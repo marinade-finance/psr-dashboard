@@ -14,7 +14,7 @@
 }
 
 html, body {
-    background-color: var(--bg-dark-1);
+    background-color: var(--bg-dark-2);
     font-family: monospace, 'Courier New', Courier;
     color: var(--text-light-1);
 }
