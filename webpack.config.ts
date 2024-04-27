@@ -12,8 +12,8 @@ const webpackConfig = (env): Configuration => ({
         plugins: [new TsconfigPathsPlugin({ configFile: './tsconfig.json' })]
     },
     output: {
-        path: path.join(__dirname, "/dist"),
-        filename: "build.js"
+        path: path.join(__dirname, "/build"),
+        filename: "bundle.[chunkhash].js",
     },
     performance: {
         hints: false,
