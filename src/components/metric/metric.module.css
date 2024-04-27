@@ -5,6 +5,10 @@
     cursor: help;
 }
 
+.metricWrap > div {
+    white-space: nowrap;
+}
+
 .metricWrap > div:last-child {
     margin-top: 10px;
     font-size: 24px;
