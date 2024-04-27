@@ -6,6 +6,6 @@ export type RewardsResponse = {
 }
 
 export const fetchRewards = async (): Promise<RewardsResponse> => {
-    const res = await fetch(`http://validators-api.marinade.finance/rewards`);
+    const res = await fetch(`https://validators-api.marinade.finance/rewards`);
     return res.json();
 };
