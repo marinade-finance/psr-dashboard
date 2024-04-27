@@ -1,0 +1,11 @@
+.metricWrap {
+    padding: 10px 20px;
+    background-color: var(--bg-dark-1);
+    margin-right: 10px;
+    cursor: help;
+}
+
+.metricWrap > div:last-child {
+    margin-top: 10px;
+    font-size: 24px;
+}

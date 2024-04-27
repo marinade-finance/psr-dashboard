@@ -1,0 +1,69 @@
+.tableWrap {
+    position: relative;
+}
+
+.tableWrap>table {
+    margin-left: 10px;
+}
+
+.pubkey {
+    display: inline-block;
+    width: 100px;
+    padding-top: 4px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.badge {
+    border-radius: 2px;
+    padding: 0px 4px;
+    cursor: help;
+    float: left;
+}
+
+.badgeDryRun {
+    background-color: var(--bg-dark-1);
+    color: var(--text-light-1);
+}
+
+.badgeEstimate {
+    background-color: #91e4b7;
+    color: black;
+}
+
+.matricWrap {
+    display: flex;
+    padding: 10px;
+}
+
+.funder {
+    cursor: help;
+}
+
+.tableWrap input {
+    background-color: var(--bg-dark-1);
+    color: var(--text-light-1);
+    border: 2px solid var(--bg-dark-2);
+    border-radius: 5px;
+    padding: 8px;
+    outline: none;
+
+}
+input:focus {
+  border-color: var(--bg-dark-3);
+  color: var(--text-light-2);
+}
+
+.epochFilter {
+    width: 70px;
+}
+
+.filters {
+    margin-bottom: 10px;
+}
+
+.filters fieldset {
+    display: inline-block;
+    margin-left: 10px;
+    border-color: transparent;
+}

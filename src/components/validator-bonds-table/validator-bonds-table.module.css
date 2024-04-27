@@ -1,0 +1,35 @@
+.tableWrap {
+    position: relative;
+}
+
+.tableWrap > table {
+    margin-left: 10px;
+}
+
+.pubkey {
+    display: inline-block;
+    width: 100px;
+    padding-top: 4px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.badge {
+    padding: 2px;
+    border-radius: 2px;
+}
+
+.badgeDryRun {
+    background-color: purple;
+    color: var(--text-light-1);
+}
+
+.badgeEstimate {
+    background-color: yellowgreen;
+    color: black;
+}
+
+.matricWrap {
+    display: flex;
+    padding: 10px;
+}
