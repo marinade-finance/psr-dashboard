@@ -18,7 +18,9 @@ export type Validator = {
     epoch_stats: ValidatorEpoch[]
 }
 
-export const selectTotalMarinadeStake = (validator: Validator) => Math.round(Number(lamportsToSol(validator.marinade_stake)) + Number(lamportsToSol(validator.marinade_native_stake)))
+export const selectTotalMarinadeStake = (validator: Validator) => Math.round(selectLiquidMarinadeStake(validator) + selectNativeMarinadeStake(validator))
+export const selectLiquidMarinadeStake = (validator: Validator) => Math.round(Number(lamportsToSol(validator.marinade_stake)))
+export const selectNativeMarinadeStake = (validator: Validator) => Math.round(Number(lamportsToSol(validator.marinade_native_stake)))
 
 export const selectVoteAccount = (validator: Validator) => validator.vote_account
 
