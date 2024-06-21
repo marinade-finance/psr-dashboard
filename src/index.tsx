@@ -11,6 +11,7 @@ import { ValidatorBondsPage } from "./pages/validator-bonds";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { Tooltip } from "react-tooltip";
 import 'react-tooltip/dist/react-tooltip.css'
+import { SamPage } from "./pages/sam";
 
 const ErrorPage = () => {
     const error: any = useRouteError();
@@ -30,6 +31,11 @@ const ErrorPage = () => {
 const router = createBrowserRouter([
     {
         path: "/",
+        element: <SamPage />,
+        errorElement: <ErrorPage />,
+    },
+    {
+        path: "/bonds",
         element: <ValidatorBondsPage />,
         errorElement: <ErrorPage />,
     },

@@ -19,9 +19,10 @@ const alignmentClassName = (alignment?: Alignment) => {
     }
 }
 
-const renderHeader: <Item>(columns: Column<Item>[], onSort: (i: number) => void, userOrder: [number, OrderDirection] | null) => JSX.Element = (columns, onSort, userOrder) => {
+const renderHeader: <Item>(columns: Column<Item>[], onSort: (i: number) => void, userOrder: [number, OrderDirection] | null, showRowNumber: boolean) => JSX.Element = (columns, onSort, userOrder, showRowNumber: boolean) => {
     const [orderColumn, orderDirection] = userOrder ?? [null, null]
     return <tr>
+        {showRowNumber ? <td>#</td> : null}
         {columns.map((column, i) => <th key={i} className={alignmentClassName(column.alignment)} onClick={() => onSort(i)}>
             {column.header}
             <span>{orderColumn === i
@@ -32,10 +33,11 @@ const renderHeader: <Item>(columns: Column<Item>[], onSort: (i: number) => void,
     </tr>
 }
 
-const renderRows: <Item>(_: Item[], __: Column<Item>[]) => JSX.Element[] = (items, columns) => items.map((item, i) => renderRow(item, columns, i))
+const renderRows: <Item>(_: Item[], __: Column<Item>[], ___: boolean) => JSX.Element[] = (items, columns, showRowNumber: boolean) => items.map((item, i) => renderRow(item, columns, i, showRowNumber))
 
-const renderRow: <Item>(_: Item, columns: Column<Item>[], index: number) => JSX.Element = (item, columns, index) => {
+const renderRow: <Item>(_: Item, columns: Column<Item>[], index: number, showRowNumber: boolean) => JSX.Element = (item, columns, index, showRowNumber: boolean) => {
     return <tr key={index}>
+        {showRowNumber ? <td>{index + 1}</td> : null}
         {columns.map((column, i) => <td key={i} className={alignmentClassName(column.alignment)}>{column.render(item)}</td>)}
     </tr>
 }
@@ -51,9 +53,10 @@ type Props<Item> = {
     data: Item[]
     columns: Column<Item>[]
     defaultOrder: Order[]
+    showRowNumber?: boolean
 }
 
-export const Table: <Item>(props: Props<Item>) => JSX.Element = ({ data, columns, defaultOrder }) => {
+export const Table: <Item>(props: Props<Item>) => JSX.Element = ({ data, columns, defaultOrder, showRowNumber }) => {
     const [userOrder, setUserOrder] = useState(null)
 
     const order: [number, OrderDirection][] = useMemo(() => {
@@ -92,10 +95,10 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({ data, columns
 
     return <table className={styles.table}>
         <thead>
-            {renderHeader(columns, onSort, userOrder)}
+            {renderHeader(columns, onSort, userOrder, showRowNumber ?? false)}
         </thead>
         <tbody>
-            {renderRows(sortedData, columns)}
+            {renderRows(sortedData, columns, showRowNumber ?? false)}
         </tbody>
     </table>
 };
