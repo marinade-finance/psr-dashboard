@@ -19,7 +19,7 @@ export const selectWinningAPY = (auctionResult: AuctionResult) => Math.pow(1 + a
 
 export const selectBid = (validator: AuctionValidator) => validator.revShare.bidPmpe
 export const selectCommission = (validator: AuctionValidator) => validator.inflationCommissionDec
-export const selectMevCommission = (validator: AuctionValidator) => validator.mevCommissionDec
+export const selectMevCommission = (validator: AuctionValidator): number | null => validator.mevCommissionDec
 
 export const selectBondSize = (validator: AuctionValidator) => validator.bondBalanceSol
 

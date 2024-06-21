@@ -34,7 +34,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult }) => {
             columns={[
                 { header: 'Validator', render: (validator) => <span className={styles.pubkey}>{selectVoteAccount(validator)}</span>, compare: (a, b) => selectVoteAccount(a).localeCompare(selectVoteAccount(b)) },
                 { header: 'Comm.', render: (validator) => <>{formatPercentage(selectCommission(validator), 0)}</>, compare: (a, b) => selectCommission(a) - selectCommission(b), alignment: Alignment.RIGHT },
-                { header: 'MEV', render: (validator) => <>{formatPercentage(selectMevCommission(validator), 0)}</>, compare: (a, b) => selectMevCommission(a) - selectMevCommission(b), alignment: Alignment.RIGHT },
+                { header: 'MEV', render: (validator) => <>{selectMevCommission(validator) === null ? '-' : formatPercentage(selectMevCommission(validator), 0)}</>, compare: (a, b) => (selectMevCommission(a) ?? 100) - (selectMevCommission(b) ?? 100), alignment: Alignment.RIGHT },
                 { header: 'Bid', render: (validator) => <>{selectBid(validator).toLocaleString()}</>, compare: (a, b) => selectBid(a) - selectBid(b), alignment: Alignment.RIGHT },
                 { header: 'Bond [☉]', render: (validator) => <>{formatSolAmount(selectBondSize(validator))}</>, compare: (a, b) => selectBondSize(a) - selectBondSize(b), alignment: Alignment.RIGHT },
                 { header: 'Max APY', render: (validator) => <>{formatPercentage(selectMaxAPY(validator))}</>, compare: (a, b) => selectMaxAPY(a) - selectMaxAPY(b), alignment: Alignment.RIGHT },
