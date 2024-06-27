@@ -4,7 +4,7 @@ interface CssExports {
   'badge': string;
   'badgeDryRun': string;
   'badgeEstimate': string;
-  'matricWrap': string;
+  'metricWrap': string;
   'pubkey': string;
   'tableWrap': string;
 }

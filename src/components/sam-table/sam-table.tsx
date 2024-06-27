@@ -3,7 +3,7 @@ import styles from './sam-table.module.css'
 import { Alignment, OrderDirection, Table } from "../table/table";
 import { formatPercentage, formatSolAmount, lamportsToSol } from "src/format";
 import { Metric } from "../metric/metric";
-import { AuctionResult } from "@marinade.finance/ds-sam-sdk/dist/types";
+import { AuctionResult } from "@marinade.finance/ds-sam-sdk";
 import { selectBid, selectBondSize, selectCommission, selectEffectiveBid, selectMarinadeTargetStake, selectMaxAPY, selectMevCommission, selectMndeDistributedStake, selectMndeTargetStake, selectSamDistributedStake, selectSamTargetStake, selectVoteAccount, selectWinningAPY } from "src/services/sam";
 
 type Props = {
@@ -20,7 +20,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult }) => {
     const validatorsWithBond = validators.filter((validator) => selectBondSize(validator) > 0)
 
     return <div className={styles.tableWrap}>
-        <div className={styles.matricWrap}>
+        <div className={styles.metricWrap}>
             <Metric label="MNDE stake" value={`☉ ${formatSolAmount(mndeDistributedStake)}`}
                 data-tooltip-id="tooltip" data-tooltip-html="How much stake is distributed by Marinade to validators based on MNDE votes" />
             <Metric label="SAM stake" value={`☉ ${formatSolAmount(samDistributedStake)}`}

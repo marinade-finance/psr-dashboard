@@ -7,7 +7,7 @@ interface CssExports {
   'epochFilter': string;
   'filters': string;
   'funder': string;
-  'matricWrap': string;
+  'metricWrap': string;
   'pubkey': string;
   'tableWrap': string;
 }

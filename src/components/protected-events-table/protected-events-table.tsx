@@ -64,7 +64,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data }) => {
     const filtered = data.length !== filteredData.length
 
     return <div className={styles.tableWrap}>
-        <div className={styles.matricWrap}>
+        <div className={styles.metricWrap}>
             <Metric label="Total events" value={totalEvents.toLocaleString()}
                 data-tooltip-id="tooltip" data-tooltip-html="Total count of protected events" />
             <Metric label="Total amount" value={`☉ ${formatSolAmount(totalAmount)}`}

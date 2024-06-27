@@ -19,7 +19,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data }) => {
     const totalFundedBonds = data.filter(({ bond }) => (bond ? selectEffectiveAmount(bond) : 0) > 0).length
 
     return <div className={styles.tableWrap}>
-        <div className={styles.matricWrap}>
+        <div className={styles.metricWrap}>
             <Metric label="Bonds funded" value={totalFundedBonds.toLocaleString()}
                 data-tooltip-id="tooltip" data-tooltip-html="Count of currently funded bonds" />
             <Metric label="Bonds balance" value={`☉ ${formatSolAmount(effectiveBalance)}`}
