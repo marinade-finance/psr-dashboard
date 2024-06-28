@@ -6,8 +6,8 @@ settings:
 
 dependencies:
   '@marinade.finance/ds-sam-sdk':
-    specifier: ^0.0.2
-    version: 0.0.2
+    specifier: ^0.0.3
+    version: 0.0.3
   react:
     specifier: ^18.0.0
     version: 18.2.0
@@ -803,8 +803,8 @@ packages:
     resolution: {integrity: sha512-Vo+PSpZG2/fmgmiNzYK9qWRh8h/CHrwD0mo1h1DzL4yzHNSfWYujGTYsWGreD000gcgmZ7K4Ys6Tx9TxtsKdDw==}
     dev: true
 
-  /@marinade.finance/ds-sam-sdk@0.0.2:
-    resolution: {integrity: sha512-qsp1Li5+KEKSV8+/JH4dtIOx6Mfdt/wsHHTg4ow07K0Sz4XFCo9EXfDApiFXmNwQ0U54VOsSbAtjjyPQ7z+srQ==}
+  /@marinade.finance/ds-sam-sdk@0.0.3:
+    resolution: {integrity: sha512-WEJMMHKkJnIQHV640Y2uqMp7p9OLQRuzY/4QNjeyDxTbNXy+73nmk0QU9FQY5gglrXCX0kvRJ3Jki63MkFrJNA==}
     dependencies:
       axios: 1.7.2
       decimal.js: 10.4.3
