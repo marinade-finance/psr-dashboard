@@ -24,7 +24,7 @@ export const lastCapConstraintDescription = (constraint: AuctionConstraint): str
         case AuctionConstraintType.BOND:
             return 'BOND setup (balance & max stake wanted)'
         case AuctionConstraintType.MNDE:
-            return `MNDE votes`
+            return 'MNDE votes'
         default:
             return '[unknown]'
     }
@@ -34,7 +34,7 @@ export const selectVoteAccount = (validator: AuctionValidator) => validator.vote
 export const selectMndeTargetStake = (validator: AuctionValidator) => validator.auctionStake.marinadeMndeTargetSol
 export const selectSamTargetStake = (validator: AuctionValidator) => validator.auctionStake.marinadeSamTargetSol
 export const selectMarinadeTargetStake = (validator: AuctionValidator) => selectSamTargetStake(validator) + selectMndeTargetStake(validator)
-export const selectConstraintText = (validator: AuctionValidator) => validator.lastCapConstraint ? `Stake capped by ${lastCapConstraintDescription(validator.lastCapConstraint)} constraint` : 'Stake amount not capped by constraints'
+export const selectConstraintText = ({ lastCapConstraint }: AuctionValidator) => lastCapConstraint && lastCapConstraint.constraintType !== AuctionConstraintType.MNDE ? `Stake capped by ${lastCapConstraintDescription(lastCapConstraint)} constraint` : 'Stake amount not capped by constraints'
 
 export const selectMndeDistributedStake = (validators: AuctionValidator[]) => validators.reduce((sum, validator) => sum + selectMndeTargetStake(validator), 0)
 export const selectSamDistributedStake = (validators: AuctionValidator[]) => validators.reduce((sum, validator) => sum + selectSamTargetStake(validator), 0)
