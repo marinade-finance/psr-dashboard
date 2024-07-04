@@ -6,18 +6,17 @@ import { ProtectedEvent, selectAmount, selectEprLossBps, selectProtectedStakeRea
 import { Metric } from "../metric/metric";
 import { ProtectedEventStatus, ProtectedEventWithValidator } from "src/services/validator-with-protected_event";
 import { selectName } from "src/services/validators";
+import { tooltipAttributes } from '../../services/utils'
 
 const NO_NAME = '---'
 
 const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
     switch (status) {
         case ProtectedEventStatus.DRYRUN: return <span
-            data-tooltip-id="tooltip"
-            data-tooltip-html="This settlement is not claimable as it was created during the testing period."
+            {...tooltipAttributes("This settlement is not claimable as it was created during the testing period.")}
             className={`${styles.badge} ${styles.badgeDryRun}`}>Dryrun</span>
         case ProtectedEventStatus.ESTIMATE: return <span
-            data-tooltip-id="tooltip"
-            data-tooltip-html="This is an estimate based on live data but may change during the epoch<br />before the settlements for this epoch are created on-chain."
+            {...tooltipAttributes("This is an estimate based on live data but may change during the epoch<br />before the settlements for this epoch are created on-chain.")}
             className={`${styles.badge} ${styles.badgeEstimate}`}>Estimate</span>
         default: return <></>
     }
@@ -27,12 +26,10 @@ const renderProtectedEventFunder = (protectedEvent: ProtectedEvent) => {
     switch (protectedEvent.meta.funder) {
         case 'Marinade': return <span
             className={styles.funder}
-            data-tooltip-id="tooltip"
-            data-tooltip-html="This settlement is funded by Marinade DAO because the yield loss<br />is beyond what the validator's are expected to cover.">Marinade</span>
+            {...tooltipAttributes("This settlement is funded by Marinade DAO because the yield loss<br />is beyond what the validator's are expected to cover.")}>Marinade</span>
         case 'ValidatorBond': return <span
             className={styles.funder}
-            data-tooltip-id="tooltip"
-            data-tooltip-html="This settlement is funded by the validator because the yield loss<br />is within amount which the validator is expected to cover.">Validator</span>
+            {...tooltipAttributes("This settlement is funded by the validator because the yield loss<br />is within amount which the validator is expected to cover.")}>Validator</span>
         default: return <></>
     }
 }
@@ -66,13 +63,13 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data }) => {
     return <div className={styles.tableWrap}>
         <div className={styles.metricWrap}>
             <Metric label="Total events" value={totalEvents.toLocaleString()}
-                data-tooltip-id="tooltip" data-tooltip-html="Total count of protected events" />
+                {...tooltipAttributes("Total count of protected events")} />
             <Metric label="Total amount" value={`☉ ${formatSolAmount(totalAmount)}`}
-                data-tooltip-id="tooltip" data-tooltip-html="Total amount of SOL claimable by users" />
+                {...tooltipAttributes("Total amount of SOL claimable by users")} />
             { filtered && <Metric label="Filtered events" value={filteredEvents.toLocaleString()}
-                data-tooltip-id="tooltip" data-tooltip-html="Count of filtered protected events" /> }
+                {...tooltipAttributes("Count of filtered protected events")} /> }
             { filtered && <Metric label="Filtered amount" value={`☉ ${formatSolAmount(filteredAmount)}`}
-                data-tooltip-id="tooltip" data-tooltip-html="Filtered amount of SOL claimable by users" /> }
+                {...tooltipAttributes("Filtered amount of SOL claimable by users")} /> }
         </div>
         <div className={styles.filters}>
             <fieldset>
