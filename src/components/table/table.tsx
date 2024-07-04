@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { HTMLAttributes, useEffect, useMemo, useState } from "react";
 import styles from './table.module.css'
 
 export const enum OrderDirection {
@@ -38,12 +38,13 @@ const renderRows: <Item>(_: Item[], __: Column<Item>[], ___: boolean) => JSX.Ele
 const renderRow: <Item>(_: Item, columns: Column<Item>[], index: number, showRowNumber: boolean) => JSX.Element = (item, columns, index, showRowNumber: boolean) => {
     return <tr key={index}>
         {showRowNumber ? <td>{index + 1}</td> : null}
-        {columns.map((column, i) => <td key={i} className={alignmentClassName(column.alignment)}>{column.render(item)}</td>)}
+        {columns.map((column, i) => <td { ...(column.cellAttrsFn ? column.cellAttrsFn(item) : {})} key={i} className={alignmentClassName(column.alignment)}>{column.render(item)}</td>)}
     </tr>
 }
 
 type Column<Item> = {
     header: string
+    cellAttrsFn?: (item: Item) => HTMLAttributes<HTMLTableCellElement>
     render: (item: Item) => JSX.Element
     compare: (a: Item, b: Item) => number
     alignment?: Alignment

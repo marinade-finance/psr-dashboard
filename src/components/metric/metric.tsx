@@ -9,8 +9,8 @@ type Props = {
     'data-tooltip-html'?: string
 }
 
-export const Metric: React.FC<Props> = ({ label, value, ...toltipsProps }) => {
-    return <div className={styles.metricWrap} data-tooltip-id={toltipsProps["data-tooltip-id"]} data-tooltip-html={toltipsProps["data-tooltip-html"]}>
+export const Metric: React.FC<Props> = ({ label, value, ...tooltipsProps }) => {
+    return <div className={styles.metricWrap} {...tooltipsProps}>
         <div>{label}</div>
         <div>{value}</div>
     </div>
