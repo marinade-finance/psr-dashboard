@@ -49,4 +49,4 @@ export const selectBondSize = (validator: AuctionValidator) => validator.bondBal
 
 export const selectMaxAPY = (validator: AuctionValidator) => Math.pow(1 + validator.revShare.totalPmpe / 1e3, EPOCHS_PER_YEAR) - 1
 
-export const selectEffectiveBid = (auctionResult: AuctionResult, validator: AuctionValidator) => Math.max(validator.revShare.bidPmpe - (validator.revShare.totalPmpe - auctionResult.winningTotalPmpe), 0)
+export const selectEffectiveBid = (auctionResult: AuctionResult, validator: AuctionValidator) => Math.min(Math.max(validator.revShare.bidPmpe - (validator.revShare.totalPmpe - auctionResult.winningTotalPmpe), 0), validator.revShare.bidPmpe)
