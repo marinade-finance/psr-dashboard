@@ -9,14 +9,15 @@ import { tooltipAttributes } from '../../services/utils'
 
 type Props = {
     auctionResult: AuctionResult
+    epochsPerYear: number
 }
 
-export const SamTable: React.FC<Props> = ({ auctionResult }) => {
+export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear }) => {
     console.log(auctionResult)
     const { auctionData: { validators } } = auctionResult
     const mndeDistributedStake = Math.round(selectMndeDistributedStake(validators))
     const samDistributedStake = Math.round(selectSamDistributedStake(validators))
-    const winningAPY = selectWinningAPY(auctionResult)
+    const winningAPY = selectWinningAPY(auctionResult, epochsPerYear)
 
     const validatorsWithBond = validators.filter((validator) => selectBondSize(validator) > 0)
 
@@ -38,7 +39,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult }) => {
                 { header: 'MEV', render: (validator) => <>{selectMevCommission(validator) === null ? '-' : formatPercentage(selectMevCommission(validator), 0)}</>, compare: (a, b) => (selectMevCommission(a) ?? 100) - (selectMevCommission(b) ?? 100), alignment: Alignment.RIGHT },
                 { header: 'Bid', render: (validator) => <>{`${selectBid(validator)}`}</>, compare: (a, b) => selectBid(a) - selectBid(b), alignment: Alignment.RIGHT },
                 { header: 'Bond [☉]', render: (validator) => <>{formatSolAmount(selectBondSize(validator))}</>, compare: (a, b) => selectBondSize(a) - selectBondSize(b), alignment: Alignment.RIGHT },
-                { header: 'Max APY', render: (validator) => <>{formatPercentage(selectMaxAPY(validator))}</>, compare: (a, b) => selectMaxAPY(a) - selectMaxAPY(b), alignment: Alignment.RIGHT },
+                { header: 'Max APY', render: (validator) => <>{formatPercentage(selectMaxAPY(validator, epochsPerYear))}</>, compare: (a, b) => selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear), alignment: Alignment.RIGHT },
                 { header: 'MNDE stake [☉]', render: (validator) => <>{formatSolAmount(Math.round(selectMndeTargetStake(validator)))}</>, compare: (a, b) => selectMndeTargetStake(a) - selectMndeTargetStake(b), alignment: Alignment.RIGHT },
                 { header: 'SAM stake [☉]', render: (validator) => <>{formatSolAmount(Math.round(selectSamTargetStake(validator)))}</>, compare: (a, b) => selectSamTargetStake(a) - selectSamTargetStake(b), alignment: Alignment.RIGHT },
                 { header: 'Target stake [☉]', cellAttrsFn: (validator) => tooltipAttributes(selectConstraintText(validator)), render: (validator) => <>{formatSolAmount(Math.round(selectMarinadeTargetStake(validator)))}</>, compare: (a, b) => selectMarinadeTargetStake(a) - selectMarinadeTargetStake(b), alignment: Alignment.RIGHT },

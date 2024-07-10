@@ -7,6 +7,8 @@ export type ValidatorEpoch = {
     activated_stake: string
     commission_advertised: number
     epoch: number
+    epoch_start_at: string | null
+    epoch_end_at: string | null
 }
 
 export type Validator = {

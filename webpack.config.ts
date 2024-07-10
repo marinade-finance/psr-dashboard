@@ -9,7 +9,9 @@ const webpackConfig = (env): Configuration => ({
     ...(env.production || !env.development ? {} : { devtool: "eval-source-map" }),
     resolve: {
         extensions: [".ts", ".tsx", ".js"],
-        plugins: [new TsconfigPathsPlugin({ configFile: './tsconfig.json' })],
+        plugins: [
+            new TsconfigPathsPlugin({ configFile: './tsconfig.json' })
+        ],
         alias: {
             fs: false
         }
