@@ -43,7 +43,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear }) => {
                 { header: 'MNDE stake [☉]', render: (validator) => <>{formatSolAmount(Math.round(selectMndeTargetStake(validator)))}</>, compare: (a, b) => selectMndeTargetStake(a) - selectMndeTargetStake(b), alignment: Alignment.RIGHT },
                 { header: 'SAM stake [☉]', render: (validator) => <>{formatSolAmount(Math.round(selectSamTargetStake(validator)))}</>, compare: (a, b) => selectSamTargetStake(a) - selectSamTargetStake(b), alignment: Alignment.RIGHT },
                 { header: 'Target stake [☉]', cellAttrsFn: (validator) => tooltipAttributes(selectConstraintText(validator)), render: (validator) => <>{formatSolAmount(Math.round(selectMarinadeTargetStake(validator)))}</>, compare: (a, b) => selectMarinadeTargetStake(a) - selectMarinadeTargetStake(b), alignment: Alignment.RIGHT },
-                { header: 'Effective bid [☉]', render: (validator) => <>{selectEffectiveBid(auctionResult, validator)}</>, compare: (a, b) => selectEffectiveBid(auctionResult, a) - selectEffectiveBid(auctionResult, b), alignment: Alignment.RIGHT },
+                { header: 'Effective bid [☉]', render: (validator) => <>{selectEffectiveBid(validator)}</>, compare: (a, b) => selectEffectiveBid(a) - selectEffectiveBid(b), alignment: Alignment.RIGHT },
             ]}
             defaultOrder={[
                 [5, OrderDirection.DESC],
