@@ -6,6 +6,7 @@ import {
     AuctionConstraintType, AuctionConstraint
 } from '@marinade.finance/ds-sam-sdk'
 import { fetchValidatorsWithEpochs } from './validators'
+import { formatSolAmount } from 'src/format'
 
 const estimateEpochsPerYear = async () => {
     const FETCHED_EPOCHS = 11
@@ -97,5 +98,11 @@ export const selectMaxAPY = (validator: AuctionValidator, epochsPerYear: number)
 export const selectEffectiveBid = (validator: AuctionValidator) => validator.revShare.auctionEffectiveBidPmpe
 
 export const selectMarinadeActivatedStake = (validator: AuctionValidator) => validator.marinadeActivatedStakeSol
-
-export const selectMarinadeDeltaStake = (validator: AuctionValidator) => validator.marinadeActivatedStakeSol - selectMarinadeTargetStake(validator)
+export const selectMissingDeltaToTargetStake = (validator: AuctionValidator) =>  selectMarinadeTargetStake(validator) - validator.marinadeActivatedStakeSol
+export const selectDeltaTooltip = (validator: AuctionValidator) => {
+    const delta = selectMissingDeltaToTargetStake(validator)
+    return validator.voteAccount +
+        (delta > 0 ? ' will be staked with ' : ' is over-staked by ') +
+        `${formatSolAmount(Math.abs(delta))} SOLs ` +
+        (delta > 0 ? 'to reach the target stake amount' : 'above the target stake amount')
+}

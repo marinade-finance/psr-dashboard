@@ -20,7 +20,8 @@ import {
     selectVoteAccount,
     selectWinningAPY,
     selectMarinadeActivatedStake,
-    selectMarinadeDeltaStake
+    selectMissingDeltaToTargetStake,
+    selectDeltaTooltip
 } from "src/services/sam";
 import { tooltipAttributes } from '../../services/utils'
 
@@ -48,26 +49,39 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear }) => {
               {...tooltipAttributes("Estimated APY of the last validator winning the auction based on ideal count of epochs in the year")} />
 
         </div>
-        <Table
-            data={validatorsWithBond}
-            columns={[
-                { header: 'Validator', render: (validator) => <span className={styles.pubkey}>{selectVoteAccount(validator)}</span>, compare: (a, b) => selectVoteAccount(a).localeCompare(selectVoteAccount(b)) },
-                { header: 'Comm.', render: (validator) => <>{formatPercentage(selectCommission(validator), 0)}</>, compare: (a, b) => selectCommission(a) - selectCommission(b), alignment: Alignment.RIGHT },
-                { header: 'MEV', render: (validator) => <>{selectMevCommission(validator) === null ? '-' : formatPercentage(selectMevCommission(validator), 0)}</>, compare: (a, b) => (selectMevCommission(a) ?? 100) - (selectMevCommission(b) ?? 100), alignment: Alignment.RIGHT },
-                { header: 'Bid', render: (validator) => <>{`${selectBid(validator)}`}</>, compare: (a, b) => selectBid(a) - selectBid(b), alignment: Alignment.RIGHT },
-                { header: 'Bond [☉]', render: (validator) => <>{formatSolAmount(selectBondSize(validator))}</>, compare: (a, b) => selectBondSize(a) - selectBondSize(b), alignment: Alignment.RIGHT },
-                { header: 'Max APY', render: (validator) => <>{formatPercentage(selectMaxAPY(validator, epochsPerYear))}</>, compare: (a, b) => selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear), alignment: Alignment.RIGHT },
-                { header: 'MNDE stake [☉]', render: (validator) => <>{formatSolAmount(Math.round(selectMndeTargetStake(validator)))}</>, compare: (a, b) => selectMndeTargetStake(a) - selectMndeTargetStake(b), alignment: Alignment.RIGHT },
-                { header: 'SAM stake [☉]', render: (validator) => <>{formatSolAmount(Math.round(selectSamTargetStake(validator)))}</>, compare: (a, b) => selectSamTargetStake(a) - selectSamTargetStake(b), alignment: Alignment.RIGHT },
-                { header: 'Target stake [☉]', cellAttrsFn: (validator) => tooltipAttributes(selectConstraintText(validator)), render: (validator) => <>{formatSolAmount(Math.round(selectMarinadeTargetStake(validator)))}</>, compare: (a, b) => selectMarinadeTargetStake(a) - selectMarinadeTargetStake(b), alignment: Alignment.RIGHT },
-                { header: 'Current stake [☉]', render: (validator) => <>{formatSolAmount(Math.round(selectMarinadeActivatedStake(validator)))}</>, compare: (a, b) => selectMarinadeActivatedStake(a) - selectMarinadeActivatedStake(b), alignment: Alignment.RIGHT },
-                { header: 'Stake delta [☉]', render: (validator) => <>{formatSolAmount(Math.round(selectMarinadeDeltaStake(validator)))}</>, compare: (a, b) => selectMarinadeDeltaStake(a) - selectMarinadeDeltaStake(b), alignment: Alignment.RIGHT },
-                { header: 'Effective bid [☉]', render: (validator) => <>{selectEffectiveBid(validator)}</>, compare: (a, b) => selectEffectiveBid(a) - selectEffectiveBid(b), alignment: Alignment.RIGHT },
-            ]}
-            defaultOrder={[
-                [5, OrderDirection.DESC],
-                [4, OrderDirection.DESC],
-            ]}
-            showRowNumber={true} />
+            <Table
+                data={validatorsWithBond}
+                columns={[
+                    { header: 'Validator', render: (validator) => <span className={styles.pubkey}>{selectVoteAccount(validator)}</span>, compare: (a, b) => selectVoteAccount(a).localeCompare(selectVoteAccount(b)) },
+                    { header: 'Comm.', render: (validator) => <>{formatPercentage(selectCommission(validator), 0)}</>, compare: (a, b) => selectCommission(a) - selectCommission(b), alignment: Alignment.RIGHT },
+                    { header: 'MEV', render: (validator) => <>{selectMevCommission(validator) === null ? '-' : formatPercentage(selectMevCommission(validator), 0)}</>, compare: (a, b) => (selectMevCommission(a) ?? 100) - (selectMevCommission(b) ?? 100), alignment: Alignment.RIGHT },
+                    { header: 'Bid', render: (validator) => <>{`${selectBid(validator)}`}</>, compare: (a, b) => selectBid(a) - selectBid(b), alignment: Alignment.RIGHT },
+                    { header: 'Bond [☉]', render: (validator) => <>{formatSolAmount(selectBondSize(validator))}</>, compare: (a, b) => selectBondSize(a) - selectBondSize(b), alignment: Alignment.RIGHT },
+                    { header: 'Max APY', render: (validator) => <>{formatPercentage(selectMaxAPY(validator, epochsPerYear))}</>, compare: (a, b) => selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear), alignment: Alignment.RIGHT },
+                    { header: 'MNDE stake [☉]', render: (validator) => <>{formatSolAmount(Math.round(selectMndeTargetStake(validator)))}</>, compare: (a, b) => selectMndeTargetStake(a) - selectMndeTargetStake(b), alignment: Alignment.RIGHT },
+                    { header: 'SAM stake [☉]', render: (validator) => <>{formatSolAmount(Math.round(selectSamTargetStake(validator)))}</>, compare: (a, b) => selectSamTargetStake(a) - selectSamTargetStake(b), alignment: Alignment.RIGHT },
+                    { header: 'Target stake [☉]', cellAttrsFn: (validator) => tooltipAttributes(selectConstraintText(validator)), render: (validator) => <>{formatSolAmount(Math.round(selectMarinadeTargetStake(validator)))}</>, compare: (a, b) => selectMarinadeTargetStake(a) - selectMarinadeTargetStake(b), alignment: Alignment.RIGHT },
+                    { 
+                        header: 'Current stake [☉]',
+                        cellAttrsFn: (validator) => tooltipAttributes(selectDeltaTooltip(validator)),
+                        render: (validator) => {
+                            const marinadeActivatedStake = selectMarinadeActivatedStake(validator);
+                            const missingDeltaStake = selectMissingDeltaToTargetStake(validator);
+                            return (
+                                <div style={{backgroundColor: missingDeltaStake > 0 ? 'rgba(205, 254, 194, 0.2)' : 'transparent'}}>
+                                    {formatSolAmount(Math.round(marinadeActivatedStake))} ({formatSolAmount(Math.round(missingDeltaStake))})
+                                </div>
+                            );
+                        },
+                        compare: (a, b) => selectMarinadeActivatedStake(a) - selectMarinadeActivatedStake(b), 
+                        alignment: Alignment.RIGHT 
+                    },
+                    { header: 'Effective bid [☉]', render: (validator) => <>{selectEffectiveBid(validator)}</>, compare: (a, b) => selectEffectiveBid(a) - selectEffectiveBid(b), alignment: Alignment.RIGHT },
+                ]}
+                defaultOrder={[
+                    [5, OrderDirection.DESC],
+                    [4, OrderDirection.DESC],
+                ]}
+                showRowNumber={true} />
     </div>
 };
