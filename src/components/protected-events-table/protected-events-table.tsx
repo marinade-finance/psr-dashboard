@@ -50,7 +50,8 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data }) => {
         const lowerCaseValidatorFilter = validatorFilter.toLocaleLowerCase()
         const matchesValidator = protectedEvent.vote_account.toLowerCase().includes(lowerCaseValidatorFilter) || validator?.info_name?.toLocaleLowerCase().includes(lowerCaseValidatorFilter)
         const matchesEpoch = minEpochFilter <= protectedEvent.epoch && protectedEvent.epoch <= maxEpochFilter
-        return matchesEpoch && matchesValidator
+        const isBidding = protectedEvent.reason as any === 'Bidding'
+        return matchesEpoch && matchesValidator && !isBidding
     })
 
     const totalEvents = data.length

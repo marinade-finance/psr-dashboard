@@ -8,6 +8,17 @@ export type SettlementMeta = {
 
 export namespace SettlementReason {
     export namespace ProtectedEvent {
+        export type CommissionSamIncreaseReason = {
+            vote_account: string,
+            actual_inflation_commission: number,
+            expected_inflation_commission: number,
+            actual_mev_commission: number,
+            expected_mev_commission: number,
+            expected_epr: number,
+            actual_epr: number,
+            epr_loss_bps: number,
+            stake: number,
+        }
         export type CommissionIncrease = {
             vote_account: string,
             previous_commission: number,
@@ -31,10 +42,14 @@ export namespace SettlementReason {
 
     export type CommissionIncreaseReason = { CommissionIncrease: ProtectedEvent.CommissionIncrease }
     export type LowCreditsReason = { LowCredits: ProtectedEvent.LowCredits }
-    export type ProtectedEventReason = CommissionIncreaseReason | LowCreditsReason
+    export type DowntimeRevenueImpactReason = { DowntimeRevenueImpact: ProtectedEvent.LowCredits }
+    export type CommissionSamIncreaseReason = { CommissionSamIncrease: ProtectedEvent.CommissionSamIncreaseReason }
+    export type ProtectedEventReason = CommissionIncreaseReason | LowCreditsReason | DowntimeRevenueImpactReason | CommissionSamIncreaseReason
 
     export const isCommissionIncreaseReason = (e: ProtectedEventReason): e is CommissionIncreaseReason => 'CommissionIncrease' in (e as any)
     export const isLowCreditsReason = (e: ProtectedEventReason): e is LowCreditsReason => 'LowCredits' in (e as any)
+    export const isDowntimeRevenueImpactReason = (e: ProtectedEventReason): e is DowntimeRevenueImpactReason => 'DowntimeRevenueImpact' in (e as any)
+    export const isCommissionSamIncreaseReason = (e: ProtectedEventReason): e is CommissionSamIncreaseReason => 'CommissionSamIncrease' in (e as any)
 }
 export type SettlementReason = { ProtectedEvent: SettlementReason.ProtectedEventReason }
 
@@ -55,9 +70,16 @@ export const selectProtectedStakeReason = (protectedEvent: ProtectedEvent) => {
     if (SettlementReason.isCommissionIncreaseReason(reason)) {
         return `Commission ${reason.CommissionIncrease.previous_commission}% -> ${reason.CommissionIncrease.current_commission}%`
     }
+    if (SettlementReason.isCommissionSamIncreaseReason(reason)) {
+        return `Inflation Commission ${reason.CommissionSamIncrease.expected_inflation_commission * 100}% -> ${reason.CommissionSamIncrease.actual_inflation_commission * 100}%; MEV Commission ${reason.CommissionSamIncrease.expected_mev_commission * 100}% -> ${reason.CommissionSamIncrease.actual_mev_commission * 100}%`
+    }
     if (SettlementReason.isLowCreditsReason(reason)) {
         return `Uptime ${formatPercentage(reason.LowCredits.actual_credits / reason.LowCredits.expected_credits)}`
     }
+    if (SettlementReason.isDowntimeRevenueImpactReason(reason)) {
+        return `Uptime ${formatPercentage(reason.DowntimeRevenueImpact.actual_credits / reason.DowntimeRevenueImpact.expected_credits)}`
+    }
+    console.log('unsupported event:', protectedEvent)
     return 'Unsupported'
 }
 
