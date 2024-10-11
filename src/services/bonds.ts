@@ -4,16 +4,16 @@ export type BondRecord = {
     pubkey: string,
     vote_account: string,
     authority: string,
-    cpmpe: string,
+    cpmpe: number,
     updated_at: string,
     epoch: number,
-    funded_amount: string,
-    effective_amount: string,
-    remaining_witdraw_request_amount: string,
-    remainining_settlement_claim_amount: string,
+    funded_amount: number,
+    effective_amount: number,
+    remaining_witdraw_request_amount: number,
+    remainining_settlement_claim_amount: number,
 }
 
-export const selectEffectiveAmount = (bond: BondRecord) => Number(lamportsToSol(bond.effective_amount))
+export const selectEffectiveAmount = (bond: BondRecord) => Number(lamportsToSol(bond.effective_amount.toString()))
 export const selectMaxProtectedStake = (bond: BondRecord) => Math.round(selectEffectiveAmount(bond) * 10_000)
 
 export type BondsResponse = {
