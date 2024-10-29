@@ -6,8 +6,8 @@ settings:
 
 dependencies:
   '@marinade.finance/ds-sam-sdk':
-    specifier: ^0.0.14
-    version: 0.0.14
+    specifier: ^0.0.15
+    version: 0.0.15
   react:
     specifier: ^18.0.0
     version: 18.2.0
@@ -803,8 +803,8 @@ packages:
     resolution: {integrity: sha512-Vo+PSpZG2/fmgmiNzYK9qWRh8h/CHrwD0mo1h1DzL4yzHNSfWYujGTYsWGreD000gcgmZ7K4Ys6Tx9TxtsKdDw==}
     dev: true
 
-  /@marinade.finance/ds-sam-sdk@0.0.14:
-    resolution: {integrity: sha512-rRkxbtQrn7TEA4Jch0bZOh43N9wDYM+3hl5XYXd0EHrNV2NhqsC+n6tRVlPqeM1dU0tQlwOS31coUK9CIOHPVw==}
+  /@marinade.finance/ds-sam-sdk@0.0.15:
+    resolution: {integrity: sha512-+/K+cO43rjbJfed4atPbqrYPiqrZVTnvRt3bPxLggRbaMAuoQE78fKqdmyKnght0tA8iB3foEgniNbwD3MwSlA==}
     dependencies:
       axios: 1.7.2
       decimal.js: 10.4.3
@@ -2387,6 +2387,7 @@ packages:
   /eslint@8.57.0:
     resolution: {integrity: sha512-dZ6+mexnaTIbSBZWgou51U6OmzIhYM2VcNdtiTtI7qPNZm35Akpr0f6vtw3w1Kmn5PYo+tZVfh13WrhpS6oLqQ==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     dependencies:
       '@eslint-community/eslint-utils': 4.4.0(eslint@8.57.0)
