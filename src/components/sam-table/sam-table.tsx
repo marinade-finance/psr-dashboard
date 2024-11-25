@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React from "react";
 import styles from './sam-table.module.css'
 import { Alignment, OrderDirection, Table } from "../table/table";
-import { formatPercentage, formatSolAmount, lamportsToSol } from "src/format";
+import { formatPercentage, formatSolAmount } from "src/format";
 import { Metric } from "../metric/metric";
 import { AuctionResult } from "@marinade.finance/ds-sam-sdk";
-import { selectBid, selectBondSize, selectCommission, selectEffectiveBid, selectConstraintText, selectMarinadeTargetStake, selectMaxAPY, selectMevCommission, selectMndeDistributedStake, selectMndeTargetStake, selectSamDistributedStake, selectSamTargetStake, selectVoteAccount, selectWinningAPY } from "src/services/sam";
+import { selectBid, selectBondSize, selectCommission, selectEffectiveBid, selectConstraintText, selectMaxAPY, selectMevCommission, selectSamDistributedStake, selectSamTargetStake, selectVoteAccount, selectWinningAPY } from "src/services/sam";
 import { tooltipAttributes } from '../../services/utils'
 
 type Props = {
@@ -15,7 +15,6 @@ type Props = {
 export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear }) => {
     console.log(auctionResult)
     const { auctionData: { validators } } = auctionResult
-    const mndeDistributedStake = Math.round(selectMndeDistributedStake(validators))
     const samDistributedStake = Math.round(selectSamDistributedStake(validators))
     const winningAPY = selectWinningAPY(auctionResult, epochsPerYear)
 
@@ -23,8 +22,6 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear }) => {
 
     return <div className={styles.tableWrap}>
         <div className={styles.metricWrap}>
-            <Metric label="MNDE stake" value={`☉ ${formatSolAmount(mndeDistributedStake)}`}
-              {...tooltipAttributes("How much stake is distributed by Marinade to validators based on MNDE votes")} />
             <Metric label="SAM stake" value={`☉ ${formatSolAmount(samDistributedStake)}`}
               {...tooltipAttributes("How much stake is distributed by Marinade to validators based on SAM")} />
             <Metric label="Auction winning APY" value={`☉ ${formatPercentage(winningAPY)}`}
@@ -40,9 +37,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear }) => {
                 { header: 'Bid', render: (validator) => <>{`${selectBid(validator)}`}</>, compare: (a, b) => selectBid(a) - selectBid(b), alignment: Alignment.RIGHT },
                 { header: 'Bond [☉]', render: (validator) => <>{formatSolAmount(selectBondSize(validator))}</>, compare: (a, b) => selectBondSize(a) - selectBondSize(b), alignment: Alignment.RIGHT },
                 { header: 'Max APY', render: (validator) => <>{formatPercentage(selectMaxAPY(validator, epochsPerYear)).replace('Infinity%', '∞')}</>, compare: (a, b) => selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear), alignment: Alignment.RIGHT },
-                { header: 'MNDE stake [☉]', render: (validator) => <>{formatSolAmount(Math.round(selectMndeTargetStake(validator)))}</>, compare: (a, b) => selectMndeTargetStake(a) - selectMndeTargetStake(b), alignment: Alignment.RIGHT },
-                { header: 'SAM stake [☉]', render: (validator) => <>{formatSolAmount(Math.round(selectSamTargetStake(validator)))}</>, compare: (a, b) => selectSamTargetStake(a) - selectSamTargetStake(b), alignment: Alignment.RIGHT },
-                { header: 'Target stake [☉]', cellAttrsFn: (validator) => tooltipAttributes(selectConstraintText(validator)), render: (validator) => <>{formatSolAmount(Math.round(selectMarinadeTargetStake(validator)))}</>, compare: (a, b) => selectMarinadeTargetStake(a) - selectMarinadeTargetStake(b), alignment: Alignment.RIGHT },
+                { header: 'SAM stake [☉]', cellAttrsFn: (validator) => tooltipAttributes(selectConstraintText(validator)), render: (validator) => <>{formatSolAmount(Math.round(selectSamTargetStake(validator)))}</>, compare: (a, b) => selectSamTargetStake(a) - selectSamTargetStake(b), alignment: Alignment.RIGHT },
                 { header: 'Effective bid [☉]', render: (validator) => <>{selectEffectiveBid(validator)}</>, compare: (a, b) => selectEffectiveBid(a) - selectEffectiveBid(b), alignment: Alignment.RIGHT },
             ]}
             defaultOrder={[
