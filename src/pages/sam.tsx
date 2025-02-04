@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React from "react";
 import styles from './sam.module.css'
 import { Navigation } from "src/components/navigation/navigation";
 import { useQuery } from "react-query";

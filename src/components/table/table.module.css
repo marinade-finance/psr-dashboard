@@ -39,3 +39,15 @@
 .right {
     text-align: right;
 }
+
+.red {
+    background-color: red;
+}
+
+.green {
+    background-color: green;
+}
+
+.noBg {
+    background-color: unset;
+}

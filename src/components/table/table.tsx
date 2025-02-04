@@ -1,4 +1,4 @@
-import React, { HTMLAttributes, useEffect, useMemo, useState } from "react";
+import React, { HTMLAttributes, useMemo, useState } from "react";
 import styles from './table.module.css'
 
 export const enum OrderDirection {
@@ -11,11 +11,23 @@ export enum Alignment {
     LEFT, RIGHT
 }
 
+export enum Color {
+    RED, GREEN
+}
+
 const alignmentClassName = (alignment?: Alignment) => {
     switch (alignment) {
         case Alignment.LEFT: return styles.left
         case Alignment.RIGHT: return styles.right
         default: return styles.left
+    }
+}
+
+const colorClassName = (color?: Color) => {
+    switch (color) {
+        case Color.RED: return styles.red
+        case Color.GREEN: return styles.green
+        default: return styles.noBg
     }
 }
 
@@ -38,7 +50,15 @@ const renderRows: <Item>(_: Item[], __: Column<Item>[], ___: boolean) => JSX.Ele
 const renderRow: <Item>(_: Item, columns: Column<Item>[], index: number, showRowNumber: boolean) => JSX.Element = (item, columns, index, showRowNumber: boolean) => {
     return <tr key={index}>
         {showRowNumber ? <td>{index + 1}</td> : null}
-        {columns.map((column, i) => <td { ...(column.cellAttrsFn ? column.cellAttrsFn(item) : {})} key={i} className={alignmentClassName(column.alignment)}>{column.render(item)}</td>)}
+        {columns.map((column, i) => 
+            <td 
+                { ...(column.cellAttrsFn ? column.cellAttrsFn(item) : {})}
+                key={i}
+                className={`${alignmentClassName(column.alignment)} ${column.background ? colorClassName(column.background(item)) : ""}`}
+            >
+                {column.render(item)}
+            </td>
+        )}
     </tr>
 }
 
@@ -47,6 +67,7 @@ type Column<Item> = {
     cellAttrsFn?: (item: Item) => HTMLAttributes<HTMLTableCellElement>
     render: (item: Item) => JSX.Element
     compare: (a: Item, b: Item) => number
+    background?: (item: Item) => Color
     alignment?: Alignment
 }
 

@@ -6,6 +6,7 @@ import {
     AuctionConstraintType, AuctionConstraint
 } from '@marinade.finance/ds-sam-sdk'
 import { fetchValidatorsWithEpochs } from './validators'
+import { Color } from 'src/components/table/table'
 
 const estimateEpochsPerYear = async () => {
     const FETCHED_EPOCHS = 11
@@ -90,3 +91,15 @@ export const selectBondSize = (validator: AuctionValidator) => validator.bondBal
 export const selectMaxAPY = (validator: AuctionValidator, epochsPerYear: number) => Math.pow(1 + validator.revShare.totalPmpe / 1e3, epochsPerYear) - 1
 
 export const selectEffectiveBid = (validator: AuctionValidator) => validator.revShare.auctionEffectiveBidPmpe
+
+export const bondColorState = (samDistributedStake: number, validator: AuctionValidator): Color => {
+    const bidPerStake = validator.revShare.bidPmpe / 1000
+    const downtimeProtectionPerStake = 1 / 10000
+    const refundableDepositPerStake = validator.revShare.totalPmpe / 1000
+    const neededBid = (samDistributedStake * 0.02) * (bidPerStake + downtimeProtectionPerStake + refundableDepositPerStake) 
+    if (validator.bondBalanceSol < neededBid) {
+        return Color.RED
+    } else {
+        return Color.GREEN
+    }
+}
