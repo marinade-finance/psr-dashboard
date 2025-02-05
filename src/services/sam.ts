@@ -92,14 +92,25 @@ export const selectMaxAPY = (validator: AuctionValidator, epochsPerYear: number)
 
 export const selectEffectiveBid = (validator: AuctionValidator) => validator.revShare.auctionEffectiveBidPmpe
 
-export const bondColorState = (samDistributedStake: number, validator: AuctionValidator): Color => {
+export const bondColorState = (validator: AuctionValidator): Color => {
     const bidPerStake = validator.revShare.bidPmpe / 1000
-    const downtimeProtectionPerStake = 1 / 10000
+    const downtimeProtectionPerStake = 0
     const refundableDepositPerStake = validator.revShare.totalPmpe / 1000
-    const neededBid = (samDistributedStake * 0.02) * (bidPerStake + downtimeProtectionPerStake + refundableDepositPerStake) 
-    if (validator.bondBalanceSol < neededBid) {
-        return Color.RED
-    } else {
+    const neededBid = validator.maxStakeWanted * (bidPerStake + downtimeProtectionPerStake + refundableDepositPerStake) 
+    if (validator.bondBalanceSol > neededBid * 2) {
         return Color.GREEN
+    } else if (validator.bondBalanceSol <= neededBid * 2 && validator.bondBalanceSol > neededBid) {
+        return Color.YELLOW
+    } else {
+        return Color.RED
+    }
+}
+
+export const bondTooltip = (color: Color) => {
+    switch (color) {
+        case Color.RED: return "Your bond balance is not sufficient to cover bidding costs and is limiting the maximum stake you can get. Top up your bond to increase your stake and stay in the auction."
+        case Color.GREEN: return "You have enough in the bond to cover at least 2 epochs of bids."
+        case Color.YELLOW: return "Your bond balance is sufficient only to cover one epoch of bids. Top up your bond with enough SOL to stay in the auction"
+        default: return ""
     }
 }

@@ -12,7 +12,7 @@ export enum Alignment {
 }
 
 export enum Color {
-    RED, GREEN
+    RED, GREEN, YELLOW
 }
 
 const alignmentClassName = (alignment?: Alignment) => {
@@ -27,6 +27,7 @@ const colorClassName = (color?: Color) => {
     switch (color) {
         case Color.RED: return styles.red
         case Color.GREEN: return styles.green
+        case Color.YELLOW: return styles.yellow
         default: return styles.noBg
     }
 }

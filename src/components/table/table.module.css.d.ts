@@ -7,6 +7,7 @@ interface CssExports {
   'red': string;
   'right': string;
   'table': string;
+  'yellow': string;
 }
 export const cssExports: CssExports;
 export default cssExports;

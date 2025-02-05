@@ -4,7 +4,7 @@ import { Alignment, Color, OrderDirection, Table } from "../table/table";
 import { formatPercentage, formatSolAmount } from "src/format";
 import { Metric } from "../metric/metric";
 import { AuctionResult } from "@marinade.finance/ds-sam-sdk";
-import { selectBid, selectBondSize, selectCommission, selectEffectiveBid, selectConstraintText, selectMaxAPY, selectMevCommission, selectSamDistributedStake, selectSamTargetStake, selectVoteAccount, selectWinningAPY, bondColorState } from "src/services/sam";
+import { selectBid, selectBondSize, selectCommission, selectEffectiveBid, selectConstraintText, selectMaxAPY, selectMevCommission, selectSamDistributedStake, selectSamTargetStake, selectVoteAccount, selectWinningAPY, bondColorState, bondTooltip } from "src/services/sam";
 import { tooltipAttributes } from '../../services/utils'
 
 type Props = {
@@ -63,7 +63,8 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear }) => {
                     render: (validator) => <>{formatSolAmount(selectBondSize(validator))}</>,
                     compare: (a, b) => selectBondSize(a) - selectBondSize(b),
                     alignment: Alignment.RIGHT,
-                    background: (validator) => bondColorState(samDistributedStake, validator)
+                    background: (validator) => bondColorState(validator),
+                    cellAttrsFn: (validator) => tooltipAttributes(bondTooltip(bondColorState(validator)))
                 },
                 { 
                     header: 'Max APY',
