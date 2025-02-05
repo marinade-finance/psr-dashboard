@@ -4,7 +4,7 @@ import { Alignment, Color, OrderDirection, Table } from "../table/table";
 import { formatPercentage, formatSolAmount } from "src/format";
 import { Metric } from "../metric/metric";
 import { AuctionResult } from "@marinade.finance/ds-sam-sdk";
-import { selectBid, selectBondSize, selectCommission, selectEffectiveBid, selectConstraintText, selectMaxAPY, selectMevCommission, selectSamDistributedStake, selectSamTargetStake, selectVoteAccount, selectWinningAPY, bondColorState, bondTooltip } from "src/services/sam";
+import { selectBid, selectBondSize, selectCommission, selectEffectiveBid, selectConstraintText, selectMaxAPY, selectMevCommission, selectSamDistributedStake, selectSamTargetStake, selectVoteAccount, selectWinningAPY, bondColorState, bondTooltip, selectMaxWantedStake, selectEffectiveCost } from "src/services/sam";
 import { tooltipAttributes } from '../../services/utils'
 
 type Props = {
@@ -77,10 +77,23 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear }) => {
                     cellAttrsFn: (validator) => tooltipAttributes(selectConstraintText(validator)),
                     render: (validator) => <>{formatSolAmount(Math.round(selectSamTargetStake(validator)))}</>,
                     compare: (a, b) => selectSamTargetStake(a) - selectSamTargetStake(b),
-                    alignment: Alignment.RIGHT },
+                    alignment: Alignment.RIGHT
+                },
+                { 
+                    header: 'Wanted stake [☉]',
+                    render: (validator) => <>{formatSolAmount(Math.round(selectMaxWantedStake(validator)))}</>,
+                    compare: (a, b) => selectMaxWantedStake(a) - selectMaxWantedStake(b),
+                    alignment: Alignment.RIGHT
+                },
                 {
                     header: 'Effective bid [☉]',
                     render: (validator) => <>{selectEffectiveBid(validator)}</>,
+                    compare: (a, b) => selectEffectiveBid(a) - selectEffectiveBid(b),
+                    alignment: Alignment.RIGHT
+                },
+                {
+                    header: 'Effective cost [☉]',
+                    render: (validator) => <>{selectEffectiveCost(validator)}</>,
                     compare: (a, b) => selectEffectiveBid(a) - selectEffectiveBid(b),
                     alignment: Alignment.RIGHT
                 },

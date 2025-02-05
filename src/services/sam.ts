@@ -76,6 +76,7 @@ export const lastCapConstraintDescription = (constraint: AuctionConstraint): str
 
 export const selectVoteAccount = (validator: AuctionValidator) => validator.voteAccount
 export const selectSamTargetStake = (validator: AuctionValidator) => validator.auctionStake.marinadeSamTargetSol
+export const selectMaxWantedStake = (validator: AuctionValidator) => validator.maxStakeWanted
 export const selectConstraintText = ({ lastCapConstraint }: AuctionValidator) => lastCapConstraint ? `Stake capped by ${lastCapConstraintDescription(lastCapConstraint)} constraint` : 'Stake amount not capped by constraints'
 
 export const selectSamDistributedStake = (validators: AuctionValidator[]) => validators.reduce((sum, validator) => sum + selectSamTargetStake(validator), 0)
@@ -91,6 +92,7 @@ export const selectBondSize = (validator: AuctionValidator) => validator.bondBal
 export const selectMaxAPY = (validator: AuctionValidator, epochsPerYear: number) => Math.pow(1 + validator.revShare.totalPmpe / 1e3, epochsPerYear) - 1
 
 export const selectEffectiveBid = (validator: AuctionValidator) => validator.revShare.auctionEffectiveBidPmpe
+export const selectEffectiveCost = (validator: AuctionValidator) => (validator.auctionStake.marinadeSamTargetSol / 1000) * validator.revShare.auctionEffectiveBidPmpe
 
 export const bondColorState = (validator: AuctionValidator): Color => {
     const bidPerStake = validator.revShare.bidPmpe / 1000
