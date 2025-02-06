@@ -3,7 +3,10 @@ import {
     InputsSource,
     AuctionResult,
     AuctionValidator,
-    AuctionConstraintType, AuctionConstraint
+    AuctionConstraintType,
+    AuctionConstraint,
+    bondBalanceRequiredForStakeAmount,
+    DsSamConfig
 } from '@marinade.finance/ds-sam-sdk'
 import { fetchValidatorsWithEpochs } from './validators'
 import { Color } from 'src/components/table/table'
@@ -45,14 +48,14 @@ const estimateEpochsPerYear = async () => {
     return SECONDS_PER_YEAR / (rangeDuration / rangeEpochs)
 }
 
-export const loadSam = async (): Promise<{ auctionResult: AuctionResult, epochsPerYear: number }> => {
+export const loadSam = async (): Promise<{ auctionResult: AuctionResult, epochsPerYear: number, dcSamConfig: DsSamConfig }> => {
     try {
         const epochsPerYear = await estimateEpochsPerYear()
         console.log('epochsPerYear', epochsPerYear)
 
         const dsSam = new DsSamSDK({ inputsSource: InputsSource.APIS, cacheInputs: false })
         const auctionResult = await dsSam.run()
-        return { auctionResult, epochsPerYear }
+        return { auctionResult, epochsPerYear, dcSamConfig: dsSam.config }
     } catch (err) {
         console.log(err)
         throw err
@@ -94,14 +97,13 @@ export const selectMaxAPY = (validator: AuctionValidator, epochsPerYear: number)
 export const selectEffectiveBid = (validator: AuctionValidator) => validator.revShare.auctionEffectiveBidPmpe
 export const selectEffectiveCost = (validator: AuctionValidator) => (validator.auctionStake.marinadeSamTargetSol / 1000) * validator.revShare.auctionEffectiveBidPmpe
 
-export const bondColorState = (validator: AuctionValidator): Color => {
-    const bidPerStake = validator.revShare.bidPmpe / 1000
-    const downtimeProtectionPerStake = 0
-    const refundableDepositPerStake = validator.revShare.totalPmpe / 1000
-    const neededBid = validator.maxStakeWanted * (bidPerStake + downtimeProtectionPerStake + refundableDepositPerStake) 
-    if (validator.bondBalanceSol > neededBid * 2) {
+export const bondColorState = (validator: AuctionValidator, samDistributedStake: number, maxMarinadeTvlSharePerValidatorDec: number): Color => {
+    const maxValidatorStakeShare = maxMarinadeTvlSharePerValidatorDec * samDistributedStake
+    const stake = validator.maxStakeWanted >= maxValidatorStakeShare ? maxValidatorStakeShare : validator.maxStakeWanted
+    const bondReq = bondBalanceRequiredForStakeAmount(stake, validator)
+    if (validator.bondBalanceSol > bondReq * 2) {
         return Color.GREEN
-    } else if (validator.bondBalanceSol <= neededBid * 2 && validator.bondBalanceSol > neededBid) {
+    } else if (validator.bondBalanceSol <= bondReq * 2 && validator.bondBalanceSol > bondReq) {
         return Color.YELLOW
     } else {
         return Color.RED
