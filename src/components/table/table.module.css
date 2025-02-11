@@ -39,3 +39,19 @@
 .right {
     text-align: right;
 }
+
+.red {
+    background-color: rgb(122, 27, 27);
+}
+
+.green {
+    background-color: rgb(8, 71, 8);
+}
+
+.yellow {
+    background-color: rgb(126, 115, 8);
+}
+
+.noBg {
+    background-color: unset;
+}

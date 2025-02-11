@@ -3,9 +3,13 @@ import {
     InputsSource,
     AuctionResult,
     AuctionValidator,
-    AuctionConstraintType, AuctionConstraint
+    AuctionConstraintType,
+    AuctionConstraint,
+    bondBalanceRequiredForStakeAmount,
+    DsSamConfig
 } from '@marinade.finance/ds-sam-sdk'
 import { fetchValidatorsWithEpochs } from './validators'
+import { Color } from 'src/components/table/table'
 
 const estimateEpochsPerYear = async () => {
     const FETCHED_EPOCHS = 11
@@ -44,14 +48,14 @@ const estimateEpochsPerYear = async () => {
     return SECONDS_PER_YEAR / (rangeDuration / rangeEpochs)
 }
 
-export const loadSam = async (): Promise<{ auctionResult: AuctionResult, epochsPerYear: number }> => {
+export const loadSam = async (): Promise<{ auctionResult: AuctionResult, epochsPerYear: number, dcSamConfig: DsSamConfig }> => {
     try {
         const epochsPerYear = await estimateEpochsPerYear()
         console.log('epochsPerYear', epochsPerYear)
 
         const dsSam = new DsSamSDK({ inputsSource: InputsSource.APIS, cacheInputs: false })
         const auctionResult = await dsSam.run()
-        return { auctionResult, epochsPerYear }
+        return { auctionResult, epochsPerYear, dcSamConfig: dsSam.config }
     } catch (err) {
         console.log(err)
         throw err
@@ -75,6 +79,7 @@ export const lastCapConstraintDescription = (constraint: AuctionConstraint): str
 
 export const selectVoteAccount = (validator: AuctionValidator) => validator.voteAccount
 export const selectSamTargetStake = (validator: AuctionValidator) => validator.auctionStake.marinadeSamTargetSol
+export const selectMaxWantedStake = (validator: AuctionValidator) => validator.maxStakeWanted
 export const selectConstraintText = ({ lastCapConstraint }: AuctionValidator) => lastCapConstraint ? `Stake capped by ${lastCapConstraintDescription(lastCapConstraint)} constraint` : 'Stake amount not capped by constraints'
 
 export const selectSamDistributedStake = (validators: AuctionValidator[]) => validators.reduce((sum, validator) => sum + selectSamTargetStake(validator), 0)
@@ -90,3 +95,26 @@ export const selectBondSize = (validator: AuctionValidator) => validator.bondBal
 export const selectMaxAPY = (validator: AuctionValidator, epochsPerYear: number) => Math.pow(1 + validator.revShare.totalPmpe / 1e3, epochsPerYear) - 1
 
 export const selectEffectiveBid = (validator: AuctionValidator) => validator.revShare.auctionEffectiveBidPmpe
+export const selectEffectiveCost = (validator: AuctionValidator) => (validator.marinadeActivatedStakeSol / 1000) * validator.revShare.auctionEffectiveBidPmpe
+
+export const bondColorState = (validator: AuctionValidator, samDistributedStake: number, maxMarinadeTvlSharePerValidatorDec: number): Color => {
+    const maxValidatorStakeShare = maxMarinadeTvlSharePerValidatorDec * samDistributedStake
+    const stake = validator.maxStakeWanted >= maxValidatorStakeShare ? maxValidatorStakeShare : validator.maxStakeWanted
+    const bondReq = bondBalanceRequiredForStakeAmount(stake, validator)
+    if (validator.bondBalanceSol > bondReq * 2) {
+        return Color.GREEN
+    } else if (validator.bondBalanceSol <= bondReq * 2 && validator.bondBalanceSol > bondReq) {
+        return Color.YELLOW
+    } else {
+        return Color.RED
+    }
+}
+
+export const bondTooltip = (color: Color) => {
+    switch (color) {
+        case Color.RED: return "Your bond balance is not sufficient to cover bidding costs and is limiting the maximum stake you can get. Top up your bond to increase your stake and stay in the auction."
+        case Color.GREEN: return "You have enough in the bond to cover at least 2 epochs of bids."
+        case Color.YELLOW: return "Your bond balance is sufficient only to cover one epoch of bids. Top up your bond with enough SOL to stay in the auction"
+        default: return ""
+    }
+}

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React from "react";
 import styles from './sam.module.css'
 import { Navigation } from "src/components/navigation/navigation";
 import { useQuery } from "react-query";
@@ -13,6 +13,6 @@ export const SamPage: React.FC = () => {
         <Navigation />
         {status === "error" && <p>Error fetching data</p>}
         {status === "loading" && <Loader />}
-        {status === "success" && <SamTable auctionResult={data.auctionResult} epochsPerYear={data.epochsPerYear} />}
+        {status === "success" && <SamTable auctionResult={data.auctionResult} epochsPerYear={data.epochsPerYear} dsSamConfig={data.dcSamConfig} />}
     </div>
 };
