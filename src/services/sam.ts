@@ -95,7 +95,7 @@ export const selectBondSize = (validator: AuctionValidator) => validator.bondBal
 export const selectMaxAPY = (validator: AuctionValidator, epochsPerYear: number) => Math.pow(1 + validator.revShare.totalPmpe / 1e3, epochsPerYear) - 1
 
 export const selectEffectiveBid = (validator: AuctionValidator) => validator.revShare.auctionEffectiveBidPmpe
-export const selectEffectiveCost = (validator: AuctionValidator) => (validator.auctionStake.marinadeSamTargetSol / 1000) * validator.revShare.auctionEffectiveBidPmpe
+export const selectEffectiveCost = (validator: AuctionValidator) => (validator.marinadeActivatedStakeSol / 1000) * validator.revShare.auctionEffectiveBidPmpe
 
 export const bondColorState = (validator: AuctionValidator, samDistributedStake: number, maxMarinadeTvlSharePerValidatorDec: number): Color => {
     const maxValidatorStakeShare = maxMarinadeTvlSharePerValidatorDec * samDistributedStake
