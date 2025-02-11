@@ -55,6 +55,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                 },
                 {
                     header: 'Bid',
+                    cellAttrsFn: () => tooltipAttributes("Maximum bid for 1000 SOL set by the validator."),
                     render: (validator) => <>{`${selectBid(validator)}`}</>,
                     compare: (a, b) => selectBid(a) - selectBid(b),
                     alignment: Alignment.RIGHT
@@ -69,6 +70,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                 },
                 { 
                     header: 'Max APY',
+                    cellAttrsFn: () => tooltipAttributes("Calculated APY using the bid of this validator."),
                     render: (validator) => <>{formatPercentage(selectMaxAPY(validator, epochsPerYear)).replace('Infinity%', '∞')}</>,
                     compare: (a, b) => selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear),
                     alignment: Alignment.RIGHT
@@ -82,12 +84,14 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                 },
                 {
                     header: 'Effective bid [☉]',
+                    cellAttrsFn: () => tooltipAttributes("Bid for 1000 SOL that the validator would be paying based on the current Auction Winning APY."),
                     render: (validator) => <>{selectEffectiveBid(validator)}</>,
                     compare: (a, b) => selectEffectiveBid(a) - selectEffectiveBid(b),
                     alignment: Alignment.RIGHT
                 },
                 {
                     header: 'Effective cost [☉]',
+                    cellAttrsFn: () => tooltipAttributes("Total cost per epoch for the SAM stake that this validator has active."),
                     render: (validator) => <>{selectEffectiveCost(validator)}</>,
                     compare: (a, b) => selectEffectiveBid(a) - selectEffectiveBid(b),
                     alignment: Alignment.RIGHT
