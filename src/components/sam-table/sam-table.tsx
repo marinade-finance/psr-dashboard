@@ -4,7 +4,7 @@ import { Alignment, OrderDirection, Table } from "../table/table";
 import { formatPercentage, formatSolAmount } from "src/format";
 import { Metric } from "../metric/metric";
 import { AuctionResult, DsSamConfig } from "@marinade.finance/ds-sam-sdk";
-import { selectBid, selectBondSize, selectCommission, selectEffectiveBid, selectConstraintText, selectMaxAPY, selectMevCommission, selectSamDistributedStake, selectSamTargetStake, selectVoteAccount, selectWinningAPY, bondColorState, bondTooltip, selectMaxWantedStake, selectEffectiveCost } from "src/services/sam";
+import { selectBid, selectBondSize, selectCommission, selectEffectiveBid, selectConstraintText, selectMaxAPY, selectMevCommission, selectSamDistributedStake, selectSamTargetStake, selectVoteAccount, selectWinningAPY, bondColorState, bondTooltip, selectEffectiveCost } from "src/services/sam";
 import { tooltipAttributes } from '../../services/utils'
 
 type Props = {
@@ -78,12 +78,6 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                     cellAttrsFn: (validator) => tooltipAttributes(selectConstraintText(validator)),
                     render: (validator) => <>{formatSolAmount(Math.round(selectSamTargetStake(validator)))}</>,
                     compare: (a, b) => selectSamTargetStake(a) - selectSamTargetStake(b),
-                    alignment: Alignment.RIGHT
-                },
-                { 
-                    header: 'Wanted stake [☉]',
-                    render: (validator) => <>{formatSolAmount(Math.round(selectMaxWantedStake(validator)))}</>,
-                    compare: (a, b) => selectMaxWantedStake(a) - selectMaxWantedStake(b),
                     alignment: Alignment.RIGHT
                 },
                 {

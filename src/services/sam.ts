@@ -99,11 +99,12 @@ export const selectEffectiveCost = (validator: AuctionValidator) => (validator.m
 
 export const bondColorState = (validator: AuctionValidator, samDistributedStake: number, maxMarinadeTvlSharePerValidatorDec: number): Color => {
     const maxValidatorStakeShare = maxMarinadeTvlSharePerValidatorDec * samDistributedStake
-    const stake = validator.maxStakeWanted >= maxValidatorStakeShare ? maxValidatorStakeShare : validator.maxStakeWanted
-    const bondReq = bondBalanceRequiredForStakeAmount(stake, validator)
-    if (validator.bondBalanceSol > bondReq * 2) {
+    const bondReqMaxShare = bondBalanceRequiredForStakeAmount(maxValidatorStakeShare, validator)
+    const bondReqTargetSol = bondBalanceRequiredForStakeAmount(validator.auctionStake.marinadeSamTargetSol, validator)
+    const bondReqMin = Math.min(bondReqMaxShare, bondReqTargetSol)
+    if (validator.bondBalanceSol > bondReqMaxShare * 2) {
         return Color.GREEN
-    } else if (validator.bondBalanceSol <= bondReq * 2 && validator.bondBalanceSol > bondReq) {
+    } else if (validator.bondBalanceSol > bondReqMin && validator.bondBalanceSol <= bondReqMaxShare * 2) {
         return Color.YELLOW
     } else {
         return Color.RED
