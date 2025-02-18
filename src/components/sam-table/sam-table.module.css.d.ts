@@ -4,9 +4,12 @@ interface CssExports {
   'badge': string;
   'badgeDryRun': string;
   'badgeEstimate': string;
+  'green': string;
   'metricWrap': string;
   'pubkey': string;
+  'red': string;
   'tableWrap': string;
+  'yellow': string;
 }
 export const cssExports: CssExports;
 export default cssExports;

@@ -1,11 +1,12 @@
 import React from "react";
 import styles from './sam-table.module.css'
-import { Alignment, OrderDirection, Table } from "../table/table";
+import { Alignment, Color, OrderDirection, Table } from "../table/table";
 import { formatPercentage, formatSolAmount } from "src/format";
 import { Metric } from "../metric/metric";
 import { AuctionResult, DsSamConfig } from "@marinade.finance/ds-sam-sdk";
 import { selectBid, selectBondSize, selectCommission, selectEffectiveBid, selectConstraintText, selectMaxAPY, selectMevCommission, selectSamDistributedStake, selectSamTargetStake, selectVoteAccount, selectWinningAPY, bondColorState, bondTooltip, selectEffectiveCost } from "src/services/sam";
 import { tooltipAttributes } from '../../services/utils'
+import { ComplexMetric } from "../complex-metric/complex-metric";
 
 type Props = {
     auctionResult: AuctionResult
@@ -19,7 +20,14 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
     const samDistributedStake = Math.round(selectSamDistributedStake(validators))
     const winningAPY = selectWinningAPY(auctionResult, epochsPerYear)
 
-    const validatorsWithBond = validators.filter((validator) => selectBondSize(validator) > 0)
+    const validatorsWithBond = validators.filter((validator) => selectBondSize(validator) > 0).map((v) => {
+        return {
+            ...v,
+            bondState: bondColorState(v, samDistributedStake, dsSamConfig.maxMarinadeTvlSharePerValidatorDec)
+        }
+    })
+
+    const samStakeValidators = validatorsWithBond.filter((v) => v.auctionStake.marinadeSamTargetSol)
 
     return <div className={styles.tableWrap}>
         <div className={styles.metricWrap}>
@@ -31,6 +39,22 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                 label="Auction winning APY"
                 value={`☉ ${formatPercentage(winningAPY)}`}
                 {...tooltipAttributes("Estimated APY of the last validator winning the auction based on ideal count of epochs in the year")}
+            />
+            <ComplexMetric
+                label="Winning validators"
+                value={<div><span>{samStakeValidators.length}</span> / <span>{validatorsWithBond.length}</span></div>}
+                {...tooltipAttributes("Number of validators that won stake in this SAM auction")}
+            />
+            <ComplexMetric
+                label="Bond health"
+                value={
+                    <div>
+                        <span className={styles.green}>{validatorsWithBond.filter((v) => v.bondState === Color.GREEN).length}</span> /
+                        <span className={styles.yellow}> {validatorsWithBond.filter((v) => v.bondState === Color.YELLOW).length}</span> /
+                        <span className={styles.red}> {validatorsWithBond.filter((v) => v.bondState === Color.RED).length}</span>
+                    </div>
+                }
+                {...tooltipAttributes("Number of validators in each bond state category")}
             />
         </div>
         <Table
@@ -65,8 +89,8 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                     render: (validator) => <>{formatSolAmount(selectBondSize(validator))}</>,
                     compare: (a, b) => selectBondSize(a) - selectBondSize(b),
                     alignment: Alignment.RIGHT,
-                    background: (validator) => bondColorState(validator, samDistributedStake, dsSamConfig.maxMarinadeTvlSharePerValidatorDec),
-                    cellAttrsFn: (validator) => tooltipAttributes(bondTooltip(bondColorState(validator, samDistributedStake, dsSamConfig.maxMarinadeTvlSharePerValidatorDec)))
+                    background: (validator) => validator.bondState,
+                    cellAttrsFn: (validator) => tooltipAttributes(bondTooltip(validator.bondState))
                 },
                 { 
                     header: 'Max APY',
