@@ -33,3 +33,15 @@
     display: flex;
     padding: 10px;
 }
+
+.red {
+    color: #7a1b1b;
+}
+
+.green {
+    color: rgb(8, 71, 8);
+}
+
+.yellow {
+    color: rgb(126, 115, 8);
+}
