@@ -5,7 +5,7 @@ import {
     AuctionValidator,
     AuctionConstraintType,
     AuctionConstraint,
-    bondBalanceRequiredForStakeAmount,
+    bondBalanceRequiredForXEpochs,
     DsSamConfig
 } from '@marinade.finance/ds-sam-sdk'
 import { fetchValidatorsWithEpochs } from './validators'
@@ -99,12 +99,12 @@ export const selectEffectiveCost = (validator: AuctionValidator) => (validator.m
 
 export const bondColorState = (validator: AuctionValidator, samDistributedStake: number, maxMarinadeTvlSharePerValidatorDec: number): Color => {
     const maxValidatorStakeShare = maxMarinadeTvlSharePerValidatorDec * samDistributedStake
-    const bondReqMaxShare = bondBalanceRequiredForStakeAmount(maxValidatorStakeShare, validator)
-    const bondReqTargetSol = bondBalanceRequiredForStakeAmount(validator.auctionStake.marinadeSamTargetSol, validator)
-    const bondReqMin = Math.min(bondReqMaxShare, bondReqTargetSol)
-    if (validator.bondBalanceSol > bondReqMaxShare * 2) {
+    const stake = validator.maxStakeWanted >= maxValidatorStakeShare ? maxValidatorStakeShare : validator.maxStakeWanted
+    const bondReqTwoEpochs = bondBalanceRequiredForXEpochs(stake, validator, 2)
+    const bondReqOneEpoch = bondBalanceRequiredForXEpochs(stake, validator, 1)
+    if (validator.bondBalanceSol > bondReqTwoEpochs) {
         return Color.GREEN
-    } else if (validator.bondBalanceSol > bondReqMin && validator.bondBalanceSol <= bondReqMaxShare * 2) {
+    } else if (validator.bondBalanceSol <= bondReqTwoEpochs && validator.bondBalanceSol > bondReqOneEpoch) {
         return Color.YELLOW
     } else {
         return Color.RED
