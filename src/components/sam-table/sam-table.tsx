@@ -23,7 +23,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
     const validatorsWithBond = validators.filter((validator) => selectBondSize(validator) > 0).map((v) => {
         return {
             ...v,
-            bondState: bondColorState(v, samDistributedStake, dsSamConfig.maxMarinadeTvlSharePerValidatorDec)
+            bondState: bondColorState(v)
         }
     })
 
