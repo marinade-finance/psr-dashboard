@@ -99,6 +99,10 @@ export const selectEffectiveCost = (validator: AuctionValidator) => (validator.m
 
 export const bondColorState = (validator: AuctionValidator): Color => {
     const stake = validator.auctionStake.marinadeSamTargetSol
+    if (!stake) {
+        return undefined
+    }
+
     const bondReqTwoEpochs = bondBalanceRequiredForXEpochs(stake, validator, 2)
     const bondReqOneEpoch = bondBalanceRequiredForXEpochs(stake, validator, 1)
     if (validator.bondBalanceSol > bondReqTwoEpochs) {
