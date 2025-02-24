@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@marinade.finance/ds-sam-sdk':
-        specifier: ^0.0.21
-        version: 0.0.21
+        specifier: ^0.0.22
+        version: 0.0.22
       react:
         specifier: ^18.0.0
         version: 18.2.0
@@ -421,8 +421,8 @@ packages:
   '@leichtgewicht/ip-codec@2.0.5':
     resolution: {integrity: sha512-Vo+PSpZG2/fmgmiNzYK9qWRh8h/CHrwD0mo1h1DzL4yzHNSfWYujGTYsWGreD000gcgmZ7K4Ys6Tx9TxtsKdDw==}
 
-  '@marinade.finance/ds-sam-sdk@0.0.21':
-    resolution: {integrity: sha512-Yfu2SxjktpcepCC7pW+HffbjJ77rdGTmuW88ZlDo4Iqwke4Ixlvp287iJh3ZGqgW/wOiJ/uy9kOR9DqpHlB+mA==}
+  '@marinade.finance/ds-sam-sdk@0.0.22':
+    resolution: {integrity: sha512-FRBiyANkqx4j6suxrX6vDaYI/Fpw2PeB4LW21douubCs3Sb1oUfW5lPxCfssxMD0Oer9EQ3BiLEtptdwgA774g==}
 
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -3429,7 +3429,7 @@ snapshots:
 
   '@leichtgewicht/ip-codec@2.0.5': {}
 
-  '@marinade.finance/ds-sam-sdk@0.0.21':
+  '@marinade.finance/ds-sam-sdk@0.0.22':
     dependencies:
       axios: 1.7.2
       decimal.js: 10.4.3
