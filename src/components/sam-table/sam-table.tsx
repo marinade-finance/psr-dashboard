@@ -45,17 +45,6 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                 value={<div><span>{samStakeValidators.length}</span> / <span>{validatorsWithBond.length}</span></div>}
                 {...tooltipAttributes("Number of validators that won stake in this SAM auction")}
             />
-            <ComplexMetric
-                label="Bond health"
-                value={
-                    <div>
-                        <span className={styles.green}>{validatorsWithBond.filter((v) => v.bondState === Color.GREEN).length}</span> /
-                        <span className={styles.yellow}> {validatorsWithBond.filter((v) => v.bondState === Color.YELLOW).length}</span> /
-                        <span className={styles.red}> {validatorsWithBond.filter((v) => v.bondState === Color.RED).length}</span>
-                    </div>
-                }
-                {...tooltipAttributes("Number of validators in each bond state category")}
-            />
         </div>
         <Table
             data={validatorsWithBond}
@@ -89,7 +78,6 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                     render: (validator) => <>{formatSolAmount(selectBondSize(validator))}</>,
                     compare: (a, b) => selectBondSize(a) - selectBondSize(b),
                     alignment: Alignment.RIGHT,
-                    background: (validator) => validator.bondState,
                     cellAttrsFn: (validator) => tooltipAttributes(bondTooltip(validator.bondState))
                 },
                 { 
