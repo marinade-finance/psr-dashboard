@@ -90,7 +90,6 @@ export const selectProtectedStakeReason = (protectedEvent: ProtectedEvent) => {
         }
     }
     if (isBidTooLowPenalty(protectedEvent.reason)) {
-      console.log(JSON.stringify(protectedEvent))
       return 'BidTooLow'
     }
     console.log('unsupported event:', protectedEvent)
