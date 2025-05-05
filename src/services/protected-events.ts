@@ -51,7 +51,15 @@ export namespace SettlementReason {
     export const isDowntimeRevenueImpactReason = (e: ProtectedEventReason): e is DowntimeRevenueImpactReason => 'DowntimeRevenueImpact' in (e as any)
     export const isCommissionSamIncreaseReason = (e: ProtectedEventReason): e is CommissionSamIncreaseReason => 'CommissionSamIncrease' in (e as any)
 }
-export type SettlementReason = { ProtectedEvent: SettlementReason.ProtectedEventReason }
+
+export type ProtectedEventSettlement = {
+  ProtectedEvent: SettlementReason.ProtectedEventReason,
+}
+
+export type SettlementReason = ProtectedEventSettlement | 'BidTooLowPenalty'
+
+export const isProtectedEvent = (e: SettlementReason): e is ProtectedEventSettlement => typeof e === 'object' && 'ProtectedEvent' in (e as any)
+export const isBidTooLowPenalty = (e: SettlementReason): boolean => e == 'BidTooLowPenalty'
 
 export type ProtectedEvent = {
     epoch: number
@@ -66,31 +74,39 @@ export type ProtectedEventsResponse = {
 }
 
 export const selectProtectedStakeReason = (protectedEvent: ProtectedEvent) => {
-    const reason = protectedEvent.reason.ProtectedEvent
-    if (SettlementReason.isCommissionIncreaseReason(reason)) {
-        return `Commission ${reason.CommissionIncrease.previous_commission}% -> ${reason.CommissionIncrease.current_commission}%`
+    if (isProtectedEvent(protectedEvent.reason)) {
+        const reason = protectedEvent.reason.ProtectedEvent
+        if (SettlementReason.isCommissionIncreaseReason(reason)) {
+            return `Commission ${reason.CommissionIncrease.previous_commission}% -> ${reason.CommissionIncrease.current_commission}%`
+        }
+        if (SettlementReason.isCommissionSamIncreaseReason(reason)) {
+            return `Inflation Commission ${reason.CommissionSamIncrease.expected_inflation_commission * 100}% -> ${reason.CommissionSamIncrease.actual_inflation_commission * 100}%; MEV Commission ${reason.CommissionSamIncrease.expected_mev_commission * 100}% -> ${reason.CommissionSamIncrease.actual_mev_commission * 100}%`
+        }
+        if (SettlementReason.isLowCreditsReason(reason)) {
+            return `Uptime ${formatPercentage(reason.LowCredits.actual_credits / reason.LowCredits.expected_credits)}`
+        }
+        if (SettlementReason.isDowntimeRevenueImpactReason(reason)) {
+            return `Uptime ${formatPercentage(reason.DowntimeRevenueImpact.actual_credits / reason.DowntimeRevenueImpact.expected_credits)}`
+        }
     }
-    if (SettlementReason.isCommissionSamIncreaseReason(reason)) {
-        return `Inflation Commission ${reason.CommissionSamIncrease.expected_inflation_commission * 100}% -> ${reason.CommissionSamIncrease.actual_inflation_commission * 100}%; MEV Commission ${reason.CommissionSamIncrease.expected_mev_commission * 100}% -> ${reason.CommissionSamIncrease.actual_mev_commission * 100}%`
-    }
-    if (SettlementReason.isLowCreditsReason(reason)) {
-        return `Uptime ${formatPercentage(reason.LowCredits.actual_credits / reason.LowCredits.expected_credits)}`
-    }
-    if (SettlementReason.isDowntimeRevenueImpactReason(reason)) {
-        return `Uptime ${formatPercentage(reason.DowntimeRevenueImpact.actual_credits / reason.DowntimeRevenueImpact.expected_credits)}`
+    if (isBidTooLowPenalty(protectedEvent.reason)) {
+      console.log(JSON.stringify(protectedEvent))
+      return 'BidTooLow'
     }
     console.log('unsupported event:', protectedEvent)
     return 'Unsupported'
 }
 
 export const selectEprLossBps = (protectedEvent: ProtectedEvent) => {
-    const reason = protectedEvent.reason.ProtectedEvent
-    if (SettlementReason.isCommissionIncreaseReason(reason)) {
-        // return reason.CommissionIncrease.epr_loss_bps
-        return 10000 - 10000 * (100 - reason.CommissionIncrease.current_commission) / (100 - reason.CommissionIncrease.previous_commission)
-    }
-    if (SettlementReason.isLowCreditsReason(reason)) {
-        return reason.LowCredits.epr_loss_bps
+    if (isProtectedEvent(protectedEvent.reason)) {
+        const reason = protectedEvent.reason.ProtectedEvent
+        if (SettlementReason.isCommissionIncreaseReason(reason)) {
+            // return reason.CommissionIncrease.epr_loss_bps
+            return 10000 - 10000 * (100 - reason.CommissionIncrease.current_commission) / (100 - reason.CommissionIncrease.previous_commission)
+        }
+        if (SettlementReason.isLowCreditsReason(reason)) {
+            return reason.LowCredits.epr_loss_bps
+        }
     }
     return 0
 }

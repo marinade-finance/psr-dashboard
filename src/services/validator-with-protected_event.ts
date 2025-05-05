@@ -1,6 +1,7 @@
 import { ProtectedEvent, fetchProtectedEvents } from "./protected-events";
 import { calculateProtectedEventEstimates } from "./protected-events-estimator";
 import { Validator, fetchValidators, fetchValidatorsWithEpochs } from "./validators";
+import { fetchScoring } from "./scoring";
 
 export enum ProtectedEventStatus {
     DRYRUN, ESTIMATE, FACT
@@ -14,7 +15,7 @@ export type ProtectedEventWithValidator = {
 const LAST_DRYRUN_EPOCH = 608
 
 export const fetchProtectedEventsWithValidator = async (): Promise<ProtectedEventWithValidator[]> => {
-    const [{ validators }, { protected_events }] = await Promise.all([fetchValidatorsWithEpochs(3), fetchProtectedEvents()])
+  const [{ validators }, { protected_events }, scoring] = await Promise.all([fetchValidatorsWithEpochs(3), fetchProtectedEvents(), fetchScoring(1000)])
 
     const estimatedProtectedEvents = await calculateProtectedEventEstimates(validators)
 
@@ -35,6 +36,24 @@ export const fetchProtectedEventsWithValidator = async (): Promise<ProtectedEven
         if (protectedEvent.epoch > latestProcessedEpoch) {
             protectedEventsWithValidator.push({ status: ProtectedEventStatus.ESTIMATE, protectedEvent, validator: validatorsMap[protectedEvent.vote_account] ?? null })
         }
+    }
+
+    for (const entry of scoring) {
+      const penalty = (entry.revShare as any).bidTooLowPenaltyPmpe as number
+      if (penalty > 0) {
+        const protectedEvent = {
+          epoch: entry.epoch,
+          amount: penalty,
+          vote_account: entry.voteAccount,
+          meta: {funder: 'ValidatorBond' as 'ValidatorBond'},
+          reason: 'BidTooLowPenalty' as 'BidTooLowPenalty',
+        }
+        protectedEventsWithValidator.push({
+          status: ProtectedEventStatus.ESTIMATE,
+          protectedEvent,
+          validator: validatorsMap[entry.voteAccount] ?? null
+        })
+      }
     }
 
     return protectedEventsWithValidator
