@@ -1,7 +1,7 @@
 import { ProtectedEvent, fetchProtectedEvents } from "./protected-events";
 import { calculateProtectedEventEstimates } from "./protected-events-estimator";
 import { Validator, fetchValidators, fetchValidatorsWithEpochs } from "./validators";
-import { fetchScoring } from "./scoring";
+import { loadSam } from "./sam";
 
 export enum ProtectedEventStatus {
     DRYRUN, ESTIMATE, FACT
@@ -15,7 +15,7 @@ export type ProtectedEventWithValidator = {
 const LAST_DRYRUN_EPOCH = 608
 
 export const fetchProtectedEventsWithValidator = async (): Promise<ProtectedEventWithValidator[]> => {
-  const [{ validators }, { protected_events }, scoring] = await Promise.all([fetchValidatorsWithEpochs(3), fetchProtectedEvents(), fetchScoring(1000)])
+  const [{ validators }, { protected_events }, { auctionResult }] = await Promise.all([fetchValidatorsWithEpochs(3), fetchProtectedEvents(), loadSam()])
 
     const estimatedProtectedEvents = await calculateProtectedEventEstimates(validators)
 
@@ -38,8 +38,8 @@ export const fetchProtectedEventsWithValidator = async (): Promise<ProtectedEven
         }
     }
 
-    for (const entry of scoring) {
-      const penalty = (entry.revShare as any).bidTooLowPenaltyPmpe as number
+    for (const entry of auctionResult.auctionData.validators) {
+      const penalty = entry.revShare.bidTooLowPenaltyPmpe
       if (penalty > 0) {
         const protectedEvent = {
           epoch: entry.epoch,
