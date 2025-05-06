@@ -25,6 +25,7 @@ export const fetchProtectedEventsWithValidator = async (): Promise<ProtectedEven
     }
 
     let latestProcessedEpoch = 0
+    let latestEpoch = 0
     const protectedEventsWithValidator: ProtectedEventWithValidator[] = []
     for (const protectedEvent of protected_events) {
         latestProcessedEpoch = Math.max(protectedEvent.epoch, latestProcessedEpoch)
@@ -33,16 +34,18 @@ export const fetchProtectedEventsWithValidator = async (): Promise<ProtectedEven
     }
 
     for (const protectedEvent of estimatedProtectedEvents) {
+        latestEpoch = Math.max(protectedEvent.epoch, latestEpoch)
         if (protectedEvent.epoch > latestProcessedEpoch) {
             protectedEventsWithValidator.push({ status: ProtectedEventStatus.ESTIMATE, protectedEvent, validator: validatorsMap[protectedEvent.vote_account] ?? null })
         }
     }
 
     for (const entry of auctionResult.auctionData.validators) {
-      const penalty = entry.revShare.bidTooLowPenaltyPmpe
+      const validator = validatorsMap[entry.voteAccount] ?? null
+      const penalty = (parseFloat(validator?.activated_stake ?? "0")) * entry.revShare.bidTooLowPenaltyPmpe / 1000
       if (penalty > 0) {
         const protectedEvent = {
-          epoch: entry.epoch,
+          epoch: latestEpoch,
           amount: penalty,
           vote_account: entry.voteAccount,
           meta: {funder: 'ValidatorBond' as 'ValidatorBond'},
@@ -51,7 +54,7 @@ export const fetchProtectedEventsWithValidator = async (): Promise<ProtectedEven
         protectedEventsWithValidator.push({
           status: ProtectedEventStatus.ESTIMATE,
           protectedEvent,
-          validator: validatorsMap[entry.voteAccount] ?? null
+          validator,
         })
       }
     }
