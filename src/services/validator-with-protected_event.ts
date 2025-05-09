@@ -42,7 +42,7 @@ export const fetchProtectedEventsWithValidator = async (): Promise<ProtectedEven
 
     for (const entry of auctionResult.auctionData.validators) {
       const validator = validatorsMap[entry.voteAccount] ?? null
-      const penalty = (parseFloat(validator?.activated_stake ?? "0")) * entry.revShare.bidTooLowPenaltyPmpe / 1000
+      const penalty = (Number(validator?.marinade_native_stake ?? "0") + Number(validator?.marinade_stake ?? "0")) * entry.revShare.bidTooLowPenaltyPmpe / 1000
       if (penalty > 0) {
         const protectedEvent = {
           epoch: latestEpoch,
