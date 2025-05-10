@@ -16,7 +16,7 @@ export type ProtectedEventWithValidator = {
 const LAST_DRYRUN_EPOCH = 608
 
 export const fetchProtectedEventsWithValidator = async (): Promise<ProtectedEventWithValidator[]> => {
-  const [{ validators }, { protected_events }, { auctionResult }, scoring] = await Promise.all([fetchValidatorsWithEpochs(3), fetchProtectedEvents(), loadSam(), fetchScoring()])
+  const [{ validators }, { protected_events }, scoring, { auctionResult }] = await Promise.all([fetchValidatorsWithEpochs(3), fetchProtectedEvents(), fetchScoring(), loadSam()])
 
     const estimatedProtectedEvents = await calculateProtectedEventEstimates(validators)
 
@@ -37,6 +37,13 @@ export const fetchProtectedEventsWithValidator = async (): Promise<ProtectedEven
         if (protectedEvent.epoch > latestProcessedEpoch) {
             protectedEventsWithValidator.push({ status: ProtectedEventStatus.ESTIMATE, protectedEvent, validator: validatorsMap[protectedEvent.vote_account] ?? null })
         }
+    }
+
+    let maxStatsEpoch = -Infinity
+    for (const validator of validators) {
+      for (const stat of validator.epoch_stats) {
+        maxStatsEpoch = Math.max(maxStatsEpoch, stat.epoch)
+      }
     }
 
     let maxScoredEpoch = 0
@@ -64,13 +71,6 @@ export const fetchProtectedEventsWithValidator = async (): Promise<ProtectedEven
           protectedEvent,
           validator,
         })
-      }
-    }
-
-    let maxStatsEpoch = -Infinity
-    for (const validator of validators) {
-      for (const stat of validator.epoch_stats) {
-        maxStatsEpoch = Math.max(maxStatsEpoch, stat.epoch)
       }
     }
 

@@ -7,6 +7,6 @@ export type ScoringValidator = {
 }
 
 export const fetchScoring = async (): Promise<ScoringValidator[]> => {
-    const res = await fetch(`https://scoring.marinade.finance/api/v1/scores/sam?lastEpochs=10`);
+    const res = await fetch(`https://scoring.marinade.finance/api/v1/scores/sam?lastEpochs=3`);
     return res.json();
 };
