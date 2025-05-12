@@ -32,13 +32,8 @@ const lowCreditsSettlementConfigs: LowCreditsSettlementConfig[] = [{
 const commissionIncreaseSettlementConfigs: CommissionIncreaseSettlementConfig[] = [{
     meta: { funder: 'ValidatorBond' },
     min_settlement_lamports: 100000000,
-    grace_commission_increase: 100,
-    covered_range_bps: [0, 2000],
-}, {
-    meta: { funder: 'Marinade' },
-    min_settlement_lamports: 100000000,
-    grace_commission_increase: 100,
-    covered_range_bps: [2000, 10000],
+    grace_commission_increase: 1,
+    covered_range_bps: [0, 10000],
 }]
 
 type EprCalculator = (commission: number) => number
