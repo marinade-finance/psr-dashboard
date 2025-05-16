@@ -53,11 +53,14 @@ export const fetchProtectedEventsWithValidator = async (): Promise<ProtectedEven
         continue
       }
       const validator = validatorsMap[entry.voteAccount] ?? null
-      const epochStats = validator.epoch_stats.find(({ epoch }) => epoch == entry.epoch)
+      const epochStats = validator?.epoch_stats.find(({ epoch }) => epoch == entry.epoch)
       if (epochStats == null) {
         continue
       }
-      const penalty = (Number(epochStats.marinade_native_stake ?? "0") + Number(epochStats.marinade_stake ?? "0")) * entry.revShare.bidTooLowPenaltyPmpe / 1000
+      const penalty = (
+        Number(epochStats.marinade_native_stake ?? "0")
+          + Number(epochStats.marinade_stake ?? "0")
+      ) * entry.revShare.bidTooLowPenaltyPmpe / 1000
       if (penalty > 0) {
         const protectedEvent = {
           epoch: entry.epoch,
@@ -74,10 +77,13 @@ export const fetchProtectedEventsWithValidator = async (): Promise<ProtectedEven
       }
     }
 
-    if (maxStatsEpoch> maxScoredEpoch) {
+    if (maxStatsEpoch > maxScoredEpoch) {
       for (const entry of auctionResult.auctionData.validators) {
         const validator = validatorsMap[entry.voteAccount] ?? null
-        const penalty = (Number(validator?.marinade_native_stake ?? "0") + Number(validator?.marinade_stake ?? "0")) * entry.revShare.bidTooLowPenaltyPmpe / 1000
+        const penalty = (
+          Number(validator?.marinade_native_stake ?? "0")
+            + Number(validator?.marinade_stake ?? "0")
+        ) * entry.revShare.bidTooLowPenaltyPmpe / 1000
         if (penalty > 0) {
           const protectedEvent = {
             epoch: maxStatsEpoch,
