@@ -5,7 +5,7 @@ import { Alignment, Color, OrderDirection, Table } from "../table/table";
 import { formatPercentage, formatSolAmount } from "src/format";
 import { Metric } from "../metric/metric";
 import { AuctionResult, DsSamConfig } from "@marinade.finance/ds-sam-sdk";
-import { selectBid, selectBondSize, selectCommission, selectEffectiveBid, selectConstraintText, selectMaxAPY, selectMevCommission, selectSamDistributedStake, selectSamTargetStake, selectVoteAccount, selectWinningAPY, bondColorState, bondTooltip, selectEffectiveCost, selectSpendRobustReputation, spendRobustReputationTooltip, selectMaxSamStake, maxSamStakeTooltip } from "src/services/sam";
+import { selectBid, selectBondSize, selectCommission, selectEffectiveBid, selectConstraintText, selectMaxAPY, selectMevCommission, selectSamDistributedStake, selectSamTargetStake, selectVoteAccount, selectWinningAPY, selectProjectedAPY, selectStakeToMove, selectActiveStake, bondColorState, bondTooltip, selectEffectiveCost, selectSpendRobustReputation, spendRobustReputationTooltip } from "src/services/sam";
 import { tooltipAttributes } from '../../services/utils'
 import { ComplexMetric } from "../complex-metric/complex-metric";
 
@@ -20,6 +20,9 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
     const { auctionData: { validators } } = auctionResult
     const samDistributedStake = Math.round(selectSamDistributedStake(validators))
     const winningAPY = selectWinningAPY(auctionResult, epochsPerYear)
+    const projectedAPY = selectProjectedAPY(auctionResult, dsSamConfig, epochsPerYear)
+    const stakeToMove = selectStakeToMove(auctionResult) / samDistributedStake
+    const activeStake = selectActiveStake(auctionResult) / samDistributedStake
 
     const validatorsWithBond = validators.filter((validator) => selectBondSize(validator) > 0).map((v) => {
         return {
@@ -34,16 +37,31 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
     return <div className={styles.tableWrap}>
         <div className={styles.metricWrap}>
             <Metric 
-                label="SAM stake"
-                value={`☉ ${formatSolAmount(samDistributedStake, 0)}`}
+                label="Total Auction Stake"
+                value={`☉ ${formatSolAmount(samDistributedStake)}`}
                 {...tooltipAttributes("How much stake is distributed by Marinade to validators based on SAM")} />
             <Metric
-                label="Auction winning APY"
+                label="Winning APY"
                 value={`☉ ${formatPercentage(winningAPY)}`}
                 {...tooltipAttributes("Estimated APY of the last validator winning the auction based on ideal count of epochs in the year")}
             />
+            <Metric
+                label="Projected APY"
+                value={`☉ ${formatPercentage(projectedAPY)}`}
+                {...tooltipAttributes("Estimated APY of currently active stake")}
+            />
+            <Metric
+                label="Stake to Move"
+                value={`${formatPercentage(stakeToMove)}`}
+                {...tooltipAttributes("Stake that has to move to match auction results")}
+            />
+            <Metric
+                label="Active Stake"
+                value={`${formatPercentage(activeStake)}`}
+                {...tooltipAttributes("Share of active stake earning rewards")}
+            />
             <ComplexMetric
-                label="Winning validators"
+                label="Winning Validators"
                 value={<div><span>{samStakeValidators.length}</span> / <span>{validatorsWithBond.length}</span></div>}
                 {...tooltipAttributes("Number of validators that won stake in this SAM auction")}
             />
