@@ -27,8 +27,6 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data }) => {
                 {...tooltipAttributes("Total effective amount of SOL deposited to the bonds")} />
             <Metric label="Marinade stake" value={`☉ ${formatSolAmount(totalMarinadeStake)}`}
                 {...tooltipAttributes("How much stake is distributed by Marinade")} />
-            <Metric label="Protected stake" value={`☉ ${formatSolAmount(totalProtectedStake)}`}
-                {...tooltipAttributes("How much of Marinade's stake is protected by validators' deposits to the bonds")} />
             <Metric label="Protected stake" value={formatPercentage(totalProtectedStake / totalMarinadeStake)}
                 {...tooltipAttributes("How much of Marinade's stake is protected by validators' deposits to the bonds")} />
         </div>
