@@ -87,15 +87,30 @@ export const selectSamDistributedStake = (validators: AuctionValidator[]) => val
 export const selectWinningAPY = (auctionResult: AuctionResult, epochsPerYear: number) => Math.pow(1 + auctionResult.winningTotalPmpe / 1e3, epochsPerYear) - 1
 
 export const selectBid = (validator: AuctionValidator) => validator.revShare.bidPmpe
-export const selectCommission = (validator: AuctionValidator) => validator.inflationCommissionDec
-export const selectMevCommission = (validator: AuctionValidator): number | null => validator.mevCommissionDec
+
+export const selectCommission = (validator: AuctionValidator) =>
+  validator.inflationCommissionDec
+
+export const selectMevCommission = (validator: AuctionValidator): number | null =>
+  validator.mevCommissionDec
 
 export const selectBondSize = (validator: AuctionValidator) => validator.bondBalanceSol
 
-export const selectMaxAPY = (validator: AuctionValidator, epochsPerYear: number) => Math.pow(1 + validator.revShare.totalPmpe / 1e3, epochsPerYear) - 1
 
-export const selectEffectiveBid = (validator: AuctionValidator) => validator.revShare.auctionEffectiveBidPmpe
-export const selectEffectiveCost = (validator: AuctionValidator) => (validator.marinadeActivatedStakeSol / 1000) * validator.revShare.auctionEffectiveBidPmpe
+export const selectSpendRobustReputation = (validator: AuctionValidator) =>
+  validator.values.spendRobustReputation
+
+export const selectMaxSamStake = (validator: AuctionValidator) =>
+  validator.values.adjMaxSpendRobustDelegation
+
+export const selectMaxAPY = (validator: AuctionValidator, epochsPerYear: number) =>
+  Math.pow(1 + validator.revShare.totalPmpe / 1e3, epochsPerYear) - 1
+
+export const selectEffectiveBid = (validator: AuctionValidator) =>
+  validator.revShare.auctionEffectiveBidPmpe
+
+export const selectEffectiveCost = (validator: AuctionValidator) =>
+  (validator.marinadeActivatedStakeSol / 1000) * validator.revShare.auctionEffectiveBidPmpe
 
 export const bondColorState = (validator: AuctionValidator): Color => {
     const stake = validator.auctionStake.marinadeSamTargetSol
@@ -121,4 +136,24 @@ export const bondTooltip = (color: Color) => {
         case Color.YELLOW: return "Your bond balance is sufficient only to cover one epoch of bids. Top up your bond with enough SOL to stay in the auction"
         default: return ""
     }
+}
+
+export const spendRobustReputationTooltip = (validator: AuctionValidator) => {
+    // switch (color) {
+    //     case Color.RED: return "Your bond balance is not sufficient to cover bidding costs and is limiting the maximum stake you can get. Top up your bond to increase your stake and stay in the auction."
+    //     case Color.GREEN: return "You have enough in the bond to cover at least 2 epochs of bids."
+    //     case Color.YELLOW: return "Your bond balance is sufficient only to cover one epoch of bids. Top up your bond with enough SOL to stay in the auction"
+    //     default: return ""
+    // }
+  return "NO TOOLTIP"
+}
+
+export const maxSamStakeTooltip = (validator: AuctionValidator) => {
+    // switch (color) {
+    //     case Color.RED: return "Your bond balance is not sufficient to cover bidding costs and is limiting the maximum stake you can get. Top up your bond to increase your stake and stay in the auction."
+    //     case Color.GREEN: return "You have enough in the bond to cover at least 2 epochs of bids."
+    //     case Color.YELLOW: return "Your bond balance is sufficient only to cover one epoch of bids. Top up your bond with enough SOL to stay in the auction"
+    //     default: return ""
+    // }
+  return "NO TOOLTIP"
 }
