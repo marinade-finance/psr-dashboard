@@ -4,7 +4,7 @@ import { Alignment, Color, OrderDirection, Table } from "../table/table";
 import { formatPercentage, formatSolAmount } from "src/format";
 import { Metric } from "../metric/metric";
 import { AuctionResult, DsSamConfig } from "@marinade.finance/ds-sam-sdk";
-import { selectBid, selectBondSize, selectCommission, selectEffectiveBid, selectConstraintText, selectMaxAPY, selectMevCommission, selectSamDistributedStake, selectSamTargetStake, selectVoteAccount, selectWinningAPY, selectProjectedAPY, selectStakeToMove, selectActiveStake, bondColorState, bondTooltip, selectEffectiveCost } from "src/services/sam";
+import { selectBid, selectBondSize, selectCommission, selectEffectiveBid, selectConstraintText, selectMaxAPY, selectMevCommission, selectSamDistributedStake, selectSamTargetStake, selectVoteAccount, selectWinningAPY, selectProjectedAPY, selectStakeToMove, selectActiveStake, bondColorState, bondTooltip, selectEffectiveCost, selectSpendRobustReputation, spendRobustReputationTooltip, selectMaxSamStake, maxSamStakeTooltip } from "src/services/sam";
 import { tooltipAttributes } from '../../services/utils'
 import { ComplexMetric } from "../complex-metric/complex-metric";
 
@@ -98,6 +98,20 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                     alignment: Alignment.RIGHT,
                     cellAttrsFn: (validator) => tooltipAttributes(bondTooltip(validator.bondState))
                 },
+                {
+                    header: 'Rep. [☉]',
+                    render: (validator) => <>{formatSolAmount(selectSpendRobustReputation(validator), 0)}</>,
+                    compare: (a, b) => selectSpendRobustReputation(a) - selectSpendRobustReputation(b),
+                    alignment: Alignment.RIGHT,
+                    cellAttrsFn: (validator) => tooltipAttributes(spendRobustReputationTooltip(validator))
+                },
+                {
+                    header: 'Max SAM Stake [☉]',
+                    render: (validator) => <>{formatSolAmount(selectMaxSamStake(validator), 0)}</>,
+                    compare: (a, b) => selectMaxSamStake(a) - selectMaxSamStake(b),
+                    alignment: Alignment.RIGHT,
+                    cellAttrsFn: (validator) => tooltipAttributes(maxSamStakeTooltip(validator))
+                },
                 { 
                     header: 'Max APY',
                     cellAttrsFn: () => tooltipAttributes("Calculated APY using the bid of this validator."),
@@ -106,7 +120,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                     alignment: Alignment.RIGHT
                 },
                 { 
-                    header: 'SAM stake [☉]',
+                    header: 'SAM Stake [☉]',
                     cellAttrsFn: (validator) => tooltipAttributes(selectConstraintText(validator)),
                     render: (validator) => <>{formatSolAmount(Math.round(selectSamTargetStake(validator)))}</>,
                     compare: (a, b) => selectSamTargetStake(a) - selectSamTargetStake(b),
