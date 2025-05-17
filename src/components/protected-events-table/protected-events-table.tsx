@@ -53,24 +53,33 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data }) => {
         const isBidding = protectedEvent.reason as any === 'Bidding'
         return matchesEpoch && matchesValidator && !isBidding
     })
+    const lastSettledEpoch = data.reduce((epoch, { protectedEvent, status }) => status == ProtectedEventStatus.FACT ? Math.max(epoch, protectedEvent.epoch) : epoch, 0)
 
     const totalEvents = data.length
     const filteredEvents = filteredData.length
     const totalAmount = data.reduce((sum, { protectedEvent }) => sum + selectAmount(protectedEvent), 0)
     const filteredAmount = filteredData.reduce((sum, { protectedEvent }) => sum + selectAmount(protectedEvent), 0)
+    const lastSettledEpochAmount = filteredData.filter(
+      ({ protectedEvent: { epoch } }) => epoch == lastSettledEpoch
+    ).reduce(
+      (sum, { protectedEvent }) => sum + selectAmount(protectedEvent),
+      0
+    )
 
     const filtered = data.length !== filteredData.length
 
     return <div className={styles.tableWrap}>
         <div className={styles.metricWrap}>
             <Metric label="Total events" value={totalEvents.toLocaleString()}
-                {...tooltipAttributes("Total count of protected events")} />
+                {...tooltipAttributes("Total Count of Protected Events")} />
             <Metric label="Total amount" value={`☉ ${formatSolAmount(totalAmount)}`}
-                {...tooltipAttributes("Total amount of SOL claimable by users")} />
-            { filtered && <Metric label="Filtered events" value={filteredEvents.toLocaleString()}
-                {...tooltipAttributes("Count of filtered protected events")} /> }
-            { filtered && <Metric label="Filtered amount" value={`☉ ${formatSolAmount(filteredAmount)}`}
-                {...tooltipAttributes("Filtered amount of SOL claimable by users")} /> }
+                {...tooltipAttributes("Total Amount of SOL Claimable by Users")} />
+            { filtered && <Metric label="Filtered Events" value={filteredEvents.toLocaleString()}
+                {...tooltipAttributes("Count of Filtered Protected Events")} /> }
+            { filtered && <Metric label="Filtered Amount" value={`☉ ${formatSolAmount(filteredAmount)}`}
+                {...tooltipAttributes("Filtered Amount of SOL Claimable By Users")} /> }
+            { filtered && <Metric label="Last Settled Amount" value={`☉ ${formatSolAmount(lastSettledEpochAmount)}`}
+                {...tooltipAttributes("Last Settled Epoch's Amount of SOL Claimable By Users")} /> }
         </div>
         <div className={styles.filters}>
             <fieldset>

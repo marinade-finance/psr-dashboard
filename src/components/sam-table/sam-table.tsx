@@ -5,7 +5,7 @@ import { Alignment, Color, OrderDirection, Table } from "../table/table";
 import { formatPercentage, formatSolAmount } from "src/format";
 import { Metric } from "../metric/metric";
 import { AuctionResult, DsSamConfig } from "@marinade.finance/ds-sam-sdk";
-import { selectBid, selectBondSize, selectCommission, selectEffectiveBid, selectConstraintText, selectMaxAPY, selectMevCommission, selectSamDistributedStake, selectSamTargetStake, selectVoteAccount, selectWinningAPY, selectProjectedAPY, selectStakeToMove, selectActiveStake, bondColorState, bondTooltip, selectEffectiveCost, selectSpendRobustReputation, spendRobustReputationTooltip } from "src/services/sam";
+import { selectBid, selectBondSize, selectCommission, selectEffectiveBid, selectConstraintText, selectMaxAPY, selectMevCommission, selectSamDistributedStake, selectSamTargetStake, selectVoteAccount, selectWinningAPY, selectProjectedAPY, selectStakeToMove, selectActiveStake, bondColorState, bondTooltip, selectEffectiveCost, selectSpendRobustReputation, spendRobustReputationTooltip, maxSamStakeTooltip } from "src/services/sam";
 import { tooltipAttributes } from '../../services/utils'
 import { ComplexMetric } from "../complex-metric/complex-metric";
 
