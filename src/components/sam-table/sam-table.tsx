@@ -34,7 +34,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
         <div className={styles.metricWrap}>
             <Metric 
                 label="SAM stake"
-                value={`☉ ${formatSolAmount(samDistributedStake)}`}
+                value={`☉ ${formatSolAmount(samDistributedStake, 0)}`}
                 {...tooltipAttributes("How much stake is distributed by Marinade to validators based on SAM")} />
             <Metric
                 label="Auction winning APY"
@@ -76,7 +76,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                 },
                 { 
                     header: 'Bond [☉]',
-                    render: (validator) => <>{formatSolAmount(selectBondSize(validator))}</>,
+                    render: (validator) => <>{formatSolAmount(selectBondSize(validator, 0))}</>,
                     compare: (a, b) => selectBondSize(a) - selectBondSize(b),
                     alignment: Alignment.RIGHT,
                     cellAttrsFn: (validator) => tooltipAttributes(bondTooltip(validator.bondState))
@@ -105,7 +105,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                 { 
                     header: 'SAM Stake [☉]',
                     cellAttrsFn: (validator) => tooltipAttributes(selectConstraintText(validator)),
-                    render: (validator) => <>{formatSolAmount(Math.round(selectSamTargetStake(validator)))}</>,
+                    render: (validator) => <>{formatSolAmount(selectSamTargetStake(validator), 0)}</>,
                     compare: (a, b) => selectSamTargetStake(a) - selectSamTargetStake(b),
                     alignment: Alignment.RIGHT
                 },
