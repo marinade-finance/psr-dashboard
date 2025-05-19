@@ -5,7 +5,6 @@ import { formatPercentage, formatSolAmount } from "src/format";
 import { Metric } from "../metric/metric";
 import { AuctionResult, DsSamConfig } from "@marinade.finance/ds-sam-sdk";
 import { selectBid, selectBondSize, selectCommission, selectEffectiveBid, selectConstraintText, selectMaxAPY, selectMevCommission, selectSamDistributedStake, selectSamTargetStake, selectVoteAccount, selectWinningAPY, bondColorState, bondTooltip, selectEffectiveCost, selectSpendRobustReputation, spendRobustReputationTooltip, selectMaxSamStake, maxSamStakeTooltip } from "src/services/sam";
->>>>>>> 28a45bf (Add reputation and max stake display)
 import { tooltipAttributes } from '../../services/utils'
 import { ComplexMetric } from "../complex-metric/complex-metric";
 
@@ -76,7 +75,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                 },
                 { 
                     header: 'Bond [☉]',
-                    render: (validator) => <>{formatSolAmount(selectBondSize(validator, 0))}</>,
+                    render: (validator) => <>{formatSolAmount(selectBondSize(validator), 0)}</>,
                     compare: (a, b) => selectBondSize(a) - selectBondSize(b),
                     alignment: Alignment.RIGHT,
                     cellAttrsFn: (validator) => tooltipAttributes(bondTooltip(validator.bondState))
@@ -110,22 +109,22 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                     alignment: Alignment.RIGHT
                 },
                 {
-                    header: 'Effective bid [☉]',
+                    header: 'Eff. bid [☉]',
                     cellAttrsFn: () => tooltipAttributes("Bid for 1000 SOL that the validator would be paying based on the current Auction Winning APY."),
-                    render: (validator) => <>{selectEffectiveBid(validator)}</>,
+                    render: (validator) => <>{selectEffectiveBid(validator).toFixed(4)}</>,
                     compare: (a, b) => selectEffectiveBid(a) - selectEffectiveBid(b),
                     alignment: Alignment.RIGHT
                 },
                 {
-                    header: 'Effective cost [☉]',
+                    header: 'Eff. cost [☉]',
                     cellAttrsFn: () => tooltipAttributes("Total cost per epoch for the SAM stake that this validator has active."),
-                    render: (validator) => <>{selectEffectiveCost(validator)}</>,
+                    render: (validator) => <>{selectEffectiveCost(validator).toFixed(1)}</>,
                     compare: (a, b) => selectEffectiveBid(a) - selectEffectiveBid(b),
                     alignment: Alignment.RIGHT
                 },
             ]}
             defaultOrder={[
-                [5, OrderDirection.DESC],
+                [3, OrderDirection.DESC],
                 [4, OrderDirection.DESC],
             ]}
             showRowNumber={true} />
