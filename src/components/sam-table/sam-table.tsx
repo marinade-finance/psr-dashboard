@@ -83,7 +83,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                     cellAttrsFn: (validator) => tooltipAttributes(bondTooltip(validator.bondState))
                 },
                 {
-                    header: 'Rep. [☉]',
+                    header: 'Rep.',
                     render: (validator) => <>{formatSolAmount(selectSpendRobustReputation(validator), 0)}</>,
                     compare: (a, b) => selectSpendRobustReputation(a) - selectSpendRobustReputation(b),
                     alignment: Alignment.RIGHT,
