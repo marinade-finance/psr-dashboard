@@ -98,7 +98,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                 { 
                     header: 'Max APY',
                     cellAttrsFn: () => tooltipAttributes("Calculated APY using the bid of this validator."),
-                    render: (validator) => <>{formatPercentage(selectMaxAPY(validator, epochsPerYear)).replace('Infinity%', '∞')}</>,
+                    render: (validator) => <>{formatPercentage(selectMaxAPY(validator, epochsPerYear))}</>,
                     compare: (a, b) => selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear),
                     alignment: Alignment.RIGHT
                 },
