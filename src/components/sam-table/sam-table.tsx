@@ -1,3 +1,4 @@
+import round from 'lodash.round'
 import React from "react";
 import styles from './sam-table.module.css'
 import { Alignment, Color, OrderDirection, Table } from "../table/table";
@@ -111,14 +112,14 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                 {
                     header: 'Eff. bid [☉]',
                     cellAttrsFn: () => tooltipAttributes("Bid for 1000 SOL that the validator would be paying based on the current Auction Winning APY."),
-                    render: (validator) => <>{selectEffectiveBid(validator).toFixed(4)}</>,
+                    render: (validator) => <>{round(selectEffectiveBid(validator), 4)}</>,
                     compare: (a, b) => selectEffectiveBid(a) - selectEffectiveBid(b),
                     alignment: Alignment.RIGHT
                 },
                 {
                     header: 'Eff. cost [☉]',
                     cellAttrsFn: () => tooltipAttributes("Total cost per epoch for the SAM stake that this validator has active."),
-                    render: (validator) => <>{selectEffectiveCost(validator).toFixed(1)}</>,
+                    render: (validator) => <>{round(selectEffectiveCost(validator), 1)}</>,
                     compare: (a, b) => selectEffectiveBid(a) - selectEffectiveBid(b),
                     alignment: Alignment.RIGHT
                 },
