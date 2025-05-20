@@ -53,7 +53,7 @@ export const loadSam = async (): Promise<{ auctionResult: AuctionResult, epochsP
         const epochsPerYear = await estimateEpochsPerYear()
         console.log('epochsPerYear', epochsPerYear)
 
-      const dsSam = new DsSamSDK({ inputsSource: InputsSource.APIS, cacheInputs: false })
+        const dsSam = new DsSamSDK({ inputsSource: InputsSource.APIS, cacheInputs: false })
         const auctionResult = await dsSam.runFinalOnly()
         return { auctionResult, epochsPerYear, dcSamConfig: dsSam.config }
     } catch (err) {
@@ -147,23 +147,9 @@ export const bondTooltip = (color: Color) => {
     }
 }
 
-//
-// TOOLTIPS for once the bounds are enabled... next week
-//
-
-// export const spendRobustReputationTooltip = (validator: AuctionValidator) => {
-//   if (validator.values.adjMaxSpendRobustDelegation <= validator.auctionStake.marinadeSamTargetSol) {
-//     return "Your reputation is currently capping your stake allocation. Hint: Increase your bond and participate in the auction regularly to build up your reputation to get more stake from Marinade."
-//   } else if (selectMaxSpendRobustDelegation(validator) <= validator.auctionStake.marinadeSamTargetSol) {
-//     return "Your reputation may start capping your stake allocation if other validators get more reputation than you have. Hint: Increase your bond and participate in the auction regularly to build up your reputation to get more stake from Marinade."
-//   } else if (validator.values.spendRobustReputation < 100)  {
-//     return "Reputation is not limiting your stake right now, but there is room to grow. Hint: Increase your bond and participate consistently to boost your reputation to get more stake from Marinade."
-//   } else {
-//     return "Your reputation is outstanding—thank you for your consistent participation! Hint: Keep bidding high in each auction to maintain your reputation over time."
-//   }
-// }
-
 export const spendRobustReputationTooltip = (validator: AuctionValidator) => {
+  // the matches are approximate so that we start displaying the limiting
+  // warning a bit (10%) before it actually happens
   if (0.9 * validator.values.adjMaxSpendRobustDelegation <= validator.auctionStake.marinadeSamTargetSol) {
     return "Your reputation will start capping your stake allocation. Hint: Increase your bond and participate in the auction regularly to build up your reputation to get more stake from Marinade."
   } else if (0.9 * selectMaxSpendRobustDelegation(validator) <= validator.auctionStake.marinadeSamTargetSol) {
@@ -178,6 +164,8 @@ export const spendRobustReputationTooltip = (validator: AuctionValidator) => {
 }
 
 export const maxSamStakeTooltip = (validator: AuctionValidator, cfg: { maxTvlDelegation: number, minBondBalanceSol: number }) => {
+  // the matches are approximate so that we start displaying the limiting
+  // warning a bit (10%) before it actually happens
   if (validator.values.adjMaxSpendRobustDelegation <= validator.auctionStake.marinadeSamTargetSol) {
     return "Your reputation will start limiting your stake allocation. Hint: Increase your bond and participate in the auction regularly to build up your reputation to get more stake from Marinade."
   } else if (0.9 * cfg.maxTvlDelegation <= validator.auctionStake.marinadeSamTargetSol) {
