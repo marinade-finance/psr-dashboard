@@ -90,7 +90,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                     cellAttrsFn: (validator) => tooltipAttributes(spendRobustReputationTooltip(validator))
                 },
                 {
-                    header: 'Max SAM Stake [☉]',
+                    header: 'Future Max SAM Stake [☉]',
                     render: (validator) => <>{formatSolAmount(selectMaxSamStake(validator), 0)}</>,
                     compare: (a, b) => selectMaxSamStake(a) - selectMaxSamStake(b),
                     alignment: Alignment.RIGHT,
