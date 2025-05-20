@@ -94,7 +94,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                     render: (validator) => <>{formatSolAmount(selectMaxSamStake(validator), 0)}</>,
                     compare: (a, b) => selectMaxSamStake(a) - selectMaxSamStake(b),
                     alignment: Alignment.RIGHT,
-                    cellAttrsFn: (validator) => tooltipAttributes(maxSamStakeTooltip(validator, maxTvlDelegation))
+                    cellAttrsFn: (validator) => tooltipAttributes(maxSamStakeTooltip(validator, {maxTvlDelegation, minBondBalanceSol: dsSamConfig.minBondBalanceSol}))
                 },
                 { 
                     header: 'Max APY',

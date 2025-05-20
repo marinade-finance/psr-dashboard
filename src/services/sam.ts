@@ -164,9 +164,9 @@ export const bondTooltip = (color: Color) => {
 // }
 
 export const spendRobustReputationTooltip = (validator: AuctionValidator) => {
-  if (validator.values.adjMaxSpendRobustDelegation <= validator.auctionStake.marinadeSamTargetSol) {
+  if (0.9 * validator.values.adjMaxSpendRobustDelegation <= validator.auctionStake.marinadeSamTargetSol) {
     return "Your reputation will start capping your stake allocation. Hint: Increase your bond and participate in the auction regularly to build up your reputation to get more stake from Marinade."
-  } else if (selectMaxSpendRobustDelegation(validator) <= validator.auctionStake.marinadeSamTargetSol) {
+  } else if (0.9 * selectMaxSpendRobustDelegation(validator) <= validator.auctionStake.marinadeSamTargetSol) {
     return "Your reputation may start capping your stake allocation if other validators get more reputation than you have. Hint: Increase your bond and participate in the auction regularly to build up your reputation to get more stake from Marinade."
   } else if (validator.values.spendRobustReputation < 100)  {
     return "Reputation will not limit your stake right now, but there is room to grow. Hint: Increase your bond and participate consistently to boost your reputation to get more stake from Marinade."
@@ -175,14 +175,16 @@ export const spendRobustReputationTooltip = (validator: AuctionValidator) => {
   }
 }
 
-export const maxSamStakeTooltip = (validator: AuctionValidator, maxTvlDelegation: number) => {
+export const maxSamStakeTooltip = (validator: AuctionValidator, cfg: { maxTvlDelegation: number, minBondBalanceSol: number }) => {
   if (validator.values.adjMaxSpendRobustDelegation <= validator.auctionStake.marinadeSamTargetSol) {
-    return "Your reputation will start limiting your stake allocation."
-  } else if (maxTvlDelegation <= validator.auctionStake.marinadeSamTargetSol) {
+    return "Your reputation will start limiting your stake allocation. Hint: Increase your bond and participate in the auction regularly to build up your reputation to get more stake from Marinade."
+  } else if (0.9 * cfg.maxTvlDelegation <= validator.auctionStake.marinadeSamTargetSol) {
     return "You have the maximum stake a single validator can get from Marinade."
-  } else if (validator.maxBondDelegation <= validator.auctionStake.marinadeSamTargetSol) {
+  } else if (0.9 * validator.maxBondDelegation <= validator.auctionStake.marinadeSamTargetSol) {
     return "Your bond is limiting your stake allocation. Hint: Top up your bond to receive more stake."
+  } else if (validator.bondBalanceSol <= cfg.minBondBalanceSol) {
+    return `You bond is lower than the minimum amount of ${cfg.minBondBalanceSol} SOL.  Hint: Top up your bond to start receiving stake from Marinade.`
   } else {
-    return "Nothing is limiting your stake allocation."
+    return ""
   }
 }
