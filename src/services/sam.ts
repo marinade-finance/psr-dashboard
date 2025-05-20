@@ -53,7 +53,7 @@ export const loadSam = async (): Promise<{ auctionResult: AuctionResult, epochsP
         const epochsPerYear = await estimateEpochsPerYear()
         console.log('epochsPerYear', epochsPerYear)
 
-      const dsSam = new DsSamSDK({ inputsSource: InputsSource.APIS, cacheInputs: false, scoringApiBaseUrl: 'http://localhost:3000'})
+      const dsSam = new DsSamSDK({ inputsSource: InputsSource.APIS, cacheInputs: false })
         const auctionResult = await dsSam.runFinalOnly()
         return { auctionResult, epochsPerYear, dcSamConfig: dsSam.config }
     } catch (err) {
@@ -101,7 +101,7 @@ export const selectSpendRobustReputation = (validator: AuctionValidator) =>
   validator.values.spendRobustReputation
 
 export const selectMaxSamStake = (validator: AuctionValidator) =>
-  validator.values.adjMaxSpendRobustDelegation
+  Math.min(validator.values.adjMaxSpendRobustDelegation, validator.maxBondDelegation)
 
 export const selectMaxAPY = (validator: AuctionValidator, epochsPerYear: number) =>
   Math.pow(1 + validator.revShare.totalPmpe / 1e3, epochsPerYear) - 1
@@ -175,6 +175,14 @@ export const spendRobustReputationTooltip = (validator: AuctionValidator) => {
   }
 }
 
-export const maxSamStakeTooltip = (validator: AuctionValidator) => {
-  return ""
+export const maxSamStakeTooltip = (validator: AuctionValidator, maxTvlDelegation: number) => {
+  if (validator.values.adjMaxSpendRobustDelegation <= validator.auctionStake.marinadeSamTargetSol) {
+    return "Your reputation will start limiting your stake allocation."
+  } else if (maxTvlDelegation <= validator.auctionStake.marinadeSamTargetSol) {
+    return "You have the maximum stake a single validator can get from Marinade."
+  } else if (validator.maxBondDelegation <= validator.auctionStake.marinadeSamTargetSol) {
+    return "Your bond is limiting your stake allocation. Hint: Top up your bond to receive more stake."
+  } else {
+    return "Nothing is limiting your stake allocation."
+  }
 }

@@ -29,6 +29,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
     })
 
     const samStakeValidators = validatorsWithBond.filter((v) => v.auctionStake.marinadeSamTargetSol)
+    const maxTvlDelegation = dsSamConfig.maxMarinadeTvlSharePerValidatorDec * samDistributedStake
 
     return <div className={styles.tableWrap}>
         <div className={styles.metricWrap}>
@@ -93,7 +94,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                     render: (validator) => <>{formatSolAmount(selectMaxSamStake(validator), 0)}</>,
                     compare: (a, b) => selectMaxSamStake(a) - selectMaxSamStake(b),
                     alignment: Alignment.RIGHT,
-                    cellAttrsFn: (validator) => tooltipAttributes(maxSamStakeTooltip(validator))
+                    cellAttrsFn: (validator) => tooltipAttributes(maxSamStakeTooltip(validator, maxTvlDelegation))
                 },
                 { 
                     header: 'Max APY',

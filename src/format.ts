@@ -1,6 +1,6 @@
 import round from 'lodash.round'
 
-export const formatSolAmount = (amount: number, digits = 2) => Number(round(amount, digits)).toLocaleString()
+export const formatSolAmount = (amount: number, digits = 2) => round(amount, digits).toLocaleString()
 
 export const formatPercentage = (amount: number, fractionDigits = 2) => {
   if (amount >= Infinity) {
