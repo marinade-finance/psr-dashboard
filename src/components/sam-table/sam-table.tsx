@@ -64,7 +64,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
             />
             <Metric
                 label="Rep. Infl."
-                value={`${reputationInflationFactor}`}
+                value={`${round(reputationInflationFactor, 1)}`}
                 {...tooltipAttributes("How much do we have to inflate reputation so that our TVL fits into the induced limits")}
             />
         </>
