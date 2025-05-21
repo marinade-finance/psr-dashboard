@@ -58,6 +58,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                 },
                 { 
                     header: 'Comm.',
+                    headerAttrsFn: () => tooltipAttributes('Validator Commission'),
                     render: (validator) => <>{formatPercentage(selectCommission(validator), 0)}</>,
                     compare: (a, b) => selectCommission(a) - selectCommission(b),
                     alignment: Alignment.RIGHT 
@@ -84,17 +85,11 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                 },
                 {
                     header: 'Rep.',
+                    headerAttrsFn: () => tooltipAttributes('Validator Reputation'),
                     render: (validator) => <>{formatSolAmount(selectSpendRobustReputation(validator), 0)}</>,
                     compare: (a, b) => selectSpendRobustReputation(a) - selectSpendRobustReputation(b),
                     alignment: Alignment.RIGHT,
                     cellAttrsFn: (validator) => tooltipAttributes(spendRobustReputationTooltip(validator))
-                },
-                {
-                    header: 'Future Max SAM Stake [☉]',
-                    render: (validator) => <>{formatSolAmount(selectMaxSamStake(validator), 0)}</>,
-                    compare: (a, b) => selectMaxSamStake(a) - selectMaxSamStake(b),
-                    alignment: Alignment.RIGHT,
-                    cellAttrsFn: (validator) => tooltipAttributes(maxSamStakeTooltip(validator, {maxTvlDelegation, minBondBalanceSol: dsSamConfig.minBondBalanceSol}))
                 },
                 { 
                     header: 'Max APY',
@@ -123,6 +118,14 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                     render: (validator) => <>{round(selectEffectiveCost(validator), 1)}</>,
                     compare: (a, b) => selectEffectiveBid(a) - selectEffectiveBid(b),
                     alignment: Alignment.RIGHT
+                },
+                {
+                    header: 'Fut. Max SAM Stake [☉]',
+                    headerAttrsFn: () => tooltipAttributes('The maximum attainable stake once the Reputation Limits come into effect'),
+                    render: (validator) => <>{formatSolAmount(selectMaxSamStake(validator), 0)}</>,
+                    compare: (a, b) => selectMaxSamStake(a) - selectMaxSamStake(b),
+                    alignment: Alignment.RIGHT,
+                    cellAttrsFn: (validator) => tooltipAttributes(maxSamStakeTooltip(validator, {maxTvlDelegation, minBondBalanceSol: dsSamConfig.minBondBalanceSol}))
                 },
             ]}
             defaultOrder={[
