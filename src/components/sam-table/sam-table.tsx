@@ -35,6 +35,10 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
 
     const samStakeValidators = validatorsWithBond.filter((v) => v.auctionStake.marinadeSamTargetSol)
     const maxTvlDelegation = dsSamConfig.maxMarinadeTvlSharePerValidatorDec * samDistributedStake
+    const avgStake = (
+        samStakeValidators.reduce((agg, v) => agg + v.auctionStake.marinadeSamTargetSol, 0)
+        / samStakeValidators.length
+    )
 
     let expertMetrics
     if (level == UserLevel.Expert) {
@@ -48,6 +52,11 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                 label="Active Stake"
                 value={`${formatPercentage(activeStake)}`}
                 {...tooltipAttributes("Share of active stake earning rewards")}
+            />
+            <Metric
+                label="Avg. Stake"
+                value={`${formatSolAmount(avgStake, 0)}`}
+                {...tooltipAttributes("Average stake per validator")}
             />
         </>
     }

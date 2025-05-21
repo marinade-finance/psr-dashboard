@@ -45,17 +45,17 @@ const router = createBrowserRouter([
         errorElement: <ErrorPage />,
     },
     {
-        path: "/expert",
+        path: "/expert-",
         element: <SamPage level={UserLevel.Expert} />,
         errorElement: <ErrorPage />,
     },
     {
-        path: "/expert/bonds",
+        path: "/expert-bonds",
         element: <ValidatorBondsPage level={UserLevel.Expert} />,
         errorElement: <ErrorPage />,
     },
     {
-        path: "/expert/protected-events",
+        path: "/expert-protected-events",
         element: <ProtectedEventsPage level={UserLevel.Expert} />,
         errorElement: <ErrorPage />,
     },
