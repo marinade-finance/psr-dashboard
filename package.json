@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "start:dev": "webpack-cli serve --mode=development --env development --hot --config webpack.config.cjs",
+    "start:dev": "webpack-cli serve --mode=development --env development --hot --config webpack.config.cjs --history-api-fallback",
     "build": "webpack --mode=production --env production --progress",
     "lint": "eslint './src/**/*.{ts,tsx,js,jsx}'",
     "lint:fix": "eslint './src/**/*.{ts,tsx,js,jsx}' --fix"

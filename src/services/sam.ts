@@ -88,6 +88,41 @@ export const selectSamDistributedStake = (validators: AuctionValidator[]) => val
 
 export const selectWinningAPY = (auctionResult: AuctionResult, epochsPerYear: number) => Math.pow(1 + auctionResult.winningTotalPmpe / 1e3, epochsPerYear) - 1
 
+export const selectProjectedAPY = (auctionResult: AuctionResult, config: DsSamConfig, epochsPerYear: number) => {
+  const profit = auctionResult.auctionData.validators.reduce(
+    (acc, entry) => (
+      acc + (
+        entry.revShare.auctionEffectiveBidPmpe * (1 - 0.5)
+          + entry.revShare.inflationPmpe
+          + entry.revShare.mevPmpe
+      ) * entry.marinadeActivatedStakeSol / 1000
+    ),
+    0
+  )
+  const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol + auctionResult.auctionData.stakeAmounts.marinadeMndeTvlSol
+  return Math.pow(1 + profit / tvl, epochsPerYear) - 1
+}
+
+export const selectStakeToMove = (auctionResult: AuctionResult) =>
+  auctionResult.auctionData.validators.reduce(
+    (acc, entry) => (
+      acc + 
+        Math.max(
+          0,
+          entry.marinadeActivatedStakeSol
+            - (entry.auctionStake.marinadeSamTargetSol
+              + entry.auctionStake.marinadeMndeTargetSol)
+        )
+    ),
+    0
+  )
+
+export const selectActiveStake = (auctionResult: AuctionResult) =>
+  auctionResult.auctionData.validators.reduce(
+    (acc, entry) => acc + entry.marinadeActivatedStakeSol,
+    0
+  )
+
 export const selectBid = (validator: AuctionValidator) => validator.revShare.bidPmpe
 
 export const selectCommission = (validator: AuctionValidator) =>
