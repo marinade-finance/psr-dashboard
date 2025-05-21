@@ -11,6 +11,7 @@ import { ValidatorBondsPage } from "./pages/validator-bonds";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { Tooltip } from "react-tooltip";
 import 'react-tooltip/dist/react-tooltip.css'
+import { UserLevel } from "./components/navigation/navigation";
 import { SamPage } from "./pages/sam";
 
 const ErrorPage = () => {
@@ -27,11 +28,10 @@ const ErrorPage = () => {
     );
 }
 
-
 const router = createBrowserRouter([
     {
         path: "/",
-        element: <SamPage />,
+        element: <SamPage level={UserLevel.Basic} />,
         errorElement: <ErrorPage />,
     },
     {
@@ -42,6 +42,21 @@ const router = createBrowserRouter([
     {
         path: "/protected-events",
         element: <ProtectedEventsPage />,
+        errorElement: <ErrorPage />,
+    },
+    {
+        path: "/expert",
+        element: <SamPage level={UserLevel.Expert} />,
+        errorElement: <ErrorPage />,
+    },
+    {
+        path: "/expert/bonds",
+        element: <ValidatorBondsPage level={UserLevel.Expert} />,
+        errorElement: <ErrorPage />,
+    },
+    {
+        path: "/expert/protected-events",
+        element: <ProtectedEventsPage level={UserLevel.Expert} />,
         errorElement: <ErrorPage />,
     },
 ]);

@@ -5,17 +5,19 @@ import { Alignment, Color, OrderDirection, Table } from "../table/table";
 import { formatPercentage, formatSolAmount } from "src/format";
 import { Metric } from "../metric/metric";
 import { AuctionResult, DsSamConfig } from "@marinade.finance/ds-sam-sdk";
-import { selectBid, selectBondSize, selectCommission, selectEffectiveBid, selectConstraintText, selectMaxAPY, selectMevCommission, selectSamDistributedStake, selectSamTargetStake, selectVoteAccount, selectWinningAPY, selectProjectedAPY, selectStakeToMove, selectActiveStake, bondColorState, bondTooltip, selectEffectiveCost, selectSpendRobustReputation, spendRobustReputationTooltip, maxSamStakeTooltip } from "src/services/sam";
+import { selectBid, selectBondSize, selectCommission, selectEffectiveBid, selectConstraintText, selectMaxAPY, selectMevCommission, selectSamDistributedStake, selectSamTargetStake, selectVoteAccount, selectWinningAPY, selectProjectedAPY, selectStakeToMove, selectActiveStake, bondColorState, bondTooltip, selectEffectiveCost, selectSpendRobustReputation, spendRobustReputationTooltip, selectMaxSamStake, maxSamStakeTooltip } from "src/services/sam";
 import { tooltipAttributes } from '../../services/utils'
 import { ComplexMetric } from "../complex-metric/complex-metric";
+import { UserLevel } from "../navigation/navigation"
 
 type Props = {
     auctionResult: AuctionResult
     epochsPerYear: number
     dsSamConfig: DsSamConfig
+    level: UserLevel
 }
 
-export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamConfig }) => {
+export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamConfig, level }) => {
     console.log(auctionResult)
     const { auctionData: { validators } } = auctionResult
     const samDistributedStake = Math.round(selectSamDistributedStake(validators))
@@ -34,6 +36,22 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
     const samStakeValidators = validatorsWithBond.filter((v) => v.auctionStake.marinadeSamTargetSol)
     const maxTvlDelegation = dsSamConfig.maxMarinadeTvlSharePerValidatorDec * samDistributedStake
 
+    let expertMetrics
+    if (level == UserLevel.Expert) {
+        expertMetrics = <>
+            <Metric
+                label="Stake to Move"
+                value={`${formatPercentage(stakeToMove)}`}
+                {...tooltipAttributes("Stake that has to move to match auction results")}
+            />
+            <Metric
+                label="Active Stake"
+                value={`${formatPercentage(activeStake)}`}
+                {...tooltipAttributes("Share of active stake earning rewards")}
+            />
+        </>
+    }
+
     return <div className={styles.tableWrap}>
         <div className={styles.metricWrap}>
             <Metric 
@@ -50,21 +68,12 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                 value={`☉ ${formatPercentage(projectedAPY)}`}
                 {...tooltipAttributes("Estimated APY of currently active stake")}
             />
-            <Metric
-                label="Stake to Move"
-                value={`${formatPercentage(stakeToMove)}`}
-                {...tooltipAttributes("Stake that has to move to match auction results")}
-            />
-            <Metric
-                label="Active Stake"
-                value={`${formatPercentage(activeStake)}`}
-                {...tooltipAttributes("Share of active stake earning rewards")}
-            />
             <ComplexMetric
                 label="Winning Validators"
                 value={<div><span>{samStakeValidators.length}</span> / <span>{validatorsWithBond.length}</span></div>}
                 {...tooltipAttributes("Number of validators that won stake in this SAM auction")}
             />
+            <>{ expertMetrics }</>
         </div>
         <Table
             data={validatorsWithBond}
@@ -96,10 +105,10 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                 },
                 { 
                     header: 'Bond [☉]',
+                    cellAttrsFn: (validator) => tooltipAttributes(bondTooltip(validator.bondState)),
                     render: (validator) => <>{formatSolAmount(selectBondSize(validator), 0)}</>,
                     compare: (a, b) => selectBondSize(a) - selectBondSize(b),
                     alignment: Alignment.RIGHT,
-                    cellAttrsFn: (validator) => tooltipAttributes(bondTooltip(validator.bondState))
                 },
                 {
                     header: 'Rep.',
@@ -127,6 +136,10 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                     header: 'Eff. Bid [☉]',
                     cellAttrsFn: () => tooltipAttributes("Bid for 1000 SOL that the validator would be paying based on the current Auction Winning APY."),
                     render: (validator) => <>{round(selectEffectiveBid(validator), 4)}</>,
+                    compare: (a, b) => selectEffectiveBid(a) - selectEffectiveBid(b),
+                    alignment: Alignment.RIGHT
+                },
+                {
                     header: 'Eff. Cost [☉]',
                     cellAttrsFn: () => tooltipAttributes("Total cost per epoch for the SAM stake that this validator has active."),
                     render: (validator) => <>{round(selectEffectiveCost(validator), 1)}</>,
