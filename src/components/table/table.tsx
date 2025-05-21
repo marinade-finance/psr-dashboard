@@ -36,7 +36,7 @@ const renderHeader: <Item>(columns: Column<Item>[], onSort: (i: number) => void,
     const [orderColumn, orderDirection] = userOrder ?? [null, null]
     return <tr>
         {showRowNumber ? <td>#</td> : null}
-        {columns.map((column, i) => <th key={i} className={alignmentClassName(column.alignment)} onClick={() => onSort(i)}>
+        {columns.map((column, i) => <th key={i} className={alignmentClassName(column.alignment)} onClick={() => onSort(i)} { ...(column.headerAttrsFn ? column.headerAttrsFn() : {})}>
             {column.header}
             <span>{orderColumn === i
                 ? (orderDirection === OrderDirection.ASC ? '▴' : '▾')
@@ -65,6 +65,7 @@ const renderRow: <Item>(_: Item, columns: Column<Item>[], index: number, showRow
 
 type Column<Item> = {
     header: string
+    headerAttrsFn?: () => HTMLAttributes<HTMLTableCellElement>
     cellAttrsFn?: (item: Item) => HTMLAttributes<HTMLTableCellElement>
     render: (item: Item) => JSX.Element
     compare: (a: Item, b: Item) => number

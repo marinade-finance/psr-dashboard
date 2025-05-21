@@ -38,7 +38,9 @@
     "webpack-dev-server": "4.13.3"
   },
   "dependencies": {
-    "@marinade.finance/ds-sam-sdk": "^0.0.23",
+    "@marinade.finance/ds-sam-sdk": "^0.0.26",
+    "@types/lodash.round": "^4.0.9",
+    "lodash.round": "^4.0.4",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "react-query": "^3.39.3",
