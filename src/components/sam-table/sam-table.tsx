@@ -39,6 +39,10 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
         samStakeValidators.reduce((agg, v) => agg + v.auctionStake.marinadeSamTargetSol, 0)
         / samStakeValidators.length
     )
+    const reputationInflationFactor = (
+        samStakeValidators.reduce((agg, v) => agg + v.values.adjSpendRobustReputationInflationFactor, 0)
+        / samStakeValidators.length
+    )
 
     let expertMetrics
     if (level == UserLevel.Expert) {
@@ -57,6 +61,11 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                 label="Avg. Stake"
                 value={`${formatSolAmount(avgStake, 0)}`}
                 {...tooltipAttributes("Average stake per validator")}
+            />
+            <Metric
+                label="Rep. Infl."
+                value={`${reputationInflationFactor}`}
+                {...tooltipAttributes("How much do we have to inflate reputation so that our TVL fits into the induced limits")}
             />
         </>
     }
