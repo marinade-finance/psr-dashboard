@@ -5,7 +5,7 @@ import { Alignment, Color, OrderDirection, Table } from "../table/table";
 import { formatPercentage, formatSolAmount } from "src/format";
 import { Metric } from "../metric/metric";
 import { AuctionResult, DsSamConfig } from "@marinade.finance/ds-sam-sdk";
-import { selectBid, selectBondSize, selectCommission, selectEffectiveBid, selectConstraintText, selectMaxAPY, selectMevCommission, selectSamDistributedStake, selectSamTargetStake, selectVoteAccount, selectWinningAPY, selectProjectedAPY, selectStakeToMove, selectActiveStake, bondColorState, bondTooltip, selectEffectiveCost, selectSpendRobustReputation, spendRobustReputationTooltip, selectMaxSamStake, maxSamStakeTooltip } from "src/services/sam";
+import { selectBid, selectBondSize, selectCommission, selectEffectiveBid, selectConstraintText, selectMaxAPY, selectMevCommission, selectSamDistributedStake, selectSamTargetStake, selectVoteAccount, selectWinningAPY, selectProjectedAPY, selectStakeToMove, selectActiveStake, bondColorState, bondTooltip, selectEffectiveCost, selectSpendRobustReputation, spendRobustReputationTooltip, selectMaxSamStake, maxSamStakeTooltip, selectProductiveStake } from "src/services/sam";
 import { tooltipAttributes } from '../../services/utils'
 import { ComplexMetric } from "../complex-metric/complex-metric";
 import { UserLevel } from "../navigation/navigation"
@@ -25,6 +25,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
     const projectedAPY = selectProjectedAPY(auctionResult, dsSamConfig, epochsPerYear)
     const stakeToMove = selectStakeToMove(auctionResult) / samDistributedStake
     const activeStake = selectActiveStake(auctionResult) / samDistributedStake
+    const productiveStake = selectProductiveStake(auctionResult) / samDistributedStake
 
     const validatorsWithBond = validators.filter((validator) => selectBondSize(validator) > 0).map((v) => {
         return {
@@ -45,7 +46,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
     )
 
     let expertMetrics
-    if (level == UserLevel.Expert) {
+    if (level === UserLevel.Expert) {
         expertMetrics = <>
             <Metric
                 label="Stake to Move"
@@ -56,6 +57,11 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                 label="Active Stake"
                 value={`${formatPercentage(activeStake)}`}
                 {...tooltipAttributes("Share of active stake earning rewards")}
+            />
+            <Metric
+                label="Productive Stake"
+                value={`${formatPercentage(productiveStake)}`}
+                {...tooltipAttributes("Share of stake that pays at least 90% of winning bid")}
             />
             <Metric
                 label="Avg. Stake"

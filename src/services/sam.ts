@@ -123,6 +123,15 @@ export const selectActiveStake = (auctionResult: AuctionResult) =>
     0
   )
 
+export const selectProductiveStake = (auctionResult: AuctionResult) =>
+  auctionResult.auctionData.validators.reduce(
+    (acc, entry) =>
+      entry.revShare.bidPmpe >= entry.revShare.effParticipatingBidPmpe * 0.9
+      ? acc + entry.marinadeActivatedStakeSol
+      : acc,
+    0
+  )
+
 export const selectBid = (validator: AuctionValidator) => validator.revShare.bidPmpe
 
 export const selectCommission = (validator: AuctionValidator) =>
