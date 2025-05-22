@@ -1,10 +1,11 @@
 import path from "path";
-import webpack, { Configuration } from "webpack";
+import webpack from "webpack";
+import type { Configuration } from "webpack";
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import ForkTsCheckerWebpackPlugin from "fork-ts-checker-webpack-plugin";
 import { TsconfigPathsPlugin } from "tsconfig-paths-webpack-plugin";
 
-const webpackConfig = (env): Configuration => ({
+const webpackConfig = (env: {production: boolean, development: boolean}): Configuration => ({
     entry: "./src/index.tsx",
     ...(env.production || !env.development ? {} : { devtool: "eval-source-map" }),
     resolve: {

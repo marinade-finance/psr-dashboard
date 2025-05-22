@@ -1,6 +1,8 @@
 import { ProtectedEvent, fetchProtectedEvents } from "./protected-events";
 import { calculateProtectedEventEstimates } from "./protected-events-estimator";
 import { Validator, fetchValidators, fetchValidatorsWithEpochs } from "./validators";
+import { loadSam } from "./sam";
+import { fetchScoring } from "./scoring";
 
 export enum ProtectedEventStatus {
     DRYRUN, ESTIMATE, FACT
@@ -14,7 +16,7 @@ export type ProtectedEventWithValidator = {
 const LAST_DRYRUN_EPOCH = 608
 
 export const fetchProtectedEventsWithValidator = async (): Promise<ProtectedEventWithValidator[]> => {
-    const [{ validators }, { protected_events }] = await Promise.all([fetchValidatorsWithEpochs(3), fetchProtectedEvents()])
+  const [{ validators }, { protected_events }, scoring, { auctionResult }] = await Promise.all([fetchValidatorsWithEpochs(3), fetchProtectedEvents(), fetchScoring(), loadSam()])
 
     const estimatedProtectedEvents = await calculateProtectedEventEstimates(validators)
 
@@ -35,6 +37,68 @@ export const fetchProtectedEventsWithValidator = async (): Promise<ProtectedEven
         if (protectedEvent.epoch > latestProcessedEpoch) {
             protectedEventsWithValidator.push({ status: ProtectedEventStatus.ESTIMATE, protectedEvent, validator: validatorsMap[protectedEvent.vote_account] ?? null })
         }
+    }
+
+    let maxStatsEpoch = -Infinity
+    for (const validator of validators) {
+      for (const stat of validator.epoch_stats) {
+        maxStatsEpoch = Math.max(maxStatsEpoch, stat.epoch)
+      }
+    }
+
+    let maxScoredEpoch = 0
+    for (const entry of scoring) {
+      maxScoredEpoch = Math.max(entry.epoch, maxScoredEpoch)
+      if (entry.epoch <= latestProcessedEpoch) {
+        continue
+      }
+      const validator = validatorsMap[entry.voteAccount] ?? null
+      const epochStats = validator?.epoch_stats.find(({ epoch }) => epoch == entry.epoch)
+      if (epochStats == null) {
+        continue
+      }
+      const penalty = (
+        Number(epochStats.marinade_native_stake ?? "0")
+          + Number(epochStats.marinade_stake ?? "0")
+      ) * entry.revShare.bidTooLowPenaltyPmpe / 1000
+      if (penalty > 0) {
+        const protectedEvent = {
+          epoch: entry.epoch,
+          amount: penalty,
+          vote_account: entry.voteAccount,
+          meta: {funder: 'ValidatorBond' as 'ValidatorBond'},
+          reason: 'BidTooLowPenalty' as 'BidTooLowPenalty',
+        }
+        protectedEventsWithValidator.push({
+          status: ProtectedEventStatus.ESTIMATE,
+          protectedEvent,
+          validator,
+        })
+      }
+    }
+
+    if (maxStatsEpoch > maxScoredEpoch) {
+      for (const entry of auctionResult.auctionData.validators) {
+        const validator = validatorsMap[entry.voteAccount] ?? null
+        const penalty = (
+          Number(validator?.marinade_native_stake ?? "0")
+            + Number(validator?.marinade_stake ?? "0")
+        ) * entry.revShare.bidTooLowPenaltyPmpe / 1000
+        if (penalty > 0) {
+          const protectedEvent = {
+            epoch: maxStatsEpoch,
+            amount: penalty,
+            vote_account: entry.voteAccount,
+            meta: {funder: 'ValidatorBond' as 'ValidatorBond'},
+            reason: 'BidTooLowPenalty' as 'BidTooLowPenalty',
+          }
+          protectedEventsWithValidator.push({
+            status: ProtectedEventStatus.ESTIMATE,
+            protectedEvent,
+            validator,
+          })
+        }
+      }
     }
 
     return protectedEventsWithValidator
