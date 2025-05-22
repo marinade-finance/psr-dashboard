@@ -45,7 +45,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
     )
 
     let expertMetrics
-    if (level == UserLevel.Expert) {
+    if (level === UserLevel.Expert) {
         expertMetrics = <>
             <Metric
                 label="Stake to Move"

@@ -13,6 +13,6 @@ export const ProtectedEventsPage: React.FC<UserLevelProps> = ({level}) => {
         <Navigation level={level} />
         {status === "error" && <p>Error fetching data</p>}
         {status === "loading" && <Loader />}
-        {status === "success" && <ProtectedEventsTable data={data} />}
+        {status === "success" && <ProtectedEventsTable data={data} level={level} />}
     </div>
 };

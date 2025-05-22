@@ -7,6 +7,7 @@ import { Metric } from "../metric/metric";
 import { ProtectedEventStatus, ProtectedEventWithValidator } from "src/services/validator-with-protected_event";
 import { selectName } from "src/services/validators";
 import { tooltipAttributes } from '../../services/utils'
+import { UserLevel } from '../navigation/navigation'
 
 const NO_NAME = '---'
 
@@ -36,9 +37,10 @@ const renderProtectedEventFunder = (protectedEvent: ProtectedEvent) => {
 
 type Props = {
     data: ProtectedEventWithValidator[]
+    level: UserLevel
 }
 
-export const ProtectedEventsTable: React.FC<Props> = ({ data }) => {
+export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
     const minEpoch = data.reduce((epoch, { protectedEvent }) => Math.min(protectedEvent.epoch, epoch), 9999)
     const maxEpoch = data.reduce((epoch, { protectedEvent }) => Math.max(protectedEvent.epoch, epoch), 0)
 
@@ -46,14 +48,19 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data }) => {
     const [minEpochFilter, setMinEpochFilter] = useState(minEpoch)
     const [maxEpochFilter, setMaxEpochFilter] = useState(maxEpoch)
 
-    const filteredData = data.filter(({ protectedEvent, validator }) => {
+    const preFilteredData = data.filter(({ protectedEvent, validator }) => {
         const lowerCaseValidatorFilter = validatorFilter.toLocaleLowerCase()
         const matchesValidator = protectedEvent.vote_account.toLowerCase().includes(lowerCaseValidatorFilter) || validator?.info_name?.toLocaleLowerCase().includes(lowerCaseValidatorFilter)
         const matchesEpoch = minEpochFilter <= protectedEvent.epoch && protectedEvent.epoch <= maxEpochFilter
-        const isBidding = protectedEvent.reason as any === 'Bidding'
-        return matchesEpoch && matchesValidator && !isBidding
+        return matchesEpoch && matchesValidator
     })
-    const lastSettledEpoch = data.reduce((epoch, { protectedEvent, status }) => status == ProtectedEventStatus.FACT ? Math.max(epoch, protectedEvent.epoch) : epoch, 0)
+    const filteredData = preFilteredData.filter(({ protectedEvent, validator }) => {
+        return protectedEvent.reason as any !== 'Bidding'
+    })
+    const lastSettledEpoch = data.reduce((epoch, { protectedEvent, status }) =>
+      status == ProtectedEventStatus.FACT ? Math.max(epoch, protectedEvent.epoch) : epoch,
+      0
+    )
 
     const totalEvents = data.length
     const filteredEvents = filteredData.length
@@ -62,9 +69,27 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data }) => {
     const lastSettledEpochAmount = filteredData.filter(
       ({ protectedEvent: { epoch } }) => epoch == lastSettledEpoch
     ).reduce(
-      (sum, { protectedEvent }) => sum + selectAmount(protectedEvent),
+      (sum, { protectedEvent }) =>
+        sum + selectAmount(protectedEvent),
       0
     )
+    const lastEpochBids = preFilteredData.filter(
+      ({ protectedEvent }) =>
+        protectedEvent.epoch == lastSettledEpoch
+        && protectedEvent.reason as any === 'Bidding'
+    ).reduce(
+      (sum, { protectedEvent }) =>
+        sum + selectAmount(protectedEvent),
+      0
+    )
+
+    let expertMetrics
+    if (level === UserLevel.Expert) {
+        expertMetrics = <>
+          <Metric label="Last Epoch Bids" value={`☉ ${formatSolAmount(lastEpochBids)}`}
+              {...tooltipAttributes("Last Settled Epoch's Bids collectable By Users")} />
+        </>
+    }
 
     const filtered = data.length !== filteredData.length
 
@@ -78,8 +103,9 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data }) => {
                 {...tooltipAttributes("Count of Filtered Protected Events")} /> }
             { filtered && <Metric label="Filtered Amount" value={`☉ ${formatSolAmount(filteredAmount)}`}
                 {...tooltipAttributes("Filtered Amount of SOL Claimable By Users")} /> }
-            { filtered && <Metric label="Last Settled Amount" value={`☉ ${formatSolAmount(lastSettledEpochAmount)}`}
-                {...tooltipAttributes("Last Settled Epoch's Amount of SOL Claimable By Users")} /> }
+            <Metric label="Last Settled Amount" value={`☉ ${formatSolAmount(lastSettledEpochAmount)}`}
+                {...tooltipAttributes("Last Settled Epoch's Amount of SOL Claimable By Users")} />
+            { expertMetrics }
         </div>
         <div className={styles.filters}>
             <fieldset>
