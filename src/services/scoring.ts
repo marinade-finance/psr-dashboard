@@ -3,7 +3,7 @@ export type ScoringValidator = {
   voteAccount: string
   revShare: {
     bidTooLowPenaltyPmpe: number
-  }
+  },
 }
 
 export const fetchScoring = async (): Promise<ScoringValidator[]> => {

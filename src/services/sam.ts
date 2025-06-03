@@ -48,12 +48,18 @@ const estimateEpochsPerYear = async () => {
     return SECONDS_PER_YEAR / (rangeDuration / rangeEpochs)
 }
 
+const loadSamConfig = async (): Promise<DsSamConfig> => {
+    const url = 'https://raw.githubusercontent.com/marinade-finance/ds-sam-pipeline/main/auction-config.json'
+    const response = await fetch(url)
+    return response.json()
+}
+
 export const loadSam = async (): Promise<{ auctionResult: AuctionResult, epochsPerYear: number, dcSamConfig: DsSamConfig }> => {
     try {
         const epochsPerYear = await estimateEpochsPerYear()
         console.log('epochsPerYear', epochsPerYear)
-
-        const dsSam = new DsSamSDK({ inputsSource: InputsSource.APIS, cacheInputs: false })
+        const config = await loadSamConfig()
+        const dsSam = new DsSamSDK({ ...config, inputsSource: InputsSource.APIS, cacheInputs: false })
         const auctionResult = await dsSam.runFinalOnly()
         return { auctionResult, epochsPerYear, dcSamConfig: dsSam.config }
     } catch (err) {
