@@ -1,0 +1,33 @@
+.bannerShoutout {
+  padding: 10px 10px 0px 10px;
+  background-color: var(--bg-dark-2);
+}
+
+.bannerShoutout div {
+  padding: 20px;
+  background-color: var(--bg-dark-3);
+  font-size: large;
+  line-height: 1.4;
+  border: 3px solid var(--bg-dark-1);
+}
+
+/* Dark Mode Anchor Styles */
+.bannerShoutout a {
+  color: #61dafb;            /* Light blue for links */
+  text-decoration: none;
+  transition: color 0.2s ease-in-out;
+}
+
+.bannerShoutout a:visited {
+  color: #6090be;            /* Muted purple-blue for visited links */
+}
+
+.bannerShoutout a:hover,
+.bannerShoutout a:focus {
+  color: #21a1f1;            /* Brighter blue on hover/focus */
+  text-decoration: underline;
+}
+
+.bannerShoutout a:active {
+  color: #1b8acb;            /* Darker blue when active/clicked */
+}

@@ -43,7 +43,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data }) => {
                     headerAttrsFn: () => tooltipAttributes("The max-stake-wanted parameter set up in contract.  If not set up, max stake is not limited."),
                     render: ({ bond }) => {
                       const maxStakeWanted = bond ? selectMaxStakeWanted(bond) : 0
-                      return <>{ maxStakeWanted > 0 ? round(maxStakeWanted, 0) : '-' }</>
+                      return <>{ maxStakeWanted > 0 ? formatSolAmount(maxStakeWanted) : '-' }</>
                     },
                     compare: ({ bond: a }, { bond: b }) => a && b ? selectMaxStakeWanted(a) - selectMaxStakeWanted(b) : undefined,
                     alignment: Alignment.RIGHT
