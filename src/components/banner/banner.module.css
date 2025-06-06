@@ -9,6 +9,7 @@
   font-size: large;
   line-height: 1.4;
   border: 3px solid var(--bg-dark-1);
+  width: 100ex;
 }
 
 /* Dark Mode Anchor Styles */
