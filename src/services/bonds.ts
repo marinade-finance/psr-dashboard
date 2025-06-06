@@ -9,6 +9,7 @@ export type BondRecord = {
     epoch: number,
     funded_amount: number,
     effective_amount: number,
+    max_stake_wanted: number,
     remaining_witdraw_request_amount: number,
     remainining_settlement_claim_amount: number,
 }

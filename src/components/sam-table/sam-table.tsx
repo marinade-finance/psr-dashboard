@@ -164,13 +164,6 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                     alignment: Alignment.RIGHT
                 },
                 {
-                    header: 'Eff. Cost [☉]',
-                    cellAttrsFn: () => tooltipAttributes("Total cost per epoch for the SAM stake that this validator has active."),
-                    render: (validator) => <>{round(selectEffectiveCost(validator), 1)}</>,
-                    compare: (a, b) => selectEffectiveBid(a) - selectEffectiveBid(b),
-                    alignment: Alignment.RIGHT
-                },
-                {
                     header: 'Fut. Max SAM Stake [☉]',
                     headerAttrsFn: () => tooltipAttributes('The maximum attainable stake once the Reputation Limits come into effect'),
                     render: (validator) => <>{formatSolAmount(selectMaxSamStake(validator), 0)}</>,

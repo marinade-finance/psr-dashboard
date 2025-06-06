@@ -80,7 +80,7 @@ export const selectProtectedStakeReason = (protectedEvent: ProtectedEvent) => {
             return `Commission ${reason.CommissionIncrease.previous_commission}% -> ${reason.CommissionIncrease.current_commission}%`
         }
         if (SettlementReason.isCommissionSamIncreaseReason(reason)) {
-            return `Inflation Commission ${reason.CommissionSamIncrease.expected_inflation_commission * 100}% -> ${reason.CommissionSamIncrease.actual_inflation_commission * 100}%; MEV Commission ${reason.CommissionSamIncrease.expected_mev_commission * 100}% -> ${reason.CommissionSamIncrease.actual_mev_commission * 100}%`
+          return `Inflation Commission ${formatPercentage(reason.CommissionSamIncrease.expected_inflation_commission)} -> ${formatPercentage(reason.CommissionSamIncrease.actual_inflation_commission)}; MEV Commission ${formatPercentage(reason.CommissionSamIncrease.expected_mev_commission)} -> ${formatPercentage(reason.CommissionSamIncrease.actual_mev_commission)}`
         }
         if (SettlementReason.isLowCreditsReason(reason)) {
             return `Uptime ${formatPercentage(reason.LowCredits.actual_credits / reason.LowCredits.expected_credits)}`

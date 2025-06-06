@@ -5,12 +5,15 @@ import { ProtectedEventsTable } from "src/components/protected-events-table/prot
 import { useQuery } from "react-query";
 import { fetchProtectedEventsWithValidator } from "src/services/validator-with-protected_event";
 import { Loader } from "src/components/loader/loader";
+import { getBannerData } from "src/services/banner";
+import { Banner } from "src/components/banner/banner";
 
 export const ProtectedEventsPage: React.FC<UserLevelProps> = ({level}) => {
     const { data, status } = useQuery("protected-events", fetchProtectedEventsWithValidator);
 
     return <div className={styles.page}>
         <Navigation level={level} />
+        <Banner {...getBannerData()} />
         {status === "error" && <p>Error fetching data</p>}
         {status === "loading" && <Loader />}
         {status === "success" && <ProtectedEventsTable data={data} level={level} />}
