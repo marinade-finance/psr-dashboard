@@ -19,6 +19,10 @@
   transition: color 0.2s ease-in-out;
 }
 
+.bannerShoutout p {
+  margin: 10px 0
+}
+
 .bannerShoutout a:visited {
   color: #6090be;            /* Muted purple-blue for visited links */
 }
