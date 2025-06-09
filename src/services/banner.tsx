@@ -9,7 +9,7 @@ export const getBannerData = (): Props => ({
 We are re-enabling max-stake-wanted, a setting that lets validators cap how much
 stake they want to receive from Marinade. This gives validators more control and
 helps them better manage their bonding needs.  Once most validators have set
-their max-stake-wanted, we plan to relax bonding constraints, allowing more stake
+their max-stake-wanted, we plan to <strong>relax bond constraints</strong>, allowing more stake
 with smaller bonds, even at higher bids.
 </p>
 
