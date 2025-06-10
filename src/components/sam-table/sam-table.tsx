@@ -5,7 +5,7 @@ import { Alignment, Color, OrderDirection, Table } from "../table/table";
 import { formatPercentage, formatSolAmount } from "src/format";
 import { Metric } from "../metric/metric";
 import { AuctionResult, DsSamConfig } from "@marinade.finance/ds-sam-sdk";
-import { selectBid, selectBondSize, selectCommission, selectEffectiveBid, selectConstraintText, selectMaxAPY, selectMevCommission, selectSamDistributedStake, selectSamTargetStake, selectVoteAccount, selectWinningAPY, selectProjectedAPY, selectStakeToMove, selectActiveStake, bondColorState, bondTooltip, selectEffectiveCost, selectSpendRobustReputation, spendRobustReputationTooltip, selectMaxSamStake, maxSamStakeTooltip, selectProductiveStake } from "src/services/sam";
+import { selectBid, selectBondSize, selectCommission, selectEffectiveBid, selectConstraintText, selectMaxAPY, selectMevCommission, selectSamDistributedStake, selectSamTargetStake, selectVoteAccount, selectWinningAPY, selectAuctionAPY, selectProjectedAPY, selectStakeToMove, selectActiveStake, bondColorState, bondTooltip, selectEffectiveCost, selectSpendRobustReputation, spendRobustReputationTooltip, selectMaxSamStake, maxSamStakeTooltip, selectProductiveStake } from "src/services/sam";
 import { tooltipAttributes } from '../../services/utils'
 import { ComplexMetric } from "../complex-metric/complex-metric";
 import { UserLevel } from "../navigation/navigation"
@@ -21,8 +21,10 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
     console.log(auctionResult)
     const { auctionData: { validators } } = auctionResult
     const samDistributedStake = Math.round(selectSamDistributedStake(validators))
+    const samBackstoppedStake = Math.round(auctionResult.auctionData.stakeAmounts.marinadeRemainingSamSol)
     const winningAPY = selectWinningAPY(auctionResult, epochsPerYear)
-    const projectedAPY = selectProjectedAPY(auctionResult, dsSamConfig, epochsPerYear)
+    const auctionAPY = selectAuctionAPY(auctionResult, epochsPerYear)
+    const projectedAPY = selectProjectedAPY(auctionResult, epochsPerYear)
     const stakeToMove = selectStakeToMove(auctionResult) / samDistributedStake
     const activeStake = selectActiveStake(auctionResult) / samDistributedStake
     const productiveStake = selectProductiveStake(auctionResult) / samDistributedStake
@@ -80,12 +82,21 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
         <div className={styles.metricWrap}>
             <Metric 
                 label="Total Auction Stake"
-                value={`☉ ${formatSolAmount(samDistributedStake)}`}
+                value={`☉ ${formatSolAmount(samDistributedStake + samBackstoppedStake)}`}
+                {...tooltipAttributes("How much stake is distributed by Marinade to validators based on SAM")} />
+            <Metric 
+                label="Backstopped Stake"
+                value={`☉ ${formatSolAmount(samBackstoppedStake)}`}
                 {...tooltipAttributes("How much stake is distributed by Marinade to validators based on SAM")} />
             <Metric
                 label="Winning APY"
                 value={`☉ ${formatPercentage(winningAPY)}`}
                 {...tooltipAttributes("Estimated APY of the last validator winning the auction based on ideal count of epochs in the year")}
+            />
+            <Metric
+                label="Auction APY"
+                value={`☉ ${formatPercentage(auctionAPY)}`}
+                {...tooltipAttributes("Estimated APY of the whole auction including backstopped stake")}
             />
             <Metric
                 label="Projected APY"
