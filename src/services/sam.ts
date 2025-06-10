@@ -59,6 +59,8 @@ export const loadSam = async (): Promise<{ auctionResult: AuctionResult, epochsP
         const epochsPerYear = await estimateEpochsPerYear()
         console.log('epochsPerYear', epochsPerYear)
         const config = await loadSamConfig()
+        ;(config as any).maxAuctionToBackstopBidMult = 10
+        ;(config as any).maxBackstopTvlShare = 0.5
         const dsSam = new DsSamSDK({ ...config, inputsSource: InputsSource.APIS, cacheInputs: false })
         const auctionResult = await dsSam.runFinalOnly()
         return { auctionResult, epochsPerYear, dcSamConfig: dsSam.config }
@@ -90,11 +92,30 @@ export const selectSamTargetStake = (validator: AuctionValidator) => validator.a
 export const selectMaxWantedStake = (validator: AuctionValidator) => validator.maxStakeWanted
 export const selectConstraintText = ({ lastCapConstraint }: AuctionValidator) => lastCapConstraint ? `Stake capped by ${lastCapConstraintDescription(lastCapConstraint)} constraint` : 'Stake amount not capped by constraints'
 
-export const selectSamDistributedStake = (validators: AuctionValidator[]) => validators.reduce((sum, validator) => sum + selectSamTargetStake(validator), 0)
+export const selectSamDistributedStake = (validators: AuctionValidator[]) =>
+  validators.reduce((sum, validator) => sum + selectSamTargetStake(validator), 0)
 
-export const selectWinningAPY = (auctionResult: AuctionResult, epochsPerYear: number) => Math.pow(1 + auctionResult.winningTotalPmpe / 1e3, epochsPerYear) - 1
+export const selectWinningAPY = (auctionResult: AuctionResult, epochsPerYear: number) =>
+  Math.pow(1 + auctionResult.winningTotalPmpe / 1e3, epochsPerYear) - 1
 
-export const selectProjectedAPY = (auctionResult: AuctionResult, config: DsSamConfig, epochsPerYear: number) => {
+export const selectAuctionAPY = (auctionResult: AuctionResult, epochsPerYear: number) => {
+  const profit = auctionResult.auctionData.validators.reduce(
+    (acc, entry) => (
+      acc + (
+        entry.revShare.auctionEffectiveBidPmpe * (1 - 0.5)
+          + entry.revShare.inflationPmpe
+          + entry.revShare.mevPmpe
+      ) / 1000 * selectSamTargetStake(entry)
+    ),
+    0
+  )
+  // TODO ... check that the backstop Total Pmpe correctly reflects the fees we charge
+  const backstop = auctionResult.auctionData.stakeAmounts.marinadeRemainingSamSol * (auctionResult as any).backstopTotalPmpe / 1000
+  const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol + auctionResult.auctionData.stakeAmounts.marinadeMndeTvlSol
+  return Math.pow(1 + (profit + backstop) / tvl, epochsPerYear) - 1
+}
+
+export const selectProjectedAPY = (auctionResult: AuctionResult, epochsPerYear: number) => {
   const profit = auctionResult.auctionData.validators.reduce(
     (acc, entry) => (
       acc + (
