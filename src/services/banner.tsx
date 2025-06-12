@@ -5,7 +5,7 @@ export const getBannerData = (): Props => ({
   title: "🚨 Bond requirements are now relaxed 🚨",
   body: <>
 
-<p>You can now bid high with a reasonably sized bond.</p>
+<p>You can now bid high with a reasonably sized bond and still get decent stake delegation.</p>
 
 <p>
 👉 Please set your <strong><u>--max-stake-wanted</u></strong> to benefit from these changes.
