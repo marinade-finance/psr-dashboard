@@ -11,6 +11,6 @@ export type Props = {
 
 export const Banner: React.FC<Props> = ({ title, body, ...tooltipsProps }) => {
     return <div className={styles.bannerShoutout} {...tooltipsProps}>
-      <div><strong>{title}: </strong>{body}</div>
+      <div><strong>{title}</strong>{body}</div>
     </div>
 };
