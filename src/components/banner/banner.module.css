@@ -3,7 +3,7 @@
   background-color: var(--bg-dark-2);
 }
 
-.bannerShoutout div {
+.bannerShoutout > div {
   padding: 20px;
   background-color: var(--bg-dark-3);
   font-size: large;
@@ -19,8 +19,12 @@
   transition: color 0.2s ease-in-out;
 }
 
+.bannerTitle {
+  margin: 0 0 20px 0
+}
+
 .bannerShoutout p {
-  margin: 10px 0
+  margin: 10px 0px
 }
 
 .bannerShoutout a:visited {

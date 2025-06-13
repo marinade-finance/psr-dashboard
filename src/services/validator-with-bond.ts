@@ -11,7 +11,9 @@ export type ValidatorWithBond = {
 
 export const selectProtectedStake = ({ validator, bond }: ValidatorWithBond) =>
   Math.round(Math.min(bond ? selectMaxProtectedStake(bond) : 0, selectTotalMarinadeStake(validator)))
-export const selectMaxStakeWanted = (bond: BondRecord) => bond.max_stake_wanted / 1e9
+
+export const selectMaxStakeWanted = (bond: BondRecord) =>
+  bond.max_stake_wanted / 1e9
 
 export const fetchValidatorsWithBonds = async (): Promise<ValidatorWithBond[]> => {
   const [{ validators }, { bonds }, { auctionResult }] = await Promise.all([fetchValidators(), fetchBonds(), loadSam()])
