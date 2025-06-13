@@ -9,11 +9,11 @@ export const getBannerData = (): Props => ({
 
 <p>
 👉 Please set your <strong><u>--max-stake-wanted</u></strong> to benefit from these changes.
-<br/> Note that you can never request less than 10k SOL from the auction.
+<br/> Note that the minimum amount you can request via the auction is <strong>10,000 SOL</strong>.
 </p>
 
 <p>
-💡 You can review your current setup in the " <a href="/bonds">Validator Bonds</a> " tab.
+💡 You can review your current setup in the <a href="/bonds">Validator Bonds</a> tab.
 </p>
 
 <p>
