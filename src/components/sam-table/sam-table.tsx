@@ -73,6 +73,11 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                 value={`${round(reputationInflationFactor, 1)}`}
                 {...tooltipAttributes("How much do we have to inflate reputation so that our TVL fits into the induced limits")}
             />
+            <Metric
+                label="Projected APY"
+                value={`☉ ${formatPercentage(projectedAPY)}`}
+                {...tooltipAttributes("Estimated APY of currently active stake")}
+            />
         </>
     }
 
@@ -86,11 +91,6 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                 label="Winning APY"
                 value={`☉ ${formatPercentage(winningAPY)}`}
                 {...tooltipAttributes("Estimated APY of the last validator winning the auction based on ideal count of epochs in the year")}
-            />
-            <Metric
-                label="Projected APY"
-                value={`☉ ${formatPercentage(projectedAPY)}`}
-                {...tooltipAttributes("Estimated APY of currently active stake")}
             />
             <ComplexMetric
                 label="Winning Validators"
