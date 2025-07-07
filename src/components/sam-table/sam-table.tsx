@@ -130,6 +130,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                 },
                 { 
                     header: 'Bond [☉]',
+                    headerAttrsFn: () => tooltipAttributes('Bond Balance.'),
                     cellAttrsFn: (validator) => tooltipAttributes(bondTooltip(validator.bondState)),
                     render: (validator) => <>{formatSolAmount(selectBondSize(validator), 0)}</>,
                     compare: (a, b) => selectBondSize(a) - selectBondSize(b),
@@ -137,7 +138,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                 },
                 {
                     header: 'Rep.',
-                    headerAttrsFn: () => tooltipAttributes('Validator Reputation'),
+                    headerAttrsFn: () => tooltipAttributes('Validator Reputation. Not used in the auction at the moment.'),
                     render: (validator) => <>{formatSolAmount(selectSpendRobustReputation(validator), 0)}</>,
                     compare: (a, b) => selectSpendRobustReputation(a) - selectSpendRobustReputation(b),
                     alignment: Alignment.RIGHT,
