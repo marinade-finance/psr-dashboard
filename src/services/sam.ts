@@ -102,7 +102,7 @@ export const selectProjectedAPY = (auctionResult: AuctionResult, config: DsSamCo
   const profit = auctionResult.auctionData.validators.reduce(
     (acc, entry) => (
       acc + (
-        entry.revShare.auctionEffectiveBidPmpe * (1 - 0.5)
+        entry.revShare.auctionEffectiveBidPmpe
           + entry.revShare.inflationPmpe
           + entry.revShare.mevPmpe
       ) * entry.marinadeActivatedStakeSol / 1000
