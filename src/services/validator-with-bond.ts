@@ -1,4 +1,4 @@
-import { BondRecord, fetchBonds, selectMaxProtectedStake } from "./bonds"
+import { BondRecord, fetchBonds, selectEffectiveAmount } from "./bonds"
 import { Validator, fetchValidators, selectTotalMarinadeStake } from "./validators"
 import { loadSam } from "./sam"
 import { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
@@ -9,8 +9,16 @@ export type ValidatorWithBond = {
     bond: BondRecord | null
 }
 
-export const selectProtectedStake = ({ validator, bond }: ValidatorWithBond) =>
-  Math.round(Math.min(bond ? selectMaxProtectedStake(bond) : 0, selectTotalMarinadeStake(validator)))
+export const selectMaxProtectedStake = ({ bond, auction }: ValidatorWithBond) => {
+  const effBondBalance = bond ? selectEffectiveAmount(bond) : 0
+  const participatingTotalBidPmpe = auction
+    ? auction.revShare.inflationPmpe + auction.revShare.mevPmpe + auction.revShare.effParticipatingBidPmpe
+    : Infinity
+  return Math.max(0, effBondBalance / (participatingTotalBidPmpe / 1000))
+}
+
+export const selectProtectedStake = (entry: ValidatorWithBond) =>
+  Math.round(Math.min(entry.bond ? selectMaxProtectedStake(entry) : 0, selectTotalMarinadeStake(entry.validator)))
 
 export const selectMaxStakeWanted = (bond: BondRecord) =>
   bond.max_stake_wanted / 1e9
