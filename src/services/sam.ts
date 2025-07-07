@@ -91,6 +91,7 @@ export const lastCapConstraintDescription = (constraint: AuctionConstraint): str
 
 export const selectVoteAccount = (validator: AuctionValidator) => validator.voteAccount
 export const selectSamTargetStake = (validator: AuctionValidator) => validator.auctionStake.marinadeSamTargetSol
+export const selectSamActiveStake = (validator: AuctionValidator) => validator.marinadeActivatedStakeSol
 export const selectMaxWantedStake = (validator: AuctionValidator) => validator.maxStakeWanted
 export const selectConstraintText = ({ lastCapConstraint }: AuctionValidator) => lastCapConstraint ? `Stake capped by ${lastCapConstraintDescription(lastCapConstraint)} constraint` : 'Stake amount not capped by constraints'
 
@@ -127,7 +128,7 @@ export const selectStakeToMove = (auctionResult: AuctionResult) =>
     0
   )
 
-export const selectActiveStake = (auctionResult: AuctionResult) =>
+export const selectTotalActiveStake = (auctionResult: AuctionResult) =>
   auctionResult.auctionData.validators.reduce(
     (acc, entry) => acc + entry.marinadeActivatedStakeSol,
     0

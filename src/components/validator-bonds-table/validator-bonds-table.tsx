@@ -25,11 +25,28 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
     const totalFundedBonds = data.filter(({ bond }) => (bond ? selectEffectiveAmount(bond) : 0) > 0).length
 
     let expertMetrics
+    let expertColumns: any[] = []
     if (level === UserLevel.Expert) {
         expertMetrics = <>
             <Metric label="Max Protectable Stake" value={formatPercentage(totalMaxProtectedStake / totalMarinadeStake)}
                 {...tooltipAttributes("How much of Marinade's stake can be potentially protected if all bonds in the system are used")} />
         </>
+        expertColumns = [
+            {
+                header: 'Max protected stake [☉]',
+                render: (entry: ValidatorWithBond) => <>{formatSolAmount(selectMaxProtectedStake(entry))}</>,
+                compare: (a: ValidatorWithBond, b: ValidatorWithBond) => selectMaxProtectedStake(a) - selectMaxProtectedStake(b), alignment: Alignment.RIGHT
+            },
+            {
+                header: 'Protected stake [%]',
+                render: (validatorWithBond: ValidatorWithBond) => {
+                    const stake = selectNativeMarinadeStake(validatorWithBond.validator)
+                    return <>{ formatPercentage(stake > 0 ? selectProtectedStake(validatorWithBond) / stake : 0) }</>
+                },
+                compare: (a: ValidatorWithBond, b: ValidatorWithBond) => selectProtectedStake(a) - selectProtectedStake(b),
+                alignment: Alignment.RIGHT
+            },
+        ]
     }
     
     return <div className={styles.tableWrap}>
@@ -52,7 +69,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
                 { header: 'Bond balance [☉]', render: ({ bond }) => <>{formatSolAmount(Number(lamportsToSol(bond?.effective_amount?.toString() ?? '0')))}</>, compare: (a, b) => Number(a.bond?.effective_amount ?? 0) - Number(b.bond?.effective_amount ?? 0), alignment: Alignment.RIGHT },
                 {
                     header: 'Max Stake Wanted [☉]',
-                    headerAttrsFn: () => tooltipAttributes("The max-stake-wanted parameter set up in contract.  If not set up, max stake is not limited."),
+                    headerAttrsFn: () => tooltipAttributes("The max-stake-wanted parameter set up in contract. If not set up, max stake is not limited. The validator won't get more stake than what they set up here. No already delegated stake will be lost by decreasing this setting."),
                     render: ({ bond }) => {
                       const maxStakeWanted = bond ? selectMaxStakeWanted(bond) : 0
                       return <>{ maxStakeWanted > 0 ? formatSolAmount(maxStakeWanted) : '-' }</>
@@ -74,17 +91,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
                     compare: ({ auction: a }, { auction: b }) => a && b ? selectEffectiveBid(a) - selectEffectiveBid(b) : undefined,
                     alignment: Alignment.RIGHT
                 },
-                {
-                    header: 'Protected stake [☉]',
-                    render: (validatorWithBond) => <>{formatSolAmount(selectProtectedStake(validatorWithBond))}</>,
-                    compare: (a, b) => selectProtectedStake(a) - selectProtectedStake(b),
-                    alignment: Alignment.RIGHT
-                },
-                {
-                    header: 'Max protected stake [☉]',
-                    render: (entry) => <>{formatSolAmount(selectMaxProtectedStake(entry))}</>,
-                    compare: (a, b) => selectMaxProtectedStake(a) - selectMaxProtectedStake(b), alignment: Alignment.RIGHT
-                },
+                ...expertColumns
             ]}
             defaultOrder={[
                 [2, OrderDirection.DESC],

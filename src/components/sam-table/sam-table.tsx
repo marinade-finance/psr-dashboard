@@ -5,7 +5,7 @@ import { Alignment, Color, OrderDirection, Table } from "../table/table";
 import { formatPercentage, formatSolAmount } from "src/format";
 import { Metric } from "../metric/metric";
 import { AuctionResult, DsSamConfig } from "@marinade.finance/ds-sam-sdk";
-import { selectBid, selectBondSize, selectCommission, selectEffectiveBid, selectConstraintText, selectMaxAPY, selectMevCommission, selectSamDistributedStake, selectSamTargetStake, selectVoteAccount, selectWinningAPY, selectProjectedAPY, selectStakeToMove, selectActiveStake, bondColorState, bondTooltip, selectEffectiveCost, selectSpendRobustReputation, spendRobustReputationTooltip, selectMaxSamStake, maxSamStakeTooltip, selectProductiveStake } from "src/services/sam";
+import { selectBid, selectBondSize, selectCommission, selectEffectiveBid, selectConstraintText, selectMaxAPY, selectMevCommission, selectSamDistributedStake, selectSamTargetStake, selectVoteAccount, selectWinningAPY, selectProjectedAPY, selectStakeToMove, selectTotalActiveStake, selectSamActiveStake, bondColorState, bondTooltip, selectEffectiveCost, selectSpendRobustReputation, spendRobustReputationTooltip, selectMaxSamStake, maxSamStakeTooltip, selectProductiveStake } from "src/services/sam";
 import { tooltipAttributes } from '../../services/utils'
 import { ComplexMetric } from "../complex-metric/complex-metric";
 import { UserLevel } from "../navigation/navigation"
@@ -25,7 +25,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
     const winningTotalPmpe = auctionResult.winningTotalPmpe
     const projectedAPY = selectProjectedAPY(auctionResult, dsSamConfig, epochsPerYear)
     const stakeToMove = selectStakeToMove(auctionResult) / samDistributedStake
-    const activeStake = selectActiveStake(auctionResult) / samDistributedStake
+    const activeStake = selectTotalActiveStake(auctionResult) / samDistributedStake
     const productiveStake = selectProductiveStake(auctionResult) / samDistributedStake
 
     const validatorsWithBond = validators.filter((validator) => selectBondSize(validator) > 0).map((v) => {
@@ -151,7 +151,15 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                     alignment: Alignment.RIGHT
                 },
                 { 
-                    header: 'SAM Stake [☉]',
+                    header: 'SAM Active [☉]',
+                    headerAttrsFn: () => tooltipAttributes("The currently active stake delegated by SAM."),
+                    render: (validator) => <>{formatSolAmount(selectSamActiveStake(validator), 0)}</>,
+                    compare: (a, b) => selectSamActiveStake(a) - selectSamActiveStake(b),
+                    alignment: Alignment.RIGHT
+                },
+                { 
+                    header: 'SAM Target [☉]',
+                    headerAttrsFn: () => tooltipAttributes("The target stake to be received based off the auction."),
                     cellAttrsFn: (validator) => tooltipAttributes(selectConstraintText(validator)),
                     render: (validator) => <>{formatSolAmount(selectSamTargetStake(validator), 0)}</>,
                     compare: (a, b) => selectSamTargetStake(a) - selectSamTargetStake(b),
