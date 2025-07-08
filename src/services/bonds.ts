@@ -15,7 +15,6 @@ export type BondRecord = {
 }
 
 export const selectEffectiveAmount = (bond: BondRecord) => Number(lamportsToSol(bond.effective_amount.toString()))
-export const selectMaxProtectedStake = (bond: BondRecord) => Math.round(selectEffectiveAmount(bond) * 10_000)
 
 export type BondsResponse = {
     bonds: BondRecord[]
