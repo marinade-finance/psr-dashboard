@@ -23,10 +23,10 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
     const samDistributedStake = Math.round(selectSamDistributedStake(validators))
     const winningAPY = selectWinningAPY(auctionResult, epochsPerYear)
     const winningTotalPmpe = auctionResult.winningTotalPmpe
+    const projectedApy = selectProjectedAPY(auctionResult, dsSamConfig, epochsPerYear)
     const stakeToMove = selectStakeToMove(auctionResult) / samDistributedStake
     const activeStake = selectTotalActiveStake(auctionResult) / samDistributedStake
     const productiveStake = selectProductiveStake(auctionResult) / samDistributedStake
-    const projectedApy = selectProjectedAPY(auctionResult, dsSamConfig, epochsPerYear)
 
     const validatorsWithBond = validators.filter((validator) => selectBondSize(validator) > 0).map((v) => {
         return {

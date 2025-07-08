@@ -17,6 +17,6 @@ export const ValidatorBondsPage: React.FC<UserLevelProps> = ({level}) => {
         <Banner {...getBannerData()} />
         {status === "error" && <p>Error fetching data</p>}
         {status === "loading" && <Loader />}
-        {status === "success" && <ValidatorBondsTable data={data.filter(({ validator, bond}) => selectTotalMarinadeStake(validator) > 0 || Number(bond?.effective_amount) > 0)} level={level} />}
+        {status === "success" && <ValidatorBondsTable data={data.filter(({ validator, bond }) => selectTotalMarinadeStake(validator) > 0 || Number(bond?.effective_amount) > 0)} level={level} />}
     </div>
 };
