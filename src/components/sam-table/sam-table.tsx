@@ -23,7 +23,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
     const samDistributedStake = Math.round(selectSamDistributedStake(validators))
     const winningAPY = selectWinningAPY(auctionResult, epochsPerYear)
     const winningTotalPmpe = auctionResult.winningTotalPmpe
-    const projectedAPY = selectProjectedAPY(auctionResult, dsSamConfig, epochsPerYear)
+    const projectedApy = selectProjectedAPY(auctionResult, dsSamConfig, epochsPerYear)
     const stakeToMove = selectStakeToMove(auctionResult) / samDistributedStake
     const activeStake = selectTotalActiveStake(auctionResult) / samDistributedStake
     const productiveStake = selectProductiveStake(auctionResult) / samDistributedStake
@@ -47,6 +47,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
     )
 
     let expertMetrics
+    let apyMetrics
     if (level === UserLevel.Expert) {
         expertMetrics = <>
             <Metric
@@ -75,6 +76,21 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                 {...tooltipAttributes("How much do we have to inflate reputation so that our TVL fits into the induced limits")}
             />
         </>
+        apyMetrics = <>
+            <Metric
+                label="Ideal APY"
+                value={`☉ ${formatPercentage(projectedApy / activeStake)}`}
+                {...tooltipAttributes("Estimated APY of currently active stake; assumes no Marinade fees; assumes all distributed stake is active")}
+            />
+        </>
+    } else {
+        apyMetrics = <>
+            <Metric
+                label="Projected APY"
+                value={`☉ ${formatPercentage(projectedApy)}`}
+                {...tooltipAttributes("Estimated APY of currently active stake; assumes no Marinade fees")}
+            />
+        </>
     }
 
     return <div className={styles.tableWrap}>
@@ -86,13 +102,9 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
             <Metric
                 label="Winning APY"
                 value={`☉ ${formatPercentage(winningAPY)}`}
-                {...tooltipAttributes("Estimated APY of the last validator winning the auction based on ideal count of epochs in the year; not decreased by Marinade fees")}
+                {...tooltipAttributes("Estimated APY of the last validator winning the auction based on ideal count of epochs in the year; assumes no Marinade fees")}
             />
-            <Metric
-                label="Projected APY"
-                value={`☉ ${formatPercentage(projectedAPY)}`}
-                {...tooltipAttributes("Estimated APY of currently active stake; not decreased by Marinade fees")}
-            />
+            <>{ apyMetrics }</>
             <ComplexMetric
                 label="Winning Validators"
                 value={<div><span>{samStakeValidators.length}</span> / <span>{validatorsWithBond.length}</span></div>}
@@ -173,14 +185,6 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                     compare: (a, b) => selectEffectiveBid(a) - selectEffectiveBid(b),
                     alignment: Alignment.RIGHT
                 },
-                // {
-                //     header: 'Fut. Max SAM Stake [☉]',
-                //     headerAttrsFn: () => tooltipAttributes('The maximum attainable stake once the Reputation Limits come into effect'),
-                //     render: (validator) => <>{formatSolAmount(selectMaxSamStake(validator), 0)}</>,
-                //     compare: (a, b) => selectMaxSamStake(a) - selectMaxSamStake(b),
-                //     alignment: Alignment.RIGHT,
-                //     cellAttrsFn: (validator) => tooltipAttributes(maxSamStakeTooltip(validator, {maxTvlDelegation, minBondBalanceSol: dsSamConfig.minBondBalanceSol}))
-                // },
             ]}
             defaultOrder={[
                 [6, OrderDirection.DESC],
