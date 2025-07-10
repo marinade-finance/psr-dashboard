@@ -16,6 +16,6 @@ You must still win stake through the auction to receive matching.
 Up to 0.4% of Marinade TVL can be matched per validator.
 </p>
 
-Learn more in the <a href="https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market#stake-matching">docs</a>.
+Learn more in the <a href="https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market#stake-matching" target="_blank">docs</a>.
 </>,
 })
