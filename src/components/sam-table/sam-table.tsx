@@ -136,7 +136,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                 {
                     header: 'Bid',
                     cellAttrsFn: () => tooltipAttributes("Maximum bid for 1000 SOL set by the validator."),
-                    render: (validator) => <>{round(selectBid(validator), 2)}</>,
+                    render: (validator) => <>{round(selectBid(validator), 3)}</>,
                     compare: (a, b) => selectBid(a) - selectBid(b),
                     alignment: Alignment.RIGHT
                 },
