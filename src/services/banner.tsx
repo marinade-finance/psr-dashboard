@@ -15,6 +15,5 @@ Now their stake is getting re-distributed towards honest validators.
 <p>
 🧠 Make sure to top-up your bond to <strong>receive part of the re-distributed stake</strong>.
 </p>
-
 </>,
 })
