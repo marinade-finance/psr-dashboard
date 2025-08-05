@@ -84,13 +84,15 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
             />
         </>
     } else {
-        apyMetrics = <>
-            <Metric
-                label="Projected APY"
-                value={`☉ ${formatPercentage(projectedApy)}`}
-                {...tooltipAttributes("Estimated APY of currently active stake; assumes no Marinade fees")}
-            />
-        </>
+        if (activeStake > 0.9) {
+            apyMetrics = <>
+                <Metric
+                    label="Projected APY"
+                    value={`☉ ${formatPercentage(projectedApy)}`}
+                    {...tooltipAttributes("Estimated APY of currently active stake; assumes no Marinade fees")}
+                />
+            </>
+        }
     }
 
     return <div className={styles.tableWrap}>
