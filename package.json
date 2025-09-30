@@ -40,9 +40,11 @@
   "dependencies": {
     "@marinade.finance/ds-sam-sdk": "github:marinade-finance/ds-sam#path:/packages/ds-sam-sdk",
     "@types/lodash.round": "^4.0.9",
+    "@types/react-gtm-module": "^2.0.4",
     "lodash.round": "^4.0.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-gtm-module": "^2.0.11",
     "react-query": "^3.39.3",
     "react-tooltip": "^5.26.3"
   },

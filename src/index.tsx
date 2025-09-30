@@ -13,6 +13,13 @@ import { Tooltip } from "react-tooltip";
 import 'react-tooltip/dist/react-tooltip.css'
 import { UserLevel } from "./components/navigation/navigation";
 import { SamPage } from "./pages/sam";
+import TagManager from 'react-gtm-module'
+
+const tagManagerArgs = {
+  gtmId: 'GTM-TTZLQF7'
+}
+
+TagManager.initialize(tagManagerArgs)
 
 const ErrorPage = () => {
     const error: any = useRouteError();
