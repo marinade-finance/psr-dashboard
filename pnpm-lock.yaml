@@ -14,6 +14,9 @@ importers:
       '@types/lodash.round':
         specifier: ^4.0.9
         version: 4.0.9
+      '@types/react-gtm-module':
+        specifier: ^2.0.4
+        version: 2.0.4
       lodash.round:
         specifier: ^4.0.4
         version: 4.0.4
@@ -23,6 +26,9 @@ importers:
       react-dom:
         specifier: ^18.2.0
         version: 18.2.0(react@18.2.0)
+      react-gtm-module:
+        specifier: ^2.0.11
+        version: 2.0.11
       react-query:
         specifier: ^3.39.3
         version: 3.39.3(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
@@ -575,6 +581,9 @@ packages:
 
   '@types/react-dom@18.0.11':
     resolution: {integrity: sha512-O38bPbI2CWtgw/OoQoY+BRelw7uysmXbWvw3nLWO21H1HSh+GOlqPuXshJfjmpNlKiiSDG9cc1JZAaMmVdcTlw==}
+
+  '@types/react-gtm-module@2.0.4':
+    resolution: {integrity: sha512-5wPMWsUE5AI6O0B0K1/zbs0rFHBKu+7NWXQwDXhqvA12ooLD6W1AYiWZqR4UiOd7ixZDV1H5Ys301zEsqyIfNg==}
 
   '@types/react@18.0.38':
     resolution: {integrity: sha512-ExsidLLSzYj4cvaQjGnQCk4HFfVT9+EZ9XZsQ8Hsrcn8QNgXtpZ3m9vSIC2MWtx7jHictK6wYhQgGh6ic58oOw==}
@@ -2365,6 +2374,9 @@ packages:
     peerDependencies:
       react: ^18.2.0
 
+  react-gtm-module@2.0.11:
+    resolution: {integrity: sha512-8gyj4TTxeP7eEyc2QKawEuQoAZdjKvMY4pgWfycGmqGByhs17fR+zEBs0JUDq4US/l+vbTl+6zvUIx27iDo/Vw==}
+
   react-is@18.2.0:
     resolution: {integrity: sha512-xWGDIW6x921xtzPkhiULtthJHoJvBbF3q26fzloPCK0hsvxtPVelvftw3zjbHWSkR2km9Z+4uxbDDK/6Zw9B8w==}
 
@@ -3649,6 +3661,8 @@ snapshots:
   '@types/react-dom@18.0.11':
     dependencies:
       '@types/react': 18.0.38
+
+  '@types/react-gtm-module@2.0.4': {}
 
   '@types/react@18.0.38':
     dependencies:
@@ -5697,6 +5711,8 @@ snapshots:
       loose-envify: 1.4.0
       react: 18.2.0
       scheduler: 0.23.0
+
+  react-gtm-module@2.0.11: {}
 
   react-is@18.2.0: {}
 
