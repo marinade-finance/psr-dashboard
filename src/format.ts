@@ -1,7 +1,11 @@
 import round from 'lodash.round'
 
 export const formatSolAmount = (amount: number, digits = 2) =>
-  round(amount, digits).toLocaleString()
+  round(amount, digits).toLocaleString(undefined, {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits
+  })
+
 
 export const formatPercentageString = (amount: number, fractionDigits: number = 2): string => {
   const x = round(100 * amount, fractionDigits)
