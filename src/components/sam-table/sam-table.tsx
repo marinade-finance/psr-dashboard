@@ -138,7 +138,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                 {
                     header: 'Bid',
                     cellAttrsFn: () => tooltipAttributes("Maximum bid for 1000 SOL set by the validator."),
-                    render: (validator) => <>{round(selectBid(validator), 3)}</>,
+                    render: (validator) => <>{formatSolAmount(selectBid(validator), 4)}</>,
                     compare: (a, b) => selectBid(a) - selectBid(b),
                     alignment: Alignment.RIGHT
                 },
@@ -183,7 +183,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                 {
                     header: 'Eff. Bid [☉]',
                     headerAttrsFn: () => tooltipAttributes("Bid for 1000 SOL that the validator would be paying based on the current Auction Winning APY. It is also the minimal bid the Validator has to pay in order to not get penalized for decreasing their bid."),
-                    render: (validator) => <>{round(selectEffectiveBid(validator), 4)}</>,
+                    render: (validator) => <>{formatSolAmount(selectEffectiveBid(validator), 4)}</>,
                     compare: (a, b) => selectEffectiveBid(a) - selectEffectiveBid(b),
                     alignment: Alignment.RIGHT
                 },
