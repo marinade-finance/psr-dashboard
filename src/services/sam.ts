@@ -49,9 +49,13 @@ const estimateEpochsPerYear = async () => {
 }
 
 const loadSamConfig = async (): Promise<DsSamConfig> => {
-    const url = 'https://raw.githubusercontent.com/marinade-finance/ds-sam-pipeline/main/auction-config.json'
+    const url = 'https://thru.marinade.finance/marinade-finance/ds-sam-pipeline/main/auction-config.json'
     const response = await fetch(url)
-    return response.json()
+    const dataJson = (await response.json()) as DsSamConfig
+    // Use Marinade proxy cache to bypass GitHub raw URL rate limits
+    dataJson.blacklistApiBaseUrl = 'https://thru.marinade.finance/marinade-finance/delegation-strategy-2/master'
+    dataJson.overridesApiBaseUrl = 'https://thru.marinade.finance/marinade-finance/ds-sam-pipeline/main/epochs'
+    return dataJson
 }
 
 export const loadSam = async (): Promise<{ auctionResult: AuctionResult, epochsPerYear: number, dcSamConfig: DsSamConfig }> => {
