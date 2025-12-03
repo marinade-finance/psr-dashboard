@@ -10,7 +10,7 @@ importers:
     dependencies:
       '@marinade.finance/ds-sam-sdk':
         specifier: github:marinade-finance/ds-sam#path:/packages/ds-sam-sdk
-        version: https://codeload.github.com/marinade-finance/ds-sam/tar.gz/5a27ba580aec6fdd4e825932dea62c8d396bc30b#path:/packages/ds-sam-sdk
+        version: https://codeload.github.com/marinade-finance/ds-sam/tar.gz/8a617fda5c73f709a9ca8b49a17b803e9b550f07#path:/packages/ds-sam-sdk
       '@types/lodash.round':
         specifier: ^4.0.9
         version: 4.0.9
@@ -439,8 +439,8 @@ packages:
   '@leichtgewicht/ip-codec@2.0.5':
     resolution: {integrity: sha512-Vo+PSpZG2/fmgmiNzYK9qWRh8h/CHrwD0mo1h1DzL4yzHNSfWYujGTYsWGreD000gcgmZ7K4Ys6Tx9TxtsKdDw==}
 
-  '@marinade.finance/ds-sam-sdk@https://codeload.github.com/marinade-finance/ds-sam/tar.gz/5a27ba580aec6fdd4e825932dea62c8d396bc30b#path:/packages/ds-sam-sdk':
-    resolution: {path: /packages/ds-sam-sdk, tarball: https://codeload.github.com/marinade-finance/ds-sam/tar.gz/5a27ba580aec6fdd4e825932dea62c8d396bc30b}
+  '@marinade.finance/ds-sam-sdk@https://codeload.github.com/marinade-finance/ds-sam/tar.gz/8a617fda5c73f709a9ca8b49a17b803e9b550f07#path:/packages/ds-sam-sdk':
+    resolution: {path: /packages/ds-sam-sdk, tarball: https://codeload.github.com/marinade-finance/ds-sam/tar.gz/8a617fda5c73f709a9ca8b49a17b803e9b550f07}
     version: 0.0.35
 
   '@nodelib/fs.scandir@2.1.5':
@@ -3498,7 +3498,7 @@ snapshots:
 
   '@leichtgewicht/ip-codec@2.0.5': {}
 
-  '@marinade.finance/ds-sam-sdk@https://codeload.github.com/marinade-finance/ds-sam/tar.gz/5a27ba580aec6fdd4e825932dea62c8d396bc30b#path:/packages/ds-sam-sdk':
+  '@marinade.finance/ds-sam-sdk@https://codeload.github.com/marinade-finance/ds-sam/tar.gz/8a617fda5c73f709a9ca8b49a17b803e9b550f07#path:/packages/ds-sam-sdk':
     dependencies:
       axios: 1.9.0
       decimal.js: 10.4.3

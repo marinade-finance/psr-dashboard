@@ -20,5 +20,12 @@ export const formatPercentage = (amount: number, fractionDigits: number = 2, max
   return formatPercentageString(amount, fractionDigits)
 }
 
+export const formatUndefinedPercentage = (amount?: number, fractionDigits: number = 2, maxValue: number = 1e18): string => {
+  if (amount == null) {
+    return '-'
+  }
+  return formatPercentage(amount, fractionDigits, maxValue)
+}
+
 export const lamportsToSol = (lamports: string) =>
   lamports.padStart(10, '0').replace(/(.{9})$/, '.$1')

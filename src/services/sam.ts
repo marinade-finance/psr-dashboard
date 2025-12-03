@@ -10,6 +10,7 @@ import {
 } from '@marinade.finance/ds-sam-sdk'
 import { fetchValidatorsWithEpochs } from './validators'
 import { Color } from 'src/components/table/table'
+import { formatPercentage } from 'src/format'
 
 const estimateEpochsPerYear = async () => {
     const FETCHED_EPOCHS = 11
@@ -149,11 +150,49 @@ export const selectProductiveStake = (auctionResult: AuctionResult) =>
 
 export const selectBid = (validator: AuctionValidator) => validator.revShare.bidPmpe
 
-export const selectCommission = (validator: AuctionValidator) =>
+export const selectCommission = (validator: AuctionValidator): number =>
   validator.inflationCommissionDec
+
+export const selectFormattedInBondCommission = (validator: AuctionValidator): string => {
+  const inBondCommission = validator.values?.commissions?.inflationCommissionInBondDec
+  return inBondCommission == null ? '-' : formatPercentage(inBondCommission, 0)
+}
+
+export const formattedOnChainCommission = (validator: AuctionValidator): string => {
+  const onChainCommission = validator.values?.commissions?.inflationCommissionOnchainDec || selectCommission(validator)
+  return onChainCommission == null ? '-' : formatPercentage(onChainCommission, 0)
+}
 
 export const selectMevCommission = (validator: AuctionValidator): number | null =>
   validator.mevCommissionDec
+
+export const formattedMevCommission = (validator: AuctionValidator): string => {
+  const mevCommission = selectMevCommission(validator)
+  return mevCommission == null ? '-' : formatPercentage(mevCommission, 0)
+}
+
+export const formattedInBondMevCommission = (validator: AuctionValidator): string => {
+  const inBondMevCommission = validator.values?.commissions?.mevCommissionInBondDec
+  return inBondMevCommission == null ? '-' : formatPercentage(inBondMevCommission, 0)
+}
+
+export const formattedOnChainMevCommission = (validator: AuctionValidator): string => {
+  const onChainMevCommission = validator.values?.commissions?.mevCommissionOnchainDec || selectMevCommission(validator)
+  return onChainMevCommission == null ? '-' : formatPercentage(onChainMevCommission, 0)
+}
+
+export const selectBlockRewardsCommission = (validator: AuctionValidator): number | null =>
+  validator.blockRewardsCommissionDec
+
+export const formattedBlockRewardsCommission = (validator: AuctionValidator): string => {
+  const blockRewardsCommission = selectBlockRewardsCommission(validator)
+  return blockRewardsCommission == null ? formatPercentage(1, 0) : formatPercentage(blockRewardsCommission, 0)
+}
+
+export const formattedInBondBlockRewardsCommission = (validator: AuctionValidator): string => {
+  const inBondBlockRewardsCommission = validator.values?.commissions?.blockRewardsCommissionInBondDec
+  return inBondBlockRewardsCommission == null ? '-' : formatPercentage(inBondBlockRewardsCommission, 0)
+}
 
 export const selectBondSize = (validator: AuctionValidator) => validator.bondBalanceSol
 
@@ -182,14 +221,14 @@ export const selectMaxSpendRobustDelegation = (validator: AuctionValidator): num
 }
 
 
-export const bondColorState = (validator: AuctionValidator): Color => {
+export const bondColorState = (validator: AuctionValidator, bondObligationSafetyMult?: number): Color => {
     const stake = validator.auctionStake.marinadeSamTargetSol
     if (!stake) {
         return undefined
     }
 
-    const bondReqTwoEpochs = bondBalanceRequiredForXEpochs(stake, validator, 2)
-    const bondReqOneEpoch = bondBalanceRequiredForXEpochs(stake, validator, 1)
+    const bondReqTwoEpochs = bondBalanceRequiredForXEpochs(stake, validator, 2, bondObligationSafetyMult)
+    const bondReqOneEpoch = bondBalanceRequiredForXEpochs(stake, validator, 1, bondObligationSafetyMult)
     if (validator.bondBalanceSol > bondReqTwoEpochs) {
         return Color.GREEN
     } else if (validator.bondBalanceSol <= bondReqTwoEpochs && validator.bondBalanceSol > bondReqOneEpoch) {
