@@ -12,6 +12,9 @@ export type BondRecord = {
     max_stake_wanted: number,
     remaining_witdraw_request_amount: number,
     remainining_settlement_claim_amount: number,
+    inflation_commission_bps?: number,
+    mev_commission_bps?: number,
+    block_commission_bps?: number
 }
 
 export const selectEffectiveAmount = (bond: BondRecord) => Number(lamportsToSol(bond.effective_amount.toString()))
