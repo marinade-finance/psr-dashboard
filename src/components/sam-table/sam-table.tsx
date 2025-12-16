@@ -240,8 +240,8 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                 },
             ]}
             defaultOrder={[
-                [6, OrderDirection.DESC],
-                [4, OrderDirection.DESC],
+                [7, OrderDirection.DESC],
+                [5, OrderDirection.DESC],
             ]}
             showRowNumber={true} />
     </div>
