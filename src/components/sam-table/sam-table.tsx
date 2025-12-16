@@ -182,7 +182,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                     header: 'St. Bid',
                     headerAttrsFn: () => tooltipAttributes('Static bid for 1000 SOL set by the validator in Bond configuration.'),
                     cellAttrsFn: () => tooltipAttributes("Maximum bid for 1000 SOL."),
-                    render: (validator) => <>{round(selectBid(validator), 3)}</>,
+                    render: (validator) => <>{formatSolAmount(selectBid(validator), 4)}</>,
                     compare: (a, b) => selectBid(a) - selectBid(b),
                     alignment: Alignment.RIGHT
                 },
@@ -234,7 +234,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                         "It is not the actual amount the validator will pay from the bond, as that depends on the real stake delegated to the validator for the static bid, " +
                         "and on the rewards earned in the previous epoch for the commission configuration."
                     ),
-                    render: (validator) => <>{round(selectEffectiveBid(validator), 4)}</>,
+                    render: (validator) => <>{formatSolAmount(selectEffectiveBid(validator), 4)}</>,
                     compare: (a, b) => selectEffectiveBid(a) - selectEffectiveBid(b),
                     alignment: Alignment.RIGHT
                 },
