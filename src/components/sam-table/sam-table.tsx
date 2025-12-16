@@ -151,7 +151,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                     compare: (a, b) => selectVoteAccount(a).localeCompare(selectVoteAccount(b)) 
                 },
                 { 
-                    header: 'Comm.',
+                    header: 'Infl.',
                     headerAttrsFn: () => tooltipAttributes('Validator Inflation Commission'),
                     cellAttrsFn: (validator) => tooltipAttributes(
                         `On chain commission: ${formattedOnChainCommission(validator)}<br/>` +
@@ -240,8 +240,8 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                 },
             ]}
             defaultOrder={[
-                [6, OrderDirection.DESC],
-                [4, OrderDirection.DESC],
+                [7, OrderDirection.DESC],
+                [5, OrderDirection.DESC],
             ]}
             showRowNumber={true} />
     </div>
