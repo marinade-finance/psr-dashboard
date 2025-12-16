@@ -151,7 +151,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                     compare: (a, b) => selectVoteAccount(a).localeCompare(selectVoteAccount(b)) 
                 },
                 { 
-                    header: 'Infl. Comm.',
+                    header: 'Infl.',
                     headerAttrsFn: () => tooltipAttributes('Validator Inflation Commission'),
                     cellAttrsFn: (validator) => tooltipAttributes(
                         `On chain commission: ${formattedOnChainCommission(validator)}<br/>` +
