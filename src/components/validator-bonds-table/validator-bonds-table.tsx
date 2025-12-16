@@ -1,9 +1,9 @@
 import round from 'lodash.round'
 import { UserLevel } from "src/components/navigation/navigation";
-import React, { useEffect, useMemo, useState } from "react";
+import React from "react";
 import styles from './validator-bonds-table.module.css'
 import { Alignment, OrderDirection, Table } from "../table/table";
-import { formatPercentage, formatSolAmount, lamportsToSol } from "src/format";
+import { formatPercentage, formatSolAmount, formatUndefinedPercentage as formatUndefPercentage, lamportsToSol } from "src/format";
 import { ValidatorWithBond, selectProtectedStake, selectMaxStakeWanted, selectMaxProtectedStake } from "src/services/validator-with-bond";
 import { selectLiquidMarinadeStake, selectName, selectNativeMarinadeStake, selectTotalMarinadeStake, selectVoteAccount } from "src/services/validators";
 import { selectEffectiveBid, selectEffectiveCost } from "src/services/sam";
@@ -64,7 +64,12 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
         <Table
             data={data}
             columns={[
-                { header: 'Validator', render: ({ validator }) => <span className={styles.pubkey}>{selectVoteAccount(validator)}</span>, compare: (a, b) => selectVoteAccount(a.validator).localeCompare(selectVoteAccount(b.validator)) },
+                {
+                    header: 'Validator',
+                    headerAttrsFn: () => tooltipAttributes('Validator Vote Account'),
+                    render: ({ validator }) => <span className={styles.pubkey}>{selectVoteAccount(validator)}</span>,
+                    compare: (a, b) => selectVoteAccount(a.validator).localeCompare(selectVoteAccount(b.validator))
+                },
                 { header: 'Name', render: ({ validator }) => <span className={styles.pubkey}>{selectName(validator)}</span>, compare: (a, b) => selectName(a.validator).localeCompare(selectName(b.validator)) },
                 { header: 'Bond balance [☉]', render: ({ bond }) => <>{formatSolAmount(Number(lamportsToSol(bond?.effective_amount?.toString() ?? '0')))}</>, compare: (a, b) => Number(a.bond?.effective_amount ?? 0) - Number(b.bond?.effective_amount ?? 0), alignment: Alignment.RIGHT },
                 {
@@ -78,6 +83,22 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
                     alignment: Alignment.RIGHT
                 },
                 {
+                    header: 'Bond Comm.',
+                    headerAttrsFn: () => tooltipAttributes(
+                        "Current commission settings in the bond configuration. If the configured commission is lower " + 
+                        "than the on-chain commission, the difference is drawn from the funded bond.<br/>" +
+                        "Ordered by in-bond inflation commission."
+                    ),
+                    cellAttrsFn: ({bond}) => tooltipAttributes(
+                        `Inflation commission: ${formatUndefPercentage(bond?.inflation_commission_bps)}<br/>` + 
+                        `MEV commission: ${formatUndefPercentage(bond?.mev_commission_bps)}<br/>` + 
+                        `Block rewards commission: ${formatUndefPercentage(bond?.block_commission_bps)}`
+                    ),
+                    render: ({bond}) => <>{formatUndefPercentage(bond?.inflation_commission_bps)} / {formatUndefPercentage(bond?.mev_commission_bps)} / {formatUndefPercentage(bond?.block_commission_bps)} </>,
+                    compare: ({ bond: a }, { bond: b }) => a?.inflation_commission_bps && b?.inflation_commission_bps ? a.inflation_commission_bps - b.inflation_commission_bps : undefined,
+                    alignment: Alignment.RIGHT
+                },
+                {
                     header: 'Marinade stake [☉]',
                     render: ({ validator }) => <span {...tooltipAttributes(`Native: ${formatSolAmount(selectNativeMarinadeStake(validator))}, Liquid: ${formatSolAmount(selectLiquidMarinadeStake(validator))}`)}>{formatSolAmount(selectTotalMarinadeStake(validator))}</span>,
                     compare: (a, b) => selectTotalMarinadeStake(a.validator) - selectTotalMarinadeStake(b.validator),
@@ -85,8 +106,11 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
                 },
                 {
                     header: 'Eff. Cost [☉]',
-                    headerAttrsFn: () => tooltipAttributes("Total cost per epoch for the SAM stake that this validator received.  (sorts by Eff. Bid)"),
-                    cellAttrsFn: () => tooltipAttributes("Total cost per epoch for the SAM stake that this validator received."),
+                    headerAttrsFn: () => tooltipAttributes("Estimated total cost per epoch for the SAM stake that this validator received. " +
+                        "This estimation does not consider the commission bidding never claims more than the real rewards earned in the epoch. " +
+                        "And the potential penalties for rapid bid changes. (sorts by Eff. Bid)"
+                    ),
+                    cellAttrsFn: () => tooltipAttributes("Assumed cost per epoch for the SAM stake that this validator received."),
                     render: ({ auction }) => <>{auction ? round(selectEffectiveCost(auction), 1) : '-'}</>,
                     compare: ({ auction: a }, { auction: b }) => a && b ? selectEffectiveBid(a) - selectEffectiveBid(b) : undefined,
                     alignment: Alignment.RIGHT

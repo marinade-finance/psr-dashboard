@@ -1,11 +1,39 @@
 import round from 'lodash.round'
 import React from "react";
 import styles from './sam-table.module.css'
-import { Alignment, Color, OrderDirection, Table } from "../table/table";
+import { Alignment, OrderDirection, Table } from "../table/table";
 import { formatPercentage, formatSolAmount } from "src/format";
 import { Metric } from "../metric/metric";
 import { AuctionResult, DsSamConfig } from "@marinade.finance/ds-sam-sdk";
-import { selectBid, selectBondSize, selectCommission, selectEffectiveBid, selectConstraintText, selectMaxAPY, selectMevCommission, selectSamDistributedStake, selectSamTargetStake, selectVoteAccount, selectWinningAPY, selectProjectedAPY, selectStakeToMove, selectTotalActiveStake, selectSamActiveStake, bondColorState, bondTooltip, selectEffectiveCost, selectSpendRobustReputation, spendRobustReputationTooltip, selectMaxSamStake, maxSamStakeTooltip, selectProductiveStake } from "src/services/sam";
+import { 
+    selectBid,
+    selectBondSize,
+    selectCommission,
+    selectEffectiveBid,
+    selectConstraintText,
+    selectMaxAPY,
+    selectMevCommission,
+    selectSamDistributedStake,
+    selectSamTargetStake,
+    selectVoteAccount,
+    selectWinningAPY,
+    selectProjectedAPY,
+    selectStakeToMove,
+    selectTotalActiveStake,
+    selectSamActiveStake,
+    bondColorState,
+    bondTooltip, 
+    selectSpendRobustReputation,
+    spendRobustReputationTooltip,
+    selectProductiveStake,
+    selectBlockRewardsCommission,
+    formattedMevCommission,
+    formattedBlockRewardsCommission,
+    selectFormattedInBondCommission as formattedInBondCommission,
+    formattedOnChainMevCommission,
+    formattedInBondMevCommission,
+    formattedOnChainCommission
+} from "src/services/sam";
 import { tooltipAttributes } from '../../services/utils'
 import { ComplexMetric } from "../complex-metric/complex-metric";
 import { UserLevel } from "../navigation/navigation"
@@ -22,8 +50,8 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
     const { auctionData: { validators } } = auctionResult
     const samDistributedStake = Math.round(selectSamDistributedStake(validators))
     const winningAPY = selectWinningAPY(auctionResult, epochsPerYear)
-    const winningTotalPmpe = auctionResult.winningTotalPmpe
     const projectedApy = selectProjectedAPY(auctionResult, dsSamConfig, epochsPerYear)
+    const bondObligationSafetyMult = dsSamConfig.bondObligationSafetyMult
     const stakeToMove = selectStakeToMove(auctionResult) / samDistributedStake
     const activeStake = selectTotalActiveStake(auctionResult) / samDistributedStake
     const productiveStake = selectProductiveStake(auctionResult) / samDistributedStake
@@ -31,12 +59,11 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
     const validatorsWithBond = validators.filter((validator) => selectBondSize(validator) > 0).map((v) => {
         return {
             ...v,
-            bondState: bondColorState(v)
+            bondState: bondColorState(v, bondObligationSafetyMult)
         }
     })
 
     const samStakeValidators = validatorsWithBond.filter((v) => v.auctionStake.marinadeSamTargetSol)
-    const maxTvlDelegation = dsSamConfig.maxMarinadeTvlSharePerValidatorDec * samDistributedStake
     const avgStake = (
         samStakeValidators.reduce((agg, v) => agg + v.auctionStake.marinadeSamTargetSol, 0)
         / samStakeValidators.length
@@ -119,25 +146,42 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
             columns={[
                 { 
                     header: 'Validator', 
+                    headerAttrsFn: () => tooltipAttributes('Validator Vote Account'),
                     render: (validator) => <span className={styles.pubkey}>{selectVoteAccount(validator)}</span>,
                     compare: (a, b) => selectVoteAccount(a).localeCompare(selectVoteAccount(b)) 
                 },
                 { 
                     header: 'Comm.',
-                    headerAttrsFn: () => tooltipAttributes('Validator Commission'),
+                    headerAttrsFn: () => tooltipAttributes('Validator Inflation Commission'),
+                    cellAttrsFn: (validator) => tooltipAttributes(
+                        `On chain commission: ${formattedOnChainCommission(validator)}<br/>` +
+                        `In-bond commission: ${formattedInBondCommission(validator)}`
+                    ),
                     render: (validator) => <>{formatPercentage(selectCommission(validator), 0)}</>,
                     compare: (a, b) => selectCommission(a) - selectCommission(b),
                     alignment: Alignment.RIGHT 
                 },
                 { 
                     header: 'MEV',
-                    render: (validator) => <>{selectMevCommission(validator) === null ? '-' : formatPercentage(selectMevCommission(validator), 0)}</>,
+                    cellAttrsFn: (validator) => tooltipAttributes(
+                        `On chain commission: ${formattedOnChainMevCommission(validator)}<br/>` + 
+                        `In-bond commission: ${formattedInBondMevCommission(validator)}`
+                    ),
+                    render: (validator) => <>{formattedMevCommission(validator)}</>,
                     compare: (a, b) => (selectMevCommission(a) ?? 100) - (selectMevCommission(b) ?? 100),
                     alignment: Alignment.RIGHT
                 },
+                { 
+                    header: 'Block',
+                    headerAttrsFn: () => tooltipAttributes('Block rewards commission can be in Bond configuration solely.'),
+                    render: (validator) => <>{formattedBlockRewardsCommission(validator)}</>,
+                    compare: (a, b) => (selectBlockRewardsCommission(a) ?? 100) - (selectBlockRewardsCommission(b) ?? 100),
+                    alignment: Alignment.RIGHT
+                },
                 {
-                    header: 'Bid',
-                    cellAttrsFn: () => tooltipAttributes("Maximum bid for 1000 SOL set by the validator."),
+                    header: 'St. Bid',
+                    headerAttrsFn: () => tooltipAttributes('Static bid for 1000 SOL set by the validator in Bond configuration.'),
+                    cellAttrsFn: () => tooltipAttributes("Maximum bid for 1000 SOL."),
                     render: (validator) => <>{formatSolAmount(selectBid(validator), 4)}</>,
                     compare: (a, b) => selectBid(a) - selectBid(b),
                     alignment: Alignment.RIGHT
@@ -160,7 +204,7 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                 },
                 { 
                     header: 'Max APY',
-                    headerAttrsFn: () => tooltipAttributes("Calculated APY using the bid of this validator."),
+                    headerAttrsFn: () => tooltipAttributes("APY calculated using this validator’s bid and commission configuration."),
                     render: (validator) => <>{formatPercentage(selectMaxAPY(validator, epochsPerYear), 2, 0.50)}</>,
                     compare: (a, b) => selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear),
                     alignment: Alignment.RIGHT
@@ -180,9 +224,16 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                     compare: (a, b) => selectSamTargetStake(a) - selectSamTargetStake(b),
                     alignment: Alignment.RIGHT
                 },
+                // TODO: double check in DS SAM and validator bonds if static bid is used correctly in claiming from bond
                 {
                     header: 'Eff. Bid [☉]',
-                    headerAttrsFn: () => tooltipAttributes("Bid for 1000 SOL that the validator would be paying based on the current Auction Winning APY. It is also the minimal bid the Validator has to pay in order to not get penalized for decreasing their bid."),
+                    headerAttrsFn: () =>
+                    tooltipAttributes(
+                        "Effective bid used in the auction calculation, combining the static bid and commission settings. " +
+                        "This value is used to rank validators in the auction and is shown as cost per 1000 SOL. " +
+                        "It is not the actual amount the validator will pay from the bond, as that depends on the real stake delegated to the validator for the static bid, " +
+                        "and on the rewards earned in the previous epoch for the commission configuration."
+                    ),
                     render: (validator) => <>{formatSolAmount(selectEffectiveBid(validator), 4)}</>,
                     compare: (a, b) => selectEffectiveBid(a) - selectEffectiveBid(b),
                     alignment: Alignment.RIGHT
