@@ -1,5 +1,5 @@
 import round from 'lodash.round'
-import React from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 
 import { formatPercentage, formatSolAmount } from 'src/format'
 import {
@@ -39,11 +39,25 @@ import { Alignment, OrderDirection, Table } from '../table/table'
 
 import type { AuctionResult, DsSamConfig } from '@marinade.finance/ds-sam-sdk'
 
+export type SimulationInputs = {
+  voteAccount: string
+  bidPmpe: number | null
+  inflationCommission: number | null
+  mevCommission: number | null
+  blockRewardsCommission: number | null
+}
+
 type Props = {
   auctionResult: AuctionResult
   epochsPerYear: number
   dsSamConfig: DsSamConfig
   level: UserLevel
+  showSimulator: boolean
+  onToggleSimulator: () => void
+  onRunSimulation: (inputs: SimulationInputs) => void
+  onResetSimulation: () => void
+  isSimulating: boolean
+  isLoading: boolean
 }
 
 export const SamTable: React.FC<Props> = ({
@@ -51,6 +65,12 @@ export const SamTable: React.FC<Props> = ({
   epochsPerYear,
   dsSamConfig,
   level,
+  showSimulator,
+  onToggleSimulator,
+  onRunSimulation,
+  onResetSimulation,
+  isSimulating,
+  isLoading,
 }) => {
   console.log(auctionResult)
   const {
@@ -69,6 +89,65 @@ export const SamTable: React.FC<Props> = ({
     selectTotalActiveStake(auctionResult) / samDistributedStake
   const productiveStake =
     selectProductiveStake(auctionResult) / samDistributedStake
+
+  // Simulation input state
+  const [voteAccount, setVoteAccount] = useState('')
+  const [bidPmpe, setBidPmpe] = useState<string>('')
+  const [inflationCommission, setInflationCommission] = useState<string>('')
+  const [mevCommission, setMevCommission] = useState<string>('')
+  const [blockRewardsCommission, setBlockRewardsCommission] =
+    useState<string>('')
+
+  // Pre-populate fields when vote account matches an existing validator
+  useEffect(() => {
+    if (!voteAccount || voteAccount.length < 32) return
+
+    const validator = validators.find(v => v.voteAccount === voteAccount)
+    if (validator) {
+      setBidPmpe(validator.revShare.bidPmpe.toString())
+      setInflationCommission(
+        (validator.inflationCommissionDec * 100).toString(),
+      )
+      if (validator.mevCommissionDec !== null) {
+        setMevCommission((validator.mevCommissionDec * 100).toString())
+      }
+      if (validator.blockRewardsCommissionDec !== null) {
+        setBlockRewardsCommission(
+          (validator.blockRewardsCommissionDec * 100).toString(),
+        )
+      }
+    }
+  }, [voteAccount, validators])
+
+  const handleRunSimulation = useCallback(() => {
+    onRunSimulation({
+      voteAccount,
+      bidPmpe: bidPmpe ? parseFloat(bidPmpe) : null,
+      inflationCommission: inflationCommission
+        ? parseFloat(inflationCommission)
+        : null,
+      mevCommission: mevCommission ? parseFloat(mevCommission) : null,
+      blockRewardsCommission: blockRewardsCommission
+        ? parseFloat(blockRewardsCommission)
+        : null,
+    })
+  }, [
+    voteAccount,
+    bidPmpe,
+    inflationCommission,
+    mevCommission,
+    blockRewardsCommission,
+    onRunSimulation,
+  ])
+
+  const handleReset = useCallback(() => {
+    setVoteAccount('')
+    setBidPmpe('')
+    setInflationCommission('')
+    setMevCommission('')
+    setBlockRewardsCommission('')
+    onResetSimulation()
+  }, [onResetSimulation])
 
   const validatorsWithBond = validators
     .filter(validator => selectBondSize(validator) > 0)
@@ -189,7 +268,112 @@ export const SamTable: React.FC<Props> = ({
           )}
         />
         <>{expertMetrics}</>
+        <button className={styles.simulatorToggle} onClick={onToggleSimulator}>
+          {showSimulator ? 'Hide Simulator' : 'Run Simulation'}
+        </button>
+        {isSimulating && (
+          <span className={styles.simulationBadge}>Simulation Active</span>
+        )}
       </div>
+
+      {showSimulator && (
+        <div className={styles.simulatorSection}>
+          <div className={styles.simulatorHeader}>
+            <h3>SAM Auction Simulator</h3>
+            <p>
+              Override bid and commission values for a validator to simulate
+              auction results
+            </p>
+          </div>
+          <div className={styles.simulatorForm}>
+            <div className={styles.inputGroup}>
+              <label className={styles.inputLabel}>Vote Account</label>
+              <input
+                type="text"
+                className={styles.input}
+                placeholder="Enter vote account address"
+                value={voteAccount}
+                onChange={e => setVoteAccount(e.target.value)}
+              />
+            </div>
+            <div className={styles.inputRow}>
+              <div className={styles.inputGroup}>
+                <label className={styles.inputLabel}>
+                  Bid PMPE (SOL per 1000 delegated)
+                </label>
+                <input
+                  type="number"
+                  className={styles.input}
+                  placeholder="e.g., 0.05"
+                  step="0.001"
+                  value={bidPmpe}
+                  onChange={e => setBidPmpe(e.target.value)}
+                />
+              </div>
+              <div className={styles.inputGroup}>
+                <label className={styles.inputLabel}>
+                  Inflation Commission (%)
+                </label>
+                <input
+                  type="number"
+                  className={styles.input}
+                  placeholder="e.g., 5"
+                  step="0.1"
+                  min="0"
+                  max="100"
+                  value={inflationCommission}
+                  onChange={e => setInflationCommission(e.target.value)}
+                />
+              </div>
+              <div className={styles.inputGroup}>
+                <label className={styles.inputLabel}>MEV Commission (%)</label>
+                <input
+                  type="number"
+                  className={styles.input}
+                  placeholder="e.g., 5"
+                  step="0.1"
+                  min="0"
+                  max="100"
+                  value={mevCommission}
+                  onChange={e => setMevCommission(e.target.value)}
+                />
+              </div>
+              <div className={styles.inputGroup}>
+                <label className={styles.inputLabel}>
+                  Block Rewards Commission (%)
+                </label>
+                <input
+                  type="number"
+                  className={styles.input}
+                  placeholder="e.g., 5"
+                  step="0.1"
+                  min="0"
+                  max="100"
+                  value={blockRewardsCommission}
+                  onChange={e => setBlockRewardsCommission(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className={styles.buttonGroup}>
+              <button
+                className={styles.primaryButton}
+                onClick={handleRunSimulation}
+                disabled={!voteAccount || isLoading}
+              >
+                {isLoading ? 'Running...' : 'Run SAM'}
+              </button>
+              <button
+                className={styles.secondaryButton}
+                onClick={handleReset}
+                disabled={isLoading}
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Table
         data={validatorsWithBond}
         columns={[
@@ -270,18 +454,25 @@ export const SamTable: React.FC<Props> = ({
             alignment: Alignment.RIGHT,
           },
           // {
-          //     header: 'Rep.',
-          //     headerAttrsFn: () => tooltipAttributes('Validator Reputation. Not used in the auction at the moment.'),
-          //     render: (validator) => <>{formatSolAmount(selectSpendRobustReputation(validator), 0)}</>,
-          //     compare: (a, b) => selectSpendRobustReputation(a) - selectSpendRobustReputation(b),
-          //     alignment: Alignment.RIGHT,
-          //     cellAttrsFn: (validator) => tooltipAttributes(spendRobustReputationTooltip(validator))
+          //   header: 'Rep.',
+          //   headerAttrsFn: () =>
+          //     tooltipAttributes(
+          //       'Validator Reputation. Not used in the auction at the moment.',
+          //     ),
+          //   render: validator => (
+          //     <>{formatSolAmount(selectSpendRobustReputation(validator), 0)}</>
+          //   ),
+          //   compare: (a, b) =>
+          //     selectSpendRobustReputation(a) - selectSpendRobustReputation(b),
+          //   alignment: Alignment.RIGHT,
+          //   cellAttrsFn: validator =>
+          //     tooltipAttributes(spendRobustReputationTooltip(validator)),
           // },
           {
             header: 'Max APY',
             headerAttrsFn: () =>
               tooltipAttributes(
-                'APY calculated using this validator’s bid and commission configuration.',
+                "APY calculated using this validator's bid and commission configuration.",
               ),
             render: validator => (
               <>
