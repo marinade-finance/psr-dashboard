@@ -8,6 +8,7 @@ import {
     bondBalanceRequiredForXEpochs,
     DsSamConfig,
     loadSamConfig
+    SourceDataOverrides
 } from '@marinade.finance/ds-sam-sdk'
 import { fetchValidatorsWithEpochs } from './validators'
 import { Color } from 'src/components/table/table'
@@ -50,19 +51,34 @@ const estimateEpochsPerYear = async () => {
     return SECONDS_PER_YEAR / (rangeDuration / rangeEpochs)
 }
 
-export const loadSam = async (): Promise<{ auctionResult: AuctionResult, epochsPerYear: number, dcSamConfig: DsSamConfig }> => {
+const loadSamConfig = async (): Promise<DsSamConfig> => {
+    const url = 'https://thru.marinade.finance/marinade-finance/ds-sam-pipeline/main/auction-config.json'
+    const response = await fetch(url)
+    const dataJson = (await response.json()) as DsSamConfig
+    // Use Marinade proxy cache to bypass GitHub raw URL rate limits
+    dataJson.blacklistApiBaseUrl = 'https://thru.marinade.finance/marinade-finance/delegation-strategy-2/master'
+    dataJson.overridesApiBaseUrl = 'https://thru.marinade.finance/marinade-finance/ds-sam-pipeline/main/epochs'
+    return dataJson
+}
+
+export const loadSam = async (dataOverrides?: SourceDataOverrides | null): Promise<{ auctionResult: AuctionResult, epochsPerYear: number, dcSamConfig: DsSamConfig }> => {
     try {
         const epochsPerYear = await estimateEpochsPerYear()
         console.log('epochsPerYear', epochsPerYear)
         const config = await loadSamConfig()
         const dsSam = new DsSamSDK({ ...config, inputsSource: InputsSource.APIS, cacheInputs: false })
-        const auctionResult = await dsSam.runFinalOnly()
+        // Use run() for simulation with overrides, runFinalOnly() for default view
+        const auctionResult = dataOverrides
+            ? await dsSam.run(dataOverrides)
+            : await dsSam.runFinalOnly()
         return { auctionResult, epochsPerYear, dcSamConfig: dsSam.config }
     } catch (err) {
         console.log(err)
         throw err
     }
 };
+
+export { SourceDataOverrides }
 
 export const lastCapConstraintDescription = (constraint: AuctionConstraint): string => {
     switch (constraint.constraintType) {

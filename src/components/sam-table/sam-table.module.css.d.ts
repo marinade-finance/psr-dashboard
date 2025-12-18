@@ -4,10 +4,22 @@ interface CssExports {
   'badge': string;
   'badgeDryRun': string;
   'badgeEstimate': string;
+  'buttonGroup': string;
   'green': string;
+  'input': string;
+  'inputGroup': string;
+  'inputLabel': string;
+  'inputRow': string;
   'metricWrap': string;
+  'primaryButton': string;
   'pubkey': string;
   'red': string;
+  'secondaryButton': string;
+  'simulationBadge': string;
+  'simulatorForm': string;
+  'simulatorHeader': string;
+  'simulatorSection': string;
+  'simulatorToggle': string;
   'tableWrap': string;
   'yellow': string;
 }
