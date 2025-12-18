@@ -2,18 +2,14 @@ import React from "react";
 import { Props } from "src/components/banner/banner";
 
 export const getBannerData = (): Props => ({
-  title: "",
+  title: "✓✓✓ Introducing Dynamic Commissions ✓✓✓",
   body: <>
 <p>
-📜 Marinade banned validators intentionally degrading Solana's performance.
-</p>
-
-<p>
-Now their stake is getting re-distributed towards honest validators.
-</p>
-
-<p>
-🧠 Make sure to top-up your bond to <strong>receive part of the re-distributed stake</strong>.
+📜 You can now bid not only by setting a static bid (<code>--cpmpe</code>),
+but also by setting commissions on inflation, MEV, and block rewards in your bond,
+which directly your effective bid in the auction. This allows you to set the bid to track inflation, mev and block rewards and not worry about getting penalized for undercutting the auction.
+See more at <a target="_blank" href="https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market">Marinade Doc page</a>
+&nbsp;and <a target="_blank" href="https://github.com/marinade-finance/validator-bonds/tree/main/packages/validator-bonds-cli#core-concepts">Validator Bonds CLI README</a>
 </p>
 </>,
 })
