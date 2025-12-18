@@ -16,6 +16,7 @@ import type {
   AuctionValidator,
   AuctionConstraint,
   DsSamConfig,
+  SourceDataOverrides,
 } from '@marinade.finance/ds-sam-sdk'
 
 const estimateEpochsPerYear = async () => {
@@ -61,7 +62,9 @@ const estimateEpochsPerYear = async () => {
   return SECONDS_PER_YEAR / (rangeDuration / rangeEpochs)
 }
 
-export const loadSam = async (): Promise<{
+export const loadSam = async (
+  dataOverrides?: SourceDataOverrides | null,
+): Promise<{
   auctionResult: AuctionResult
   epochsPerYear: number
   dcSamConfig: DsSamConfig
@@ -75,13 +78,16 @@ export const loadSam = async (): Promise<{
       inputsSource: InputsSource.APIS,
       cacheInputs: false,
     })
-    const auctionResult = await dsSam.runFinalOnly()
+    // Use runFinalOnly() for both default view and simulation with overrides
+    const auctionResult = await dsSam.runFinalOnly(dataOverrides)
     return { auctionResult, epochsPerYear, dcSamConfig: dsSam.config }
   } catch (err) {
     console.log(err)
     throw err
   }
 }
+
+export type { SourceDataOverrides }
 
 export const lastCapConstraintDescription = (
   constraint: AuctionConstraint,
