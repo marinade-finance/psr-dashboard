@@ -47,15 +47,20 @@ const buildSourceDataOverrides = (inputs: SimulationInputs): SourceDataOverrides
 export const SamPage: React.FC<Props> = ({ level }) => {
     const [simulationOverrides, setSimulationOverrides] = useState<SourceDataOverrides | null>(null)
     const [showSimulator, setShowSimulator] = useState(false)
+    const [isSimulationRunning, setIsSimulationRunning] = useState(false)
 
-    const { data, status, refetch, isFetching } = useQuery(
+    const { data, status, isFetching } = useQuery(
         ["sam", simulationOverrides],
         () => loadSam(simulationOverrides),
-        { keepPreviousData: true }
+        {
+            keepPreviousData: true,
+            onSettled: () => setIsSimulationRunning(false)
+        }
     )
 
     const handleRunSimulation = useCallback((inputs: SimulationInputs) => {
         const overrides = buildSourceDataOverrides(inputs)
+        setIsSimulationRunning(true)
         setSimulationOverrides(overrides)
     }, [])
 
@@ -85,7 +90,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
                 onRunSimulation={handleRunSimulation}
                 onResetSimulation={handleResetSimulation}
                 isSimulating={isSimulating}
-                isLoading={isFetching}
+                isLoading={isSimulationRunning}
             />
         )}
     </div>

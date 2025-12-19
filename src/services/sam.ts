@@ -68,9 +68,10 @@ export const loadSam = async (dataOverrides?: SourceDataOverrides | null): Promi
         const config = await loadSamConfig()
         const dsSam = new DsSamSDK({ ...config, inputsSource: InputsSource.APIS, cacheInputs: false })
         // Use run() for simulation with overrides, runFinalOnly() for default view
-        const auctionResult = dataOverrides
-            ? await dsSam.run(dataOverrides)
-            : await dsSam.runFinalOnly()
+        // const auctionResult = dataOverrides
+        //     ? await dsSam.run(dataOverrides)
+        //     : await dsSam.runFinalOnly(dataOverrides)
+        const auctionResult = await dsSam.runFinalOnly(dataOverrides)
         return { auctionResult, epochsPerYear, dcSamConfig: dsSam.config }
     } catch (err) {
         console.log(err)
