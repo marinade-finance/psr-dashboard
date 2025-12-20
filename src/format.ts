@@ -1,5 +1,7 @@
 import round from 'lodash.round'
 
+const BPS_IN_100_PERCENT = 10_000
+
 export const formatSolAmount = (amount: number, digits = 2) =>
   round(amount, digits).toLocaleString(undefined, {
       minimumFractionDigits: digits,
@@ -24,11 +26,11 @@ export const formatPercentage = (amount: number, fractionDigits: number = 2, max
   return formatPercentageString(amount, fractionDigits)
 }
 
-export const formatUndefinedPercentage = (amount?: number, fractionDigits: number = 2, maxValue: number = 1e18): string => {
+export const formatBps = (amount?: number, fractionDigits: number = 2, maxValue: number = 1e18): string => {
   if (amount == null) {
     return '-'
   }
-  return formatPercentage(amount, fractionDigits, maxValue)
+  return formatPercentage(amount / BPS_IN_100_PERCENT, fractionDigits, maxValue)
 }
 
 export const lamportsToSol = (lamports: string) =>

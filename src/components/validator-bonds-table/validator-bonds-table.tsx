@@ -3,7 +3,7 @@ import { UserLevel } from "src/components/navigation/navigation";
 import React from "react";
 import styles from './validator-bonds-table.module.css'
 import { Alignment, OrderDirection, Table } from "../table/table";
-import { formatPercentage, formatSolAmount, formatUndefinedPercentage as formatUndefPercentage, lamportsToSol } from "src/format";
+import { formatBps, formatPercentage, formatSolAmount, lamportsToSol } from "src/format";
 import { ValidatorWithBond, selectProtectedStake, selectMaxStakeWanted, selectMaxProtectedStake } from "src/services/validator-with-bond";
 import { selectLiquidMarinadeStake, selectName, selectNativeMarinadeStake, selectTotalMarinadeStake, selectVoteAccount } from "src/services/validators";
 import { selectEffectiveBid, selectEffectiveCost } from "src/services/sam";
@@ -90,11 +90,11 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
                         "Ordered by in-bond inflation commission."
                     ),
                     cellAttrsFn: ({bond}) => tooltipAttributes(
-                        `Inflation commission: ${formatUndefPercentage(bond?.inflation_commission_bps)}<br/>` + 
-                        `MEV commission: ${formatUndefPercentage(bond?.mev_commission_bps)}<br/>` + 
-                        `Block rewards commission: ${formatUndefPercentage(bond?.block_commission_bps)}`
+                        `Inflation commission: ${formatBps(bond?.inflation_commission_bps)}<br/>` +
+                        `MEV commission: ${formatBps(bond?.mev_commission_bps)}<br/>` +
+                        `Block rewards commission: ${formatBps(bond?.block_commission_bps)}`
                     ),
-                    render: ({bond}) => <>{formatUndefPercentage(bond?.inflation_commission_bps)} / {formatUndefPercentage(bond?.mev_commission_bps)} / {formatUndefPercentage(bond?.block_commission_bps)} </>,
+                    render: ({bond}) => <>{formatBps(bond?.inflation_commission_bps)} / {formatBps(bond?.mev_commission_bps)} / {formatBps(bond?.block_commission_bps)} </>,
                     compare: ({ bond: a }, { bond: b }) => a?.inflation_commission_bps && b?.inflation_commission_bps ? a.inflation_commission_bps - b.inflation_commission_bps : undefined,
                     alignment: Alignment.RIGHT
                 },
