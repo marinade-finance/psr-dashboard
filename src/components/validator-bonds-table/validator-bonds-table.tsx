@@ -124,15 +124,15 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
     </div>
 };
 
-function compareBondCommissions(a: BondRecord, b: BondRecord): number {
-  const aVal = a?.inflation_commission_bps
-  const bVal = b?.inflation_commission_bps
+function compareBondCommissions({bond: aBond}: ValidatorWithBond, {bond: bBond} : ValidatorWithBond): number | undefined {
+  const aVal = aBond?.inflation_commission_bps
+  const bVal = bBond?.inflation_commission_bps
   // Both null/undefined - equal
   if (aVal == null && bVal == null) return 0
-  // Only a is null - push to end
-  if (aVal == null) return 1
-  // Only b is null - push to end
-  if (bVal == null) return -1
+  // Only a is null - always push to end (use Infinity so it stays at end regardless of sort direction)
+  if (aVal == null) return Infinity
+  // Only b is null - always push to end (use -Infinity so it stays at end regardless of sort direction)
+  if (bVal == null) return -Infinity
   // Both have values - normal numeric sort
   return aVal - bVal
 }
