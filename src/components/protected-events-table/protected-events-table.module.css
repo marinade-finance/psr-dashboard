@@ -1,53 +1,52 @@
 .tableWrap {
-    position: relative;
+  position: relative;
 }
 
-.tableWrap>table {
-    margin-left: 10px;
+.tableWrap > table {
+  margin-left: 10px;
 }
 
 .pubkey {
-    display: inline-block;
-    width: 100px;
-    padding-top: 4px;
-    text-overflow: ellipsis;
-    overflow: hidden;
+  display: inline-block;
+  width: 100px;
+  padding-top: 4px;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 .badge {
-    border-radius: 2px;
-    padding: 0px 4px;
-    cursor: help;
-    float: left;
+  border-radius: 2px;
+  padding: 0px 4px;
+  cursor: help;
+  float: left;
 }
 
 .badgeDryRun {
-    background-color: var(--bg-dark-1);
-    color: var(--text-light-1);
+  background-color: var(--bg-dark-1);
+  color: var(--text-light-1);
 }
 
 .badgeEstimate {
-    background-color: #91e4b7;
-    color: black;
+  background-color: #91e4b7;
+  color: black;
 }
 
 .metricWrap {
-    display: flex;
-    padding: 10px;
+  display: flex;
+  padding: 10px;
 }
 
 .funder {
-    cursor: help;
+  cursor: help;
 }
 
 .tableWrap input {
-    background-color: var(--bg-dark-1);
-    color: var(--text-light-1);
-    border: 2px solid var(--bg-dark-2);
-    border-radius: 5px;
-    padding: 8px;
-    outline: none;
-
+  background-color: var(--bg-dark-1);
+  color: var(--text-light-1);
+  border: 2px solid var(--bg-dark-2);
+  border-radius: 5px;
+  padding: 8px;
+  outline: none;
 }
 input:focus {
   border-color: var(--bg-dark-3);
@@ -55,15 +54,15 @@ input:focus {
 }
 
 .epochFilter {
-    width: 70px;
+  width: 70px;
 }
 
 .filters {
-    margin-bottom: 10px;
+  margin-bottom: 10px;
 }
 
 .filters fieldset {
-    display: inline-block;
-    margin-left: 10px;
-    border-color: transparent;
+  display: inline-block;
+  margin-left: 10px;
+  border-color: transparent;
 }
