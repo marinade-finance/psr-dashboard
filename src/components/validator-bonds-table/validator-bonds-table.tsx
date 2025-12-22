@@ -7,7 +7,7 @@ import { formatBps, formatPercentage, formatSolAmount, lamportsToSol } from "src
 import { ValidatorWithBond, selectProtectedStake, selectMaxStakeWanted, selectMaxProtectedStake } from "src/services/validator-with-bond";
 import { selectLiquidMarinadeStake, selectName, selectNativeMarinadeStake, selectTotalMarinadeStake, selectVoteAccount } from "src/services/validators";
 import { selectEffectiveBid, selectEffectiveCost } from "src/services/sam";
-import { selectEffectiveAmount } from "src/services/bonds";
+import { BondRecord, selectEffectiveAmount } from "src/services/bonds";
 import { Metric } from "../metric/metric";
 import { tooltipAttributes } from '../../services/utils'
 
@@ -95,7 +95,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
                         `Block rewards commission: ${formatBps(bond?.block_commission_bps)}`
                     ),
                     render: ({bond}) => <>{formatBps(bond?.inflation_commission_bps)} / {formatBps(bond?.mev_commission_bps)} / {formatBps(bond?.block_commission_bps)} </>,
-                    compare: ({ bond: a }, { bond: b }) => a?.inflation_commission_bps && b?.inflation_commission_bps ? a.inflation_commission_bps - b.inflation_commission_bps : undefined,
+                    compare: compareBondCommissions,
                     alignment: Alignment.RIGHT
                 },
                 {
@@ -123,3 +123,16 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
             ]} />
     </div>
 };
+
+function compareBondCommissions(a: BondRecord, b: BondRecord): number {
+  const aVal = a?.inflation_commission_bps
+  const bVal = b?.inflation_commission_bps
+  // Both null/undefined - equal
+  if (aVal == null && bVal == null) return 0
+  // Only a is null - push to end
+  if (aVal == null) return 1
+  // Only b is null - push to end
+  if (bVal == null) return -1
+  // Both have values - normal numeric sort
+  return aVal - bVal
+}
