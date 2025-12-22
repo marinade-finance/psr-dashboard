@@ -14,29 +14,29 @@
 
 /* Dark Mode Anchor Styles */
 .bannerShoutout a {
-  color: #61dafb;            /* Light blue for links */
+  color: #61dafb; /* Light blue for links */
   text-decoration: none;
   transition: color 0.2s ease-in-out;
 }
 
 .bannerTitle {
-  margin: 0 0 20px 0
+  margin: 0 0 20px 0;
 }
 
 .bannerShoutout p {
-  margin: 10px 0px
+  margin: 10px 0px;
 }
 
 .bannerShoutout a:visited {
-  color: #6090be;            /* Muted purple-blue for visited links */
+  color: #6090be; /* Muted purple-blue for visited links */
 }
 
 .bannerShoutout a:hover,
 .bannerShoutout a:focus {
-  color: #21a1f1;            /* Brighter blue on hover/focus */
+  color: #21a1f1; /* Brighter blue on hover/focus */
   text-decoration: underline;
 }
 
 .bannerShoutout a:active {
-  color: #1b8acb;            /* Darker blue when active/clicked */
+  color: #1b8acb; /* Darker blue when active/clicked */
 }
