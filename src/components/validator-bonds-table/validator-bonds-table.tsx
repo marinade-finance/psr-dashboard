@@ -8,7 +8,7 @@ import {
   formatSolAmount,
   lamportsToSol,
 } from 'src/format'
-import { BondRecord, selectEffectiveAmount } from 'src/services/bonds'
+import { selectEffectiveAmount } from 'src/services/bonds'
 import { selectEffectiveBid, selectEffectiveCost } from 'src/services/sam'
 import {
   selectProtectedStake,

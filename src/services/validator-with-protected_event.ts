@@ -2,7 +2,7 @@ import { fetchProtectedEvents } from './protected-events'
 import { calculateProtectedEventEstimates } from './protected-events-estimator'
 import { loadSam } from './sam'
 import { fetchScoring } from './scoring'
-import { fetchValidators, fetchValidatorsWithEpochs } from './validators'
+import { fetchValidatorsWithEpochs } from './validators'
 
 import type { ProtectedEvent } from './protected-events'
 import type { Validator } from './validators'
@@ -23,13 +23,17 @@ const LAST_DRYRUN_EPOCH = 608
 export const fetchProtectedEventsWithValidator = async (): Promise<
   ProtectedEventWithValidator[]
 > => {
-  const [{ validators }, { protected_events }, scoring, { auctionResult }] =
-    await Promise.all([
-      fetchValidatorsWithEpochs(3),
-      fetchProtectedEvents(),
-      fetchScoring(),
-      loadSam(),
-    ])
+  const [
+    { validators },
+    { protected_events: protectedEvents },
+    scoring,
+    { auctionResult },
+  ] = await Promise.all([
+    fetchValidatorsWithEpochs(3),
+    fetchProtectedEvents(),
+    fetchScoring(),
+    loadSam(),
+  ])
 
   const estimatedProtectedEvents =
     await calculateProtectedEventEstimates(validators)
@@ -41,7 +45,7 @@ export const fetchProtectedEventsWithValidator = async (): Promise<
 
   let latestProcessedEpoch = 0
   const protectedEventsWithValidator: ProtectedEventWithValidator[] = []
-  for (const protectedEvent of protected_events) {
+  for (const protectedEvent of protectedEvents) {
     latestProcessedEpoch = Math.max(protectedEvent.epoch, latestProcessedEpoch)
     const status =
       protectedEvent.epoch > LAST_DRYRUN_EPOCH
@@ -79,9 +83,9 @@ export const fetchProtectedEventsWithValidator = async (): Promise<
     }
     const validator = validatorsMap[entry.voteAccount] ?? null
     const epochStats = validator?.epoch_stats.find(
-      ({ epoch }) => epoch == entry.epoch,
+      ({ epoch }) => epoch === entry.epoch,
     )
-    if (epochStats == null) {
+    if (epochStats === null) {
       continue
     }
     const penalty =

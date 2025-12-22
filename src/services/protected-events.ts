@@ -1,5 +1,3 @@
-import { formatPercentage, formatSolAmount, lamportsToSol } from 'src/format'
-
 export type SettlementFunder = 'ValidatorBond' | 'Marinade'
 
 export type SettlementMeta = {
@@ -84,9 +82,9 @@ export const isProtectedEvent = (
 ): e is ProtectedEventSettlement =>
   typeof e === 'object' && 'ProtectedEvent' in (e as any)
 export const isBidTooLowPenalty = (e: SettlementReason): boolean =>
-  e == 'BidTooLowPenalty'
+  e === 'BidTooLowPenalty'
 export const isBlacklistPenalty = (e: SettlementReason): boolean =>
-  e == 'BlacklistPenalty'
+  e === 'BlacklistPenalty'
 
 export type ProtectedEvent = {
   epoch: number
@@ -152,5 +150,5 @@ export const fetchProtectedEvents =
     const res = await fetch(
       'https://validator-bonds-api.marinade.finance/protected-events',
     )
-    return res.json()
+    return (await res.json()) as ProtectedEventsResponse
   }

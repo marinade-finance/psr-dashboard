@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React from 'react'
 import { useQuery } from 'react-query'
 
 import { Banner } from 'src/components/banner/banner'
 import { Loader } from 'src/components/loader/loader'
-import { Navigation, UserLevel } from 'src/components/navigation/navigation'
+import { Navigation } from 'src/components/navigation/navigation'
 import { ValidatorBondsTable } from 'src/components/validator-bonds-table/validator-bonds-table'
 import { getBannerData } from 'src/services/banner'
 import { fetchValidatorsWithBonds } from 'src/services/validator-with-bond'

@@ -112,13 +112,13 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
     return matchesEpoch && matchesValidator
   })
   const filteredData = preFilteredData.filter(
-    ({ protectedEvent, validator }) => {
+    ({ protectedEvent, validator: _validator }) => {
       return (protectedEvent.reason as any) !== 'Bidding'
     },
   )
   const lastSettledEpoch = data.reduce(
     (epoch, { protectedEvent, status }) =>
-      status == ProtectedEventStatus.FACT
+      status === ProtectedEventStatus.FACT
         ? Math.max(epoch, protectedEvent.epoch)
         : epoch,
     0,
@@ -135,12 +135,12 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
     0,
   )
   const lastSettledEpochAmount = filteredData
-    .filter(({ protectedEvent: { epoch } }) => epoch == lastSettledEpoch)
+    .filter(({ protectedEvent: { epoch } }) => epoch === lastSettledEpoch)
     .reduce((sum, { protectedEvent }) => sum + selectAmount(protectedEvent), 0)
   const lastEpochBids = preFilteredData
     .filter(
       ({ protectedEvent }) =>
-        protectedEvent.epoch == lastSettledEpoch &&
+        protectedEvent.epoch === lastSettledEpoch &&
         (protectedEvent.reason as any) === 'Bidding',
     )
     .reduce((sum, { protectedEvent }) => sum + selectAmount(protectedEvent), 0)

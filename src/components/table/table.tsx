@@ -129,7 +129,7 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
   defaultOrder,
   showRowNumber,
 }) => {
-  const [userOrder, setUserOrder] = useState(null)
+  const [userOrder, setUserOrder] = useState<Order | null>(null)
 
   const order: [number, OrderDirection][] = useMemo(() => {
     if (userOrder) {

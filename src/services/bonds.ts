@@ -26,5 +26,5 @@ export type BondsResponse = {
 
 export const fetchBonds = async (): Promise<BondsResponse> => {
   const res = await fetch('https://validator-bonds-api.marinade.finance/bonds')
-  return res.json()
+  return (await res.json()) as BondsResponse
 }

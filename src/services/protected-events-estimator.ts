@@ -1,7 +1,6 @@
-import { formatPercentage, formatSolAmount, lamportsToSol } from 'src/format'
+import { lamportsToSol } from 'src/format'
 
 import { fetchRewards } from './rewards'
-import { fetchValidatorsWithEpochs } from './validators'
 
 import type { ProtectedEvent, SettlementMeta } from './protected-events'
 import type { EpochRewards } from './rewards'
@@ -335,12 +334,9 @@ const buildEprCalculators = (
 export const calculateProtectedEventEstimates = async (
   validators: Validator[],
 ): Promise<ProtectedEvent[]> => {
-  const { rewards_inflation_est } = await fetchRewards()
+  const { rewards_inflation_est: rewardsInflationEst } = await fetchRewards()
   const stakeByEpoch = calcStakeByEpoch(validators)
-  const eprCalculators = buildEprCalculators(
-    stakeByEpoch,
-    rewards_inflation_est,
-  )
+  const eprCalculators = buildEprCalculators(stakeByEpoch, rewardsInflationEst)
 
   return [
     ...calculateLowCreditsEstimates(validators, eprCalculators),

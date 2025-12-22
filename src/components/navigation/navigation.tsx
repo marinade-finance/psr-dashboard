@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React from 'react'
 import { NavLink } from 'react-router-dom'
 
 import styles from './navigation.module.css'
@@ -13,24 +13,30 @@ export type UserLevelProps = {
 }
 
 export const Navigation: React.FC<UserLevelProps> = ({ level }) => {
-  const expert = level == UserLevel.Expert ? 'expert-' : ''
+  const expert = level === UserLevel.Expert ? 'expert-' : ''
   return (
     <div className={styles.navigation}>
       <NavLink
         to={`/${expert}`}
-        className={({ isActive, isPending }) => (isActive ? styles.active : '')}
+        className={({ isActive, isPending: _isPending }) =>
+          isActive ? styles.active : ''
+        }
       >
         <div className={styles.navButton}>Stake Auction Marketplace</div>
       </NavLink>
       <NavLink
         to={`/${expert}protected-events`}
-        className={({ isActive, isPending }) => (isActive ? styles.active : '')}
+        className={({ isActive, isPending: _isPending }) =>
+          isActive ? styles.active : ''
+        }
       >
         <div className={styles.navButton}>Protected Events</div>
       </NavLink>
       <NavLink
         to={`/${expert}bonds`}
-        className={({ isActive, isPending }) => (isActive ? styles.active : '')}
+        className={({ isActive, isPending: _isPending }) =>
+          isActive ? styles.active : ''
+        }
       >
         <div className={styles.navButton}>Validator Bonds</div>
       </NavLink>
