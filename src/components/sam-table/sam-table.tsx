@@ -23,8 +23,6 @@ import {
     selectSamActiveStake,
     bondColorState,
     bondTooltip, 
-    selectSpendRobustReputation,
-    spendRobustReputationTooltip,
     selectProductiveStake,
     selectBlockRewardsCommission,
     formattedMevCommission,
@@ -194,14 +192,14 @@ export const SamTable: React.FC<Props> = ({ auctionResult, epochsPerYear, dsSamC
                     compare: (a, b) => selectBondSize(a) - selectBondSize(b),
                     alignment: Alignment.RIGHT,
                 },
-                {
-                    header: 'Rep.',
-                    headerAttrsFn: () => tooltipAttributes('Validator Reputation. Not used in the auction at the moment.'),
-                    render: (validator) => <>{formatSolAmount(selectSpendRobustReputation(validator), 0)}</>,
-                    compare: (a, b) => selectSpendRobustReputation(a) - selectSpendRobustReputation(b),
-                    alignment: Alignment.RIGHT,
-                    cellAttrsFn: (validator) => tooltipAttributes(spendRobustReputationTooltip(validator))
-                },
+                // {
+                //     header: 'Rep.',
+                //     headerAttrsFn: () => tooltipAttributes('Validator Reputation. Not used in the auction at the moment.'),
+                //     render: (validator) => <>{formatSolAmount(selectSpendRobustReputation(validator), 0)}</>,
+                //     compare: (a, b) => selectSpendRobustReputation(a) - selectSpendRobustReputation(b),
+                //     alignment: Alignment.RIGHT,
+                //     cellAttrsFn: (validator) => tooltipAttributes(spendRobustReputationTooltip(validator))
+                // },
                 { 
                     header: 'Max APY',
                     headerAttrsFn: () => tooltipAttributes("APY calculated using this validator’s bid and commission configuration."),
