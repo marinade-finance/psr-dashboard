@@ -95,7 +95,12 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({ data, columns
         items.sort((a, b) => {
             for (const [columnIndex, orderDirection] of order) {
                 const compareResult = columns[columnIndex].compare(a, b)
-                if (compareResult !== 0) {
+                if (compareResult !== undefined && compareResult !== 0) {
+                    // Handle special null values - Infinity means "a is null, always goes to end"
+                    if (compareResult === Infinity) return 1
+                    // -Infinity means "b is null, always goes to end"
+                    if (compareResult === -Infinity) return -1
+                    // Normal comparison - apply sort direction
                     return orderDirection === OrderDirection.ASC ? compareResult : -compareResult
                 }
             }

@@ -7,7 +7,7 @@ import { formatBps, formatPercentage, formatSolAmount, lamportsToSol } from "src
 import { ValidatorWithBond, selectProtectedStake, selectMaxStakeWanted, selectMaxProtectedStake } from "src/services/validator-with-bond";
 import { selectLiquidMarinadeStake, selectName, selectNativeMarinadeStake, selectTotalMarinadeStake, selectVoteAccount } from "src/services/validators";
 import { selectEffectiveBid, selectEffectiveCost } from "src/services/sam";
-import { selectEffectiveAmount } from "src/services/bonds";
+import { BondRecord, selectEffectiveAmount } from "src/services/bonds";
 import { Metric } from "../metric/metric";
 import { tooltipAttributes } from '../../services/utils'
 
@@ -95,7 +95,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
                         `Block rewards commission: ${formatBps(bond?.block_commission_bps)}`
                     ),
                     render: ({bond}) => <>{formatBps(bond?.inflation_commission_bps)} / {formatBps(bond?.mev_commission_bps)} / {formatBps(bond?.block_commission_bps)} </>,
-                    compare: ({ bond: a }, { bond: b }) => a?.inflation_commission_bps && b?.inflation_commission_bps ? a.inflation_commission_bps - b.inflation_commission_bps : undefined,
+                    compare: compareBondCommissions,
                     alignment: Alignment.RIGHT
                 },
                 {
@@ -123,3 +123,16 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
             ]} />
     </div>
 };
+
+function compareBondCommissions({bond: aBond}: ValidatorWithBond, {bond: bBond} : ValidatorWithBond): number | undefined {
+  const aVal = aBond?.inflation_commission_bps
+  const bVal = bBond?.inflation_commission_bps
+  // Both null/undefined - equal
+  if (aVal == null && bVal == null) return 0
+  // Only a is null - always push to end (use Infinity so it stays at end regardless of sort direction)
+  if (aVal == null) return Infinity
+  // Only b is null - always push to end (use -Infinity so it stays at end regardless of sort direction)
+  if (bVal == null) return -Infinity
+  // Both have values - normal numeric sort
+  return aVal - bVal
+}
