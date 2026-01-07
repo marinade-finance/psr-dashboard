@@ -1,29 +1,30 @@
-import { lamportsToSol } from "src/format";
+import { lamportsToSol } from 'src/format'
 
 export type BondRecord = {
-    pubkey: string,
-    vote_account: string,
-    authority: string,
-    cpmpe: number,
-    updated_at: string,
-    epoch: number,
-    funded_amount: number,
-    effective_amount: number,
-    max_stake_wanted: number,
-    remaining_witdraw_request_amount: number,
-    remainining_settlement_claim_amount: number,
-    inflation_commission_bps?: number,
-    mev_commission_bps?: number,
-    block_commission_bps?: number
+  pubkey: string
+  vote_account: string
+  authority: string
+  cpmpe: number
+  updated_at: string
+  epoch: number
+  funded_amount: number
+  effective_amount: number
+  max_stake_wanted: number
+  remaining_witdraw_request_amount: number
+  remainining_settlement_claim_amount: number
+  inflation_commission_bps?: number
+  mev_commission_bps?: number
+  block_commission_bps?: number
 }
 
-export const selectEffectiveAmount = (bond: BondRecord) => Number(lamportsToSol(bond.effective_amount.toString()))
+export const selectEffectiveAmount = (bond: BondRecord) =>
+  Number(lamportsToSol(bond.effective_amount.toString()))
 
 export type BondsResponse = {
-    bonds: BondRecord[]
+  bonds: BondRecord[]
 }
 
 export const fetchBonds = async (): Promise<BondsResponse> => {
-    const res = await fetch("https://validator-bonds-api.marinade.finance/bonds");
-    return res.json();
-};
+  const res = await fetch('https://validator-bonds-api.marinade.finance/bonds')
+  return (await res.json()) as BondsResponse
+}

@@ -1,57 +1,58 @@
 .table {
-    position: relative;
-    border-collapse: collapse;
-    border-spacing: 0px;
+  position: relative;
+  border-collapse: collapse;
+  border-spacing: 0px;
 }
 
 .table thead {
-    top: 0;
-    position: sticky;
-    background-color: var(--bg-dark-1);
-    color: var(--text-light-1);
-    cursor: pointer;
-    user-select: none;
-    z-index: 1;
+  top: 0;
+  position: sticky;
+  background-color: var(--bg-dark-1);
+  color: var(--text-light-1);
+  cursor: pointer;
+  user-select: none;
+  z-index: 1;
 }
 
 .table tbody {
-    background-color: var(--bg-dark-2);
+  background-color: var(--bg-dark-2);
 }
 
-.table th, .table td {
-    position: relative;
-    padding: 2px 20px;
-    white-space: nowrap;
+.table th,
+.table td {
+  position: relative;
+  padding: 2px 20px;
+  white-space: nowrap;
 }
 .table th {
-    padding-bottom: 10px;
-    padding-top: 8px;
+  padding-bottom: 10px;
+  padding-top: 8px;
 }
 
 .table tbody tr:hover {
-    background-color: var(--bg-dark-3);
+  background-color: var(--bg-dark-3);
 }
 
 .left {
-    text-align: left;
+  text-align: left;
 }
 
 .right {
-    text-align: right;
+  text-align: right;
 }
 
 .red {
-    background-color: #871C18;
+  background-color: #871c18;
 }
 
 .green {
-    background-color: #004D40;
+  background-color: #004d40;
 }
 
 .yellow {
-    background-color: #806000;
+  background-color: #806000;
 }
 
 .noBg {
-    background-color: unset;
+  background-color: unset;
 }

@@ -1,47 +1,47 @@
 .tableWrap {
-    position: relative;
+  position: relative;
 }
 
 .tableWrap > table {
-    margin-left: 10px;
+  margin-left: 10px;
 }
 
 .pubkey {
-    display: inline-block;
-    width: 100px;
-    padding-top: 4px;
-    text-overflow: ellipsis;
-    overflow: hidden;
+  display: inline-block;
+  width: 100px;
+  padding-top: 4px;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 .badge {
-    padding: 2px;
-    border-radius: 2px;
+  padding: 2px;
+  border-radius: 2px;
 }
 
 .badgeDryRun {
-    background-color: purple;
-    color: var(--text-light-1);
+  background-color: purple;
+  color: var(--text-light-1);
 }
 
 .badgeEstimate {
-    background-color: yellowgreen;
-    color: black;
+  background-color: yellowgreen;
+  color: black;
 }
 
 .metricWrap {
-    display: flex;
-    padding: 10px;
+  display: flex;
+  padding: 10px;
 }
 
 .red {
-    color: #FF3030;
+  color: #ff3030;
 }
 
 .green {
-    color: #05D764;
+  color: #05d764;
 }
 
 .yellow {
-    color: #FFD100;
+  color: #ffd100;
 }

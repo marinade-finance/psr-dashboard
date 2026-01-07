@@ -1,28 +1,29 @@
 :root {
-    --bg-dark-1: #1c1b23;
-    --bg-dark-2: #2b2a34;
-    --bg-dark-3: #353439;
-    --bg-dark-4: #42414e;
-    --text-light-1: #b8b8bc;
-    --text-light-2: #fbfbfe;
+  --bg-dark-1: #1c1b23;
+  --bg-dark-2: #2b2a34;
+  --bg-dark-3: #353439;
+  --bg-dark-4: #42414e;
+  --text-light-1: #b8b8bc;
+  --text-light-2: #fbfbfe;
 }
 
-* { 
-    margin: 0px;
-    padding: 0px;
-    box-sizing: border-box;
+* {
+  margin: 0px;
+  padding: 0px;
+  box-sizing: border-box;
 }
 
-html, body {
-    background-color: var(--bg-dark-2);
-    font-family: monospace, 'Courier New', Courier;
-    color: var(--text-light-1);
+html,
+body {
+  background-color: var(--bg-dark-2);
+  font-family: monospace, 'Courier New', Courier;
+  color: var(--text-light-1);
 }
 
 html {
-    width: 100%;
+  width: 100%;
 }
 
 body {
-    position: relative;
+  position: relative;
 }

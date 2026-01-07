@@ -1,29 +1,29 @@
 .navigation {
-    display: flex;
-    background-color: var(--bg-dark-1);
+  display: flex;
+  background-color: var(--bg-dark-1);
 }
 
 .navButton {
-    height: 40px;
-    line-height: 30px;
-    padding: 5px 20px;
-    background-color: var(--bg-dark-2);
-    color: var(--text-light-1);
-    margin: 4px;
-    margin-right: 0px;
-    cursor: pointer;
-    border-radius: 4px;
+  height: 40px;
+  line-height: 30px;
+  padding: 5px 20px;
+  background-color: var(--bg-dark-2);
+  color: var(--text-light-1);
+  margin: 4px;
+  margin-right: 0px;
+  cursor: pointer;
+  border-radius: 4px;
 }
 
 .navButton:hover {
-    background-color: var(--bg-dark-3);
+  background-color: var(--bg-dark-3);
 }
 
 .active > .navButton {
-    background-color: var(--bg-dark-4);
-    color: var(--text-light-2);
+  background-color: var(--bg-dark-4);
+  color: var(--text-light-2);
 }
 
 .navigation a {
-    text-decoration: none !important;
+  text-decoration: none !important;
 }
