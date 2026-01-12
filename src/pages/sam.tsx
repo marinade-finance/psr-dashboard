@@ -11,85 +11,169 @@ import { loadSam } from 'src/services/sam'
 import styles from './sam.module.css'
 
 import type { UserLevel } from 'src/components/navigation/navigation'
-import type { SimulationInputs } from 'src/components/sam-table/sam-table'
 import type { SourceDataOverrides } from 'src/services/sam'
 
 type Props = {
   level: UserLevel
 }
 
-const buildSourceDataOverrides = (
-  inputs: SimulationInputs,
-): SourceDataOverrides | null => {
-  if (!inputs.voteAccount) {
-    return null
-  }
+// Track which validators have been edited (for bold/italic styling)
+export type EditedValidators = Set<string>
 
-  const overrides: SourceDataOverrides = {
-    inflationCommissions: new Map(),
-    mevCommissions: new Map(),
-    blockRewardsCommissions: new Map(),
-    cpmpes: new Map(),
+// Track pending edits before they're applied (for input field values)
+export type PendingEdits = Map<
+  string,
+  {
+    inflationCommission?: string
+    mevCommission?: string
+    blockRewardsCommission?: string
+    bidPmpe?: string
   }
-
-  if (inputs.inflationCommission !== null) {
-    // User enters percentage (e.g., 5 for 5%), SDK expects value * 100 (e.g., 500 for 5%)
-    overrides.inflationCommissions.set(
-      inputs.voteAccount,
-      inputs.inflationCommission * 100,
-    )
-  }
-  if (inputs.mevCommission !== null) {
-    // User enters percentage (e.g., 5 for 5%), SDK expects basis points (e.g., 500 for 5%)
-    overrides.mevCommissions.set(inputs.voteAccount, inputs.mevCommission * 100)
-  }
-  if (inputs.blockRewardsCommission !== null) {
-    // User enters percentage (e.g., 5 for 5%), SDK expects basis points (e.g., 500 for 5%)
-    overrides.blockRewardsCommissions.set(
-      inputs.voteAccount,
-      inputs.blockRewardsCommission * 100,
-    )
-  }
-  if (inputs.bidPmpe !== null) {
-    // User enters SOL (e.g., 0.05), SDK expects lamports (e.g., 50000000)
-    overrides.cpmpes.set(inputs.voteAccount, inputs.bidPmpe * 1e9)
-  }
-
-  return overrides
-}
+>
 
 export const SamPage: React.FC<Props> = ({ level }) => {
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [isSimulationRunning, setIsSimulationRunning] = useState(false)
+  // Counter to force cache invalidation - Maps don't serialize properly with JSON.stringify
+  const [simulationRunId, setSimulationRunId] = useState(0)
+  // The actual overrides sent to the SDK
   const [simulationOverrides, setSimulationOverrides] =
     useState<SourceDataOverrides | null>(null)
-  const [showSimulator, setShowSimulator] = useState(false)
-  const [isSimulationRunning, setIsSimulationRunning] = useState(false)
+  // Track which validators have been edited
+  const [editedValidators, setEditedValidators] = useState<EditedValidators>(
+    new Set(),
+  )
+  // Track pending input values (before blur triggers recalculation)
+  const [pendingEdits, setPendingEdits] = useState<PendingEdits>(new Map())
 
   const {
     data,
     status,
     // isFetching,
-  } = useQuery(
-    ['sam', simulationOverrides],
-    () => loadSam(simulationOverrides),
-    {
-      keepPreviousData: true,
-      onSettled: () => setIsSimulationRunning(false),
+  } = useQuery(['sam', simulationRunId], () => loadSam(simulationOverrides), {
+    keepPreviousData: true,
+    onSettled: () => setIsSimulationRunning(false),
+  })
+
+  const handleToggleEditMode = useCallback(() => {
+    setIsEditMode(prev => {
+      if (prev) {
+        // Exiting edit mode - reset everything
+        setSimulationOverrides(null)
+        setEditedValidators(new Set())
+        setPendingEdits(new Map())
+        setSimulationRunId(id => id + 1)
+      }
+      return !prev
+    })
+  }, [])
+
+  // Handle input field changes (just update pending edits, don't recalculate yet)
+  const handleFieldChange = useCallback(
+    (
+      voteAccount: string,
+      field:
+        | 'inflationCommission'
+        | 'mevCommission'
+        | 'blockRewardsCommission'
+        | 'bidPmpe',
+      value: string,
+    ) => {
+      setPendingEdits(prev => {
+        const next = new Map(prev)
+        const existing = next.get(voteAccount) || {}
+        next.set(voteAccount, { ...existing, [field]: value })
+        return next
+      })
     },
+    [],
   )
 
-  const handleRunSimulation = useCallback((inputs: SimulationInputs) => {
-    const overrides = buildSourceDataOverrides(inputs)
-    setIsSimulationRunning(true)
-    setSimulationOverrides(overrides)
-  }, [])
+  // Handle blur - apply pending edits and trigger recalculation
+  const handleFieldBlur = useCallback(
+    (
+      voteAccount: string,
+      field:
+        | 'inflationCommission'
+        | 'mevCommission'
+        | 'blockRewardsCommission'
+        | 'bidPmpe',
+      value: string,
+      originalValue: number | null,
+    ) => {
+      const numValue = value === '' ? null : parseFloat(value)
 
-  const handleResetSimulation = useCallback(() => {
-    setSimulationOverrides(null)
-  }, [])
+      // Check if value actually changed from original
+      const hasChanged =
+        numValue !== originalValue &&
+        !(numValue === null && originalValue === null)
 
-  const handleToggleSimulator = useCallback(() => {
-    setShowSimulator(prev => !prev)
-  }, [])
+      if (!hasChanged) {
+        return
+      }
+
+      // Build new overrides
+      setSimulationOverrides(prev => {
+        const overrides: SourceDataOverrides = prev
+          ? {
+              inflationCommissions: new Map(prev.inflationCommissions),
+              mevCommissions: new Map(prev.mevCommissions),
+              blockRewardsCommissions: new Map(prev.blockRewardsCommissions),
+              cpmpes: new Map(prev.cpmpes),
+            }
+          : {
+              inflationCommissions: new Map(),
+              mevCommissions: new Map(),
+              blockRewardsCommissions: new Map(),
+              cpmpes: new Map(),
+            }
+
+        if (field === 'inflationCommission') {
+          if (numValue !== null) {
+            // inflaction commission is calculated in percentage (e.g., 5 for 5%)
+            overrides.inflationCommissions.set(voteAccount, numValue)
+          } else {
+            overrides.inflationCommissions.delete(voteAccount)
+          }
+        } else if (field === 'mevCommission') {
+          if (numValue !== null) {
+            // mev commission is calculated in bps (e.g., 500 for 5%)
+            overrides.mevCommissions.set(voteAccount, numValue * 100)
+          } else {
+            overrides.mevCommissions.delete(voteAccount)
+          }
+        } else if (field === 'blockRewardsCommission') {
+          if (numValue !== null) {
+            // block rewards commission is calculated in bps (e.g., 500 for 5%)
+            overrides.blockRewardsCommissions.set(voteAccount, numValue * 100)
+          } else {
+            overrides.blockRewardsCommissions.delete(voteAccount)
+          }
+        } else if (field === 'bidPmpe') {
+          if (numValue !== null) {
+            // User enters SOL (e.g., 0.05 means 0.05 SOL per mil), SDK expects lamports
+            overrides.cpmpes.set(voteAccount, numValue * 1e9)
+          } else {
+            overrides.cpmpes.delete(voteAccount)
+          }
+        }
+
+        return overrides
+      })
+
+      // Mark validator as edited
+      setEditedValidators(prev => {
+        const next = new Set(prev)
+        next.add(voteAccount)
+        return next
+      })
+
+      // Trigger recalculation
+      setIsSimulationRunning(true)
+      setSimulationRunId(prev => prev + 1)
+    },
+    [],
+  )
 
   const isSimulating = simulationOverrides !== null
 
@@ -105,12 +189,14 @@ export const SamPage: React.FC<Props> = ({ level }) => {
           epochsPerYear={data.epochsPerYear}
           dsSamConfig={data.dcSamConfig}
           level={level}
-          showSimulator={showSimulator}
-          onToggleSimulator={handleToggleSimulator}
-          onRunSimulation={handleRunSimulation}
-          onResetSimulation={handleResetSimulation}
+          isEditMode={isEditMode}
+          onToggleEditMode={handleToggleEditMode}
           isSimulating={isSimulating}
           isLoading={isSimulationRunning}
+          editedValidators={editedValidators}
+          pendingEdits={pendingEdits}
+          onFieldChange={handleFieldChange}
+          onFieldBlur={handleFieldBlur}
         />
       )}
     </div>

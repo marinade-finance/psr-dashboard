@@ -1,5 +1,5 @@
 import round from 'lodash.round'
-import React, { useState, useCallback, useEffect } from 'react'
+import React from 'react'
 
 import { formatPercentage, formatSolAmount } from 'src/format'
 import {
@@ -31,6 +31,10 @@ import {
   selectMevCommissionPmpe,
   selectCommissionPmpe,
   selectBlockRewardsCommissionPmpe,
+  overridesCommissionMessage,
+  overridesBlockRewardsCommissionMessage,
+  overridesMevCommissionMessage,
+  overridesCpmpeMessage as overridesBidCpmpeMessage,
 } from 'src/services/sam'
 
 import styles from './sam-table.module.css'
@@ -41,26 +45,38 @@ import { UserLevel } from '../navigation/navigation'
 import { Alignment, OrderDirection, Table } from '../table/table'
 
 import type { AuctionResult, DsSamConfig } from '@marinade.finance/ds-sam-sdk'
-
-export type SimulationInputs = {
-  voteAccount: string
-  bidPmpe: number | null
-  inflationCommission: number | null
-  mevCommission: number | null
-  blockRewardsCommission: number | null
-}
+import type { EditedValidators, PendingEdits } from 'src/pages/sam'
 
 type Props = {
   auctionResult: AuctionResult
   epochsPerYear: number
   dsSamConfig: DsSamConfig
   level: UserLevel
-  showSimulator: boolean
-  onToggleSimulator: () => void
-  onRunSimulation: (inputs: SimulationInputs) => void
-  onResetSimulation: () => void
+  isEditMode: boolean
+  onToggleEditMode: () => void
   isSimulating: boolean
   isLoading: boolean
+  editedValidators: EditedValidators
+  pendingEdits: PendingEdits
+  onFieldChange: (
+    voteAccount: string,
+    field:
+      | 'inflationCommission'
+      | 'mevCommission'
+      | 'blockRewardsCommission'
+      | 'bidPmpe',
+    value: string,
+  ) => void
+  onFieldBlur: (
+    voteAccount: string,
+    field:
+      | 'inflationCommission'
+      | 'mevCommission'
+      | 'blockRewardsCommission'
+      | 'bidPmpe',
+    value: string,
+    originalValue: number | null,
+  ) => void
 }
 
 export const SamTable: React.FC<Props> = ({
@@ -68,14 +84,15 @@ export const SamTable: React.FC<Props> = ({
   epochsPerYear,
   dsSamConfig,
   level,
-  showSimulator,
-  onToggleSimulator,
-  onRunSimulation,
-  onResetSimulation,
+  isEditMode,
+  onToggleEditMode,
   isSimulating,
   isLoading,
+  editedValidators,
+  pendingEdits,
+  onFieldChange,
+  onFieldBlur,
 }) => {
-  console.log(auctionResult)
   const {
     auctionData: { validators },
   } = auctionResult
@@ -92,65 +109,6 @@ export const SamTable: React.FC<Props> = ({
     selectTotalActiveStake(auctionResult) / samDistributedStake
   const productiveStake =
     selectProductiveStake(auctionResult) / samDistributedStake
-
-  // Simulation input state
-  const [voteAccount, setVoteAccount] = useState('')
-  const [bidPmpe, setBidPmpe] = useState<string>('')
-  const [inflationCommission, setInflationCommission] = useState<string>('')
-  const [mevCommission, setMevCommission] = useState<string>('')
-  const [blockRewardsCommission, setBlockRewardsCommission] =
-    useState<string>('')
-
-  // Pre-populate fields when vote account matches an existing validator
-  useEffect(() => {
-    if (!voteAccount || voteAccount.length < 32) return
-
-    const validator = validators.find(v => v.voteAccount === voteAccount)
-    if (validator) {
-      setBidPmpe(validator.revShare.bidPmpe.toString())
-      setInflationCommission(
-        (validator.inflationCommissionDec * 100).toString(),
-      )
-      if (validator.mevCommissionDec !== null) {
-        setMevCommission((validator.mevCommissionDec * 100).toString())
-      }
-      if (validator.blockRewardsCommissionDec !== null) {
-        setBlockRewardsCommission(
-          (validator.blockRewardsCommissionDec * 100).toString(),
-        )
-      }
-    }
-  }, [voteAccount, validators])
-
-  const handleRunSimulation = useCallback(() => {
-    onRunSimulation({
-      voteAccount,
-      bidPmpe: bidPmpe ? parseFloat(bidPmpe) : null,
-      inflationCommission: inflationCommission
-        ? parseFloat(inflationCommission)
-        : null,
-      mevCommission: mevCommission ? parseFloat(mevCommission) : null,
-      blockRewardsCommission: blockRewardsCommission
-        ? parseFloat(blockRewardsCommission)
-        : null,
-    })
-  }, [
-    voteAccount,
-    bidPmpe,
-    inflationCommission,
-    mevCommission,
-    blockRewardsCommission,
-    onRunSimulation,
-  ])
-
-  const handleReset = useCallback(() => {
-    setVoteAccount('')
-    setBidPmpe('')
-    setInflationCommission('')
-    setMevCommission('')
-    setBlockRewardsCommission('')
-    onResetSimulation()
-  }, [onResetSimulation])
 
   const validatorsWithBond = validators
     .filter(validator => selectBondSize(validator) > 0)
@@ -174,6 +132,23 @@ export const SamTable: React.FC<Props> = ({
       (agg, v) => agg + v.values.adjSpendRobustReputationInflationFactor,
       0,
     ) / samStakeValidators.length
+
+  // Helper to get input value - either from pending edits or original data
+  const getInputValue = (
+    voteAccount: string,
+    field:
+      | 'inflationCommission'
+      | 'mevCommission'
+      | 'blockRewardsCommission'
+      | 'bidPmpe',
+    originalValue: string,
+  ): string => {
+    const pending = pendingEdits.get(voteAccount)
+    if (pending && pending[field] !== undefined) {
+      return pending[field]
+    }
+    return originalValue
+  }
 
   let expertMetrics
   let apyMetrics
@@ -271,111 +246,23 @@ export const SamTable: React.FC<Props> = ({
           )}
         />
         <>{expertMetrics}</>
-        <button className={styles.simulatorToggle} onClick={onToggleSimulator}>
-          {showSimulator ? 'Hide Simulator' : 'Run Simulation'}
-        </button>
-        {isSimulating && (
-          <span className={styles.simulationBadge}>Simulation Active</span>
-        )}
-      </div>
-
-      {showSimulator && (
-        <div className={styles.simulatorSection}>
-          <div className={styles.simulatorHeader}>
-            <h3>SAM Auction Simulator</h3>
-            <p>
-              Override bid and commission values for a validator to simulate
-              auction results
-            </p>
-          </div>
-          <div className={styles.simulatorForm}>
-            <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>Vote Account</label>
-              <input
-                type="text"
-                className={styles.input}
-                placeholder="Enter vote account address"
-                value={voteAccount}
-                onChange={e => setVoteAccount(e.target.value)}
-              />
-            </div>
-            <div className={styles.inputRow}>
-              <div className={styles.inputGroup}>
-                <label className={styles.inputLabel}>
-                  Bid PMPE (SOL per 1000 delegated)
-                </label>
-                <input
-                  type="number"
-                  className={styles.input}
-                  placeholder="e.g., 0.05"
-                  step="0.001"
-                  value={bidPmpe}
-                  onChange={e => setBidPmpe(e.target.value)}
-                />
-              </div>
-              <div className={styles.inputGroup}>
-                <label className={styles.inputLabel}>
-                  Inflation Commission (%)
-                </label>
-                <input
-                  type="number"
-                  className={styles.input}
-                  placeholder="e.g., 5"
-                  step="0.1"
-                  min="0"
-                  max="100"
-                  value={inflationCommission}
-                  onChange={e => setInflationCommission(e.target.value)}
-                />
-              </div>
-              <div className={styles.inputGroup}>
-                <label className={styles.inputLabel}>MEV Commission (%)</label>
-                <input
-                  type="number"
-                  className={styles.input}
-                  placeholder="e.g., 5"
-                  step="0.1"
-                  min="0"
-                  max="100"
-                  value={mevCommission}
-                  onChange={e => setMevCommission(e.target.value)}
-                />
-              </div>
-              <div className={styles.inputGroup}>
-                <label className={styles.inputLabel}>
-                  Block Rewards Commission (%)
-                </label>
-                <input
-                  type="number"
-                  className={styles.input}
-                  placeholder="e.g., 5"
-                  step="0.1"
-                  min="0"
-                  max="100"
-                  value={blockRewardsCommission}
-                  onChange={e => setBlockRewardsCommission(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className={styles.buttonGroup}>
-              <button
-                className={styles.primaryButton}
-                onClick={handleRunSimulation}
-                disabled={!voteAccount || isLoading}
-              >
-                {isLoading ? 'Running...' : 'Run SAM'}
-              </button>
-              <button
-                className={styles.secondaryButton}
-                onClick={handleReset}
-                disabled={isLoading}
-              >
-                Reset
-              </button>
-            </div>
-          </div>
+        <div className={styles.simulatorToggleWrap}>
+          <button
+            className={`${styles.simulatorToggle} ${isSimulating ? styles.simulatorToggleActive : ''}`}
+            onClick={onToggleEditMode}
+            disabled={isLoading}
+          >
+            {isLoading
+              ? 'Running...'
+              : isEditMode
+                ? 'Exit Simulation'
+                : 'Run Simulation'}
+          </button>
+          {isSimulating && (
+            <span className={styles.simulationNote}>(simulation active)</span>
+          )}
         </div>
-      )}
+      </div>
 
       <Table
         data={validatorsWithBond}
@@ -383,11 +270,17 @@ export const SamTable: React.FC<Props> = ({
           {
             header: 'Validator',
             headerAttrsFn: () => tooltipAttributes('Validator Vote Account'),
-            render: validator => (
-              <span className={styles.pubkey}>
-                {selectVoteAccount(validator)}
-              </span>
-            ),
+            render: validator => {
+              const voteAccount = selectVoteAccount(validator)
+              const isEdited = editedValidators.has(voteAccount)
+              return (
+                <span
+                  className={`${styles.pubkey} ${isEdited ? styles.pubkeySimulated : ''}`}
+                >
+                  {voteAccount}
+                </span>
+              )
+            },
             compare: (a, b) =>
               selectVoteAccount(a).localeCompare(selectVoteAccount(b)),
           },
@@ -397,13 +290,48 @@ export const SamTable: React.FC<Props> = ({
               tooltipAttributes('Validator Inflation Commission'),
             cellAttrsFn: validator =>
               tooltipAttributes(
-                `On chain commission: ${formattedOnChainCommission(validator)}<br/>` +
+                `${overridesCommissionMessage(validator)}` +
+                  `On chain commission: ${formattedOnChainCommission(validator)}<br/>` +
                   `In-bond commission: ${formattedInBondCommission(validator)}<br/>` +
                   `Effective inflation commission PMPE: ${selectCommissionPmpe(validator)}`,
               ),
-            render: validator => (
-              <>{formatPercentage(selectCommission(validator), 0)}</>
-            ),
+            render: validator => {
+              const voteAccount = selectVoteAccount(validator)
+              const originalValue = selectCommission(validator) * 100
+              if (isEditMode) {
+                const inputValue = getInputValue(
+                  voteAccount,
+                  'inflationCommission',
+                  originalValue.toString(),
+                )
+                return (
+                  <input
+                    type="number"
+                    className={styles.inlineInput}
+                    value={inputValue}
+                    step="0.1"
+                    min="0"
+                    max="100"
+                    onChange={e =>
+                      onFieldChange(
+                        voteAccount,
+                        'inflationCommission',
+                        e.target.value,
+                      )
+                    }
+                    onBlur={e =>
+                      onFieldBlur(
+                        voteAccount,
+                        'inflationCommission',
+                        e.target.value,
+                        originalValue,
+                      )
+                    }
+                  />
+                )
+              }
+              return <>{formatPercentage(selectCommission(validator), 0)}</>
+            },
             compare: (a, b) => selectCommission(a) - selectCommission(b),
             alignment: Alignment.RIGHT,
           },
@@ -411,11 +339,51 @@ export const SamTable: React.FC<Props> = ({
             header: 'MEV',
             cellAttrsFn: validator =>
               tooltipAttributes(
-                `On chain commission: ${formattedOnChainMevCommission(validator)}<br/>` +
+                `${overridesMevCommissionMessage(validator)}` +
+                  `On chain commission: ${formattedOnChainMevCommission(validator)}<br/>` +
                   `In-bond commission: ${formattedInBondMevCommission(validator)}<br/>` +
                   `Effective MEV commission PMPE: ${selectMevCommissionPmpe(validator)}`,
               ),
-            render: validator => <>{formattedMevCommission(validator)}</>,
+            render: validator => {
+              const voteAccount = selectVoteAccount(validator)
+              const mevCommission = selectMevCommission(validator)
+              const originalValue =
+                mevCommission !== null ? mevCommission * 100 : null
+              if (isEditMode) {
+                const inputValue = getInputValue(
+                  voteAccount,
+                  'mevCommission',
+                  originalValue?.toString() ?? '',
+                )
+                return (
+                  <input
+                    type="number"
+                    className={styles.inlineInput}
+                    value={inputValue}
+                    step="0.1"
+                    min="0"
+                    max="100"
+                    placeholder="-"
+                    onChange={e =>
+                      onFieldChange(
+                        voteAccount,
+                        'mevCommission',
+                        e.target.value,
+                      )
+                    }
+                    onBlur={e =>
+                      onFieldBlur(
+                        voteAccount,
+                        'mevCommission',
+                        e.target.value,
+                        originalValue,
+                      )
+                    }
+                  />
+                )
+              }
+              return <>{formattedMevCommission(validator)}</>
+            },
             compare: (a, b) =>
               (selectMevCommission(a) ?? 100) - (selectMevCommission(b) ?? 100),
             alignment: Alignment.RIGHT,
@@ -428,11 +396,49 @@ export const SamTable: React.FC<Props> = ({
               ),
             cellAttrsFn: validator =>
               tooltipAttributes(
-                `Effective block rewards commission PMPE: ${selectBlockRewardsCommissionPmpe(validator)}`,
+                `${overridesBlockRewardsCommissionMessage(validator)}` +
+                  `Effective block rewards commission PMPE: ${selectBlockRewardsCommissionPmpe(validator)}`,
               ),
-            render: validator => (
-              <>{formattedBlockRewardsCommission(validator)}</>
-            ),
+            render: validator => {
+              const voteAccount = selectVoteAccount(validator)
+              const blockCommission = selectBlockRewardsCommission(validator)
+              const originalValue =
+                blockCommission !== null ? blockCommission * 100 : null
+              if (isEditMode) {
+                const inputValue = getInputValue(
+                  voteAccount,
+                  'blockRewardsCommission',
+                  originalValue?.toString() ?? '',
+                )
+                return (
+                  <input
+                    type="number"
+                    className={styles.inlineInput}
+                    value={inputValue}
+                    step="0.1"
+                    min="0"
+                    max="100"
+                    placeholder="-"
+                    onChange={e =>
+                      onFieldChange(
+                        voteAccount,
+                        'blockRewardsCommission',
+                        e.target.value,
+                      )
+                    }
+                    onBlur={e =>
+                      onFieldBlur(
+                        voteAccount,
+                        'blockRewardsCommission',
+                        e.target.value,
+                        originalValue,
+                      )
+                    }
+                  />
+                )
+              }
+              return <>{formattedBlockRewardsCommission(validator)}</>
+            },
             compare: (a, b) =>
               (selectBlockRewardsCommission(a) ?? 100) -
               (selectBlockRewardsCommission(b) ?? 100),
@@ -444,10 +450,43 @@ export const SamTable: React.FC<Props> = ({
               tooltipAttributes(
                 'Static bid for 1000 SOL set by the validator in Bond configuration.',
               ),
-            cellAttrsFn: () => tooltipAttributes('Maximum bid for 1000 SOL.'),
-            render: validator => (
-              <>{formatSolAmount(selectBid(validator), 4)}</>
-            ),
+            cellAttrsFn: validator =>
+              tooltipAttributes(
+                `${overridesBidCpmpeMessage(validator)}` +
+                  `Maximum bid ${selectBid(validator)} for 1000 SOL.`,
+              ),
+            render: validator => {
+              const voteAccount = selectVoteAccount(validator)
+              const originalValue = selectBid(validator)
+              if (isEditMode) {
+                const inputValue = getInputValue(
+                  voteAccount,
+                  'bidPmpe',
+                  originalValue.toString(),
+                )
+                return (
+                  <input
+                    type="number"
+                    className={styles.inlineInput}
+                    value={inputValue}
+                    step="0.001"
+                    min="0"
+                    onChange={e =>
+                      onFieldChange(voteAccount, 'bidPmpe', e.target.value)
+                    }
+                    onBlur={e =>
+                      onFieldBlur(
+                        voteAccount,
+                        'bidPmpe',
+                        e.target.value,
+                        originalValue,
+                      )
+                    }
+                  />
+                )
+              }
+              return <>{formatSolAmount(selectBid(validator), 4)}</>
+            },
             compare: (a, b) => selectBid(a) - selectBid(b),
             alignment: Alignment.RIGHT,
           },
@@ -462,21 +501,6 @@ export const SamTable: React.FC<Props> = ({
             compare: (a, b) => selectBondSize(a) - selectBondSize(b),
             alignment: Alignment.RIGHT,
           },
-          // {
-          //   header: 'Rep.',
-          //   headerAttrsFn: () =>
-          //     tooltipAttributes(
-          //       'Validator Reputation. Not used in the auction at the moment.',
-          //     ),
-          //   render: validator => (
-          //     <>{formatSolAmount(selectSpendRobustReputation(validator), 0)}</>
-          //   ),
-          //   compare: (a, b) =>
-          //     selectSpendRobustReputation(a) - selectSpendRobustReputation(b),
-          //   alignment: Alignment.RIGHT,
-          //   cellAttrsFn: validator =>
-          //     tooltipAttributes(spendRobustReputationTooltip(validator)),
-          // },
           {
             header: 'Max APY',
             headerAttrsFn: () =>
@@ -522,7 +546,6 @@ export const SamTable: React.FC<Props> = ({
               selectSamTargetStake(a) - selectSamTargetStake(b),
             alignment: Alignment.RIGHT,
           },
-          // TODO: double check in DS SAM and validator bonds if static bid is used correctly in claiming from bond
           {
             header: 'Eff. Bid [☉]',
             headerAttrsFn: () =>
