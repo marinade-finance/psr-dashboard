@@ -206,6 +206,9 @@ export const formattedOnChainCommission = (
     : formatPercentage(onChainCommission, 0)
 }
 
+export const selectCommissionPmpe = (validator: AuctionValidator) =>
+  validator.revShare.inflationPmpe
+
 export const selectMevCommission = (
   validator: AuctionValidator,
 ): number | null => validator.mevCommissionDec
@@ -236,6 +239,9 @@ export const formattedOnChainMevCommission = (
     : formatPercentage(onChainMevCommission, 0)
 }
 
+export const selectMevCommissionPmpe = (validator: AuctionValidator) =>
+  validator.revShare.mevPmpe
+
 export const selectBlockRewardsCommission = (
   validator: AuctionValidator,
 ): number | null => validator.blockRewardsCommissionDec
@@ -258,6 +264,9 @@ export const formattedInBondBlockRewardsCommission = (
     ? '-'
     : formatPercentage(inBondBlockRewardsCommission, 0)
 }
+
+export const selectBlockRewardsCommissionPmpe = (validator: AuctionValidator) =>
+  validator.revShare.blockPmpe
 
 export const selectBondSize = (validator: AuctionValidator) =>
   validator.bondBalanceSol
