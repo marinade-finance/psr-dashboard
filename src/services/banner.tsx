@@ -9,10 +9,10 @@ export const getBannerData = (): Props => ({
       <p>
         📜 You can now bid not only by setting a static bid (
         <code>--cpmpe</code>), but also by setting commissions on inflation,
-        MEV, and block rewards in your bond, which directly your effective bid
-        in the auction. This allows you to set the bid to track inflation, mev
-        and block rewards and not worry about getting penalized for undercutting
-        the auction. See more at{' '}
+        MEV, and block rewards in your bond, which directly affects your
+        effective bid in the auction. This allows you to set the bid to track
+        inflation, MEV and block rewards and not worry about getting penalized
+        for undercutting the auction. See more at{' '}
         <a
           target="_blank"
           href="https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market"
