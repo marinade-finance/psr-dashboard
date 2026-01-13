@@ -28,6 +28,9 @@ import {
   formattedOnChainMevCommission,
   formattedInBondMevCommission,
   formattedOnChainCommission,
+  selectMevCommissionPmpe,
+  selectCommissionPmpe,
+  selectBlockRewardsCommissionPmpe,
 } from 'src/services/sam'
 
 import styles from './sam-table.module.css'
@@ -211,7 +214,8 @@ export const SamTable: React.FC<Props> = ({
             cellAttrsFn: validator =>
               tooltipAttributes(
                 `On chain commission: ${formattedOnChainCommission(validator)}<br/>` +
-                  `In-bond commission: ${formattedInBondCommission(validator)}`,
+                  `In-bond commission: ${formattedInBondCommission(validator)}<br/>` +
+                  `Effective inflation commission PMPE: ${selectCommissionPmpe(validator)}`,
               ),
             render: validator => (
               <>{formatPercentage(selectCommission(validator), 0)}</>
@@ -224,7 +228,8 @@ export const SamTable: React.FC<Props> = ({
             cellAttrsFn: validator =>
               tooltipAttributes(
                 `On chain commission: ${formattedOnChainMevCommission(validator)}<br/>` +
-                  `In-bond commission: ${formattedInBondMevCommission(validator)}`,
+                  `In-bond commission: ${formattedInBondMevCommission(validator)}<br/>` +
+                  `Effective MEV commission PMPE: ${selectMevCommissionPmpe(validator)}`,
               ),
             render: validator => <>{formattedMevCommission(validator)}</>,
             compare: (a, b) =>
@@ -236,6 +241,10 @@ export const SamTable: React.FC<Props> = ({
             headerAttrsFn: () =>
               tooltipAttributes(
                 'Block rewards commission can be in Bond configuration solely.',
+              ),
+            cellAttrsFn: validator =>
+              tooltipAttributes(
+                `Effective block rewards commission PMPE: ${selectBlockRewardsCommissionPmpe(validator)}`,
               ),
             render: validator => (
               <>{formattedBlockRewardsCommission(validator)}</>
