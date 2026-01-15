@@ -293,7 +293,7 @@ export const SamTable: React.FC<Props> = ({
                 `${overridesCommissionMessage(validator)}` +
                   `On chain commission: ${formattedOnChainCommission(validator)}<br/>` +
                   `In-bond commission: ${formattedInBondCommission(validator)}<br/>` +
-                  `Effective inflation commission PMPE: ${selectCommissionPmpe(validator)}`,
+                  `Effective inflation commission bid: ${selectCommissionPmpe(validator)}`,
               ),
             render: validator => {
               const voteAccount = selectVoteAccount(validator)
@@ -342,7 +342,7 @@ export const SamTable: React.FC<Props> = ({
                 `${overridesMevCommissionMessage(validator)}` +
                   `On chain commission: ${formattedOnChainMevCommission(validator)}<br/>` +
                   `In-bond commission: ${formattedInBondMevCommission(validator)}<br/>` +
-                  `Effective MEV commission PMPE: ${selectMevCommissionPmpe(validator)}`,
+                  `Effective MEV commission bid: ${selectMevCommissionPmpe(validator)}`,
               ),
             render: validator => {
               const voteAccount = selectVoteAccount(validator)
@@ -397,7 +397,7 @@ export const SamTable: React.FC<Props> = ({
             cellAttrsFn: validator =>
               tooltipAttributes(
                 `${overridesBlockRewardsCommissionMessage(validator)}` +
-                  `Effective block rewards commission PMPE: ${selectBlockRewardsCommissionPmpe(validator)}`,
+                  `Effective block rewards commission bid: ${selectBlockRewardsCommissionPmpe(validator)}`,
               ),
             render: validator => {
               const voteAccount = selectVoteAccount(validator)
