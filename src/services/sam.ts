@@ -81,7 +81,6 @@ export const loadSam = async (
       debugVoteAccounts: [],
       logVerbosity: LogVerbosity.ERROR,
     })
-    // Use runFinalOnly() for both default view and simulation with overrides
     const auctionResult = await dsSam.runFinalOnly(dataOverrides)
     return { auctionResult, epochsPerYear, dcSamConfig: dsSam.config }
   } catch (err) {
