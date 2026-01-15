@@ -7,14 +7,24 @@ interface CssExports {
   'green': string;
   'inlineInput': string;
   'metricWrap': string;
+  'originalPosition': string;
+  'positionImproved': string;
+  'positionUnchanged': string;
+  'positionWorsened': string;
   'pubkey': string;
   'pubkeySimulated': string;
   'red': string;
+  'runSimulationBtn': string;
+  'runSimulationBtnCalculating': string;
+  'simulationModeActive': string;
   'simulationNote': string;
   'simulatorToggle': string;
   'simulatorToggleActive': string;
   'simulatorToggleWrap': string;
   'tableWrap': string;
+  'validatorActions': string;
+  'validatorRowClickable': string;
+  'validatorRowEditing': string;
   'yellow': string;
 }
 export const cssExports: CssExports;

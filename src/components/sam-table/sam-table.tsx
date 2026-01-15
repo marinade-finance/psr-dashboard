@@ -45,21 +45,23 @@ import { UserLevel } from '../navigation/navigation'
 import { Alignment, OrderDirection, Table } from '../table/table'
 
 import type { AuctionResult, DsSamConfig } from '@marinade.finance/ds-sam-sdk'
-import type { EditedValidators, PendingEdits } from 'src/pages/sam'
+import type { PendingEdits } from 'src/pages/sam'
 
 type Props = {
   auctionResult: AuctionResult
+  originalAuctionResult: AuctionResult | null
   epochsPerYear: number
   dsSamConfig: DsSamConfig
   level: UserLevel
-  isEditMode: boolean
-  onToggleEditMode: () => void
-  isSimulating: boolean
-  isLoading: boolean
-  editedValidators: EditedValidators
+  simulationModeActive: boolean
+  onToggleSimulationMode: () => void
+  editingValidator: string | null
+  simulatedValidator: string | null
+  isCalculating: boolean
+  hasSimulationApplied: boolean
   pendingEdits: PendingEdits
+  onValidatorClick: (voteAccount: string) => void
   onFieldChange: (
-    voteAccount: string,
     field:
       | 'inflationCommission'
       | 'mevCommission'
@@ -67,31 +69,25 @@ type Props = {
       | 'bidPmpe',
     value: string,
   ) => void
-  onFieldBlur: (
-    voteAccount: string,
-    field:
-      | 'inflationCommission'
-      | 'mevCommission'
-      | 'blockRewardsCommission'
-      | 'bidPmpe',
-    value: string,
-    originalValue: number | null,
-  ) => void
+  onRunSimulation: () => void
 }
 
 export const SamTable: React.FC<Props> = ({
   auctionResult,
+  originalAuctionResult,
   epochsPerYear,
   dsSamConfig,
   level,
-  isEditMode,
-  onToggleEditMode,
-  isSimulating,
-  isLoading,
-  editedValidators,
+  simulationModeActive,
+  onToggleSimulationMode,
+  editingValidator,
+  simulatedValidator,
+  isCalculating,
+  hasSimulationApplied,
   pendingEdits,
+  onValidatorClick,
   onFieldChange,
-  onFieldBlur,
+  onRunSimulation,
 }) => {
   const {
     auctionData: { validators },
@@ -135,7 +131,6 @@ export const SamTable: React.FC<Props> = ({
 
   // Helper to get input value - either from pending edits or original data
   const getInputValue = (
-    voteAccount: string,
     field:
       | 'inflationCommission'
       | 'mevCommission'
@@ -143,11 +138,40 @@ export const SamTable: React.FC<Props> = ({
       | 'bidPmpe',
     originalValue: string,
   ): string => {
-    const pending = pendingEdits.get(voteAccount)
-    if (pending && pending[field] !== undefined) {
-      return pending[field]
+    if (pendingEdits[field] !== undefined) {
+      return pendingEdits[field]
     }
     return originalValue
+  }
+
+  // Helper to find the original position of a validator
+  const getOriginalPosition = (voteAccount: string): number | null => {
+    if (!originalAuctionResult) return null
+    const originalValidators =
+      originalAuctionResult.auctionData.validators.filter(
+        v => selectBondSize(v) > 0,
+      )
+    return originalValidators.findIndex(v => v.voteAccount === voteAccount) + 1
+  }
+
+  // Helper to determine position change color
+  const getPositionChangeClass = (
+    voteAccount: string,
+    currentPosition: number,
+  ): string | null => {
+    const originalPosition = getOriginalPosition(voteAccount)
+    if (originalPosition === null || originalPosition === -1) return null
+
+    if (currentPosition < originalPosition) {
+      // Lower position number = better (moved up in the list)
+      return styles.positionImproved
+    } else if (currentPosition > originalPosition) {
+      // Higher position number = worse (moved down in the list)
+      return styles.positionWorsened
+    } else {
+      // Same position
+      return styles.positionUnchanged
+    }
   }
 
   let expertMetrics
@@ -216,7 +240,9 @@ export const SamTable: React.FC<Props> = ({
   }
 
   return (
-    <div className={styles.tableWrap}>
+    <div
+      className={`${styles.tableWrap} ${simulationModeActive ? styles.simulationModeActive : ''}`}
+    >
       <div className={styles.metricWrap}>
         <Metric
           label="Total Auction Stake"
@@ -248,37 +274,90 @@ export const SamTable: React.FC<Props> = ({
         <>{expertMetrics}</>
         <div className={styles.simulatorToggleWrap}>
           <button
-            className={`${styles.simulatorToggle} ${isSimulating ? styles.simulatorToggleActive : ''}`}
-            onClick={onToggleEditMode}
-            disabled={isLoading}
+            className={`${styles.simulatorToggle} ${simulationModeActive ? styles.simulatorToggleActive : ''}`}
+            onClick={onToggleSimulationMode}
+            disabled={isCalculating}
           >
-            {isLoading
-              ? 'Running...'
-              : isEditMode
-                ? 'Exit Simulation'
-                : 'Run Simulation'}
+            {simulationModeActive ? 'Exit Simulation' : 'Enter Simulation'}
           </button>
-          {isSimulating && (
-            <span className={styles.simulationNote}>(simulation active)</span>
+          {hasSimulationApplied && !isCalculating && (
+            <span className={styles.simulationNote}>Simulation applied</span>
+          )}
+          {isCalculating && (
+            <span className={styles.simulationNote}>Calculating...</span>
           )}
         </div>
       </div>
 
       <Table
         data={validatorsWithBond}
+        rowAttrsFn={(validator, index) => {
+          const voteAccount = selectVoteAccount(validator)
+          const isEditing = editingValidator === voteAccount
+          const isSimulated = simulatedValidator === voteAccount
+          const canClick =
+            simulationModeActive && !isSimulated && !editingValidator
+
+          const attrs: {
+            className?: string
+            onClick?: React.MouseEventHandler<HTMLTableRowElement>
+          } = {}
+
+          // Add clickable styling if in simulation mode and not the simulated validator
+          if (canClick) {
+            attrs.className = styles.validatorRowClickable
+            attrs.onClick = () => onValidatorClick(voteAccount)
+          } else if (isEditing) {
+            attrs.className = styles.validatorRowEditing
+          }
+
+          // Add position change styling if this validator was simulated
+          if (isSimulated) {
+            const positionClass = getPositionChangeClass(voteAccount, index + 1)
+            if (positionClass) {
+              attrs.className = positionClass
+            }
+          }
+
+          return attrs
+        }}
         columns={[
           {
             header: 'Validator',
             headerAttrsFn: () => tooltipAttributes('Validator Vote Account'),
             render: validator => {
               const voteAccount = selectVoteAccount(validator)
-              const isEdited = editedValidators.has(voteAccount)
+              const isEditing = editingValidator === voteAccount
+              const isSimulated = simulatedValidator === voteAccount
+              const originalPosition = isSimulated
+                ? getOriginalPosition(voteAccount)
+                : null
+
               return (
-                <span
-                  className={`${styles.pubkey} ${isEdited ? styles.pubkeySimulated : ''}`}
-                >
-                  {voteAccount}
-                </span>
+                <div className={styles.validatorActions}>
+                  {originalPosition !== null && originalPosition !== -1 && (
+                    <span className={styles.originalPosition}>
+                      #{originalPosition}
+                    </span>
+                  )}
+                  <span
+                    className={`${styles.pubkey} ${isSimulated ? styles.pubkeySimulated : ''}`}
+                  >
+                    {voteAccount}
+                  </span>
+                  {isEditing && (
+                    <button
+                      className={`${styles.runSimulationBtn} ${isCalculating ? styles.runSimulationBtnCalculating : ''}`}
+                      onClick={e => {
+                        e.stopPropagation()
+                        onRunSimulation()
+                      }}
+                      disabled={isCalculating}
+                    >
+                      {isCalculating ? 'Calculating...' : 'Run Simulation'}
+                    </button>
+                  )}
+                </div>
               )
             },
             compare: (a, b) =>
@@ -297,10 +376,10 @@ export const SamTable: React.FC<Props> = ({
               ),
             render: validator => {
               const voteAccount = selectVoteAccount(validator)
+              const isEditing = editingValidator === voteAccount
               const originalValue = selectCommission(validator) * 100
-              if (isEditMode) {
+              if (isEditing) {
                 const inputValue = getInputValue(
-                  voteAccount,
                   'inflationCommission',
                   originalValue.toString(),
                 )
@@ -313,20 +392,13 @@ export const SamTable: React.FC<Props> = ({
                     min="0"
                     max="100"
                     onChange={e =>
-                      onFieldChange(
-                        voteAccount,
-                        'inflationCommission',
-                        e.target.value,
-                      )
+                      onFieldChange('inflationCommission', e.target.value)
                     }
-                    onBlur={e =>
-                      onFieldBlur(
-                        voteAccount,
-                        'inflationCommission',
-                        e.target.value,
-                        originalValue,
-                      )
-                    }
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        onRunSimulation()
+                      }
+                    }}
                   />
                 )
               }
@@ -346,12 +418,12 @@ export const SamTable: React.FC<Props> = ({
               ),
             render: validator => {
               const voteAccount = selectVoteAccount(validator)
+              const isEditing = editingValidator === voteAccount
               const mevCommission = selectMevCommission(validator)
               const originalValue =
                 mevCommission !== null ? mevCommission * 100 : null
-              if (isEditMode) {
+              if (isEditing) {
                 const inputValue = getInputValue(
-                  voteAccount,
                   'mevCommission',
                   originalValue?.toString() ?? '',
                 )
@@ -365,20 +437,13 @@ export const SamTable: React.FC<Props> = ({
                     max="100"
                     placeholder="-"
                     onChange={e =>
-                      onFieldChange(
-                        voteAccount,
-                        'mevCommission',
-                        e.target.value,
-                      )
+                      onFieldChange('mevCommission', e.target.value)
                     }
-                    onBlur={e =>
-                      onFieldBlur(
-                        voteAccount,
-                        'mevCommission',
-                        e.target.value,
-                        originalValue,
-                      )
-                    }
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        onRunSimulation()
+                      }
+                    }}
                   />
                 )
               }
@@ -401,12 +466,12 @@ export const SamTable: React.FC<Props> = ({
               ),
             render: validator => {
               const voteAccount = selectVoteAccount(validator)
+              const isEditing = editingValidator === voteAccount
               const blockCommission = selectBlockRewardsCommission(validator)
               const originalValue =
                 blockCommission !== null ? blockCommission * 100 : null
-              if (isEditMode) {
+              if (isEditing) {
                 const inputValue = getInputValue(
-                  voteAccount,
                   'blockRewardsCommission',
                   originalValue?.toString() ?? '',
                 )
@@ -420,20 +485,13 @@ export const SamTable: React.FC<Props> = ({
                     max="100"
                     placeholder="-"
                     onChange={e =>
-                      onFieldChange(
-                        voteAccount,
-                        'blockRewardsCommission',
-                        e.target.value,
-                      )
+                      onFieldChange('blockRewardsCommission', e.target.value)
                     }
-                    onBlur={e =>
-                      onFieldBlur(
-                        voteAccount,
-                        'blockRewardsCommission',
-                        e.target.value,
-                        originalValue,
-                      )
-                    }
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        onRunSimulation()
+                      }
+                    }}
                   />
                 )
               }
@@ -457,10 +515,10 @@ export const SamTable: React.FC<Props> = ({
               ),
             render: validator => {
               const voteAccount = selectVoteAccount(validator)
+              const isEditing = editingValidator === voteAccount
               const originalValue = selectBid(validator)
-              if (isEditMode) {
+              if (isEditing) {
                 const inputValue = getInputValue(
-                  voteAccount,
                   'bidPmpe',
                   originalValue.toString(),
                 )
@@ -471,17 +529,12 @@ export const SamTable: React.FC<Props> = ({
                     value={inputValue}
                     step="0.001"
                     min="0"
-                    onChange={e =>
-                      onFieldChange(voteAccount, 'bidPmpe', e.target.value)
-                    }
-                    onBlur={e =>
-                      onFieldBlur(
-                        voteAccount,
-                        'bidPmpe',
-                        e.target.value,
-                        originalValue,
-                      )
-                    }
+                    onChange={e => onFieldChange('bidPmpe', e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        onRunSimulation()
+                      }
+                    }}
                   />
                 )
               }
