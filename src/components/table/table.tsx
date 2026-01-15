@@ -50,29 +50,52 @@ const renderHeader: <Item>(
   columns: Column<Item>[],
   onSort: (i: number) => void,
   userOrder: [number, OrderDirection] | null,
+  defaultOrder: Order[],
   showRowNumber: boolean,
-) => JSX.Element = (columns, onSort, userOrder, showRowNumber: boolean) => {
-  const [orderColumn, orderDirection] = userOrder ?? [null, null]
+) => JSX.Element = (
+  columns,
+  onSort,
+  userOrder,
+  defaultOrder,
+  showRowNumber: boolean,
+) => {
+  const [userOrderColumn, userOrderDirection] = userOrder ?? [null, null]
+  // Get the primary default order column (first in defaultOrder array)
+  const [defaultOrderColumn, defaultOrderDirection] = defaultOrder[0] ?? [
+    null,
+    null,
+  ]
+
   return (
     <tr>
       {showRowNumber ? <td>#</td> : null}
-      {columns.map((column, i) => (
-        <th
-          key={i}
-          className={alignmentClassName(column.alignment)}
-          onClick={() => onSort(i)}
-          {...(column.headerAttrsFn ? column.headerAttrsFn() : {})}
-        >
-          {column.header}
-          <span>
-            {orderColumn === i
-              ? orderDirection === OrderDirection.ASC
-                ? '▴'
-                : '▾'
-              : '\u00A0'}
-          </span>
-        </th>
-      ))}
+      {columns.map((column, i) => {
+        const isUserSorted = userOrderColumn === i
+        const isDefaultSorted = !userOrder && defaultOrderColumn === i
+
+        let indicatorClass = styles.sortIndicator
+        let indicator = ''
+
+        if (isUserSorted) {
+          indicatorClass = `${styles.sortIndicator} ${styles.sortIndicatorActive}`
+          indicator = userOrderDirection === OrderDirection.ASC ? '▲' : '▼'
+        } else if (isDefaultSorted) {
+          indicatorClass = `${styles.sortIndicator} ${styles.sortIndicatorDefault}`
+          indicator = defaultOrderDirection === OrderDirection.ASC ? '▲' : '▼'
+        }
+
+        return (
+          <th
+            key={i}
+            className={alignmentClassName(column.alignment)}
+            onClick={() => onSort(i)}
+            {...(column.headerAttrsFn ? column.headerAttrsFn() : {})}
+          >
+            {column.header}
+            <span className={indicatorClass}>{indicator}</span>
+          </th>
+        )
+      })}
     </tr>
   )
 }
@@ -208,7 +231,13 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
   return (
     <table className={styles.table}>
       <thead>
-        {renderHeader(columns, onSort, userOrder, showRowNumber ?? false)}
+        {renderHeader(
+          columns,
+          onSort,
+          userOrder,
+          defaultOrder,
+          showRowNumber ?? false,
+        )}
       </thead>
       <tbody>
         {renderRows(
