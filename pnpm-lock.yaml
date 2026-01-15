@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@marinade.finance/ds-sam-sdk':
-        specifier: 0.0.39
-        version: 0.0.39
+        specifier: 0.0.40
+        version: 0.0.40
       '@types/lodash.round':
         specifier: ^4.0.9
         version: 4.0.9
@@ -470,8 +470,8 @@ packages:
   '@leichtgewicht/ip-codec@2.0.5':
     resolution: {integrity: sha512-Vo+PSpZG2/fmgmiNzYK9qWRh8h/CHrwD0mo1h1DzL4yzHNSfWYujGTYsWGreD000gcgmZ7K4Ys6Tx9TxtsKdDw==}
 
-  '@marinade.finance/ds-sam-sdk@0.0.39':
-    resolution: {integrity: sha512-JDCIkOUVJrepoHLVO8PG1P9k0FUhw+Kfzl6kCqNY6lHLDuf6dydgil8WXYxA+YNd0Zucyc1NwQPWA0z8zr75gA==}
+  '@marinade.finance/ds-sam-sdk@0.0.40':
+    resolution: {integrity: sha512-vaWcMH4xI5kWxSEWn/Z+hdhk4Gz7H1Q82oyn6/tYzc8bu4tcSJpJcrTzuK2IGWlWJQyOTstmOy+KFxlmdHEAVw==}
 
   '@marinade.finance/eslint-config@1.3.1':
     resolution: {integrity: sha512-6eZq7AqE8KsAK7rYJlx4+gDcfsPuwbOotS6VEoa5E2BFfuhb1PO5AmccT1z9Emuez/KoR51wdGFrH8mZwhgEYg==}
@@ -4368,7 +4368,7 @@ snapshots:
 
   '@leichtgewicht/ip-codec@2.0.5': {}
 
-  '@marinade.finance/ds-sam-sdk@0.0.39':
+  '@marinade.finance/ds-sam-sdk@0.0.40':
     dependencies:
       axios: 1.13.2
       decimal.js: 10.6.0

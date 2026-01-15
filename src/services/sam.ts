@@ -207,6 +207,9 @@ const overridesMessage = (
 export const selectBid = (validator: AuctionValidator) =>
   validator.revShare.bidPmpe
 
+export const selectBondBid = (validator: AuctionValidator) =>
+  validator.values?.commissions?.bidCpmpeInBondDec ?? validator.bidCpmpe
+
 export const overridesCpmpeMessage = (validator: AuctionValidator): string => {
   return overridesMessage(
     'CPMPE',
