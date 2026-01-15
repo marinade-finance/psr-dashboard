@@ -4,9 +4,14 @@ interface CssExports {
   'badge': string;
   'badgeDryRun': string;
   'badgeEstimate': string;
+  'calculating': string;
   'green': string;
+  'header-glow': string;
   'inlineInput': string;
+  'inputCell': string;
+  'inputPlaceholder': string;
   'metricWrap': string;
+  'orderCell': string;
   'originalPosition': string;
   'positionImproved': string;
   'positionUnchanged': string;
@@ -22,7 +27,6 @@ interface CssExports {
   'simulatorToggleActive': string;
   'simulatorToggleWrap': string;
   'tableWrap': string;
-  'validatorActions': string;
   'validatorRowClickable': string;
   'validatorRowEditing': string;
   'yellow': string;

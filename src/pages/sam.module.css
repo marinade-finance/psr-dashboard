@@ -1,43 +1,8 @@
 .page {
   background-color: var(--bg-dark-2);
-  position: relative;
 }
 
-/* Content wrapper - changes background when in simulation mode */
+/* Content wrapper */
 .pageContent {
   position: relative;
-  min-height: 100vh;
-  transition: background-color 0.3s ease;
-}
-
-/* Simulation mode - tint the entire content area */
-.pageContent.simulationMode {
-  background: linear-gradient(
-    to bottom,
-    rgba(30, 58, 138, 0.25),
-    rgba(30, 58, 138, 0.15)
-  );
-}
-
-/* Calculating animation */
-@keyframes pulse-glow {
-  0%,
-  100% {
-    background: linear-gradient(
-      to bottom,
-      rgba(30, 58, 138, 0.25),
-      rgba(30, 58, 138, 0.15)
-    );
-  }
-  50% {
-    background: linear-gradient(
-      to bottom,
-      rgba(30, 58, 138, 0.35),
-      rgba(30, 58, 138, 0.25)
-    );
-  }
-}
-
-.pageContent.calculating {
-  animation: pulse-glow 2s ease-in-out infinite;
 }

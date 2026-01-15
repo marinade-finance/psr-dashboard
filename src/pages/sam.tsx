@@ -174,9 +174,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
 
   return (
     <div className={styles.page}>
-      <div
-        className={`${styles.pageContent} ${simulationModeActive ? styles.simulationMode : ''} ${isCalculating ? styles.calculating : ''}`}
-      >
+      <div className={styles.pageContent}>
         <Navigation level={level} />
         <Banner {...getBannerData()} />
         {status === 'error' && <p>Error fetching data</p>}

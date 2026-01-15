@@ -241,7 +241,7 @@ export const SamTable: React.FC<Props> = ({
 
   return (
     <div
-      className={`${styles.tableWrap} ${simulationModeActive ? styles.simulationModeActive : ''}`}
+      className={`${styles.tableWrap} ${simulationModeActive ? styles.simulationModeActive : ''} ${isCalculating ? styles.calculating : ''}`}
     >
       <div className={styles.metricWrap}>
         <Metric
@@ -321,43 +321,53 @@ export const SamTable: React.FC<Props> = ({
 
           return attrs
         }}
+        showRowNumber
+        rowNumberRender={(validator, index) => {
+          const voteAccount = selectVoteAccount(validator)
+          const isEditing = editingValidator === voteAccount
+          const isSimulated = simulatedValidator === voteAccount
+          const originalPosition = isSimulated
+            ? getOriginalPosition(voteAccount)
+            : null
+          const currentPosition = index + 1
+
+          return (
+            <div className={styles.orderCell}>
+              {originalPosition !== null && originalPosition !== -1 && (
+                <span className={styles.originalPosition}>
+                  {originalPosition}
+                </span>
+              )}
+              <span>{currentPosition}</span>
+              {isEditing && (
+                <button
+                  className={`${styles.runSimulationBtn} ${isCalculating ? styles.runSimulationBtnCalculating : ''}`}
+                  onClick={e => {
+                    e.stopPropagation()
+                    onRunSimulation()
+                  }}
+                  disabled={isCalculating}
+                >
+                  {isCalculating ? '...' : 'Simulate'}
+                </button>
+              )}
+            </div>
+          )
+        }}
         columns={[
           {
             header: 'Validator',
             headerAttrsFn: () => tooltipAttributes('Validator Vote Account'),
             render: validator => {
               const voteAccount = selectVoteAccount(validator)
-              const isEditing = editingValidator === voteAccount
               const isSimulated = simulatedValidator === voteAccount
-              const originalPosition = isSimulated
-                ? getOriginalPosition(voteAccount)
-                : null
 
               return (
-                <div className={styles.validatorActions}>
-                  {originalPosition !== null && originalPosition !== -1 && (
-                    <span className={styles.originalPosition}>
-                      #{originalPosition}
-                    </span>
-                  )}
-                  <span
-                    className={`${styles.pubkey} ${isSimulated ? styles.pubkeySimulated : ''}`}
-                  >
-                    {voteAccount}
-                  </span>
-                  {isEditing && (
-                    <button
-                      className={`${styles.runSimulationBtn} ${isCalculating ? styles.runSimulationBtnCalculating : ''}`}
-                      onClick={e => {
-                        e.stopPropagation()
-                        onRunSimulation()
-                      }}
-                      disabled={isCalculating}
-                    >
-                      {isCalculating ? 'Calculating...' : 'Run Simulation'}
-                    </button>
-                  )}
-                </div>
+                <span
+                  className={`${styles.pubkey} ${isSimulated ? styles.pubkeySimulated : ''}`}
+                >
+                  {voteAccount}
+                </span>
               )
             },
             compare: (a, b) =>
@@ -378,31 +388,40 @@ export const SamTable: React.FC<Props> = ({
               const voteAccount = selectVoteAccount(validator)
               const isEditing = editingValidator === voteAccount
               const originalValue = selectCommission(validator) * 100
+              const displayValue = formatPercentage(
+                selectCommission(validator),
+                0,
+              )
               if (isEditing) {
                 const inputValue = getInputValue(
                   'inflationCommission',
                   originalValue.toString(),
                 )
                 return (
-                  <input
-                    type="number"
-                    className={styles.inlineInput}
-                    value={inputValue}
-                    step="0.1"
-                    min="0"
-                    max="100"
-                    onChange={e =>
-                      onFieldChange('inflationCommission', e.target.value)
-                    }
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') {
-                        onRunSimulation()
+                  <div className={styles.inputCell}>
+                    <span className={styles.inputPlaceholder}>
+                      {displayValue}
+                    </span>
+                    <input
+                      type="number"
+                      className={styles.inlineInput}
+                      value={inputValue}
+                      step="0.1"
+                      min="0"
+                      max="100"
+                      onChange={e =>
+                        onFieldChange('inflationCommission', e.target.value)
                       }
-                    }}
-                  />
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          onRunSimulation()
+                        }
+                      }}
+                    />
+                  </div>
                 )
               }
-              return <>{formatPercentage(selectCommission(validator), 0)}</>
+              return <>{displayValue}</>
             },
             compare: (a, b) => selectCommission(a) - selectCommission(b),
             alignment: Alignment.RIGHT,
@@ -422,32 +441,38 @@ export const SamTable: React.FC<Props> = ({
               const mevCommission = selectMevCommission(validator)
               const originalValue =
                 mevCommission !== null ? mevCommission * 100 : null
+              const displayValue = formattedMevCommission(validator)
               if (isEditing) {
                 const inputValue = getInputValue(
                   'mevCommission',
                   originalValue?.toString() ?? '',
                 )
                 return (
-                  <input
-                    type="number"
-                    className={styles.inlineInput}
-                    value={inputValue}
-                    step="0.1"
-                    min="0"
-                    max="100"
-                    placeholder="-"
-                    onChange={e =>
-                      onFieldChange('mevCommission', e.target.value)
-                    }
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') {
-                        onRunSimulation()
+                  <div className={styles.inputCell}>
+                    <span className={styles.inputPlaceholder}>
+                      {displayValue}
+                    </span>
+                    <input
+                      type="number"
+                      className={styles.inlineInput}
+                      value={inputValue}
+                      step="0.1"
+                      min="0"
+                      max="100"
+                      placeholder="-"
+                      onChange={e =>
+                        onFieldChange('mevCommission', e.target.value)
                       }
-                    }}
-                  />
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          onRunSimulation()
+                        }
+                      }}
+                    />
+                  </div>
                 )
               }
-              return <>{formattedMevCommission(validator)}</>
+              return <>{displayValue}</>
             },
             compare: (a, b) =>
               (selectMevCommission(a) ?? 100) - (selectMevCommission(b) ?? 100),
@@ -470,32 +495,38 @@ export const SamTable: React.FC<Props> = ({
               const blockCommission = selectBlockRewardsCommission(validator)
               const originalValue =
                 blockCommission !== null ? blockCommission * 100 : null
+              const displayValue = formattedBlockRewardsCommission(validator)
               if (isEditing) {
                 const inputValue = getInputValue(
                   'blockRewardsCommission',
                   originalValue?.toString() ?? '',
                 )
                 return (
-                  <input
-                    type="number"
-                    className={styles.inlineInput}
-                    value={inputValue}
-                    step="0.1"
-                    min="0"
-                    max="100"
-                    placeholder="-"
-                    onChange={e =>
-                      onFieldChange('blockRewardsCommission', e.target.value)
-                    }
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') {
-                        onRunSimulation()
+                  <div className={styles.inputCell}>
+                    <span className={styles.inputPlaceholder}>
+                      {displayValue}
+                    </span>
+                    <input
+                      type="number"
+                      className={styles.inlineInput}
+                      value={inputValue}
+                      step="0.1"
+                      min="0"
+                      max="100"
+                      placeholder="-"
+                      onChange={e =>
+                        onFieldChange('blockRewardsCommission', e.target.value)
                       }
-                    }}
-                  />
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          onRunSimulation()
+                        }
+                      }}
+                    />
+                  </div>
                 )
               }
-              return <>{formattedBlockRewardsCommission(validator)}</>
+              return <>{displayValue}</>
             },
             compare: (a, b) =>
               (selectBlockRewardsCommission(a) ?? 100) -
@@ -517,28 +548,34 @@ export const SamTable: React.FC<Props> = ({
               const voteAccount = selectVoteAccount(validator)
               const isEditing = editingValidator === voteAccount
               const originalValue = selectBid(validator)
+              const displayValue = formatSolAmount(selectBid(validator), 4)
               if (isEditing) {
                 const inputValue = getInputValue(
                   'bidPmpe',
                   originalValue.toString(),
                 )
                 return (
-                  <input
-                    type="number"
-                    className={styles.inlineInput}
-                    value={inputValue}
-                    step="0.001"
-                    min="0"
-                    onChange={e => onFieldChange('bidPmpe', e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') {
-                        onRunSimulation()
-                      }
-                    }}
-                  />
+                  <div className={styles.inputCell}>
+                    <span className={styles.inputPlaceholder}>
+                      {displayValue}
+                    </span>
+                    <input
+                      type="number"
+                      className={styles.inlineInput}
+                      value={inputValue}
+                      step="0.001"
+                      min="0"
+                      onChange={e => onFieldChange('bidPmpe', e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          onRunSimulation()
+                        }
+                      }}
+                    />
+                  </div>
                 )
               }
-              return <>{formatSolAmount(selectBid(validator), 4)}</>
+              return <>{displayValue}</>
             },
             compare: (a, b) => selectBid(a) - selectBid(b),
             alignment: Alignment.RIGHT,
@@ -619,7 +656,6 @@ export const SamTable: React.FC<Props> = ({
           [7, OrderDirection.DESC],
           [5, OrderDirection.DESC],
         ]}
-        showRowNumber={true}
       />
     </div>
   )

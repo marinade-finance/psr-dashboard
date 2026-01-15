@@ -82,8 +82,17 @@ const renderRows: <Item>(
   __: Column<Item>[],
   ___: boolean,
   ____?: (item: Item, index: number) => HTMLAttributes<HTMLTableRowElement>,
-) => JSX.Element[] = (items, columns, showRowNumber, rowAttrsFn) =>
-  items.map((item, i) => renderRow(item, columns, i, showRowNumber, rowAttrsFn))
+  _____?: (item: Item, index: number) => JSX.Element,
+) => JSX.Element[] = (
+  items,
+  columns,
+  showRowNumber,
+  rowAttrsFn,
+  rowNumberRender,
+) =>
+  items.map((item, i) =>
+    renderRow(item, columns, i, showRowNumber, rowAttrsFn, rowNumberRender),
+  )
 
 const renderRow: <Item>(
   _: Item,
@@ -94,10 +103,22 @@ const renderRow: <Item>(
     item: Item,
     index: number,
   ) => HTMLAttributes<HTMLTableRowElement>,
-) => JSX.Element = (item, columns, index, showRowNumber, rowAttrsFn) => {
+  rowNumberRender?: (item: Item, index: number) => JSX.Element,
+) => JSX.Element = (
+  item,
+  columns,
+  index,
+  showRowNumber,
+  rowAttrsFn,
+  rowNumberRender,
+) => {
   return (
     <tr key={index} {...(rowAttrsFn ? rowAttrsFn(item, index) : {})}>
-      {showRowNumber ? <td>{index + 1}</td> : null}
+      {showRowNumber ? (
+        <td>
+          {rowNumberRender ? rowNumberRender(item, index) : <>{index + 1}</>}
+        </td>
+      ) : null}
       {columns.map((column, i) => (
         <td
           {...(column.cellAttrsFn ? column.cellAttrsFn(item) : {})}
@@ -130,6 +151,7 @@ type Props<Item> = {
     item: Item,
     index: number,
   ) => HTMLAttributes<HTMLTableRowElement>
+  rowNumberRender?: (item: Item, index: number) => JSX.Element
 }
 
 export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
@@ -138,6 +160,7 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
   defaultOrder,
   showRowNumber,
   rowAttrsFn,
+  rowNumberRender,
 }) => {
   const [userOrder, setUserOrder] = useState<Order | null>(null)
 
@@ -188,7 +211,13 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
         {renderHeader(columns, onSort, userOrder, showRowNumber ?? false)}
       </thead>
       <tbody>
-        {renderRows(sortedData, columns, showRowNumber ?? false, rowAttrsFn)}
+        {renderRows(
+          sortedData,
+          columns,
+          showRowNumber ?? false,
+          rowAttrsFn,
+          rowNumberRender,
+        )}
       </tbody>
     </table>
   )
