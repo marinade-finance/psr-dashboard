@@ -203,11 +203,18 @@
   gap: 4px;
 }
 
-.runSimulationBtn {
+.editingButtons {
   position: absolute;
   left: 0;
   top: 50%;
   transform: translateY(-50%);
+  display: flex;
+  gap: 4px;
+  z-index: 10;
+}
+
+.runSimulationBtn {
+  min-width: 60px;
   padding: 3px 8px;
   background-color: #3b82f6;
   color: white;
@@ -218,8 +225,25 @@
   font-weight: 500;
   transition: background-color 0.2s;
   white-space: nowrap;
-  z-index: 10;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+.cancelBtn {
+  padding: 3px 6px;
+  background-color: #6b7280;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.cancelBtn:hover:not(:disabled) {
+  background-color: #ef4444;
 }
 
 .runSimulationBtn:hover:not(:disabled) {

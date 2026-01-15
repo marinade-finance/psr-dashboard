@@ -1,5 +1,5 @@
 import round from 'lodash.round'
-import React from 'react'
+import React, { useEffect } from 'react'
 
 import { formatPercentage, formatSolAmount } from 'src/format'
 import {
@@ -70,6 +70,7 @@ type Props = {
     value: string,
   ) => void
   onRunSimulation: () => void
+  onCancelEditing: () => void
 }
 
 export const SamTable: React.FC<Props> = ({
@@ -88,6 +89,7 @@ export const SamTable: React.FC<Props> = ({
   onValidatorClick,
   onFieldChange,
   onRunSimulation,
+  onCancelEditing,
 }) => {
   const {
     auctionData: { validators },
@@ -105,6 +107,17 @@ export const SamTable: React.FC<Props> = ({
     selectTotalActiveStake(auctionResult) / samDistributedStake
   const productiveStake =
     selectProductiveStake(auctionResult) / samDistributedStake
+
+  // Global Escape key handler to cancel editing
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && editingValidator) {
+        onCancelEditing()
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [editingValidator, onCancelEditing])
 
   const validatorsWithBond = validators
     .filter(validator => selectBondSize(validator) > 0)
@@ -295,8 +308,10 @@ export const SamTable: React.FC<Props> = ({
           const voteAccount = selectVoteAccount(validator)
           const isEditing = editingValidator === voteAccount
           const isSimulated = simulatedValidator === voteAccount
-          const canClick =
+          const canStartEditing =
             simulationModeActive && !isSimulated && !editingValidator
+          const canSwitchOrCancel =
+            simulationModeActive && editingValidator && !isEditing
 
           const attrs: {
             className?: string
@@ -304,9 +319,21 @@ export const SamTable: React.FC<Props> = ({
           } = {}
 
           // Add clickable styling if in simulation mode and not the simulated validator
-          if (canClick) {
+          if (canStartEditing) {
             attrs.className = styles.validatorRowClickable
             attrs.onClick = () => onValidatorClick(voteAccount)
+          } else if (canSwitchOrCancel) {
+            // When editing, clicking other rows cancels editing (or switches to new row)
+            attrs.className = styles.validatorRowClickable
+            attrs.onClick = () => {
+              if (isSimulated) {
+                // Just cancel editing, don't start editing simulated row
+                onCancelEditing()
+              } else {
+                // Switch to editing this validator
+                onValidatorClick(voteAccount)
+              }
+            }
           } else if (isEditing) {
             attrs.className = styles.validatorRowEditing
           }
@@ -340,16 +367,29 @@ export const SamTable: React.FC<Props> = ({
               )}
               <span>{currentPosition}</span>
               {isEditing && (
-                <button
-                  className={`${styles.runSimulationBtn} ${isCalculating ? styles.runSimulationBtnCalculating : ''}`}
-                  onClick={e => {
-                    e.stopPropagation()
-                    onRunSimulation()
-                  }}
-                  disabled={isCalculating}
-                >
-                  {isCalculating ? '...' : 'Simulate'}
-                </button>
+                <div className={styles.editingButtons}>
+                  <button
+                    className={`${styles.runSimulationBtn} ${isCalculating ? styles.runSimulationBtnCalculating : ''}`}
+                    onClick={e => {
+                      e.stopPropagation()
+                      onRunSimulation()
+                    }}
+                    disabled={isCalculating}
+                  >
+                    {isCalculating ? 'Simulating' : 'Simulate'}
+                  </button>
+                  <button
+                    className={styles.cancelBtn}
+                    onClick={e => {
+                      e.stopPropagation()
+                      onCancelEditing()
+                    }}
+                    disabled={isCalculating}
+                    title="Cancel editing (Esc)"
+                  >
+                    ✕
+                  </button>
+                </div>
               )}
             </div>
           )
@@ -415,6 +455,8 @@ export const SamTable: React.FC<Props> = ({
                       onKeyDown={e => {
                         if (e.key === 'Enter') {
                           onRunSimulation()
+                        } else if (e.key === 'Escape') {
+                          onCancelEditing()
                         }
                       }}
                     />
@@ -466,6 +508,8 @@ export const SamTable: React.FC<Props> = ({
                       onKeyDown={e => {
                         if (e.key === 'Enter') {
                           onRunSimulation()
+                        } else if (e.key === 'Escape') {
+                          onCancelEditing()
                         }
                       }}
                     />
@@ -520,6 +564,8 @@ export const SamTable: React.FC<Props> = ({
                       onKeyDown={e => {
                         if (e.key === 'Enter') {
                           onRunSimulation()
+                        } else if (e.key === 'Escape') {
+                          onCancelEditing()
                         }
                       }}
                     />
@@ -569,6 +615,8 @@ export const SamTable: React.FC<Props> = ({
                       onKeyDown={e => {
                         if (e.key === 'Enter') {
                           onRunSimulation()
+                        } else if (e.key === 'Escape') {
+                          onCancelEditing()
                         }
                       }}
                     />

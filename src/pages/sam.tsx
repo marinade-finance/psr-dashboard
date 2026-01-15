@@ -55,7 +55,11 @@ export const SamPage: React.FC<Props> = ({ level }) => {
     // isFetching,
   } = useQuery(['sam', simulationRunId], () => loadSam(simulationOverrides), {
     keepPreviousData: true,
-    onSettled: () => setIsCalculating(false),
+    onSettled: () => {
+      setIsCalculating(false)
+      setEditingValidator(null)
+      setPendingEdits({})
+    },
   })
 
   // Toggle simulation mode on/off
@@ -87,12 +91,25 @@ export const SamPage: React.FC<Props> = ({ level }) => {
       // Don't allow clicking on the previously simulated validator (it shows old position)
       if (voteAccount === simulatedValidator) return
 
+      // Toggle off if clicking the same validator
+      if (voteAccount === editingValidator) {
+        setEditingValidator(null)
+        setPendingEdits({})
+        return
+      }
+
       // Start editing this validator
       setEditingValidator(voteAccount)
       setPendingEdits({})
     },
-    [simulationModeActive, simulatedValidator],
+    [simulationModeActive, simulatedValidator, editingValidator],
   )
+
+  // Cancel editing without running simulation
+  const handleCancelEditing = useCallback(() => {
+    setEditingValidator(null)
+    setPendingEdits({})
+  }, [])
 
   // Handle input field changes (just update pending edits locally)
   const handleFieldChange = useCallback(
@@ -164,10 +181,9 @@ export const SamPage: React.FC<Props> = ({ level }) => {
 
     setSimulationOverrides(overrides)
     setSimulatedValidator(editingValidator)
-    setEditingValidator(null)
-    setPendingEdits({})
     setIsCalculating(true)
     setSimulationRunId(prev => prev + 1)
+    // editingValidator and pendingEdits are cleared in onSettled when calculation completes
   }, [editingValidator, pendingEdits, originalAuctionResult])
 
   const hasSimulationApplied = simulatedValidator !== null
@@ -196,6 +212,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
             onValidatorClick={handleValidatorClick}
             onFieldChange={handleFieldChange}
             onRunSimulation={handleRunSimulation}
+            onCancelEditing={handleCancelEditing}
           />
         )}
       </div>

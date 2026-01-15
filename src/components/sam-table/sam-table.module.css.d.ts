@@ -5,6 +5,8 @@ interface CssExports {
   'badgeDryRun': string;
   'badgeEstimate': string;
   'calculating': string;
+  'cancelBtn': string;
+  'editingButtons': string;
   'green': string;
   'header-glow': string;
   'inlineInput': string;
