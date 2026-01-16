@@ -191,6 +191,13 @@ export const SamTable: React.FC<Props> = ({
             'Number of validators that won stake in this SAM auction',
           )}
         />
+        <Metric
+          label="Epoch"
+          value={auctionResult.auctionData.epoch.toString()}
+          {...tooltipAttributes(
+            'Epoch for which this SAM auction calculation was held',
+          )}
+        />
         <>{expertMetrics}</>
       </div>
       <Table
