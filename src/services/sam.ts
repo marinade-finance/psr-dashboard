@@ -95,9 +95,6 @@ export const lastCapConstraintDescription = (
       return 'VALIDATOR stake concentration'
     case AuctionConstraintType.BOND:
       return 'BOND setup (bond balance is too low)'
-    // deprecated: left here for historical auction data compatibility
-    case AuctionConstraintType.REPUTATION:
-      return 'REPUTATION (reputation is too low)'
     case AuctionConstraintType.WANT:
       return 'WANT (max stake wanted)'
     case AuctionConstraintType.MNDE:
