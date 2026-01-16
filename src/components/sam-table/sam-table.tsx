@@ -1,4 +1,3 @@
-import round from 'lodash.round'
 import React from 'react'
 
 import { formatPercentage, formatSolAmount } from 'src/format'
@@ -90,11 +89,6 @@ export const SamTable: React.FC<Props> = ({
       (agg, v) => agg + v.auctionStake.marinadeSamTargetSol,
       0,
     ) / samStakeValidators.length
-  const reputationInflationFactor =
-    samStakeValidators.reduce(
-      (agg, v) => agg + v.values.adjSpendRobustReputationInflationFactor,
-      0,
-    ) / samStakeValidators.length
 
   let expertMetrics
   let apyMetrics
@@ -124,13 +118,6 @@ export const SamTable: React.FC<Props> = ({
           label="Avg. Stake"
           value={`${formatSolAmount(avgStake, 0)}`}
           {...tooltipAttributes('Average stake per validator')}
-        />
-        <Metric
-          label="Rep. Infl."
-          value={`${round(reputationInflationFactor, 1)}`}
-          {...tooltipAttributes(
-            'How much do we have to inflate reputation so that our TVL fits into the induced limits',
-          )}
         />
       </>
     )
@@ -278,14 +265,6 @@ export const SamTable: React.FC<Props> = ({
             compare: (a, b) => selectBondSize(a) - selectBondSize(b),
             alignment: Alignment.RIGHT,
           },
-          // {
-          //     header: 'Rep.',
-          //     headerAttrsFn: () => tooltipAttributes('Validator Reputation. Not used in the auction at the moment.'),
-          //     render: (validator) => <>{formatSolAmount(selectSpendRobustReputation(validator), 0)}</>,
-          //     compare: (a, b) => selectSpendRobustReputation(a) - selectSpendRobustReputation(b),
-          //     alignment: Alignment.RIGHT,
-          //     cellAttrsFn: (validator) => tooltipAttributes(spendRobustReputationTooltip(validator))
-          // },
           {
             header: 'Max APY',
             headerAttrsFn: () =>
