@@ -4,6 +4,7 @@ import {
   AuctionConstraintType,
   bondBalanceRequiredForXEpochs,
   loadSamConfig,
+  LogVerbosity,
 } from '@marinade.finance/ds-sam-sdk'
 
 import { Color } from 'src/components/table/table'
@@ -16,6 +17,7 @@ import type {
   AuctionValidator,
   AuctionConstraint,
   DsSamConfig,
+  SourceDataOverrides,
 } from '@marinade.finance/ds-sam-sdk'
 
 const estimateEpochsPerYear = async () => {
@@ -61,7 +63,9 @@ const estimateEpochsPerYear = async () => {
   return SECONDS_PER_YEAR / (rangeDuration / rangeEpochs)
 }
 
-export const loadSam = async (): Promise<{
+export const loadSam = async (
+  dataOverrides?: SourceDataOverrides | null,
+): Promise<{
   auctionResult: AuctionResult
   epochsPerYear: number
   dcSamConfig: DsSamConfig
@@ -74,14 +78,18 @@ export const loadSam = async (): Promise<{
       ...config,
       inputsSource: InputsSource.APIS,
       cacheInputs: false,
+      debugVoteAccounts: [],
+      logVerbosity: LogVerbosity.ERROR,
     })
-    const auctionResult = await dsSam.runFinalOnly()
+    const auctionResult = await dsSam.runFinalOnly(dataOverrides)
     return { auctionResult, epochsPerYear, dcSamConfig: dsSam.config }
   } catch (err) {
     console.log(err)
     throw err
   }
 }
+
+export type { SourceDataOverrides }
 
 export const lastCapConstraintDescription = (
   constraint: AuctionConstraint,
@@ -181,8 +189,34 @@ export const selectProductiveStake = (auctionResult: AuctionResult) =>
     0,
   )
 
+const overridesMessage = (
+  label: string,
+  overrideValue: number | null | undefined,
+  type: 'percentage' | 'number' = 'percentage',
+): string => {
+  if (overrideValue != null) {
+    const formattedValue =
+      type === 'percentage'
+        ? `${formatPercentage(overrideValue, 0)}`
+        : overrideValue.toString()
+    return `<b>Overrides ${label}: ${formattedValue}</b><br/>`
+  }
+  return ''
+}
+
 export const selectBid = (validator: AuctionValidator) =>
   validator.revShare.bidPmpe
+
+export const selectBondBid = (validator: AuctionValidator) =>
+  validator.values?.commissions?.bidCpmpeInBondDec ?? validator.bidCpmpe
+
+export const overridesCpmpeMessage = (validator: AuctionValidator): string => {
+  return overridesMessage(
+    'CPMPE',
+    validator.values?.commissions?.bidCpmpeOverrideDec,
+    'number',
+  )
+}
 
 export const selectCommission = (validator: AuctionValidator): number =>
   validator.inflationCommissionDec
@@ -204,6 +238,15 @@ export const formattedOnChainCommission = (
   return onChainCommission == null
     ? '-'
     : formatPercentage(onChainCommission, 0)
+}
+
+export const overridesCommissionMessage = (
+  validator: AuctionValidator,
+): string => {
+  return overridesMessage(
+    'inflation commission',
+    validator.values?.commissions?.inflationCommissionOverrideDec,
+  )
 }
 
 export const selectCommissionPmpe = (validator: AuctionValidator) =>
@@ -242,6 +285,15 @@ export const formattedOnChainMevCommission = (
 export const selectMevCommissionPmpe = (validator: AuctionValidator) =>
   validator.revShare.mevPmpe
 
+export const overridesMevCommissionMessage = (
+  validator: AuctionValidator,
+): string => {
+  return overridesMessage(
+    'MEV commission',
+    validator.values?.commissions?.mevCommissionOverrideDec,
+  )
+}
+
 export const selectBlockRewardsCommission = (
   validator: AuctionValidator,
 ): number | null => validator.blockRewardsCommissionDec
@@ -267,6 +319,15 @@ export const formattedInBondBlockRewardsCommission = (
 
 export const selectBlockRewardsCommissionPmpe = (validator: AuctionValidator) =>
   validator.revShare.blockPmpe
+
+export const overridesBlockRewardsCommissionMessage = (
+  validator: AuctionValidator,
+): string => {
+  return overridesMessage(
+    'block rewards commission',
+    validator.values?.commissions?.blockRewardsCommissionOverrideDec,
+  )
+}
 
 export const selectBondSize = (validator: AuctionValidator) =>
   validator.bondBalanceSol

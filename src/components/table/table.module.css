@@ -56,3 +56,20 @@
 .noBg {
   background-color: unset;
 }
+
+/* Sort indicators */
+.sortIndicator {
+  margin-left: 4px;
+  font-size: 10px;
+  opacity: 0.4;
+}
+
+.sortIndicatorActive {
+  opacity: 1;
+  color: #3b82f6;
+}
+
+.sortIndicatorDefault {
+  opacity: 0.6;
+  color: #9ca3af;
+}
