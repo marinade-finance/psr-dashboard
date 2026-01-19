@@ -20,8 +20,8 @@
     "@marinade.finance/eslint-config": "1.3.1",
     "@types/jest": "^28.1.8",
     "@types/node": "16.18.24",
-    "@types/react": "18.0.38",
-    "@types/react-dom": "18.0.11",
+    "@types/react": "18.3.0",
+    "@types/react-dom": "18.3.0",
     "@types/webpack": "5.28.1",
     "@types/webpack-dev-server": "4.7.1",
     "copyfiles": "^2.4.1",
@@ -38,11 +38,11 @@
     "ts-jest": "^28.0.8",
     "ts-loader": "9.4.2",
     "ts-node": "^10.9.2",
-    "tsconfig-paths-webpack-plugin": "3.5.2",
+    "tsconfig-paths-webpack-plugin": "4.2.0",
     "typescript": "4.9.5",
-    "webpack": "5.80.0",
-    "webpack-cli": "4.10.0",
-    "webpack-dev-server": "4.13.3"
+    "webpack": "5.104.1",
+    "webpack-cli": "6.0.1",
+    "webpack-dev-server": "5.2.3"
   },
   "dependencies": {
     "@marinade.finance/ds-sam-sdk": "^0.0.40",
@@ -64,6 +64,11 @@
     "*.rs": [
       "cargo fmt --"
     ]
+  },
+  "pnpm": {
+    "overrides": {
+      "@remix-run/router": ">=1.23.2"
+    }
   },
   "packageManager": "pnpm@9.12.0+sha512.4abf725084d7bcbafbd728bfc7bee61f2f791f977fd87542b3579dcb23504d170d46337945e4c66485cd12d588a0c0e570ed9c477e7ccdd8507cf05f3f92eaca"
 }
