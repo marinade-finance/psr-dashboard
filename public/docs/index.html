@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Docs | PSR Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+      :root {
+        --bg-dark-1: #1c1b23;
+        --bg-dark-2: #2b2a34;
+        --bg-dark-3: #353439;
+        --bg-dark-4: #42414e;
+        --text-light-1: #b8b8bc;
+        --text-light-2: #fbfbfe;
+        --accent: #82d9c9;
+        --accent-hover: #6bc4b4;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: var(--bg-dark-1);
+        color: var(--text-light-1);
+        line-height: 1.7;
+      }
+      header {
+        background: var(--bg-dark-2);
+        border-bottom: 1px solid var(--bg-dark-3);
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+      .back {
+        color: var(--text-light-1);
+        text-decoration: none;
+        font-size: 13px;
+        padding: 5px 12px;
+        background-color: var(--bg-dark-3);
+        border-radius: 4px;
+        transition: all 0.15s;
+      }
+      .back:hover {
+        background-color: var(--bg-dark-4);
+        color: var(--text-light-2);
+      }
+      .tabs {
+        display: flex;
+        gap: 4px;
+      }
+      .tab {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        background: var(--bg-dark-3);
+        color: var(--text-light-1);
+        cursor: pointer;
+        font-size: 13px;
+        font-family: inherit;
+        transition: all 0.15s;
+      }
+      .tab:hover {
+        background-color: var(--bg-dark-4);
+        color: var(--text-light-2);
+      }
+      .tab.active {
+        background: var(--accent);
+        color: var(--bg-dark-1);
+      }
+      main {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 32px 20px;
+      }
+      #content {
+        background: var(--bg-dark-2);
+        border: 1px solid var(--bg-dark-3);
+        border-radius: 8px;
+        padding: 32px;
+      }
+      #content h1 {
+        font-size: 1.5rem;
+        color: var(--text-light-2);
+        margin-bottom: 24px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid var(--bg-dark-3);
+      }
+      #content h2 {
+        font-size: 1.2rem;
+        color: var(--text-light-2);
+        margin: 32px 0 12px;
+      }
+      #content h3 {
+        font-size: 1rem;
+        color: var(--text-light-2);
+        margin: 24px 0 8px;
+      }
+      #content p {
+        margin-bottom: 12px;
+      }
+      #content code {
+        font-family: 'SF Mono', Monaco, Consolas, monospace;
+        background: var(--bg-dark-1);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.85em;
+        color: var(--accent);
+      }
+      #content pre {
+        background: var(--bg-dark-1);
+        border: 1px solid var(--bg-dark-3);
+        border-radius: 8px;
+        padding: 16px;
+        overflow-x: auto;
+        margin: 16px 0;
+      }
+      #content pre code {
+        background: none;
+        padding: 0;
+        color: var(--text-light-1);
+      }
+      #content ul,
+      #content ol {
+        margin: 12px 0 12px 24px;
+      }
+      #content li {
+        margin: 4px 0;
+      }
+      #content a {
+        color: var(--accent);
+      }
+      #content a:hover {
+        color: var(--accent-hover);
+      }
+      #content strong {
+        color: var(--text-light-2);
+      }
+      #content hr {
+        border: none;
+        border-top: 1px solid var(--bg-dark-3);
+        margin: 32px 0;
+      }
+      #content table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 16px 0;
+      }
+      #content th,
+      #content td {
+        border: 1px solid var(--bg-dark-3);
+        padding: 8px 12px;
+        text-align: left;
+      }
+      #content th {
+        background: var(--bg-dark-1);
+        color: var(--text-light-2);
+      }
+      @media (max-width: 600px) {
+        header {
+          flex-wrap: wrap;
+          gap: 12px;
+        }
+        main {
+          padding: 20px 16px;
+        }
+        #content {
+          padding: 20px;
+        }
+        .tab {
+          padding: 6px 12px;
+          font-size: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <a href="../" class="back">← Dashboard</a>
+      <div class="tabs">
+        <button class="tab active" data-doc="GUIDE.md">Guide</button>
+      </div>
+    </header>
+    <main>
+      <div id="content">loading...</div>
+    </main>
+    <script>
+      const content = document.getElementById('content')
+      const tabs = document.querySelectorAll('.tab')
+
+      function loadDoc(filename) {
+        content.innerHTML = 'loading...'
+        fetch(filename)
+          .then(r => r.text())
+          .then(md => {
+            content.innerHTML = marked.parse(md)
+          })
+          .catch(() => {
+            content.innerHTML = '<p>Error loading doc</p>'
+          })
+      }
+
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => t.classList.remove('active'))
+          tab.classList.add('active')
+          loadDoc(tab.dataset.doc)
+          history.replaceState(
+            null,
+            '',
+            '?doc=' + tab.dataset.doc.replace('.md', ''),
+          )
+        })
+      })
+
+      // Load from URL param or default
+      const params = new URLSearchParams(window.location.search)
+      const doc = params.get('doc')
+      if (doc) {
+        const tab = document.querySelector(`[data-doc="${doc}.md"]`)
+        if (tab) {
+          tabs.forEach(t => t.classList.remove('active'))
+          tab.classList.add('active')
+          loadDoc(doc + '.md')
+        } else {
+          loadDoc('GUIDE.md')
+        }
+      } else {
+        loadDoc('GUIDE.md')
+      }
+    </script>
+  </body>
+</html>

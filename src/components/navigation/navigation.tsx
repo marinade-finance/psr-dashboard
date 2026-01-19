@@ -40,6 +40,9 @@ export const Navigation: React.FC<UserLevelProps> = ({ level }) => {
       >
         <div className={styles.navButton}>Validator Bonds</div>
       </NavLink>
+      <a href="docs/" style={{ marginLeft: 'auto' }}>
+        <div className={styles.navButton}>Docs</div>
+      </a>
     </div>
   )
 }

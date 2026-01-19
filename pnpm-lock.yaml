@@ -12,7 +12,7 @@ importers:
   .:
     dependencies:
       '@marinade.finance/ds-sam-sdk':
-        specifier: ^0.0.40
+        specifier: 0.0.40
         version: 0.0.40
       '@types/lodash.round':
         specifier: ^4.0.9

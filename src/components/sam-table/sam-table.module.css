@@ -6,12 +6,54 @@
   margin-left: 10px;
 }
 
+/* Visual indicator when simulation mode is active */
+.tableWrap.simulationModeActive > table tbody {
+  background-color: rgba(30, 58, 138, 0.08);
+}
+
+.tableWrap.simulationModeActive > table tbody tr {
+  background-color: rgba(30, 58, 138, 0.06);
+}
+
+.tableWrap.simulationModeActive > table thead {
+  background: linear-gradient(135deg, rgba(15, 25, 60, 1), rgba(40, 45, 80, 1));
+  transition: background 0.8s ease-in-out;
+}
+
+/* Calculating animation - slow glow with more contrast */
+@keyframes header-glow {
+  0%,
+  100% {
+    background: linear-gradient(
+      135deg,
+      rgba(15, 25, 60, 1),
+      rgba(40, 45, 80, 1)
+    );
+  }
+  50% {
+    background: linear-gradient(
+      135deg,
+      rgba(15, 70, 140, 1),
+      rgba(55, 90, 170, 1)
+    );
+  }
+}
+
+.tableWrap.calculating > table thead {
+  animation: header-glow 2s ease-in-out infinite;
+}
+
 .pubkey {
   display: inline-block;
   width: 100px;
   padding-top: 4px;
   text-overflow: ellipsis;
   overflow: hidden;
+}
+
+.pubkeySimulated {
+  font-weight: bold;
+  font-style: italic;
 }
 
 .badge {
@@ -44,4 +86,210 @@
 
 .yellow {
   color: #ffd100;
+}
+
+/* Simulator styles */
+.simulatorToggleWrap {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.simulatorToggle {
+  padding: 8px 16px;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.simulatorToggle:hover:not(:disabled) {
+  background-color: #2563eb;
+}
+
+.simulatorToggle:disabled {
+  background-color: #4b5563;
+  cursor: not-allowed;
+}
+
+.simulatorToggleActive {
+  background-color: #0ea5e9;
+}
+
+.simulatorToggleActive:hover:not(:disabled) {
+  background-color: #0284c7;
+}
+
+.simulationNote {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #0ea5e9;
+}
+
+/* Inline input wrapper - maintains column width */
+.inputCell {
+  position: relative;
+  display: inline-block;
+}
+
+.inputCell .inputPlaceholder {
+  visibility: hidden;
+}
+
+/* Inline input for table cells */
+.inlineInput {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 50px;
+  padding: 2px 4px;
+  background-color: var(--bg-dark-3, #2a2a3e);
+  border: 1px solid var(--border-dark, #444);
+  border-radius: 3px;
+  color: var(--text-light-1, #fff);
+  font-size: 12px;
+  text-align: right;
+  box-sizing: border-box;
+}
+
+.inlineInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.inlineInput::placeholder {
+  color: var(--text-light-3, #666);
+}
+
+/* Hide number input spinners */
+.inlineInput::-webkit-outer-spin-button,
+.inlineInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.inlineInput[type='number'] {
+  -moz-appearance: textfield;
+}
+
+/* Validator row states */
+.validatorRowClickable {
+  cursor: pointer;
+}
+
+.validatorRowClickable:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.validatorRowEditing {
+  background-color: rgba(59, 130, 246, 0.15);
+}
+
+/* Order cell with simulate button */
+.orderCell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.editingButtons {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 4px;
+  z-index: 10;
+}
+
+.runSimulationBtn {
+  min-width: 60px;
+  padding: 3px 8px;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+.cancelBtn {
+  padding: 3px 6px;
+  background-color: #6b7280;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.cancelBtn:hover:not(:disabled) {
+  background-color: #ef4444;
+}
+
+.runSimulationBtn:hover:not(:disabled) {
+  background-color: #2563eb;
+}
+
+.runSimulationBtn:disabled {
+  background-color: #6b7280;
+  cursor: not-allowed;
+}
+
+.runSimulationBtnCalculating {
+  background-color: #6b7280;
+}
+
+/* Position change indicators - applied to cells for proper rendering */
+.positionImproved td {
+  background-color: rgba(34, 197, 94, 0.25);
+}
+
+.positionWorsened td {
+  background-color: rgba(239, 68, 68, 0.25);
+}
+
+.positionUnchanged td {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Original position display */
+.originalPosition {
+  text-decoration: line-through;
+  opacity: 0.6;
+  font-size: 0.9em;
+  margin-right: 8px;
+  color: #9ca3af;
+}
+
+/* Ghost row - shows original data before simulation */
+.ghostRow {
+  cursor: default !important;
+  pointer-events: none;
+}
+
+.ghostRow td {
+  text-decoration: line-through;
+  color: #a0a0b0;
+  background-color: rgba(80, 70, 100, 0.35) !important;
+}
+
+.ghostRow td span,
+.ghostRow td div {
+  text-decoration: line-through;
 }

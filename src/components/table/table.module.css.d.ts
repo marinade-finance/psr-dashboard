@@ -6,6 +6,9 @@ interface CssExports {
   'noBg': string;
   'red': string;
   'right': string;
+  'sortIndicator': string;
+  'sortIndicatorActive': string;
+  'sortIndicatorDefault': string;
   'table': string;
   'yellow': string;
 }
