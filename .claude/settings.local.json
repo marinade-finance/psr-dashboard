@@ -8,7 +8,9 @@
       "Bash(pnpm build:*)",
       "WebFetch(domain:docs.marinade.finance)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(find:*)",
+      "Bash(pnpm add:*)"
     ]
   }
 }

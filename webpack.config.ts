@@ -4,6 +4,7 @@ import type { Configuration } from 'webpack'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin'
 import { TsconfigPathsPlugin } from 'tsconfig-paths-webpack-plugin'
+import CopyPlugin from 'copy-webpack-plugin'
 
 const webpackConfig = (env: {
   production: boolean
@@ -46,6 +47,12 @@ const webpackConfig = (env: {
   plugins: [
     new HtmlWebpackPlugin({
       template: './public/index.html',
+    }),
+    new CopyPlugin({
+      patterns: [
+        { from: 'public/docs', to: 'docs' },
+        { from: 'public/_routes.json', to: '_routes.json' },
+      ],
     }),
     new webpack.DefinePlugin({
       'process.env.PRODUCTION': env.production || !env.development,
