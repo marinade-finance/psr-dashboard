@@ -103,7 +103,7 @@ To receive stake via SAM, validators must:
 
 - Create a Protected Staking Rewards (PSR) bond
 - Maintain adequate uptime (>80% across recent epochs)
-- Keep inflation commission within limits (currently 7%)
+- Keep effective commission within limits (currently 7%)
 - Fund bond to cover potential downtime and bid costs
 
 ### Stability Mechanisms
