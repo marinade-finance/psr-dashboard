@@ -1,4 +1,3 @@
-import round from 'lodash.round'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { formatPercentage, formatSolAmount } from 'src/format'
@@ -203,11 +202,6 @@ export const SamTable: React.FC<Props> = ({
   const avgStake =
     samStakeValidators.reduce(
       (agg, v) => agg + v.auctionStake.marinadeSamTargetSol,
-      0,
-    ) / samStakeValidators.length
-  const reputationInflationFactor =
-    samStakeValidators.reduce(
-      (agg, v) => agg + v.values.adjSpendRobustReputationInflationFactor,
       0,
     ) / samStakeValidators.length
 
@@ -431,13 +425,6 @@ export const SamTable: React.FC<Props> = ({
           label="Avg. Stake"
           value={`${formatSolAmount(avgStake, 0)}`}
           {...tooltipAttributes('Average stake per validator')}
-        />
-        <Metric
-          label="Rep. Infl."
-          value={`${round(reputationInflationFactor, 1)}`}
-          {...tooltipAttributes(
-            'How much do we have to inflate reputation so that our TVL fits into the induced limits',
-          )}
         />
       </>
     )
