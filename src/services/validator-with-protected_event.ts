@@ -86,7 +86,7 @@ export const fetchProtectedEventsWithValidator = async (): Promise<
     const epochStats = validator?.epoch_stats.find(
       ({ epoch }) => epoch === entry.epoch,
     )
-    if (epochStats === null) {
+    if (epochStats == null) {
       continue
     }
     const penalty =
