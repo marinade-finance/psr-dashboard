@@ -11,7 +11,9 @@
       "Bash(npx tsc:*)",
       "Bash(find:*)",
       "Bash(pnpm add:*)",
-      "Bash(pnpm tsc:*)"
+      "Bash(pnpm tsc:*)",
+      "WebFetch(domain:scoring.marinade.finance)",
+      "Bash(npx webpack:*)"
     ]
   }
 }

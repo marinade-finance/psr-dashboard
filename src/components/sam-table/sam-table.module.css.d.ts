@@ -29,6 +29,8 @@ interface CssExports {
   'simulatorToggle': string;
   'simulatorToggleActive': string;
   'simulatorToggleWrap': string;
+  'stakeArrowDown': string;
+  'stakeArrowUp': string;
   'tableWrap': string;
   'validatorRowClickable': string;
   'validatorRowEditing': string;

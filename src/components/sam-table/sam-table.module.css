@@ -293,3 +293,14 @@
 .ghostRow td div {
   text-decoration: line-through;
 }
+
+/* Stake change arrow indicators */
+.stakeArrowUp {
+  color: #05d764;
+  font-size: 11px;
+}
+
+.stakeArrowDown {
+  color: #ff3030;
+  font-size: 11px;
+}

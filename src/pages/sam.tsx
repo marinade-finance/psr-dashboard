@@ -6,6 +6,7 @@ import { Loader } from 'src/components/loader/loader'
 import { Navigation } from 'src/components/navigation/navigation'
 import { SamTable } from 'src/components/sam-table/sam-table'
 import { getBannerData } from 'src/services/banner'
+import { fetchReportsSummary } from 'src/services/reports'
 import { loadSam } from 'src/services/sam'
 
 import styles from './sam.module.css'
@@ -48,6 +49,8 @@ export const SamPage: React.FC<Props> = ({ level }) => {
   // Original auction result (saved when entering simulation mode)
   const [originalAuctionResult, setOriginalAuctionResult] =
     useState<AuctionResult | null>(null)
+
+  const { data: reportsData } = useQuery('reports-summary', fetchReportsSummary)
 
   const {
     data,
@@ -231,6 +234,12 @@ export const SamPage: React.FC<Props> = ({ level }) => {
             onFieldChange={handleFieldChange}
             onRunSimulation={handleRunSimulation}
             onCancelEditing={handleCancelEditing}
+            stakeChanges={reportsData?.stakeChanges ?? null}
+            stakeChangesEpochs={
+              reportsData
+                ? `${reportsData.fromEpoch}–${reportsData.toEpoch}`
+                : null
+            }
           />
         )}
       </div>

@@ -1,3 +1,5 @@
+/* eslint-disable complexity */
+
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { formatPercentage, formatSolAmount } from 'src/format'
@@ -52,6 +54,7 @@ import type {
   DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
 import type { PendingEdits } from 'src/pages/sam'
+import type { ValidatorStakeChange } from 'src/services/reports'
 
 // Validator with computed bond state
 type ValidatorWithBondState = AuctionValidator & { bondState: Color }
@@ -86,6 +89,8 @@ type Props = {
   ) => void
   onRunSimulation: () => void
   onCancelEditing: () => void
+  stakeChanges: Map<string, ValidatorStakeChange> | null
+  stakeChangesEpochs: string | null
 }
 
 export const SamTable: React.FC<Props> = ({
@@ -105,6 +110,8 @@ export const SamTable: React.FC<Props> = ({
   onFieldChange,
   onRunSimulation,
   onCancelEditing,
+  stakeChanges,
+  stakeChangesEpochs,
 }) => {
   const {
     auctionData: { validators },
@@ -266,11 +273,16 @@ export const SamTable: React.FC<Props> = ({
           return selectSamTargetStake(a) - selectSamTargetStake(b)
         case 9:
           return selectEffectiveBid(a) - selectEffectiveBid(b)
+        case 10:
+          return (
+            (stakeChanges?.get(selectVoteAccount(a))?.netLamports ?? 0) -
+            (stakeChanges?.get(selectVoteAccount(b))?.netLamports ?? 0)
+          )
         default:
           return 0
       }
     },
-    [epochsPerYear],
+    [epochsPerYear, stakeChanges],
   )
 
   // Compute original positions map using the current table sort order
@@ -920,6 +932,52 @@ export const SamTable: React.FC<Props> = ({
             compare: (a, b) =>
               selectEffectiveBid(a.validator) - selectEffectiveBid(b.validator),
             alignment: Alignment.RIGHT,
+          },
+          {
+            header: '',
+            cellAttrsFn: item => {
+              const change = stakeChanges?.get(
+                selectVoteAccount(item.validator),
+              )
+              if (!change) return {}
+
+              const stakedSol = change.stakedLamports / 1e9
+              const unstakedSol = change.unstakedLamports / 1e9
+              const netSol = change.netLamports / 1e9
+
+              let tooltip = ''
+              if (stakedSol > 0)
+                tooltip += `Staked: ☉ ${formatSolAmount(stakedSol)}<br/>`
+              if (unstakedSol > 0)
+                tooltip += `Unstaked: ☉ ${formatSolAmount(unstakedSol)}<br/>`
+              if (stakedSol > 0 && unstakedSol > 0) {
+                tooltip += `Net: ☉ ${formatSolAmount(Math.abs(netSol))} ${netSol >= 0 ? 'staked' : 'unstaked'}<br/>`
+              }
+              if (stakeChangesEpochs) {
+                tooltip += `Epochs: ${stakeChangesEpochs}`
+              }
+
+              return tooltipAttributes(tooltip)
+            },
+            render: item => {
+              const change = stakeChanges?.get(
+                selectVoteAccount(item.validator),
+              )
+              if (!change) return <></>
+
+              const netSol = change.netLamports / 1e9
+              if (netSol > 0) {
+                return <span className={styles.stakeArrowUp}>▲</span>
+              } else if (netSol < 0) {
+                return <span className={styles.stakeArrowDown}>▼</span>
+              }
+              return <></>
+            },
+            compare: (a, b) =>
+              (stakeChanges?.get(selectVoteAccount(a.validator))?.netLamports ??
+                0) -
+              (stakeChanges?.get(selectVoteAccount(b.validator))?.netLamports ??
+                0),
           },
         ]}
         defaultOrder={defaultOrder}
