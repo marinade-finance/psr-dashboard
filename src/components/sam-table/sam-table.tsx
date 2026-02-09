@@ -20,6 +20,9 @@ import {
   bondColorState,
   bondTooltip,
   selectProductiveStake,
+  selectTargetProtectedPct,
+  selectActuallyUnprotectedStake,
+  selectBackstopDiff,
   selectBlockRewardsCommission,
   formattedMevCommission,
   formattedBlockRewardsCommission,
@@ -122,6 +125,11 @@ export const SamTable: React.FC<Props> = ({
     selectTotalActiveStake(auctionResult) / samDistributedStake
   const productiveStake =
     selectProductiveStake(auctionResult) / samDistributedStake
+  const targetProtectedPct = selectTargetProtectedPct(auctionResult)
+  const unprotectedStake = selectActuallyUnprotectedStake(auctionResult)
+  const backstopDiffs = [1, 2, 3, 4].map(n =>
+    selectBackstopDiff(auctionResult, epochsPerYear, n),
+  )
 
   // Ref for click-outside detection
   const tableWrapRef = useRef<HTMLDivElement>(null)
@@ -426,6 +434,28 @@ export const SamTable: React.FC<Props> = ({
           value={`${formatSolAmount(avgStake, 0)}`}
           {...tooltipAttributes('Average stake per validator')}
         />
+        <Metric
+          label="Target Protected"
+          value={formatPercentage(targetProtectedPct)}
+          {...tooltipAttributes(
+            'Percentage of target delegation covered by bond reserves',
+          )}
+        />
+        <Metric
+          label="Unprotected"
+          value={`☉ ${formatSolAmount(unprotectedStake, 0)}`}
+          {...tooltipAttributes('Target delegation beyond bond coverage')}
+        />
+        {backstopDiffs.map((diff, i) => (
+          <Metric
+            key={`backstop-${i}`}
+            label={`Backstop -${i + 1}`}
+            value={`${diff >= 0 ? '+' : ''}${formatPercentage(diff, 2)}`}
+            {...tooltipAttributes(
+              `APY impact if top ${i + 1} validator${i > 0 ? 's' : ''} by target stake left`,
+            )}
+          />
+        ))}
       </>
     )
     apyMetrics = (

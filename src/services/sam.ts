@@ -385,6 +385,79 @@ export const bondTooltip = (color: Color) => {
   }
 }
 
+export const selectActuallyUnprotectedStake = (
+  auctionResult: AuctionResult,
+): number => {
+  return auctionResult.auctionData.validators.reduce((sum, v) => {
+    const target = v.auctionStake.marinadeSamTargetSol
+    if (!target) return sum
+    const bondOnlyCap = v.bondSamStakeCapSol - v.unprotectedStakeSol
+    return sum + Math.max(0, target - bondOnlyCap)
+  }, 0)
+}
+
+export const selectTargetProtectedPct = (
+  auctionResult: AuctionResult,
+): number => {
+  const totalTarget = selectSamDistributedStake(
+    auctionResult.auctionData.validators,
+  )
+  if (!totalTarget) return 1
+  return 1 - selectActuallyUnprotectedStake(auctionResult) / totalTarget
+}
+
+export const selectBackstopDiff = (
+  auctionResult: AuctionResult,
+  epochsPerYear: number,
+  removeCount: number,
+): number => {
+  const validators = auctionResult.auctionData.validators
+  const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
+
+  const sorted = [...validators]
+    .filter(v => v.auctionStake.marinadeSamTargetSol > 0)
+    .sort(
+      (a, b) =>
+        b.auctionStake.marinadeSamTargetSol -
+        a.auctionStake.marinadeSamTargetSol,
+    )
+
+  const removed = new Set(sorted.slice(0, removeCount).map(v => v.voteAccount))
+
+  const remainingProfit = validators.reduce((acc, v) => {
+    if (removed.has(v.voteAccount)) return acc
+    return (
+      acc +
+      ((v.revShare.auctionEffectiveBidPmpe +
+        v.revShare.inflationPmpe +
+        v.revShare.mevPmpe) *
+        v.marinadeActivatedStakeSol) /
+        1000
+    )
+  }, 0)
+
+  const removedStake = sorted
+    .slice(0, removeCount)
+    .reduce((s, v) => s + v.auctionStake.marinadeSamTargetSol, 0)
+  const remainingTvl = tvl - removedStake
+
+  const baseProfit = validators.reduce(
+    (acc, v) =>
+      acc +
+      ((v.revShare.auctionEffectiveBidPmpe +
+        v.revShare.inflationPmpe +
+        v.revShare.mevPmpe) *
+        v.marinadeActivatedStakeSol) /
+        1000,
+    0,
+  )
+  const baseApy = Math.pow(1 + baseProfit / tvl, epochsPerYear) - 1
+  const backstopApy =
+    Math.pow(1 + remainingProfit / remainingTvl, epochsPerYear) - 1
+
+  return backstopApy - baseApy
+}
+
 export const maxSamStakeTooltip = (
   validator: AuctionValidator,
   cfg: { maxTvlDelegation: number; minBondBalanceSol: number },
