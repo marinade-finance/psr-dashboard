@@ -221,13 +221,7 @@ export const SamTable: React.FC<Props> = ({
   }
 
   // Default table sort order
-  const defaultOrder: Order[] = useMemo(
-    () => [
-      [7, OrderDirection.DESC],
-      [5, OrderDirection.DESC],
-    ],
-    [],
-  )
+  const defaultOrder: Order[] = useMemo(() => [[8, OrderDirection.DESC]], [])
 
   // Track current table sort order
   const [currentOrder, setCurrentOrder] = useState<Order[]>(defaultOrder)
