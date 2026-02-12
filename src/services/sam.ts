@@ -462,6 +462,27 @@ export const selectTvlLeaveImpact = (
 ): number => {
   const validators = auctionResult.auctionData.validators
   const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
+  const targetRemoval = tvl * 0.1
+
+  // Sort validators by target stake (ascending) to remove from bottom
+  const sorted = validators
+    .filter(v => v.auctionStake.marinadeSamTargetSol > 0)
+    .sort(
+      (a, b) =>
+        a.auctionStake.marinadeSamTargetSol -
+        b.auctionStake.marinadeSamTargetSol,
+    )
+
+  // Remove validators from bottom until we've removed 10% TVL
+  let removed = 0
+  const removedSet = new Set<string>()
+  for (const v of sorted) {
+    if (removed >= targetRemoval) {
+      break
+    }
+    removedSet.add(v.voteAccount)
+    removed += v.auctionStake.marinadeSamTargetSol
+  }
 
   const baseProfit = validators.reduce(
     (acc, v) =>
@@ -474,11 +495,25 @@ export const selectTvlLeaveImpact = (
     0,
   )
 
+  // Calculate profit after removing lowest validators
+  const leaveProfit = validators.reduce((acc, v) => {
+    if (removedSet.has(v.voteAccount)) {
+      return acc
+    }
+    return (
+      acc +
+      ((v.revShare.auctionEffectiveBidPmpe +
+        v.revShare.inflationPmpe +
+        v.revShare.mevPmpe) *
+        v.marinadeActivatedStakeSol) /
+        1000
+    )
+  }, 0)
+
   const baseApy = Math.pow(1 + baseProfit / tvl, epochsPerYear) - 1
-  const tvlAfterLeave = tvl * 0.9
-  const apyAfterLeave =
-    Math.pow(1 + baseProfit / tvlAfterLeave, epochsPerYear) - 1
-  return apyAfterLeave - baseApy
+  const leaveApy =
+    Math.pow(1 + leaveProfit / (tvl - removed), epochsPerYear) - 1
+  return leaveApy - baseApy
 }
 
 export const selectTvlJoinImpact = (
@@ -499,11 +534,23 @@ export const selectTvlJoinImpact = (
     0,
   )
 
+  // Assume 10% more TVL is distributed proportionally to current allocation
+  // Each validator gets 10% more stake, earning at their current rate
+  const joinProfit = validators.reduce(
+    (acc, v) =>
+      acc +
+      ((v.revShare.auctionEffectiveBidPmpe +
+        v.revShare.inflationPmpe +
+        v.revShare.mevPmpe) *
+        v.marinadeActivatedStakeSol *
+        1.1) /
+        1000,
+    0,
+  )
+
   const baseApy = Math.pow(1 + baseProfit / tvl, epochsPerYear) - 1
-  const tvlAfterJoin = tvl * 1.1
-  const apyAfterJoin =
-    Math.pow(1 + baseProfit / tvlAfterJoin, epochsPerYear) - 1
-  return apyAfterJoin - baseApy
+  const joinApy = Math.pow(1 + joinProfit / (tvl * 1.1), epochsPerYear) - 1
+  return joinApy - baseApy
 }
 
 export const maxSamStakeTooltip = (
