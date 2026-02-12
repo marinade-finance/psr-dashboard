@@ -186,13 +186,20 @@
       <a href="../" class="back">← Dashboard</a>
       <div class="tabs">
         <button class="tab active" data-doc="GUIDE.md">Guide</button>
-        <button class="tab" data-doc="GUIDE-EXPERT.md">Expert</button>
+        <button class="tab" data-doc="GUIDE-EXPERT.md" id="expert-tab" style="display: none;">Expert</button>
       </div>
     </header>
     <main>
       <div id="content">loading...</div>
     </main>
     <script>
+      // Show Expert tab only if coming from expert view
+      const isExpertView = document.referrer.includes('/expert') ||
+                           window.location.search.includes('expert')
+      if (isExpertView) {
+        document.getElementById('expert-tab').style.display = ''
+      }
+
       const content = document.getElementById('content')
       const tabs = document.querySelectorAll('.tab')
 

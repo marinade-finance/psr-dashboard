@@ -8,25 +8,25 @@ The expert view shows additional metrics and columns beyond the standard dashboa
 
 ### Target Protected
 
-Percentage of total SAM target delegation covered by validator bonds. Higher values mean more delegated stake has bond protection backing it.
+Percentage of total SAM target stake where validator bond coverage exceeds unprotected stake thresholds. Calculated as `1 - (actuallyUnprotectedStake / totalTargetStake)`, where unprotected stake is `max(0, targetStake - (bondCapacity - existingUnprotectedStake))`.
 
 ### Unprotected Stake
 
-Total SOL of target delegation that exceeds bond coverage across all validators. This is the aggregate amount of stake that would lack coverage if validators experienced issues.
+Total SOL where target stake exceeds validator bond-only capacity. Sum of `max(0, targetStake - (bondCapacity - unprotectedStake))` across all validators. Represents stake lacking bond coverage if validators fail to pay bids.
 
 ### Backstop
 
-APY impact if the top 5 validators by target stake left the pool. When validators leave, their stake remains in the pool but their revenue contribution is lost. The metric recalculates projected APY with the remaining validators' revenue against the full TVL.
+APY impact if the top 5 validators by target stake departed. Calculates `backstopAPY - baseAPY` where backstop APY excludes revenue from the 5 largest validators but keeps their stake in TVL. Formula: `(1 + remainingProfit/tvl)^epochsPerYear - 1 - baseAPY`.
 
-- **Positive value** (e.g. +0.18%) &mdash; APY would increase if these validators left, meaning their effective bids were below the weighted average
-- **Negative value** &mdash; APY would decrease, meaning the validators were contributing above-average revenue
+- **Positive value** (e.g. +0.18%) &mdash; Departed validators had below-average effective bids; APY improves
+- **Negative value** &mdash; Departed validators contributed above-average revenue; APY declines
 
-This metric indicates concentration risk &mdash; how dependent the pool's yield is on its largest validators.
+Measures concentration risk: dependence on largest validators for yield.
 
 ### Productive Stake / Active Stake
 
-- **Productive Stake** &mdash; Ratio of stake delegated to validators actively earning rewards
-- **Active Stake** &mdash; Ratio of currently activated stake vs total auction stake
+- **Productive Stake** &mdash; Ratio of activated stake on validators paying ≥90% of their effective participating bid. Measures stake delegated to validators meeting revenue commitments.
+- **Active Stake** &mdash; Ratio of currently activated stake vs total target auction stake (marinadeSamTargetSol)
 
 ---
 
@@ -36,10 +36,10 @@ Expert view adds these columns to the standard SAM table:
 
 | Column       | Description                                                              |
 | ------------ | ------------------------------------------------------------------------ |
-| **Score**    | Validator's SAM score combining uptime and performance metrics           |
-| **Penalty**  | Bid reduction penalty applied if validator lowered their bid             |
-| **Max SAM**  | Maximum stake the validator can receive (limited by TVL cap or bond)     |
-| **Eff. Bid** | Effective bid in PMPE after accounting for all commission types          |
+| **Score**    | SAM eligibility score (0-1) from uptime and performance metrics          |
+| **Penalty**  | Bid reduction multiplier applied when validator decreases bid            |
+| **Max SAM**  | Maximum marinadeSamTargetSol capped by maxTvlDelegation or bond capacity |
+| **Eff. Bid** | Auction effective bid PMPE: `auctionEffectiveBidPmpe` after commissions  |
 
 ---
 
