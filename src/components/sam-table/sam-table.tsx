@@ -23,6 +23,7 @@ import {
   selectTargetProtectedPct,
   selectActuallyUnprotectedStake,
   selectBackstopDiff,
+  selectTvlVolatility,
   selectBlockRewardsCommission,
   formattedMevCommission,
   formattedBlockRewardsCommission,
@@ -128,6 +129,7 @@ export const SamTable: React.FC<Props> = ({
   const targetProtectedPct = selectTargetProtectedPct(auctionResult)
   const unprotectedStake = selectActuallyUnprotectedStake(auctionResult)
   const backstopDiff = selectBackstopDiff(auctionResult, epochsPerYear, 5)
+  const tvlVolatility = selectTvlVolatility(auctionResult, epochsPerYear)
 
   // Ref for click-outside detection
   const tableWrapRef = useRef<HTMLDivElement>(null)
@@ -406,7 +408,6 @@ export const SamTable: React.FC<Props> = ({
   const fmtDiff = (d: number) => `${d >= 0 ? '+' : ''}${formatPercentage(d, 2)}`
 
   let expertMetrics
-  let expertMetrics2
   let apyMetrics
   if (level === UserLevel.Expert) {
     expertMetrics = (
@@ -435,10 +436,6 @@ export const SamTable: React.FC<Props> = ({
           value={`${formatSolAmount(avgStake, 0)}`}
           {...tooltipAttributes('Average stake per validator')}
         />
-      </>
-    )
-    expertMetrics2 = (
-      <>
         <Metric
           label="Target Protected"
           value={formatPercentage(targetProtectedPct)}
@@ -457,6 +454,13 @@ export const SamTable: React.FC<Props> = ({
           {...tooltipAttributes(
             'APY impact if top 5 validators by target stake left' +
               ' (stake stays in pool, revenue lost)',
+          )}
+        />
+        <Metric
+          label="TVL Volatility"
+          value={formatPercentage(tvlVolatility, 2)}
+          {...tooltipAttributes(
+            'APY sensitivity to ±10% TVL change (sum of impacts when 10% leaves vs joins)',
           )}
         />
       </>
@@ -522,7 +526,6 @@ export const SamTable: React.FC<Props> = ({
           )}
         />
         <>{expertMetrics}</>
-        <>{expertMetrics2}</>
         <div className={styles.simulatorToggleWrap}>
           <button
             className={`${styles.simulatorToggle} ${simulationModeActive ? styles.simulatorToggleActive : ''}`}

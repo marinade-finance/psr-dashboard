@@ -390,7 +390,7 @@ export const selectActuallyUnprotectedStake = (
 ): number => {
   return auctionResult.auctionData.validators.reduce((sum, v) => {
     const target = v.auctionStake.marinadeSamTargetSol
-    if (!target) return sum
+    if (target == null) return sum
     const bondOnlyCap = v.bondSamStakeCapSol - v.unprotectedStakeSol
     return sum + Math.max(0, target - bondOnlyCap)
   }, 0)
@@ -402,7 +402,7 @@ export const selectTargetProtectedPct = (
   const totalTarget = selectSamDistributedStake(
     auctionResult.auctionData.validators,
   )
-  if (!totalTarget) return 1
+  if (totalTarget === 0) return 1
   return 1 - selectActuallyUnprotectedStake(auctionResult) / totalTarget
 }
 
@@ -451,6 +451,42 @@ export const selectBackstopDiff = (
   const backstopApy = Math.pow(1 + remainingProfit / tvl, epochsPerYear) - 1
 
   return backstopApy - baseApy
+}
+
+export const selectTvlVolatility = (
+  auctionResult: AuctionResult,
+  epochsPerYear: number,
+): number => {
+  const validators = auctionResult.auctionData.validators
+  const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
+
+  const baseProfit = validators.reduce(
+    (acc, v) =>
+      acc +
+      ((v.revShare.auctionEffectiveBidPmpe +
+        v.revShare.inflationPmpe +
+        v.revShare.mevPmpe) *
+        v.marinadeActivatedStakeSol) /
+        1000,
+    0,
+  )
+
+  const baseApy = Math.pow(1 + baseProfit / tvl, epochsPerYear) - 1
+
+  // APY if 1/10 of TVL leaves (profit stays same, TVL decreases)
+  const tvlAfterLeave = tvl * 0.9
+  const apyAfterLeave =
+    Math.pow(1 + baseProfit / tvlAfterLeave, epochsPerYear) - 1
+  const impactLeave = apyAfterLeave - baseApy
+
+  // APY if 1/10 of TVL joins (profit stays same, TVL increases)
+  const tvlAfterJoin = tvl * 1.1
+  const apyAfterJoin =
+    Math.pow(1 + baseProfit / tvlAfterJoin, epochsPerYear) - 1
+  const impactJoin = apyAfterJoin - baseApy
+
+  // Sum signed impacts and return absolute value
+  return Math.abs(impactLeave + impactJoin)
 }
 
 export const maxSamStakeTooltip = (
