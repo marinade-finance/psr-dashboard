@@ -476,14 +476,14 @@ export const SamTable: React.FC<Props> = ({
           label="+10% TVL"
           value={fmtDiff(tvlJoinImpact)}
           {...tooltipAttributes(
-            'APY impact if 10% more TVL joins the pool (profit stays same, TVL increases)',
+            'APY impact if 10% more TVL joins distributed proportionally (validators earn at current rates on 1.1x stake)',
           )}
         />
         <Metric
           label="-10% TVL"
           value={fmtDiff(tvlLeaveImpact)}
           {...tooltipAttributes(
-            'APY impact if 10% of TVL leaves the pool (profit stays same, TVL decreases)',
+            'APY impact if 10% of TVL leaves by removing validators from bottom (by target stake)',
           )}
         />
       </>

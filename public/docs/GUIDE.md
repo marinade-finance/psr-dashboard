@@ -1,12 +1,12 @@
 # PSR Dashboard Guide
 
-The PSR (Protected Staking Rewards) Dashboard provides visibility into Marinade's stake distribution system. It displays DS SAM max yield auction results, validator bonds on-chain, and protected events.
+The PSR (Protected Staking Rewards) Dashboard shows Marinade's stake distribution system. Displays DS SAM max yield auction results, validator bonds on-chain, and protected events.
 
 ---
 
 ## Data Sources
 
-The dashboard aggregates data from multiple Marinade APIs:
+Aggregates data from multiple Marinade APIs:
 
 | API                  | Endpoint                                                                                                     | Purpose                                                                     |
 | -------------------- | ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
@@ -24,7 +24,7 @@ Auction calculations are performed client-side using the
 
 ### Stake Auction Marketplace
 
-The main view showing current auction results and validator rankings. Displays how stake is distributed among validators based on their bids and performance.
+Shows current auction results and validator rankings. Displays stake distribution among validators based on bids and performance.
 
 **Key Metrics:**
 
@@ -33,12 +33,11 @@ The main view showing current auction results and validator rankings. Displays h
 - **Projected APY** &mdash; Expected staker return based on total revenue from all winning validators
 - **Winning Validators** &mdash; Count of validators receiving stake in current auction
 
-**Simulation Mode:** Click "Enter Simulation" to test how changing a validator's parameters would affect their auction position. Edit commission rates or bid amounts, then click "Simulate" to see projected results.
+**Simulation Mode:** Click "Enter Simulation" to test parameter changes and their effect on auction position. Edit commission rates or bid amounts, click "Simulate" to see projected results.
 
 ### Protected Events
 
-Shows the history of protected staking events for particular epochs &mdash;
-situations where validators experienced issues (slashing, downtime, etc.) and the bond system compensated delegators.
+History of protected staking events by epoch. Shows situations where validators experienced issues (slashing, downtime) and the bond system compensated delegators.
 
 **Event Status Types:**
 
@@ -49,13 +48,13 @@ Events display without a badge once settled. Special badges indicate:
 
 ### Validator Bonds
 
-Displays all [validator bonds](https://github.com/marinade-finance/validator-bonds/tree/main/packages/validator-bonds-cli#core-concepts) and their protection coverage. Shows effective bond amounts, protected stake limits, and maximum protection capacity for each validator.
+All [validator bonds](https://github.com/marinade-finance/validator-bonds/tree/main/packages/validator-bonds-cli#core-concepts) and their protection coverage. Shows bond amounts, protected stake limits, and maximum protection capacity per validator.
 
 ---
 
 ## Stake Auction Marketplace
 
-The Stake Auction Marketplace (SAM) is Marinade's transparent delegation system. Each epoch, validators compete for stake allocation through a last-price auction mechanism.
+Marinade's transparent delegation system. Each epoch, validators compete for stake allocation through a last-price auction mechanism.
 
 ### How the Auction Works
 
@@ -71,16 +70,16 @@ Validators can use two complementary bidding methods:
 **Static Bid (CPMPE)** &mdash; Cost Per Mille Per Epoch
 
 - Fixed payment per 1000 SOL delegated per epoch
-- Deducted directly from the validator's bond
-- Predictable cost regardless of reward fluctuations
+- Deducted from validator's bond
+- Cost independent of reward fluctuations
 
 **Dynamic Commission Bid**
 
-- Percentage-based sharing of actual rewards
+- Percentage of actual rewards
 - Covers inflation rewards, MEV rewards, and block rewards
-- Each can be set independently via bond configuration
+- Each set independently via bond configuration
 
-Both methods can be combined. The effective bid combines all components to determine auction ranking.
+Both methods can be combined. Effective bid combines all components for auction ranking.
 
 ### Table Columns
 
@@ -108,9 +107,9 @@ To receive stake via SAM, validators must:
 
 ### Stability Mechanisms
 
-**Bid Reduction Penalty** &mdash; Discourages validators from lowering bids after receiving stake. If a validator reduces their bid significantly, penalties are charged from their bond to prevent free-riding behavior.
+**Bid Reduction Penalty** &mdash; Penalties charged from bond when validator significantly reduces bid after receiving stake. Prevents free-riding.
 
-**Undelegation Caps** &mdash; Stake movements are rate-limited per epoch to minimize activation/deactivation costs and maintain stability.
+**Undelegation Caps** &mdash; Stake movements rate-limited per epoch to minimize activation/deactivation costs.
 
 ---
 
@@ -125,11 +124,11 @@ Revenue measurement per 1000 SOL per epoch.
 
 ### Bond
 
-A pre-funded vault validators create to participate in SAM. The bond:
+Pre-funded vault validators create to participate in SAM. The bond:
 
-- Covers bid costs (static bids are deducted from bond)
+- Covers bid costs (static bids deducted from bond)
 - Protects delegators against validator failures
-- Demonstrates validator commitment to the ecosystem
+- Required for auction participation
 
 ### Effective vs Maximum Bid
 

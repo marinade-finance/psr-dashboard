@@ -1,6 +1,6 @@
 # Expert View Guide
 
-The expert view shows additional metrics and columns beyond the standard dashboard view.
+Additional metrics and columns beyond the standard view.
 
 ---
 
@@ -8,7 +8,7 @@ The expert view shows additional metrics and columns beyond the standard dashboa
 
 ### Target Protected
 
-Percentage of total SAM target stake where validator bond coverage exceeds unprotected stake thresholds. Calculated as `1 - (actuallyUnprotectedStake / totalTargetStake)`, where unprotected stake is `max(0, targetStake - (bondCapacity - existingUnprotectedStake))`.
+Percentage of total SAM target stake with validator bond coverage. Calculated as `1 - (actuallyUnprotectedStake / totalTargetStake)`, where unprotected stake is `max(0, targetStake - (bondCapacity - existingUnprotectedStake))`.
 
 ### Unprotected Stake
 
@@ -16,23 +16,36 @@ Total SOL where target stake exceeds validator bond-only capacity. Sum of `max(0
 
 ### Backstop
 
-APY impact if the top 5 validators by target stake departed. Their stake redistributes proportionally to remaining validators. Both APYs use identical formula `(1 + profit/tvl)^epochsPerYear - 1` with same TVL. Only difference: base profit from all validators at current stake, backstop profit from remaining validators earning on original + redistributed stake. Result: `backstopAPY - baseAPY`.
+APY impact if top 5 validators by target stake departed. Stake redistributes proportionally to remaining validators. Both APYs use formula `(1 + profit/tvl)^epochsPerYear - 1` with identical TVL. Difference: base profit from all validators at current stake, backstop profit from remaining validators earning on original plus redistributed stake. Result: `backstopAPY - baseAPY`.
 
-- **Positive value** (e.g. +0.18%) &mdash; Departed validators had below-average effective bids; APY improves
+- **Positive value** (e.g., +0.18%) &mdash; Departed validators had below-average effective bids; APY improves
 - **Negative value** &mdash; Departed validators contributed above-average revenue; APY declines
 
-Measures concentration risk: dependence on largest validators for yield.
+Measures concentration risk and dependence on largest validators for yield.
+
+### +10% TVL
+
+APY impact if 10% more TVL joins and distributes proportionally to current active stake. Assumes validators maintain current earning rates on increased stake. Recalculates profit based on validators earning at same rates on 1.1x their active stake. Formula: `joinAPY - baseAPY` where `joinAPY = (1 + joinProfit / joinTVL)^epochsPerYear - 1`.
+
+Models scenario where new capital enters and gets allocated proportionally while validator economics remain unchanged.
+
+### -10% TVL
+
+APY impact if 10% of TVL leaves the pool. Removes validators from bottom (by target stake) until 10% TVL is gone. Formula: `(1 + profit/tvl)^epochsPerYear - 1` where profit decreases (removed validators no longer earning) and TVL decreases by 10%. Result: `leaveAPY - baseAPY`.
+
+- **Positive value** &mdash; Removed validators had below-average effective bids; APY improves
+- **Negative value** &mdash; Removed validators contributed above-average revenue; APY declines
 
 ### Productive Stake / Active Stake
 
-- **Productive Stake** &mdash; Ratio of activated stake on validators paying ≥90% of their effective participating bid. Measures stake delegated to validators meeting revenue commitments.
+- **Productive Stake** &mdash; Ratio of activated stake on validators paying ≥90% of effective participating bid. Measures stake delegated to validators meeting revenue commitments.
 - **Active Stake** &mdash; Ratio of currently activated stake vs total target auction stake (marinadeSamTargetSol)
 
 ---
 
 ## Expert Table Columns
 
-Expert view adds these columns to the standard SAM table:
+Additional columns in expert view:
 
 | Column       | Description                                                              |
 | ------------ | ------------------------------------------------------------------------ |
@@ -45,9 +58,9 @@ Expert view adds these columns to the standard SAM table:
 
 ## Simulation Mode
 
-Available in both basic and expert views. Enter simulation to test parameter changes:
+Test parameter changes:
 
-1. Click a validator row to select it for editing
+1. Click validator row to select for editing
 2. Modify commission rates or bid amounts
-3. Click "Simulate" to recalculate the auction
-4. Results show projected changes to stake distribution and APY
+3. Click "Simulate" to recalculate auction
+4. Shows projected changes to stake distribution and APY
