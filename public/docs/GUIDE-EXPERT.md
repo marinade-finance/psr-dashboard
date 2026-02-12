@@ -16,7 +16,7 @@ Total SOL where target stake exceeds validator bond-only capacity. Sum of `max(0
 
 ### Backstop
 
-APY impact if the top 5 validators by target stake departed. Calculates `backstopAPY - baseAPY` where backstop APY excludes revenue from the 5 largest validators but keeps their stake in TVL. Formula: `(1 + remainingProfit/tvl)^epochsPerYear - 1 - baseAPY`.
+APY impact if the top 5 validators by target stake departed. Their stake redistributes proportionally to remaining validators. Formula: `backstopAPY - baseAPY` where `backstopAPY = (1 + redistributedProfit/tvl)^epochsPerYear - 1` and redistributed profit accounts for remaining validators earning on their original + redistributed stake.
 
 - **Positive value** (e.g. +0.18%) &mdash; Departed validators had below-average effective bids; APY improves
 - **Negative value** &mdash; Departed validators contributed above-average revenue; APY declines
