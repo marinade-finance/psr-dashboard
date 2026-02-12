@@ -11,7 +11,18 @@ const webpackConfig = (env: {
   development: boolean
 }): Configuration => ({
   entry: './src/index.tsx',
-  ...(env.production || !env.development ? {} : { devtool: 'eval-source-map' }),
+  ...(env.production || !env.development
+    ? {}
+    : {
+        devtool: 'eval-source-map',
+        devServer: {
+          historyApiFallback: {
+            rewrites: [
+              { from: /^\/docs$/, to: '/docs/index.html' },
+            ],
+          },
+        },
+      }),
   resolve: {
     extensions: ['.ts', '.tsx', '.js'],
     plugins: [new TsconfigPathsPlugin({ configFile: './tsconfig.json' })],
