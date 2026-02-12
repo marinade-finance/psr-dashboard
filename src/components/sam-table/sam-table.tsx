@@ -23,7 +23,8 @@ import {
   selectTargetProtectedPct,
   selectActuallyUnprotectedStake,
   selectBackstopDiff,
-  selectTvlVolatility,
+  selectTvlLeaveImpact,
+  selectTvlJoinImpact,
   selectBlockRewardsCommission,
   formattedMevCommission,
   formattedBlockRewardsCommission,
@@ -129,7 +130,8 @@ export const SamTable: React.FC<Props> = ({
   const targetProtectedPct = selectTargetProtectedPct(auctionResult)
   const unprotectedStake = selectActuallyUnprotectedStake(auctionResult)
   const backstopDiff = selectBackstopDiff(auctionResult, epochsPerYear, 5)
-  const tvlVolatility = selectTvlVolatility(auctionResult, epochsPerYear)
+  const tvlLeaveImpact = selectTvlLeaveImpact(auctionResult, epochsPerYear)
+  const tvlJoinImpact = selectTvlJoinImpact(auctionResult, epochsPerYear)
 
   // Ref for click-outside detection
   const tableWrapRef = useRef<HTMLDivElement>(null)
@@ -471,10 +473,17 @@ export const SamTable: React.FC<Props> = ({
           )}
         />
         <Metric
-          label="TVL Volatility"
-          value={fmtDiff(tvlVolatility)}
+          label="+10% TVL"
+          value={fmtDiff(tvlJoinImpact)}
           {...tooltipAttributes(
-            'APY sensitivity to ±10% TVL change: sum of impact when 10% leaves (positive) and when 10% joins (negative). Positive = more sensitive to outflows, negative = more sensitive to inflows',
+            'APY impact if 10% more TVL joins the pool (profit stays same, TVL increases)',
+          )}
+        />
+        <Metric
+          label="-10% TVL"
+          value={fmtDiff(tvlLeaveImpact)}
+          {...tooltipAttributes(
+            'APY impact if 10% of TVL leaves the pool (profit stays same, TVL decreases)',
           )}
         />
       </>

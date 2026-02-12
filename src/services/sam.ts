@@ -456,7 +456,7 @@ export const selectBackstopDiff = (
   return backstopApy - baseApy
 }
 
-export const selectTvlVolatility = (
+export const selectTvlLeaveImpact = (
   auctionResult: AuctionResult,
   epochsPerYear: number,
 ): number => {
@@ -475,21 +475,35 @@ export const selectTvlVolatility = (
   )
 
   const baseApy = Math.pow(1 + baseProfit / tvl, epochsPerYear) - 1
-
-  // APY if 1/10 of TVL leaves (profit stays same, TVL decreases)
   const tvlAfterLeave = tvl * 0.9
   const apyAfterLeave =
     Math.pow(1 + baseProfit / tvlAfterLeave, epochsPerYear) - 1
-  const impactLeave = apyAfterLeave - baseApy
+  return apyAfterLeave - baseApy
+}
 
-  // APY if 1/10 of TVL joins (profit stays same, TVL increases)
+export const selectTvlJoinImpact = (
+  auctionResult: AuctionResult,
+  epochsPerYear: number,
+): number => {
+  const validators = auctionResult.auctionData.validators
+  const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
+
+  const baseProfit = validators.reduce(
+    (acc, v) =>
+      acc +
+      ((v.revShare.auctionEffectiveBidPmpe +
+        v.revShare.inflationPmpe +
+        v.revShare.mevPmpe) *
+        v.marinadeActivatedStakeSol) /
+        1000,
+    0,
+  )
+
+  const baseApy = Math.pow(1 + baseProfit / tvl, epochsPerYear) - 1
   const tvlAfterJoin = tvl * 1.1
   const apyAfterJoin =
     Math.pow(1 + baseProfit / tvlAfterJoin, epochsPerYear) - 1
-  const impactJoin = apyAfterJoin - baseApy
-
-  // Sum signed impacts (preserves asymmetry information)
-  return impactLeave + impactJoin
+  return apyAfterJoin - baseApy
 }
 
 export const maxSamStakeTooltip = (
