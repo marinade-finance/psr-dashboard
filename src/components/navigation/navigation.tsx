@@ -43,6 +43,11 @@ export const Navigation: React.FC<UserLevelProps> = ({ level }) => {
       <a href="docs/" style={{ marginLeft: 'auto' }}>
         <div className={styles.navButton}>Docs</div>
       </a>
+      {level === UserLevel.Expert && (
+        <a href="docs/?doc=GUIDE-EXPERT">
+          <div className={styles.navButton}>Expert Guide</div>
+        </a>
+      )}
     </div>
   )
 }
