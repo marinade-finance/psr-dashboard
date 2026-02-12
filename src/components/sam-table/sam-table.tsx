@@ -127,9 +127,7 @@ export const SamTable: React.FC<Props> = ({
     selectProductiveStake(auctionResult) / samDistributedStake
   const targetProtectedPct = selectTargetProtectedPct(auctionResult)
   const unprotectedStake = selectActuallyUnprotectedStake(auctionResult)
-  const backstopDiffs = [1, 2, 3, 4].map(n =>
-    selectBackstopDiff(auctionResult, epochsPerYear, n),
-  )
+  const backstopDiff = selectBackstopDiff(auctionResult, epochsPerYear, 5)
 
   // Ref for click-outside detection
   const tableWrapRef = useRef<HTMLDivElement>(null)
@@ -405,7 +403,10 @@ export const SamTable: React.FC<Props> = ({
     getOriginalPosition,
   ])
 
+  const fmtDiff = (d: number) => `${d >= 0 ? '+' : ''}${formatPercentage(d, 2)}`
+
   let expertMetrics
+  let expertMetrics2
   let apyMetrics
   if (level === UserLevel.Expert) {
     expertMetrics = (
@@ -434,6 +435,10 @@ export const SamTable: React.FC<Props> = ({
           value={`${formatSolAmount(avgStake, 0)}`}
           {...tooltipAttributes('Average stake per validator')}
         />
+      </>
+    )
+    expertMetrics2 = (
+      <>
         <Metric
           label="Target Protected"
           value={formatPercentage(targetProtectedPct)}
@@ -446,16 +451,14 @@ export const SamTable: React.FC<Props> = ({
           value={`☉ ${formatSolAmount(unprotectedStake, 0)}`}
           {...tooltipAttributes('Target delegation beyond bond coverage')}
         />
-        {backstopDiffs.map((diff, i) => (
-          <Metric
-            key={`backstop-${i}`}
-            label={`Backstop -${i + 1}`}
-            value={`${diff >= 0 ? '+' : ''}${formatPercentage(diff, 2)}`}
-            {...tooltipAttributes(
-              `APY impact if top ${i + 1} validator${i > 0 ? 's' : ''} by target stake left`,
-            )}
-          />
-        ))}
+        <Metric
+          label="Backstop"
+          value={fmtDiff(backstopDiff)}
+          {...tooltipAttributes(
+            'APY impact if top 5 validators by target stake left' +
+              ' (stake stays in pool, revenue lost)',
+          )}
+        />
       </>
     )
     apyMetrics = (
@@ -519,6 +522,7 @@ export const SamTable: React.FC<Props> = ({
           )}
         />
         <>{expertMetrics}</>
+        <>{expertMetrics2}</>
         <div className={styles.simulatorToggleWrap}>
           <button
             className={`${styles.simulatorToggle} ${simulationModeActive ? styles.simulatorToggleActive : ''}`}

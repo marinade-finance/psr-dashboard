@@ -436,11 +436,6 @@ export const selectBackstopDiff = (
     )
   }, 0)
 
-  const removedStake = sorted
-    .slice(0, removeCount)
-    .reduce((s, v) => s + v.auctionStake.marinadeSamTargetSol, 0)
-  const remainingTvl = tvl - removedStake
-
   const baseProfit = validators.reduce(
     (acc, v) =>
       acc +
@@ -452,8 +447,8 @@ export const selectBackstopDiff = (
     0,
   )
   const baseApy = Math.pow(1 + baseProfit / tvl, epochsPerYear) - 1
-  const backstopApy =
-    Math.pow(1 + remainingProfit / remainingTvl, epochsPerYear) - 1
+  // stake stays in pool, only revenue from departed validators is lost
+  const backstopApy = Math.pow(1 + remainingProfit / tvl, epochsPerYear) - 1
 
   return backstopApy - baseApy
 }
