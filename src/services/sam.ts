@@ -429,15 +429,18 @@ export const selectBackstopDiff = (
   const removed = sorted.slice(0, removeCount)
   const remaining = sorted.slice(removeCount)
 
-  // Calculate stake that would be redistributed
-  const removedStake = removed.reduce(
+  const removedTargetStake = removed.reduce(
     (sum, v) => sum + v.auctionStake.marinadeSamTargetSol,
     0,
   )
-  const remainingStake = remaining.reduce(
+  const remainingTargetStake = remaining.reduce(
     (sum, v) => sum + v.auctionStake.marinadeSamTargetSol,
     0,
   )
+
+  if (remainingTargetStake === 0) {
+    return 0
+  }
 
   const baseProfit = validators.reduce(
     (acc, v) =>
@@ -450,12 +453,12 @@ export const selectBackstopDiff = (
     0,
   )
 
-  // Assume removed stake redistributes proportionally to remaining validators
-  // Each remaining validator gets: removedStake * (theirStake / remainingStake)
+  // Redistributed stake goes proportionally to remaining validators
   const backstopProfit = remaining.reduce((acc, v) => {
-    const currentStake = v.auctionStake.marinadeSamTargetSol
-    const additionalStake = (removedStake * currentStake) / remainingStake
-    const totalStake = currentStake + additionalStake
+    const currentTargetStake = v.auctionStake.marinadeSamTargetSol
+    const additionalStake =
+      (removedTargetStake * currentTargetStake) / remainingTargetStake
+    const totalStake = currentTargetStake + additionalStake
 
     return (
       acc +
@@ -481,7 +484,7 @@ export const selectTvlLeaveImpact = (
   const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
   const targetRemoval = tvl * 0.1
 
-  // Sort validators by target stake (ascending) to remove from bottom
+  // Remove validators from bottom (by target stake) until 10% TVL is gone
   const sorted = validators
     .filter(v => v.auctionStake.marinadeSamTargetSol > 0)
     .sort(
@@ -490,15 +493,18 @@ export const selectTvlLeaveImpact = (
         b.auctionStake.marinadeSamTargetSol,
     )
 
-  // Remove validators from bottom until we've removed 10% TVL
-  let removed = 0
+  let removedTargetStake = 0
   const removedSet = new Set<string>()
   for (const v of sorted) {
-    if (removed >= targetRemoval) {
+    if (removedTargetStake >= targetRemoval) {
       break
     }
     removedSet.add(v.voteAccount)
-    removed += v.auctionStake.marinadeSamTargetSol
+    removedTargetStake += v.auctionStake.marinadeSamTargetSol
+  }
+
+  if (removedTargetStake >= tvl) {
+    return 0
   }
 
   const baseProfit = validators.reduce(
@@ -512,7 +518,7 @@ export const selectTvlLeaveImpact = (
     0,
   )
 
-  // Calculate profit after removing lowest validators
+  // Profit after removing lowest validators (by active stake they currently earn)
   const leaveProfit = validators.reduce((acc, v) => {
     if (removedSet.has(v.voteAccount)) {
       return acc
@@ -529,7 +535,7 @@ export const selectTvlLeaveImpact = (
 
   const baseApy = Math.pow(1 + baseProfit / tvl, epochsPerYear) - 1
   const leaveApy =
-    Math.pow(1 + leaveProfit / (tvl - removed), epochsPerYear) - 1
+    Math.pow(1 + leaveProfit / (tvl - removedTargetStake), epochsPerYear) - 1
   return leaveApy - baseApy
 }
 
@@ -551,8 +557,7 @@ export const selectTvlJoinImpact = (
     0,
   )
 
-  // Assume 10% more TVL is distributed proportionally to current allocation
-  // Each validator gets 10% more stake, earning at their current rate
+  // 10% more TVL distributed proportionally to active stake
   const joinProfit = validators.reduce(
     (acc, v) =>
       acc +
