@@ -147,7 +147,9 @@ export const SamTable: React.FC<Props> = ({
 
   // Click-outside handler to cancel editing
   useEffect(() => {
-    if (!editingValidator) return undefined
+    if (!editingValidator) {
+      return undefined
+    }
 
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -176,7 +178,9 @@ export const SamTable: React.FC<Props> = ({
 
   // Original validators with bond state (for ghost rows)
   const originalValidatorsWithBond: ValidatorWithBondState[] = useMemo(() => {
-    if (!originalAuctionResult) return []
+    if (!originalAuctionResult) {
+      return []
+    }
     return originalAuctionResult.auctionData.validators
       .filter(v => selectBondSize(v) > 0)
       .map(v => ({
@@ -187,12 +191,16 @@ export const SamTable: React.FC<Props> = ({
 
   // Check if simulated data actually changed from original
   const hasDataChanged = useMemo(() => {
-    if (!simulatedValidator || !originalAuctionResult) return false
+    if (!simulatedValidator || !originalAuctionResult) {
+      return false
+    }
     const original = originalAuctionResult.auctionData.validators.find(
       v => v.voteAccount === simulatedValidator,
     )
     const simulated = validators.find(v => v.voteAccount === simulatedValidator)
-    if (!original || !simulated) return false
+    if (!original || !simulated) {
+      return false
+    }
 
     // Compare relevant fields
     return (
@@ -283,7 +291,9 @@ export const SamTable: React.FC<Props> = ({
 
   // Compute original positions map using the current table sort order
   const originalPositionsMap = useMemo(() => {
-    if (!originalAuctionResult) return null
+    if (!originalAuctionResult) {
+      return null
+    }
 
     const originalValidators =
       originalAuctionResult.auctionData.validators.filter(
@@ -307,7 +317,9 @@ export const SamTable: React.FC<Props> = ({
 
   // Helper to find the original position of a validator (using sorted positions)
   const getOriginalPosition = (voteAccount: string): number | null => {
-    if (!originalPositionsMap) return null
+    if (!originalPositionsMap) {
+      return null
+    }
     return originalPositionsMap.get(voteAccount) ?? null
   }
 
@@ -317,7 +329,9 @@ export const SamTable: React.FC<Props> = ({
     currentPosition: number,
   ): string | null => {
     const originalPosition = getOriginalPosition(voteAccount)
-    if (originalPosition === null || originalPosition === -1) return null
+    if (originalPosition === null || originalPosition === -1) {
+      return null
+    }
 
     if (currentPosition < originalPosition) {
       // Lower position number = better (moved up in the list)

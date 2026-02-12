@@ -390,7 +390,9 @@ export const selectActuallyUnprotectedStake = (
 ): number => {
   return auctionResult.auctionData.validators.reduce((sum, v) => {
     const target = v.auctionStake.marinadeSamTargetSol
-    if (target == null) return sum
+    if (target == null) {
+      return sum
+    }
     const bondOnlyCap = v.bondSamStakeCapSol - v.unprotectedStakeSol
     return sum + Math.max(0, target - bondOnlyCap)
   }, 0)
@@ -402,7 +404,9 @@ export const selectTargetProtectedPct = (
   const totalTarget = selectSamDistributedStake(
     auctionResult.auctionData.validators,
   )
-  if (totalTarget === 0) return 1
+  if (totalTarget === 0) {
+    return 1
+  }
   return 1 - selectActuallyUnprotectedStake(auctionResult) / totalTarget
 }
 
@@ -414,7 +418,7 @@ export const selectBackstopDiff = (
   const validators = auctionResult.auctionData.validators
   const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
 
-  const sorted = [...validators]
+  const sorted = validators
     .filter(v => v.auctionStake.marinadeSamTargetSol > 0)
     .sort(
       (a, b) =>
@@ -425,7 +429,9 @@ export const selectBackstopDiff = (
   const removed = new Set(sorted.slice(0, removeCount).map(v => v.voteAccount))
 
   const remainingProfit = validators.reduce((acc, v) => {
-    if (removed.has(v.voteAccount)) return acc
+    if (removed.has(v.voteAccount)) {
+      return acc
+    }
     return (
       acc +
       ((v.revShare.auctionEffectiveBidPmpe +
