@@ -426,16 +426,16 @@ export const selectBackstopDiff = (
         a.auctionStake.marinadeSamTargetSol,
     )
 
+  const removed = sorted.slice(0, removeCount)
   const remaining = sorted.slice(removeCount)
 
-  const remainingProfit = remaining.reduce(
-    (acc, v) =>
-      acc +
-      ((v.revShare.auctionEffectiveBidPmpe +
-        v.revShare.inflationPmpe +
-        v.revShare.mevPmpe) *
-        v.marinadeActivatedStakeSol) /
-        1000,
+  // Calculate stake that would be redistributed
+  const removedStake = removed.reduce(
+    (sum, v) => sum + v.auctionStake.marinadeSamTargetSol,
+    0,
+  )
+  const remainingStake = remaining.reduce(
+    (sum, v) => sum + v.auctionStake.marinadeSamTargetSol,
     0,
   )
 
@@ -449,9 +449,26 @@ export const selectBackstopDiff = (
         1000,
     0,
   )
+
+  // Assume removed stake redistributes proportionally to remaining validators
+  // Each remaining validator gets: removedStake * (theirStake / remainingStake)
+  const backstopProfit = remaining.reduce((acc, v) => {
+    const currentStake = v.auctionStake.marinadeSamTargetSol
+    const additionalStake = (removedStake * currentStake) / remainingStake
+    const totalStake = currentStake + additionalStake
+
+    return (
+      acc +
+      ((v.revShare.auctionEffectiveBidPmpe +
+        v.revShare.inflationPmpe +
+        v.revShare.mevPmpe) *
+        totalStake) /
+        1000
+    )
+  }, 0)
+
   const baseApy = Math.pow(1 + baseProfit / tvl, epochsPerYear) - 1
-  // stake stays in pool, only revenue from departed validators is lost
-  const backstopApy = Math.pow(1 + remainingProfit / tvl, epochsPerYear) - 1
+  const backstopApy = Math.pow(1 + backstopProfit / tvl, epochsPerYear) - 1
 
   return backstopApy - baseApy
 }
