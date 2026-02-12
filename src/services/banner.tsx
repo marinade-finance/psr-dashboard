@@ -7,10 +7,10 @@ export const getBannerData = (): Props => ({
   body: (
     <>
       <p>
-        Per-validator stake cap raised from 4% to 8% of TVL as part of MIP-19.
-        Top-performing validators can now acquire more stake by adjusting{' '}
-        <code>maxStakeWanted</code>, topping up bonds and offering competitive
-        bids.
+        Per-validator stake cap raised from 4% to 8% of TVL as part of
+        MIP-19. Top-performing validators can now acquire more stake by
+        adjusting <code>maxStakeWanted</code>, topping up bonds and
+        offering competitive bids.
       </p>
     </>
   ),
