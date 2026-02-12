@@ -485,8 +485,8 @@ export const selectTvlVolatility = (
     Math.pow(1 + baseProfit / tvlAfterJoin, epochsPerYear) - 1
   const impactJoin = apyAfterJoin - baseApy
 
-  // Sum signed impacts and return absolute value
-  return Math.abs(impactLeave + impactJoin)
+  // Sum signed impacts (preserves asymmetry information)
+  return impactLeave + impactJoin
 }
 
 export const maxSamStakeTooltip = (

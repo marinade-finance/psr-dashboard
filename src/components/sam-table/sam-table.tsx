@@ -458,9 +458,9 @@ export const SamTable: React.FC<Props> = ({
         />
         <Metric
           label="TVL Volatility"
-          value={formatPercentage(tvlVolatility, 2)}
+          value={fmtDiff(tvlVolatility)}
           {...tooltipAttributes(
-            'APY sensitivity to ±10% TVL change (sum of impacts when 10% leaves vs joins)',
+            'APY sensitivity to ±10% TVL change: sum of impact when 10% leaves (positive) and when 10% joins (negative). Positive = more sensitive to outflows, negative = more sensitive to inflows',
           )}
         />
       </>
