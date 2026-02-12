@@ -426,21 +426,18 @@ export const selectBackstopDiff = (
         a.auctionStake.marinadeSamTargetSol,
     )
 
-  const removed = new Set(sorted.slice(0, removeCount).map(v => v.voteAccount))
+  const remaining = sorted.slice(removeCount)
 
-  const remainingProfit = validators.reduce((acc, v) => {
-    if (removed.has(v.voteAccount)) {
-      return acc
-    }
-    return (
+  const remainingProfit = remaining.reduce(
+    (acc, v) =>
       acc +
       ((v.revShare.auctionEffectiveBidPmpe +
         v.revShare.inflationPmpe +
         v.revShare.mevPmpe) *
         v.marinadeActivatedStakeSol) /
-        1000
-    )
-  }, 0)
+        1000,
+    0,
+  )
 
   const baseProfit = validators.reduce(
     (acc, v) =>
