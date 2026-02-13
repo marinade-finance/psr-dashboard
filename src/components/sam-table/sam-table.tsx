@@ -161,7 +161,7 @@ export const SamTable: React.FC<Props> = ({
         .filter(validator => selectBondSize(validator) > 0)
         .map(v => ({
           ...v,
-          bondState: bondColorState(v, bondObligationSafetyMult),
+          bondState: bondColorState(v),
         })),
     [validators, bondObligationSafetyMult],
   )
@@ -173,7 +173,7 @@ export const SamTable: React.FC<Props> = ({
       .filter(v => selectBondSize(v) > 0)
       .map(v => ({
         ...v,
-        bondState: bondColorState(v, bondObligationSafetyMult),
+        bondState: bondColorState(v),
       }))
   }, [originalAuctionResult, bondObligationSafetyMult])
 
