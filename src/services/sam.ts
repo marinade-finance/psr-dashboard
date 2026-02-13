@@ -2,7 +2,6 @@ import {
   DsSamSDK,
   InputsSource,
   AuctionConstraintType,
-  bondBalanceRequiredForXEpochs,
   loadSamConfig,
   LogVerbosity,
 } from '@marinade.finance/ds-sam-sdk'
@@ -339,10 +338,7 @@ export const selectEffectiveCost = (validator: AuctionValidator) =>
   (validator.marinadeActivatedStakeSol / 1000) *
   validator.revShare.auctionEffectiveBidPmpe
 
-export const bondColorState = (
-  validator: AuctionValidator,
-  bondObligationSafetyMult?: number,
-): Color => {
+export const bondColorState = (validator: AuctionValidator): Color => {
   const stake = validator.auctionStake.marinadeSamTargetSol
   if (!stake) {
     return undefined
