@@ -75,7 +75,7 @@ ReactDOM.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />
-      <Tooltip id="tooltip" style={{ zIndex: 2, width: 400 }} />
+      <Tooltip id="tooltip" style={{ zIndex: 2, maxWidth: 500 }} />
     </QueryClientProvider>
   </React.StrictMode>,
   document.getElementById('root'),

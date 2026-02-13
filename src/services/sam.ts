@@ -16,6 +16,7 @@ import type {
   AuctionResult,
   AuctionValidator,
   AuctionConstraint,
+  ConstraintDiagnostic,
   DsSamConfig,
   SourceDataOverrides,
 } from '@marinade.finance/ds-sam-sdk'
@@ -120,12 +121,58 @@ export const selectSamActiveStake = (validator: AuctionValidator) =>
   validator.marinadeActivatedStakeSol
 export const selectMaxWantedStake = (validator: AuctionValidator) =>
   validator.maxStakeWanted
-export const selectConstraintText = ({
-  lastCapConstraint,
-}: AuctionValidator) =>
-  lastCapConstraint
+export const selectConstraintText = (validator: AuctionValidator): string => {
+  const { lastCapConstraint, constraintDiagnostics } = validator
+
+  if (constraintDiagnostics && constraintDiagnostics.length > 0) {
+    return buildConstraintDiagnosticsHtml(
+      lastCapConstraint,
+      constraintDiagnostics,
+    )
+  }
+
+  return lastCapConstraint
     ? `Stake capped by ${lastCapConstraintDescription(lastCapConstraint)} constraint`
     : 'Stake amount not capped by constraints'
+}
+
+const diagnosticIndicator = (diag: ConstraintDiagnostic): string => {
+  if (diag.isBinding) return '<span style="color:#ef4444">●</span>'
+  if (diag.headroomSol < 1000) return '<span style="color:#f59e0b">●</span>'
+  return '<span style="color:#22c55e">●</span>'
+}
+
+const fmtSol = (sol: number): string => {
+  if (!isFinite(sol)) return '∞'
+  return Math.round(sol).toLocaleString('en-US')
+}
+
+const buildConstraintDiagnosticsHtml = (
+  lastCapConstraint: AuctionConstraint | null,
+  diagnostics: ConstraintDiagnostic[],
+): string => {
+  const header = lastCapConstraint
+    ? `<b>Stake capped by ${lastCapConstraintDescription(lastCapConstraint)} constraint</b>`
+    : '<b>Stake not capped by constraints</b>'
+
+  const lines = diagnostics.map(diag => {
+    const indicator = diagnosticIndicator(diag)
+    const binding = diag.isBinding ? ' <b>(binding)</b>' : ''
+    const label =
+      diag.constraintType === AuctionConstraintType.COUNTRY ||
+      diag.constraintType === AuctionConstraintType.ASO
+        ? `${diag.constraintType} (${diag.constraintName})`
+        : diag.constraintType
+    const headroom = `Headroom: ${fmtSol(diag.headroomSol)} SOL`
+    const advice = diag.advice
+      ? `<br/>&nbsp;&nbsp;&nbsp;&nbsp;${diag.advice}`
+      : ''
+
+    return `${indicator} ${label}${binding} — ${headroom}${advice}`
+  })
+
+  return `${header}<br/><br/>${lines.join('<br/>')}`
+}
 
 export const selectSamDistributedStake = (validators: AuctionValidator[]) =>
   validators.reduce(
