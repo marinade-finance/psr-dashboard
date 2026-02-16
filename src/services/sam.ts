@@ -2,7 +2,6 @@ import {
   DsSamSDK,
   InputsSource,
   AuctionConstraintType,
-  bondBalanceRequiredForXEpochs,
   loadSamConfig,
   LogVerbosity,
 } from '@marinade.finance/ds-sam-sdk'
@@ -339,33 +338,14 @@ export const selectEffectiveCost = (validator: AuctionValidator) =>
   (validator.marinadeActivatedStakeSol / 1000) *
   validator.revShare.auctionEffectiveBidPmpe
 
-export const bondColorState = (
-  validator: AuctionValidator,
-  bondObligationSafetyMult?: number,
-): Color => {
+export const bondColorState = (validator: AuctionValidator): Color => {
   const stake = validator.auctionStake.marinadeSamTargetSol
   if (!stake) {
     return undefined
   }
-
-  const bondReqTwoEpochs = bondBalanceRequiredForXEpochs(
-    stake,
-    validator,
-    2,
-    bondObligationSafetyMult,
-  )
-  const bondReqOneEpoch = bondBalanceRequiredForXEpochs(
-    stake,
-    validator,
-    1,
-    bondObligationSafetyMult,
-  )
-  if (validator.bondBalanceSol > bondReqTwoEpochs) {
+  if (validator.bondGoodForNEpochs > 10) {
     return Color.GREEN
-  } else if (
-    validator.bondBalanceSol <= bondReqTwoEpochs &&
-    validator.bondBalanceSol > bondReqOneEpoch
-  ) {
+  } else if (validator.bondGoodForNEpochs > 2) {
     return Color.YELLOW
   } else {
     return Color.RED
