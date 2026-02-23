@@ -283,7 +283,8 @@ export const selectTotalActiveStake = (auctionResult: AuctionResult) =>
 export const selectProductiveStake = (auctionResult: AuctionResult) =>
   auctionResult.auctionData.validators.reduce(
     (acc, entry) =>
-      entry.revShare.bidPmpe >= entry.revShare.effParticipatingBidPmpe * 0.9
+      entry.revShare.bondObligationPmpe >=
+      entry.revShare.effParticipatingBidPmpe * 0.9
         ? acc + entry.marinadeActivatedStakeSol
         : acc,
     0,
