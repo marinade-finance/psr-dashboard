@@ -3,6 +3,7 @@
   background-color: var(--bg-dark-1);
   margin-right: 10px;
   cursor: help;
+  flex: 1;
 }
 
 .metricWrap > div {
