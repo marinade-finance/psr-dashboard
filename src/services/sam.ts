@@ -68,7 +68,7 @@ export const loadSam = async (
   dataOverrides?: SourceDataOverrides | null,
 ): Promise<{
   auctionResult: AuctionResult
-  joinAuctionResult: AuctionResult
+  tvlJoinApyDiff: number
   epochsPerYear: number
   dcSamConfig: DsSamConfig
 }> => {
@@ -84,47 +84,34 @@ export const loadSam = async (
       logVerbosity: LogVerbosity.ERROR,
     })
 
-    // Fetch data once, run base auction
-    const aggregatedData = await dsSam.getAggregatedData(dataOverrides)
-    const debug = new Debug(new Set(), LogVerbosity.ERROR)
-    const constraints = dsSam.getAuctionConstraints(aggregatedData, debug)
-    const auctionData = {
-      ...aggregatedData,
-      validators: dsSam.transformValidators(aggregatedData),
-    }
-    const auctionResult = new Auction(
-      auctionData,
-      constraints,
-      dsSam.config,
-      debug,
-    ).evaluate()
+    // Fetch data once, run base auction via SDK
+    const auctionResult = await dsSam.runFinalOnly(dataOverrides)
 
-    // Run +10% TVL auction: same data with bumped TVL
-    const joinData = {
-      ...aggregatedData,
-      stakeAmounts: {
-        ...aggregatedData.stakeAmounts,
-        marinadeSamTvlSol: aggregatedData.stakeAmounts.marinadeSamTvlSol * 1.1,
-        marinadeRemainingSamSol:
-          aggregatedData.stakeAmounts.marinadeRemainingSamSol * 1.1,
-      },
-    }
+    // Run +10% TVL auction: re-fetch (cheap, cached) with bumped TVL
+    const joinAggData = await dsSam.getAggregatedData(dataOverrides)
+    joinAggData.stakeAmounts.marinadeSamTvlSol *= 1.1
+    joinAggData.stakeAmounts.marinadeRemainingSamSol *= 1.1
     const joinDebug = new Debug(new Set(), LogVerbosity.ERROR)
-    const joinConstraints = dsSam.getAuctionConstraints(joinData, joinDebug)
+    const joinConstraints = dsSam.getAuctionConstraints(joinAggData, joinDebug)
     const joinAuctionData = {
-      ...joinData,
-      validators: dsSam.transformValidators(joinData),
+      ...joinAggData,
+      validators: dsSam.transformValidators(joinAggData),
     }
-    const joinAuctionResult = new Auction(
+    const joinResult = new Auction(
       joinAuctionData,
       joinConstraints,
       dsSam.config,
       joinDebug,
     ).evaluate()
+    const tvlJoinApyDiff = selectTvlJoinImpact(
+      auctionResult,
+      joinResult,
+      epochsPerYear,
+    )
 
     return {
       auctionResult,
-      joinAuctionResult,
+      tvlJoinApyDiff,
       epochsPerYear,
       dcSamConfig: dsSam.config,
     }

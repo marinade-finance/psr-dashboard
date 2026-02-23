@@ -216,7 +216,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
         {status === 'success' && displayAuctionResult && (
           <SamTable
             auctionResult={displayAuctionResult}
-            joinAuctionResult={data.joinAuctionResult}
+            tvlJoinApyDiff={data.tvlJoinApyDiff}
             originalAuctionResult={originalAuctionResult}
             epochsPerYear={data.epochsPerYear}
             dsSamConfig={data.dcSamConfig}

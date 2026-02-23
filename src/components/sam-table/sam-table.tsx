@@ -24,7 +24,6 @@ import {
   selectActuallyUnprotectedStake,
   selectBackstopDiff,
   selectTvlLeaveImpact,
-  selectTvlJoinImpact,
   selectBlockRewardsCommission,
   formattedMevCommission,
   formattedBlockRewardsCommission,
@@ -69,7 +68,7 @@ type DisplayValidator = {
 
 type Props = {
   auctionResult: AuctionResult
-  joinAuctionResult: AuctionResult
+  tvlJoinApyDiff: number
   originalAuctionResult: AuctionResult | null
   epochsPerYear: number
   dsSamConfig: DsSamConfig
@@ -96,7 +95,7 @@ type Props = {
 
 export const SamTable: React.FC<Props> = ({
   auctionResult,
-  joinAuctionResult,
+  tvlJoinApyDiff,
   originalAuctionResult,
   epochsPerYear,
   dsSamConfig,
@@ -132,11 +131,7 @@ export const SamTable: React.FC<Props> = ({
   const unprotectedStake = selectActuallyUnprotectedStake(auctionResult)
   const backstopDiff = selectBackstopDiff(auctionResult, epochsPerYear, 5)
   const tvlLeaveImpact = selectTvlLeaveImpact(auctionResult, epochsPerYear)
-  const tvlJoinImpact = selectTvlJoinImpact(
-    auctionResult,
-    joinAuctionResult,
-    epochsPerYear,
-  )
+  const tvlJoinImpact = tvlJoinApyDiff
 
   // Ref for click-outside detection
   const tableWrapRef = useRef<HTMLDivElement>(null)
