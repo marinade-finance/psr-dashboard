@@ -1,5 +1,7 @@
 import {
   DsSamSDK,
+  Auction,
+  Debug,
   InputsSource,
   AuctionConstraintType,
   loadSamConfig,
@@ -66,6 +68,7 @@ export const loadSam = async (
   dataOverrides?: SourceDataOverrides | null,
 ): Promise<{
   auctionResult: AuctionResult
+  joinAuctionResult: AuctionResult
   epochsPerYear: number
   dcSamConfig: DsSamConfig
 }> => {
@@ -80,8 +83,51 @@ export const loadSam = async (
       debugVoteAccounts: [],
       logVerbosity: LogVerbosity.ERROR,
     })
-    const auctionResult = await dsSam.runFinalOnly(dataOverrides)
-    return { auctionResult, epochsPerYear, dcSamConfig: dsSam.config }
+
+    // Fetch data once, run base auction
+    const aggregatedData = await dsSam.getAggregatedData(dataOverrides)
+    const debug = new Debug(new Set(), LogVerbosity.ERROR)
+    const constraints = dsSam.getAuctionConstraints(aggregatedData, debug)
+    const auctionData = {
+      ...aggregatedData,
+      validators: dsSam.transformValidators(aggregatedData),
+    }
+    const auctionResult = new Auction(
+      auctionData,
+      constraints,
+      dsSam.config,
+      debug,
+    ).evaluate()
+
+    // Run +10% TVL auction: same data with bumped TVL
+    const joinData = {
+      ...aggregatedData,
+      stakeAmounts: {
+        ...aggregatedData.stakeAmounts,
+        marinadeSamTvlSol: aggregatedData.stakeAmounts.marinadeSamTvlSol * 1.1,
+        marinadeRemainingSamSol:
+          aggregatedData.stakeAmounts.marinadeRemainingSamSol * 1.1,
+      },
+    }
+    const joinDebug = new Debug(new Set(), LogVerbosity.ERROR)
+    const joinConstraints = dsSam.getAuctionConstraints(joinData, joinDebug)
+    const joinAuctionData = {
+      ...joinData,
+      validators: dsSam.transformValidators(joinData),
+    }
+    const joinAuctionResult = new Auction(
+      joinAuctionData,
+      joinConstraints,
+      dsSam.config,
+      joinDebug,
+    ).evaluate()
+
+    return {
+      auctionResult,
+      joinAuctionResult,
+      epochsPerYear,
+      dcSamConfig: dsSam.config,
+    }
   } catch (err) {
     console.log(err)
     throw err
@@ -520,38 +566,29 @@ export const selectTvlLeaveImpact = (
 }
 
 export const selectTvlJoinImpact = (
-  auctionResult: AuctionResult,
+  baseResult: AuctionResult,
+  joinResult: AuctionResult,
   epochsPerYear: number,
 ): number => {
-  const validators = auctionResult.auctionData.validators
-  const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
+  const profitOf = (r: AuctionResult) =>
+    r.auctionData.validators.reduce(
+      (acc, v) =>
+        acc +
+        ((v.revShare.auctionEffectiveBidPmpe +
+          v.revShare.inflationPmpe +
+          v.revShare.mevPmpe) *
+          v.marinadeActivatedStakeSol) /
+          1000,
+      0,
+    )
 
-  const baseProfit = validators.reduce(
-    (acc, v) =>
-      acc +
-      ((v.revShare.auctionEffectiveBidPmpe +
-        v.revShare.inflationPmpe +
-        v.revShare.mevPmpe) *
-        v.marinadeActivatedStakeSol) /
-        1000,
-    0,
-  )
+  const baseTvl = baseResult.auctionData.stakeAmounts.marinadeSamTvlSol
+  const joinTvl = joinResult.auctionData.stakeAmounts.marinadeSamTvlSol
 
-  // 10% more TVL distributed proportionally to active stake
-  const joinProfit = validators.reduce(
-    (acc, v) =>
-      acc +
-      ((v.revShare.auctionEffectiveBidPmpe +
-        v.revShare.inflationPmpe +
-        v.revShare.mevPmpe) *
-        v.marinadeActivatedStakeSol *
-        1.1) /
-        1000,
-    0,
-  )
-
-  const baseApy = Math.pow(1 + baseProfit / tvl, epochsPerYear) - 1
-  const joinApy = Math.pow(1 + joinProfit / (tvl * 1.1), epochsPerYear) - 1
+  const baseApy =
+    Math.pow(1 + profitOf(baseResult) / baseTvl, epochsPerYear) - 1
+  const joinApy =
+    Math.pow(1 + profitOf(joinResult) / joinTvl, epochsPerYear) - 1
   return joinApy - baseApy
 }
 

@@ -69,6 +69,7 @@ type DisplayValidator = {
 
 type Props = {
   auctionResult: AuctionResult
+  joinAuctionResult: AuctionResult
   originalAuctionResult: AuctionResult | null
   epochsPerYear: number
   dsSamConfig: DsSamConfig
@@ -95,6 +96,7 @@ type Props = {
 
 export const SamTable: React.FC<Props> = ({
   auctionResult,
+  joinAuctionResult,
   originalAuctionResult,
   epochsPerYear,
   dsSamConfig,
@@ -130,7 +132,11 @@ export const SamTable: React.FC<Props> = ({
   const unprotectedStake = selectActuallyUnprotectedStake(auctionResult)
   const backstopDiff = selectBackstopDiff(auctionResult, epochsPerYear, 5)
   const tvlLeaveImpact = selectTvlLeaveImpact(auctionResult, epochsPerYear)
-  const tvlJoinImpact = selectTvlJoinImpact(auctionResult, epochsPerYear)
+  const tvlJoinImpact = selectTvlJoinImpact(
+    auctionResult,
+    joinAuctionResult,
+    epochsPerYear,
+  )
 
   // Ref for click-outside detection
   const tableWrapRef = useRef<HTMLDivElement>(null)
@@ -469,7 +475,7 @@ export const SamTable: React.FC<Props> = ({
           label="+10% TVL"
           value={fmtDiff(tvlJoinImpact)}
           {...tooltipAttributes(
-            'APY impact if 10% more TVL joins distributed proportionally (validators earn at current rates on 1.1x stake)',
+            'APY impact if 10% more TVL joins (full auction re-run with increased TVL)',
           )}
         />
         <Metric
