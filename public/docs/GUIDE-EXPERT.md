@@ -27,7 +27,10 @@ Measures concentration risk and dependence on largest validators for yield.
 
 ### +10% TVL
 
-APY impact if 10% more TVL joins and distributes proportionally to current active stake. Assumes validators maintain current earning rates on increased stake. Recalculates profit based on validators earning at same rates on 1.1x their active stake. Formula: `joinAPY - baseAPY` where `joinAPY = (1 + joinProfit / joinTVL)^epochsPerYear - 1`.
+APY impact if 10% more TVL enters the pool. Computed by re-running the full SAM auction with `marinadeSamTvlSol * 1.1` and `marinadeRemainingSamSol * 1.1`. The auction recalculates constraints (stake caps scale with TVL), re-evaluates all validators, and produces a new stake distribution. Result: `joinAPY - baseAPY` where each APY = `(1 + profit/tvl)^epochsPerYear - 1`.
+
+- **Negative value** (typical, e.g., -0.70%) &mdash; More TVL dilutes per-SOL revenue; validators bid the same but stake is spread across more SOL
+- **Near zero** &mdash; Additional TVL unlocks enough new validator capacity to offset dilution
 
 ### -10% TVL
 
