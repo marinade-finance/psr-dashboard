@@ -447,14 +447,14 @@ export const SamTable: React.FC<Props> = ({
         </div>
         <div className={styles.metricRow}>
           <Metric
-            label="Target Protected"
+            label="T. Protected"
             value={formatPercentage(targetProtectedPct)}
             {...tooltipAttributes(
               'Percentage of target delegation covered by bond reserves',
             )}
           />
           <Metric
-            label="Unprotected"
+            label="T. Unprotected"
             value={`☉ ${formatSolAmount(unprotectedStake, 0)}`}
             {...tooltipAttributes('Target delegation beyond bond coverage')}
           />
