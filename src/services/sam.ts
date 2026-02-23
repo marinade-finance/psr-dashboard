@@ -70,6 +70,7 @@ export const loadSam = async (
   auctionResult: AuctionResult
   tvlJoinApyDiff: number
   tvlLeaveApyDiff: number
+  backstopDiff: number
   epochsPerYear: number
   dcSamConfig: DsSamConfig
 }> => {
@@ -135,10 +136,45 @@ export const loadSam = async (
       epochsPerYear,
     )
 
+    // Run backstop auction: blacklist top 5 validators by target stake
+    const backstopAggData = await dsSam.getAggregatedData(dataOverrides)
+    const top5 = [...auctionResult.auctionData.validators]
+      .sort(
+        (a, b) =>
+          b.auctionStake.marinadeSamTargetSol -
+          a.auctionStake.marinadeSamTargetSol,
+      )
+      .slice(0, 5)
+      .map(v => v.voteAccount)
+    for (const va of top5) {
+      backstopAggData.blacklist.add(va)
+    }
+    const backstopDebug = new Debug(new Set(), LogVerbosity.ERROR)
+    const backstopConstraints = dsSam.getAuctionConstraints(
+      backstopAggData,
+      backstopDebug,
+    )
+    const backstopAuctionData = {
+      ...backstopAggData,
+      validators: dsSam.transformValidators(backstopAggData),
+    }
+    const backstopResult = new Auction(
+      backstopAuctionData,
+      backstopConstraints,
+      dsSam.config,
+      backstopDebug,
+    ).evaluate()
+    const backstopDiff = selectTvlApyDiff(
+      auctionResult,
+      backstopResult,
+      epochsPerYear,
+    )
+
     return {
       auctionResult,
       tvlJoinApyDiff,
       tvlLeaveApyDiff,
+      backstopDiff,
       epochsPerYear,
       dcSamConfig: dsSam.config,
     }
@@ -448,72 +484,6 @@ export const selectTargetProtectedPct = (
     return 1
   }
   return 1 - selectActuallyUnprotectedStake(auctionResult) / totalTarget
-}
-
-export const selectBackstopDiff = (
-  auctionResult: AuctionResult,
-  epochsPerYear: number,
-  removeCount: number,
-): number => {
-  const validators = auctionResult.auctionData.validators
-  const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
-
-  const sorted = validators
-    .filter(v => v.auctionStake.marinadeSamTargetSol > 0)
-    .sort(
-      (a, b) =>
-        b.auctionStake.marinadeSamTargetSol -
-        a.auctionStake.marinadeSamTargetSol,
-    )
-
-  const removed = sorted.slice(0, removeCount)
-  const remaining = sorted.slice(removeCount)
-
-  const removedTargetStake = removed.reduce(
-    (sum, v) => sum + v.auctionStake.marinadeSamTargetSol,
-    0,
-  )
-  const remainingTargetStake = remaining.reduce(
-    (sum, v) => sum + v.auctionStake.marinadeSamTargetSol,
-    0,
-  )
-
-  if (remainingTargetStake === 0) {
-    return 0
-  }
-
-  const baseProfit = validators.reduce(
-    (acc, v) =>
-      acc +
-      ((v.revShare.auctionEffectiveBidPmpe +
-        v.revShare.inflationPmpe +
-        v.revShare.mevPmpe) *
-        v.marinadeActivatedStakeSol) /
-        1000,
-    0,
-  )
-
-  // Redistributed stake goes proportionally to remaining validators
-  const backstopProfit = remaining.reduce((acc, v) => {
-    const currentTargetStake = v.auctionStake.marinadeSamTargetSol
-    const additionalStake =
-      (removedTargetStake * currentTargetStake) / remainingTargetStake
-    const totalStake = currentTargetStake + additionalStake
-
-    return (
-      acc +
-      ((v.revShare.auctionEffectiveBidPmpe +
-        v.revShare.inflationPmpe +
-        v.revShare.mevPmpe) *
-        totalStake) /
-        1000
-    )
-  }, 0)
-
-  const baseApy = Math.pow(1 + baseProfit / tvl, epochsPerYear) - 1
-  const backstopApy = Math.pow(1 + backstopProfit / tvl, epochsPerYear) - 1
-
-  return backstopApy - baseApy
 }
 
 export const selectTvlApyDiff = (

@@ -22,7 +22,6 @@ import {
   selectProductiveStake,
   selectTargetProtectedPct,
   selectActuallyUnprotectedStake,
-  selectBackstopDiff,
   selectBlockRewardsCommission,
   formattedMevCommission,
   formattedBlockRewardsCommission,
@@ -69,6 +68,7 @@ type Props = {
   auctionResult: AuctionResult
   tvlJoinApyDiff: number
   tvlLeaveApyDiff: number
+  backstopDiff: number
   originalAuctionResult: AuctionResult | null
   epochsPerYear: number
   dsSamConfig: DsSamConfig
@@ -95,6 +95,7 @@ export const SamTable: React.FC<Props> = ({
   auctionResult,
   tvlJoinApyDiff,
   tvlLeaveApyDiff,
+  backstopDiff,
   originalAuctionResult,
   epochsPerYear,
   dsSamConfig,
@@ -126,7 +127,6 @@ export const SamTable: React.FC<Props> = ({
     selectProductiveStake(auctionResult) / samDistributedStake
   const targetProtectedPct = selectTargetProtectedPct(auctionResult)
   const unprotectedStake = selectActuallyUnprotectedStake(auctionResult)
-  const backstopDiff = selectBackstopDiff(auctionResult, epochsPerYear, 5)
   const tvlLeaveImpact = tvlLeaveApyDiff
   const tvlJoinImpact = tvlJoinApyDiff
 
@@ -462,8 +462,7 @@ export const SamTable: React.FC<Props> = ({
             label="Backstop"
             value={fmtDiff(backstopDiff)}
             {...tooltipAttributes(
-              'APY impact if top 5 validators by target stake left' +
-                ' (stake stays in pool, revenue lost)',
+              'APY impact if top 5 validators by target stake left (full auction re-run without them)',
             )}
           />
           <Metric
