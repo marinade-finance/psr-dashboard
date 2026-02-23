@@ -129,8 +129,6 @@ export const SamTable: React.FC<Props> = ({
     selectProductiveStake(auctionResult) / samDistributedStake
   const targetProtectedPct = selectTargetProtectedPct(auctionResult)
   const unprotectedStake = selectActuallyUnprotectedStake(auctionResult)
-  const tvlLeaveImpact = tvlLeaveApyDiff
-  const tvlJoinImpact = tvlJoinApyDiff
 
   // Ref for click-outside detection
   const tableWrapRef = useRef<HTMLDivElement>(null)
@@ -476,14 +474,14 @@ export const SamTable: React.FC<Props> = ({
           />
           <Metric
             label="+10% TVL"
-            value={fmtDiff(tvlJoinImpact)}
+            value={fmtDiff(tvlJoinApyDiff)}
             {...tooltipAttributes(
               'APY impact if 10% more TVL joins (full auction re-run with increased TVL)',
             )}
           />
           <Metric
             label="-10% TVL"
-            value={fmtDiff(tvlLeaveImpact)}
+            value={fmtDiff(tvlLeaveApyDiff)}
             {...tooltipAttributes(
               'APY impact if 10% of TVL leaves (full auction re-run with decreased TVL)',
             )}

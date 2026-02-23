@@ -90,55 +90,46 @@ export const loadSam = async (
     // Fetch data once, run base auction via SDK
     const auctionResult = await dsSam.runFinalOnly(dataOverrides)
 
-    // Run +10% TVL auction: re-fetch (cheap, cached) with bumped TVL
-    const joinAggData = await dsSam.getAggregatedData(dataOverrides)
-    joinAggData.stakeAmounts.marinadeSamTvlSol *= 1.1
-    joinAggData.stakeAmounts.marinadeRemainingSamSol *= 1.1
-    const joinDebug = new Debug(new Set(), LogVerbosity.ERROR)
-    const joinConstraints = dsSam.getAuctionConstraints(joinAggData, joinDebug)
-    const joinAuctionData = {
-      ...joinAggData,
-      validators: dsSam.transformValidators(joinAggData),
+    // Run alternative auction with mutated aggregated data
+    const runAlt = async (
+      mutate: (
+        agg: Awaited<ReturnType<typeof dsSam.getAggregatedData>>,
+      ) => void,
+    ) => {
+      const agg = await dsSam.getAggregatedData(dataOverrides)
+      mutate(agg)
+      const debug = new Debug(new Set(), LogVerbosity.ERROR)
+      const constraints = dsSam.getAuctionConstraints(agg, debug)
+      const d = { ...agg, validators: dsSam.transformValidators(agg) }
+      return new Auction(d, constraints, dsSam.config, debug).evaluate()
     }
-    const joinResult = new Auction(
-      joinAuctionData,
-      joinConstraints,
-      dsSam.config,
-      joinDebug,
-    ).evaluate()
+
+    // +10% / -10% TVL sensitivity
+    const joinResult = await runAlt(agg => {
+      // eslint-disable-next-line no-param-reassign
+      agg.stakeAmounts.marinadeSamTvlSol *= 1.1
+      // eslint-disable-next-line no-param-reassign
+      agg.stakeAmounts.marinadeRemainingSamSol *= 1.1
+    })
     const tvlJoinApyDiff = selectTvlApyDiff(
       auctionResult,
       joinResult,
       epochsPerYear,
     )
 
-    // Run -10% TVL auction
-    const leaveAggData = await dsSam.getAggregatedData(dataOverrides)
-    leaveAggData.stakeAmounts.marinadeSamTvlSol *= 0.9
-    leaveAggData.stakeAmounts.marinadeRemainingSamSol *= 0.9
-    const leaveDebug = new Debug(new Set(), LogVerbosity.ERROR)
-    const leaveConstraints = dsSam.getAuctionConstraints(
-      leaveAggData,
-      leaveDebug,
-    )
-    const leaveAuctionData = {
-      ...leaveAggData,
-      validators: dsSam.transformValidators(leaveAggData),
-    }
-    const leaveResult = new Auction(
-      leaveAuctionData,
-      leaveConstraints,
-      dsSam.config,
-      leaveDebug,
-    ).evaluate()
+    const leaveResult = await runAlt(agg => {
+      // eslint-disable-next-line no-param-reassign
+      agg.stakeAmounts.marinadeSamTvlSol *= 0.9
+      // eslint-disable-next-line no-param-reassign
+      agg.stakeAmounts.marinadeRemainingSamSol *= 0.9
+    })
     const tvlLeaveApyDiff = selectTvlApyDiff(
       auctionResult,
       leaveResult,
       epochsPerYear,
     )
 
-    // Run backstop auction: blacklist top 5 validators by target stake
-    const backstopAggData = await dsSam.getAggregatedData(dataOverrides)
+    // Backstop: blacklist top 5 validators by target stake
     const top5 = [...auctionResult.auctionData.validators]
       .sort(
         (a, b) =>
@@ -146,38 +137,19 @@ export const loadSam = async (
           a.auctionStake.marinadeSamTargetSol,
       )
       .slice(0, 5)
-      .map(v => v.voteAccount)
-    for (const va of top5) {
-      backstopAggData.blacklist.add(va)
-    }
-    const backstopDebug = new Debug(new Set(), LogVerbosity.ERROR)
-    const backstopConstraints = dsSam.getAuctionConstraints(
-      backstopAggData,
-      backstopDebug,
-    )
-    const backstopAuctionData = {
-      ...backstopAggData,
-      validators: dsSam.transformValidators(backstopAggData),
-    }
-    const backstopResult = new Auction(
-      backstopAuctionData,
-      backstopConstraints,
-      dsSam.config,
-      backstopDebug,
-    ).evaluate()
+
+    const backstopResult = await runAlt(agg => {
+      for (const v of top5) agg.blacklist.add(v.voteAccount)
+    })
     const backstopDiff = selectTargetApyDiff(
       auctionResult,
       backstopResult,
       epochsPerYear,
     )
-    const backstopTvl = [...auctionResult.auctionData.validators]
-      .sort(
-        (a, b) =>
-          b.auctionStake.marinadeSamTargetSol -
-          a.auctionStake.marinadeSamTargetSol,
-      )
-      .slice(0, 5)
-      .reduce((sum, v) => sum + v.auctionStake.marinadeSamTargetSol, 0)
+    const backstopTvl = top5.reduce(
+      (sum, v) => sum + v.auctionStake.marinadeSamTargetSol,
+      0,
+    )
 
     return {
       auctionResult,
