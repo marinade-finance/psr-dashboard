@@ -1,21 +1,15 @@
 .metricWrap {
-  padding: 10px 16px;
+  padding: 10px 20px;
   background-color: var(--bg-dark-1);
+  margin-right: 10px;
   cursor: help;
-  border-radius: 4px;
 }
 
 .metricWrap > div {
   white-space: nowrap;
 }
 
-.metricWrap > div:first-child {
-  font-size: 11px;
-  color: var(--text-light-1);
-  opacity: 0.8;
-}
-
 .metricWrap > div:last-child {
-  margin-top: 6px;
-  font-size: 22px;
+  margin-top: 10px;
+  font-size: 24px;
 }
