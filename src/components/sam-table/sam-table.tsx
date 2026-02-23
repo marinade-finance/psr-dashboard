@@ -462,9 +462,16 @@ export const SamTable: React.FC<Props> = ({
           />
           <Metric
             label="Backstop"
-            value={`${fmtDiff(backstopDiff)} (☉ ${formatSolAmount(backstopTvl, 0)})`}
+            value={fmtDiff(backstopDiff)}
             {...tooltipAttributes(
-              'APY impact if top 5 validators by target stake left (full auction re-run without them). Shows target stake at risk.',
+              'APY impact if top 5 validators by target stake left (full auction re-run without them)',
+            )}
+          />
+          <Metric
+            label="Backstop TVL"
+            value={`☉ ${formatSolAmount(backstopTvl, 0)}`}
+            {...tooltipAttributes(
+              'Target stake held by top 5 validators at risk in backstop scenario',
             )}
           />
           <Metric
