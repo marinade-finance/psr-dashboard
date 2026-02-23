@@ -209,7 +209,21 @@ export const SamPage: React.FC<Props> = ({ level }) => {
   return (
     <div className={styles.page}>
       <div className={styles.pageContent}>
-        <Navigation level={level} />
+        <Navigation level={level}>
+          {hasSimulationApplied && !isCalculating && (
+            <span className={styles.simulationNote}>Simulation applied</span>
+          )}
+          {isCalculating && (
+            <span className={styles.simulationNote}>Calculating...</span>
+          )}
+          <button
+            className={`${styles.simulatorToggle} ${simulationModeActive ? styles.simulatorToggleActive : ''}`}
+            onClick={handleToggleSimulationMode}
+            disabled={isCalculating}
+          >
+            {simulationModeActive ? 'Exit Simulation' : 'Enter Simulation'}
+          </button>
+        </Navigation>
         <Banner {...getBannerData()} />
         {status === 'error' && <p>Error fetching data</p>}
         {status === 'loading' && <Loader />}
@@ -223,11 +237,9 @@ export const SamPage: React.FC<Props> = ({ level }) => {
             dsSamConfig={data.dcSamConfig}
             level={level}
             simulationModeActive={simulationModeActive}
-            onToggleSimulationMode={handleToggleSimulationMode}
             editingValidator={editingValidator}
             simulatedValidator={simulatedValidator}
             isCalculating={isCalculating}
-            hasSimulationApplied={hasSimulationApplied}
             pendingEdits={pendingEdits}
             onValidatorClick={handleValidatorClick}
             onFieldChange={handleFieldChange}

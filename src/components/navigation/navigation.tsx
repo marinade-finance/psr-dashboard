@@ -12,7 +12,10 @@ export type UserLevelProps = {
   level?: UserLevel
 }
 
-export const Navigation: React.FC<UserLevelProps> = ({ level }) => {
+export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
+  level,
+  children,
+}) => {
   const expert = level === UserLevel.Expert ? 'expert-' : ''
   return (
     <div className={styles.navigation}>
@@ -48,6 +51,7 @@ export const Navigation: React.FC<UserLevelProps> = ({ level }) => {
           <div className={styles.docsButton}>Expert Guide</div>
         </a>
       )}
+      {children}
     </div>
   )
 }

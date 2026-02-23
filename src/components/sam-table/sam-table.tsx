@@ -74,11 +74,9 @@ type Props = {
   dsSamConfig: DsSamConfig
   level: UserLevel
   simulationModeActive: boolean
-  onToggleSimulationMode: () => void
   editingValidator: string | null
   simulatedValidator: string | null
   isCalculating: boolean
-  hasSimulationApplied: boolean
   pendingEdits: PendingEdits
   onValidatorClick: (voteAccount: string) => void
   onFieldChange: (
@@ -102,11 +100,9 @@ export const SamTable: React.FC<Props> = ({
   dsSamConfig,
   level,
   simulationModeActive,
-  onToggleSimulationMode,
   editingValidator,
   simulatedValidator,
   isCalculating,
-  hasSimulationApplied,
   pendingEdits,
   onValidatorClick,
   onFieldChange,
@@ -546,21 +542,6 @@ export const SamTable: React.FC<Props> = ({
         {expertMetrics && (
           <div className={styles.expertMetrics}>{expertMetrics}</div>
         )}
-        <div className={styles.simulatorToggleWrap}>
-          <button
-            className={`${styles.simulatorToggle} ${simulationModeActive ? styles.simulatorToggleActive : ''}`}
-            onClick={onToggleSimulationMode}
-            disabled={isCalculating}
-          >
-            {simulationModeActive ? 'Exit Simulation' : 'Enter Simulation'}
-          </button>
-          {hasSimulationApplied && !isCalculating && (
-            <span className={styles.simulationNote}>Simulation applied</span>
-          )}
-          {isCalculating && (
-            <span className={styles.simulationNote}>Calculating...</span>
-          )}
-        </div>
       </div>
 
       <Table
