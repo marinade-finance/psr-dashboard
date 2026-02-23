@@ -436,7 +436,7 @@ export const SamTable: React.FC<Props> = ({
             label="Productive Stake"
             value={`${formatPercentage(productiveStake)}`}
             {...tooltipAttributes(
-              'Share of stake that pays at least 90% of winning bid',
+              'Share of active stake where bid covers at least 90% of effective bid (accounting for commission)',
             )}
           />
           <Metric
