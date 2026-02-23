@@ -14,6 +14,7 @@ interface CssExports {
   'inlineInput': string;
   'inputCell': string;
   'inputPlaceholder': string;
+  'metricRow': string;
   'metricWrap': string;
   'orderCell': string;
   'originalPosition': string;

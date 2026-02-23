@@ -419,64 +419,70 @@ export const SamTable: React.FC<Props> = ({
   if (level === UserLevel.Expert) {
     expertMetrics = (
       <>
-        <Metric
-          label="Stake to Move"
-          value={`${formatPercentage(stakeToMove)}`}
-          {...tooltipAttributes(
-            'Stake that has to move to match auction results',
-          )}
-        />
-        <Metric
-          label="Active Stake"
-          value={`${formatPercentage(activeStake)}`}
-          {...tooltipAttributes('Share of active stake earning rewards')}
-        />
-        <Metric
-          label="Productive Stake"
-          value={`${formatPercentage(productiveStake)}`}
-          {...tooltipAttributes(
-            'Share of stake that pays at least 90% of winning bid',
-          )}
-        />
-        <Metric
-          label="Avg. Stake"
-          value={`${formatSolAmount(avgStake, 0)}`}
-          {...tooltipAttributes('Average stake per validator')}
-        />
-        <Metric
-          label="Target Protected"
-          value={formatPercentage(targetProtectedPct)}
-          {...tooltipAttributes(
-            'Percentage of target delegation covered by bond reserves',
-          )}
-        />
-        <Metric
-          label="Unprotected"
-          value={`☉ ${formatSolAmount(unprotectedStake, 0)}`}
-          {...tooltipAttributes('Target delegation beyond bond coverage')}
-        />
-        <Metric
-          label="Backstop"
-          value={fmtDiff(backstopDiff)}
-          {...tooltipAttributes(
-            'APY impact if top 5 validators by target stake left' +
-              ' (stake stays in pool, revenue lost)',
-          )}
-        />
-        <Metric
-          label="+10% TVL"
-          value={fmtDiff(tvlJoinImpact)}
-          {...tooltipAttributes(
-            'APY impact if 10% more TVL joins (full auction re-run with increased TVL)',
-          )}
-        />
-        <Metric
-          label="-10% TVL"
-          value={fmtDiff(tvlLeaveImpact)}
-          {...tooltipAttributes(
-            'APY impact if 10% of TVL leaves by removing validators from bottom (by target stake)',
-          )}
-        />
+        <div className={styles.metricRow}>
+          <Metric
+            label="Stake to Move"
+            value={`${formatPercentage(stakeToMove)}`}
+            {...tooltipAttributes(
+              'Stake that has to move to match auction results',
+            )}
+          />
+          <Metric
+            label="Active Stake"
+            value={`${formatPercentage(activeStake)}`}
+            {...tooltipAttributes('Share of active stake earning rewards')}
+          />
+          <Metric
+            label="Productive Stake"
+            value={`${formatPercentage(productiveStake)}`}
+            {...tooltipAttributes(
+              'Share of stake that pays at least 90% of winning bid',
+            )}
+          />
+          <Metric
+            label="Avg. Stake"
+            value={`${formatSolAmount(avgStake, 0)}`}
+            {...tooltipAttributes('Average stake per validator')}
+          />
+        </div>
+        <div className={styles.metricRow}>
+          <Metric
+            label="Target Protected"
+            value={formatPercentage(targetProtectedPct)}
+            {...tooltipAttributes(
+              'Percentage of target delegation covered by bond reserves',
+            )}
+          />
+          <Metric
+            label="Unprotected"
+            value={`☉ ${formatSolAmount(unprotectedStake, 0)}`}
+            {...tooltipAttributes('Target delegation beyond bond coverage')}
+          />
+          <Metric
+            label="Backstop"
+            value={fmtDiff(backstopDiff)}
+            {...tooltipAttributes(
+              'APY impact if top 5 validators by target stake left' +
+                ' (stake stays in pool, revenue lost)',
+            )}
+          />
+        </div>
+        <div className={styles.metricRow}>
+          <Metric
+            label="+10% TVL"
+            value={fmtDiff(tvlJoinImpact)}
+            {...tooltipAttributes(
+              'APY impact if 10% more TVL joins (full auction re-run with increased TVL)',
+            )}
+          />
+          <Metric
+            label="-10% TVL"
+            value={fmtDiff(tvlLeaveImpact)}
+            {...tooltipAttributes(
+              'APY impact if 10% of TVL leaves by removing validators from bottom (by target stake)',
+            )}
+          />
+        </div>
       </>
     )
     apyMetrics = (
@@ -512,36 +518,36 @@ export const SamTable: React.FC<Props> = ({
       className={`${styles.tableWrap} ${simulationModeActive ? styles.simulationModeActive : ''} ${isCalculating ? styles.calculating : ''}`}
     >
       <div className={styles.metricWrap}>
-        <Metric
-          label="Total Auction Stake"
-          value={`☉ ${formatSolAmount(samDistributedStake)}`}
-          {...tooltipAttributes(
-            'How much stake is distributed by Marinade to validators based on SAM',
-          )}
-        />
-        <Metric
-          label="Winning APY"
-          value={`☉ ${formatPercentage(winningAPY)}`}
-          {...tooltipAttributes(
-            'Estimated APY of the last validator winning the auction based on ideal count of epochs in the year; assumes no Marinade fees',
-          )}
-        />
-        <>{apyMetrics}</>
-        <ComplexMetric
-          label="Winning Validators"
-          value={
-            <div>
-              <span>{samStakeValidators.length}</span> /{' '}
-              <span>{validatorsWithBond.length}</span>
-            </div>
-          }
-          {...tooltipAttributes(
-            'Number of validators that won stake in this SAM auction',
-          )}
-        />
-        {expertMetrics && (
-          <div className={styles.expertMetrics}>{expertMetrics}</div>
-        )}
+        <div className={styles.metricRow}>
+          <Metric
+            label="Total Auction Stake"
+            value={`☉ ${formatSolAmount(samDistributedStake)}`}
+            {...tooltipAttributes(
+              'How much stake is distributed by Marinade to validators based on SAM',
+            )}
+          />
+          <Metric
+            label="Winning APY"
+            value={`☉ ${formatPercentage(winningAPY)}`}
+            {...tooltipAttributes(
+              'Estimated APY of the last validator winning the auction based on ideal count of epochs in the year; assumes no Marinade fees',
+            )}
+          />
+          <>{apyMetrics}</>
+          <ComplexMetric
+            label="Winning Validators"
+            value={
+              <div>
+                <span>{samStakeValidators.length}</span> /{' '}
+                <span>{validatorsWithBond.length}</span>
+              </div>
+            }
+            {...tooltipAttributes(
+              'Number of validators that won stake in this SAM auction',
+            )}
+          />
+        </div>
+        {expertMetrics}
       </div>
 
       <Table
