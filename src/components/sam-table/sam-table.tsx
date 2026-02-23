@@ -477,7 +477,7 @@ export const SamTable: React.FC<Props> = ({
             label="-10% TVL"
             value={fmtDiff(tvlLeaveImpact)}
             {...tooltipAttributes(
-              'APY impact if 10% of TVL leaves by removing validators from bottom (by target stake)',
+              'APY impact if 10% of TVL leaves (full auction re-run with decreased TVL)',
             )}
           />
         </div>
