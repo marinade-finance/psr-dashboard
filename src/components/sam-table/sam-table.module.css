@@ -251,11 +251,11 @@
 
 /* Row tints by bond health */
 .rowRed {
-  background-color: rgba(135, 28, 24, 0.25);
+  background-color: rgba(135, 28, 24, 0.2);
 }
 
 .rowYellow {
-  background-color: rgba(128, 96, 0, 0.25);
+  background-color: rgba(128, 96, 0, 0.12);
 }
 
 /* No-bond row - validator without bond balance */
