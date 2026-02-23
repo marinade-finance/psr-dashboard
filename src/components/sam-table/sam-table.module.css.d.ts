@@ -25,6 +25,8 @@ interface CssExports {
   'pubkey': string;
   'pubkeySimulated': string;
   'red': string;
+  'rowRed': string;
+  'rowYellow': string;
   'runSimulationBtn': string;
   'runSimulationBtnCalculating': string;
   'simulationModeActive': string;

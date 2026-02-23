@@ -20,6 +20,7 @@ import {
   bondColorState,
   bondTooltip,
   selectProductiveStake,
+  selectIsNonProductive,
   selectTargetProtectedPct,
   selectActuallyUnprotectedStake,
   selectBlockRewardsCommission,
@@ -44,10 +45,9 @@ import { tooltipAttributes } from '../../services/utils'
 import { ComplexMetric } from '../complex-metric/complex-metric'
 import { Metric } from '../metric/metric'
 import { UserLevel } from '../navigation/navigation'
-import { Alignment, OrderDirection, Table } from '../table/table'
+import { Alignment, Color, OrderDirection, Table } from '../table/table'
 
 import type { Order } from '../table/table'
-import type { Color } from '../table/table'
 import type {
   AuctionResult,
   AuctionValidator,
@@ -590,6 +590,21 @@ export const SamTable: React.FC<Props> = ({
             attrs.className = [attrs.className, styles.noBondRow]
               .filter(Boolean)
               .join(' ')
+          } else {
+            // Row tint by bond health / productivity
+            const bs = validator.bondState
+            if (bs === Color.RED) {
+              attrs.className = [attrs.className, styles.rowRed]
+                .filter(Boolean)
+                .join(' ')
+            } else if (
+              bs === Color.YELLOW ||
+              selectIsNonProductive(validator)
+            ) {
+              attrs.className = [attrs.className, styles.rowYellow]
+                .filter(Boolean)
+                .join(' ')
+            }
           }
 
           return attrs
@@ -899,6 +914,7 @@ export const SamTable: React.FC<Props> = ({
             ),
             compare: (a, b) =>
               selectBondSize(a.validator) - selectBondSize(b.validator),
+            background: item => item.validator.bondState,
             alignment: Alignment.RIGHT,
           },
           {

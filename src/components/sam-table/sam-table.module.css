@@ -249,6 +249,15 @@
   color: #9ca3af;
 }
 
+/* Row tints by bond health */
+.rowRed {
+  background-color: rgba(135, 28, 24, 0.25);
+}
+
+.rowYellow {
+  background-color: rgba(128, 96, 0, 0.25);
+}
+
 /* No-bond row - validator without bond balance */
 .noBondRow {
   opacity: 0.4;
