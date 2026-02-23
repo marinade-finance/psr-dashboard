@@ -74,7 +74,7 @@
 .metricWrap {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 8px;
+  gap: 8px;
   padding: 10px;
 }
 
@@ -87,6 +87,7 @@
 
 .expertMetrics > * {
   flex: 1 0 18%;
+  max-width: calc(20% - 8px);
 }
 
 .red {
