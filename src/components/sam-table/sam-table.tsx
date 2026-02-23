@@ -466,8 +466,6 @@ export const SamTable: React.FC<Props> = ({
                 ' (stake stays in pool, revenue lost)',
             )}
           />
-        </div>
-        <div className={styles.metricRow}>
           <Metric
             label="+10% TVL"
             value={fmtDiff(tvlJoinImpact)}
