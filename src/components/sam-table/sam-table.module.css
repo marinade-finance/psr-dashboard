@@ -80,12 +80,14 @@
 
 .expertMetrics {
   display: flex;
+  flex-wrap: wrap;
   width: 100%;
   gap: 8px;
 }
 
 .expertMetrics > * {
-  flex: 1;
+  flex: 1 0 calc(20% - 8px);
+  max-width: calc(20% - 8px);
 }
 
 .red {

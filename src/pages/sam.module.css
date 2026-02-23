@@ -16,6 +16,7 @@
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  font-family: inherit;
   font-size: 13px;
   white-space: nowrap;
   transition: background-color 0.2s;
