@@ -164,14 +164,12 @@ export const SamTable: React.FC<Props> = ({
   }, [editingValidator, onCancelEditing])
 
   // Current validators with bond state
-  const validatorsWithBond: ValidatorWithBondState[] = useMemo(
+  const allValidators: ValidatorWithBondState[] = useMemo(
     () =>
-      validators
-        .filter(validator => selectBondSize(validator) > 0)
-        .map(v => ({
-          ...v,
-          bondState: bondColorState(v),
-        })),
+      validators.map(v => ({
+        ...v,
+        bondState: bondColorState(v),
+      })),
     [validators],
   )
 
@@ -180,12 +178,10 @@ export const SamTable: React.FC<Props> = ({
     if (!originalAuctionResult) {
       return []
     }
-    return originalAuctionResult.auctionData.validators
-      .filter(v => selectBondSize(v) > 0)
-      .map(v => ({
-        ...v,
-        bondState: bondColorState(v),
-      }))
+    return originalAuctionResult.auctionData.validators.map(v => ({
+      ...v,
+      bondState: bondColorState(v),
+    }))
   }, [originalAuctionResult])
 
   // Check if simulated data actually changed from original
@@ -211,7 +207,7 @@ export const SamTable: React.FC<Props> = ({
     )
   }, [simulatedValidator, originalAuctionResult, validators])
 
-  const samStakeValidators = validatorsWithBond.filter(
+  const samStakeValidators = allValidators.filter(
     v => v.auctionStake.marinadeSamTargetSol,
   )
   const avgStake =
@@ -288,10 +284,7 @@ export const SamTable: React.FC<Props> = ({
       return null
     }
 
-    const originalValidators =
-      originalAuctionResult.auctionData.validators.filter(
-        v => selectBondSize(v) > 0,
-      )
+    const originalValidators = originalAuctionResult.auctionData.validators
 
     const sorted = [...originalValidators].sort((a, b) => {
       for (const [columnIndex, orderDirection] of currentOrder) {
@@ -340,7 +333,7 @@ export const SamTable: React.FC<Props> = ({
 
   // Sort validators using current order (same as Table does)
   const sortedValidatorsWithBond = useMemo(() => {
-    return [...validatorsWithBond].sort((a, b) => {
+    return [...allValidators].sort((a, b) => {
       for (const [columnIndex, orderDirection] of currentOrder) {
         const result = compareByColumn(a, b, columnIndex)
         if (result !== 0) {
@@ -349,7 +342,7 @@ export const SamTable: React.FC<Props> = ({
       }
       return 0
     })
-  }, [validatorsWithBond, currentOrder, compareByColumn])
+  }, [allValidators, currentOrder, compareByColumn])
 
   // Build display list with ghost row for simulated validator
   const displayValidators: DisplayValidator[] = useMemo(() => {
@@ -543,7 +536,7 @@ export const SamTable: React.FC<Props> = ({
             value={
               <div>
                 <span>{samStakeValidators.length}</span> /{' '}
-                <span>{validatorsWithBond.length}</span>
+                <span>{allValidators.length}</span>
               </div>
             }
             {...tooltipAttributes(
@@ -594,6 +587,11 @@ export const SamTable: React.FC<Props> = ({
             attrs.onClick = () => onValidatorClick(voteAccount)
           } else if (isEditing) {
             attrs.className = styles.validatorRowEditing
+          }
+
+          // Grey out validators with no bond
+          if (selectBondSize(validator) <= 0) {
+            attrs.className = `${attrs.className ?? ''} ${styles.noBondRow}`
           }
 
           return attrs

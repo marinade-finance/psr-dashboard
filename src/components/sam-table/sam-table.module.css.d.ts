@@ -16,6 +16,7 @@ interface CssExports {
   'inputPlaceholder': string;
   'metricRow': string;
   'metricWrap': string;
+  'noBondRow': string;
   'orderCell': string;
   'originalPosition': string;
   'positionImproved': string;

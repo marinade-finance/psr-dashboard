@@ -249,6 +249,11 @@
   color: #9ca3af;
 }
 
+/* No-bond row - validator without bond balance */
+.noBondRow {
+  opacity: 0.4;
+}
+
 /* Ghost row - shows original data before simulation */
 .ghostRow {
   cursor: default !important;
