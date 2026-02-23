@@ -121,7 +121,6 @@ export const SamTable: React.FC<Props> = ({
     dsSamConfig,
     epochsPerYear,
   )
-  const bondObligationSafetyMult = dsSamConfig.bondObligationSafetyMult
   const stakeToMove = selectStakeToMove(auctionResult) / samDistributedStake
   const activeStake =
     selectTotalActiveStake(auctionResult) / samDistributedStake
@@ -175,7 +174,7 @@ export const SamTable: React.FC<Props> = ({
           ...v,
           bondState: bondColorState(v),
         })),
-    [validators, bondObligationSafetyMult],
+    [validators],
   )
 
   // Original validators with bond state (for ghost rows)
@@ -189,7 +188,7 @@ export const SamTable: React.FC<Props> = ({
         ...v,
         bondState: bondColorState(v),
       }))
-  }, [originalAuctionResult, bondObligationSafetyMult])
+  }, [originalAuctionResult])
 
   // Check if simulated data actually changed from original
   const hasDataChanged = useMemo(() => {
