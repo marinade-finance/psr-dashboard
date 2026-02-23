@@ -914,7 +914,10 @@ export const SamTable: React.FC<Props> = ({
             ),
             compare: (a, b) =>
               selectBondSize(a.validator) - selectBondSize(b.validator),
-            background: item => item.validator.bondState,
+            background: item => {
+              const bs = item.validator.bondState
+              return bs === Color.GREEN ? undefined : bs
+            },
             alignment: Alignment.RIGHT,
           },
           {
