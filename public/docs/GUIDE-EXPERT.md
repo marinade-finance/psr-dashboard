@@ -27,11 +27,9 @@ Measures concentration risk and dependence on largest validators for yield.
 
 APY impact if 10% more TVL joins and distributes proportionally to current active stake. Assumes validators maintain current earning rates on increased stake. Recalculates profit based on validators earning at same rates on 1.1x their active stake. Formula: `joinAPY - baseAPY` where `joinAPY = (1 + joinProfit / joinTVL)^epochsPerYear - 1`.
 
-Models scenario where new capital enters and gets allocated proportionally while validator economics remain unchanged.
-
 ### -10% TVL
 
-APY impact if 10% of TVL leaves the pool. Removes validators from bottom (by target stake) until 10% TVL is gone. Formula: `(1 + profit/tvl)^epochsPerYear - 1` where profit decreases (removed validators no longer earning) and TVL decreases by 10%. Result: `leaveAPY - baseAPY`.
+APY impact if 10% of TVL leaves the pool. Removes validators from bottom (by target stake) until 10% TVL is gone. Profit decreases (removed validators no longer earning) and TVL decreases. Result: `leaveAPY - baseAPY`.
 
 - **Positive value** &mdash; Removed validators had below-average effective bids; APY improves
 - **Negative value** &mdash; Removed validators contributed above-average revenue; APY declines
@@ -45,22 +43,8 @@ APY impact if 10% of TVL leaves the pool. Removes validators from bottom (by tar
 
 ## Expert Table Columns
 
-Additional columns in expert view:
-
-| Column       | Description                                                              |
-| ------------ | ------------------------------------------------------------------------ |
-| **Score**    | SAM eligibility score (0-1) from uptime and performance metrics          |
-| **Penalty**  | Bid reduction multiplier applied when validator decreases bid            |
-| **Max SAM**  | Maximum marinadeSamTargetSol capped by maxTvlDelegation or bond capacity |
-| **Eff. Bid** | Auction effective bid PMPE: `auctionEffectiveBidPmpe` after commissions  |
-
----
-
-## Simulation Mode
-
-Test parameter changes:
-
-1. Click validator row to select for editing
-2. Modify commission rates or bid amounts
-3. Click "Simulate" to recalculate auction
-4. Shows projected changes to stake distribution and APY
+| Column      | Description                                                              |
+| ----------- | ------------------------------------------------------------------------ |
+| **Score**   | SAM eligibility score (0-1) from uptime and performance metrics          |
+| **Penalty** | Bid reduction multiplier applied when validator decreases bid            |
+| **Max SAM** | Maximum marinadeSamTargetSol capped by maxTvlDelegation or bond capacity |
