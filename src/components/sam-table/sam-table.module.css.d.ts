@@ -26,10 +26,6 @@ interface CssExports {
   'runSimulationBtn': string;
   'runSimulationBtnCalculating': string;
   'simulationModeActive': string;
-  'simulationNote': string;
-  'simulatorToggle': string;
-  'simulatorToggleActive': string;
-  'simulatorToggleWrap': string;
   'tableWrap': string;
   'validatorRowClickable': string;
   'validatorRowEditing': string;
