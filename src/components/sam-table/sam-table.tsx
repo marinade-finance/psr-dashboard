@@ -585,26 +585,20 @@ export const SamTable: React.FC<Props> = ({
             attrs.className = styles.validatorRowEditing
           }
 
-          // Grey out validators with no bond
-          if (selectBondSize(validator) <= 0) {
-            attrs.className = [attrs.className, styles.noBondRow]
-              .filter(Boolean)
-              .join(' ')
-          } else {
-            // Row tint by bond health / productivity
-            const bs = validator.bondState
-            if (bs === Color.RED) {
-              attrs.className = [attrs.className, styles.rowRed]
-                .filter(Boolean)
-                .join(' ')
-            } else if (
-              bs === Color.YELLOW ||
-              selectIsNonProductive(validator)
-            ) {
-              attrs.className = [attrs.className, styles.rowYellow]
-                .filter(Boolean)
-                .join(' ')
-            }
+          // Row tint by bond health / productivity
+          const tint =
+            selectBondSize(validator) <= 0
+              ? styles.noBondRow
+              : validator.bondState === Color.RED
+                ? styles.rowRed
+                : validator.bondState === Color.YELLOW ||
+                    selectIsNonProductive(validator)
+                  ? styles.rowYellow
+                  : ''
+          if (tint) {
+            attrs.className = attrs.className
+              ? `${attrs.className} ${tint}`
+              : tint
           }
 
           return attrs
