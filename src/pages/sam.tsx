@@ -233,6 +233,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
             tvlJoinApyDiff={data.tvlJoinApyDiff}
             tvlLeaveApyDiff={data.tvlLeaveApyDiff}
             backstopDiff={data.backstopDiff}
+            backstopTvl={data.backstopTvl}
             originalAuctionResult={originalAuctionResult}
             epochsPerYear={data.epochsPerYear}
             dsSamConfig={data.dcSamConfig}

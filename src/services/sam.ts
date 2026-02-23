@@ -71,6 +71,7 @@ export const loadSam = async (
   tvlJoinApyDiff: number
   tvlLeaveApyDiff: number
   backstopDiff: number
+  backstopTvl: number
   epochsPerYear: number
   dcSamConfig: DsSamConfig
 }> => {
@@ -164,17 +165,26 @@ export const loadSam = async (
       dsSam.config,
       backstopDebug,
     ).evaluate()
-    const backstopDiff = selectTvlApyDiff(
+    const backstopDiff = selectTargetApyDiff(
       auctionResult,
       backstopResult,
       epochsPerYear,
     )
+    const backstopTvl = [...auctionResult.auctionData.validators]
+      .sort(
+        (a, b) =>
+          b.auctionStake.marinadeSamTargetSol -
+          a.auctionStake.marinadeSamTargetSol,
+      )
+      .slice(0, 5)
+      .reduce((sum, v) => sum + v.auctionStake.marinadeSamTargetSol, 0)
 
     return {
       auctionResult,
       tvlJoinApyDiff,
       tvlLeaveApyDiff,
       backstopDiff,
+      backstopTvl,
       epochsPerYear,
       dcSamConfig: dsSam.config,
     }
@@ -484,6 +494,29 @@ export const selectTargetProtectedPct = (
     return 1
   }
   return 1 - selectActuallyUnprotectedStake(auctionResult) / totalTarget
+}
+
+export const selectTargetApyDiff = (
+  baseResult: AuctionResult,
+  altResult: AuctionResult,
+  epochsPerYear: number,
+): number => {
+  const profitOf = (r: AuctionResult) =>
+    r.auctionData.validators.reduce(
+      (acc, v) =>
+        acc +
+        ((v.revShare.auctionEffectiveBidPmpe +
+          v.revShare.inflationPmpe +
+          v.revShare.mevPmpe) *
+          v.auctionStake.marinadeSamTargetSol) /
+          1000,
+      0,
+    )
+
+  const tvl = baseResult.auctionData.stakeAmounts.marinadeSamTvlSol
+  const baseApy = Math.pow(1 + profitOf(baseResult) / tvl, epochsPerYear) - 1
+  const altApy = Math.pow(1 + profitOf(altResult) / tvl, epochsPerYear) - 1
+  return altApy - baseApy
 }
 
 export const selectTvlApyDiff = (

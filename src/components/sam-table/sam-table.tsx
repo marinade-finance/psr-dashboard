@@ -69,6 +69,7 @@ type Props = {
   tvlJoinApyDiff: number
   tvlLeaveApyDiff: number
   backstopDiff: number
+  backstopTvl: number
   originalAuctionResult: AuctionResult | null
   epochsPerYear: number
   dsSamConfig: DsSamConfig
@@ -96,6 +97,7 @@ export const SamTable: React.FC<Props> = ({
   tvlJoinApyDiff,
   tvlLeaveApyDiff,
   backstopDiff,
+  backstopTvl,
   originalAuctionResult,
   epochsPerYear,
   dsSamConfig,
@@ -460,9 +462,9 @@ export const SamTable: React.FC<Props> = ({
           />
           <Metric
             label="Backstop"
-            value={fmtDiff(backstopDiff)}
+            value={`${fmtDiff(backstopDiff)} (☉ ${formatSolAmount(backstopTvl, 0)})`}
             {...tooltipAttributes(
-              'APY impact if top 5 validators by target stake left (full auction re-run without them)',
+              'APY impact if top 5 validators by target stake left (full auction re-run without them). Shows target stake at risk.',
             )}
           />
           <Metric
