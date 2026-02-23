@@ -24,6 +24,24 @@
   color: var(--text-light-2);
 }
 
+.docsButton {
+  height: 40px;
+  line-height: 30px;
+  padding: 5px 20px;
+  background-color: var(--bg-dark-3);
+  color: var(--text-light-1);
+  margin: 4px;
+  margin-right: 0px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.docsButton:hover {
+  background-color: var(--accent);
+  color: var(--bg-dark-1);
+}
+
 .navigation a {
   text-decoration: none !important;
 }

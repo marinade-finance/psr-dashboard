@@ -541,7 +541,9 @@ export const SamTable: React.FC<Props> = ({
             'Number of validators that won stake in this SAM auction',
           )}
         />
-        <>{expertMetrics}</>
+        {expertMetrics && (
+          <div className={styles.expertMetrics}>{expertMetrics}</div>
+        )}
         <div className={styles.simulatorToggleWrap}>
           <button
             className={`${styles.simulatorToggle} ${simulationModeActive ? styles.simulatorToggleActive : ''}`}

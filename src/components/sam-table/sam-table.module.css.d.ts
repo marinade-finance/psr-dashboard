@@ -7,6 +7,7 @@ interface CssExports {
   'calculating': string;
   'cancelBtn': string;
   'editingButtons': string;
+  'expertMetrics': string;
   'ghostRow': string;
   'green': string;
   'header-glow': string;

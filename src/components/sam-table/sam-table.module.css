@@ -78,6 +78,16 @@
   padding: 10px;
 }
 
+.expertMetrics {
+  display: flex;
+  width: 100%;
+  gap: 8px;
+}
+
+.expertMetrics > * {
+  flex: 1;
+}
+
 .red {
   color: #ff3030;
 }
