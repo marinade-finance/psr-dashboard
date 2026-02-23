@@ -173,7 +173,7 @@ export const SamTable: React.FC<Props> = ({
         .filter(validator => selectBondSize(validator) > 0)
         .map(v => ({
           ...v,
-          bondState: bondColorState(v, bondObligationSafetyMult),
+          bondState: bondColorState(v),
         })),
     [validators, bondObligationSafetyMult],
   )
@@ -187,7 +187,7 @@ export const SamTable: React.FC<Props> = ({
       .filter(v => selectBondSize(v) > 0)
       .map(v => ({
         ...v,
-        bondState: bondColorState(v, bondObligationSafetyMult),
+        bondState: bondColorState(v),
       }))
   }, [originalAuctionResult, bondObligationSafetyMult])
 
@@ -239,13 +239,7 @@ export const SamTable: React.FC<Props> = ({
   }
 
   // Default table sort order
-  const defaultOrder: Order[] = useMemo(
-    () => [
-      [7, OrderDirection.DESC],
-      [5, OrderDirection.DESC],
-    ],
-    [],
-  )
+  const defaultOrder: Order[] = useMemo(() => [[8, OrderDirection.DESC]], [])
 
   // Track current table sort order
   const [currentOrder, setCurrentOrder] = useState<Order[]>(defaultOrder)
