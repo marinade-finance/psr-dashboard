@@ -34,10 +34,10 @@ APY impact if 10% more TVL enters the pool. Computed by re-running the full SAM 
 
 ### -10% TVL
 
-APY impact if 10% of TVL leaves the pool. Removes validators from bottom (by target stake) until 10% TVL is gone. Profit decreases (removed validators no longer earning) and TVL decreases. Result: `leaveAPY - baseAPY`.
+APY impact if 10% of TVL leaves the pool. Computed by re-running the full SAM auction with `marinadeSamTvlSol * 0.9` and `marinadeRemainingSamSol * 0.9`. Constraints shrink with TVL (per-validator caps, concentration limits). Result: `leaveAPY - baseAPY`.
 
-- **Positive value** &mdash; Removed validators had below-average effective bids; APY improves
-- **Negative value** &mdash; Removed validators contributed above-average revenue; APY declines
+- **Positive value** (typical) &mdash; Less TVL concentrates per-SOL revenue; same bids spread over fewer SOL
+- **Near zero** &mdash; Reduced capacity offsets the concentration benefit
 
 ### Productive Stake / Active Stake
 

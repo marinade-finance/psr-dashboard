@@ -217,6 +217,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
           <SamTable
             auctionResult={displayAuctionResult}
             tvlJoinApyDiff={data.tvlJoinApyDiff}
+            tvlLeaveApyDiff={data.tvlLeaveApyDiff}
             originalAuctionResult={originalAuctionResult}
             epochsPerYear={data.epochsPerYear}
             dsSamConfig={data.dcSamConfig}

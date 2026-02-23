@@ -69,6 +69,7 @@ export const loadSam = async (
 ): Promise<{
   auctionResult: AuctionResult
   tvlJoinApyDiff: number
+  tvlLeaveApyDiff: number
   epochsPerYear: number
   dcSamConfig: DsSamConfig
 }> => {
@@ -103,15 +104,41 @@ export const loadSam = async (
       dsSam.config,
       joinDebug,
     ).evaluate()
-    const tvlJoinApyDiff = selectTvlJoinImpact(
+    const tvlJoinApyDiff = selectTvlApyDiff(
       auctionResult,
       joinResult,
+      epochsPerYear,
+    )
+
+    // Run -10% TVL auction
+    const leaveAggData = await dsSam.getAggregatedData(dataOverrides)
+    leaveAggData.stakeAmounts.marinadeSamTvlSol *= 0.9
+    leaveAggData.stakeAmounts.marinadeRemainingSamSol *= 0.9
+    const leaveDebug = new Debug(new Set(), LogVerbosity.ERROR)
+    const leaveConstraints = dsSam.getAuctionConstraints(
+      leaveAggData,
+      leaveDebug,
+    )
+    const leaveAuctionData = {
+      ...leaveAggData,
+      validators: dsSam.transformValidators(leaveAggData),
+    }
+    const leaveResult = new Auction(
+      leaveAuctionData,
+      leaveConstraints,
+      dsSam.config,
+      leaveDebug,
+    ).evaluate()
+    const tvlLeaveApyDiff = selectTvlApyDiff(
+      auctionResult,
+      leaveResult,
       epochsPerYear,
     )
 
     return {
       auctionResult,
       tvlJoinApyDiff,
+      tvlLeaveApyDiff,
       epochsPerYear,
       dcSamConfig: dsSam.config,
     }
@@ -489,72 +516,9 @@ export const selectBackstopDiff = (
   return backstopApy - baseApy
 }
 
-export const selectTvlLeaveImpact = (
-  auctionResult: AuctionResult,
-  epochsPerYear: number,
-): number => {
-  const validators = auctionResult.auctionData.validators
-  const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
-  const targetRemoval = tvl * 0.1
-
-  // Remove validators from bottom (by target stake) until 10% TVL is gone
-  const sorted = validators
-    .filter(v => v.auctionStake.marinadeSamTargetSol > 0)
-    .sort(
-      (a, b) =>
-        a.auctionStake.marinadeSamTargetSol -
-        b.auctionStake.marinadeSamTargetSol,
-    )
-
-  let removedTargetStake = 0
-  const removedSet = new Set<string>()
-  for (const v of sorted) {
-    if (removedTargetStake >= targetRemoval) {
-      break
-    }
-    removedSet.add(v.voteAccount)
-    removedTargetStake += v.auctionStake.marinadeSamTargetSol
-  }
-
-  if (removedTargetStake >= tvl) {
-    return 0
-  }
-
-  const baseProfit = validators.reduce(
-    (acc, v) =>
-      acc +
-      ((v.revShare.auctionEffectiveBidPmpe +
-        v.revShare.inflationPmpe +
-        v.revShare.mevPmpe) *
-        v.marinadeActivatedStakeSol) /
-        1000,
-    0,
-  )
-
-  // Profit after removing lowest validators (by active stake they currently earn)
-  const leaveProfit = validators.reduce((acc, v) => {
-    if (removedSet.has(v.voteAccount)) {
-      return acc
-    }
-    return (
-      acc +
-      ((v.revShare.auctionEffectiveBidPmpe +
-        v.revShare.inflationPmpe +
-        v.revShare.mevPmpe) *
-        v.marinadeActivatedStakeSol) /
-        1000
-    )
-  }, 0)
-
-  const baseApy = Math.pow(1 + baseProfit / tvl, epochsPerYear) - 1
-  const leaveApy =
-    Math.pow(1 + leaveProfit / (tvl - removedTargetStake), epochsPerYear) - 1
-  return leaveApy - baseApy
-}
-
-export const selectTvlJoinImpact = (
+export const selectTvlApyDiff = (
   baseResult: AuctionResult,
-  joinResult: AuctionResult,
+  altResult: AuctionResult,
   epochsPerYear: number,
 ): number => {
   const profitOf = (r: AuctionResult) =>
@@ -570,13 +534,12 @@ export const selectTvlJoinImpact = (
     )
 
   const baseTvl = baseResult.auctionData.stakeAmounts.marinadeSamTvlSol
-  const joinTvl = joinResult.auctionData.stakeAmounts.marinadeSamTvlSol
+  const altTvl = altResult.auctionData.stakeAmounts.marinadeSamTvlSol
 
   const baseApy =
     Math.pow(1 + profitOf(baseResult) / baseTvl, epochsPerYear) - 1
-  const joinApy =
-    Math.pow(1 + profitOf(joinResult) / joinTvl, epochsPerYear) - 1
-  return joinApy - baseApy
+  const altApy = Math.pow(1 + profitOf(altResult) / altTvl, epochsPerYear) - 1
+  return altApy - baseApy
 }
 
 export const maxSamStakeTooltip = (
