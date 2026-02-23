@@ -86,7 +86,7 @@
 }
 
 .expertMetrics > * {
-  flex: 1 0 calc(20% - 6.4px);
+  flex: 1 0 18%;
 }
 
 .red {
