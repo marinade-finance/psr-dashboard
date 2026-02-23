@@ -1,6 +1,8 @@
 # Expert View Guide
 
-Additional metrics and columns beyond the standard view.
+See the [Dashboard Guide](?doc=GUIDE) for general documentation.
+
+Additional metrics and columns visible in expert mode.
 
 ---
 

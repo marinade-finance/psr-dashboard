@@ -225,13 +225,11 @@
       const doc = params.get('doc')
       if (doc) {
         const tab = document.querySelector(`[data-doc="${doc}.md"]`)
+        tabs.forEach(t => t.classList.remove('active'))
         if (tab) {
-          tabs.forEach(t => t.classList.remove('active'))
           tab.classList.add('active')
-          loadDoc(doc + '.md')
-        } else {
-          loadDoc('GUIDE.md')
         }
+        loadDoc(doc + '.md')
       } else {
         loadDoc('GUIDE.md')
       }

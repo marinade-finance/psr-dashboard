@@ -73,6 +73,8 @@
 
 .metricWrap {
   display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
   padding: 10px;
 }
 
