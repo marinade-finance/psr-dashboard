@@ -2,7 +2,6 @@
 // Please do not change this file!
 interface CssExports {
   'green': string;
-  'grey': string;
   'left': string;
   'noBg': string;
   'red': string;

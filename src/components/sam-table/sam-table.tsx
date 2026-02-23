@@ -174,7 +174,7 @@ export const SamTable: React.FC<Props> = ({
   )
 
   // Original validators with bond state (for ghost rows)
-  const originalValidatorsWithBond: ValidatorWithBondState[] = useMemo(() => {
+  const originalValidators: ValidatorWithBondState[] = useMemo(() => {
     if (!originalAuctionResult) {
       return []
     }
@@ -332,7 +332,7 @@ export const SamTable: React.FC<Props> = ({
   }
 
   // Sort validators using current order (same as Table does)
-  const sortedValidatorsWithBond = useMemo(() => {
+  const sortedValidators = useMemo(() => {
     return [...allValidators].sort((a, b) => {
       for (const [columnIndex, orderDirection] of currentOrder) {
         const result = compareByColumn(a, b, columnIndex)
@@ -347,19 +347,15 @@ export const SamTable: React.FC<Props> = ({
   // Build display list with ghost row for simulated validator
   const displayValidators: DisplayValidator[] = useMemo(() => {
     // Wrap sorted validators
-    const display: DisplayValidator[] = sortedValidatorsWithBond.map(v => ({
+    const display: DisplayValidator[] = sortedValidators.map(v => ({
       validator: v,
       isGhost: false,
     }))
 
     // If there's a simulated validator with changed data, insert ghost at original position
-    if (
-      simulatedValidator &&
-      hasDataChanged &&
-      originalValidatorsWithBond.length > 0
-    ) {
+    if (simulatedValidator && hasDataChanged && originalValidators.length > 0) {
       // Find the original validator data
-      const originalValidator = originalValidatorsWithBond.find(
+      const originalValidator = originalValidators.find(
         v => v.voteAccount === simulatedValidator,
       )
       if (originalValidator) {
@@ -398,10 +394,10 @@ export const SamTable: React.FC<Props> = ({
 
     return display
   }, [
-    sortedValidatorsWithBond,
+    sortedValidators,
     simulatedValidator,
     hasDataChanged,
-    originalValidatorsWithBond,
+    originalValidators,
     getOriginalPosition,
   ])
 
@@ -591,7 +587,9 @@ export const SamTable: React.FC<Props> = ({
 
           // Grey out validators with no bond
           if (selectBondSize(validator) <= 0) {
-            attrs.className = `${attrs.className ?? ''} ${styles.noBondRow}`
+            attrs.className = [attrs.className, styles.noBondRow]
+              .filter(Boolean)
+              .join(' ')
           }
 
           return attrs

@@ -20,7 +20,6 @@ export enum Color {
   RED,
   GREEN,
   YELLOW,
-  GREY,
 }
 
 const alignmentClassName = (alignment?: Alignment) => {
@@ -42,8 +41,6 @@ const colorClassName = (color?: Color) => {
       return styles.green
     case Color.YELLOW:
       return styles.yellow
-    case Color.GREY:
-      return styles.grey
     default:
       return styles.noBg
   }
