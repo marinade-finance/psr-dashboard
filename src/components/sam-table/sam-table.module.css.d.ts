@@ -5,7 +5,6 @@ interface CssExports {
   'cancelBtn': string;
   'editingButtons': string;
   'ghostRow': string;
-  'green': string;
   'header-glow': string;
   'inlineInput': string;
   'inputCell': string;
@@ -23,7 +22,6 @@ interface CssExports {
   'positionWorsened3': string;
   'pubkey': string;
   'pubkeySimulated': string;
-  'red': string;
   'rowRed': string;
   'rowYellow': string;
   'runSimulationBtn': string;
@@ -33,7 +31,6 @@ interface CssExports {
   'tableWrap': string;
   'validatorRowClickable': string;
   'validatorRowEditing': string;
-  'yellow': string;
 }
 export const cssExports: CssExports;
 export default cssExports;

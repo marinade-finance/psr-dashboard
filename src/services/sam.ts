@@ -188,8 +188,6 @@ export const selectSamTargetStake = (validator: AuctionValidator) =>
   validator.auctionStake.marinadeSamTargetSol
 export const selectSamActiveStake = (validator: AuctionValidator) =>
   validator.marinadeActivatedStakeSol
-export const selectMaxWantedStake = (validator: AuctionValidator) =>
-  validator.maxStakeWanted
 export const selectConstraintText = ({
   lastCapConstraint,
 }: AuctionValidator) =>
@@ -361,13 +359,6 @@ export const formattedBlockRewardsCommission = (
   return formatPercentage(v ?? 1, 0)
 }
 
-export const formattedInBondBlockRewardsCommission = (
-  validator: AuctionValidator,
-): string => {
-  const v = validator.values?.commissions?.blockRewardsCommissionInBondDec
-  return v == null ? '-' : formatPercentage(v, 0)
-}
-
 export const selectBlockRewardsCommissionPmpe = (validator: AuctionValidator) =>
   validator.revShare.blockPmpe
 
@@ -484,27 +475,4 @@ export const selectTvlApyDiff = (
     Math.pow(1 + profitOf(baseResult) / baseTvl, epochsPerYear) - 1
   const altApy = Math.pow(1 + profitOf(altResult) / altTvl, epochsPerYear) - 1
   return altApy - baseApy
-}
-
-export const maxSamStakeTooltip = (
-  validator: AuctionValidator,
-  cfg: { maxTvlDelegation: number; minBondBalanceSol: number },
-) => {
-  // the matches are approximate so that we start displaying the limiting
-  // warning a bit (10%) before it actually happens
-  if (
-    0.9 * cfg.maxTvlDelegation <=
-    validator.auctionStake.marinadeSamTargetSol
-  ) {
-    return 'You have the maximum stake a single validator can get from Marinade.'
-  } else if (
-    0.9 * validator.maxBondDelegation <=
-    validator.auctionStake.marinadeSamTargetSol
-  ) {
-    return 'Your bond is limiting your stake allocation. Hint: Top up your bond to receive more stake.'
-  } else if (validator.bondBalanceSol <= cfg.minBondBalanceSol) {
-    return `You bond is lower than the minimum amount of ${cfg.minBondBalanceSol} SOL.  Hint: Top up your bond to start receiving stake from Marinade.`
-  } else {
-    return ''
-  }
 }

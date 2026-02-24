@@ -86,30 +86,28 @@ export const SamPage: React.FC<Props> = ({ level }) => {
   }, [])
 
   const handleFieldChange = useCallback(
-    (
-      field:
-        | 'inflationCommission'
-        | 'mevCommission'
-        | 'blockRewardsCommission'
-        | 'bidPmpe',
-      value: string,
-    ) => {
-      setPendingEdits(prev => ({
-        ...prev,
-        [field]: value,
-      }))
-    },
+    (field: keyof PendingEdits, value: string) =>
+      setPendingEdits(prev => ({ ...prev, [field]: value })),
     [],
   )
 
   const handleRunSimulation = useCallback(() => {
     if (!editingValidator || !originalAuctionResult || !data) return
-    const currentValidator = data.auctionResult.auctionData.validators.find(
+    const v = data.auctionResult.auctionData.validators.find(
       v => v.voteAccount === editingValidator,
     )
-    if (!currentValidator) return
+    if (!v) return
 
-    // Merge pending edits with current displayed values to preserve previous simulation changes
+    const resolve = (
+      edit: string | undefined,
+      fallback: number | null,
+    ): number =>
+      edit !== undefined
+        ? parseFloat(edit)
+        : fallback !== null
+          ? fallback * 100
+          : NaN
+
     const overrides: SourceDataOverrides = {
       inflationCommissions: new Map(),
       mevCommissions: new Map(),
@@ -117,41 +115,27 @@ export const SamPage: React.FC<Props> = ({ level }) => {
       cpmpes: new Map(),
     }
 
-    const inflationValue =
-      pendingEdits.inflationCommission !== undefined
-        ? parseFloat(pendingEdits.inflationCommission)
-        : currentValidator.inflationCommissionDec * 100
-    if (!isNaN(inflationValue)) {
-      overrides.inflationCommissions.set(editingValidator, inflationValue)
-    }
+    const infl = resolve(
+      pendingEdits.inflationCommission,
+      v.inflationCommissionDec,
+    )
+    if (!isNaN(infl)) overrides.inflationCommissions.set(editingValidator, infl)
 
-    const mevValue =
-      pendingEdits.mevCommission !== undefined
-        ? parseFloat(pendingEdits.mevCommission)
-        : currentValidator.mevCommissionDec !== null
-          ? currentValidator.mevCommissionDec * 100
-          : NaN
-    if (!isNaN(mevValue)) {
-      overrides.mevCommissions.set(editingValidator, mevValue * 100) // bps
-    }
+    const mev = resolve(pendingEdits.mevCommission, v.mevCommissionDec)
+    if (!isNaN(mev)) overrides.mevCommissions.set(editingValidator, mev * 100)
 
-    const blockValue =
-      pendingEdits.blockRewardsCommission !== undefined
-        ? parseFloat(pendingEdits.blockRewardsCommission)
-        : currentValidator.blockRewardsCommissionDec !== null
-          ? currentValidator.blockRewardsCommissionDec * 100
-          : NaN
-    if (!isNaN(blockValue)) {
-      overrides.blockRewardsCommissions.set(editingValidator, blockValue * 100) // bps
-    }
+    const blk = resolve(
+      pendingEdits.blockRewardsCommission,
+      v.blockRewardsCommissionDec,
+    )
+    if (!isNaN(blk))
+      overrides.blockRewardsCommissions.set(editingValidator, blk * 100)
 
-    const bidValue =
+    const bid =
       pendingEdits.bidPmpe !== undefined
         ? parseFloat(pendingEdits.bidPmpe)
-        : currentValidator.revShare.bidPmpe
-    if (!isNaN(bidValue)) {
-      overrides.cpmpes.set(editingValidator, bidValue * 1e9) // SOL -> lamports
-    }
+        : v.revShare.bidPmpe
+    if (!isNaN(bid)) overrides.cpmpes.set(editingValidator, bid * 1e9)
 
     setSimulationOverrides(overrides)
     setSimulatedValidator(editingValidator)
@@ -159,7 +143,6 @@ export const SamPage: React.FC<Props> = ({ level }) => {
     setSimulationRunId(prev => prev + 1)
   }, [editingValidator, pendingEdits, originalAuctionResult, data])
 
-  // Use cached original when simulation mode is off to avoid refetching
   const displayAuctionResult =
     simulationModeActive || !originalAuctionResult
       ? data?.auctionResult
