@@ -2,7 +2,6 @@
   background-color: var(--bg-dark-2);
 }
 
-/* Content wrapper */
 .pageContent {
   position: relative;
 }
@@ -11,8 +10,7 @@
   height: 40px;
   line-height: 30px;
   padding: 5px 20px;
-  margin: 4px;
-  margin-right: 0px;
+  margin: 4px 0 4px 4px;
   background-color: #3b82f6;
   color: white;
   border: none;

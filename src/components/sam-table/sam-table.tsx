@@ -130,10 +130,8 @@ export const SamTable: React.FC<Props> = ({
   const targetProtectedPct = selectTargetProtectedPct(auctionResult)
   const unprotectedStake = selectActuallyUnprotectedStake(auctionResult)
 
-  // Ref for click-outside detection
   const tableWrapRef = useRef<HTMLDivElement>(null)
 
-  // Global Escape key handler to cancel editing
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && editingValidator) {
@@ -144,7 +142,6 @@ export const SamTable: React.FC<Props> = ({
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [editingValidator, onCancelEditing])
 
-  // Click-outside handler to cancel editing
   useEffect(() => {
     if (!editingValidator) {
       return undefined
@@ -163,7 +160,6 @@ export const SamTable: React.FC<Props> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [editingValidator, onCancelEditing])
 
-  // Current validators with bond state
   const allValidators: ValidatorWithBondState[] = useMemo(
     () =>
       validators.map(v => ({
@@ -173,7 +169,6 @@ export const SamTable: React.FC<Props> = ({
     [validators],
   )
 
-  // Check if simulated data actually changed from original
   const hasDataChanged = useMemo(() => {
     if (!simulatedValidator || !originalAuctionResult) {
       return false
@@ -186,7 +181,6 @@ export const SamTable: React.FC<Props> = ({
       return false
     }
 
-    // Compare relevant fields
     return (
       original.inflationCommissionDec !== simulated.inflationCommissionDec ||
       original.mevCommissionDec !== simulated.mevCommissionDec ||
@@ -205,33 +199,19 @@ export const SamTable: React.FC<Props> = ({
       0,
     ) / samStakeValidators.length
 
-  // Helper to get input value - either from pending edits or original data
-  const getInputValue = (
-    field:
-      | 'inflationCommission'
-      | 'mevCommission'
-      | 'blockRewardsCommission'
-      | 'bidPmpe',
-    originalValue: string,
-  ): string => {
-    if (pendingEdits[field] !== undefined) {
-      return pendingEdits[field]
-    }
-    return originalValue
-  }
+  const getInputValue = (field: keyof PendingEdits, fallback: string): string =>
+    pendingEdits[field] ?? fallback
 
   // Default table sort order
   const defaultOrder: Order[] = useMemo(() => [[8, OrderDirection.DESC]], [])
 
-  // Track current table sort order
   const [currentOrder, setCurrentOrder] = useState<Order[]>(defaultOrder)
 
-  // Handle order change from Table
   const handleOrderChange = useCallback((order: Order[]) => {
     setCurrentOrder(order)
   }, [])
 
-  // Comparator for sorting validators by column index (must match Table columns order)
+  // Must match Table columns order
   const compareByColumn = useCallback(
     (a: AuctionValidator, b: AuctionValidator, columnIndex: number): number => {
       switch (columnIndex) {
@@ -267,7 +247,6 @@ export const SamTable: React.FC<Props> = ({
     [epochsPerYear],
   )
 
-  // Compute original positions map using the current table sort order
   const originalPositionsMap = useMemo(() => {
     if (!originalAuctionResult) {
       return null
@@ -290,37 +269,20 @@ export const SamTable: React.FC<Props> = ({
     return map
   }, [originalAuctionResult, currentOrder, compareByColumn])
 
-  // Helper to find the original position of a validator (using sorted positions)
-  const getOriginalPosition = (voteAccount: string): number | null => {
-    if (!originalPositionsMap) {
-      return null
-    }
-    return originalPositionsMap.get(voteAccount) ?? null
-  }
+  const getOriginalPosition = (voteAccount: string): number | null =>
+    originalPositionsMap?.get(voteAccount) ?? null
 
-  // Helper to determine position change color
   const getPositionChangeClass = (
     voteAccount: string,
     currentPosition: number,
   ): string | null => {
-    const originalPosition = getOriginalPosition(voteAccount)
-    if (originalPosition === null || originalPosition === -1) {
-      return null
-    }
-
-    if (currentPosition < originalPosition) {
-      // Lower position number = better (moved up in the list)
-      return styles.positionImproved
-    } else if (currentPosition > originalPosition) {
-      // Higher position number = worse (moved down in the list)
-      return styles.positionWorsened
-    } else {
-      // Same position
-      return styles.positionUnchanged
-    }
+    const orig = getOriginalPosition(voteAccount)
+    if (orig === null) return null
+    if (currentPosition < orig) return styles.positionImproved
+    if (currentPosition > orig) return styles.positionWorsened
+    return styles.positionUnchanged
   }
 
-  // Sort validators using current order (same as Table does)
   const sortedValidators = useMemo(() => {
     return [...allValidators].sort((a, b) => {
       for (const [columnIndex, orderDirection] of currentOrder) {
@@ -333,15 +295,12 @@ export const SamTable: React.FC<Props> = ({
     })
   }, [allValidators, currentOrder, compareByColumn])
 
-  // Build display list with ghost row for simulated validator
   const displayValidators: DisplayValidator[] = useMemo(() => {
-    // Wrap sorted validators
     const display: DisplayValidator[] = sortedValidators.map(v => ({
       validator: v,
       isGhost: false,
     }))
 
-    // If there's a simulated validator with changed data, insert ghost at original position
     if (simulatedValidator && hasDataChanged && originalAuctionResult) {
       const orig = originalAuctionResult.auctionData.validators.find(
         v => v.voteAccount === simulatedValidator,
@@ -502,7 +461,7 @@ export const SamTable: React.FC<Props> = ({
               'Estimated APY of the last validator winning the auction based on ideal count of epochs in the year; assumes no Marinade fees',
             )}
           />
-          <>{apyMetrics}</>
+          {apyMetrics}
           <ComplexMetric
             label="Winning Validators"
             value={
@@ -541,27 +500,21 @@ export const SamTable: React.FC<Props> = ({
             onClick?: React.MouseEventHandler<HTMLTableRowElement>
           } = {}
 
-          // Ghost rows have special styling and are not clickable
           if (isGhost) {
             attrs.className = styles.ghostRow
             return attrs
           }
 
-          // Add position change styling if this validator was simulated (and not being edited)
-          // This should be applied first, then other styles can be added
           if (isSimulated && !isEditing) {
-            // Count only non-ghost rows for position
             const realIndex = displayValidators
               .slice(0, index + 1)
               .filter(d => !d.isGhost).length
             const positionClass = getPositionChangeClass(voteAccount, realIndex)
-            // Always apply position styling for simulated validator
             attrs.className = `${styles.validatorRowClickable} ${positionClass || styles.positionUnchanged}`
             attrs.onClick = () => onValidatorClick(voteAccount)
             return attrs
           }
 
-          // Add clickable styling if in simulation mode and not currently editing this row
           if (canClick) {
             attrs.className = styles.validatorRowClickable
             attrs.onClick = () => onValidatorClick(voteAccount)
@@ -569,7 +522,6 @@ export const SamTable: React.FC<Props> = ({
             attrs.className = styles.validatorRowEditing
           }
 
-          // Row tint by bond health / productivity
           const tint =
             selectBondSize(validator) <= 0
               ? styles.noBondRow
@@ -593,7 +545,6 @@ export const SamTable: React.FC<Props> = ({
           const voteAccount = selectVoteAccount(validator)
           const isEditing = !isGhost && editingValidator === voteAccount
 
-          // For ghost rows, show the original position
           if (isGhost) {
             const originalPosition = getOriginalPosition(voteAccount)
             return (
@@ -603,11 +554,9 @@ export const SamTable: React.FC<Props> = ({
             )
           }
 
-          // Count only non-ghost rows for position
           const realIndex = displayValidators
             .slice(0, index + 1)
             .filter(d => !d.isGhost).length
-
           return (
             <div className={styles.orderCell}>
               <span>{realIndex}</span>
