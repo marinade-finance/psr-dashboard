@@ -197,12 +197,18 @@
     </main>
     <script>
       const content = document.getElementById('content')
-      const tabs = document.querySelectorAll('.tab')
       const params = new URLSearchParams(window.location.search)
       const from = params.get('from')
 
       if (from) {
         document.getElementById('back').href = '../' + from
+        if (from === 'expert-') {
+          const btn = document.createElement('button')
+          btn.className = 'tab'
+          btn.dataset.doc = 'GUIDE-EXPERT.md'
+          btn.textContent = 'Expert Guide'
+          document.querySelector('.tabs').appendChild(btn)
+        }
       }
 
       function loadDoc(name) {
@@ -215,18 +221,20 @@
         history.replaceState(null, '', '?' + params)
       }
 
-      tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-          tabs.forEach(t => t.classList.remove('active'))
-          tab.classList.add('active')
-          loadDoc(tab.dataset.doc.replace('.md', ''))
-        })
+      document.querySelector('.tabs').addEventListener('click', e => {
+        const tab = e.target.closest('.tab')
+        if (!tab) return
+        document.querySelectorAll('.tab').forEach(t =>
+          t.classList.remove('active'))
+        tab.classList.add('active')
+        loadDoc(tab.dataset.doc.replace('.md', ''))
       })
 
       const doc = params.get('doc')
       if (doc) {
         const tab = document.querySelector(`[data-doc="${doc}.md"]`)
-        tabs.forEach(t => t.classList.remove('active'))
+        document.querySelectorAll('.tab').forEach(t =>
+          t.classList.remove('active'))
         if (tab) tab.classList.add('active')
       }
       loadDoc(doc || 'GUIDE')
