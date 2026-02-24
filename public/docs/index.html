@@ -183,7 +183,7 @@
   </head>
   <body>
     <header>
-      <a href="../" class="back">← Dashboard</a>
+      <a id="back" href="../" class="back">← Dashboard</a>
       <div class="tabs">
         <button class="tab active" data-doc="GUIDE.md">Guide</button>
       </div>
@@ -220,8 +220,14 @@
         })
       })
 
-      // Load from URL param or default
+      // Set back link based on 'from' param
       const params = new URLSearchParams(window.location.search)
+      const from = params.get('from')
+      if (from) {
+        document.getElementById('back').href = '../' + from
+      }
+
+      // Load from URL param or default
       const doc = params.get('doc')
       if (doc) {
         const tab = document.querySelector(`[data-doc="${doc}.md"]`)
