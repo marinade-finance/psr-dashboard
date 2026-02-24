@@ -1,6 +1,7 @@
 .simulationBanner {
-  padding: 8px 16px;
-  margin-left: 10px;
+  position: sticky;
+  left: 0;
+  padding: 16px 32px;
   background: linear-gradient(
     135deg,
     rgba(15, 25, 60, 1),
