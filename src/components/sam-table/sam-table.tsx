@@ -278,8 +278,17 @@ export const SamTable: React.FC<Props> = ({
   ): string | null => {
     const orig = getOriginalPosition(voteAccount)
     if (orig === null) return null
-    if (currentPosition < orig) return styles.positionImproved
-    if (currentPosition > orig) return styles.positionWorsened
+    const delta = Math.abs(currentPosition - orig)
+    if (currentPosition < orig) {
+      if (delta >= 5) return styles.positionImproved3
+      if (delta >= 3) return styles.positionImproved2
+      return styles.positionImproved1
+    }
+    if (currentPosition > orig) {
+      if (delta >= 5) return styles.positionWorsened3
+      if (delta >= 3) return styles.positionWorsened2
+      return styles.positionWorsened1
+    }
     return styles.positionUnchanged
   }
 

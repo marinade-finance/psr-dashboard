@@ -213,12 +213,28 @@
   background-color: #6b7280;
 }
 
-.positionImproved td {
-  background-color: rgba(34, 197, 94, 0.25);
+.positionImproved1 td {
+  background-color: rgba(34, 197, 94, 0.12);
 }
 
-.positionWorsened td {
-  background-color: rgba(239, 68, 68, 0.25);
+.positionImproved2 td {
+  background-color: rgba(34, 197, 94, 0.22);
+}
+
+.positionImproved3 td {
+  background-color: rgba(34, 197, 94, 0.35);
+}
+
+.positionWorsened1 td {
+  background-color: rgba(239, 68, 68, 0.12);
+}
+
+.positionWorsened2 td {
+  background-color: rgba(239, 68, 68, 0.22);
+}
+
+.positionWorsened3 td {
+  background-color: rgba(239, 68, 68, 0.35);
 }
 
 .positionUnchanged td {

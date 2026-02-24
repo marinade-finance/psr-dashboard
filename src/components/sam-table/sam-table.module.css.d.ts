@@ -14,9 +14,13 @@ interface CssExports {
   'metricWrap': string;
   'noBondRow': string;
   'orderCell': string;
-  'positionImproved': string;
+  'positionImproved1': string;
+  'positionImproved2': string;
+  'positionImproved3': string;
   'positionUnchanged': string;
-  'positionWorsened': string;
+  'positionWorsened1': string;
+  'positionWorsened2': string;
+  'positionWorsened3': string;
   'pubkey': string;
   'pubkeySimulated': string;
   'red': string;
