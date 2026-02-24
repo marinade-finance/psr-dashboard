@@ -38,7 +38,7 @@ impact of their departure.
 
 Percentage of total SAM target stake with validator bond coverage. Calculated as `1 - (actuallyUnprotectedStake / totalTargetStake)`, where unprotected stake is `max(0, targetStake - (bondCapacity - existingUnprotectedStake))`.
 
-### Unprotected Stake
+### Target Unprotected
 
 Total SOL where target stake exceeds validator bond-only capacity. Sum of `max(0, targetStake - (bondCapacity - unprotectedStake))` across all validators. Represents stake lacking bond coverage if validators fail to pay bids.
 
