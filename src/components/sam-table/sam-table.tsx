@@ -478,15 +478,16 @@ export const SamTable: React.FC<Props> = ({
         {expertMetrics}
       </div>
 
-      {simulationModeActive && (
-        <div className={styles.simulationBanner}>
-          {isCalculating
-            ? 'Calculating simulation...'
-            : 'Simulation mode active'}
-        </div>
-      )}
-
       <Table
+        caption={
+          simulationModeActive ? (
+            <div className={styles.simulationBanner}>
+              {isCalculating
+                ? 'Calculating simulation...'
+                : 'Simulation mode active'}
+            </div>
+          ) : undefined
+        }
         data={displayValidators}
         rowAttrsFn={(item, index) => {
           const { validator, isGhost } = item
