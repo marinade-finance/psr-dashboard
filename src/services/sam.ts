@@ -130,7 +130,7 @@ export const loadSam = async (
       epochsPerYear,
     )
 
-    // Backstop: blacklist top 5 validators by target stake
+    // Backstop: block top 5 validators by target stake
     const top5 = [...auctionResult.auctionData.validators]
       .sort(
         (a, b) =>
@@ -139,9 +139,11 @@ export const loadSam = async (
       )
       .slice(0, 5)
 
-    const backstopResult = await runAlt(data => {
-      for (const v of top5) data.blacklist.add(v.voteAccount)
-    })
+    const backstopAuction = await dsSam.auction(dataOverrides)
+    for (const v of top5) {
+      backstopAuction.blockInSam(v.voteAccount)
+    }
+    const backstopResult = backstopAuction.evaluate()
     const backstopDiff = selectTargetApyDiff(
       auctionResult,
       backstopResult,
