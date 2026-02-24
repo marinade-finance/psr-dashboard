@@ -38,6 +38,15 @@ validators based on their bids and performance.
 **Simulation Mode:** Click "Enter Simulation" to test how changing a validator's parameters would affect their auction
 position. Edit commission rates or bid amounts, then click "Simulate" to see projected results.
 
+When a simulation runs, the table re-sorts with updated auction results. The simulated validator's row shows:
+
+- **Green background** &mdash; Position improved (moved up in ranking)
+- **Red background** &mdash; Position worsened (moved down in ranking)
+- **Grey background** &mdash; Position unchanged
+
+A **ghost row** appears at the validator's original position with strikethrough styling, showing where the validator
+moved from. Ghost rows are non-interactive.
+
 ### Protected Events
 
 Shows the history of protected staking events for particular epochs &mdash; situations where validators experienced

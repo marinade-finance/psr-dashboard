@@ -513,10 +513,7 @@ export const SamTable: React.FC<Props> = ({
             const positionClass = getPositionChangeClass(voteAccount, realIndex)
             attrs.className = `${styles.validatorRowClickable} ${positionClass || styles.positionUnchanged}`
             attrs.onClick = () => onValidatorClick(voteAccount)
-            return attrs
-          }
-
-          if (canClick) {
+          } else if (canClick) {
             attrs.className = styles.validatorRowClickable
             attrs.onClick = () => onValidatorClick(voteAccount)
           } else if (isEditing) {
