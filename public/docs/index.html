@@ -71,10 +71,7 @@
         margin: 4px;
         margin-right: 0;
       }
-      .tab:hover {
-        background-color: var(--bg-dark-4);
-        color: var(--text-light-2);
-      }
+      .tab:hover,
       .tab.active {
         background-color: var(--bg-dark-4);
         color: var(--text-light-2);
@@ -189,7 +186,7 @@
     <header>
       <a id="back" href="../" class="back">← Dashboard</a>
       <div class="tabs">
-        <button class="tab active" data-doc="GUIDE.md">Guide</button>
+        <button class="tab active" data-doc="GUIDE">Guide</button>
       </div>
     </header>
     <main>
@@ -197,15 +194,16 @@
     </main>
     <script>
       const content = document.getElementById('content')
-      const expert = /\/expert-docs\//.test(window.location.pathname)
+      const tabs = document.querySelector('.tabs')
+      const expert = /\/expert-docs\//.test(location.pathname)
 
       if (expert) {
         document.getElementById('back').href = '../expert-'
         const btn = document.createElement('button')
         btn.className = 'tab'
-        btn.dataset.doc = 'GUIDE-EXPERT.md'
+        btn.dataset.doc = 'GUIDE-EXPERT'
         btn.textContent = 'Expert Guide'
-        document.querySelector('.tabs').appendChild(btn)
+        tabs.appendChild(btn)
       }
 
       function loadDoc(name) {
@@ -217,23 +215,18 @@
         history.replaceState(null, '', '#' + name)
       }
 
-      document.querySelector('.tabs').addEventListener('click', e => {
+      function activateTab(doc) {
+        tabs.querySelectorAll('.tab').forEach(t =>
+          t.classList.toggle('active', t.dataset.doc === doc))
+        loadDoc(doc)
+      }
+
+      tabs.addEventListener('click', e => {
         const tab = e.target.closest('.tab')
-        if (!tab) return
-        document.querySelectorAll('.tab').forEach(t =>
-          t.classList.remove('active'))
-        tab.classList.add('active')
-        loadDoc(tab.dataset.doc.replace('.md', ''))
+        if (tab) activateTab(tab.dataset.doc)
       })
 
-      const doc = window.location.hash.slice(1)
-      if (doc) {
-        const tab = document.querySelector(`[data-doc="${doc}.md"]`)
-        document.querySelectorAll('.tab').forEach(t =>
-          t.classList.remove('active'))
-        if (tab) tab.classList.add('active')
-      }
-      loadDoc(doc || 'GUIDE')
+      activateTab(location.hash.slice(1) || 'GUIDE')
     </script>
   </body>
 </html>

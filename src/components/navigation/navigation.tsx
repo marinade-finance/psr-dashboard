@@ -19,27 +19,28 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
   level,
   children,
 }) => {
-  const expert = level === UserLevel.Expert ? 'expert-' : ''
+  const isExpert = level === UserLevel.Expert
+  const prefix = isExpert ? 'expert-' : ''
   return (
     <div className={styles.navigation}>
-      <NavLink to={`/${expert}`} className={navClass}>
+      <NavLink to={`/${prefix}`} className={navClass}>
         <div className={styles.navButton}>Stake Auction Marketplace</div>
       </NavLink>
-      <NavLink to={`/${expert}protected-events`} className={navClass}>
+      <NavLink to={`/${prefix}protected-events`} className={navClass}>
         <div className={styles.navButton}>Protected Events</div>
       </NavLink>
-      <NavLink to={`/${expert}bonds`} className={navClass}>
+      <NavLink to={`/${prefix}bonds`} className={navClass}>
         <div className={styles.navButton}>Validator Bonds</div>
       </NavLink>
       <a
-        href={`${expert}docs/`}
+        href={`${prefix}docs/`}
         className={styles.docsButton}
         style={{ marginLeft: 'auto' }}
       >
         Docs
       </a>
-      {level === UserLevel.Expert && (
-        <a href={`${expert}docs/#GUIDE-EXPERT`} className={styles.docsButton}>
+      {isExpert && (
+        <a href={`${prefix}docs/#GUIDE-EXPERT`} className={styles.docsButton}>
           Expert Guide
         </a>
       )}
