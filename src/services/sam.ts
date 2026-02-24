@@ -89,20 +89,12 @@ export const loadSam = async (
 
   const auctionResult = await dsSam.runFinalOnly(dataOverrides)
 
-  const runAlt = async (
-    mutatePre?: (data: AggregatedData) => void,
-    mutatePost?: (validators: AuctionValidator[]) => void,
-  ) => {
+  const runAlt = async (mutate: (data: AggregatedData) => void) => {
     const aggregatedData = await dsSam.getAggregatedData(dataOverrides)
-    if (mutatePre) {
-      mutatePre(aggregatedData)
-    }
+    mutate(aggregatedData)
     const debug = new Debug(new Set(), LogVerbosity.ERROR)
     const constraints = dsSam.getAuctionConstraints(aggregatedData, debug)
     const validators = dsSam.transformValidators(aggregatedData)
-    if (mutatePost) {
-      mutatePost(validators)
-    }
     const data = { ...aggregatedData, validators }
     return new Auction(data, constraints, dsSam.config, debug).evaluate()
   }
@@ -147,12 +139,11 @@ export const loadSam = async (
     }))
 
   const top5Accounts = new Set(top5.map(t => t.voteAccount))
-  const backstopResult = await runAlt(undefined, validators => {
-    for (const validator of validators) {
-      if (top5Accounts.has(validator.voteAccount)) {
-        validator.samBlocked = true
-      }
-    }
+  const backstopResult = await runAlt(data => {
+    // eslint-disable-next-line no-param-reassign
+    data.validators = data.validators.filter(
+      v => !top5Accounts.has(v.voteAccount),
+    )
   })
   const backstopDiff = selectTargetApyDiff(
     auctionResult,
