@@ -173,17 +173,6 @@ export const SamTable: React.FC<Props> = ({
     [validators],
   )
 
-  // Original validators with bond state (for ghost rows)
-  const originalValidators: ValidatorWithBondState[] = useMemo(() => {
-    if (!originalAuctionResult) {
-      return []
-    }
-    return originalAuctionResult.auctionData.validators.map(v => ({
-      ...v,
-      bondState: bondColorState(v),
-    }))
-  }, [originalAuctionResult])
-
   // Check if simulated data actually changed from original
   const hasDataChanged = useMemo(() => {
     if (!simulatedValidator || !originalAuctionResult) {
@@ -353,37 +342,24 @@ export const SamTable: React.FC<Props> = ({
     }))
 
     // If there's a simulated validator with changed data, insert ghost at original position
-    if (simulatedValidator && hasDataChanged && originalValidators.length > 0) {
-      // Find the original validator data
-      const originalValidator = originalValidators.find(
+    if (simulatedValidator && hasDataChanged && originalAuctionResult) {
+      const orig = originalAuctionResult.auctionData.validators.find(
         v => v.voteAccount === simulatedValidator,
       )
-      if (originalValidator) {
+      if (orig) {
+        const originalValidator = { ...orig, bondState: bondColorState(orig) }
         const originalPosition = getOriginalPosition(simulatedValidator)
-        // Find the current position of the simulated validator in sorted list
         const currentSimulatedIndex = display.findIndex(
           d => d.validator.voteAccount === simulatedValidator,
         )
         if (originalPosition !== null && originalPosition > 0) {
-          // Calculate where to insert ghost based on original position
-          // If simulated moved up (lower number), ghost goes at higher index
-          // If simulated moved down (higher number), ghost goes at lower index but after simulated
-          let insertIndex: number
-          const adjustedOriginalPos = originalPosition - 1 // Convert to 0-based
-
-          if (currentSimulatedIndex < adjustedOriginalPos) {
-            // Simulated moved UP - ghost should be at original position (below simulated)
-            // Account for the fact that simulated is no longer at original position
-            insertIndex = adjustedOriginalPos
-          } else if (currentSimulatedIndex > adjustedOriginalPos) {
-            // Simulated moved DOWN - ghost at original position, simulated is below
-            insertIndex = adjustedOriginalPos
-          } else {
-            // Same position - show ghost right after simulated
-            insertIndex = currentSimulatedIndex + 1
-          }
-
-          insertIndex = Math.min(insertIndex, display.length)
+          const adjustedOriginalPos = originalPosition - 1
+          const insertIndex = Math.min(
+            currentSimulatedIndex === adjustedOriginalPos
+              ? currentSimulatedIndex + 1
+              : adjustedOriginalPos,
+            display.length,
+          )
           display.splice(insertIndex, 0, {
             validator: originalValidator,
             isGhost: true,
@@ -397,7 +373,7 @@ export const SamTable: React.FC<Props> = ({
     sortedValidators,
     simulatedValidator,
     hasDataChanged,
-    originalValidators,
+    originalAuctionResult,
     getOriginalPosition,
   ])
 
