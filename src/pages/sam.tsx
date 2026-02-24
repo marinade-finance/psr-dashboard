@@ -92,11 +92,15 @@ export const SamPage: React.FC<Props> = ({ level }) => {
   )
 
   const handleRunSimulation = useCallback(() => {
-    if (!editingValidator || !originalAuctionResult || !data) return
-    const v = data.auctionResult.auctionData.validators.find(
+    if (!editingValidator || !originalAuctionResult || !data) {
+      return
+    }
+    const current = data.auctionResult.auctionData.validators.find(
       v => v.voteAccount === editingValidator,
     )
-    if (!v) return
+    if (!current) {
+      return
+    }
 
     const resolve = (
       edit: string | undefined,
@@ -117,20 +121,20 @@ export const SamPage: React.FC<Props> = ({ level }) => {
 
     const infl = resolve(
       pendingEdits.inflationCommission,
-      v.inflationCommissionDec,
+      current.inflationCommissionDec,
     )
     if (!isNaN(infl)) {
       overrides.inflationCommissions.set(editingValidator, infl)
     }
 
-    const mev = resolve(pendingEdits.mevCommission, v.mevCommissionDec)
+    const mev = resolve(pendingEdits.mevCommission, current.mevCommissionDec)
     if (!isNaN(mev)) {
       overrides.mevCommissions.set(editingValidator, mev * 100)
     }
 
     const blk = resolve(
       pendingEdits.blockRewardsCommission,
-      v.blockRewardsCommissionDec,
+      current.blockRewardsCommissionDec,
     )
     if (!isNaN(blk)) {
       overrides.blockRewardsCommissions.set(editingValidator, blk * 100)
@@ -139,7 +143,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
     const bid =
       pendingEdits.bidPmpe !== undefined
         ? parseFloat(pendingEdits.bidPmpe)
-        : v.revShare.bidPmpe
+        : current.revShare.bidPmpe
     if (!isNaN(bid)) {
       overrides.cpmpes.set(editingValidator, bid * 1e9)
     }
