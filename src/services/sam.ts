@@ -90,26 +90,27 @@ export const loadSam = async (
     // Fetch data once, run base auction via SDK
     const auctionResult = await dsSam.runFinalOnly(dataOverrides)
 
+    type AggregatedData = Awaited<ReturnType<typeof dsSam.getAggregatedData>>
+
     // Run alternative auction with mutated aggregated data
-    const runAlt = async (
-      mutate: (
-        agg: Awaited<ReturnType<typeof dsSam.getAggregatedData>>,
-      ) => void,
-    ) => {
-      const agg = await dsSam.getAggregatedData(dataOverrides)
-      mutate(agg)
+    const runAlt = async (mutate: (data: AggregatedData) => void) => {
+      const aggregatedData = await dsSam.getAggregatedData(dataOverrides)
+      mutate(aggregatedData)
       const debug = new Debug(new Set(), LogVerbosity.ERROR)
-      const constraints = dsSam.getAuctionConstraints(agg, debug)
-      const d = { ...agg, validators: dsSam.transformValidators(agg) }
+      const constraints = dsSam.getAuctionConstraints(aggregatedData, debug)
+      const d = {
+        ...aggregatedData,
+        validators: dsSam.transformValidators(aggregatedData),
+      }
       return new Auction(d, constraints, dsSam.config, debug).evaluate()
     }
 
     // +10% / -10% TVL sensitivity
-    const joinResult = await runAlt(agg => {
+    const joinResult = await runAlt(data => {
       // eslint-disable-next-line no-param-reassign
-      agg.stakeAmounts.marinadeSamTvlSol *= 1.1
+      data.stakeAmounts.marinadeSamTvlSol *= 1.1
       // eslint-disable-next-line no-param-reassign
-      agg.stakeAmounts.marinadeRemainingSamSol *= 1.1
+      data.stakeAmounts.marinadeRemainingSamSol *= 1.1
     })
     const tvlJoinApyDiff = selectTvlApyDiff(
       auctionResult,
@@ -117,11 +118,11 @@ export const loadSam = async (
       epochsPerYear,
     )
 
-    const leaveResult = await runAlt(agg => {
+    const leaveResult = await runAlt(data => {
       // eslint-disable-next-line no-param-reassign
-      agg.stakeAmounts.marinadeSamTvlSol *= 0.9
+      data.stakeAmounts.marinadeSamTvlSol *= 0.9
       // eslint-disable-next-line no-param-reassign
-      agg.stakeAmounts.marinadeRemainingSamSol *= 0.9
+      data.stakeAmounts.marinadeRemainingSamSol *= 0.9
     })
     const tvlLeaveApyDiff = selectTvlApyDiff(
       auctionResult,
@@ -138,8 +139,8 @@ export const loadSam = async (
       )
       .slice(0, 5)
 
-    const backstopResult = await runAlt(agg => {
-      for (const v of top5) agg.blacklist.add(v.voteAccount)
+    const backstopResult = await runAlt(data => {
+      for (const v of top5) data.blacklist.add(v.voteAccount)
     })
     const backstopDiff = selectTargetApyDiff(
       auctionResult,
