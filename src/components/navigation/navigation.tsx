@@ -12,6 +12,9 @@ export type UserLevelProps = {
   level?: UserLevel
 }
 
+const navClass = ({ isActive }: { isActive: boolean }) =>
+  isActive ? styles.active : ''
+
 export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
   level,
   children,
@@ -19,28 +22,13 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
   const expert = level === UserLevel.Expert ? 'expert-' : ''
   return (
     <div className={styles.navigation}>
-      <NavLink
-        to={`/${expert}`}
-        className={({ isActive, isPending: _isPending }) =>
-          isActive ? styles.active : ''
-        }
-      >
+      <NavLink to={`/${expert}`} className={navClass}>
         <div className={styles.navButton}>Stake Auction Marketplace</div>
       </NavLink>
-      <NavLink
-        to={`/${expert}protected-events`}
-        className={({ isActive, isPending: _isPending }) =>
-          isActive ? styles.active : ''
-        }
-      >
+      <NavLink to={`/${expert}protected-events`} className={navClass}>
         <div className={styles.navButton}>Protected Events</div>
       </NavLink>
-      <NavLink
-        to={`/${expert}bonds`}
-        className={({ isActive, isPending: _isPending }) =>
-          isActive ? styles.active : ''
-        }
-      >
+      <NavLink to={`/${expert}bonds`} className={navClass}>
         <div className={styles.navButton}>Validator Bonds</div>
       </NavLink>
       <a

@@ -194,51 +194,38 @@
     <script>
       const content = document.getElementById('content')
       const tabs = document.querySelectorAll('.tab')
+      const params = new URLSearchParams(window.location.search)
+      const from = params.get('from')
 
-      function loadDoc(filename) {
+      if (from) {
+        document.getElementById('back').href = '../' + from
+      }
+
+      function loadDoc(name) {
         content.innerHTML = 'loading...'
-        fetch(filename)
+        fetch(name + '.md')
           .then(r => r.text())
-          .then(md => {
-            content.innerHTML = marked.parse(md)
-          })
-          .catch(() => {
-            content.innerHTML = '<p>Error loading doc</p>'
-          })
+          .then(md => { content.innerHTML = marked.parse(md) })
+          .catch(() => { content.innerHTML = '<p>Error loading doc</p>' })
+        params.set('doc', name)
+        history.replaceState(null, '', '?' + params)
       }
 
       tabs.forEach(tab => {
         tab.addEventListener('click', () => {
           tabs.forEach(t => t.classList.remove('active'))
           tab.classList.add('active')
-          loadDoc(tab.dataset.doc)
-          history.replaceState(
-            null,
-            '',
-            '?doc=' + tab.dataset.doc.replace('.md', ''),
-          )
+          loadDoc(tab.dataset.doc.replace('.md', ''))
         })
       })
 
-      // Set back link based on 'from' param
-      const params = new URLSearchParams(window.location.search)
-      const from = params.get('from')
-      if (from) {
-        document.getElementById('back').href = '../' + from
-      }
-
-      // Load from URL param or default
       const doc = params.get('doc')
       if (doc) {
         const tab = document.querySelector(`[data-doc="${doc}.md"]`)
         tabs.forEach(t => t.classList.remove('active'))
-        if (tab) {
-          tab.classList.add('active')
-        }
-        loadDoc(doc + '.md')
-      } else {
-        loadDoc('GUIDE.md')
+        if (tab) tab.classList.add('active')
       }
+      loadDoc(doc || 'GUIDE')
     </script>
   </body>
 </html>
