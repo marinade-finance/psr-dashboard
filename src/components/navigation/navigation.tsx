@@ -32,17 +32,14 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
         <div className={styles.navButton}>Validator Bonds</div>
       </NavLink>
       <a
-        href={`docs/?from=${expert}`}
+        href={`${expert}docs/`}
         className={styles.docsButton}
         style={{ marginLeft: 'auto' }}
       >
         Docs
       </a>
       {level === UserLevel.Expert && (
-        <a
-          href={`docs/?from=${expert}&doc=GUIDE-EXPERT`}
-          className={styles.docsButton}
-        >
+        <a href={`${expert}docs/#GUIDE-EXPERT`} className={styles.docsButton}>
           Expert Guide
         </a>
       )}

@@ -197,18 +197,15 @@
     </main>
     <script>
       const content = document.getElementById('content')
-      const params = new URLSearchParams(window.location.search)
-      const from = params.get('from')
+      const expert = /\/expert-docs\//.test(window.location.pathname)
 
-      if (from) {
-        document.getElementById('back').href = '../' + from
-        if (from === 'expert-') {
-          const btn = document.createElement('button')
-          btn.className = 'tab'
-          btn.dataset.doc = 'GUIDE-EXPERT.md'
-          btn.textContent = 'Expert Guide'
-          document.querySelector('.tabs').appendChild(btn)
-        }
+      if (expert) {
+        document.getElementById('back').href = '../expert-'
+        const btn = document.createElement('button')
+        btn.className = 'tab'
+        btn.dataset.doc = 'GUIDE-EXPERT.md'
+        btn.textContent = 'Expert Guide'
+        document.querySelector('.tabs').appendChild(btn)
       }
 
       function loadDoc(name) {
@@ -217,8 +214,7 @@
           .then(r => r.text())
           .then(md => { content.innerHTML = marked.parse(md) })
           .catch(() => { content.innerHTML = '<p>Error loading doc</p>' })
-        params.set('doc', name)
-        history.replaceState(null, '', '?' + params)
+        history.replaceState(null, '', '#' + name)
       }
 
       document.querySelector('.tabs').addEventListener('click', e => {
@@ -230,7 +226,7 @@
         loadDoc(tab.dataset.doc.replace('.md', ''))
       })
 
-      const doc = params.get('doc')
+      const doc = window.location.hash.slice(1)
       if (doc) {
         const tab = document.querySelector(`[data-doc="${doc}.md"]`)
         document.querySelectorAll('.tab').forEach(t =>
