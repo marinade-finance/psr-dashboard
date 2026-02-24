@@ -274,7 +274,9 @@ function overridesMessage(
   overrideValue: number | null | undefined,
   type: 'percentage' | 'number' = 'percentage',
 ): string {
-  if (overrideValue == null) return ''
+  if (overrideValue == null) {
+    return ''
+  }
   const formatted =
     type === 'percentage'
       ? formatPercentage(overrideValue, 0)
@@ -399,9 +401,15 @@ export const selectEffectiveCost = (validator: AuctionValidator) =>
   validator.revShare.auctionEffectiveBidPmpe
 
 export const bondHealthColor = (validator: AuctionValidator): Color => {
-  if (!validator.auctionStake.marinadeSamTargetSol) return undefined
-  if (validator.bondGoodForNEpochs > 10) return Color.GREEN
-  if (validator.bondGoodForNEpochs > 2) return Color.YELLOW
+  if (!validator.auctionStake.marinadeSamTargetSol) {
+    return undefined
+  }
+  if (validator.bondGoodForNEpochs > 10) {
+    return Color.GREEN
+  }
+  if (validator.bondGoodForNEpochs > 2) {
+    return Color.YELLOW
+  }
   return Color.RED
 }
 
@@ -423,7 +431,9 @@ export const selectActuallyUnprotectedStake = (
 ): number =>
   auctionResult.auctionData.validators.reduce((sum, v) => {
     const target = v.auctionStake.marinadeSamTargetSol
-    if (target == null) return sum
+    if (target == null) {
+      return sum
+    }
     return (
       sum + Math.max(0, target - (v.bondSamStakeCapSol - v.unprotectedStakeSol))
     )

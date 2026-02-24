@@ -119,23 +119,30 @@ export const SamPage: React.FC<Props> = ({ level }) => {
       pendingEdits.inflationCommission,
       v.inflationCommissionDec,
     )
-    if (!isNaN(infl)) overrides.inflationCommissions.set(editingValidator, infl)
+    if (!isNaN(infl)) {
+      overrides.inflationCommissions.set(editingValidator, infl)
+    }
 
     const mev = resolve(pendingEdits.mevCommission, v.mevCommissionDec)
-    if (!isNaN(mev)) overrides.mevCommissions.set(editingValidator, mev * 100)
+    if (!isNaN(mev)) {
+      overrides.mevCommissions.set(editingValidator, mev * 100)
+    }
 
     const blk = resolve(
       pendingEdits.blockRewardsCommission,
       v.blockRewardsCommissionDec,
     )
-    if (!isNaN(blk))
+    if (!isNaN(blk)) {
       overrides.blockRewardsCommissions.set(editingValidator, blk * 100)
+    }
 
     const bid =
       pendingEdits.bidPmpe !== undefined
         ? parseFloat(pendingEdits.bidPmpe)
         : v.revShare.bidPmpe
-    if (!isNaN(bid)) overrides.cpmpes.set(editingValidator, bid * 1e9)
+    if (!isNaN(bid)) {
+      overrides.cpmpes.set(editingValidator, bid * 1e9)
+    }
 
     setSimulationOverrides(overrides)
     setSimulatedValidator(editingValidator)
