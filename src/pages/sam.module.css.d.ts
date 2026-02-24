@@ -3,7 +3,6 @@
 interface CssExports {
   'page': string;
   'pageContent': string;
-  'simulationNote': string;
   'simulatorToggle': string;
   'simulatorToggleActive': string;
 }

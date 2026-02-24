@@ -40,9 +40,3 @@
 .simulatorToggleActive:hover:not(:disabled) {
   background-color: #0284c7;
 }
-
-.simulationNote {
-  font-size: 11px;
-  color: #0ea5e9;
-  margin-right: 8px;
-}

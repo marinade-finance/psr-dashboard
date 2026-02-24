@@ -197,8 +197,6 @@ export const SamPage: React.FC<Props> = ({ level }) => {
     // editingValidator and pendingEdits are cleared in onSettled when calculation completes
   }, [editingValidator, pendingEdits, originalAuctionResult, data])
 
-  const hasSimulationApplied = simulatedValidator !== null
-
   // When simulation mode is off but we have cached original data, use it
   // This avoids refetching when exiting simulation mode
   const displayAuctionResult =
@@ -210,12 +208,6 @@ export const SamPage: React.FC<Props> = ({ level }) => {
     <div className={styles.page}>
       <div className={styles.pageContent}>
         <Navigation level={level}>
-          {hasSimulationApplied && !isCalculating && (
-            <span className={styles.simulationNote}>Simulation applied</span>
-          )}
-          {isCalculating && (
-            <span className={styles.simulationNote}>Calculating...</span>
-          )}
           <button
             className={`${styles.simulatorToggle} ${simulationModeActive ? styles.simulatorToggleActive : ''}`}
             onClick={handleToggleSimulationMode}

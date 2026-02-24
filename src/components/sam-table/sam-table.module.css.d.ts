@@ -29,6 +29,7 @@ interface CssExports {
   'rowYellow': string;
   'runSimulationBtn': string;
   'runSimulationBtnCalculating': string;
+  'simulationBanner': string;
   'simulationModeActive': string;
   'tableWrap': string;
   'validatorRowClickable': string;
