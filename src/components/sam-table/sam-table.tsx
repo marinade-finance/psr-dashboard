@@ -486,13 +486,6 @@ export const SamTable: React.FC<Props> = ({
       ref={tableWrapRef}
       className={`${styles.tableWrap} ${simulationModeActive ? styles.simulationModeActive : ''} ${isCalculating ? styles.calculating : ''}`}
     >
-      {simulationModeActive && (
-        <div className={styles.simulationBanner}>
-          {isCalculating
-            ? 'Calculating simulation...'
-            : 'Simulation mode active'}
-        </div>
-      )}
       <div className={styles.metricWrap}>
         <div className={styles.metricRow}>
           <Metric
@@ -525,6 +518,14 @@ export const SamTable: React.FC<Props> = ({
         </div>
         {expertMetrics}
       </div>
+
+      {simulationModeActive && (
+        <div className={styles.simulationBanner}>
+          {isCalculating
+            ? 'Calculating simulation...'
+            : 'Simulation mode active'}
+        </div>
+      )}
 
       <Table
         data={displayValidators}
