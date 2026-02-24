@@ -103,8 +103,8 @@ export const loadSam = async (
     if (mutatePost) {
       mutatePost(validators)
     }
-    const d = { ...aggregatedData, validators }
-    return new Auction(d, constraints, dsSam.config, debug).evaluate()
+    const data = { ...aggregatedData, validators }
+    return new Auction(data, constraints, dsSam.config, debug).evaluate()
   }
 
   // +10% / -10% TVL sensitivity
@@ -429,13 +429,17 @@ export const bondTooltip = (color: Color) => {
 export const selectActuallyUnprotectedStake = (
   auctionResult: AuctionResult,
 ): number =>
-  auctionResult.auctionData.validators.reduce((sum, v) => {
-    const target = v.auctionStake.marinadeSamTargetSol
+  auctionResult.auctionData.validators.reduce((sum, validator) => {
+    const target = validator.auctionStake.marinadeSamTargetSol
     if (target == null) {
       return sum
     }
     return (
-      sum + Math.max(0, target - (v.bondSamStakeCapSol - v.unprotectedStakeSol))
+      sum +
+      Math.max(
+        0,
+        target - (validator.bondSamStakeCapSol - validator.unprotectedStakeSol),
+      )
     )
   }, 0)
 
@@ -458,12 +462,12 @@ export const selectTargetApyDiff = (
 ): number => {
   const profitOf = (r: AuctionResult) =>
     r.auctionData.validators.reduce(
-      (acc, v) =>
+      (acc, entry) =>
         acc +
-        ((v.revShare.auctionEffectiveBidPmpe +
-          v.revShare.inflationPmpe +
-          v.revShare.mevPmpe) *
-          v.auctionStake.marinadeSamTargetSol) /
+        ((entry.revShare.auctionEffectiveBidPmpe +
+          entry.revShare.inflationPmpe +
+          entry.revShare.mevPmpe) *
+          entry.auctionStake.marinadeSamTargetSol) /
           1000,
       0,
     )
@@ -481,12 +485,12 @@ export const selectTvlApyDiff = (
 ): number => {
   const profitOf = (r: AuctionResult) =>
     r.auctionData.validators.reduce(
-      (acc, v) =>
+      (acc, entry) =>
         acc +
-        ((v.revShare.auctionEffectiveBidPmpe +
-          v.revShare.inflationPmpe +
-          v.revShare.mevPmpe) *
-          v.marinadeActivatedStakeSol) /
+        ((entry.revShare.auctionEffectiveBidPmpe +
+          entry.revShare.inflationPmpe +
+          entry.revShare.mevPmpe) *
+          entry.marinadeActivatedStakeSol) /
           1000,
       0,
     )

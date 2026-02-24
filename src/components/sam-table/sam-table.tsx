@@ -94,7 +94,9 @@ function renderEditableCell(
   onCancelEditing: () => void,
   opts: { step: string; min: string; max?: string; placeholder?: string },
 ): JSX.Element {
-  if (!isEditing) return <>{displayValue}</>
+  if (!isEditing) {
+    return <>{displayValue}</>
+  }
   return (
     <div className={styles.inputCell}>
       <span className={styles.inputPlaceholder}>{displayValue}</span>
@@ -108,8 +110,11 @@ function renderEditableCell(
         placeholder={opts.placeholder}
         onChange={e => onFieldChange(field, e.target.value)}
         onKeyDown={e => {
-          if (e.key === 'Enter') onRunSimulation()
-          else if (e.key === 'Escape') onCancelEditing()
+          if (e.key === 'Enter') {
+            onRunSimulation()
+          } else if (e.key === 'Escape') {
+            onCancelEditing()
+          }
         }}
       />
     </div>
@@ -172,8 +177,9 @@ export const SamTable: React.FC<Props> = ({
       if (
         tableWrapRef.current &&
         !tableWrapRef.current.contains(e.target as Node)
-      )
+      ) {
         onCancelEditing()
+      }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
@@ -509,7 +515,9 @@ export const SamTable: React.FC<Props> = ({
         rowAttrsFn={(item, index) => {
           const { validator, isGhost } = item
           const va = selectVoteAccount(validator)
-          if (isGhost) return { className: styles.ghostRow }
+          if (isGhost) {
+            return { className: styles.ghostRow }
+          }
 
           const isEditing = editingValidator === va
           const isSimulated = simulatedValidator === va
@@ -532,10 +540,11 @@ export const SamTable: React.FC<Props> = ({
             classes.push(styles.validatorRowEditing)
           }
 
-          if (selectBondSize(validator) <= 0) classes.push(styles.noBondRow)
-          else if (validator.bondState === Color.RED)
+          if (selectBondSize(validator) <= 0) {
+            classes.push(styles.noBondRow)
+          } else if (validator.bondState === Color.RED) {
             classes.push(styles.rowRed)
-          else if (
+          } else if (
             validator.bondState === Color.YELLOW ||
             selectIsNonProductive(validator)
           ) {
