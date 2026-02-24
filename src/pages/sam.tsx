@@ -68,7 +68,9 @@ export const SamPage: React.FC<Props> = ({ level }) => {
 
   const handleValidatorClick = useCallback(
     (voteAccount: string) => {
-      if (!simulationModeActive) return
+      if (!simulationModeActive) {
+        return
+      }
       if (voteAccount === editingValidator) {
         setEditingValidator(null)
         setPendingEdits({})

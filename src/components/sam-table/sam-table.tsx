@@ -63,6 +63,13 @@ type EditField =
   | 'blockRewardsCommission'
   | 'bidPmpe'
 
+type InputOpts = {
+  step: string
+  min: string
+  max?: string
+  placeholder?: string
+}
+
 type Props = {
   auctionResult: AuctionResult
   tvlJoinApyDiff: number
@@ -92,7 +99,7 @@ function renderEditableCell(
   onFieldChange: (field: EditField, value: string) => void,
   onRunSimulation: () => void,
   onCancelEditing: () => void,
-  opts: { step: string; min: string; max?: string; placeholder?: string },
+  opts: InputOpts,
 ): JSX.Element {
   if (!isEditing) {
     return <>{displayValue}</>
@@ -172,7 +179,9 @@ export const SamTable: React.FC<Props> = ({
   }, [editingValidator, onCancelEditing])
 
   useEffect(() => {
-    if (!editingValidator) return undefined
+    if (!editingValidator) {
+      return undefined
+    }
     const handleClickOutside = (e: MouseEvent) => {
       if (
         tableWrapRef.current &&
@@ -295,7 +304,9 @@ export const SamTable: React.FC<Props> = ({
     currentPosition: number,
   ): string | null => {
     const orig = getOriginalPosition(voteAccount)
-    if (orig === null) return null
+    if (orig === null) {
+      return null
+    }
     const delta = Math.abs(currentPosition - orig)
     if (currentPosition < orig) {
       if (delta >= 5) return styles.positionImproved3

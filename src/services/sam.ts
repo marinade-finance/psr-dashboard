@@ -65,9 +65,7 @@ const estimateEpochsPerYear = async () => {
   return SECONDS_PER_YEAR / (rangeDuration / rangeEpochs)
 }
 
-export const loadSam = async (
-  dataOverrides?: SourceDataOverrides | null,
-): Promise<{
+type SamResult = {
   auctionResult: AuctionResult
   tvlJoinApyDiff: number
   tvlLeaveApyDiff: number
@@ -75,7 +73,11 @@ export const loadSam = async (
   backstopTvl: number
   epochsPerYear: number
   dcSamConfig: DsSamConfig
-}> => {
+}
+
+export const loadSam = async (
+  dataOverrides?: SourceDataOverrides | null,
+): Promise<SamResult> => {
   const epochsPerYear = await estimateEpochsPerYear()
   console.log('epochsPerYear', epochsPerYear)
   const config = await loadSamConfig()
@@ -294,17 +296,17 @@ export const selectCommission = (validator: AuctionValidator): number =>
 export const selectFormattedInBondCommission = (
   validator: AuctionValidator,
 ): string => {
-  const v = validator.values?.commissions?.inflationCommissionInBondDec
-  return v == null ? '-' : formatPercentage(v, 0)
+  const dec = validator.values?.commissions?.inflationCommissionInBondDec
+  return dec == null ? '-' : formatPercentage(dec, 0)
 }
 
 export const formattedOnChainCommission = (
   validator: AuctionValidator,
 ): string => {
-  const v =
+  const dec =
     validator.values?.commissions?.inflationCommissionOnchainDec ||
     selectCommission(validator)
-  return v == null ? '-' : formatPercentage(v, 0)
+  return dec == null ? '-' : formatPercentage(dec, 0)
 }
 
 export const overridesCommissionMessage = (
@@ -323,24 +325,24 @@ export const selectMevCommission = (
 ): number | null => validator.mevCommissionDec
 
 export const formattedMevCommission = (validator: AuctionValidator): string => {
-  const v = selectMevCommission(validator)
-  return v == null ? '-' : formatPercentage(v, 0)
+  const dec = selectMevCommission(validator)
+  return dec == null ? '-' : formatPercentage(dec, 0)
 }
 
 export const formattedInBondMevCommission = (
   validator: AuctionValidator,
 ): string => {
-  const v = validator.values?.commissions?.mevCommissionInBondDec
-  return v == null ? '-' : formatPercentage(v, 0)
+  const dec = validator.values?.commissions?.mevCommissionInBondDec
+  return dec == null ? '-' : formatPercentage(dec, 0)
 }
 
 export const formattedOnChainMevCommission = (
   validator: AuctionValidator,
 ): string => {
-  const v =
+  const dec =
     validator.values?.commissions?.mevCommissionOnchainDec ||
     selectMevCommission(validator)
-  return v == null ? '-' : formatPercentage(v, 0)
+  return dec == null ? '-' : formatPercentage(dec, 0)
 }
 
 export const selectMevCommissionPmpe = (validator: AuctionValidator) =>
