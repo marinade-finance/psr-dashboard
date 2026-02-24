@@ -89,20 +89,26 @@ export const loadSam = async (
 
   const auctionResult = await dsSam.runFinalOnly(dataOverrides)
 
-  const runAlt = async (mutate: (data: AggregatedData) => void) => {
+  const runAlt = async (
+    mutatePre?: (data: AggregatedData) => void,
+    mutatePost?: (validators: AuctionValidator[]) => void,
+  ) => {
     const aggregatedData = await dsSam.getAggregatedData(dataOverrides)
-    mutate(aggregatedData)
+    if (mutatePre) {
+      mutatePre(aggregatedData)
+    }
     const debug = new Debug(new Set(), LogVerbosity.ERROR)
     const constraints = dsSam.getAuctionConstraints(aggregatedData, debug)
-    const d = {
-      ...aggregatedData,
-      validators: dsSam.transformValidators(aggregatedData),
+    const validators = dsSam.transformValidators(aggregatedData)
+    if (mutatePost) {
+      mutatePost(validators)
     }
+    const d = { ...aggregatedData, validators }
     return new Auction(d, constraints, dsSam.config, debug).evaluate()
   }
 
   // +10% / -10% TVL sensitivity
-  const joinResult = await runAlt(data => {
+  const joinResult = await runAlt((data: AggregatedData) => {
     // eslint-disable-next-line no-param-reassign
     data.stakeAmounts.marinadeSamTvlSol *= 1.1
     // eslint-disable-next-line no-param-reassign
@@ -114,7 +120,7 @@ export const loadSam = async (
     epochsPerYear,
   )
 
-  const leaveResult = await runAlt(data => {
+  const leaveResult = await runAlt((data: AggregatedData) => {
     // eslint-disable-next-line no-param-reassign
     data.stakeAmounts.marinadeSamTvlSol *= 0.9
     // eslint-disable-next-line no-param-reassign
@@ -127,26 +133,33 @@ export const loadSam = async (
   )
 
   // Backstop: block top 5 validators by target stake
-  const top5 = [...auctionResult.auctionData.validators]
+  const top5 = auctionResult.auctionData.validators
+    .slice()
     .sort(
       (a, b) =>
         b.auctionStake.marinadeSamTargetSol -
         a.auctionStake.marinadeSamTargetSol,
     )
     .slice(0, 5)
+    .map(validator => ({
+      voteAccount: validator.voteAccount,
+      targetStake: validator.auctionStake.marinadeSamTargetSol,
+    }))
 
-  const backstopAuction = await dsSam.auction(dataOverrides)
-  for (const v of top5) backstopAuction.blockInSam(v.voteAccount)
-  const backstopResult = backstopAuction.evaluate()
+  const top5Accounts = new Set(top5.map(t => t.voteAccount))
+  const backstopResult = await runAlt(undefined, validators => {
+    for (const validator of validators) {
+      if (top5Accounts.has(validator.voteAccount)) {
+        validator.samBlocked = true
+      }
+    }
+  })
   const backstopDiff = selectTargetApyDiff(
     auctionResult,
     backstopResult,
     epochsPerYear,
   )
-  const backstopTvl = top5.reduce(
-    (sum, v) => sum + v.auctionStake.marinadeSamTargetSol,
-    0,
-  )
+  const backstopTvl = top5.reduce((sum, t) => sum + t.targetStake, 0)
 
   return {
     auctionResult,
@@ -385,7 +398,7 @@ export const selectEffectiveCost = (validator: AuctionValidator) =>
   (validator.marinadeActivatedStakeSol / 1000) *
   validator.revShare.auctionEffectiveBidPmpe
 
-export const bondColorState = (validator: AuctionValidator): Color => {
+export const bondHealthColor = (validator: AuctionValidator): Color => {
   if (!validator.auctionStake.marinadeSamTargetSol) return undefined
   if (validator.bondGoodForNEpochs > 10) return Color.GREEN
   if (validator.bondGoodForNEpochs > 2) return Color.YELLOW

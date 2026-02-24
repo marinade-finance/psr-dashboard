@@ -17,7 +17,7 @@ import {
   selectStakeToMove,
   selectTotalActiveStake,
   selectSamActiveStake,
-  bondColorState,
+  bondHealthColor,
   bondTooltip,
   selectProductiveStake,
   selectIsNonProductive,
@@ -183,7 +183,7 @@ export const SamTable: React.FC<Props> = ({
     () =>
       validators.map(v => ({
         ...v,
-        bondState: bondColorState(v),
+        bondState: bondHealthColor(v),
       })),
     [validators],
   )
@@ -329,7 +329,7 @@ export const SamTable: React.FC<Props> = ({
         v => v.voteAccount === simulatedValidator,
       )
       if (orig) {
-        const originalValidator = { ...orig, bondState: bondColorState(orig) }
+        const originalValidator = { ...orig, bondState: bondHealthColor(orig) }
         const originalPosition = getOriginalPosition(simulatedValidator)
         const currentSimulatedIndex = display.findIndex(
           d => d.validator.voteAccount === simulatedValidator,
