@@ -5,11 +5,15 @@ structure, reuse existing components and logic.
 
 ## Principle
 
-Change as little as possible. No new frameworks, no routing library,
-no state management. Detail view is React state in sam.tsx
-(`viewMode: 'list' | 'detail'`), not a URL route. No browser URL
-change for detail — back button restores list via state. Existing
-`<Table>` component stays for expert mode.
+Change as little as possible. No routing library, no state management.
+Detail view is React state in sam.tsx (`viewMode: 'list' | 'detail'`),
+not a URL route. No browser URL change for detail — back button
+restores list via state. Existing `<Table>` component stays for expert
+mode.
+
+CSS: Tailwind CSS v3 + shadcn/ui for new components (basic mode table,
+detail page). Old CSS Modules coexist — no mass rewrite. See VISUALS.md
+for Tailwind tokens and shadcn component mapping.
 
 ## Changes by File
 
@@ -57,13 +61,13 @@ change for detail — back button restores list via state. Existing
   - `selectIsNonProductive()` (existing, `src/services/sam.ts`) for productivity
   - Priority cascade per SCREENS.md recommendation logic
 
-### src/components/sam-detail/sam-detail.module.css (new)
+### src/components/sam-detail/ styling
 
-- Detail page layout styles
-- Summary cards (3-across flex)
-- Detail columns (3-across grid)
-- Recommendation box (blue accent)
-- Reuse color palette from SCREENS.md
+- Uses Tailwind classes + shadcn/ui components (Card, Badge, Progress)
+- No new CSS Modules file — layout via Tailwind utilities
+- Summary cards (grid-cols-3), detail columns (grid-cols-3)
+- Recommendation box: shadcn Card with accent-blue left border
+- Color tokens from VISUALS.md tailwind.config
 
 ### src/components/sam-table/sam-table.module.css
 

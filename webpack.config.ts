@@ -40,7 +40,7 @@ const webpackConfig = (env: {
       },
       {
         test: /\.css$/i,
-        use: ['style-loader', 'css-modules-typescript-loader', 'css-loader'],
+        use: ['style-loader', 'css-modules-typescript-loader', 'css-loader', 'postcss-loader'],
       },
     ],
   },

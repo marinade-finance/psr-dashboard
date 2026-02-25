@@ -3,6 +3,10 @@
 Derived from Michael's mockups (3 SAM variants + detail views). Dark theme
 throughout. Target: migrate from CSS Modules to Tailwind + shadcn/ui.
 
+> **Authority split**: This file defines visual layout, component mapping,
+> and styling tokens. SCREENS.md defines behavior, recommendation logic,
+> and data flow. Where text/logic differs, SCREENS.md is authoritative.
+
 ---
 
 ## Tech Migration: shadcn/ui + Tailwind CSS
@@ -235,17 +239,10 @@ Use shadcn `Table` component with custom dark styling.
 - Style: text-xs text-muted leading-relaxed
 - Content: actionable recommendation text
 - Can wrap to 2 lines for longer recommendations
-- Recommendation priority (first match wins, reuses existing logic):
-  1. No bond → "Fund bond to enter auction"
-  2. Bond ≤2 epochs → "Top up bond — stake at risk"
-  3. Bond 3-10 + constrained → "Top up bond to unlock higher
-     stake cap (+N◎ potential)"
-  4. Non-productive bid → "Raise bid — currently low at X%.
-     Could gain N◎ with competitive bid"
-  5. Country/ASO constraint → "Capped by [name] concentration"
-  6. Target > active → "On track to gain +N◎"
-  7. Target < active → "Losing N◎ — others outbid you"
-  8. Stable → "Stable position"
+- Recommendation text: see SCREENS.md "Recommendation Logic" for
+  the authoritative priority cascade (11 steps). The mockup examples
+  below are illustrative — SCREENS.md defines the exact logic and
+  wording.
 
 #### Row Interaction
 - Entire row is clickable → navigates to Variant C detail or
@@ -670,7 +667,8 @@ Shared structure across all SAM variants.
 - Implement NEXT STEP recommendation logic
 - Bond health dots + SOL balance
 - Validator name + truncated pubkey
-- View mode tabs (A only active, B/C disabled)
+- No view mode tabs yet — Variant A renders directly (tabs ship
+  with Phase 5 when Variant B is ready)
 - Click row → detail page (existing SamDetail)
 
 ### Ship Later (Phases 3–6)
