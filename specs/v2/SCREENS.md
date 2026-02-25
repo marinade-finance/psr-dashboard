@@ -195,6 +195,61 @@ Row tinting unchanged (yellow for non-productive).
 
 Same as current: inline editing, ghost rows, position grading.
 
+### Operations
+
+#### Data Loading
+
+react-query key `['sam', simulationRunId]` → `loadSam(overrides?)` runs
+DS-SAM SDK auction. Loading spinner while pending. Error state shows
+message. Data refreshes when `simulationRunId` increments (simulation).
+
+#### Sorting
+
+Default: SAM Target DESC. Click column header cycles: ASC → DESC → reset
+to default. Multi-level sort: user click prepended to default order array.
+Sort indicators: `▲`/`▼` on active column, dimmed on default.
+
+#### Expert Toggle
+
+URL-based: `/` (basic) vs `/expert-` (expert). Navigation links swap
+between variants. Expert shows additional metrics rows and table columns.
+Toggle preserves no other state (fresh page load).
+
+#### Simulation Flow (Expert Only)
+
+1. Click "Enter Simulation" in nav → `simulationModeActive = true`,
+   current result snapshot saved as `originalAuctionResult`
+2. Table header glows blue, body tinted with simulation background
+3. Click any validator row → inline edit opens (4 fields: Inflation
+   Commission, MEV Commission, Block Rewards Commission, Stake Bid)
+4. Edit values → click "Simulate" or press Enter → builds
+   `SourceDataOverrides` map, increments `simulationRunId`, SDK re-runs
+5. During calculation: header pulses (CSS animation), Simulate button
+   disabled and shows "Calculating..."
+6. Result: ghost row at original position (greyed, strikethrough,
+   non-interactive), simulated row at new position with tint:
+   - 1-2 positions moved: light green/red (12% opacity)
+   - 3-4 positions: medium (22% opacity)
+   - ≥5 positions: strong (35% opacity)
+   - Unchanged: white tint (12% opacity)
+7. Cancel: Escape key or Cancel button → clears edits, closes fields
+8. Click outside table → cancels editing (mousedown listener)
+9. Exit Simulation → resets all overrides, restores original data
+
+#### Row Coloring
+
+- Non-productive validators (bid < 90% effective bid): row tinted yellow
+- Bond column cell: background colored by `bondHealthColor()`:
+  GREEN (>10 epochs), YELLOW (3-10), RED (≤2), GREY (no bond)
+
+#### Metrics Display
+
+Basic: single row of 4 metric cards with subtitles.
+Expert: 3 rows — basic metrics + Stake to Move / Active Stake /
+Productive Stake / Avg Stake (row 2) + T. Protected / T. Unprotected /
+Conc. Risk / Conc. TVL / +/-10% TVL / Ideal APY (row 3).
+All values formatted with tooltips showing full precision.
+
 ---
 
 ## Protected Events
@@ -222,6 +277,44 @@ Badges in Settlement column:
 
 Funder shows "Marinade" or "Validator" with explanatory tooltip.
 
+### Operations
+
+#### Data Loading
+
+react-query key `'protected-events'` → `fetchProtectedEventsWithValidator()`.
+Joins events with validator names. Loading spinner while pending.
+
+#### Filtering (Local State)
+
+- **Validator search**: text input, case-insensitive substring match on
+  vote account or validator name. Filters rows client-side.
+- **Epoch range**: min/max number inputs, initialized to dataset bounds.
+  Filters rows where epoch is within [min, max].
+- Events with `reason === 'Bidding'` always excluded from table display
+  (their amounts feed the Last Epoch Bids expert metric instead).
+
+#### Filtered Metrics
+
+When any filter is active, two additional metrics appear alongside totals:
+Filtered Events (count) and Filtered Amount (SOL sum of filtered rows).
+When filters cleared, these metrics disappear.
+
+#### Sorting
+
+Default: Epoch DESC, Settlement DESC, Reason DESC (multi-level).
+Column click cycling same as SAM table.
+
+#### Badges
+
+Settlement column renders status badges:
+- `Estimate` (green background) — live data, may change before settlement
+- `Dryrun` (dark background) — test event, not claimable
+
+#### Funder Logic
+
+Shows `Marinade` (DAO-funded, beyond validator's expected coverage) or
+`Validator` (within bond coverage). Tooltip explains the distinction.
+
 ---
 
 ## Validator Bonds
@@ -239,6 +332,44 @@ Columns: Validator, Name, Bond balance, Max Stake Wanted, Bond Comm.,
 Marinade stake, Eff. Cost.
 Expert adds: Max protected stake, Protected stake %.
 Default sort: Bond Commission asc, Bond balance desc.
+
+### Operations
+
+#### Data Loading
+
+react-query key `'bonds'` → `fetchValidatorsWithBonds()`. Pre-filtered:
+only validators with Marinade stake > 0 OR bond effective_amount > 0.
+
+#### Sorting
+
+Default: Bond balance DESC, Bond Comm DESC. Column click cycling same
+as other tables. Null handling: nulls pushed to end regardless of sort
+direction (uses Infinity/-Infinity sentinel).
+
+#### No Interactive Filters
+
+Static display — no search, no range filters. All qualifying validators
+shown.
+
+---
+
+## Navigation
+
+### Layout
+
+Sticky horizontal bar at top. Contains:
+- Tab links: SAM, Protected Events, Validator Bonds
+- Docs button (external `/docs/` link)
+- Expert Guide button (expert mode only, links to `/docs/?from=expert#GUIDE-EXPERT`)
+- Children slot (used for simulation toggle button on SAM page)
+
+### Operations
+
+- Active tab highlighted via React Router NavLink `isActive`
+- Expert mode: routes prefixed with `/expert-` (e.g. `/expert-bonds`)
+- Basic ↔ Expert: separate URL paths, not a toggle. User navigates via
+  bookmarks or direct URL. No in-app toggle button.
+- Tab click triggers React Router navigation (no full page reload)
 
 ---
 
