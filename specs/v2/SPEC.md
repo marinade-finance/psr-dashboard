@@ -30,7 +30,7 @@ change for detail — back button restores list via state. Existing
 ### src/components/sam-table/sam-table.tsx
 
 - **Basic mode**: replace `<Table>` with card-based list
-  - Compact: single-line row (rank, flag, name, APY, bond dot, delta)
+  - Compact: single-line row (rank, name, APY, bond dot, delta)
   - Expanded: multi-line card (APY breakdown, bond health, stake movement)
   - Density toggle above list
   - Row click → `onValidatorClick(voteAccount)`

@@ -31,15 +31,11 @@ Single-line card. Five elements:
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│▎ 1  🇩🇪 Laine          16.27%    ● Healthy     ↑ +22,549☉   │
+│▎ 1   Laine             16.27%    ● Healthy     ↑ +22,549☉   │
 └──────────────────────────────────────────────────────────────┘
 ```
 
 - **#** — rank, muted
-- **Flag** — country flag (circular 16px). Source: `dc_country_iso` field
-  from validators API (ISO 3166-1 alpha-2 code, e.g. "DE", "US").
-  Rendered as Unicode regional indicator emoji (e.g. "DE" → 🇩🇪).
-  No CDN, no images — pure text. Fallback: hidden if `dc_country_iso` null.
 - **Name** — validator name, fallback truncated pubkey `Abc1…xyz9`
   (pubkey fallback: click to copy, brief "Copied" toast)
 - **Max APY** — bold percentage
@@ -52,7 +48,7 @@ Multi-line card with 3-column detail breakdown:
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│▎ 1  🇩🇪 Laine                                   ↑ +22,549☉   │
+│▎ 1  🇩🇪 Laine                                    ↑ +22,549☉   │
 │                                                              │
 │  APY BREAKDOWN          BOND HEALTH         STAKE MOVEMENT   │
 │  Inflation comm.  0%    315☉  42% used      Current  45,000☉ │
@@ -125,7 +121,7 @@ change, no routing library needed. Back button top-left sets
 ```
 ← Back
 
-🇩🇪 Laine                                          #1 of 211
+Laine                                              #1 of 211
 Abc1...xyz9  (click to copy)
 
 ┌──────────┐  ┌──────────┐  ┌──────────┐
@@ -151,7 +147,7 @@ Stake bid      0.461%                          Delta  ↑+23,059☉
 └──────────────────────────────────────────────────────────┘
 ```
 
-**Header**: flag + name (large), pubkey below (muted, click to copy),
+**Header**: name (large), pubkey below (muted, click to copy),
 rank badge `#1 of 211` top-right.
 
 **Summary cards** (3 across): Max APY, Bond (health + utilization),
