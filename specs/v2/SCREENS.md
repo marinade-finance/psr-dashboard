@@ -2,6 +2,10 @@
 
 Three tabs, dark theme, shared sticky nav with tab links and docs buttons.
 
+> **See also**: `VISUALS.md` for detailed mockup-derived layouts,
+> component specs, shadcn/Tailwind migration plan, and pixel-level
+> styling tokens.
+
 ---
 
 ## Stake Auction Marketplace
