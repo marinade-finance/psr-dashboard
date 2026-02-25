@@ -70,6 +70,8 @@ type InputOpts = {
   placeholder?: string
 }
 
+export type ValidatorNameEntry = { name: string; countryIso: string | null }
+
 type Props = {
   auctionResult: AuctionResult
   tvlJoinApyDiff: number
@@ -85,10 +87,13 @@ type Props = {
   simulatedValidator: string | null
   isCalculating: boolean
   pendingEdits: PendingEdits
+  nameMap: Map<string, ValidatorNameEntry>
+  densityMode: 'compact' | 'expanded'
   onValidatorClick: (voteAccount: string) => void
   onFieldChange: (field: EditField, value: string) => void
   onRunSimulation: () => void
   onCancelEditing: () => void
+  onDensityChange: (mode: 'compact' | 'expanded') => void
 }
 
 function renderEditableCell(
@@ -143,10 +148,13 @@ export const SamTable: React.FC<Props> = ({
   simulatedValidator,
   isCalculating,
   pendingEdits,
+  nameMap: _nameMap,
+  densityMode: _densityMode,
   onValidatorClick,
   onFieldChange,
   onRunSimulation,
   onCancelEditing,
+  onDensityChange: _onDensityChange,
 }) => {
   const {
     auctionData: { validators },

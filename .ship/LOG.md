@@ -1,0 +1,7 @@
+- added playwright.config.ts (chromium, baseURL localhost:8080, reuseExistingServer) and test:e2e scripts to package.json
+- added dc_country_iso: string | null to Validator type in src/services/validators.ts
+- added card row, density toggle, copy address, and copied feedback styles to sam-table.module.css
+- added selectStakeDelta, getRecommendation, isoToFlag to src/services/sam.ts
+- created sam-detail.module.css and .d.ts: back button, header, pubkey copy, rank badge, 3-across summary cards with bond health colors, 3-col detail grid, recommendation box, simulation CTA
+- created sam-detail.tsx (~200 lines): SamDetail component with pubkey click-to-copy, rank badge, APY/bond/stake summary cards, APY breakdown + bond health progress + stake movement detail columns, recommendation box, simulation CTA
+- added tests/bonds.spec.ts (9 tests: load, metrics, descending sort, expert columns/metric), tests/events.spec.ts (11 tests: load, metrics, validator filter, epoch filter, filtered metrics appear/disappear, badges, funder, no Bidding, expert Last Epoch Bids), tests/navigation.spec.ts (13 tests: tabs visible, docs link, URL changes, active class, expert URLs, no Expert Guide in basic)
