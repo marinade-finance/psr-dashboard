@@ -249,71 +249,229 @@
   text-decoration: line-through;
 }
 
-/* Card row styles for basic mode list view */
-.cardRow {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(148, 163, 184, 0.1);
-  border-radius: 8px;
-  margin-bottom: 4px;
-  padding: 12px 24px;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+/* Card list (basic mode) */
+
+.cardList {
+  padding: 0 10px 10px;
 }
 
-.cardRow:hover {
-  background: rgba(59, 130, 246, 0.04);
-  border-left: 3px solid #3b82f6;
-  cursor: pointer;
-}
-
-.cardRowExpanded {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(148, 163, 184, 0.1);
-  border-radius: 8px;
-  margin-bottom: 4px;
-  padding: 20px 24px;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-}
-
-.cardRowExpanded:hover {
-  background: rgba(59, 130, 246, 0.04);
-  border-left: 3px solid #3b82f6;
-  cursor: pointer;
-}
-
-/* Density toggle button */
 .densityToggle {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 6px;
-  color: #94a3b8;
+  gap: 4px;
+  padding: 8px 0;
   font-size: 12px;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  color: #a0a0b0;
 }
 
-.densityToggle:hover {
-  background: rgba(59, 130, 246, 0.08);
-  border-color: rgba(59, 130, 246, 0.4);
+.densityBtn {
+  background: none;
+  border: none;
+  color: #a0a0b0;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 6px;
+}
+
+.densityBtn:hover {
   color: #e2e8f0;
 }
 
-/* Click-to-copy address */
-.copyAddress {
+.densityActive {
+  background: none;
+  border: none;
+  color: #e2e8f0;
   cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 6px;
 }
 
-.copyAddress:hover {
-  text-decoration: underline;
+.densitySep {
+  color: #4a5568;
 }
 
-/* "Copied" feedback text */
-.copiedFeedback {
-  color: #4ade80;
+.card {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 3px solid transparent;
+  border-radius: 8px;
+  margin-bottom: 4px;
+  cursor: pointer;
+  transition: border-left-color 0.15s;
+}
+
+.card:hover {
+  border-left-color: #3b82f6;
+}
+
+.ghostCard {
+  cursor: default;
+  pointer-events: none;
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+.cardYellow {
+  background: rgba(128, 96, 0, 0.12);
+}
+
+.compactRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.cardRank {
+  min-width: 28px;
+  color: #64748b;
   font-size: 11px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.cardName {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  min-width: 0;
+  overflow: hidden;
+  text-decoration: underline dotted;
+  text-decoration-color: #4a5568;
+}
+
+.cardName:hover {
+  text-decoration-color: #94a3b8;
+}
+
+.countryFlag {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.copiedBadge {
+  font-size: 10px;
+  color: #22c55e;
+  font-weight: 600;
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+
+.cardApy {
+  min-width: 60px;
+  text-align: right;
+  font-size: 13px;
+  color: #93c5fd;
+  flex-shrink: 0;
+}
+
+.cardBond {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 80px;
+  font-size: 12px;
+  color: #a0a0b0;
+  flex-shrink: 0;
+}
+
+.bondDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.bondDotGreen {
+  background-color: #22c55e;
+}
+
+.bondDotYellow {
+  background-color: #eab308;
+}
+
+.bondDotRed {
+  background-color: #ef4444;
+}
+
+.bondDotGrey {
+  background-color: #6b7280;
+}
+
+.cardDelta {
+  min-width: 80px;
+  text-align: right;
+  font-size: 12px;
+  color: #a0a0b0;
+  flex-shrink: 0;
+}
+
+.deltaPos {
+  color: #22c55e;
+}
+
+.deltaNeg {
+  color: #ef4444;
+}
+
+.expandedContent {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  padding: 8px 12px 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.expandedLeft,
+.expandedCenter,
+.expandedRight {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.expandedLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.bondHealth {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.bondBar {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 2px;
+}
+
+.bondBarFill {
+  height: 100%;
+  background: #3b82f6;
+  border-radius: 2px;
+  transition: width 0.3s;
+}
+
+.bondEpochs {
+  font-size: 10px;
+  color: #64748b;
+}
+
+.tipLine {
+  padding: 4px 12px 8px;
+  font-size: 11px;
+  color: #64748b;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
 }

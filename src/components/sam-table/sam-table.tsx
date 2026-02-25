@@ -70,7 +70,10 @@ type InputOpts = {
   placeholder?: string
 }
 
-export type ValidatorNameEntry = { name: string; countryIso: string | null }
+export type ValidatorMeta = {
+  name?: string
+  countryIso?: string | null
+}
 
 type Props = {
   auctionResult: AuctionResult
@@ -87,13 +90,44 @@ type Props = {
   simulatedValidator: string | null
   isCalculating: boolean
   pendingEdits: PendingEdits
-  nameMap: Map<string, ValidatorNameEntry>
-  densityMode: 'compact' | 'expanded'
+  validatorMeta?: Map<string, ValidatorMeta>
   onValidatorClick: (voteAccount: string) => void
   onFieldChange: (field: EditField, value: string) => void
   onRunSimulation: () => void
   onCancelEditing: () => void
-  onDensityChange: (mode: 'compact' | 'expanded') => void
+}
+
+function isoToFlag(iso: string): string {
+  if (!iso || iso.length !== 2) return ''
+  const toRegional = (c: string) =>
+    String.fromCodePoint(0x1f1e6 + c.toUpperCase().charCodeAt(0) - 65)
+  return toRegional(iso[0]) + toRegional(iso[1])
+}
+
+function bondLabel(color: Color): string {
+  switch (color) {
+    case Color.GREEN:
+      return 'Healthy'
+    case Color.YELLOW:
+      return 'Low'
+    case Color.RED:
+      return 'Critical'
+    default:
+      return '—'
+  }
+}
+
+function bondDotClassName(color: Color): string {
+  switch (color) {
+    case Color.GREEN:
+      return styles.bondDotGreen
+    case Color.YELLOW:
+      return styles.bondDotYellow
+    case Color.RED:
+      return styles.bondDotRed
+    default:
+      return styles.bondDotGrey
+  }
 }
 
 function renderEditableCell(
@@ -148,13 +182,11 @@ export const SamTable: React.FC<Props> = ({
   simulatedValidator,
   isCalculating,
   pendingEdits,
-  nameMap: _nameMap,
-  densityMode: _densityMode,
+  validatorMeta,
   onValidatorClick,
   onFieldChange,
   onRunSimulation,
   onCancelEditing,
-  onDensityChange: _onDensityChange,
 }) => {
   const {
     auctionData: { validators },
@@ -175,6 +207,16 @@ export const SamTable: React.FC<Props> = ({
   const unprotectedStake = selectActuallyUnprotectedStake(auctionResult)
 
   const tableWrapRef = useRef<HTMLDivElement>(null)
+
+  const [density, setDensity] = useState<'compact' | 'expanded'>('compact')
+  const [copiedVa, setCopiedVa] = useState<string | null>(null)
+
+  const handleCopy = useCallback((e: React.MouseEvent, voteAccount: string) => {
+    e.stopPropagation()
+    void navigator.clipboard.writeText(voteAccount)
+    setCopiedVa(voteAccount)
+    setTimeout(() => setCopiedVa(null), 1500)
+  }, [])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -238,7 +280,15 @@ export const SamTable: React.FC<Props> = ({
   const inputVal = (field: keyof PendingEdits, fallback: string) =>
     pendingEdits[field] ?? fallback
 
-  const defaultOrder: Order[] = useMemo(() => [[8, OrderDirection.DESC]], [])
+  // Expert mode: col 7=Stake Δ (sorts by target), col 8=Eff Bid, col 9=Constraint
+  // Basic mode: col 7=SAM Active, col 8=SAM Target
+  const defaultOrder: Order[] = useMemo(
+    () =>
+      level === UserLevel.Expert
+        ? [[7, OrderDirection.DESC]]
+        : [[8, OrderDirection.DESC]],
+    [level],
+  )
 
   const [currentOrder, setCurrentOrder] = useState<Order[]>(defaultOrder)
 
@@ -246,9 +296,43 @@ export const SamTable: React.FC<Props> = ({
     setCurrentOrder(order)
   }, [])
 
-  // Must match Table columns order
   const compareByColumn = useCallback(
     (a: AuctionValidator, b: AuctionValidator, columnIndex: number): number => {
+      if (level === UserLevel.Expert) {
+        switch (columnIndex) {
+          case 0:
+            return selectVoteAccount(a).localeCompare(selectVoteAccount(b))
+          case 1:
+            return selectCommission(a) - selectCommission(b)
+          case 2:
+            return (
+              (selectMevCommission(a) ?? 100) - (selectMevCommission(b) ?? 100)
+            )
+          case 3:
+            return (
+              (selectBlockRewardsCommission(a) ?? 100) -
+              (selectBlockRewardsCommission(b) ?? 100)
+            )
+          case 4:
+            return selectBid(a) - selectBid(b)
+          case 5:
+            return selectBondSize(a) - selectBondSize(b)
+          case 6:
+            return (
+              selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
+            )
+          case 7:
+            return selectSamTargetStake(a) - selectSamTargetStake(b)
+          case 8:
+            return selectEffectiveBid(a) - selectEffectiveBid(b)
+          case 9:
+            return selectConstraintText(a).localeCompare(
+              selectConstraintText(b),
+            )
+          default:
+            return 0
+        }
+      }
       switch (columnIndex) {
         case 0:
           return selectVoteAccount(a).localeCompare(selectVoteAccount(b))
@@ -279,7 +363,7 @@ export const SamTable: React.FC<Props> = ({
           return 0
       }
     },
-    [epochsPerYear],
+    [epochsPerYear, level],
   )
 
   const originalPositionsMap = useMemo(() => {
@@ -482,6 +566,513 @@ export const SamTable: React.FC<Props> = ({
     )
   }
 
+  const simulationCaption = simulationModeActive ? (
+    <div className={styles.simulationBanner}>
+      {isCalculating ? 'Calculating simulation...' : 'Simulation mode active'}
+    </div>
+  ) : undefined
+
+  const renderCardList = () => {
+    const cards = displayValidators.map((item, index) => {
+      const { validator, isGhost } = item
+      const va = selectVoteAccount(validator)
+      const meta = validatorMeta?.get(va)
+      const flag = meta?.countryIso ? isoToFlag(meta.countryIso) : ''
+      const displayName = meta?.name ?? va
+      const isCopied = copiedVa === va
+      const maxApy = selectMaxAPY(validator, epochsPerYear)
+      const active = selectSamActiveStake(validator)
+      const target = selectSamTargetStake(validator)
+      const delta = target - active
+      const isNonProd = !isGhost && selectIsNonProductive(validator)
+
+      const realIdx = displayValidators
+        .slice(0, index + 1)
+        .filter(d => !d.isGhost).length
+
+      const rank = isGhost ? (getOriginalPosition(va) ?? realIdx) : realIdx
+
+      const cardClass = [
+        styles.card,
+        isGhost ? styles.ghostCard : '',
+        isNonProd ? styles.cardYellow : '',
+      ]
+        .filter(Boolean)
+        .join(' ')
+
+      return (
+        <div
+          key={`${va}-${isGhost ? 'ghost' : 'real'}`}
+          className={cardClass}
+          onClick={isGhost ? undefined : () => onValidatorClick(va)}
+        >
+          <div className={styles.compactRow}>
+            <span className={styles.cardRank}>{rank}</span>
+            <span
+              className={styles.cardName}
+              onClick={e => handleCopy(e, va)}
+              title={isCopied ? 'Copied!' : 'Click to copy pubkey'}
+            >
+              {flag && <span className={styles.countryFlag}>{flag}</span>}
+              <span>
+                {displayName.length > 24
+                  ? displayName.slice(0, 24) + '\u2026'
+                  : displayName}
+              </span>
+              {isCopied && <span className={styles.copiedBadge}>Copied</span>}
+            </span>
+            <span className={styles.cardApy}>
+              {formatPercentage(maxApy, 2, 0.5)}
+            </span>
+            <span className={styles.cardBond}>
+              <span
+                className={`${styles.bondDot} ${bondDotClassName(validator.bondState)}`}
+              />
+              {bondLabel(validator.bondState)}
+            </span>
+            <span
+              className={`${styles.cardDelta} ${delta > 0 ? styles.deltaPos : delta < 0 ? styles.deltaNeg : ''}`}
+            >
+              {delta > 0 ? '\u25b2' : delta < 0 ? '\u25bc' : '\u2014'}
+              {delta !== 0 && ` \u2609${formatSolAmount(Math.abs(delta), 0)}`}
+            </span>
+          </div>
+
+          {density === 'expanded' && !isGhost && (
+            <>
+              <div className={styles.expandedContent}>
+                <div className={styles.expandedLeft}>
+                  <div className={styles.expandedLabel}>APY breakdown</div>
+                  <div>Max APY: {formatPercentage(maxApy, 2, 0.5)}</div>
+                  <div>
+                    Eff. Bid: \u2609
+                    {formatSolAmount(selectEffectiveBid(validator), 4)}
+                  </div>
+                  <div>
+                    Bond bid: \u2609
+                    {formatSolAmount(selectBondBid(validator) ?? 0, 4)}
+                  </div>
+                </div>
+                <div className={styles.expandedCenter}>
+                  <div className={styles.expandedLabel}>Bond health</div>
+                  <div className={styles.bondHealth}>
+                    <span
+                      className={`${styles.bondDot} ${bondDotClassName(validator.bondState)}`}
+                    />
+                    <span>{bondLabel(validator.bondState)}</span>
+                  </div>
+                  <div
+                    className={styles.bondBar}
+                    {...tooltipAttributes(bondTooltip(validator.bondState))}
+                  >
+                    <div
+                      className={styles.bondBarFill}
+                      style={{
+                        width: `${Math.min(100, (validator.bondGoodForNEpochs / 12) * 100)}%`,
+                      }}
+                    />
+                  </div>
+                  <div className={styles.bondEpochs}>
+                    {Math.round(validator.bondGoodForNEpochs)} epochs
+                  </div>
+                </div>
+                <div className={styles.expandedRight}>
+                  <div className={styles.expandedLabel}>Stake movement</div>
+                  <div>Active: \u2609{formatSolAmount(active, 0)}</div>
+                  <div>Target: \u2609{formatSolAmount(target, 0)}</div>
+                  <div
+                    className={
+                      delta > 0
+                        ? styles.deltaPos
+                        : delta < 0
+                          ? styles.deltaNeg
+                          : ''
+                    }
+                  >
+                    {delta > 0 ? '\u25b2' : delta < 0 ? '\u25bc' : '\u2014'}
+                    {delta !== 0 &&
+                      ` \u2609${formatSolAmount(Math.abs(delta), 0)}`}
+                  </div>
+                </div>
+              </div>
+              <div className={styles.tipLine}>
+                {selectConstraintText(validator)}
+              </div>
+            </>
+          )}
+        </div>
+      )
+    })
+
+    return (
+      <div className={styles.cardList}>
+        {simulationCaption}
+        <div className={styles.densityToggle}>
+          <button
+            className={
+              density === 'compact' ? styles.densityActive : styles.densityBtn
+            }
+            onClick={() => setDensity('compact')}
+          >
+            Compact
+          </button>
+          <span className={styles.densitySep}>|</span>
+          <button
+            className={
+              density === 'expanded' ? styles.densityActive : styles.densityBtn
+            }
+            onClick={() => setDensity('expanded')}
+          >
+            Expanded
+          </button>
+        </div>
+        {cards}
+      </div>
+    )
+  }
+
+  const renderExpertTable = () => (
+    <Table
+      caption={simulationCaption}
+      data={displayValidators}
+      rowAttrsFn={(item, index) => {
+        const { validator, isGhost } = item
+        const va = selectVoteAccount(validator)
+        if (isGhost) {
+          return { className: styles.ghostRow }
+        }
+
+        const isEditing = editingValidator === va
+        const isSimulated = simulatedValidator === va
+        const classes: string[] = []
+        let onClick: (() => void) | undefined
+
+        if (isSimulated && !isEditing) {
+          const realIdx = displayValidators
+            .slice(0, index + 1)
+            .filter(d => !d.isGhost).length
+          classes.push(
+            styles.validatorRowClickable,
+            getPositionChangeClass(va, realIdx) || styles.positionUnchanged,
+          )
+          onClick = () => onValidatorClick(va)
+        } else if (simulationModeActive && !isEditing) {
+          classes.push(styles.validatorRowClickable)
+          onClick = () => onValidatorClick(va)
+        } else if (isEditing) {
+          classes.push(styles.validatorRowEditing)
+        }
+
+        if (selectIsNonProductive(validator)) {
+          classes.push(styles.rowYellow)
+        }
+
+        return { className: classes.join(' ') || undefined, onClick }
+      }}
+      showRowNumber
+      rowNumberRender={(item, index) => {
+        const { validator, isGhost } = item
+        const va = selectVoteAccount(validator)
+        if (isGhost) {
+          return (
+            <div className={styles.orderCell}>
+              <span>{getOriginalPosition(va) ?? index + 1}</span>
+            </div>
+          )
+        }
+        const realIdx = displayValidators
+          .slice(0, index + 1)
+          .filter(d => !d.isGhost).length
+        const isEditing = editingValidator === va
+        return (
+          <div className={styles.orderCell}>
+            <span>{realIdx}</span>
+            {isEditing && (
+              <div className={styles.editingButtons}>
+                <button
+                  className={`${styles.runSimulationBtn} ${isCalculating ? styles.runSimulationBtnCalculating : ''}`}
+                  onClick={e => {
+                    e.stopPropagation()
+                    onRunSimulation()
+                  }}
+                  disabled={isCalculating}
+                >
+                  {isCalculating ? 'Simulating' : 'Simulate'}
+                </button>
+                <button
+                  className={styles.cancelBtn}
+                  onClick={e => {
+                    e.stopPropagation()
+                    onCancelEditing()
+                  }}
+                  disabled={isCalculating}
+                  title="Cancel editing (Esc)"
+                >
+                  \u2715
+                </button>
+              </div>
+            )}
+          </div>
+        )
+      }}
+      columns={[
+        {
+          header: 'Validator',
+          headerAttrsFn: () => tooltipAttributes('Validator Vote Account'),
+          render: item => {
+            const va = selectVoteAccount(item.validator)
+            const sim = !item.isGhost && simulatedValidator === va
+            return (
+              <span
+                className={`${styles.pubkey} ${sim ? styles.pubkeySimulated : ''}`}
+              >
+                {va}
+              </span>
+            )
+          },
+          compare: (a, b) =>
+            selectVoteAccount(a.validator).localeCompare(
+              selectVoteAccount(b.validator),
+            ),
+        },
+        {
+          header: 'Infl.',
+          headerAttrsFn: () =>
+            tooltipAttributes('Validator Inflation Commission'),
+          cellAttrsFn: item =>
+            tooltipAttributes(
+              `${overridesCommissionMessage(item.validator)}` +
+                `On chain commission: ${formattedOnChainCommission(item.validator)}<br/>` +
+                `In-bond commission: ${formattedInBondCommission(item.validator)}<br/>` +
+                `Effective inflation commission bid: ${selectCommissionPmpe(item.validator)}`,
+            ),
+          render: item => {
+            const { validator, isGhost } = item
+            const isEditing =
+              !isGhost && editingValidator === selectVoteAccount(validator)
+            return renderEditableCell(
+              isEditing,
+              formatPercentage(selectCommission(validator), 0),
+              'inflationCommission',
+              inputVal(
+                'inflationCommission',
+                (selectCommission(validator) * 100).toString(),
+              ),
+              onFieldChange,
+              onRunSimulation,
+              onCancelEditing,
+              { step: '0.1', min: '0', max: '100' },
+            )
+          },
+          compare: (a, b) =>
+            selectCommission(a.validator) - selectCommission(b.validator),
+          alignment: Alignment.RIGHT,
+        },
+        {
+          header: 'MEV',
+          cellAttrsFn: item =>
+            tooltipAttributes(
+              `${overridesMevCommissionMessage(item.validator)}` +
+                `On chain commission: ${formattedOnChainMevCommission(item.validator)}<br/>` +
+                `In-bond commission: ${formattedInBondMevCommission(item.validator)}<br/>` +
+                `Effective MEV commission bid: ${selectMevCommissionPmpe(item.validator)}`,
+            ),
+          render: item => {
+            const { validator, isGhost } = item
+            const isEditing =
+              !isGhost && editingValidator === selectVoteAccount(validator)
+            const mev = selectMevCommission(validator)
+            return renderEditableCell(
+              isEditing,
+              formattedMevCommission(validator),
+              'mevCommission',
+              inputVal(
+                'mevCommission',
+                mev !== null ? (mev * 100).toString() : '',
+              ),
+              onFieldChange,
+              onRunSimulation,
+              onCancelEditing,
+              { step: '0.1', min: '0', max: '100', placeholder: '-' },
+            )
+          },
+          compare: (a, b) =>
+            (selectMevCommission(a.validator) ?? 100) -
+            (selectMevCommission(b.validator) ?? 100),
+          alignment: Alignment.RIGHT,
+        },
+        {
+          header: 'Block',
+          headerAttrsFn: () =>
+            tooltipAttributes(
+              'Block rewards commission can be in Bond configuration solely.',
+            ),
+          cellAttrsFn: item =>
+            tooltipAttributes(
+              `${overridesBlockRewardsCommissionMessage(item.validator)}` +
+                `Effective block rewards commission bid: ${selectBlockRewardsCommissionPmpe(item.validator)}`,
+            ),
+          render: item => {
+            const { validator, isGhost } = item
+            const isEditing =
+              !isGhost && editingValidator === selectVoteAccount(validator)
+            const blk = selectBlockRewardsCommission(validator)
+            return renderEditableCell(
+              isEditing,
+              formattedBlockRewardsCommission(validator),
+              'blockRewardsCommission',
+              inputVal(
+                'blockRewardsCommission',
+                blk !== null ? (blk * 100).toString() : '',
+              ),
+              onFieldChange,
+              onRunSimulation,
+              onCancelEditing,
+              { step: '0.1', min: '0', max: '100', placeholder: '-' },
+            )
+          },
+          compare: (a, b) =>
+            (selectBlockRewardsCommission(a.validator) ?? 100) -
+            (selectBlockRewardsCommission(b.validator) ?? 100),
+          alignment: Alignment.RIGHT,
+        },
+        {
+          header: 'St. Bid',
+          headerAttrsFn: () =>
+            tooltipAttributes(
+              'Static bid for 1000 SOL set by the validator in Bond configuration.',
+            ),
+          cellAttrsFn: item =>
+            tooltipAttributes(
+              `${overridesBidCpmpeMessage(item.validator)}` +
+                `Maximum bid ${selectBondBid(item.validator)} for 1000 SOL.`,
+            ),
+          render: item => {
+            const { validator, isGhost } = item
+            const isEditing =
+              !isGhost && editingValidator === selectVoteAccount(validator)
+            return renderEditableCell(
+              isEditing,
+              formatSolAmount(selectBid(validator), 4),
+              'bidPmpe',
+              inputVal('bidPmpe', selectBid(validator).toString()),
+              onFieldChange,
+              onRunSimulation,
+              onCancelEditing,
+              { step: '0.001', min: '0' },
+            )
+          },
+          compare: (a, b) => selectBid(a.validator) - selectBid(b.validator),
+          alignment: Alignment.RIGHT,
+        },
+        {
+          header: 'Bond [\u2609]',
+          headerAttrsFn: () => tooltipAttributes('Bond Balance.'),
+          cellAttrsFn: item =>
+            tooltipAttributes(bondTooltip(item.validator.bondState)),
+          render: item => (
+            <>{formatSolAmount(selectBondSize(item.validator), 0)}</>
+          ),
+          compare: (a, b) =>
+            selectBondSize(a.validator) - selectBondSize(b.validator),
+          alignment: Alignment.RIGHT,
+          background: item =>
+            selectBondSize(item.validator) <= 0
+              ? Color.GREY
+              : item.validator.bondState,
+        },
+        {
+          header: 'Max APY',
+          headerAttrsFn: () =>
+            tooltipAttributes(
+              "APY calculated using this validator's bid and commission configuration.",
+            ),
+          render: item => (
+            <>
+              {formatPercentage(
+                selectMaxAPY(item.validator, epochsPerYear),
+                2,
+                0.5,
+              )}
+            </>
+          ),
+          compare: (a, b) =>
+            selectMaxAPY(a.validator, epochsPerYear) -
+            selectMaxAPY(b.validator, epochsPerYear),
+          alignment: Alignment.RIGHT,
+        },
+        {
+          header: 'Stake \u0394 [\u2609]',
+          headerAttrsFn: () =>
+            tooltipAttributes(
+              'Change from active to target stake (target \u2212 active). Sorts by target stake.',
+            ),
+          cellAttrsFn: item =>
+            tooltipAttributes(
+              `Active: \u2609${formatSolAmount(selectSamActiveStake(item.validator), 0)}<br/>` +
+                `Target: \u2609${formatSolAmount(selectSamTargetStake(item.validator), 0)}`,
+            ),
+          render: item => {
+            const delta =
+              selectSamTargetStake(item.validator) -
+              selectSamActiveStake(item.validator)
+            return (
+              <>
+                {delta > 0 ? '+' : ''}
+                {formatSolAmount(delta, 0)}
+              </>
+            )
+          },
+          compare: (a, b) =>
+            selectSamTargetStake(a.validator) -
+            selectSamTargetStake(b.validator),
+          alignment: Alignment.RIGHT,
+        },
+        {
+          header: 'Eff. Bid [\u2609]',
+          headerAttrsFn: () =>
+            tooltipAttributes(
+              'Effective bid used in the auction calculation, combining the static bid and commission settings. ' +
+                'This value is used to rank validators in the auction and is shown as cost per 1000 SOL. ' +
+                'It is not the actual amount the validator will pay from the bond, as that depends on the real stake delegated to the validator for the static bid, ' +
+                'and on the rewards earned in the previous epoch for the commission configuration.',
+            ),
+          render: item => (
+            <>{formatSolAmount(selectEffectiveBid(item.validator), 4)}</>
+          ),
+          compare: (a, b) =>
+            selectEffectiveBid(a.validator) - selectEffectiveBid(b.validator),
+          alignment: Alignment.RIGHT,
+        },
+        {
+          header: 'Constraint',
+          headerAttrsFn: () =>
+            tooltipAttributes(
+              "The last constraint that capped this validator's stake allocation.",
+            ),
+          render: item => {
+            const { lastCapConstraint } = item.validator
+            if (!lastCapConstraint) return <>{'\u2014'}</>
+            return (
+              <>
+                {selectConstraintText(item.validator)
+                  .replace('Stake capped by ', '')
+                  .replace(' constraint', '')}
+              </>
+            )
+          },
+          compare: (a, b) =>
+            selectConstraintText(a.validator).localeCompare(
+              selectConstraintText(b.validator),
+            ),
+        },
+      ]}
+      defaultOrder={defaultOrder}
+      onOrderChange={handleOrderChange}
+      presorted
+    />
+  )
+
   return (
     <div
       ref={tableWrapRef}
@@ -491,14 +1082,14 @@ export const SamTable: React.FC<Props> = ({
         <div className={styles.metricRow}>
           <Metric
             label="Total Auction Stake"
-            value={`☉ ${formatSolAmount(samDistributedStake)}`}
+            value={`\u2609 ${formatSolAmount(samDistributedStake)}`}
             {...tooltipAttributes(
               'How much stake is distributed by Marinade to validators based on SAM',
             )}
           />
           <Metric
             label="Winning APY"
-            value={`☉ ${formatPercentage(winningAPY)}`}
+            value={`\u2609 ${formatPercentage(winningAPY)}`}
             {...tooltipAttributes(
               'Estimated APY of the last validator winning the auction based on ideal count of epochs in the year; assumes no Marinade fees',
             )}
@@ -520,332 +1111,7 @@ export const SamTable: React.FC<Props> = ({
         {expertMetrics}
       </div>
 
-      <Table
-        caption={
-          simulationModeActive ? (
-            <div className={styles.simulationBanner}>
-              {isCalculating
-                ? 'Calculating simulation...'
-                : 'Simulation mode active'}
-            </div>
-          ) : undefined
-        }
-        data={displayValidators}
-        rowAttrsFn={(item, index) => {
-          const { validator, isGhost } = item
-          const va = selectVoteAccount(validator)
-          if (isGhost) {
-            return { className: styles.ghostRow }
-          }
-
-          const isEditing = editingValidator === va
-          const isSimulated = simulatedValidator === va
-          const classes: string[] = []
-          let onClick: (() => void) | undefined
-
-          if (isSimulated && !isEditing) {
-            const realIdx = displayValidators
-              .slice(0, index + 1)
-              .filter(d => !d.isGhost).length
-            classes.push(
-              styles.validatorRowClickable,
-              getPositionChangeClass(va, realIdx) || styles.positionUnchanged,
-            )
-            onClick = () => onValidatorClick(va)
-          } else if (simulationModeActive && !isEditing) {
-            classes.push(styles.validatorRowClickable)
-            onClick = () => onValidatorClick(va)
-          } else if (isEditing) {
-            classes.push(styles.validatorRowEditing)
-          }
-
-          if (selectIsNonProductive(validator)) {
-            classes.push(styles.rowYellow)
-          }
-
-          return { className: classes.join(' ') || undefined, onClick }
-        }}
-        showRowNumber
-        rowNumberRender={(item, index) => {
-          const { validator, isGhost } = item
-          const va = selectVoteAccount(validator)
-          if (isGhost) {
-            return (
-              <div className={styles.orderCell}>
-                <span>{getOriginalPosition(va) ?? index + 1}</span>
-              </div>
-            )
-          }
-          const realIdx = displayValidators
-            .slice(0, index + 1)
-            .filter(d => !d.isGhost).length
-          const isEditing = editingValidator === va
-          return (
-            <div className={styles.orderCell}>
-              <span>{realIdx}</span>
-              {isEditing && (
-                <div className={styles.editingButtons}>
-                  <button
-                    className={`${styles.runSimulationBtn} ${isCalculating ? styles.runSimulationBtnCalculating : ''}`}
-                    onClick={e => {
-                      e.stopPropagation()
-                      onRunSimulation()
-                    }}
-                    disabled={isCalculating}
-                  >
-                    {isCalculating ? 'Simulating' : 'Simulate'}
-                  </button>
-                  <button
-                    className={styles.cancelBtn}
-                    onClick={e => {
-                      e.stopPropagation()
-                      onCancelEditing()
-                    }}
-                    disabled={isCalculating}
-                    title="Cancel editing (Esc)"
-                  >
-                    ✕
-                  </button>
-                </div>
-              )}
-            </div>
-          )
-        }}
-        columns={[
-          {
-            header: 'Validator',
-            headerAttrsFn: () => tooltipAttributes('Validator Vote Account'),
-            render: item => {
-              const va = selectVoteAccount(item.validator)
-              const sim = !item.isGhost && simulatedValidator === va
-              return (
-                <span
-                  className={`${styles.pubkey} ${sim ? styles.pubkeySimulated : ''}`}
-                >
-                  {va}
-                </span>
-              )
-            },
-            compare: (a, b) =>
-              selectVoteAccount(a.validator).localeCompare(
-                selectVoteAccount(b.validator),
-              ),
-          },
-          {
-            header: 'Infl.',
-            headerAttrsFn: () =>
-              tooltipAttributes('Validator Inflation Commission'),
-            cellAttrsFn: item =>
-              tooltipAttributes(
-                `${overridesCommissionMessage(item.validator)}` +
-                  `On chain commission: ${formattedOnChainCommission(item.validator)}<br/>` +
-                  `In-bond commission: ${formattedInBondCommission(item.validator)}<br/>` +
-                  `Effective inflation commission bid: ${selectCommissionPmpe(item.validator)}`,
-              ),
-            render: item => {
-              const { validator, isGhost } = item
-              const isEditing =
-                !isGhost && editingValidator === selectVoteAccount(validator)
-              return renderEditableCell(
-                isEditing,
-                formatPercentage(selectCommission(validator), 0),
-                'inflationCommission',
-                inputVal(
-                  'inflationCommission',
-                  (selectCommission(validator) * 100).toString(),
-                ),
-                onFieldChange,
-                onRunSimulation,
-                onCancelEditing,
-                { step: '0.1', min: '0', max: '100' },
-              )
-            },
-            compare: (a, b) =>
-              selectCommission(a.validator) - selectCommission(b.validator),
-            alignment: Alignment.RIGHT,
-          },
-          {
-            header: 'MEV',
-            cellAttrsFn: item =>
-              tooltipAttributes(
-                `${overridesMevCommissionMessage(item.validator)}` +
-                  `On chain commission: ${formattedOnChainMevCommission(item.validator)}<br/>` +
-                  `In-bond commission: ${formattedInBondMevCommission(item.validator)}<br/>` +
-                  `Effective MEV commission bid: ${selectMevCommissionPmpe(item.validator)}`,
-              ),
-            render: item => {
-              const { validator, isGhost } = item
-              const isEditing =
-                !isGhost && editingValidator === selectVoteAccount(validator)
-              const mev = selectMevCommission(validator)
-              return renderEditableCell(
-                isEditing,
-                formattedMevCommission(validator),
-                'mevCommission',
-                inputVal(
-                  'mevCommission',
-                  mev !== null ? (mev * 100).toString() : '',
-                ),
-                onFieldChange,
-                onRunSimulation,
-                onCancelEditing,
-                { step: '0.1', min: '0', max: '100', placeholder: '-' },
-              )
-            },
-            compare: (a, b) =>
-              (selectMevCommission(a.validator) ?? 100) -
-              (selectMevCommission(b.validator) ?? 100),
-            alignment: Alignment.RIGHT,
-          },
-          {
-            header: 'Block',
-            headerAttrsFn: () =>
-              tooltipAttributes(
-                'Block rewards commission can be in Bond configuration solely.',
-              ),
-            cellAttrsFn: item =>
-              tooltipAttributes(
-                `${overridesBlockRewardsCommissionMessage(item.validator)}` +
-                  `Effective block rewards commission bid: ${selectBlockRewardsCommissionPmpe(item.validator)}`,
-              ),
-            render: item => {
-              const { validator, isGhost } = item
-              const isEditing =
-                !isGhost && editingValidator === selectVoteAccount(validator)
-              const blk = selectBlockRewardsCommission(validator)
-              return renderEditableCell(
-                isEditing,
-                formattedBlockRewardsCommission(validator),
-                'blockRewardsCommission',
-                inputVal(
-                  'blockRewardsCommission',
-                  blk !== null ? (blk * 100).toString() : '',
-                ),
-                onFieldChange,
-                onRunSimulation,
-                onCancelEditing,
-                { step: '0.1', min: '0', max: '100', placeholder: '-' },
-              )
-            },
-            compare: (a, b) =>
-              (selectBlockRewardsCommission(a.validator) ?? 100) -
-              (selectBlockRewardsCommission(b.validator) ?? 100),
-            alignment: Alignment.RIGHT,
-          },
-          {
-            header: 'St. Bid',
-            headerAttrsFn: () =>
-              tooltipAttributes(
-                'Static bid for 1000 SOL set by the validator in Bond configuration.',
-              ),
-            cellAttrsFn: item =>
-              tooltipAttributes(
-                `${overridesBidCpmpeMessage(item.validator)}` +
-                  `Maximum bid ${selectBondBid(item.validator)} for 1000 SOL.`,
-              ),
-            render: item => {
-              const { validator, isGhost } = item
-              const isEditing =
-                !isGhost && editingValidator === selectVoteAccount(validator)
-              return renderEditableCell(
-                isEditing,
-                formatSolAmount(selectBid(validator), 4),
-                'bidPmpe',
-                inputVal('bidPmpe', selectBid(validator).toString()),
-                onFieldChange,
-                onRunSimulation,
-                onCancelEditing,
-                { step: '0.001', min: '0' },
-              )
-            },
-            compare: (a, b) => selectBid(a.validator) - selectBid(b.validator),
-            alignment: Alignment.RIGHT,
-          },
-          {
-            header: 'Bond [☉]',
-            headerAttrsFn: () => tooltipAttributes('Bond Balance.'),
-            cellAttrsFn: item =>
-              tooltipAttributes(bondTooltip(item.validator.bondState)),
-            render: item => (
-              <>{formatSolAmount(selectBondSize(item.validator), 0)}</>
-            ),
-            compare: (a, b) =>
-              selectBondSize(a.validator) - selectBondSize(b.validator),
-            alignment: Alignment.RIGHT,
-            background: item =>
-              selectBondSize(item.validator) <= 0
-                ? Color.GREY
-                : item.validator.bondState,
-          },
-          {
-            header: 'Max APY',
-            headerAttrsFn: () =>
-              tooltipAttributes(
-                "APY calculated using this validator's bid and commission configuration.",
-              ),
-            render: item => (
-              <>
-                {formatPercentage(
-                  selectMaxAPY(item.validator, epochsPerYear),
-                  2,
-                  0.5,
-                )}
-              </>
-            ),
-            compare: (a, b) =>
-              selectMaxAPY(a.validator, epochsPerYear) -
-              selectMaxAPY(b.validator, epochsPerYear),
-            alignment: Alignment.RIGHT,
-          },
-          {
-            header: 'SAM Active [☉]',
-            headerAttrsFn: () =>
-              tooltipAttributes('The currently active stake delegated by SAM.'),
-            render: item => (
-              <>{formatSolAmount(selectSamActiveStake(item.validator), 0)}</>
-            ),
-            compare: (a, b) =>
-              selectSamActiveStake(a.validator) -
-              selectSamActiveStake(b.validator),
-            alignment: Alignment.RIGHT,
-          },
-          {
-            header: 'SAM Target [☉]',
-            headerAttrsFn: () =>
-              tooltipAttributes(
-                'The target stake to be received based off the auction.',
-              ),
-            cellAttrsFn: item =>
-              tooltipAttributes(selectConstraintText(item.validator)),
-            render: item => (
-              <>{formatSolAmount(selectSamTargetStake(item.validator), 0)}</>
-            ),
-            compare: (a, b) =>
-              selectSamTargetStake(a.validator) -
-              selectSamTargetStake(b.validator),
-            alignment: Alignment.RIGHT,
-          },
-          {
-            header: 'Eff. Bid [☉]',
-            headerAttrsFn: () =>
-              tooltipAttributes(
-                'Effective bid used in the auction calculation, combining the static bid and commission settings. ' +
-                  'This value is used to rank validators in the auction and is shown as cost per 1000 SOL. ' +
-                  'It is not the actual amount the validator will pay from the bond, as that depends on the real stake delegated to the validator for the static bid, ' +
-                  'and on the rewards earned in the previous epoch for the commission configuration.',
-              ),
-            render: item => (
-              <>{formatSolAmount(selectEffectiveBid(item.validator), 4)}</>
-            ),
-            compare: (a, b) =>
-              selectEffectiveBid(a.validator) - selectEffectiveBid(b.validator),
-            alignment: Alignment.RIGHT,
-          },
-        ]}
-        defaultOrder={defaultOrder}
-        onOrderChange={handleOrderChange}
-        presorted
-      />
+      {level === UserLevel.Expert ? renderExpertTable() : renderCardList()}
     </div>
   )
 }
