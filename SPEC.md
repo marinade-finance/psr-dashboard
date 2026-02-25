@@ -16,8 +16,8 @@ no state management. Hash-based "routing" via React state. Existing
 - Add `viewMode` state: `'list' | 'detail'`
 - Add `selectedValidator` state (vote account string)
 - Add `densityMode` state: `'compact' | 'expanded'`
-- Fetch validator names via `fetchValidators()` (already used in
-  bonds/events pages) → `Map<voteAccount, name>`
+- Fetch validator names + country via `fetchValidators()` (already used
+  in bonds/events pages) → `Map<voteAccount, {name, country}>`
 - Pass name map + view states to sam-table
 - When `viewMode === 'detail'`: render `<SamDetail>` instead of table
 - Preserve scroll position on back (save to ref before navigating)
@@ -25,7 +25,7 @@ no state management. Hash-based "routing" via React state. Existing
 ### src/components/sam-table/sam-table.tsx
 
 - **Basic mode**: replace `<Table>` with card-based list
-  - Compact: single-line row (rank, name, APY, bond dot, delta)
+  - Compact: single-line row (rank, flag, name, APY, bond dot, delta)
   - Expanded: multi-line card (APY breakdown, bond health, stake movement)
   - Density toggle above list
   - Row click → `onValidatorClick(voteAccount)`
@@ -59,7 +59,9 @@ no state management. Hash-based "routing" via React state. Existing
 
 ### src/components/sam-table/sam-table.module.css
 
-- Add card row styles (background, border, radius, hover)
+- Add card row styles (background, border, radius, hover with left accent)
+- Country flag (circular 16px)
+- Click-to-copy on address text (pointer, hover underline, "Copied" toast)
 - Density toggle styles
 - Keep all existing simulation/editing styles unchanged
 

@@ -11,8 +11,10 @@ Default view. Shows auction results and validator rankings.
 ### Metrics
 
 Total Auction Stake, Winning APY, Projected APY, Winning Validators.
+Basic mode: each card has a one-line muted subtitle explaining the metric.
 Expert adds: Stake to Move, Active Stake, Productive Stake, Avg Stake,
 T. Protected, T. Unprotected, Conc. Risk, Conc. TVL, +/-10% TVL, Ideal APY.
+Expert metrics: no subtitles (density).
 
 ### Basic Mode — List View
 
@@ -29,12 +31,14 @@ Single-line card. Five elements:
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  1   Laine            16.27%    ● Healthy     ↑ +22,549☉    │
+│▎ 1  🇩🇪 Laine          16.27%    ● Healthy     ↑ +22,549☉   │
 └──────────────────────────────────────────────────────────────┘
 ```
 
 - **#** — rank, muted
+- **Flag** — country flag (circular 16px), from `info_country`
 - **Name** — validator name, fallback truncated pubkey `Abc1…xyz9`
+  (pubkey fallback: click to copy, brief "Copied" toast)
 - **Max APY** — bold percentage
 - **Bond health** — colored dot + label
 - **Stake Δ** — signed SOL delta (target − active), colored arrow
@@ -45,7 +49,7 @@ Multi-line card with 3-column detail breakdown:
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  1   Laine                                     ↑ +22,549☉   │
+│▎ 1  🇩🇪 Laine                                   ↑ +22,549☉   │
 │                                                              │
 │  APY BREAKDOWN          BOND HEALTH         STAKE MOVEMENT   │
 │  Inflation comm.  0%    315☉  42% used      Current  45,000☉ │
@@ -89,7 +93,18 @@ with colored arrow.
 - Border: 1px solid rgba(148, 163, 184, 0.1), radius 8px
 - Gap: 4px between rows
 - Padding: compact 12px 24px, expanded 20px 24px
-- Hover: border brightens to rgba(148, 163, 184, 0.2), pointer
+- Hover: left border 3px solid #3b82f6, bg rgba(59, 130, 246, 0.04), pointer
+
+#### Typography
+
+- Basic list: Inter / system sans-serif, weight 400/500/600
+- Expert table: monospace (current), unchanged
+
+#### Copyable Addresses
+
+Anywhere a pubkey is shown: click text to copy, brief "Copied" toast.
+No separate button — the address itself is the click target.
+Cursor: pointer. Hover: subtle underline.
 
 ### Validator Detail Page
 
@@ -101,8 +116,8 @@ Back button top-left returns to list, preserving scroll and sort.
 ```
 ← Back
 
-Laine                                             #1 of 211
-Abc1...xyz9
+🇩🇪 Laine                                          #1 of 211
+Abc1...xyz9  (click to copy)
 
 ┌──────────┐  ┌──────────┐  ┌──────────┐
 │ MAX APY  │  │ BOND     │  │ STAKE Δ  │
@@ -127,7 +142,8 @@ Stake bid      0.461%                          Delta  ↑+23,059☉
 └──────────────────────────────────────────────────────────┘
 ```
 
-**Header**: name (large), pubkey (muted, copyable), rank badge.
+**Header**: flag + name (large), pubkey below (muted, click to copy),
+rank badge `#1 of 211` top-right.
 
 **Summary cards** (3 across): Max APY, Bond (health + utilization),
 Stake Δ (signed delta + "next epoch").
