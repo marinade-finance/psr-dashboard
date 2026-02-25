@@ -229,16 +229,8 @@
   background-color: rgba(255, 255, 255, 0.12);
 }
 
-.rowRed {
-  background-color: rgba(135, 28, 24, 0.2);
-}
-
 .rowYellow {
   background-color: rgba(128, 96, 0, 0.12);
-}
-
-.noBondRow {
-  opacity: 0.4;
 }
 
 .ghostRow {

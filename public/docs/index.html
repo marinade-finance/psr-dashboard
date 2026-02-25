@@ -187,10 +187,10 @@
     <script>
       const content = document.getElementById('content')
       const tabs = document.querySelector('.tabs')
-      const expert = /\/expert-docs\//.test(location.pathname)
+      const expert = new URLSearchParams(location.search).get('from') === 'expert'
 
       if (expert) {
-        document.getElementById('back').href = '../expert-'
+        document.getElementById('back').href = '/expert-'
         const btn = document.createElement('button')
         btn.className = 'btn tab'
         btn.dataset.doc = 'GUIDE-EXPERT'

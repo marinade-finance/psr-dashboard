@@ -11,7 +11,6 @@ interface CssExports {
   'inputPlaceholder': string;
   'metricRow': string;
   'metricWrap': string;
-  'noBondRow': string;
   'orderCell': string;
   'positionImproved1': string;
   'positionImproved2': string;
@@ -22,7 +21,6 @@ interface CssExports {
   'positionWorsened3': string;
   'pubkey': string;
   'pubkeySimulated': string;
-  'rowRed': string;
   'rowYellow': string;
   'runSimulationBtn': string;
   'runSimulationBtnCalculating': string;

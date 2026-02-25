@@ -551,14 +551,7 @@ export const SamTable: React.FC<Props> = ({
             classes.push(styles.validatorRowEditing)
           }
 
-          if (selectBondSize(validator) <= 0) {
-            classes.push(styles.noBondRow)
-          } else if (validator.bondState === Color.RED) {
-            classes.push(styles.rowRed)
-          } else if (
-            validator.bondState === Color.YELLOW ||
-            selectIsNonProductive(validator)
-          ) {
+          if (selectIsNonProductive(validator)) {
             classes.push(styles.rowYellow)
           }
 
@@ -771,6 +764,10 @@ export const SamTable: React.FC<Props> = ({
             compare: (a, b) =>
               selectBondSize(a.validator) - selectBondSize(b.validator),
             alignment: Alignment.RIGHT,
+            background: item =>
+              selectBondSize(item.validator) <= 0
+                ? Color.GREY
+                : item.validator.bondState,
           },
           {
             header: 'Max APY',
