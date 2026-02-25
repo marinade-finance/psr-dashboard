@@ -36,7 +36,10 @@ Single-line card. Five elements:
 ```
 
 - **#** — rank, muted
-- **Flag** — country flag (circular 16px), from `info_country`
+- **Flag** — country flag (circular 16px). Source: `dc_country_iso` field
+  from validators API (ISO 3166-1 alpha-2 code, e.g. "DE", "US").
+  Rendered as Unicode regional indicator emoji (e.g. "DE" → 🇩🇪).
+  No CDN, no images — pure text. Fallback: hidden if `dc_country_iso` null.
 - **Name** — validator name, fallback truncated pubkey `Abc1…xyz9`
   (pubkey fallback: click to copy, brief "Copied" toast)
 - **Max APY** — bold percentage
@@ -102,14 +105,20 @@ with colored arrow.
 
 #### Copyable Addresses
 
-Anywhere a pubkey is shown: click text to copy, brief "Copied" toast.
+Anywhere a pubkey is shown: click text to copy via `navigator.clipboard.writeText()`.
 No separate button — the address itself is the click target.
 Cursor: pointer. Hover: subtle underline.
 
+Toast: inline "Copied" text replaces the address for 1.5s, then reverts.
+No toast library — use local React state + `setTimeout`. The address
+element briefly shows "Copied" in muted green (#4ade80), then fades back.
+
 ### Validator Detail Page
 
-Navigate by clicking any row. Route: `/validator/{voteAccount}`.
-Back button top-left returns to list, preserving scroll and sort.
+Navigate by clicking any row. No URL routing — detail view is React state
+(`viewMode: 'detail'`, `selectedValidator: voteAccount`). No browser URL
+change, no routing library needed. Back button top-left sets
+`viewMode: 'list'`, preserving scroll position and sort via refs.
 
 #### Layout
 
@@ -171,8 +180,12 @@ Priority order (first match wins):
 10. Delta < 0 → "Losing Δ☉ — others outbid you"
 11. Stable → "Stable position"
 
-Reuses existing: `bondHealthColor()`, `bondTooltip()`,
-`selectConstraintText()`, `selectIsNonProductive()`.
+Reuses existing functions (all in `src/services/sam.ts`):
+- `bondHealthColor()` — maps bond epochs to Color enum
+- `bondTooltip()` — generates bond health tooltip text
+- `selectConstraintText()` — formats `lastCapConstraint` into display string
+  (calls `lastCapConstraintDescription()` internally)
+- `selectIsNonProductive()` — checks if bid < 90% effective bid
 
 ### Expert Mode — Table View
 

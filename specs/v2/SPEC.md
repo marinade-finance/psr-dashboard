@@ -6,7 +6,9 @@ structure, reuse existing components and logic.
 ## Principle
 
 Change as little as possible. No new frameworks, no routing library,
-no state management. Hash-based "routing" via React state. Existing
+no state management. Detail view is React state in sam.tsx
+(`viewMode: 'list' | 'detail'`), not a URL route. No browser URL
+change for detail — back button restores list via state. Existing
 `<Table>` component stays for expert mode.
 
 ## Changes by File
@@ -17,7 +19,10 @@ no state management. Hash-based "routing" via React state. Existing
 - Add `selectedValidator` state (vote account string)
 - Add `densityMode` state: `'compact' | 'expanded'`
 - Fetch validator names + country via `fetchValidators()` (already used
-  in bonds/events pages) → `Map<voteAccount, {name, country}>`
+  in bonds/events pages) → `Map<voteAccount, {name, countryIso}>`
+- Add `dc_country_iso: string | null` to `Validator` type in validators.ts
+- Country flag: convert ISO alpha-2 → Unicode regional indicator emoji
+  (e.g. "DE" → 🇩🇪). Pure text, no images. Helper: `isoToFlag(code)`
 - Pass name map + view states to sam-table
 - When `viewMode === 'detail'`: render `<SamDetail>` instead of table
 - Preserve scroll position on back (save to ref before navigating)
@@ -45,8 +50,8 @@ no state management. Hash-based "routing" via React state. Existing
 - `getRecommendation()` function composing existing logic:
   - `bondHealthColor()` for bond state
   - `bondTooltip()` for bond advice text
-  - `selectConstraintText()` / `lastCapConstraint` for cap info
-  - `selectIsNonProductive()` for productivity check
+  - `selectConstraintText()` (existing, `src/services/sam.ts:197`) for cap info
+  - `selectIsNonProductive()` (existing, `src/services/sam.ts`) for productivity
   - Priority cascade per SCREENS.md recommendation logic
 
 ### src/components/sam-detail/sam-detail.module.css (new)
@@ -61,7 +66,9 @@ no state management. Hash-based "routing" via React state. Existing
 
 - Add card row styles (background, border, radius, hover with left accent)
 - Country flag (circular 16px)
-- Click-to-copy on address text (pointer, hover underline, "Copied" toast)
+- Click-to-copy on address text (pointer, hover underline)
+- "Copied" feedback: inline text replacement for 1.5s via local state +
+  setTimeout, no toast library
 - Density toggle styles
 - Keep all existing simulation/editing styles unchanged
 
