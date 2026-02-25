@@ -1,3 +1,4 @@
+- verified sam-table.tsx: basic mode card list (compact/expanded, density toggle, isoToFlag, bond dot, stake delta, click-to-copy) and expert mode Stake Δ + Constraint columns complete
 - added playwright.config.ts (chromium, baseURL localhost:8080, reuseExistingServer) and test:e2e scripts to package.json
 - added dc_country_iso: string | null to Validator type in src/services/validators.ts
 - added card row, density toggle, copy address, and copied feedback styles to sam-table.module.css
