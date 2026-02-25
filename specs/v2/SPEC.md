@@ -17,7 +17,7 @@ change for detail — back button restores list via state. Existing
 
 - Add `viewMode` state: `'list' | 'detail'`
 - Add `selectedValidator` state (vote account string)
-- Add `densityMode` state: `'compact' | 'expanded'`
+- No density toggle — basic mode uses Variant A (clean table)
 - Fetch validator names + country via `fetchValidators()` (already used
   in bonds/events pages) → `Map<voteAccount, {name, countryIso}>`
 - Add `dc_country_iso: string | null` to `Validator` type in validators.ts
@@ -29,10 +29,13 @@ change for detail — back button restores list via state. Existing
 
 ### src/components/sam-table/sam-table.tsx
 
-- **Basic mode**: replace `<Table>` with card-based list
-  - Compact: single-line row (rank, name, APY, bond dot, delta)
-  - Expanded: multi-line card (APY breakdown, bond health, stake movement)
-  - Density toggle above list
+- **Basic mode**: simplified table (Variant A) with 6 columns:
+  `# | Validator | Max APY | Bond | Stake Δ | Next Step`
+  - Validator: name + truncated pubkey (click to copy)
+  - Max APY: tooltip shows commission breakdown
+  - Bond: colored dot + health label + SOL balance
+  - Stake Δ: signed delta, tooltip shows active/target
+  - Next Step: recommendation text from `getRecommendation()`
   - Row click → `onValidatorClick(voteAccount)`
 - **Expert mode**: keep current `<Table>`, modify columns:
   - Remove SAM Active + SAM Target columns
@@ -64,12 +67,10 @@ change for detail — back button restores list via state. Existing
 
 ### src/components/sam-table/sam-table.module.css
 
-- Add card row styles (background, border, radius, hover with left accent)
-- Country flag (circular 16px)
+- Row hover: left border accent + subtle bg shift
 - Click-to-copy on address text (pointer, hover underline)
 - "Copied" feedback: inline text replacement for 1.5s via local state +
   setTimeout, no toast library
-- Density toggle styles
 - Keep all existing simulation/editing styles unchanged
 
 ### src/services/sam.ts
@@ -92,5 +93,5 @@ change for detail — back button restores list via state. Existing
 ## Migration
 
 No breaking changes. Expert mode table is nearly identical. Basic mode
-switches from table to card list — same data, different presentation.
-Simulation stays expert-only for now.
+switches from 10-column table to 6-column table — same data, simpler
+presentation. Simulation stays expert-only for now.

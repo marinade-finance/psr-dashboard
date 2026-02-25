@@ -15,7 +15,7 @@ throughout. Target: migrate from CSS Modules to Tailwind + shadcn/ui.
 
 ### Target Stack
 - Keep Webpack + React 18 (no framework change)
-- Add Tailwind CSS v4 (PostCSS plugin for webpack)
+- Add Tailwind CSS v3 (PostCSS plugin for webpack)
 - Add shadcn/ui components (copy-paste, not npm package)
 - Migrate pages incrementally — new code uses Tailwind, old CSS
   Modules coexist during transition
@@ -656,14 +656,16 @@ Shared structure across all SAM variants.
 
 ## Implementation Phases
 
-### Phase 1: Foundation
-- Install Tailwind CSS + PostCSS in webpack
+### Ship Now (Phases 1–2)
+
+**Phase 1: Foundation**
+- Install Tailwind CSS v3 + PostCSS in webpack
 - Add shadcn/ui primitives (Card, Badge, Table, Tabs, Button, etc.)
-- Set up dark theme tokens in tailwind.config
+- Set up dark theme tokens in tailwind.config.js (v3 syntax)
 - Add Inter font
 - Wire up `cn()` utility
 
-### Phase 2: Variant A (Basic SAM Table)
+**Phase 2: Variant A (Basic SAM Table)**
 - Build simplified table with 6 columns
 - Implement NEXT STEP recommendation logic
 - Bond health dots + SOL balance
@@ -671,23 +673,25 @@ Shared structure across all SAM variants.
 - View mode tabs (A only active, B/C disabled)
 - Click row → detail page (existing SamDetail)
 
-### Phase 3: Detail Page Polish
+### Ship Later (Phases 3–6)
+
+**Phase 3: Detail Page Polish**
 - Migrate SamDetail to shadcn Card/Badge/Progress
 - Add APY composition bar chart
 - Polish recommendation box
 
-### Phase 4: Protected Events + Bonds
+**Phase 4: Protected Events + Bonds**
 - Migrate tables to shadcn Table
 - Add search/filter with shadcn Input
 - Settlement badges with shadcn Badge
 - Consistent validator cell pattern
 
-### Phase 5: Variant B (Expandable Rows)
+**Phase 5: Variant B (Expandable Rows)**
 - shadcn Collapsible accordion
 - 3-column expanded detail
 - Recommendation box in expanded view
 
-### Phase 6: Variant C (My Position)
+**Phase 6: Variant C (My Position)**
 - Validator selector (chips or combobox)
 - Focus panel with summary cards
 - Nearby validators mini-table

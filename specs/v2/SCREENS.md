@@ -20,62 +20,27 @@ Expert adds: Stake to Move, Active Stake, Productive Stake, Avg Stake,
 T. Protected, T. Unprotected, Conc. Risk, Conc. TVL, +/-10% TVL, Ideal APY.
 Expert metrics: no subtitles (density).
 
-### Basic Mode — List View
+### Basic Mode — Clean Table (Variant A)
 
-Card-based list with two density modes. Default sort: target stake desc.
+Simplified table with 6 columns. Default sort: target stake desc.
 Click any row → validator detail page.
 
-#### Density Toggle
+See `VISUALS.md` Variant A for full column specs, row interaction,
+and pixel-level styling. Variants B (expandable rows) and C (focus
+view) are deferred — ship later.
 
-`Compact | Expanded` toggle above the list. Default: Compact.
-
-#### Compact Row
-
-Single-line card. Five elements:
+#### Columns
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│▎ 1   Laine             16.27%    ● Healthy     ↑ +22,549☉   │
-└──────────────────────────────────────────────────────────────┘
+# | VALIDATOR | MAX APY | BOND | STAKE Δ | NEXT STEP
 ```
 
 - **#** — rank, muted
-- **Name** — validator name, fallback truncated pubkey `Abc1…xyz9`
-  (pubkey fallback: click to copy, brief "Copied" toast)
-- **Max APY** — bold percentage
-- **Bond health** — colored dot + label
-- **Stake Δ** — signed SOL delta (target − active), colored arrow
-
-#### Expanded Row
-
-Multi-line card with 3-column detail breakdown:
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│▎ 1  🇩🇪 Laine                                    ↑ +22,549☉   │
-│                                                              │
-│  APY BREAKDOWN          BOND HEALTH         STAKE MOVEMENT   │
-│  Inflation comm.  0%    315☉  42% used      Current  45,000☉ │
-│  MEV comm.        0%    ● Healthy           Target   67,549☉ │
-│  Block prod.    100%    ████████████░░░░                      │
-│  Stake bid    0.461%                        Delta  ↑+22,549☉ │
-│  ──────────────                                              │
-│  Max APY     16.27%                                          │
-│                                                              │
-│  Tip: On track to gain +22,549☉                              │
-└──────────────────────────────────────────────────────────────┘
-```
-
-**APY Breakdown** (left): commission percentages + stake bid,
-separator, Max APY total.
-
-**Bond Health** (center): balance in SOL, utilization badge
-(`42% used`), health dot + label, progress bar colored by health.
-
-**Stake Movement** (right): current (active), target, delta
-with colored arrow.
-
-**Tip line**: recommendation text at bottom, muted.
+- **Validator** — name + truncated pubkey below (click to copy)
+- **Max APY** — percentage, tooltip shows commission breakdown
+- **Bond** — colored dot + health label + SOL balance
+- **Stake Δ** — signed delta with colored arrow, tooltip shows active/target
+- **Next Step** — actionable recommendation text (see Recommendation Logic)
 
 #### Bond Health States
 
