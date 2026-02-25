@@ -3,6 +3,11 @@
 interface CssExports {
   'calculating': string;
   'cancelBtn': string;
+  'cardRow': string;
+  'cardRowExpanded': string;
+  'copiedFeedback': string;
+  'copyAddress': string;
+  'densityToggle': string;
   'editingButtons': string;
   'ghostRow': string;
   'header-glow': string;

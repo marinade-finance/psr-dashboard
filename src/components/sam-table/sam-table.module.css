@@ -248,3 +248,72 @@
 .ghostRow td div {
   text-decoration: line-through;
 }
+
+/* Card row styles for basic mode list view */
+.cardRow {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 8px;
+  margin-bottom: 4px;
+  padding: 12px 24px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.cardRow:hover {
+  background: rgba(59, 130, 246, 0.04);
+  border-left: 3px solid #3b82f6;
+  cursor: pointer;
+}
+
+.cardRowExpanded {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 8px;
+  margin-bottom: 4px;
+  padding: 20px 24px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.cardRowExpanded:hover {
+  background: rgba(59, 130, 246, 0.04);
+  border-left: 3px solid #3b82f6;
+  cursor: pointer;
+}
+
+/* Density toggle button */
+.densityToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 6px;
+  color: #94a3b8;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.densityToggle:hover {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #e2e8f0;
+}
+
+/* Click-to-copy address */
+.copyAddress {
+  cursor: pointer;
+}
+
+.copyAddress:hover {
+  text-decoration: underline;
+}
+
+/* "Copied" feedback text */
+.copiedFeedback {
+  color: #4ade80;
+  font-size: 11px;
+}

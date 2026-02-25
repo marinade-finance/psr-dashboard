@@ -496,3 +496,58 @@ export const selectTvlApyDiff = (
   const altApy = Math.pow(1 + profitOf(altResult) / altTvl, epochsPerYear) - 1
   return altApy - baseApy
 }
+
+export const selectStakeDelta = (validator: AuctionValidator): number =>
+  validator.auctionStake.marinadeSamTargetSol -
+  validator.marinadeActivatedStakeSol
+
+export type Recommendation = { text: string; severity: string }
+
+export function getRecommendation(
+  validator: AuctionValidator,
+  bondColor: Color,
+): Recommendation {
+  if (!validator.auctionStake.marinadeSamTargetSol) {
+    if (!validator.samEligible) {
+      return { text: 'Not eligible for SAM auction', severity: 'neutral' }
+    }
+    return {
+      text: 'Not winning any stake in the current auction',
+      severity: 'neutral',
+    }
+  }
+  if (bondColor === Color.RED) {
+    return {
+      text: 'Top up your bond immediately — bond balance is limiting your stake',
+      severity: 'critical',
+    }
+  }
+  if (bondColor === Color.YELLOW) {
+    return {
+      text: 'Top up your bond soon — balance covers only ~1 epoch of bids',
+      severity: 'warning',
+    }
+  }
+  if (selectIsNonProductive(validator)) {
+    return {
+      text: 'Validator is non-productive — bond obligation not being met',
+      severity: 'warning',
+    }
+  }
+  const delta = selectStakeDelta(validator)
+  if (delta > 0) {
+    return { text: 'Stake is increasing toward target', severity: 'positive' }
+  }
+  if (delta < 0) {
+    return { text: 'Stake is decreasing toward target', severity: 'neutral' }
+  }
+  return { text: 'Stake is at target', severity: 'positive' }
+}
+
+export function isoToFlag(iso: string): string {
+  const upper = iso.toUpperCase()
+  const OFFSET = 0x1f1e6 - 0x41 // regional indicator A minus latin A
+  return Array.from(upper)
+    .map(ch => String.fromCodePoint(ch.codePointAt(0) + OFFSET))
+    .join('')
+}
