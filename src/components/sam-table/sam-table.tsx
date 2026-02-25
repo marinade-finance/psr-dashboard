@@ -538,6 +538,7 @@ export const SamTable: React.FC<Props> = ({
       <Metric
         label="Projected APY"
         value={`☉ ${formatPercentage(projectedApy)}`}
+        subtitle="Estimated staker return"
         {...tooltipAttributes(
           'Estimated APY of currently active stake; assumes no Marinade fees',
         )}
@@ -553,6 +554,7 @@ export const SamTable: React.FC<Props> = ({
 
   const renderBasicTable = () => (
     <Table
+      className={styles.basicTable}
       caption={simulationCaption}
       data={displayValidators}
       rowAttrsFn={(item, _index) => {
@@ -1095,6 +1097,11 @@ export const SamTable: React.FC<Props> = ({
           <Metric
             label="Total Auction Stake"
             value={`\u2609 ${formatSolAmount(samDistributedStake)}`}
+            subtitle={
+              level !== UserLevel.Expert
+                ? 'Total stake distributed via auction'
+                : undefined
+            }
             {...tooltipAttributes(
               'How much stake is distributed by Marinade to validators based on SAM',
             )}
@@ -1102,6 +1109,11 @@ export const SamTable: React.FC<Props> = ({
           <Metric
             label="Winning APY"
             value={`\u2609 ${formatPercentage(winningAPY)}`}
+            subtitle={
+              level !== UserLevel.Expert
+                ? 'Last winning validator APY'
+                : undefined
+            }
             {...tooltipAttributes(
               'Estimated APY of the last validator winning the auction based on ideal count of epochs in the year; assumes no Marinade fees',
             )}

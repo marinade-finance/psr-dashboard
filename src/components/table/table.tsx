@@ -181,6 +181,7 @@ type Props<Item> = {
   onOrderChange?: (order: Order[]) => void
   presorted?: boolean // Skip internal sorting when data is already sorted
   caption?: React.ReactNode
+  className?: string
 }
 
 export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
@@ -193,6 +194,7 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
   onOrderChange,
   presorted,
   caption,
+  className,
 }) => {
   const [userOrder, setUserOrder] = useState<Order | null>(null)
 
@@ -247,7 +249,7 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
   }
 
   return (
-    <table className={styles.table}>
+    <table className={`${styles.table} ${className ?? ''}`}>
       {caption && <caption>{caption}</caption>}
       <thead>
         {renderHeader(

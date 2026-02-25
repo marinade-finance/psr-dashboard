@@ -23,7 +23,7 @@ test.describe('Visual screenshots', () => {
     await expect(page).toHaveScreenshot('sam-basic-full.png', {
       fullPage: true,
       maxDiffPixelRatio: 0.01,
-      mask: [page.locator('[class*="metricValue"]'), page.locator('td'), page.locator('[class*="cardValue"]')],
+      mask: [page.locator('[class*="metricValue"]'), page.locator('td'), page.locator('[class*="subtitle"]')],
     })
   })
 
@@ -34,7 +34,7 @@ test.describe('Visual screenshots', () => {
     await expect(page).toHaveScreenshot('sam-expert-full.png', {
       fullPage: true,
       maxDiffPixelRatio: 0.01,
-      mask: [page.locator('[class*="metricValue"]'), page.locator('td'), page.locator('[class*="cardValue"]')],
+      mask: [page.locator('[class*="metricValue"]'), page.locator('td'), page.locator('[class*="subtitle"]')],
     })
   })
 
@@ -51,7 +51,7 @@ test.describe('Visual screenshots', () => {
     await expect(page).toHaveScreenshot('sam-expert-simulation-active.png', {
       fullPage: true,
       maxDiffPixelRatio: 0.01,
-      mask: [page.locator('[class*="metricValue"]'), page.locator('td'), page.locator('[class*="cardValue"]')],
+      mask: [page.locator('[class*="metricValue"]'), page.locator('td'), page.locator('[class*="subtitle"]')],
     })
   })
 
@@ -84,7 +84,7 @@ test.describe('Visual screenshots', () => {
       }
 
       // Run simulation
-      const runBtn = page.locator('button').filter({ hasText: /run simulation/i })
+      const runBtn = page.locator('button').filter({ hasText: /simulate/i })
       const runBtnCount = await runBtn.count()
       if (runBtnCount > 0) {
         await runBtn.click()
@@ -100,7 +100,7 @@ test.describe('Visual screenshots', () => {
     await expect(page).toHaveScreenshot('sam-expert-ghost-row.png', {
       fullPage: true,
       maxDiffPixelRatio: 0.01,
-      mask: [page.locator('[class*="metricValue"]'), page.locator('td'), page.locator('[class*="cardValue"]')],
+      mask: [page.locator('[class*="metricValue"]'), page.locator('td'), page.locator('[class*="subtitle"]')],
     })
   })
 

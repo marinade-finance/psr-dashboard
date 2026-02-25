@@ -330,3 +330,51 @@
 .recPositive {
   color: #22c55e;
 }
+
+/* Basic table styling */
+
+.basicTable {
+  border-collapse: separate;
+  border-spacing: 0 4px;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+}
+
+.basicTable thead th {
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #94a3b8;
+  padding: 8px 16px;
+}
+
+.basicTable tbody tr {
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.basicTable tbody td {
+  padding: 12px 16px;
+  background: rgba(15, 23, 42, 0.6);
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.basicTable tbody td:first-child {
+  border-left: 3px solid transparent;
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+.basicTable tbody td:last-child {
+  border-right: 1px solid rgba(148, 163, 184, 0.1);
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.basicTable tbody tr:hover td {
+  background: rgba(59, 130, 246, 0.04);
+}
+
+.basicTable tbody tr:hover td:first-child {
+  border-left-color: #3b82f6;
+}
