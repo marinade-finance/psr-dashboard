@@ -1,12 +1,14 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useRef, useMemo } from 'react'
 import { useQuery } from 'react-query'
 
 import { Banner } from 'src/components/banner/banner'
 import { Loader } from 'src/components/loader/loader'
 import { Navigation } from 'src/components/navigation/navigation'
+import { SamDetail } from 'src/components/sam-detail/sam-detail'
 import { SamTable } from 'src/components/sam-table/sam-table'
 import { getBannerData } from 'src/services/banner'
 import { loadSam } from 'src/services/sam'
+import { fetchValidators } from 'src/services/validators'
 
 import styles from './sam.module.css'
 
@@ -26,6 +28,13 @@ export type PendingEdits = {
 }
 
 export const SamPage: React.FC<Props> = ({ level }) => {
+  const [viewMode, setViewMode] = useState<'list' | 'detail'>('list')
+  const [selectedValidator, setSelectedValidator] = useState<string | null>(
+    null,
+  )
+  const [densityMode, setDensityMode] = useState<'compact' | 'expanded'>(
+    'compact',
+  )
   const [simulationModeActive, setSimulationModeActive] = useState(false)
   const [editingValidator, setEditingValidator] = useState<string | null>(null)
   const [isCalculating, setIsCalculating] = useState(false)
@@ -39,6 +48,8 @@ export const SamPage: React.FC<Props> = ({ level }) => {
   const [originalAuctionResult, setOriginalAuctionResult] =
     useState<AuctionResult | null>(null)
 
+  const scrollPositionRef = useRef<number>(0)
+
   const { data, status } = useQuery(
     ['sam', simulationRunId],
     () => loadSam(simulationOverrides),
@@ -51,6 +62,20 @@ export const SamPage: React.FC<Props> = ({ level }) => {
       },
     },
   )
+
+  const { data: validatorsData } = useQuery('validators', fetchValidators)
+
+  const nameMap = useMemo(() => {
+    const map = new Map<string, { name: string; countryIso: string | null }>()
+    if (!validatorsData) return map
+    for (const v of validatorsData.validators) {
+      map.set(v.vote_account, {
+        name: v.info_name ?? '---',
+        countryIso: v.dc_country_iso,
+      })
+    }
+    return map
+  }, [validatorsData])
 
   const handleToggleSimulationMode = useCallback(() => {
     setSimulationModeActive(prev => {
@@ -68,19 +93,44 @@ export const SamPage: React.FC<Props> = ({ level }) => {
 
   const handleValidatorClick = useCallback(
     (voteAccount: string) => {
-      if (!simulationModeActive) {
-        return
-      }
-      if (voteAccount === editingValidator) {
-        setEditingValidator(null)
+      if (simulationModeActive) {
+        if (voteAccount === editingValidator) {
+          setEditingValidator(null)
+          setPendingEdits({})
+          return
+        }
+        setEditingValidator(voteAccount)
         setPendingEdits({})
         return
       }
-      setEditingValidator(voteAccount)
-      setPendingEdits({})
+      scrollPositionRef.current = window.scrollY
+      setSelectedValidator(voteAccount)
+      setViewMode('detail')
     },
     [simulationModeActive, editingValidator],
   )
+
+  const handleBack = useCallback(() => {
+    setViewMode('list')
+    setSelectedValidator(null)
+    requestAnimationFrame(() => {
+      window.scrollTo(0, scrollPositionRef.current)
+    })
+  }, [])
+
+  const handleEnterSimulation = useCallback(() => {
+    handleBack()
+    if (!simulationModeActive) {
+      setSimulationModeActive(true)
+      if (!originalAuctionResult && data?.auctionResult) {
+        setOriginalAuctionResult(data.auctionResult)
+      }
+    }
+  }, [handleBack, simulationModeActive, originalAuctionResult, data])
+
+  const handleDensityChange = useCallback((mode: 'compact' | 'expanded') => {
+    setDensityMode(mode)
+  }, [])
 
   const handleCancelEditing = useCallback(() => {
     setEditingValidator(null)
@@ -161,6 +211,13 @@ export const SamPage: React.FC<Props> = ({ level }) => {
       ? data?.auctionResult
       : originalAuctionResult
 
+  const detailValidator =
+    viewMode === 'detail' && selectedValidator && displayAuctionResult
+      ? (displayAuctionResult.auctionData.validators.find(
+          v => v.voteAccount === selectedValidator,
+        ) ?? null)
+      : null
+
   return (
     <div className={styles.page}>
       <div className={styles.pageContent}>
@@ -176,28 +233,52 @@ export const SamPage: React.FC<Props> = ({ level }) => {
         <Banner {...getBannerData()} />
         {status === 'error' && <p>Error fetching data</p>}
         {status === 'loading' && <Loader />}
-        {status === 'success' && displayAuctionResult && (
-          <SamTable
-            auctionResult={displayAuctionResult}
-            tvlJoinApyDiff={data.tvlJoinApyDiff}
-            tvlLeaveApyDiff={data.tvlLeaveApyDiff}
-            backstopDiff={data.backstopDiff}
-            backstopTvl={data.backstopTvl}
-            originalAuctionResult={originalAuctionResult}
-            epochsPerYear={data.epochsPerYear}
-            dsSamConfig={data.dcSamConfig}
-            level={level}
-            simulationModeActive={simulationModeActive}
-            editingValidator={editingValidator}
-            simulatedValidator={simulatedValidator}
-            isCalculating={isCalculating}
-            pendingEdits={pendingEdits}
-            onValidatorClick={handleValidatorClick}
-            onFieldChange={handleFieldChange}
-            onRunSimulation={handleRunSimulation}
-            onCancelEditing={handleCancelEditing}
-          />
-        )}
+        {status === 'success' &&
+          displayAuctionResult &&
+          viewMode === 'detail' &&
+          detailValidator && (
+            <SamDetail
+              validator={detailValidator}
+              name={nameMap.get(selectedValidator)?.name ?? '---'}
+              countryIso={nameMap.get(selectedValidator)?.countryIso ?? null}
+              rank={
+                displayAuctionResult.auctionData.validators.findIndex(
+                  v => v.voteAccount === selectedValidator,
+                ) + 1
+              }
+              totalCount={displayAuctionResult.auctionData.validators.length}
+              epochsPerYear={data.epochsPerYear}
+              onBack={handleBack}
+              onEnterSimulation={handleEnterSimulation}
+            />
+          )}
+        {status === 'success' &&
+          displayAuctionResult &&
+          viewMode === 'list' && (
+            <SamTable
+              auctionResult={displayAuctionResult}
+              tvlJoinApyDiff={data.tvlJoinApyDiff}
+              tvlLeaveApyDiff={data.tvlLeaveApyDiff}
+              backstopDiff={data.backstopDiff}
+              backstopTvl={data.backstopTvl}
+              originalAuctionResult={originalAuctionResult}
+              epochsPerYear={data.epochsPerYear}
+              dsSamConfig={data.dcSamConfig}
+              level={level}
+              simulationModeActive={simulationModeActive}
+              editingValidator={editingValidator}
+              simulatedValidator={simulatedValidator}
+              isCalculating={isCalculating}
+              pendingEdits={pendingEdits}
+              nameMap={nameMap}
+              densityMode={densityMode}
+              onValidatorClick={handleValidatorClick}
+              onFieldChange={handleFieldChange}
+              onRunSimulation={handleRunSimulation}
+              onCancelEditing={handleCancelEditing}
+              onDensityChange={handleDensityChange}
+            />
+          )}
       </div>
     </div>
   )
