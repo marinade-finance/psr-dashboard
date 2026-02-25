@@ -32,9 +32,6 @@ export const SamPage: React.FC<Props> = ({ level }) => {
   const [selectedValidator, setSelectedValidator] = useState<string | null>(
     null,
   )
-  const [densityMode, setDensityMode] = useState<'compact' | 'expanded'>(
-    'compact',
-  )
   const [simulationModeActive, setSimulationModeActive] = useState(false)
   const [editingValidator, setEditingValidator] = useState<string | null>(null)
   const [isCalculating, setIsCalculating] = useState(false)
@@ -127,10 +124,6 @@ export const SamPage: React.FC<Props> = ({ level }) => {
       }
     }
   }, [handleBack, simulationModeActive, originalAuctionResult, data])
-
-  const handleDensityChange = useCallback((mode: 'compact' | 'expanded') => {
-    setDensityMode(mode)
-  }, [])
 
   const handleCancelEditing = useCallback(() => {
     setEditingValidator(null)
@@ -270,13 +263,11 @@ export const SamPage: React.FC<Props> = ({ level }) => {
               simulatedValidator={simulatedValidator}
               isCalculating={isCalculating}
               pendingEdits={pendingEdits}
-              nameMap={nameMap}
-              densityMode={densityMode}
+              validatorMeta={nameMap}
               onValidatorClick={handleValidatorClick}
               onFieldChange={handleFieldChange}
               onRunSimulation={handleRunSimulation}
               onCancelEditing={handleCancelEditing}
-              onDensityChange={handleDensityChange}
             />
           )}
       </div>
