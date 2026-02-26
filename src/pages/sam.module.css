@@ -1,8 +1,22 @@
 .page {
-  background-color: var(--bg-dark-2);
+  min-height: 100vh;
+  background-color: var(--background-page);
 }
 
 /* Content wrapper */
 .pageContent {
   position: relative;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.tableContainer {
+  padding: 24px;
+}
+
+.error {
+  color: var(--destructive);
+  padding: 24px;
+  text-align: center;
+  font-size: var(--text-sm);
 }

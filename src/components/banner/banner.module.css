@@ -1,42 +1,49 @@
 .bannerShoutout {
-  padding: 10px 10px 0px 10px;
-  background-color: var(--bg-dark-2);
+  padding: 16px 24px;
+  background-color: var(--background-page);
 }
 
 .bannerShoutout > div {
-  padding: 20px;
-  background-color: var(--bg-dark-3);
-  font-size: large;
-  line-height: 1.4;
-  border: 3px solid var(--bg-dark-1);
-  width: 100ex;
+  padding: 16px 20px;
+  background-color: var(--info-light);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  border: 1px solid var(--info-20);
+  border-radius: var(--radius-lg);
+  border-left: 4px solid var(--info);
+  max-width: 900px;
+  color: var(--foreground);
 }
 
-/* Dark Mode Anchor Styles */
+/* Anchor Styles */
 .bannerShoutout a {
-  color: #61dafb; /* Light blue for links */
+  color: var(--info);
   text-decoration: none;
-  transition: color 0.2s ease-in-out;
+  font-weight: 500;
+  transition: color 0.15s;
 }
 
 .bannerTitle {
-  margin: 0 0 20px 0;
+  margin: 0 0 12px 0;
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--foreground);
 }
 
 .bannerShoutout p {
-  margin: 10px 0px;
+  margin: 8px 0px;
 }
 
 .bannerShoutout a:visited {
-  color: #6090be; /* Muted purple-blue for visited links */
+  color: var(--info);
 }
 
 .bannerShoutout a:hover,
 .bannerShoutout a:focus {
-  color: #21a1f1; /* Brighter blue on hover/focus */
+  color: #4f46e5;
   text-decoration: underline;
 }
 
 .bannerShoutout a:active {
-  color: #1b8acb; /* Darker blue when active/clicked */
+  color: #4338ca;
 }

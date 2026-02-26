@@ -1,16 +1,20 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import { useQuery } from 'react-query'
 
 import { Banner } from 'src/components/banner/banner'
 import { Loader } from 'src/components/loader/loader'
 import { Navigation } from 'src/components/navigation/navigation'
 import { SamTable } from 'src/components/sam-table/sam-table'
+import { ValidatorDetail } from 'src/components/validator-detail/validator-detail'
 import { getBannerData } from 'src/services/banner'
-import { loadSam } from 'src/services/sam'
+import { loadSam, selectBondSize } from 'src/services/sam'
 
 import styles from './sam.module.css'
 
-import type { AuctionResult } from '@marinade.finance/ds-sam-sdk'
+import type {
+  AuctionResult,
+  AuctionValidator,
+} from '@marinade.finance/ds-sam-sdk'
 import type { UserLevel } from 'src/components/navigation/navigation'
 import type { SourceDataOverrides } from 'src/services/sam'
 
@@ -48,6 +52,11 @@ export const SamPage: React.FC<Props> = ({ level }) => {
   // Original auction result (saved when entering simulation mode)
   const [originalAuctionResult, setOriginalAuctionResult] =
     useState<AuctionResult | null>(null)
+
+  // Selected validator for detail view (null = closed)
+  const [selectedValidator, setSelectedValidator] = useState<string | null>(
+    null,
+  )
 
   const {
     data,
@@ -88,7 +97,11 @@ export const SamPage: React.FC<Props> = ({ level }) => {
   // Handle clicking on a validator row (when in simulation mode)
   const handleValidatorClick = useCallback(
     (voteAccount: string) => {
-      if (!simulationModeActive) return
+      if (!simulationModeActive) {
+        // Not in simulation mode - open detail view
+        setSelectedValidator(voteAccount)
+        return
+      }
 
       // Toggle off if clicking the same validator
       if (voteAccount === editingValidator) {
@@ -103,6 +116,11 @@ export const SamPage: React.FC<Props> = ({ level }) => {
     },
     [simulationModeActive, editingValidator],
   )
+
+  // Close validator detail view
+  const handleCloseDetail = useCallback(() => {
+    setSelectedValidator(null)
+  }, [])
 
   // Cancel editing without running simulation
   const handleCancelEditing = useCallback(() => {
@@ -197,6 +215,55 @@ export const SamPage: React.FC<Props> = ({ level }) => {
     // editingValidator and pendingEdits are cleared in onSettled when calculation completes
   }, [editingValidator, pendingEdits, originalAuctionResult, data])
 
+  // Handle simulation from detail view
+  const handleDetailSimulate = useCallback(
+    (
+      inflationCommission: number | null,
+      mevCommission: number | null,
+      blockRewardsCommission: number | null,
+      bidPmpe: number | null,
+    ) => {
+      if (!selectedValidator || !data) return
+
+      const overrides: SourceDataOverrides = {
+        inflationCommissions: new Map(),
+        mevCommissions: new Map(),
+        blockRewardsCommissions: new Map(),
+        cpmpes: new Map(),
+      }
+
+      if (inflationCommission !== null) {
+        overrides.inflationCommissions.set(
+          selectedValidator,
+          inflationCommission * 100,
+        )
+      }
+      if (mevCommission !== null) {
+        overrides.mevCommissions.set(selectedValidator, mevCommission * 10000)
+      }
+      if (blockRewardsCommission !== null) {
+        overrides.blockRewardsCommissions.set(
+          selectedValidator,
+          blockRewardsCommission * 10000,
+        )
+      }
+      if (bidPmpe !== null) {
+        overrides.cpmpes.set(selectedValidator, bidPmpe * 1e9)
+      }
+
+      if (!originalAuctionResult && data?.auctionResult) {
+        setOriginalAuctionResult(data.auctionResult)
+      }
+
+      setSimulationOverrides(overrides)
+      setSimulatedValidator(selectedValidator)
+      setSimulationModeActive(true)
+      setIsCalculating(true)
+      setSimulationRunId(prev => prev + 1)
+    },
+    [selectedValidator, data, originalAuctionResult],
+  )
+
   const hasSimulationApplied = simulatedValidator !== null
 
   // When simulation mode is off but we have cached original data, use it
@@ -206,34 +273,78 @@ export const SamPage: React.FC<Props> = ({ level }) => {
       ? data?.auctionResult
       : originalAuctionResult
 
+  // Get selected validator data and compute rank
+  const selectedValidatorData = useMemo((): {
+    validator: AuctionValidator
+    rank: number
+    totalValidators: number
+  } | null => {
+    if (!selectedValidator || !displayAuctionResult) return null
+
+    const validators = displayAuctionResult.auctionData.validators
+      .filter(v => selectBondSize(v) > 0)
+      .sort(
+        (a, b) =>
+          b.auctionStake.marinadeSamTargetSol -
+          a.auctionStake.marinadeSamTargetSol,
+      )
+
+    const index = validators.findIndex(v => v.voteAccount === selectedValidator)
+    if (index === -1) return null
+
+    return {
+      validator: validators[index],
+      rank: index + 1,
+      totalValidators: validators.length,
+    }
+  }, [selectedValidator, displayAuctionResult])
+
   return (
     <div className={styles.page}>
       <div className={styles.pageContent}>
         <Navigation level={level} />
         <Banner {...getBannerData()} />
-        {status === 'error' && <p>Error fetching data</p>}
+        {status === 'error' && (
+          <p className={styles.error}>Error fetching data</p>
+        )}
         {status === 'loading' && <Loader />}
         {status === 'success' && displayAuctionResult && (
-          <SamTable
-            auctionResult={displayAuctionResult}
-            originalAuctionResult={originalAuctionResult}
-            epochsPerYear={data.epochsPerYear}
-            dsSamConfig={data.dcSamConfig}
-            level={level}
-            simulationModeActive={simulationModeActive}
-            onToggleSimulationMode={handleToggleSimulationMode}
-            editingValidator={editingValidator}
-            simulatedValidator={simulatedValidator}
-            isCalculating={isCalculating}
-            hasSimulationApplied={hasSimulationApplied}
-            pendingEdits={pendingEdits}
-            onValidatorClick={handleValidatorClick}
-            onFieldChange={handleFieldChange}
-            onRunSimulation={handleRunSimulation}
-            onCancelEditing={handleCancelEditing}
-          />
+          <div className={styles.tableContainer}>
+            <SamTable
+              auctionResult={displayAuctionResult}
+              originalAuctionResult={originalAuctionResult}
+              epochsPerYear={data.epochsPerYear}
+              dsSamConfig={data.dcSamConfig}
+              level={level}
+              simulationModeActive={simulationModeActive}
+              onToggleSimulationMode={handleToggleSimulationMode}
+              editingValidator={editingValidator}
+              simulatedValidator={simulatedValidator}
+              isCalculating={isCalculating}
+              hasSimulationApplied={hasSimulationApplied}
+              pendingEdits={pendingEdits}
+              onValidatorClick={handleValidatorClick}
+              onFieldChange={handleFieldChange}
+              onRunSimulation={handleRunSimulation}
+              onCancelEditing={handleCancelEditing}
+            />
+          </div>
         )}
       </div>
+
+      {selectedValidatorData && data && (
+        <ValidatorDetail
+          validator={selectedValidatorData.validator}
+          auctionResult={displayAuctionResult}
+          dsSamConfig={data.dcSamConfig}
+          epochsPerYear={data.epochsPerYear}
+          rank={selectedValidatorData.rank}
+          totalValidators={selectedValidatorData.totalValidators}
+          onClose={handleCloseDetail}
+          onSimulate={handleDetailSimulate}
+          isCalculating={isCalculating}
+        />
+      )}
     </div>
   )
 }

@@ -2,7 +2,6 @@
 // Please do not change this file!
 interface CssExports {
   'loader': string;
-  'shift': string;
   'spin': string;
 }
 export const cssExports: CssExports;
