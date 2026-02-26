@@ -17,7 +17,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npx serve build -l 8080',
+    command: 'npx vite preview --port 8080',
     url: 'http://localhost:8080',
     reuseExistingServer: true,
   },

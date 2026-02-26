@@ -12,7 +12,8 @@ async function waitForSamData(page: Page) {
 async function waitForPageData(page: Page, selector: string) {
   await page.waitForSelector('[class*="navigation"]', { timeout: 15000 })
   await page.waitForSelector(selector, { timeout: 30000 })
-  await page.waitForTimeout(500)
+  await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {})
+  await page.waitForTimeout(1000)
 }
 
 test.describe('Visual screenshots', () => {
@@ -129,10 +130,14 @@ test.describe('Visual screenshots', () => {
   test('/protected-events full page', async ({ page }) => {
     await page.goto('/protected-events')
     await waitForPageData(page, '[class*="metricWrap"]')
+    await page.waitForSelector('table tbody tr', { timeout: 30000 })
+    await page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {})
+    await page.waitForTimeout(2000)
 
     await expect(page).toHaveScreenshot('events-full.png', {
       fullPage: true,
       maxDiffPixelRatio: 0.01,
+      timeout: 20000,
       mask: [page.locator('[class*="metricValue"]'), page.locator('td')],
     })
   })
@@ -165,10 +170,14 @@ test.describe('Visual screenshots', () => {
   test('/expert-protected-events full page', async ({ page }) => {
     await page.goto('/expert-protected-events')
     await waitForPageData(page, '[class*="metricWrap"]')
+    await page.waitForSelector('table tbody tr', { timeout: 30000 })
+    await page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {})
+    await page.waitForTimeout(2000)
 
     await expect(page).toHaveScreenshot('events-expert-full.png', {
       fullPage: true,
       maxDiffPixelRatio: 0.01,
+      timeout: 20000,
       mask: [page.locator('[class*="metricValue"]'), page.locator('td')],
     })
   })
