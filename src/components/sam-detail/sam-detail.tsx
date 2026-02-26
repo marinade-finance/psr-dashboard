@@ -160,7 +160,7 @@ export function SamDetail({
     <div className="p-4">
       {/* Back button */}
       <button
-        className="inline-flex items-center gap-2 px-4 py-2 mb-5 bg-card border border-border-grid rounded-md text-muted-foreground text-sm cursor-pointer hover:border-primary hover:text-foreground transition-colors"
+        className="inline-flex items-center gap-2 px-4 py-2 mb-5 bg-card border border-border-grid rounded-lg text-muted-foreground text-sm cursor-pointer hover:border-primary hover:text-foreground transition-colors"
         onClick={onBack}
       >
         \u2190 Back to list
@@ -182,7 +182,7 @@ export function SamDetail({
       {/* Pubkey click-to-copy */}
       <div className="mb-6 flex items-center gap-2">
         <span
-          className="font-mono text-xs text-muted-foreground cursor-pointer hover:text-muted-foreground hover:underline select-none"
+          className="font-mono text-xs text-muted-foreground cursor-pointer hover:text-foreground hover:underline select-none"
           onClick={copyPubkey}
           title="Click to copy"
         >
@@ -198,7 +198,7 @@ export function SamDetail({
           className="flex-1 min-w-40 bg-card border border-border-grid rounded-xl p-4 flex flex-col gap-1.5 shadow-card"
           title={apyTooltip}
         >
-          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
             Max APY
           </div>
           <div className="text-2xl font-bold text-foreground">
@@ -213,7 +213,7 @@ export function SamDetail({
         <div
           className={`flex-1 min-w-40 bg-card border rounded-xl p-4 flex flex-col gap-1.5 shadow-card ${bondCardBorder(bondColor)}`}
         >
-          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
             Bond Health
           </div>
           <div className="flex items-center gap-2">
@@ -240,7 +240,7 @@ export function SamDetail({
 
         {/* Stake \u0394 */}
         <div className="flex-1 min-w-40 bg-card border border-border-grid rounded-xl p-4 flex flex-col gap-1.5 shadow-card">
-          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
             Stake \u0394
           </div>
           <div className={`text-2xl font-bold ${deltaColor}`}>
@@ -257,7 +257,7 @@ export function SamDetail({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {/* APY breakdown */}
         <div className="bg-card border border-border-grid rounded-xl p-4 flex flex-col gap-3 shadow-card">
-          <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground pb-2 border-b border-border-grid">
+          <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground pb-2 border-b border-border-grid">
             APY Breakdown
           </div>
           <div className="flex justify-between items-baseline gap-2">
@@ -309,7 +309,7 @@ export function SamDetail({
 
         {/* Bond health details */}
         <div className="bg-card border border-border-grid rounded-xl p-4 flex flex-col gap-3 shadow-card">
-          <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground pb-2 border-b border-border-grid">
+          <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground pb-2 border-b border-border-grid">
             Bond Health
           </div>
           <div className="flex justify-between items-baseline gap-2">
@@ -334,7 +334,7 @@ export function SamDetail({
               {bondLabel(bondColor)}
             </span>
           </div>
-          <div className="text-xs text-muted-foreground leading-relaxed mt-1 p-2 bg-secondary rounded">
+          <div className="text-xs text-muted-foreground leading-relaxed mt-1 p-2 bg-secondary rounded-lg">
             {bondTooltip(bondColor) ||
               'No active stake \u2014 bond health not applicable.'}
           </div>
@@ -342,7 +342,7 @@ export function SamDetail({
 
         {/* Stake movement */}
         <div className="bg-card border border-border-grid rounded-xl p-4 flex flex-col gap-3 shadow-card">
-          <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground pb-2 border-b border-border-grid">
+          <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground pb-2 border-b border-border-grid">
             Stake Movement
           </div>
           <div className="flex justify-between items-baseline gap-2">
@@ -371,8 +371,8 @@ export function SamDetail({
       <div
         className={`border border-border-grid rounded-xl p-4 mb-6 bg-card flex flex-col gap-1.5 shadow-card ${severityBorderClass(recommendation.severity)}`}
       >
-        <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-          NEXT STEP
+        <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+          Next Step
         </div>
         <div className="text-sm text-foreground leading-relaxed">
           {recommendation.text}
@@ -387,7 +387,7 @@ export function SamDetail({
             validator&apos;s position in the auction.
           </span>
           <button
-            className="px-4 py-2 bg-primary hover:brightness-110 rounded-md text-primary-foreground text-sm font-semibold cursor-pointer transition-colors flex-shrink-0"
+            className="px-4 py-2 bg-primary hover:brightness-110 rounded-lg text-primary-foreground text-sm font-semibold cursor-pointer transition-colors flex-shrink-0"
             onClick={onEdit}
           >
             Open Simulation

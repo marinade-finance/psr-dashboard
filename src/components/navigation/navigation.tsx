@@ -14,7 +14,7 @@ export type UserLevelProps = {
 }
 
 const tab =
-  'h-10 leading-[30px] px-5 py-[5px] bg-background-page text-foreground m-[4px_0_4px_4px] cursor-pointer rounded border-none text-[length:inherit] no-underline inline-block hover:bg-secondary hover:text-card-foreground transition-colors duration-150 border-b-2 border-b-transparent'
+  'h-10 leading-[30px] px-5 py-[5px] bg-background-page text-foreground m-[4px_0_4px_4px] cursor-pointer rounded-lg border-none text-[length:inherit] no-underline inline-block hover:bg-secondary hover:text-card-foreground transition-colors duration-150 border-b-2 border-b-transparent'
 const tabActive = 'bg-tertiary text-card-foreground border-b-2 border-b-primary'
 
 export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({

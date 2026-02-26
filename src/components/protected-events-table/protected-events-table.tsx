@@ -27,7 +27,7 @@ const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
           {...tooltipAttributes(
             'This settlement is not claimable as it was created during the testing period.',
           )}
-          className="badge rounded-sm px-1 cursor-help float-left bg-card text-foreground"
+          className="badge rounded px-1.5 py-0.5 cursor-help float-left bg-secondary text-foreground text-xs"
         >
           Dryrun
         </span>
@@ -38,7 +38,7 @@ const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
           {...tooltipAttributes(
             'This is an estimate based on live data but may change during the epoch<br />before the settlements for this epoch are created on-chain.',
           )}
-          className="badge rounded-sm px-1 cursor-help float-left bg-primary text-primary-foreground"
+          className="badge rounded px-1.5 py-0.5 cursor-help float-left bg-primary text-primary-foreground text-xs"
         >
           Estimate
         </span>
@@ -162,7 +162,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
   const filtered = preFilteredData.length !== data.length
 
   return (
-    <div className="relative [&>table]:ml-2.5 [&_input]:bg-secondary [&_input]:text-foreground [&_input]:border [&_input]:border-border-grid [&_input]:rounded-[5px] [&_input]:p-2 [&_input]:outline-none [&_input:focus]:border-primary [&_input:focus]:text-foreground">
+    <div className="relative [&>table]:ml-2.5 [&_input]:bg-secondary [&_input]:text-foreground [&_input]:border [&_input]:border-border-grid [&_input]:rounded-md [&_input]:p-2 [&_input]:outline-none [&_input:focus]:border-primary [&_input:focus]:text-foreground">
       <div className="metricWrap flex gap-2 p-2.5 w-fit">
         <Metric
           label="Total events"
@@ -197,7 +197,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
         />
         {expertMetrics}
       </div>
-      <div className="mb-2.5 [&_fieldset]:inline-block [&_fieldset]:ml-2.5 [&_fieldset]:border-transparent">
+      <div className="mb-2.5 [&_fieldset]:inline-block [&_fieldset]:ml-2.5 [&_fieldset]:border-transparent [&_legend]:text-[10px] [&_legend]:uppercase [&_legend]:tracking-wider [&_legend]:font-medium [&_legend]:text-muted-foreground [&_legend]:mb-1">
         <fieldset>
           <legend>Validator filter</legend>
           <input
