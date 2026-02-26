@@ -1,7 +1,15 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 
 import { Badge } from 'src/components/ui/badge'
 import { Input } from 'src/components/ui/input'
+import {
+  ShadTable,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from 'src/components/ui/table'
 import { formatSolAmount } from 'src/format'
 import {
   selectAmount,
@@ -14,52 +22,75 @@ import { selectName } from 'src/services/validators'
 import { HelpTip } from '../help-tip/help-tip'
 import { Metric } from '../metric/metric'
 import { UserLevel } from '../navigation/navigation'
-import { Alignment, OrderDirection, Table } from '../table/table'
 
 import type { ProtectedEvent } from 'src/services/protected-events'
 import type { ProtectedEventWithValidator } from 'src/services/validator-with-protected_event'
 
 const NO_NAME = '---'
 
+type SortColumn = 'epoch' | 'validator' | 'settlement' | 'reason' | 'funder'
+type SortDir = 'asc' | 'desc'
+
 const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
   switch (status) {
     case ProtectedEventStatus.DRYRUN:
       return (
         <HelpTip text="This settlement is not claimable as it was created during the testing period.">
-          <Badge variant="dryrun" className="float-left">
-            Dryrun
-          </Badge>
+          <Badge variant="dryrun">Dryrun</Badge>
         </HelpTip>
       )
     case ProtectedEventStatus.ESTIMATE:
       return (
         <HelpTip text="This is an estimate based on live data but may change during the epoch<br />before the settlements for this epoch are created on-chain.">
-          <Badge variant="estimate" className="float-left">
-            Estimate
-          </Badge>
+          <Badge variant="estimate">Estimate</Badge>
         </HelpTip>
       )
     default:
-      return <></>
+      return null
   }
 }
 
-const renderProtectedEventFunder = (protectedEvent: ProtectedEvent) => {
+const getReasonBadge = (reason: string) => {
+  if (reason.startsWith('BidTooLow')) {
+    return <Badge variant="watch">Bid Too Low</Badge>
+  }
+  if (reason.startsWith('Uptime')) {
+    const match = reason.match(/([\d.]+)%/)
+    const pct = match ? match[1] : '?'
+    return <Badge variant="watch">Uptime {pct}%</Badge>
+  }
+  if (
+    reason.startsWith('Commission') ||
+    reason.startsWith('Inflation Commission')
+  ) {
+    return (
+      <HelpTip text={reason.replace(/</g, '&lt;').replace(/>/g, '&gt;')}>
+        <Badge variant="secondary">Commission Change</Badge>
+      </HelpTip>
+    )
+  }
+  if (reason === 'Blacklist') {
+    return <Badge variant="destructive">Blacklist</Badge>
+  }
+  return <Badge variant="secondary">{reason}</Badge>
+}
+
+const renderFunderBadge = (protectedEvent: ProtectedEvent) => {
   switch (protectedEvent.meta.funder) {
     case 'Marinade':
       return (
         <HelpTip text="This settlement is funded by Marinade DAO because the yield loss<br />is beyond what the validator's are expected to cover.">
-          <span>Marinade</span>
+          <Badge variant="default">Marinade</Badge>
         </HelpTip>
       )
     case 'ValidatorBond':
       return (
         <HelpTip text="This settlement is funded by the validator because the yield loss<br />is within amount which the validator is expected to cover.">
-          <span>Validator</span>
+          <Badge variant="secondary">Validator</Badge>
         </HelpTip>
       )
     default:
-      return <></>
+      return null
   }
 }
 
@@ -81,6 +112,8 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
   const [validatorFilter, setValidatorFilter] = useState('')
   const [minEpochFilter, setMinEpochFilter] = useState(minEpoch)
   const [maxEpochFilter, setMaxEpochFilter] = useState(maxEpoch)
+  const [sortCol, setSortCol] = useState<SortColumn>('epoch')
+  const [sortDir, setSortDir] = useState<SortDir>('desc')
 
   const preFilteredData = data.filter(({ protectedEvent, validator }) => {
     const lowerCaseValidatorFilter = validatorFilter.toLocaleLowerCase()
@@ -97,9 +130,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
     return matchesEpoch && matchesValidator
   })
   const filteredData = preFilteredData.filter(
-    ({ protectedEvent, validator: _validator }) => {
-      return protectedEvent.reason !== 'Bidding'
-    },
+    ({ protectedEvent }) => protectedEvent.reason !== 'Bidding',
   )
   const lastSettledEpoch = data.reduce(
     (epoch, { protectedEvent, status }) =>
@@ -130,17 +161,67 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
     )
     .reduce((sum, { protectedEvent }) => sum + selectAmount(protectedEvent), 0)
 
+  const handleSort = (col: SortColumn) => {
+    if (sortCol === col) {
+      setSortDir(d => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortCol(col)
+      setSortDir('desc')
+    }
+  }
+
+  const sortedData = useMemo(() => {
+    const mul = sortDir === 'asc' ? 1 : -1
+    return [...filteredData].sort((a, b) => {
+      switch (sortCol) {
+        case 'epoch':
+          return mul * (a.protectedEvent.epoch - b.protectedEvent.epoch)
+        case 'validator': {
+          const nameA = a.validator ? selectName(a.validator) : NO_NAME
+          const nameB = b.validator ? selectName(b.validator) : NO_NAME
+          return mul * nameA.localeCompare(nameB)
+        }
+        case 'settlement':
+          return (
+            mul *
+            (selectAmount(a.protectedEvent) - selectAmount(b.protectedEvent))
+          )
+        case 'reason':
+          return (
+            mul *
+            (selectEprLossBps(a.protectedEvent) -
+              selectEprLossBps(b.protectedEvent))
+          )
+        case 'funder':
+          return (
+            mul *
+            a.protectedEvent.meta.funder.localeCompare(
+              b.protectedEvent.meta.funder,
+            )
+          )
+        default:
+          return 0
+      }
+    })
+  }, [filteredData, sortCol, sortDir])
+
+  const sortIndicator = (col: SortColumn) => {
+    if (sortCol !== col) return <span className="ml-1 text-muted-foreground/40">▲</span>
+    return <span className="ml-1">{sortDir === 'asc' ? '▲' : '▼'}</span>
+  }
+
+  const headClass =
+    'px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted cursor-pointer select-none whitespace-nowrap'
+
   let expertMetrics
   if (level === UserLevel.Expert) {
     expertMetrics = (
-      <>
-        <HelpTip text="Last Settled Epoch's Bids collectable By Users">
-          <Metric
-            label="Last Epoch Bids"
-            value={`☉ ${formatSolAmount(lastEpochBids)}`}
-          />
-        </HelpTip>
-      </>
+      <HelpTip text="Last Settled Epoch's Bids collectable By Users">
+        <Metric
+          label="Last Epoch Bids"
+          value={`☉ ${formatSolAmount(lastEpochBids)}`}
+        />
+      </HelpTip>
     )
   }
 
@@ -215,81 +296,84 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
           </div>
         </div>
       </div>
-      <Table
-        data={filteredData}
-        columns={[
-          {
-            header: 'Epoch',
-            render: ({ protectedEvent }) => <>{protectedEvent.epoch}</>,
-            compare: (a, b) => a.protectedEvent.epoch - b.protectedEvent.epoch,
-            alignment: Alignment.RIGHT,
-          },
-          {
-            header: 'Validator',
-            render: ({ protectedEvent }) => (
-              <span className="inline-block max-w-[200px] text-ellipsis overflow-hidden whitespace-nowrap">
-                {protectedEvent.vote_account}
-              </span>
-            ),
-            compare: (a, b) =>
-              a.protectedEvent.vote_account.localeCompare(
-                b.protectedEvent.vote_account,
-              ),
-          },
-          {
-            header: 'Name',
-            render: ({ validator }) => (
-              <span className="inline-block max-w-[180px] text-ellipsis overflow-hidden whitespace-nowrap">
-                {validator ? selectName(validator) : NO_NAME}
-              </span>
-            ),
-            compare: (a, b) =>
-              (a.validator
-                ? (selectName(a.validator) ?? NO_NAME)
-                : NO_NAME
-              ).localeCompare(
-                b.validator ? (selectName(b.validator) ?? NO_NAME) : NO_NAME,
-              ),
-          },
-          {
-            header: 'Settlement [☉]',
-            render: ({ protectedEvent, status }) => (
-              <>
-                {renderProtectedEventStatus(status)}{' '}
-                {formatSolAmount(selectAmount(protectedEvent))}
-              </>
-            ),
-            compare: (a, b) =>
-              selectAmount(a.protectedEvent) - selectAmount(b.protectedEvent),
-            alignment: Alignment.RIGHT,
-          },
-          {
-            header: 'Reason',
-            render: ({ protectedEvent }) => (
-              <span className="inline-block max-w-[350px] truncate">
-                {selectProtectedStakeReason(protectedEvent)}
-              </span>
-            ),
-            compare: (a, b) =>
-              selectEprLossBps(a.protectedEvent) -
-              selectEprLossBps(b.protectedEvent),
-          },
-          {
-            header: 'Funder',
-            render: ({ protectedEvent }) =>
-              renderProtectedEventFunder(protectedEvent),
-            compare: (a, b) =>
-              a.protectedEvent.meta.funder.localeCompare(
-                b.protectedEvent.meta.funder,
-              ),
-          },
-        ]}
-        defaultOrder={[
-          [0, OrderDirection.DESC],
-          [3, OrderDirection.DESC],
-          [4, OrderDirection.DESC],
-        ]}
-      />
+      <div className="bg-card rounded-xl border border-border shadow-xs overflow-hidden">
+        <ShadTable>
+          <TableHeader>
+            <TableRow className="border-b border-border-grid">
+              <TableHead
+                className={`${headClass} w-16 text-right`}
+                onClick={() => handleSort('epoch')}
+              >
+                Epoch{sortIndicator('epoch')}
+              </TableHead>
+              <TableHead
+                className={`${headClass} min-w-[200px]`}
+                onClick={() => handleSort('validator')}
+              >
+                Validator{sortIndicator('validator')}
+              </TableHead>
+              <TableHead
+                className={`${headClass} w-[160px] text-right`}
+                onClick={() => handleSort('settlement')}
+              >
+                Settlement [☉]{sortIndicator('settlement')}
+              </TableHead>
+              <TableHead
+                className={`${headClass} w-[160px]`}
+                onClick={() => handleSort('reason')}
+              >
+                Reason{sortIndicator('reason')}
+              </TableHead>
+              <TableHead
+                className={`${headClass} w-[100px]`}
+                onClick={() => handleSort('funder')}
+              >
+                Funder{sortIndicator('funder')}
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {sortedData.map(({ protectedEvent, validator, status }, idx) => {
+              const name = validator ? selectName(validator) : NO_NAME
+              const reason = selectProtectedStakeReason(protectedEvent)
+              const statusBadge = renderProtectedEventStatus(status)
+
+              return (
+                <TableRow
+                  key={`${protectedEvent.vote_account}-${protectedEvent.epoch}-${idx}`}
+                  className="border-b border-border-grid bg-card transition-colors duration-[120ms] hover:bg-primary-light-05"
+                >
+                  <TableCell className="px-3.5 py-3 text-right font-mono text-[13px]">
+                    {protectedEvent.epoch}
+                  </TableCell>
+                  <TableCell className="px-3.5 py-3 min-w-[200px]">
+                    <div className="text-foreground font-medium text-[13px]">
+                      {name}
+                    </div>
+                    <div className="text-muted-foreground text-[11px] mt-px font-mono truncate max-w-[280px]">
+                      {protectedEvent.vote_account}
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-3.5 py-3 text-right">
+                    <div className="flex flex-col items-end gap-1">
+                      {statusBadge}
+                      <span className="font-mono font-semibold text-[13px]">
+                        {formatSolAmount(selectAmount(protectedEvent))}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-3.5 py-3">
+                    {getReasonBadge(reason)}
+                  </TableCell>
+                  <TableCell className="px-3.5 py-3">
+                    {renderFunderBadge(protectedEvent)}
+                  </TableCell>
+                </TableRow>
+              )
+            })}
+          </TableBody>
+        </ShadTable>
+      </div>
     </div>
   )
 }
