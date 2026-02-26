@@ -47,7 +47,7 @@ function colorClassName(color?: Color): string {
     case Color.YELLOW:
       return 'bg-[#806000]'
     case Color.GREY:
-      return 'bg-gray-500/30'
+      return 'grey bg-gray-500/30'
     default:
       return ''
   }

@@ -27,7 +27,7 @@ const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
           {...tooltipAttributes(
             'This settlement is not claimable as it was created during the testing period.',
           )}
-          className="rounded-sm px-1 cursor-help float-left bg-[--bg-dark-1] text-[--text-light-1]"
+          className="badge rounded-sm px-1 cursor-help float-left bg-[--bg-dark-1] text-[--text-light-1]"
         >
           Dryrun
         </span>
@@ -38,7 +38,7 @@ const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
           {...tooltipAttributes(
             'This is an estimate based on live data but may change during the epoch<br />before the settlements for this epoch are created on-chain.',
           )}
-          className="rounded-sm px-1 cursor-help float-left bg-[#91e4b7] text-black"
+          className="badge rounded-sm px-1 cursor-help float-left bg-[#91e4b7] text-black"
         >
           Estimate
         </span>
@@ -163,7 +163,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
 
   return (
     <div className="relative [&>table]:ml-2.5 [&_input]:bg-[--bg-dark-1] [&_input]:text-[--text-light-1] [&_input]:border-2 [&_input]:border-[--bg-dark-2] [&_input]:rounded-[5px] [&_input]:p-2 [&_input]:outline-none [&_input:focus]:border-[--bg-dark-3] [&_input:focus]:text-[--text-light-2]">
-      <div className="flex gap-2 p-2.5 w-fit">
+      <div className="metricWrap flex gap-2 p-2.5 w-fit">
         <Metric
           label="Total events"
           value={totalEvents.toLocaleString()}
