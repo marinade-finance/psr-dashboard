@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useMemo } from 'react'
 import { useQuery } from 'react-query'
 
+import { HelpTip } from 'src/components/help-tip/help-tip'
 import { Navigation } from 'src/components/navigation/navigation'
 import { SamTable } from 'src/components/sam-table/sam-table'
 import { SamSkeleton } from 'src/components/skeleton/skeleton'
@@ -323,21 +324,14 @@ export const SamPage: React.FC<Props> = ({ level }) => {
                 Calculating...
               </span>
             )}
-            <a
-              href="https://docs.marinade.finance/marinade-protocol/validators"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-4 py-2 rounded-lg text-[13px] font-medium bg-secondary border border-border text-secondary-foreground font-sans transition-all hover:bg-tertiary hover:text-foreground"
-            >
-              Docs
-            </a>
             <button
-              className={`px-4 py-2 rounded-lg text-[13px] font-medium font-sans transition-all disabled:opacity-60 disabled:cursor-not-allowed ${simulationModeActive ? 'bg-info border-none text-primary-foreground hover:brightness-90' : 'bg-primary border-none text-primary-foreground hover:brightness-90'}`}
+              className={`px-4 py-2 rounded-lg text-[13px] font-medium font-sans transition-all disabled:opacity-60 disabled:cursor-not-allowed ${simulationModeActive ? 'bg-info text-white border border-info hover:brightness-90' : 'border border-border bg-secondary text-secondary-foreground hover:bg-tertiary hover:text-foreground'}`}
               onClick={handleToggleSimulationMode}
               disabled={isCalculating}
             >
-              {simulationModeActive ? 'Exit Simulation' : 'Enter Simulation'}
+              {simulationModeActive ? 'Exit What-If' : 'What-If Mode'}
             </button>
+            <HelpTip text="Test how changing your bid or commission would affect your auction ranking. Click any validator row to edit parameters." />
           </div>
         </div>
         {status === 'error' && (
