@@ -14,10 +14,7 @@ export const ComplexMetric: React.FC<Props> = ({
   ...tooltipsProps
 }) => {
   return (
-    <div
-      className="metric px-5 py-2.5 bg-[--bg-dark-1] cursor-help"
-      {...tooltipsProps}
-    >
+    <div className="metric px-5 py-2.5 bg-card cursor-help" {...tooltipsProps}>
       <div className="whitespace-nowrap">{label}</div>
       <div className="metricValue whitespace-nowrap mt-2.5 text-2xl">
         {value}

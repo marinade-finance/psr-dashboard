@@ -13,8 +13,8 @@ export type UserLevelProps = {
 }
 
 const tab =
-  'h-10 leading-[30px] px-5 py-[5px] bg-[--bg-dark-2] text-[--text-light-1] m-[4px_0_4px_4px] cursor-pointer rounded border-none text-[length:inherit] no-underline inline-block hover:bg-[--bg-dark-3] transition-colors'
-const tabActive = 'bg-[--bg-dark-4] text-[--text-light-2]'
+  'h-10 leading-[30px] px-5 py-[5px] bg-background-page text-foreground m-[4px_0_4px_4px] cursor-pointer rounded border-none text-[length:inherit] no-underline inline-block hover:bg-secondary transition-colors'
+const tabActive = 'bg-tertiary text-card-foreground'
 
 export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
   level,
@@ -23,7 +23,7 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
   const isExpert = level === UserLevel.Expert
   const prefix = isExpert ? 'expert-' : ''
   return (
-    <div className="navigation flex items-center bg-[--bg-dark-1] [&_a]:no-underline">
+    <div className="navigation flex items-center bg-card [&_a]:no-underline">
       <NavLink to={`/${prefix}`}>
         {({ isActive }) => (
           <div className={cn(tab, isActive && tabActive)}>
@@ -45,7 +45,7 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
         href="/docs/"
         className={cn(
           tab,
-          'docsButton ml-auto bg-[--bg-dark-3] hover:bg-[--bg-dark-4] hover:text-[--text-light-2]',
+          'docsButton ml-auto bg-secondary hover:bg-tertiary hover:text-card-foreground',
         )}
       >
         Docs
@@ -55,7 +55,7 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
           href="/docs/?from=expert#GUIDE-EXPERT"
           className={cn(
             tab,
-            'bg-[--bg-dark-3] hover:bg-[--bg-dark-4] hover:text-[--text-light-2]',
+            'bg-secondary hover:bg-tertiary hover:text-card-foreground',
           )}
         >
           Expert Guide

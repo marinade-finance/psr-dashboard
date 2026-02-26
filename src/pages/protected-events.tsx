@@ -17,7 +17,7 @@ export const ProtectedEventsPage: React.FC<UserLevelProps> = ({ level }) => {
   )
 
   return (
-    <div className="bg-[--bg-dark-2]">
+    <div className="bg-background-page">
       <Navigation level={level} />
       <Banner {...getBannerData()} />
       {status === 'error' && <p>Error fetching data</p>}

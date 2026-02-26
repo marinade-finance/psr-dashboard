@@ -103,9 +103,9 @@ type Props = {
 }
 
 const CLICKABLE_ROW =
-  'validatorRowClickable cursor-pointer hover:bg-blue-500/10'
+  'validatorRowClickable cursor-pointer hover:bg-primary-alpha'
 const GHOST_ROW =
-  'ghostRow !cursor-default pointer-events-none [&_td]:line-through [&_td]:text-[#a0a0b0] [&_td]:!bg-[rgba(80,70,100,0.35)] [&_td_span]:line-through [&_td_div]:line-through'
+  'ghostRow !cursor-default pointer-events-none [&_td]:line-through [&_td]:text-muted-foreground [&_td]:!bg-[rgba(80,70,100,0.35)] [&_td_span]:line-through [&_td_div]:line-through'
 
 function bondLabel(color: Color): string {
   switch (color) {
@@ -127,7 +127,7 @@ const bondDotColor: Record<string, string> = {
 }
 
 function bondDotClass(color: Color): string {
-  return bondDotColor[color] ?? 'bg-gray-500'
+  return bondDotColor[color] ?? 'bg-muted-foreground'
 }
 
 function renderEditableCell(
@@ -148,7 +148,7 @@ function renderEditableCell(
       <span className="invisible">{displayValue}</span>
       <input
         type="number"
-        className="absolute right-0 top-1/2 -translate-y-1/2 w-[50px] px-1 py-0.5 bg-[--bg-dark-3] border border-[--border-dark] rounded-[3px] text-[--text-light-1] text-xs text-right box-border focus:outline-none focus:border-blue-500 placeholder:text-[--text-light-3] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+        className="absolute right-0 top-1/2 -translate-y-1/2 w-[50px] px-1 py-0.5 bg-secondary border border-border rounded-[3px] text-foreground text-xs text-right box-border focus:outline-none focus:border-primary placeholder:text-muted-foreground [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
         value={inputValue}
         step={opts.step}
         min={opts.min}
@@ -551,14 +551,14 @@ export const SamTable: React.FC<Props> = ({
   }
 
   const simulationCaption = simulationModeActive ? (
-    <div className="px-8 py-4 bg-gradient-to-br from-[rgba(15,25,60,1)] to-[rgba(40,45,80,1)] text-blue-300 text-lg font-semibold tracking-wide text-center uppercase">
+    <div className="px-8 py-4 bg-gradient-to-br from-[rgba(15,25,60,1)] to-[rgba(40,45,80,1)] text-primary text-lg font-semibold tracking-wide text-center uppercase">
       {isCalculating ? 'Calculating simulation...' : 'Simulation mode active'}
     </div>
   ) : undefined
 
   const renderBasicTable = () => (
     <Table
-      className="border-separate border-spacing-y-1 border-spacing-x-0 font-sans [&_thead_th]:font-medium [&_thead_th]:text-[11px] [&_thead_th]:uppercase [&_thead_th]:tracking-wide [&_thead_th]:text-slate-400 [&_thead_th]:px-4 [&_thead_th]:py-2 [&_tbody_tr]:transition-colors [&_tbody_td]:px-4 [&_tbody_td]:py-3 [&_tbody_td]:bg-slate-900/60 [&_tbody_td]:border-y [&_tbody_td]:border-slate-400/10 [&_tbody_td:first-child]:border-l-[3px] [&_tbody_td:first-child]:border-l-transparent [&_tbody_td:first-child]:rounded-l-lg [&_tbody_td:last-child]:border-r [&_tbody_td:last-child]:border-r-slate-400/10 [&_tbody_td:last-child]:rounded-r-lg [&_tbody_tr:hover_td]:bg-blue-500/[0.04] [&_tbody_tr:hover_td:first-child]:border-l-blue-500"
+      className="border-separate border-spacing-y-1 border-spacing-x-0 font-sans [&_thead_th]:font-medium [&_thead_th]:text-[11px] [&_thead_th]:uppercase [&_thead_th]:tracking-wide [&_thead_th]:text-muted-foreground [&_thead_th]:px-4 [&_thead_th]:py-2 [&_tbody_tr]:transition-colors [&_tbody_td]:px-4 [&_tbody_td]:py-3 [&_tbody_td]:bg-card [&_tbody_td]:border-y [&_tbody_td]:border-border-grid [&_tbody_td:first-child]:border-l-[3px] [&_tbody_td:first-child]:border-l-transparent [&_tbody_td:first-child]:rounded-l-lg [&_tbody_td:last-child]:border-r [&_tbody_td:last-child]:border-r-border-grid [&_tbody_td:last-child]:rounded-r-lg [&_tbody_tr:hover_td]:bg-primary-alpha [&_tbody_tr:hover_td:first-child]:border-l-primary"
       caption={simulationCaption}
       data={displayValidators}
       rowAttrsFn={(item, _index) => {
@@ -572,7 +572,7 @@ export const SamTable: React.FC<Props> = ({
         return {
           className: cn(
             CLICKABLE_ROW,
-            selectIsNonProductive(validator) && 'rowYellow bg-[#806000]/[0.12]',
+            selectIsNonProductive(validator) && 'rowYellow bg-cell-yellow',
           ),
           onClick: () => onValidatorClick(va),
         }
@@ -611,7 +611,7 @@ export const SamTable: React.FC<Props> = ({
                   {name.length > 24 ? name.slice(0, 24) + '\u2026' : name}
                 </span>
                 <span
-                  className="text-[11px] text-slate-500 cursor-pointer hover:text-slate-400 hover:underline"
+                  className="text-[11px] text-muted-foreground cursor-pointer hover:text-secondary-foreground hover:underline"
                   onClick={e => handleCopy(e, va)}
                   title={isCopied ? 'Copied!' : 'Click to copy'}
                 >
@@ -707,7 +707,7 @@ export const SamTable: React.FC<Props> = ({
                 className={cn(
                   delta > 0 && 'text-green-400',
                   delta < 0 && 'text-red-400',
-                  delta === 0 && 'text-gray-500',
+                  delta === 0 && 'text-muted-foreground',
                 )}
               >
                 {arrow}
@@ -788,11 +788,11 @@ export const SamTable: React.FC<Props> = ({
           classes.push(CLICKABLE_ROW)
           onClick = () => onValidatorClick(va)
         } else if (isEditing) {
-          classes.push('bg-blue-500/[0.15]')
+          classes.push('bg-primary-alpha')
         }
 
         if (selectIsNonProductive(validator)) {
-          classes.push('rowYellow bg-[#806000]/[0.12]')
+          classes.push('rowYellow bg-cell-yellow')
         }
 
         return { className: classes.join(' ') || undefined, onClick }
@@ -819,8 +819,8 @@ export const SamTable: React.FC<Props> = ({
               <div className="absolute left-0 top-1/2 -translate-y-1/2 flex gap-1 z-10">
                 <button
                   className={cn(
-                    'min-w-[60px] px-2 py-[3px] bg-blue-500 text-white border-none rounded-[3px] cursor-pointer text-[10px] font-medium transition-colors whitespace-nowrap shadow-[0_1px_3px_rgba(0,0,0,0.3)] text-center hover:bg-blue-600 disabled:bg-gray-500 disabled:cursor-not-allowed',
-                    isCalculating && 'bg-gray-500',
+                    'min-w-[60px] px-2 py-[3px] bg-primary text-primary-foreground border-none rounded-[3px] cursor-pointer text-[10px] font-medium transition-colors whitespace-nowrap shadow-[0_1px_3px_rgba(0,0,0,0.3)] text-center hover:brightness-110 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed',
+                    isCalculating && 'bg-muted text-muted-foreground',
                   )}
                   onClick={e => {
                     e.stopPropagation()
@@ -831,7 +831,7 @@ export const SamTable: React.FC<Props> = ({
                   {isCalculating ? 'Simulating' : 'Simulate'}
                 </button>
                 <button
-                  className="px-1.5 py-[3px] bg-gray-500 text-white border-none rounded-[3px] cursor-pointer text-[10px] font-medium transition-colors shadow-[0_1px_3px_rgba(0,0,0,0.3)] hover:enabled:bg-red-500"
+                  className="px-1.5 py-[3px] bg-muted-foreground text-primary-foreground border-none rounded-[3px] cursor-pointer text-[10px] font-medium transition-colors shadow-[0_1px_3px_rgba(0,0,0,0.3)] hover:enabled:bg-destructive"
                   onClick={e => {
                     e.stopPropagation()
                     onCancelEditing()

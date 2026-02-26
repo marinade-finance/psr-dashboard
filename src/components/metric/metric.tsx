@@ -16,16 +16,13 @@ export const Metric: React.FC<Props> = ({
   ...tooltipsProps
 }) => {
   return (
-    <div
-      className="metric px-5 py-2.5 bg-[--bg-dark-1] cursor-help"
-      {...tooltipsProps}
-    >
+    <div className="metric px-5 py-2.5 bg-card cursor-help" {...tooltipsProps}>
       <div className="whitespace-nowrap">{label}</div>
       <div className="metricValue whitespace-nowrap mt-2.5 text-2xl">
         {value}
       </div>
       {subtitle && (
-        <div className="subtitle mt-1 text-[11px] text-slate-500 whitespace-nowrap">
+        <div className="subtitle mt-1 text-[11px] text-muted-foreground whitespace-nowrap">
           {subtitle}
         </div>
       )}
