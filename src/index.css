@@ -5,6 +5,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap');
 
 :root {
+  --radius: 0.625rem;
+
   /* Legacy dark theme variables */
   --bg-dark-1: #1c1b23;
   --bg-dark-2: #2b2a34;

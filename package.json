@@ -51,15 +51,19 @@
   },
   "dependencies": {
     "@marinade.finance/ds-sam-sdk": "0.0.44",
+    "@radix-ui/react-slot": "^1.2.4",
     "@types/lodash.round": "^4.0.9",
     "@types/react-gtm-module": "^2.0.4",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "lodash.round": "^4.0.4",
     "marinade-psr-dashboard": "link:",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-gtm-module": "^2.0.11",
     "react-query": "^3.39.3",
-    "react-router-dom": "^6.30.2"
+    "react-router-dom": "^6.30.2",
+    "tailwind-merge": "^3.5.0"
   },
   "lint-staged": {
     "./src/**/*.{ts,tsx,js,jsx}": [
