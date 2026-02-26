@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 
 import { HelpTip } from 'src/components/help-tip/help-tip'
 import { formatPercentage, formatSolAmount } from 'src/format'
@@ -27,7 +27,6 @@ import type {
   AuctionValidator,
   DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
-import type { PendingEdits } from 'src/pages/sam'
 
 // Validator with computed bond state
 type ValidatorWithBondState = AuctionValidator & {
@@ -40,23 +39,10 @@ type Props = {
   epochsPerYear: number
   dsSamConfig: DsSamConfig
   level: UserLevel
-  simulationModeActive: boolean
-  editingValidator: string | null
   simulatedValidator: string | null
   isCalculating: boolean
   hasSimulationApplied: boolean
-  pendingEdits: PendingEdits
   onValidatorClick: (voteAccount: string) => void
-  onFieldChange: (
-    field:
-      | 'inflationCommission'
-      | 'mevCommission'
-      | 'blockRewardsCommission'
-      | 'bidPmpe',
-    value: string,
-  ) => void
-  onRunSimulation: () => void
-  onCancelEditing: () => void
 }
 
 // APY Tooltip component for Max APY hover
@@ -146,16 +132,10 @@ export const SamTable: React.FC<Props> = ({
   epochsPerYear,
   dsSamConfig,
   level: _level,
-  simulationModeActive: _simulationModeActive,
-  editingValidator,
   simulatedValidator,
   isCalculating,
   hasSimulationApplied: _hasSimulationApplied,
-  pendingEdits: _pendingEdits,
   onValidatorClick,
-  onFieldChange: _onFieldChange,
-  onRunSimulation: _onRunSimulation,
-  onCancelEditing,
 }) => {
   const {
     auctionData: { validators },
@@ -174,34 +154,6 @@ export const SamTable: React.FC<Props> = ({
   // Hovered row for APY tooltip
   const [hoveredApyRow, setHoveredApyRow] = useState<string | null>(null)
   const [hoveredRow, setHoveredRow] = useState<string | null>(null)
-
-  // Global Escape key handler to cancel editing
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && editingValidator) {
-        onCancelEditing()
-      }
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [editingValidator, onCancelEditing])
-
-  // Click-outside handler to cancel editing
-  useEffect(() => {
-    if (!editingValidator) return undefined
-
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        tableWrapRef.current &&
-        !tableWrapRef.current.contains(e.target as Node)
-      ) {
-        onCancelEditing()
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [editingValidator, onCancelEditing])
 
   // Current validators with bond health computed
   const validatorsWithBond: ValidatorWithBondState[] = useMemo(
