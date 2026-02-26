@@ -29,6 +29,9 @@ import { Alignment, OrderDirection, Table } from '../table/table'
 
 import type { ValidatorWithBond } from 'src/services/validator-with-bond'
 
+const TRUNCATED_CELL =
+  'inline-block w-[100px] pt-1 text-ellipsis overflow-hidden'
+
 type Props = {
   data: ValidatorWithBond[]
   level: UserLevel
@@ -107,7 +110,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
 
   return (
     <div className="relative [&>table]:ml-2.5">
-      <div className="metricWrap flex gap-2 p-2.5 w-fit">
+      <div className="flex gap-2 p-2.5 w-fit">
         <Metric
           label="Bonds Funded"
           value={totalFundedBonds.toLocaleString()}
@@ -141,7 +144,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
             header: 'Validator',
             headerAttrsFn: () => tooltipAttributes('Validator Vote Account'),
             render: ({ validator }) => (
-              <span className="inline-block w-[100px] pt-1 text-ellipsis overflow-hidden">
+              <span className={TRUNCATED_CELL}>
                 {selectVoteAccount(validator)}
               </span>
             ),
@@ -153,9 +156,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
           {
             header: 'Name',
             render: ({ validator }) => (
-              <span className="inline-block w-[100px] pt-1 text-ellipsis overflow-hidden">
-                {selectName(validator)}
-              </span>
+              <span className={TRUNCATED_CELL}>{selectName(validator)}</span>
             ),
             compare: (a, b) =>
               selectName(a.validator).localeCompare(selectName(b.validator)),

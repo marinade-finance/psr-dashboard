@@ -216,7 +216,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
         <Navigation level={level}>
           <button
             className={cn(
-              'simulatorToggle h-10 leading-[30px] px-5 py-[5px] m-[4px_0_4px_4px] border-none rounded cursor-pointer font-[inherit] text-[length:inherit] whitespace-nowrap transition-colors bg-blue-500 text-white hover:bg-blue-600',
+              'h-10 leading-[30px] px-5 py-[5px] m-[4px_0_4px_4px] border-none rounded cursor-pointer font-[inherit] text-[length:inherit] whitespace-nowrap transition-colors bg-blue-500 text-white hover:bg-blue-600',
               simulationModeActive && 'bg-sky-500 hover:bg-sky-600',
               isCalculating && 'bg-gray-500 cursor-not-allowed',
             )}
