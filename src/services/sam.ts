@@ -1,3 +1,10 @@
+import {
+  DsSamSDK,
+  InputsSource,
+  loadSamConfig,
+  LogVerbosity,
+} from '@marinade.finance/ds-sam-sdk'
+
 import { Color } from 'src/components/table/table'
 import { formatPercentage } from 'src/format'
 
@@ -13,7 +20,7 @@ import type {
 
 const estimateEpochsPerYear = async () => {
   const FETCHED_EPOCHS = 11
-  const { validators } = await fetchValidatorsWithEpochs(FETCHED_EPOCHS, 1)
+  const { validators } = await fetchValidatorsWithEpochs(FETCHED_EPOCHS, 5)
   const epochStats = validators.map(({ epoch_stats }) => epoch_stats).flat()
 
   const rangeStart = epochStats.reduce(
@@ -62,18 +69,17 @@ export const loadSam = async (
   dcSamConfig: DsSamConfig
 }> => {
   try {
-    const [epochsPerYear, sdk] = await Promise.all([
+    const [epochsPerYear, config] = await Promise.all([
       estimateEpochsPerYear(),
-      import('@marinade.finance/ds-sam-sdk'),
+      loadSamConfig(),
     ])
     console.log('epochsPerYear', epochsPerYear)
-    const config = await sdk.loadSamConfig()
-    const dsSam = new sdk.DsSamSDK({
+    const dsSam = new DsSamSDK({
       ...config,
-      inputsSource: sdk.InputsSource.APIS,
+      inputsSource: InputsSource.APIS,
       cacheInputs: true,
       debugVoteAccounts: [],
-      logVerbosity: sdk.LogVerbosity.ERROR,
+      logVerbosity: LogVerbosity.ERROR,
     })
     const auctionResult = await dsSam.runFinalOnly(dataOverrides)
     return { auctionResult, epochsPerYear, dcSamConfig: dsSam.config }
