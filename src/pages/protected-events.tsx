@@ -8,8 +8,6 @@ import { ProtectedEventsTable } from 'src/components/protected-events-table/prot
 import { getBannerData } from 'src/services/banner'
 import { fetchProtectedEventsWithValidator } from 'src/services/validator-with-protected_event'
 
-import styles from './protected-events.module.css'
-
 import type { UserLevelProps } from 'src/components/navigation/navigation'
 
 export const ProtectedEventsPage: React.FC<UserLevelProps> = ({ level }) => {
@@ -19,7 +17,7 @@ export const ProtectedEventsPage: React.FC<UserLevelProps> = ({ level }) => {
   )
 
   return (
-    <div className={styles.page}>
+    <div className="bg-background-page min-h-screen">
       <Navigation level={level} />
       <Banner {...getBannerData()} />
       {status === 'error' && <p>Error fetching data</p>}
