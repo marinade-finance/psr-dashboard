@@ -2,28 +2,30 @@ import { defineConfig, type PluginOption } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
-function spaFallbackExcludeDocs(): PluginOption {
+function spaWithStaticDocs(): PluginOption {
   return {
-    name: 'spa-fallback-exclude-docs',
+    name: 'spa-with-static-docs',
+    configurePreviewServer(server) {
+      server.middlewares.use((req, _res, next) => {
+        const url = req.url ?? ''
+        if (
+          req.headers.accept?.includes('text/html') &&
+          !url.startsWith('/docs') &&
+          !url.includes('.')
+        ) {
+          req.url = '/index.html'
+        }
+        next()
+      })
+    },
     configureServer(server) {
       return () => {
         server.middlewares.use((req, _res, next) => {
+          const url = req.url ?? ''
           if (
             req.headers.accept?.includes('text/html') &&
-            !req.url?.startsWith('/docs')
-          ) {
-            req.url = '/index.html'
-          }
-          next()
-        })
-      }
-    },
-    configurePreviewServer(server) {
-      return () => {
-        server.middlewares.use((req, _res, next) => {
-          if (
-            req.headers.accept?.includes('text/html') &&
-            !req.url?.startsWith('/docs')
+            !url.startsWith('/docs') &&
+            !url.includes('.')
           ) {
             req.url = '/index.html'
           }
@@ -35,7 +37,7 @@ function spaFallbackExcludeDocs(): PluginOption {
 }
 
 export default defineConfig({
-  plugins: [react(), spaFallbackExcludeDocs()],
+  plugins: [react(), spaWithStaticDocs()],
   resolve: {
     alias: { src: path.resolve(__dirname, 'src') },
   },
