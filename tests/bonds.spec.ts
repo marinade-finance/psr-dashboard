@@ -13,25 +13,25 @@ test.describe('Validator Bonds page', () => {
 
   test('shows Bonds Funded metric', async ({ page }) => {
     await expect(
-      page.locator('[class*="metric"]').filter({ hasText: 'Bonds Funded' }),
+      page.locator('.metric').filter({ hasText: 'Bonds Funded' }),
     ).toBeVisible()
   })
 
   test('shows Bonds Balance metric', async ({ page }) => {
     await expect(
-      page.locator('[class*="metric"]').filter({ hasText: 'Bonds Balance' }),
+      page.locator('.metric').filter({ hasText: 'Bonds Balance' }),
     ).toBeVisible()
   })
 
   test('shows Marinade Stake metric', async ({ page }) => {
     await expect(
-      page.locator('[class*="metric"]').filter({ hasText: 'Marinade Stake' }),
+      page.locator('.metric').filter({ hasText: 'Marinade Stake' }),
     ).toBeVisible()
   })
 
   test('shows Protected Stake metric', async ({ page }) => {
     await expect(
-      page.locator('[class*="metric"]').filter({ hasText: 'Protected Stake' }),
+      page.locator('.metric').filter({ hasText: 'Protected Stake' }),
     ).toBeVisible()
   })
 
@@ -81,7 +81,7 @@ test.describe('Validator Bonds page', () => {
     await page.waitForSelector('[class*="metricWrap"]', { timeout: 30000 })
     await expect(
       page
-        .locator('[class*="metric"]')
+        .locator('.metric')
         .filter({ hasText: 'Max Protectable Stake' }),
     ).toBeVisible()
   })

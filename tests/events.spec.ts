@@ -13,20 +13,20 @@ test.describe('Protected Events page', () => {
 
   test('shows Total events metric', async ({ page }) => {
     await expect(
-      page.locator('[class*="metric"]').filter({ hasText: 'Total events' }),
+      page.locator('.metric').filter({ hasText: 'Total events' }),
     ).toBeVisible()
   })
 
   test('shows Total amount metric', async ({ page }) => {
     await expect(
-      page.locator('[class*="metric"]').filter({ hasText: 'Total amount' }),
+      page.locator('.metric').filter({ hasText: 'Total amount' }),
     ).toBeVisible()
   })
 
   test('shows Last Settled Amount metric', async ({ page }) => {
     await expect(
       page
-        .locator('[class*="metric"]')
+        .locator('.metric')
         .filter({ hasText: 'Last Settled Amount' }),
     ).toBeVisible()
   })
@@ -88,12 +88,12 @@ test.describe('Protected Events page', () => {
       // Filtered metrics should now appear
       await expect(
         page
-          .locator('[class*="metric"]')
+          .locator('.metric')
           .filter({ hasText: 'Filtered Events' }),
       ).toBeVisible()
       await expect(
         page
-          .locator('[class*="metric"]')
+          .locator('.metric')
           .filter({ hasText: 'Filtered Amount' }),
       ).toBeVisible()
     }
@@ -122,10 +122,10 @@ test.describe('Protected Events page', () => {
 
     // Filtered metrics should be gone
     await expect(
-      page.locator('[class*="metric"]').filter({ hasText: 'Filtered Events' }),
+      page.locator('.metric').filter({ hasText: 'Filtered Events' }),
     ).not.toBeVisible()
     await expect(
-      page.locator('[class*="metric"]').filter({ hasText: 'Filtered Amount' }),
+      page.locator('.metric').filter({ hasText: 'Filtered Amount' }),
     ).not.toBeVisible()
   })
 
@@ -201,7 +201,7 @@ test.describe('Protected Events page', () => {
     await page.waitForSelector('[class*="metricWrap"]', { timeout: 30000 })
     await expect(
       page
-        .locator('[class*="metric"]')
+        .locator('.metric')
         .filter({ hasText: 'Last Epoch Bids' }),
     ).toBeVisible()
   })
