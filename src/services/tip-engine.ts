@@ -136,8 +136,9 @@ export const getValidatorTip = (
   }
 
   if (health === 'watch' && bidPmpe < 15) {
+    // bidPmpe is in PMPE (per mille per epoch), divide by 10 to get percentage
     return {
-      text: `Bid at ${(bidPmpe / 100).toFixed(3)}% is below median. Raise to 0.15-0.25% to gain rank.`,
+      text: `Bid at ${(bidPmpe / 10).toFixed(2)}% is below median. Raise to 0.15-0.25% to gain rank.`,
       urgency: 'warning',
       constraint: 'bid',
     }
@@ -249,7 +250,7 @@ export const formatStakeDelta = (
     return { text: '\u2014', color: VAR_MUTED_FOREGROUND, arrow: '' }
   }
 
-  const delta = samTarget - samActive
+  const delta = Math.round(samTarget - samActive)
 
   if (delta > 0) {
     return {

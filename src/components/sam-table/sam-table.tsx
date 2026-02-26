@@ -43,7 +43,6 @@ type Props = {
   dsSamConfig: DsSamConfig
   level: UserLevel
   simulationModeActive: boolean
-  onToggleSimulationMode: () => void
   editingValidator: string | null
   simulatedValidator: string | null
   isCalculating: boolean
@@ -138,11 +137,10 @@ export const SamTable: React.FC<Props> = ({
   dsSamConfig,
   level: _level,
   simulationModeActive,
-  onToggleSimulationMode,
   editingValidator,
   simulatedValidator,
   isCalculating,
-  hasSimulationApplied,
+  hasSimulationApplied: _hasSimulationApplied,
   pendingEdits: _pendingEdits,
   onValidatorClick,
   onFieldChange: _onFieldChange,
@@ -362,7 +360,7 @@ export const SamTable: React.FC<Props> = ({
                 color: bondRunway <= 10 ? bondStyle.color : 'var(--muted)',
               }}
             >
-              ~{bondRunway}ep
+              ~{Math.round(bondRunway)}ep
             </span>
           </div>
         </td>
@@ -427,23 +425,6 @@ export const SamTable: React.FC<Props> = ({
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Action buttons */}
-      <div className={styles.actionBar}>
-        <button
-          className={`${styles.actionBtn} ${simulationModeActive ? styles.actionBtnActive : ''}`}
-          onClick={onToggleSimulationMode}
-          disabled={isCalculating}
-        >
-          {simulationModeActive ? 'Exit Simulation' : 'Enter Simulation'}
-        </button>
-        {hasSimulationApplied && !isCalculating && (
-          <span className={styles.simulationNote}>Simulation applied</span>
-        )}
-        {isCalculating && (
-          <span className={styles.simulationNote}>Calculating...</span>
-        )}
       </div>
 
       {/* Table */}

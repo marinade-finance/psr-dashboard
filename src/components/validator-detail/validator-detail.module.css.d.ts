@@ -4,6 +4,7 @@ interface CssExports {
   'apyBar': string;
   'apyLegend': string;
   'apySegment': string;
+  'backBtn': string;
   'bondBalance': string;
   'bondCard': string;
   'bondHeader': string;
@@ -16,6 +17,17 @@ interface CssExports {
   'constraintText': string;
   'content': string;
   'dot': string;
+  'factorIcon': string;
+  'factorInfo': string;
+  'factorItem': string;
+  'factorItemNegative': string;
+  'factorItemNeutral': string;
+  'factorItemPositive': string;
+  'factorLeft': string;
+  'factorList': string;
+  'factorName': string;
+  'factorNote': string;
+  'factorValue': string;
   'gaugeBar': string;
   'gaugeContainer': string;
   'gaugeFill': string;

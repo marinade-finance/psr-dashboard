@@ -92,15 +92,71 @@ export const ValidatorDetail = ({
     )
   }
 
-  const constraintText = useMemo(() => {
-    if (!inSet) {
-      const gap = (winningApy - currentMaxApy).toFixed(2)
-      return `APY ${gap}% below winning threshold`
-    }
-    return (
-      validator.lastCapConstraint?.constraintName || 'Meeting all constraints'
-    )
-  }, [validator, inSet, winningApy, currentMaxApy])
+  // Compute ranking factors for "Why Rank" panel
+  const rankFactors = useMemo(() => {
+    const factors: {
+      name: string
+      value: string
+      note: string
+      impact: 'positive' | 'negative' | 'neutral'
+    }[] = []
+
+    // Max APY factor
+    const apyMargin = currentMaxApy - winningApy
+    factors.push({
+      name: 'Max APY',
+      value: formatPercentage(currentMaxApy, 2),
+      note:
+        apyMargin >= 0
+          ? `+${formatPercentage(apyMargin, 2)} above cutoff`
+          : `${formatPercentage(apyMargin, 2)} below cutoff`,
+      impact: apyMargin >= 0 ? 'positive' : 'negative',
+    })
+
+    // Bond capacity factor
+    factors.push({
+      name: 'Bond capacity',
+      value: `${formatSolAmount(validator.bondBalanceSol, 0)}\u25CE`,
+      note: `${bondUtilPct.toFixed(0)}% utilized, ~${Math.round(bondRunway)} epochs runway`,
+      impact:
+        bondUtilPct < 65
+          ? 'positive'
+          : bondUtilPct < 85
+            ? 'neutral'
+            : 'negative',
+    })
+
+    // Stake target factor
+    const samActive = validator.marinadeActivatedStakeSol
+    const samTarget = validator.auctionStake.marinadeSamTargetSol
+    const stakeGrowth = samTarget - samActive
+    factors.push({
+      name: 'Stake target',
+      value: `${formatSolAmount(samTarget, 0)}\u25CE`,
+      note:
+        stakeGrowth > 0
+          ? `Gaining ${formatSolAmount(stakeGrowth, 0)}\u25CE next epoch`
+          : stakeGrowth < 0
+            ? `Losing ${formatSolAmount(Math.abs(stakeGrowth), 0)}\u25CE`
+            : 'At target allocation',
+      impact:
+        stakeGrowth > 0 ? 'positive' : stakeGrowth < 0 ? 'negative' : 'neutral',
+    })
+
+    // Block production factor
+    const blockProd =
+      validator.blockRewardsCommissionDec !== null
+        ? (1 - validator.blockRewardsCommissionDec) * 100
+        : 100
+    factors.push({
+      name: 'Block production',
+      value: `${blockProd.toFixed(0)}%`,
+      note: blockProd >= 100 ? 'Full uptime' : 'Missed slots reduce APY',
+      impact: blockProd >= 100 ? 'positive' : 'negative',
+    })
+
+    return factors
+  }, [validator, currentMaxApy, winningApy, bondUtilPct, bondRunway])
 
   const positionPct = inSet
     ? ((totalValidators - rank + 1) / totalValidators) * 100
@@ -111,6 +167,18 @@ export const ValidatorDetail = ({
       <div className={styles.panel} onClick={e => e.stopPropagation()}>
         <div className={styles.header}>
           <div className={styles.headerLeft}>
+            <button className={styles.backBtn} onClick={onClose}>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path
+                  d="M8.75 10.5L5.25 7L8.75 3.5"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              Back to rankings
+            </button>
             <span className={styles.rank}>#{rank}</span>
             <span className={styles.voteAccount}>
               {selectVoteAccount(validator).slice(0, 12)}...
@@ -137,9 +205,37 @@ export const ValidatorDetail = ({
             <div className={styles.section}>
               <h3 className={styles.sectionTitle}>
                 Why Rank #{rank}?
-                <HelpTip text="The primary constraint limiting your stake allocation. Improving this metric will improve your rank." />
+                <HelpTip text="Factors that determine your auction ranking. Improve negative factors to climb higher." />
               </h3>
-              <p className={styles.constraintText}>{constraintText}</p>
+              <div className={styles.factorList}>
+                {rankFactors.map(factor => (
+                  <div
+                    key={factor.name}
+                    className={`${styles.factorItem} ${
+                      factor.impact === 'positive'
+                        ? styles.factorItemPositive
+                        : factor.impact === 'negative'
+                          ? styles.factorItemNegative
+                          : styles.factorItemNeutral
+                    }`}
+                  >
+                    <div className={styles.factorLeft}>
+                      <span className={styles.factorIcon}>
+                        {factor.impact === 'positive'
+                          ? '\u2713'
+                          : factor.impact === 'negative'
+                            ? '\u2717'
+                            : '\u2014'}
+                      </span>
+                      <div className={styles.factorInfo}>
+                        <span className={styles.factorName}>{factor.name}</span>
+                        <span className={styles.factorNote}>{factor.note}</span>
+                      </div>
+                    </div>
+                    <span className={styles.factorValue}>{factor.value}</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className={styles.section}>
@@ -351,7 +447,7 @@ export const ValidatorDetail = ({
                   <div className={styles.bondMetric}>
                     <span className={styles.bondMetricLabel}>Runway</span>
                     <span className={styles.bondMetricValue}>
-                      {bondRunway} epochs
+                      ~{Math.round(bondRunway)} epochs
                     </span>
                   </div>
                 </div>

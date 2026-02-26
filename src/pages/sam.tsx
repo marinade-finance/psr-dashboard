@@ -1,12 +1,10 @@
 import React, { useState, useCallback, useMemo } from 'react'
 import { useQuery } from 'react-query'
 
-import { Banner } from 'src/components/banner/banner'
 import { Loader } from 'src/components/loader/loader'
 import { Navigation } from 'src/components/navigation/navigation'
 import { SamTable } from 'src/components/sam-table/sam-table'
 import { ValidatorDetail } from 'src/components/validator-detail/validator-detail'
-import { getBannerData } from 'src/services/banner'
 import { loadSam, selectBondSize } from 'src/services/sam'
 
 import styles from './sam.module.css'
@@ -303,7 +301,38 @@ export const SamPage: React.FC<Props> = ({ level }) => {
     <div className={styles.page}>
       <div className={styles.pageContent}>
         <Navigation level={level} />
-        <Banner {...getBannerData()} />
+        {/* Page header row with title and action buttons */}
+        <div className={styles.pageHeader}>
+          <div className={styles.pageHeaderLeft}>
+            <span className={styles.pageTitle}>Stake Auction Marketplace</span>
+            <span className={styles.pageSubtitle}>
+              Epoch 924 · Per-validator cap: 8% of TVL (MIP-19)
+            </span>
+          </div>
+          <div className={styles.pageHeaderRight}>
+            {hasSimulationApplied && !isCalculating && (
+              <span className={styles.simulationNote}>Simulation applied</span>
+            )}
+            {isCalculating && (
+              <span className={styles.simulationNote}>Calculating...</span>
+            )}
+            <a
+              href="https://docs.marinade.finance/marinade-protocol/validators"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.headerBtn}
+            >
+              Docs
+            </a>
+            <button
+              className={`${styles.headerBtn} ${simulationModeActive ? styles.headerBtnActive : styles.headerBtnPrimary}`}
+              onClick={handleToggleSimulationMode}
+              disabled={isCalculating}
+            >
+              {simulationModeActive ? 'Exit Simulation' : 'Enter Simulation'}
+            </button>
+          </div>
+        </div>
         {status === 'error' && (
           <p className={styles.error}>Error fetching data</p>
         )}
@@ -317,7 +346,6 @@ export const SamPage: React.FC<Props> = ({ level }) => {
               dsSamConfig={data.dcSamConfig}
               level={level}
               simulationModeActive={simulationModeActive}
-              onToggleSimulationMode={handleToggleSimulationMode}
               editingValidator={editingValidator}
               simulatedValidator={simulatedValidator}
               isCalculating={isCalculating}

@@ -2,8 +2,17 @@
 // Please do not change this file!
 interface CssExports {
   'error': string;
+  'headerBtn': string;
+  'headerBtnActive': string;
+  'headerBtnPrimary': string;
   'page': string;
   'pageContent': string;
+  'pageHeader': string;
+  'pageHeaderLeft': string;
+  'pageHeaderRight': string;
+  'pageSubtitle': string;
+  'pageTitle': string;
+  'simulationNote': string;
   'tableContainer': string;
 }
 export const cssExports: CssExports;

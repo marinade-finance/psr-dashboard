@@ -151,7 +151,7 @@
   top: 0;
   bottom: 0;
   width: 2px;
-  background: var(--destructive);
+  background: var(--primary);
 }
 
 .gaugeLabels {
@@ -163,7 +163,7 @@
 }
 
 .winningLabel {
-  color: var(--destructive);
+  color: var(--primary);
   font-weight: 500;
 }
 
@@ -355,6 +355,91 @@
   font-weight: 600;
   color: var(--foreground);
   font-family: var(--font-mono);
+}
+
+/* Back Button */
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--secondary-foreground);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  box-shadow: var(--shadow);
+  transition: all 0.15s;
+}
+
+.backBtn:hover {
+  background: var(--background-page);
+  color: var(--foreground);
+}
+
+/* Why Rank Factors */
+.factorList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.factorItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 6px;
+}
+
+.factorItemPositive {
+  background: var(--primary-light-05);
+}
+
+.factorItemNegative {
+  background: rgba(220, 38, 38, 0.03);
+}
+
+.factorItemNeutral {
+  background: var(--muted);
+}
+
+.factorLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.factorIcon {
+  font-size: 12px;
+  width: 14px;
+  text-align: center;
+}
+
+.factorInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.factorName {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+.factorNote {
+  font-size: 10px;
+  color: var(--muted-foreground);
+}
+
+.factorValue {
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  color: var(--foreground);
 }
 
 /* Responsive */
