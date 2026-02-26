@@ -1,4 +1,5 @@
 import { defineConfig, type PluginOption } from 'vite'
+import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
@@ -37,7 +38,7 @@ function spaWithStaticDocs(): PluginOption {
 }
 
 export default defineConfig({
-  plugins: [react(), spaWithStaticDocs()],
+  plugins: [tailwindcss(), react(), spaWithStaticDocs()],
   resolve: {
     alias: { src: path.resolve(__dirname, 'src') },
   },

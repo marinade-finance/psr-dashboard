@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { test, expect } from './fixtures/mock-api'
 import type { Page } from '@playwright/test'
 
 async function waitForSamData(page: Page) {

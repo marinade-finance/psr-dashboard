@@ -32,8 +32,8 @@ test.describe('Docs page', () => {
 
   test('guide content has table with API endpoints', async ({ page }) => {
     await page.goto('/docs/')
-    await expect(page.locator('#content table')).toBeVisible()
-    await expect(page.locator('#content table')).toContainText(
+    await expect(page.locator('#content table').first()).toBeVisible()
+    await expect(page.locator('#content table').first()).toContainText(
       'Validators API',
     )
   })

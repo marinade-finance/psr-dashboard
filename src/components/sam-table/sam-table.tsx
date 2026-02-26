@@ -105,7 +105,7 @@ type Props = {
 const CLICKABLE_ROW =
   'validatorRowClickable cursor-pointer hover:bg-primary-alpha'
 const GHOST_ROW =
-  'ghostRow !cursor-default pointer-events-none [&_td]:line-through [&_td]:text-muted-foreground [&_td]:!bg-cell-grey [&_td_span]:line-through [&_td_div]:line-through'
+  'ghostRow cursor-default! pointer-events-none [&_td]:line-through [&_td]:text-muted-foreground [&_td]:bg-cell-grey! [&_td_span]:line-through [&_td_div]:line-through'
 
 function bondLabel(color: Color): string {
   switch (color) {
@@ -148,7 +148,7 @@ function renderEditableCell(
       <span className="invisible">{displayValue}</span>
       <input
         type="number"
-        className="absolute right-0 top-1/2 -translate-y-1/2 w-[50px] px-1 py-0.5 bg-secondary border border-border-grid rounded text-foreground text-xs text-right box-border focus:outline-none focus:border-primary placeholder:text-muted-foreground [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+        className="absolute right-0 top-1/2 -translate-y-1/2 w-[50px] px-1 py-0.5 bg-secondary border border-border-grid rounded text-foreground text-xs text-right box-border focus:outline-hidden focus:border-primary placeholder:text-muted-foreground [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
         value={inputValue}
         step={opts.step}
         min={opts.min}
@@ -551,7 +551,7 @@ export const SamTable: React.FC<Props> = ({
   }
 
   const simulationCaption = simulationModeActive ? (
-    <div className="px-8 py-4 bg-gradient-to-br from-[rgba(5,30,28,1)] to-[rgba(15,50,48,1)] text-primary text-lg font-semibold tracking-wider text-center uppercase rounded-t-xl border-b border-border-grid">
+    <div className="px-8 py-4 bg-linear-to-br from-[rgba(5,30,28,1)] to-[rgba(15,50,48,1)] text-primary text-lg font-semibold tracking-wider text-center uppercase rounded-t-xl border-b border-border-grid">
       {isCalculating ? 'Calculating simulation...' : 'Simulation mode active'}
     </div>
   ) : undefined
@@ -1106,7 +1106,7 @@ export const SamTable: React.FC<Props> = ({
         simulationModeActive && [
           '[&>table_tbody]:bg-[rgba(5,30,28,0.08)]',
           '[&>table_tbody_tr]:bg-[rgba(5,30,28,0.06)]',
-          '[&>table_thead]:bg-gradient-to-br [&>table_thead]:from-[rgba(5,30,28,1)] [&>table_thead]:to-[rgba(15,50,48,1)] [&>table_thead]:transition-[background] [&>table_thead]:duration-[800ms] [&>table_thead]:ease-in-out',
+          '[&>table_thead]:bg-linear-to-br [&>table_thead]:from-[rgba(5,30,28,1)] [&>table_thead]:to-[rgba(15,50,48,1)] [&>table_thead]:transition-[background] [&>table_thead]:duration-[800ms] [&>table_thead]:ease-in-out',
         ],
         isCalculating && 'header-glow',
       )}

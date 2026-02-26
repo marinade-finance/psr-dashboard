@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures/mock-api'
 
 test.describe('Protected Events page', () => {
   test.beforeEach(async ({ page }) => {

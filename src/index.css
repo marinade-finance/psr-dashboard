@@ -1,34 +1,70 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+/* Class-based dark mode */
+@variant dark (&:where(.dark, .dark *));
+
+/* Theme tokens — maps CSS variables to Tailwind utilities */
+@theme {
+  --font-sans: Inter, system-ui, -apple-system, sans-serif;
+  --shadow-card: var(--shadow);
+
+  --color-background: var(--background);
+  --color-background-page: var(--background-page);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-tertiary: var(--tertiary);
+  --color-tertiary-foreground: var(--tertiary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-alpha: var(--primary-alpha);
+  --color-destructive: var(--destructive);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --color-border: var(--border);
+  --color-border-grid: var(--border-grid);
+  --color-ring: var(--ring);
+  --color-cell-red: var(--cell-red);
+  --color-cell-green: var(--cell-green);
+  --color-cell-yellow: var(--cell-yellow);
+  --color-cell-grey: var(--cell-grey);
+  --color-status-green: var(--status-green);
+  --color-status-yellow: var(--status-yellow);
+  --color-status-red: var(--status-red);
+  --color-status-grey: var(--status-grey);
+}
 
 @layer base {
   :root {
-    --background: #FFFFFF;
-    --background-page: #F3F7F7;
+    --background: #ffffff;
+    --background-page: #f3f7f7;
     --foreground: #182120;
-    --card: #FFFFFF;
+    --card: #ffffff;
     --card-foreground: #081211;
-    --secondary: #E7EEEF;
-    --secondary-foreground: #3A4E4D;
-    --tertiary: #DDE7E8;
-    --tertiary-foreground: #6F8383;
-    --muted: #F3F7F7;
-    --muted-foreground: #6C8383;
-    --border: #DDE7E8;
-    --border-grid: #E7EEEF;
-    --primary: #0C9790;
-    --primary-foreground: #F6F9F9;
+    --secondary: #e7eeef;
+    --secondary-foreground: #3a4e4d;
+    --tertiary: #dde7e8;
+    --tertiary-foreground: #6f8383;
+    --muted: #f3f7f7;
+    --muted-foreground: #6c8383;
+    --border: #dde7e8;
+    --border-grid: #e7eeef;
+    --primary: #0c9790;
+    --primary-foreground: #f6f9f9;
     --primary-alpha: rgba(12, 151, 144, 0.15);
-    --destructive: #DC2626;
-    --warning: #E59606;
-    --info: #6366F1;
-    --ring: rgba(154, 177, 178, 0.30);
+    --destructive: #dc2626;
+    --warning: #e59606;
+    --info: #6366f1;
+    --ring: rgba(154, 177, 178, 0.3);
     --shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.05);
     --cell-red: rgba(220, 38, 38, 0.12);
     --cell-green: rgba(12, 151, 144, 0.12);
     --cell-yellow: rgba(229, 150, 6, 0.12);
-    --cell-grey: rgba(100, 116, 139, 0.10);
+    --cell-grey: rgba(100, 116, 139, 0.1);
     --status-green: #16a34a;
     --status-yellow: #ca8a04;
     --status-red: #dc2626;
@@ -37,30 +73,30 @@
 
   .dark {
     --background: #030707;
-    --background-page: #050D0C;
-    --foreground: #F6F9F9;
-    --card: #0F1F1E;
-    --card-foreground: #F6F9F9;
-    --secondary: #212C2B;
-    --secondary-foreground: #F6F9F9;
-    --tertiary: #3A4E4D;
-    --tertiary-foreground: #9AB1B2;
+    --background-page: #050d0c;
+    --foreground: #f6f9f9;
+    --card: #0f1f1e;
+    --card-foreground: #f6f9f9;
+    --secondary: #212c2b;
+    --secondary-foreground: #f6f9f9;
+    --tertiary: #3a4e4d;
+    --tertiary-foreground: #9ab1b2;
     --muted: #182120;
-    --muted-foreground: #6C8383;
+    --muted-foreground: #6c8383;
     --border: rgba(255, 255, 255, 0.15);
     --border-grid: rgba(255, 255, 255, 0.06);
-    --primary: #179F99;
-    --primary-foreground: #042F2E;
-    --primary-alpha: rgba(23, 159, 153, 0.20);
-    --destructive: #F87171;
-    --warning: #FB923C;
-    --info: #818CF8;
-    --ring: rgba(111, 131, 131, 0.50);
-    --shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.20);
-    --cell-red: rgba(248, 113, 113, 0.20);
+    --primary: #179f99;
+    --primary-foreground: #042f2e;
+    --primary-alpha: rgba(23, 159, 153, 0.2);
+    --destructive: #f87171;
+    --warning: #fb923c;
+    --info: #818cf8;
+    --ring: rgba(111, 131, 131, 0.5);
+    --shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.2);
+    --cell-red: rgba(248, 113, 113, 0.2);
     --cell-green: rgba(58, 195, 188, 0.15);
     --cell-yellow: rgba(251, 146, 60, 0.18);
-    --cell-grey: rgba(128, 128, 128, 0.30);
+    --cell-grey: rgba(128, 128, 128, 0.3);
     --status-green: #4ade80;
     --status-yellow: #fbbf24;
     --status-red: #f87171;
@@ -75,13 +111,20 @@
     position: relative;
     background-color: var(--background-page);
     color: var(--foreground);
-    font-family: Inter, system-ui, -apple-system, sans-serif;
+    font-family:
+      Inter,
+      system-ui,
+      -apple-system,
+      sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     transition: background-color 200ms;
   }
 
-  button, input, select, textarea {
+  button,
+  input,
+  select,
+  textarea {
     font-family: inherit;
   }
 }
@@ -97,17 +140,25 @@
     transition: none !important;
   }
 
-
   .header-glow > table thead {
     animation: header-glow 2s ease-in-out infinite;
   }
 
   @keyframes header-glow {
-    0%, 100% {
-      background: linear-gradient(135deg, rgba(5, 30, 28, 1), rgba(15, 50, 48, 1));
+    0%,
+    100% {
+      background: linear-gradient(
+        135deg,
+        rgba(5, 30, 28, 1),
+        rgba(15, 50, 48, 1)
+      );
     }
     50% {
-      background: linear-gradient(135deg, rgba(10, 60, 56, 1), rgba(20, 80, 76, 1));
+      background: linear-gradient(
+        135deg,
+        rgba(10, 60, 56, 1),
+        rgba(20, 80, 76, 1)
+      );
     }
   }
 }

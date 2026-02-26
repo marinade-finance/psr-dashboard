@@ -162,7 +162,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
   const filtered = preFilteredData.length !== data.length
 
   return (
-    <div className="relative [&>table]:ml-2.5 [&_input]:bg-secondary [&_input]:text-foreground [&_input]:border [&_input]:border-border-grid [&_input]:rounded-md [&_input]:p-2 [&_input]:outline-none [&_input:focus]:border-primary [&_input:focus]:text-foreground">
+    <div className="relative [&>table]:ml-2.5 [&_input]:bg-secondary [&_input]:text-foreground [&_input]:border [&_input]:border-border-grid [&_input]:rounded-md [&_input]:p-2 [&_input]:outline-hidden [&_input:focus]:border-primary [&_input:focus]:text-foreground">
       <div className="metricWrap flex gap-2 p-2.5 w-fit">
         <Metric
           label="Total events"
