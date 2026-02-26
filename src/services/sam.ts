@@ -8,6 +8,8 @@ import {
 import { Color } from 'src/components/table/table'
 import { formatPercentage } from 'src/format'
 
+import { fetchValidatorsWithEpochs } from './validators'
+
 import type {
   AuctionResult,
   AuctionValidator,
@@ -16,10 +18,48 @@ import type {
   SourceDataOverrides,
 } from '@marinade.finance/ds-sam-sdk'
 
-// Solana epoch duration is very stable (~2.0 days).
-// Hardcode to skip a heavy API call (fetched 5 validators × 11 epochs).
-// Only affects APY display formatting — being off by 0.5% is invisible.
-const EPOCHS_PER_YEAR = 182.5
+const estimateEpochsPerYear = async () => {
+  const FETCHED_EPOCHS = 11
+  const { validators } = await fetchValidatorsWithEpochs(FETCHED_EPOCHS, 5)
+  const epochStats = validators.map(({ epoch_stats }) => epoch_stats).flat()
+
+  const rangeStart = epochStats.reduce(
+    (acc, { epoch, epoch_start_at, epoch_end_at }) => {
+      if (epoch_start_at === null || epoch_end_at === null) {
+        return acc
+      }
+      if (epoch < acc.epoch) {
+        return { epoch, timestamp: new Date(epoch_start_at).getTime() / 1e3 }
+      }
+      return acc
+    },
+    { epoch: Infinity, timestamp: Infinity },
+  )
+
+  const rangeEnd = epochStats.reduce(
+    (acc, { epoch, epoch_start_at, epoch_end_at }) => {
+      if (epoch_start_at === null || epoch_end_at === null) {
+        return acc
+      }
+      if (acc.epoch < epoch) {
+        return { epoch, timestamp: new Date(epoch_end_at).getTime() / 1e3 }
+      }
+      return acc
+    },
+    { epoch: 0, timestamp: 0 },
+  )
+
+  const SECONDS_PER_YEAR = 365.25 * 24 * 3600
+  const DEFAULT_EPOCH_DURATION = 0.4 * 432000
+  const DEFAULT_EPOCHS_PER_YEAR = SECONDS_PER_YEAR / DEFAULT_EPOCH_DURATION
+  const rangeDuration = rangeEnd.timestamp - rangeStart.timestamp
+  const rangeEpochs = rangeEnd.epoch - rangeStart.epoch + 1
+  if (!isFinite(rangeStart.epoch) || rangeEnd.epoch === 0) {
+    return DEFAULT_EPOCHS_PER_YEAR
+  }
+
+  return SECONDS_PER_YEAR / (rangeDuration / rangeEpochs)
+}
 
 export const loadSam = async (
   dataOverrides?: SourceDataOverrides | null,
@@ -29,8 +69,11 @@ export const loadSam = async (
   dcSamConfig: DsSamConfig
 }> => {
   try {
-    const config = await loadSamConfig()
-    console.log('epochsPerYear', EPOCHS_PER_YEAR)
+    const [epochsPerYear, config] = await Promise.all([
+      estimateEpochsPerYear(),
+      loadSamConfig(),
+    ])
+    console.log('epochsPerYear', epochsPerYear)
     const dsSam = new DsSamSDK({
       ...config,
       inputsSource: InputsSource.APIS,
@@ -39,11 +82,7 @@ export const loadSam = async (
       logVerbosity: LogVerbosity.ERROR,
     })
     const auctionResult = await dsSam.runFinalOnly(dataOverrides)
-    return {
-      auctionResult,
-      epochsPerYear: EPOCHS_PER_YEAR,
-      dcSamConfig: dsSam.config,
-    }
+    return { auctionResult, epochsPerYear, dcSamConfig: dsSam.config }
   } catch (err) {
     console.log(err)
     throw err
