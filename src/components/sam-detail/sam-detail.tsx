@@ -94,13 +94,13 @@ function bondHealthTextColor(color: Color): string {
 function severityBorderClass(severity: string): string {
   switch (severity) {
     case 'positive':
-      return 'border-l-[3px] border-l-green-500'
+      return 'border-green-500/40'
     case 'warning':
-      return 'border-l-[3px] border-l-yellow-500'
+      return 'border-yellow-500/40'
     case 'critical':
-      return 'border-l-[3px] border-l-red-500'
+      return 'border-red-500/40'
     default:
-      return 'border-l-[3px] border-l-blue-500'
+      return 'border-border-grid'
   }
 }
 
@@ -195,7 +195,7 @@ export function SamDetail({
       <div className="flex gap-3 mb-6 flex-wrap">
         {/* Max APY */}
         <div
-          className="flex-1 min-w-40 bg-card border border-border-grid rounded-lg p-4 flex flex-col gap-1.5 shadow-card"
+          className="flex-1 min-w-40 bg-card border border-border-grid rounded-xl p-4 flex flex-col gap-1.5 shadow-card"
           title={apyTooltip}
         >
           <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -211,7 +211,7 @@ export function SamDetail({
 
         {/* Bond health */}
         <div
-          className={`flex-1 min-w-40 bg-card border rounded-lg p-4 flex flex-col gap-1.5 shadow-card ${bondCardBorder(bondColor)}`}
+          className={`flex-1 min-w-40 bg-card border rounded-xl p-4 flex flex-col gap-1.5 shadow-card ${bondCardBorder(bondColor)}`}
         >
           <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Bond Health
@@ -239,7 +239,7 @@ export function SamDetail({
         </div>
 
         {/* Stake \u0394 */}
-        <div className="flex-1 min-w-40 bg-card border border-border-grid rounded-lg p-4 flex flex-col gap-1.5 shadow-card">
+        <div className="flex-1 min-w-40 bg-card border border-border-grid rounded-xl p-4 flex flex-col gap-1.5 shadow-card">
           <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Stake \u0394
           </div>
@@ -256,7 +256,7 @@ export function SamDetail({
       {/* Detail columns */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {/* APY breakdown */}
-        <div className="bg-card border border-border-grid rounded-lg p-4 flex flex-col gap-3 shadow-card">
+        <div className="bg-card border border-border-grid rounded-xl p-4 flex flex-col gap-3 shadow-card">
           <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground pb-2 border-b border-border-grid">
             APY Breakdown
           </div>
@@ -308,7 +308,7 @@ export function SamDetail({
         </div>
 
         {/* Bond health details */}
-        <div className="bg-card border border-border-grid rounded-lg p-4 flex flex-col gap-3 shadow-card">
+        <div className="bg-card border border-border-grid rounded-xl p-4 flex flex-col gap-3 shadow-card">
           <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground pb-2 border-b border-border-grid">
             Bond Health
           </div>
@@ -341,7 +341,7 @@ export function SamDetail({
         </div>
 
         {/* Stake movement */}
-        <div className="bg-card border border-border-grid rounded-lg p-4 flex flex-col gap-3 shadow-card">
+        <div className="bg-card border border-border-grid rounded-xl p-4 flex flex-col gap-3 shadow-card">
           <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground pb-2 border-b border-border-grid">
             Stake Movement
           </div>
@@ -369,7 +369,7 @@ export function SamDetail({
 
       {/* Recommendation box */}
       <div
-        className={`border border-border-grid rounded-lg p-4 mb-6 bg-card flex flex-col gap-1.5 shadow-card ${severityBorderClass(recommendation.severity)}`}
+        className={`border border-border-grid rounded-xl p-4 mb-6 bg-card flex flex-col gap-1.5 shadow-card ${severityBorderClass(recommendation.severity)}`}
       >
         <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
           NEXT STEP
@@ -381,7 +381,7 @@ export function SamDetail({
 
       {/* Expert-only simulation CTA */}
       {isExpert && onEdit && (
-        <div className="flex items-center justify-between gap-4 flex-wrap bg-background-page border border-primary rounded-lg p-4">
+        <div className="flex items-center justify-between gap-4 flex-wrap bg-background-page border border-primary rounded-xl p-4">
           <span className="text-sm text-muted-foreground flex-1">
             Simulate how changes to commission or bid affect this
             validator&apos;s position in the auction.
