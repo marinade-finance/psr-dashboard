@@ -9,7 +9,6 @@ import {
 import { ProtectedEventStatus } from 'src/services/validator-with-protected_event'
 import { selectName } from 'src/services/validators'
 
-import styles from './protected-events-table.module.css'
 import { tooltipAttributes } from '../../services/utils'
 import { Metric } from '../metric/metric'
 import { UserLevel } from '../navigation/navigation'
@@ -28,7 +27,7 @@ const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
           {...tooltipAttributes(
             'This settlement is not claimable as it was created during the testing period.',
           )}
-          className={`${styles.badge} ${styles.badgeDryRun}`}
+          className="rounded-sm px-1 cursor-help float-left bg-[--bg-dark-1] text-[--text-light-1]"
         >
           Dryrun
         </span>
@@ -39,7 +38,7 @@ const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
           {...tooltipAttributes(
             'This is an estimate based on live data but may change during the epoch<br />before the settlements for this epoch are created on-chain.',
           )}
-          className={`${styles.badge} ${styles.badgeEstimate}`}
+          className="rounded-sm px-1 cursor-help float-left bg-[#91e4b7] text-black"
         >
           Estimate
         </span>
@@ -54,7 +53,7 @@ const renderProtectedEventFunder = (protectedEvent: ProtectedEvent) => {
     case 'Marinade':
       return (
         <span
-          className={styles.funder}
+          className="cursor-help"
           {...tooltipAttributes(
             "This settlement is funded by Marinade DAO because the yield loss<br />is beyond what the validator's are expected to cover.",
           )}
@@ -65,7 +64,7 @@ const renderProtectedEventFunder = (protectedEvent: ProtectedEvent) => {
     case 'ValidatorBond':
       return (
         <span
-          className={styles.funder}
+          className="cursor-help"
           {...tooltipAttributes(
             'This settlement is funded by the validator because the yield loss<br />is within amount which the validator is expected to cover.',
           )}
@@ -163,8 +162,8 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
   const filtered = data.length !== filteredData.length
 
   return (
-    <div className={styles.tableWrap}>
-      <div className={styles.metricWrap}>
+    <div className="relative [&>table]:ml-2.5 [&_input]:bg-[--bg-dark-1] [&_input]:text-[--text-light-1] [&_input]:border-2 [&_input]:border-[--bg-dark-2] [&_input]:rounded-[5px] [&_input]:p-2 [&_input]:outline-none [&_input:focus]:border-[--bg-dark-3] [&_input:focus]:text-[--text-light-2]">
+      <div className="flex gap-2 p-2.5 w-fit">
         <Metric
           label="Total events"
           value={totalEvents.toLocaleString()}
@@ -198,7 +197,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
         />
         {expertMetrics}
       </div>
-      <div className={styles.filters}>
+      <div className="mb-2.5 [&_fieldset]:inline-block [&_fieldset]:ml-2.5 [&_fieldset]:border-transparent">
         <fieldset>
           <legend>Validator filter</legend>
           <input
@@ -210,13 +209,13 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
         <fieldset>
           <legend>Epoch filter</legend>
           <input
-            className={styles.epochFilter}
+            className="w-[70px]"
             type="number"
             value={minEpochFilter}
             onChange={e => setMinEpochFilter(Number(e.target.value))}
           />
           <input
-            className={styles.epochFilter}
+            className="w-[70px]"
             type="number"
             value={maxEpochFilter}
             onChange={e => setMaxEpochFilter(Number(e.target.value))}
@@ -235,7 +234,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
           {
             header: 'Validator',
             render: ({ protectedEvent }) => (
-              <span className={styles.pubkey}>
+              <span className="inline-block w-[100px] pt-1 text-ellipsis overflow-hidden">
                 {protectedEvent.vote_account}
               </span>
             ),
@@ -247,7 +246,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
           {
             header: 'Name',
             render: ({ validator }) => (
-              <span className={styles.pubkey}>
+              <span className="inline-block w-[100px] pt-1 text-ellipsis overflow-hidden">
                 {validator ? selectName(validator) : NO_NAME}
               </span>
             ),

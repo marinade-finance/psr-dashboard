@@ -7,11 +7,10 @@ import { Navigation } from 'src/components/navigation/navigation'
 import { UserLevel } from 'src/components/navigation/navigation'
 import { SamDetail } from 'src/components/sam-detail/sam-detail'
 import { SamTable } from 'src/components/sam-table/sam-table'
+import { cn } from 'src/lib/utils'
 import { getBannerData } from 'src/services/banner'
 import { loadSam } from 'src/services/sam'
 import { fetchValidators } from 'src/services/validators'
-
-import styles from './sam.module.css'
 
 import type { AuctionResult } from '@marinade.finance/ds-sam-sdk'
 import type { SourceDataOverrides } from 'src/services/sam'
@@ -212,11 +211,15 @@ export const SamPage: React.FC<Props> = ({ level }) => {
       : null
 
   return (
-    <div className={styles.page}>
-      <div className={styles.pageContent}>
+    <div className="bg-[--bg-dark-2]">
+      <div className="relative">
         <Navigation level={level}>
           <button
-            className={`${styles.simulatorToggle} ${simulationModeActive ? styles.simulatorToggleActive : ''}`}
+            className={cn(
+              'h-10 leading-[30px] px-5 py-[5px] m-[4px_0_4px_4px] border-none rounded cursor-pointer font-[inherit] text-[length:inherit] whitespace-nowrap transition-colors bg-blue-500 text-white hover:bg-blue-600',
+              simulationModeActive && 'bg-sky-500 hover:bg-sky-600',
+              isCalculating && 'bg-gray-500 cursor-not-allowed',
+            )}
             onClick={handleToggleSimulationMode}
             disabled={isCalculating}
           >

@@ -1,36 +1,64 @@
 @tailwind base;
+@tailwind components;
 @tailwind utilities;
 
-:root {
-  --bg-dark-1: #1c1b23;
-  --bg-dark-2: #2b2a34;
-  --bg-dark-3: #353439;
-  --bg-dark-4: #42414e;
-  --text-light-1: #b8b8bc;
-  --text-light-2: #fbfbfe;
+@layer base {
+  :root {
+    --bg-dark-1: #1c1b23;
+    --bg-dark-2: #2b2a34;
+    --bg-dark-3: #353439;
+    --bg-dark-4: #42414e;
+    --text-light-1: #b8b8bc;
+    --text-light-2: #fbfbfe;
+  }
+
+  html,
+  body {
+    background-color: var(--bg-dark-2);
+    font-family: monospace, 'Courier New', Courier;
+    color: var(--text-light-1);
+  }
+
+  html {
+    width: 100%;
+  }
+
+  body {
+    position: relative;
+  }
+
+  button, input, select, textarea {
+    font-family: inherit;
+  }
 }
 
-* {
-  margin: 0px;
-  padding: 0px;
-  box-sizing: border-box;
-}
+@layer components {
+  .loader-shift::after {
+    animation: shift 1s linear 0s infinite;
+    content: '';
+    font-family: monospace;
+  }
 
-button, input, select, textarea {
-  font-family: inherit;
-}
+  @keyframes shift {
+    0% { content: '###...'; }
+    16% { content: '.###..'; }
+    32% { content: '..###.'; }
+    48% { content: '...###'; }
+    64% { content: '#...##'; }
+    80% { content: '##...#'; }
+    100% { content: '###...'; }
+  }
 
-html,
-body {
-  background-color: var(--bg-dark-2);
-  font-family: monospace, 'Courier New', Courier;
-  color: var(--text-light-1);
-}
+  .header-glow > table thead {
+    animation: header-glow 2s ease-in-out infinite;
+  }
 
-html {
-  width: 100%;
-}
-
-body {
-  position: relative;
+  @keyframes header-glow {
+    0%, 100% {
+      background: linear-gradient(135deg, rgba(15, 25, 60, 1), rgba(40, 45, 80, 1));
+    }
+    50% {
+      background: linear-gradient(135deg, rgba(15, 70, 140, 1), rgba(55, 90, 170, 1));
+    }
+  }
 }

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { formatPercentage, formatSolAmount } from 'src/format'
+import { cn } from 'src/lib/utils'
 import {
   selectBid,
   selectBondSize,
@@ -44,7 +45,6 @@ import {
   lastCapConstraintDescription,
 } from 'src/services/sam'
 
-import styles from './sam-table.module.css'
 import { tooltipAttributes } from '../../services/utils'
 import { ComplexMetric } from '../complex-metric/complex-metric'
 import { Metric } from '../metric/metric'
@@ -102,6 +102,10 @@ type Props = {
   onCancelEditing: () => void
 }
 
+const CLICKABLE_ROW = 'cursor-pointer hover:bg-blue-500/10'
+const GHOST_ROW =
+  '!cursor-default pointer-events-none [&_td]:line-through [&_td]:text-[#a0a0b0] [&_td]:!bg-[rgba(80,70,100,0.35)] [&_td_span]:line-through [&_td_div]:line-through'
+
 function bondLabel(color: Color): string {
   switch (color) {
     case Color.GREEN:
@@ -115,17 +119,14 @@ function bondLabel(color: Color): string {
   }
 }
 
-function bondDotClassName(color: Color): string {
-  switch (color) {
-    case Color.GREEN:
-      return styles.bondDotGreen
-    case Color.YELLOW:
-      return styles.bondDotYellow
-    case Color.RED:
-      return styles.bondDotRed
-    default:
-      return styles.bondDotGrey
-  }
+const bondDotColor: Record<string, string> = {
+  [Color.GREEN]: 'bg-green-500',
+  [Color.YELLOW]: 'bg-yellow-500',
+  [Color.RED]: 'bg-red-500',
+}
+
+function bondDotClass(color: Color): string {
+  return bondDotColor[color] ?? 'bg-gray-500'
 }
 
 function renderEditableCell(
@@ -142,11 +143,11 @@ function renderEditableCell(
     return <>{displayValue}</>
   }
   return (
-    <div className={styles.inputCell}>
-      <span className={styles.inputPlaceholder}>{displayValue}</span>
+    <div className="relative inline-block">
+      <span className="invisible">{displayValue}</span>
       <input
         type="number"
-        className={styles.inlineInput}
+        className="absolute right-0 top-1/2 -translate-y-1/2 w-[50px] px-1 py-0.5 bg-[--bg-dark-3] border border-[--border-dark] rounded-[3px] text-[--text-light-1] text-xs text-right box-border focus:outline-none focus:border-blue-500 placeholder:text-[--text-light-3] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
         value={inputValue}
         step={opts.step}
         min={opts.min}
@@ -382,16 +383,16 @@ export const SamTable: React.FC<Props> = ({
     }
     const delta = Math.abs(currentPosition - orig)
     if (currentPosition < orig) {
-      if (delta >= 5) return styles.positionImproved3
-      if (delta >= 3) return styles.positionImproved2
-      return styles.positionImproved1
+      if (delta >= 5) return '[&_td]:bg-green-500/[0.35]'
+      if (delta >= 3) return '[&_td]:bg-green-500/[0.22]'
+      return '[&_td]:bg-green-500/[0.12]'
     }
     if (currentPosition > orig) {
-      if (delta >= 5) return styles.positionWorsened3
-      if (delta >= 3) return styles.positionWorsened2
-      return styles.positionWorsened1
+      if (delta >= 5) return '[&_td]:bg-red-500/[0.35]'
+      if (delta >= 3) return '[&_td]:bg-red-500/[0.22]'
+      return '[&_td]:bg-red-500/[0.12]'
     }
-    return styles.positionUnchanged
+    return '[&_td]:bg-white/[0.12]'
   }
 
   const sortedValidators = useMemo(
@@ -456,7 +457,7 @@ export const SamTable: React.FC<Props> = ({
   if (level === UserLevel.Expert) {
     expertMetrics = (
       <>
-        <div className={styles.metricRow}>
+        <div className="flex flex-wrap gap-2">
           <Metric
             label="Stake to Move"
             value={`${formatPercentage(stakeToMove)}`}
@@ -482,7 +483,7 @@ export const SamTable: React.FC<Props> = ({
             {...tooltipAttributes('Average stake per validator')}
           />
         </div>
-        <div className={styles.metricRow}>
+        <div className="flex flex-wrap gap-2">
           <Metric
             label="T. Protected"
             value={formatPercentage(targetProtectedPct)}
@@ -492,7 +493,7 @@ export const SamTable: React.FC<Props> = ({
           />
           <Metric
             label="T. Unprotected"
-            value={`☉ ${formatSolAmount(unprotectedStake, 0)}`}
+            value={`\u2609 ${formatSolAmount(unprotectedStake, 0)}`}
             {...tooltipAttributes('Target delegation beyond bond coverage')}
           />
           <Metric
@@ -504,7 +505,7 @@ export const SamTable: React.FC<Props> = ({
           />
           <Metric
             label="Conc. TVL"
-            value={`☉ ${formatSolAmount(backstopTvl, 0)}`}
+            value={`\u2609 ${formatSolAmount(backstopTvl, 0)}`}
             {...tooltipAttributes(
               'Target stake concentrated in top 5 validators',
             )}
@@ -529,7 +530,7 @@ export const SamTable: React.FC<Props> = ({
     apyMetrics = (
       <Metric
         label="Ideal APY"
-        value={`☉ ${formatPercentage(projectedApy / activeStake)}`}
+        value={`\u2609 ${formatPercentage(projectedApy / activeStake)}`}
         {...tooltipAttributes(
           'Estimated APY of currently active stake; assumes no Marinade fees; assumes all distributed stake is active',
         )}
@@ -539,7 +540,7 @@ export const SamTable: React.FC<Props> = ({
     apyMetrics = (
       <Metric
         label="Projected APY"
-        value={`☉ ${formatPercentage(projectedApy)}`}
+        value={`\u2609 ${formatPercentage(projectedApy)}`}
         subtitle="Estimated staker return"
         {...tooltipAttributes(
           'Estimated APY of currently active stake; assumes no Marinade fees',
@@ -549,28 +550,29 @@ export const SamTable: React.FC<Props> = ({
   }
 
   const simulationCaption = simulationModeActive ? (
-    <div className={styles.simulationBanner}>
+    <div className="px-8 py-4 bg-gradient-to-br from-[rgba(15,25,60,1)] to-[rgba(40,45,80,1)] text-blue-300 text-lg font-semibold tracking-wide text-center uppercase">
       {isCalculating ? 'Calculating simulation...' : 'Simulation mode active'}
     </div>
   ) : undefined
 
   const renderBasicTable = () => (
     <Table
-      className={styles.basicTable}
+      className="border-separate border-spacing-y-1 border-spacing-x-0 font-sans [&_thead_th]:font-medium [&_thead_th]:text-[11px] [&_thead_th]:uppercase [&_thead_th]:tracking-wide [&_thead_th]:text-slate-400 [&_thead_th]:px-4 [&_thead_th]:py-2 [&_tbody_tr]:transition-colors [&_tbody_td]:px-4 [&_tbody_td]:py-3 [&_tbody_td]:bg-slate-900/60 [&_tbody_td]:border-y [&_tbody_td]:border-slate-400/10 [&_tbody_td:first-child]:border-l-[3px] [&_tbody_td:first-child]:border-l-transparent [&_tbody_td:first-child]:rounded-l-lg [&_tbody_td:last-child]:border-r [&_tbody_td:last-child]:border-r-slate-400/10 [&_tbody_td:last-child]:rounded-r-lg [&_tbody_tr:hover_td]:bg-blue-500/[0.04] [&_tbody_tr:hover_td:first-child]:border-l-blue-500"
       caption={simulationCaption}
       data={displayValidators}
       rowAttrsFn={(item, _index) => {
         const { validator, isGhost } = item
         const va = selectVoteAccount(validator)
         if (isGhost) {
-          return { className: styles.ghostRow }
-        }
-        const classes: string[] = [styles.validatorRowClickable]
-        if (selectIsNonProductive(validator)) {
-          classes.push(styles.rowYellow)
+          return {
+            className: GHOST_ROW,
+          }
         }
         return {
-          className: classes.join(' '),
+          className: cn(
+            CLICKABLE_ROW,
+            selectIsNonProductive(validator) && 'bg-[#806000]/[0.12]',
+          ),
           onClick: () => onValidatorClick(va),
         }
       }}
@@ -598,14 +600,17 @@ export const SamTable: React.FC<Props> = ({
             const sim = !item.isGhost && simulatedValidator === va
             return (
               <span
-                className={`${styles.validatorCell} ${sim ? styles.pubkeySimulated : ''}`}
+                className={cn(
+                  'inline-flex items-center gap-1',
+                  sim && 'font-bold italic',
+                )}
               >
-                {flag && <span className={styles.countryFlag}>{flag} </span>}
-                <span className={styles.validatorName}>
+                {flag && <span className="text-sm shrink-0">{flag} </span>}
+                <span className="font-medium">
                   {name.length > 24 ? name.slice(0, 24) + '\u2026' : name}
                 </span>
                 <span
-                  className={styles.pubkeySmall}
+                  className="text-[11px] text-slate-500 cursor-pointer hover:text-slate-400 hover:underline"
                   onClick={e => handleCopy(e, va)}
                   title={isCopied ? 'Copied!' : 'Click to copy'}
                 >
@@ -660,9 +665,12 @@ export const SamTable: React.FC<Props> = ({
           render: item => {
             const { validator } = item
             return (
-              <span className={styles.bondCell}>
+              <span className="inline-flex items-center gap-1">
                 <span
-                  className={`${styles.bondDot} ${bondDotClassName(validator.bondState)}`}
+                  className={cn(
+                    'w-2 h-2 rounded-full shrink-0 inline-block',
+                    bondDotClass(validator.bondState),
+                  )}
                 />
                 {bondLabel(validator.bondState)}
                 {' \u2609'}
@@ -695,13 +703,11 @@ export const SamTable: React.FC<Props> = ({
               delta > 0 ? '\u2191 +' : delta < 0 ? '\u2193 ' : '\u2014 '
             return (
               <span
-                className={
-                  delta > 0
-                    ? styles.deltaPos
-                    : delta < 0
-                      ? styles.deltaNeg
-                      : styles.deltaNeutral
-                }
+                className={cn(
+                  delta > 0 && 'text-green-400',
+                  delta < 0 && 'text-red-400',
+                  delta === 0 && 'text-gray-500',
+                )}
               >
                 {arrow}
                 {formatSolAmount(delta, 0)}
@@ -724,15 +730,17 @@ export const SamTable: React.FC<Props> = ({
               item.validator,
               item.validator.bondState,
             )
-            const cls =
-              rec.severity === 'critical'
-                ? styles.recCritical
-                : rec.severity === 'warning'
-                  ? styles.recWarning
-                  : rec.severity === 'positive'
-                    ? styles.recPositive
-                    : ''
-            return <span className={cls}>{rec.text}</span>
+            return (
+              <span
+                className={cn(
+                  rec.severity === 'critical' && 'text-red-500',
+                  rec.severity === 'warning' && 'text-yellow-500',
+                  rec.severity === 'positive' && 'text-green-500',
+                )}
+              >
+                {rec.text}
+              </span>
+            )
           },
           compare: (a, b) => {
             const ra = getRecommendation(a.validator, a.validator.bondState)
@@ -755,7 +763,9 @@ export const SamTable: React.FC<Props> = ({
         const { validator, isGhost } = item
         const va = selectVoteAccount(validator)
         if (isGhost) {
-          return { className: styles.ghostRow }
+          return {
+            className: GHOST_ROW,
+          }
         }
 
         const isEditing = editingValidator === va
@@ -768,19 +778,19 @@ export const SamTable: React.FC<Props> = ({
             .slice(0, index + 1)
             .filter(d => !d.isGhost).length
           classes.push(
-            styles.validatorRowClickable,
-            getPositionChangeClass(va, realIdx) || styles.positionUnchanged,
+            CLICKABLE_ROW,
+            getPositionChangeClass(va, realIdx) || '[&_td]:bg-white/[0.12]',
           )
           onClick = () => onValidatorClick(va)
         } else if (simulationModeActive && !isEditing) {
-          classes.push(styles.validatorRowClickable)
+          classes.push(CLICKABLE_ROW)
           onClick = () => onValidatorClick(va)
         } else if (isEditing) {
-          classes.push(styles.validatorRowEditing)
+          classes.push('bg-blue-500/[0.15]')
         }
 
         if (selectIsNonProductive(validator)) {
-          classes.push(styles.rowYellow)
+          classes.push('bg-[#806000]/[0.12]')
         }
 
         return { className: classes.join(' ') || undefined, onClick }
@@ -791,7 +801,7 @@ export const SamTable: React.FC<Props> = ({
         const va = selectVoteAccount(validator)
         if (isGhost) {
           return (
-            <div className={styles.orderCell}>
+            <div className="relative inline-flex items-center gap-1">
               <span>{getOriginalPosition(va) ?? index + 1}</span>
             </div>
           )
@@ -801,12 +811,15 @@ export const SamTable: React.FC<Props> = ({
           .filter(d => !d.isGhost).length
         const isEditing = editingValidator === va
         return (
-          <div className={styles.orderCell}>
+          <div className="relative inline-flex items-center gap-1">
             <span>{realIdx}</span>
             {isEditing && (
-              <div className={styles.editingButtons}>
+              <div className="absolute left-0 top-1/2 -translate-y-1/2 flex gap-1 z-10">
                 <button
-                  className={`${styles.runSimulationBtn} ${isCalculating ? styles.runSimulationBtnCalculating : ''}`}
+                  className={cn(
+                    'min-w-[60px] px-2 py-[3px] bg-blue-500 text-white border-none rounded-[3px] cursor-pointer text-[10px] font-medium transition-colors whitespace-nowrap shadow-[0_1px_3px_rgba(0,0,0,0.3)] text-center hover:bg-blue-600 disabled:bg-gray-500 disabled:cursor-not-allowed',
+                    isCalculating && 'bg-gray-500',
+                  )}
                   onClick={e => {
                     e.stopPropagation()
                     onRunSimulation()
@@ -816,7 +829,7 @@ export const SamTable: React.FC<Props> = ({
                   {isCalculating ? 'Simulating' : 'Simulate'}
                 </button>
                 <button
-                  className={styles.cancelBtn}
+                  className="px-1.5 py-[3px] bg-gray-500 text-white border-none rounded-[3px] cursor-pointer text-[10px] font-medium transition-colors shadow-[0_1px_3px_rgba(0,0,0,0.3)] hover:enabled:bg-red-500"
                   onClick={e => {
                     e.stopPropagation()
                     onCancelEditing()
@@ -824,7 +837,7 @@ export const SamTable: React.FC<Props> = ({
                   disabled={isCalculating}
                   title="Cancel editing (Esc)"
                 >
-                  \u2715
+                  {'\u2715'}
                 </button>
               </div>
             )}
@@ -840,7 +853,10 @@ export const SamTable: React.FC<Props> = ({
             const sim = !item.isGhost && simulatedValidator === va
             return (
               <span
-                className={`${styles.pubkey} ${sim ? styles.pubkeySimulated : ''}`}
+                className={cn(
+                  'inline-block w-[100px] pt-1 text-ellipsis overflow-hidden',
+                  sim && 'font-bold italic',
+                )}
               >
                 {va}
               </span>
@@ -1084,10 +1100,18 @@ export const SamTable: React.FC<Props> = ({
   return (
     <div
       ref={tableWrapRef}
-      className={`${styles.tableWrap} ${simulationModeActive ? styles.simulationModeActive : ''} ${isCalculating ? styles.calculating : ''}`}
+      className={cn(
+        'relative [&>table]:ml-2.5',
+        simulationModeActive && [
+          '[&>table_tbody]:bg-blue-900/[0.08]',
+          '[&>table_tbody_tr]:bg-blue-900/[0.06]',
+          '[&>table_thead]:bg-gradient-to-br [&>table_thead]:from-[rgba(15,25,60,1)] [&>table_thead]:to-[rgba(40,45,80,1)] [&>table_thead]:transition-[background] [&>table_thead]:duration-[800ms] [&>table_thead]:ease-in-out',
+        ],
+        isCalculating && 'header-glow',
+      )}
     >
-      <div className={styles.metricWrap}>
-        <div className={styles.metricRow}>
+      <div className="flex flex-col gap-2 p-2.5">
+        <div className="flex flex-wrap gap-2">
           <Metric
             label="Total Auction Stake"
             value={`\u2609 ${formatSolAmount(samDistributedStake)}`}

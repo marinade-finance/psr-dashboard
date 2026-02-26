@@ -1,7 +1,5 @@
 import React from 'react'
 
-import styles from './metric.module.css'
-
 type Props = {
   label: string
   value: string
@@ -18,10 +16,17 @@ export const Metric: React.FC<Props> = ({
   ...tooltipsProps
 }) => {
   return (
-    <div className={styles.metricWrap} {...tooltipsProps}>
-      <div>{label}</div>
-      <div>{value}</div>
-      {subtitle && <div className={styles.subtitle}>{subtitle}</div>}
+    <div
+      className="px-5 py-2.5 bg-[--bg-dark-1] cursor-help"
+      {...tooltipsProps}
+    >
+      <div className="whitespace-nowrap">{label}</div>
+      <div className="whitespace-nowrap mt-2.5 text-2xl">{value}</div>
+      {subtitle && (
+        <div className="mt-1 text-[11px] text-slate-500 whitespace-nowrap">
+          {subtitle}
+        </div>
+      )}
     </div>
   )
 }

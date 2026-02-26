@@ -40,7 +40,16 @@ const webpackConfig = (env: {
       },
       {
         test: /\.module\.css$/i,
-        use: ['style-loader', 'css-modules-typescript-loader', 'css-loader'],
+        use: [
+          'style-loader',
+          'css-modules-typescript-loader',
+          {
+            loader: 'css-loader',
+            options: {
+              modules: { localIdentName: '[local]_[hash:base64:5]' },
+            },
+          },
+        ],
       },
       {
         test: /\.css$/i,

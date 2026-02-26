@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 
-import styles from './table.module.css'
+import { cn } from 'src/lib/utils'
 
 import type { HTMLAttributes } from 'react'
 
@@ -23,29 +23,33 @@ export enum Color {
   GREY,
 }
 
-const alignmentClassName = (alignment?: Alignment) => {
-  switch (alignment) {
-    case Alignment.LEFT:
-      return styles.left
-    case Alignment.RIGHT:
-      return styles.right
-    default:
-      return styles.left
-  }
+const TABLE_BASE = [
+  'relative border-collapse [border-spacing:0]',
+  '[&_thead]:sticky [&_thead]:top-0 [&_thead]:bg-[--bg-dark-1]',
+  '[&_thead]:text-[--text-light-1] [&_thead]:cursor-pointer',
+  '[&_thead]:select-none [&_thead]:z-[1]',
+  '[&_tbody]:bg-[--bg-dark-2]',
+  '[&_th]:relative [&_th]:px-4 [&_th]:py-2 [&_th]:whitespace-nowrap',
+  '[&_td]:relative [&_td]:px-4 [&_td]:py-1 [&_td]:whitespace-nowrap',
+  '[&_tbody_tr:hover]:bg-[--bg-dark-3]',
+].join(' ')
+
+function alignmentClassName(alignment?: Alignment): string {
+  return alignment === Alignment.RIGHT ? 'text-right' : 'text-left'
 }
 
-const colorClassName = (color?: Color) => {
+function colorClassName(color?: Color): string {
   switch (color) {
     case Color.RED:
-      return styles.red
+      return 'bg-[#871c18]'
     case Color.GREEN:
-      return styles.green
+      return 'bg-[#004d40]'
     case Color.YELLOW:
-      return styles.yellow
+      return 'bg-[#806000]'
     case Color.GREY:
-      return styles.grey
+      return 'bg-gray-500/30'
     default:
-      return styles.noBg
+      return ''
   }
 }
 
@@ -71,19 +75,18 @@ const renderHeader: <Item>(
 
   return (
     <tr>
-      {showRowNumber ? <td>#</td> : null}
+      {showRowNumber ? <th>#</th> : null}
       {columns.map((column, i) => {
         const isUserSorted = userOrderColumn === i
         const isDefaultSorted = !userOrder && defaultOrderColumn === i
 
-        let indicatorClass = styles.sortIndicator
+        const isActive = isUserSorted
+        const isDefault = isDefaultSorted
         let indicator = ''
 
         if (isUserSorted) {
-          indicatorClass = `${styles.sortIndicator} ${styles.sortIndicatorActive}`
           indicator = userOrderDirection === OrderDirection.ASC ? '▲' : '▼'
         } else if (isDefaultSorted) {
-          indicatorClass = `${styles.sortIndicator} ${styles.sortIndicatorDefault}`
           indicator = defaultOrderDirection === OrderDirection.ASC ? '▲' : '▼'
         }
 
@@ -95,7 +98,15 @@ const renderHeader: <Item>(
             {...(column.headerAttrsFn ? column.headerAttrsFn() : {})}
           >
             {column.header}
-            <span className={indicatorClass}>{indicator}</span>
+            <span
+              className={cn(
+                'ml-1 text-[10px] opacity-40',
+                isActive && '!opacity-100 !text-blue-500',
+                isDefault && '!opacity-60 !text-gray-400',
+              )}
+            >
+              {indicator}
+            </span>
           </th>
         )
       })}
@@ -149,7 +160,10 @@ const renderRow: <Item>(
         <td
           {...(column.cellAttrsFn ? column.cellAttrsFn(item) : {})}
           key={i}
-          className={`${alignmentClassName(column.alignment)} ${column.background ? colorClassName(column.background(item)) : ''}`}
+          className={cn(
+            alignmentClassName(column.alignment),
+            column.background && colorClassName(column.background(item)),
+          )}
         >
           {column.render(item, index)}
         </td>
@@ -249,7 +263,7 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
   }
 
   return (
-    <table className={`${styles.table} ${className ?? ''}`}>
+    <table className={cn(TABLE_BASE, className)}>
       {caption && <caption>{caption}</caption>}
       <thead>
         {renderHeader(
