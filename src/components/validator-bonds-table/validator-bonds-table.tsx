@@ -23,7 +23,6 @@ import {
   selectVoteAccount,
 } from 'src/services/validators'
 
-import styles from './validator-bonds-table.module.css'
 import { tooltipAttributes } from '../../services/utils'
 import { Metric } from '../metric/metric'
 import { Alignment, OrderDirection, Table } from '../table/table'
@@ -107,8 +106,8 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
   }
 
   return (
-    <div className={styles.tableWrap}>
-      <div className={styles.metricWrap}>
+    <div className="relative [&>table]:ml-2.5">
+      <div className="flex p-2.5">
         <Metric
           label="Bonds Funded"
           value={totalFundedBonds.toLocaleString()}
@@ -142,7 +141,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
             header: 'Validator',
             headerAttrsFn: () => tooltipAttributes('Validator Vote Account'),
             render: ({ validator }) => (
-              <span className={styles.pubkey}>
+              <span className="inline-block w-[100px] pt-1 text-ellipsis overflow-hidden">
                 {selectVoteAccount(validator)}
               </span>
             ),
@@ -154,7 +153,9 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
           {
             header: 'Name',
             render: ({ validator }) => (
-              <span className={styles.pubkey}>{selectName(validator)}</span>
+              <span className="inline-block w-[100px] pt-1 text-ellipsis overflow-hidden">
+                {selectName(validator)}
+              </span>
             ),
             compare: (a, b) =>
               selectName(a.validator).localeCompare(selectName(b.validator)),
