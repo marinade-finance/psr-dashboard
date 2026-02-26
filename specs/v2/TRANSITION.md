@@ -1,455 +1,245 @@
-# Tailwind + shadcn/ui Full UI Transition Spec
+# Tailwind + shadcn/ui Transition Spec
 
-Complete migration from CSS Modules + CSS variables to Tailwind utilities +
-shadcn/ui components. Covers every visual surface in the app.
+Two-phase migration. Phase 1: move everything to Tailwind utility classes
+with minimal styling. Phase 2: add shadcn/ui components and visual polish.
 
-## Current State (Phase 1 Complete)
+## Current State
 
-Infrastructure installed, zero components migrated:
+Infrastructure done, one component migrated:
 
-- tailwindcss@3.4, postcss, autoprefixer, postcss-loader wired in webpack
-- Webpack CSS rules split: `.module.css` → CSS Modules only, `.css` → postcss
-- `tailwind.config.js` with 6 color tokens + Inter font
-- `cn()` utility in `src/lib/utils.ts` (unused)
-- Inter font loaded in `public/index.html`
-- `@tailwind base` + `@tailwind utilities` in `src/index.css`
-- No `@tailwind components` (not needed without shadcn base layer)
-- No shadcn components installed yet
-- No Tailwind classes used anywhere in source
+- tailwindcss@3.4, postcss, autoprefixer, postcss-loader in webpack
+- Webpack split: `.module.css` → CSS Modules, `.css` → postcss/Tailwind
+- `tailwind.config.js` with color tokens + Inter font
+- `cn()` utility in `src/lib/utils.ts`
+- `sam-detail.tsx` already uses Tailwind classes (done by user)
+- `sam.tsx` updated: passes `meta`, `isExpert`, `onEdit` to SamDetail
+- `sam.ts` has `selectBondUtilization`, `selectSamActiveStake`,
+  `selectSamTargetStake`, `selectStakeDelta`, `getRecommendation`
 
-## Design Tokens
+## Tailwind Color Palette
 
-### Current CSS Variables (legacy, to be replaced)
+Use standard Tailwind slate scale, no custom tokens. Keeps classes short
+and avoids tailwind.config bloat.
+
+```
+Page bg:       bg-slate-950 or bg-slate-900
+Card bg:       bg-slate-900/60 or bg-slate-800/50
+Elevated bg:   bg-slate-800
+Text primary:  text-slate-100 or text-slate-200
+Text muted:    text-slate-400
+Text dim:      text-slate-500
+Accent blue:   text-blue-500, bg-blue-500, border-blue-500
+Accent green:  text-green-400
+Accent yellow: text-yellow-400
+Accent red:    text-red-400
+Border:        border-slate-700/20 or border-slate-700/10
+```
+
+No custom `tailwind.config.js` color extensions needed — standard
+Tailwind colors with opacity modifiers cover everything.
+
+---
+
+## Phase 1: Tailwind Classes Everywhere
+
+Goal: replace every CSS Module import with Tailwind utility classes.
+Minimal visual style — functional, readable, dark. No shadcn yet.
+
+### 1.1 Global Styles (index.css)
+
+Replace legacy CSS variables with Tailwind base:
 
 ```css
---bg-dark-1: #1c1b23    /* darkest bg */
---bg-dark-2: #2b2a34    /* page bg */
---bg-dark-3: #353439    /* hover bg */
---bg-dark-4: #42414e    /* active bg */
---text-light-1: #b8b8bc /* body text */
---text-light-2: #fbfbfe /* bright text */
-```
-
-### Target Tailwind Tokens (from VISUALS.md, extend in tailwind.config.js)
-
-```
-bg-primary:    #0f172a     (slate-900, page bg)
-bg-card:       rgba(15,23,42,0.6)  (translucent card bg)
-bg-elevated:   #1e293b     (slate-800, header/metric cards)
-text-primary:  #e2e8f0     (slate-200, main text)
-text-muted:    #94a3b8     (slate-400, secondary text)
-text-dim:      #64748b     (slate-500, labels)
-accent-blue:   #3b82f6     (blue-500, interactive accent)
-accent-green:  #4ade80     (green-400, healthy/positive)
-accent-yellow: #fbbf24     (amber-400, watch state)
-accent-red:    #f87171     (red-400, low/negative)
-accent-grey:   #6b7280     (gray-500, neutral)
-border-subtle: rgba(148,163,184,0.1)
-border-hover:  rgba(59,130,246,0.3)
-```
-
-### Token Migration
-
-Update `tailwind.config.js` to add missing tokens (text-dim, accent-*,
-border-subtle, border-hover, bg-card). After all components are migrated,
-remove legacy CSS variables from `src/index.css`.
-
-## shadcn/ui Components to Install
-
-Install via `npx shadcn-ui@latest add <name>` into `src/components/ui/`.
-These are copy-pasted source files, not npm dependencies.
-
-| Component     | Priority | Used By |
-|---------------|----------|---------|
-| `button`      | Phase 2  | Back btn, simulation toggle, CTA |
-| `card`        | Phase 2  | Metric cards, summary cards, recommendation box |
-| `badge`       | Phase 2  | Bond health, rank, "YOU" indicator |
-| `table`       | Phase 2  | Basic mode Variant A, bonds, events |
-| `tooltip`     | Phase 2  | Metric tooltips, APY breakdown |
-| `progress`    | Phase 2  | Bond utilization bar |
-| `input`       | Phase 3  | Simulation inline edits, search filters |
-| `separator`   | Phase 3  | Section dividers |
-| `tabs`        | Phase 5  | View mode A/B/C switcher |
-| `collapsible` | Phase 5  | Variant B expandable rows |
-| `sheet`       | Phase 5  | Mobile detail view |
-| `command`     | Phase 6  | Validator search combobox |
-
-### shadcn Setup
-
-Before first component install:
-1. Create `src/components/ui/` directory
-2. Add shadcn `components.json` config pointing to `src/components/ui/`
-3. Ensure path aliases work with webpack (`src/` → `@/` or keep `src/`)
-4. After install, customize each component's colors to use our tokens
-
-## Component-by-Component Migration
-
-### 1. Global: index.css + html body
-
-**Current**: CSS variables, monospace font, `--bg-dark-2` body bg
-**Target**: Tailwind base layer sets bg-primary, Inter font-sans as default,
-remove `* { margin: 0; padding: 0 }` (Tailwind preflight handles this)
-
-```css
-/* src/index.css after migration */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   body {
-    @apply bg-bg-primary text-text-primary font-sans antialiased;
+    @apply bg-slate-950 text-slate-200 font-sans antialiased;
   }
 }
 ```
 
-Remove: all `:root` CSS variables, `* { margin/padding/box-sizing }`,
-`html,body` rules. Tailwind preflight + base layer replaces them.
+Delete: `:root` variables, `*` reset, `html,body` rules.
+Tailwind preflight handles box-sizing and margin reset.
 
-### 2. Navigation
+### 1.2 Navigation (navigation.tsx)
 
-**Current**: `navigation.module.css` — flex bar, `--bg-dark-*` colors,
-hardcoded `40px` height, NavLink with `.active` class composition
-
-**Target**: Tailwind classes on Navigation component
+Delete `navigation.module.css`. Replace with:
 
 ```
-Bar:   flex items-center h-12 bg-bg-elevated px-1 sticky top-0 z-50
-Tab:   px-5 py-2 text-sm text-text-muted rounded transition-colors
-       hover:bg-white/5 hover:text-text-primary
-Active: bg-white/10 text-text-primary
-Docs:  ml-auto text-sm text-text-muted hover:text-text-primary
+Bar:     flex items-center bg-slate-900 sticky top-0 z-50
+Tab:     px-5 py-2.5 text-sm text-slate-400 rounded cursor-pointer
+         hover:bg-slate-800 hover:text-slate-200 transition-colors
+Active:  bg-slate-800 text-slate-100
+Docs:    ml-auto (same tab styles)
+Links:   no-underline
 ```
 
-Replace: `navigation.module.css` entirely. Keep NavLink, replace className
-logic with `cn()` conditionals.
+### 1.3 Banner (banner.tsx)
 
-### 3. Banner
-
-**Current**: `banner.module.css` — `--bg-dark-3` bg, `3px border`, fixed
-`100ex` width, custom link colors
-
-**Target**: shadcn Card or plain Tailwind div
+Delete `banner.module.css`. Replace with:
 
 ```
-Wrapper: mx-4 mt-4
-Inner:   bg-bg-elevated border border-border-subtle rounded-lg p-5
-         max-w-[100ch] text-base leading-relaxed
-Title:   font-semibold mb-4 text-text-primary
-Links:   text-accent-blue hover:underline
+Outer:   px-4 pt-4
+Inner:   bg-slate-800 border border-slate-700/30 rounded-lg p-5
+         max-w-prose text-base leading-relaxed
+Title:   font-semibold mb-4
+Links:   text-blue-400 hover:underline
 ```
 
-Replace: `banner.module.css` entirely.
+### 1.4 Metric + ComplexMetric
 
-### 4. Metric + ComplexMetric Cards
-
-**Current**: `metric.module.css` — `--bg-dark-1` bg, `24px` value,
-hardcoded padding. ComplexMetric similar.
-
-**Target**: shadcn Card component
+Delete `metric.module.css` and `complex-metric.module.css`.
 
 ```
-Card:     bg-bg-elevated border border-border-subtle rounded-lg p-4
-          cursor-help
-Label:    text-[10px] uppercase tracking-wider text-text-muted font-medium
-Value:    text-2xl font-bold text-text-primary font-mono mt-2
-Subtitle: text-xs text-text-dim mt-1
+Card:      bg-slate-800 p-4 cursor-help
+Label:     text-slate-400 text-sm whitespace-nowrap
+Value:     text-2xl mt-2 whitespace-nowrap
+Subtitle:  text-xs text-slate-500 mt-1
 ```
 
-Replace both `metric.module.css` and `complex-metric.module.css`. Merge
-Metric and ComplexMetric into one component using shadcn Card — the only
-difference is ComplexMetric renders JSX in the value slot.
+Keep both components (Metric renders string value, ComplexMetric
+renders JSX). Just swap CSS Module classes for Tailwind.
 
-### 5. Loader
+### 1.5 Loader
 
-**Current**: `loader.module.css` — monospace `###...` shifting animation
+Delete `loader.module.css`. Recreate the `###...` animation in
+Tailwind `@keyframes` via index.css `@layer components`:
 
-**Target**: Keep the character animation (it's charming and fits the
-monospace/terminal aesthetic for expert mode). For basic mode pages, add a
-subtle skeleton or pulse animation:
-
-```
-Basic:  animate-pulse bg-bg-elevated/50 rounded h-4 w-32
-Expert: keep current loader as-is
-```
-
-### 6. Generic Table (table.tsx)
-
-**Current**: `table.module.css` — `--bg-dark-*` colors, sticky thead,
-Color enum for RED/GREEN/YELLOW/GREY cell backgrounds
-
-**Target**: Keep for expert mode (CSS Modules stay). For basic mode, new
-components use shadcn Table. No changes to table.module.css in this
-migration — expert table stays as-is per SPEC.md.
-
-### 7. SAM Table (sam-table.tsx basic mode)
-
-**Current**: `sam-table.module.css` — `.basicTable` class with Inter font,
-border-spacing, translucent row backgrounds, hover accent border
-
-**Target**: shadcn Table + Tailwind classes
-
-```
-Table:      w-full border-separate border-spacing-y-1 font-sans
-THead:      sticky top-[48px] z-10 bg-bg-elevated
-TH:         text-[11px] uppercase tracking-wider text-text-muted
-            font-medium px-4 py-2
-TR:         group transition-colors cursor-pointer
-TD:         px-4 py-3 bg-bg-card border-y border-border-subtle
-            first:border-l first:border-l-transparent first:rounded-l-lg
-            last:border-r last:rounded-r-lg
-TR hover:   group-hover:bg-accent-blue/[0.04]
-            first:group-hover:border-l-accent-blue
-
-Validator:  flex flex-col gap-0.5
-  Name:     text-sm font-medium text-text-primary
-  Pubkey:   text-[11px] text-text-dim cursor-pointer hover:underline
-
-Bond:       flex items-center gap-1.5
-  Dot:      w-2 h-2 rounded-full (color per health)
-  Label:    text-xs (color per health)
-  Balance:  text-xs text-text-muted font-mono
-
-Delta:      text-sm font-mono
-  Positive: text-accent-green
-  Negative: text-accent-red
-  Zero:     text-accent-grey
-
-Next Step:  text-xs text-text-muted leading-relaxed max-w-xs
+```css
+@layer components {
+  .loader-shift::after {
+    animation: shift 1s linear infinite;
+    content: '';
+    font-family: monospace;
+  }
+}
+@keyframes shift {
+  0%   { content: '###...'; }
+  16%  { content: '.###..'; }
+  32%  { content: '..###.'; }
+  48%  { content: '...###'; }
+  64%  { content: '#...##'; }
+  80%  { content: '##...#'; }
+  100% { content: '###...'; }
+}
 ```
 
-Expert mode `.tableWrap`, simulation classes, ghost rows, position grading —
-all stay in `sam-table.module.css` unchanged.
+Loader component: `<div className="m-2.5 loader-shift">Loading </div>`
 
-### 8. SAM Detail (sam-detail.tsx)
+### 1.6 SAM Page Shell (sam.tsx)
 
-**Current**: `sam-detail.module.css` — already uses Tailwind-like colors
-(hardcoded hex values matching our tokens), cards, progress bar
-
-**Target**: Replace CSS Module with Tailwind classes + shadcn components
+Delete `sam.module.css`. Replace with:
 
 ```
-Back btn:     shadcn Button variant="ghost" size="sm"
-Header:       flex items-center gap-4 mb-6 flex-wrap
-  Name:       text-2xl font-bold text-text-primary truncate
-  Non-prod:   shadcn Badge variant="destructive" (red tint)
-  Rank:       shadcn Badge variant="outline" (blue tint)
-Pubkey:       text-sm font-mono text-text-dim cursor-pointer hover:underline
-  Copied:     text-xs text-accent-green
-
-Summary:      grid grid-cols-3 gap-3 mb-6 (responsive: grid-cols-1 on mobile)
-  Card:       shadcn Card — bg-bg-card border-border-subtle rounded-lg p-4
-  Label:      text-[10px] uppercase tracking-wider text-text-dim font-semibold
-  Value:      text-2xl font-bold text-text-primary font-mono
-  Sub:        text-xs text-text-dim
-  Bond card:  border-l-2 colored by health state
-
-Detail grid:  grid grid-cols-3 gap-4 mb-6 (responsive: grid-cols-1)
-  Column:     bg-bg-card/40 border border-border-subtle rounded-lg p-4
-  Title:      text-[10px] uppercase tracking-wider text-text-dim font-bold
-              pb-2 border-b border-border-subtle
-  Row:        flex justify-between items-baseline gap-2
-  Row label:  text-xs text-text-dim
-  Row value:  text-sm font-medium text-slate-300 text-right font-mono
-
-Progress:     shadcn Progress — colored fill by bond health
-  Track:      h-1.5 bg-white/[0.08] rounded-full
-  Fill:       rounded-full (green/yellow/red per health)
-
-Rec box:      shadcn Card — border-l-4 colored by severity
-  success:    border-l-accent-green bg-accent-green/[0.06]
-  warning:    border-l-accent-yellow bg-accent-yellow/[0.06]
-  danger:     border-l-accent-red bg-accent-red/[0.06]
-  info:       border-l-accent-blue bg-accent-blue/[0.06]
-  Label:      text-[10px] uppercase tracking-wider (color matches severity)
-  Text:       text-sm text-text-primary leading-relaxed
-
-Sim CTA:     shadcn Card + Button — hidden when !isExpert
-  Box:       bg-bg-primary/60 border border-accent-blue/20 rounded-lg
-             p-4 flex items-center justify-between
-  Text:      text-sm text-text-muted
-  Button:    shadcn Button variant="default" (accent-blue bg)
-```
-
-Replace: `sam-detail.module.css` entirely. Remove all inline `style={{}}` props.
-
-### 9. SAM Page Shell (sam.tsx)
-
-**Current**: `sam.module.css` — `.page` bg, `.simulatorToggle` button
-
-**Target**: Tailwind on page wrapper + shadcn Button for toggle
-
-```
-Page:     min-h-screen bg-bg-primary
+Page:     bg-slate-950 min-h-screen
 Content:  relative
 
-Sim btn:  shadcn Button — variant depends on state:
-  Off:    bg-accent-blue text-white hover:bg-blue-600
-  On:     bg-sky-500 text-white hover:bg-sky-600
-  Calc:   bg-gray-500 cursor-not-allowed (disabled)
+Sim btn:  h-10 px-5 mx-1 my-1 rounded text-sm whitespace-nowrap
+          transition-colors cursor-pointer border-none font-inherit
+  Off:    bg-blue-500 text-white hover:bg-blue-600
+  Active: bg-sky-500 text-white hover:bg-sky-600
+  Calc:   bg-slate-600 text-slate-400 cursor-not-allowed
 ```
 
-Replace: `sam.module.css` entirely.
+### 1.7 SAM Detail (sam-detail.tsx) — DONE
 
-### 10. Protected Events Table
+Already migrated to Tailwind by user. Uses slate-* scale, no CSS Module.
+`sam-detail.module.css` can be deleted.
 
-**Current**: `protected-events-table.module.css` + `protected-events.module.css`
-(minimal — just page bg)
+### 1.8 SAM Table Basic Mode (sam-table.tsx)
 
-**Target**: shadcn Table + Tailwind, same dark theme
-
-```
-Search:     shadcn Input with search icon
-Epoch:      shadcn Input type="number" for min/max
-Table:      shadcn Table with our dark tokens
-Settlement: shadcn Badge (green for settled, grey for dryrun)
-Validator:  name + truncated pubkey (shared pattern)
-```
-
-### 11. Validator Bonds Table
-
-**Current**: `validator-bonds-table.module.css` + `validator-bonds.module.css`
-(minimal)
-
-**Target**: shadcn Table + Tailwind, add bond health dot
+Replace `.basicTable` and related basic-mode classes with Tailwind.
+Keep `.tableWrap`, simulation, ghost row, and position grading classes
+in `sam-table.module.css` (expert mode stays).
 
 ```
-Table:      shadcn Table with our dark tokens
-Bond cell:  dot + health label + balance (same as SAM basic table)
-Validator:  name + truncated pubkey (shared pattern)
+Table:    w-full border-separate border-spacing-y-1 font-sans
+THead TH: text-[11px] uppercase tracking-wide text-slate-400
+          font-medium px-4 py-2
+Row:      cursor-pointer transition-colors
+TD:       px-4 py-3 bg-slate-900/60 border-y border-slate-700/10
+          first:border-l-[3px] first:border-l-transparent
+          first:rounded-l-lg last:rounded-r-lg
+Row hover: hover:bg-blue-500/[0.04]
+           first-child: hover:border-l-blue-500
+
+Validator cell: flex flex-col gap-0.5
+  Name:   text-sm font-medium text-slate-200
+  Pubkey: text-[11px] text-slate-500 cursor-pointer hover:underline
+
+Bond cell: flex items-center gap-1.5
+  Dot:    w-2 h-2 rounded-full (green-400/yellow-400/red-400/slate-500)
+  Label:  text-xs (color matches dot)
+  SOL:    text-xs text-slate-400 font-mono
+
+Delta:    text-sm font-mono
+  +delta: text-green-400
+  -delta: text-red-400
+  zero:   text-slate-500
+
+Next Step: text-xs text-slate-400 leading-relaxed
 ```
 
-### 12. scheme.module.css
+### 1.9 Expert Table (table.tsx)
 
-**Current**: Empty file
-**Target**: Delete
+Keep `table.module.css` as-is. Expert mode table stays in CSS Modules.
 
-## Shared UI Patterns (Extract to Reusable Components)
+### 1.10 Protected Events Page + Table
 
-### ValidatorCell
+Delete `protected-events.module.css`. Page wrapper: `bg-slate-950`.
+Keep `protected-events-table.module.css` for now (expert table).
 
-Used in: SAM table, bonds table, events table, detail header.
-Extract to `src/components/ui/validator-cell.tsx`:
+### 1.11 Validator Bonds Page + Table
 
-```tsx
-function ValidatorCell({ name, pubkey, countryIso, onCopy }) {
-  // name + flag + truncated pubkey with click-to-copy
-}
+Delete `validator-bonds.module.css`. Page wrapper: `bg-slate-950`.
+Keep `validator-bonds-table.module.css` for now (expert table).
+
+### 1.12 scheme.module.css
+
+Delete (empty file).
+
+### Phase 1 Completion Checklist
+
+Files deleted:
+```
+src/components/navigation/navigation.module.css(.d.ts)
+src/components/banner/banner.module.css(.d.ts)
+src/components/metric/metric.module.css(.d.ts)
+src/components/complex-metric/complex-metric.module.css(.d.ts)
+src/components/sam-detail/sam-detail.module.css(.d.ts)
+src/components/loader/loader.module.css(.d.ts)
+src/pages/sam.module.css(.d.ts)
+src/pages/validator-bonds.module.css(.d.ts)
+src/pages/protected-events.module.css(.d.ts)
+src/scheme.module.css(.d.ts)
 ```
 
-### BondBadge
-
-Used in: SAM table, bonds table, detail summary card.
-Extract to `src/components/ui/bond-badge.tsx`:
-
-```tsx
-function BondBadge({ color, balance, compact }) {
-  // dot + label + optional balance
-}
+Files kept (expert mode CSS Modules):
+```
+src/components/table/table.module.css(.d.ts)
+src/components/sam-table/sam-table.module.css(.d.ts)
+src/components/protected-events-table/*.module.css(.d.ts)
+src/components/validator-bonds-table/*.module.css(.d.ts)
 ```
 
-### DeltaValue
+Verification: `npx tsc --noEmit` passes, `pnpm build` succeeds,
+no CSS Module imports remain except for expert-mode components.
 
-Used in: SAM table, detail summary, detail grid.
-Extract to `src/components/ui/delta-value.tsx`:
+---
 
-```tsx
-function DeltaValue({ delta, suffix }) {
-  // colored arrow + formatted number
-}
-```
+## Phase 2: shadcn/ui Components + Polish
 
-## Typography Strategy
+After Phase 1 is stable, add shadcn/ui for richer components:
 
-- **Basic mode**: Inter (font-sans) everywhere. Clean, modern, readable.
-- **Expert mode**: Keep monospace for table data. Headers/nav use Inter.
-- Font sizes: Tailwind defaults (text-xs through text-2xl).
-  No custom sizes except text-[10px] for uppercase labels.
+- Card, Badge, Button, Tooltip, Progress, Input, Tabs
+- Replace raw `<button>` / `<div>` patterns with shadcn primitives
+- Add proper tooltips (replace `title=` attributes with shadcn Tooltip)
+- Bond health Badge component (dot + label as styled pill)
+- Progress bar for bond utilization
+- Responsive breakpoints and mobile polish
+- View mode Tabs (A/B/C) when Variant B is ready
 
-## Migration Order
-
-### Phase 2A: shadcn Setup + Global Styles
-
-1. Update `tailwind.config.js` with full token set
-2. Install shadcn/ui: Button, Card, Badge, Table, Tooltip, Progress
-3. Customize shadcn component colors to match dark tokens
-4. Replace `src/index.css` global styles with Tailwind base layer
-5. Add `@tailwind components` directive
-
-### Phase 2B: Navigation + Page Shell
-
-1. Migrate Navigation to Tailwind (delete navigation.module.css)
-2. Migrate sam.tsx page shell (delete sam.module.css)
-3. Migrate validator-bonds + protected-events page shells
-4. Migrate Banner to Tailwind (delete banner.module.css)
-
-### Phase 2C: Metric Cards
-
-1. Rewrite Metric using shadcn Card (delete metric.module.css)
-2. Merge ComplexMetric into Metric (delete complex-metric.module.css)
-3. All pages get consistent card styling
-
-### Phase 2D: SAM Basic Table
-
-1. Build basic mode table using shadcn Table + Tailwind
-2. Extract ValidatorCell, BondBadge, DeltaValue as shared components
-3. Keep expert mode table unchanged (CSS Modules stay)
-
-### Phase 2E: SAM Detail Page
-
-1. Rewrite sam-detail.tsx with Tailwind + shadcn components
-2. Delete sam-detail.module.css
-3. Severity-colored recommendation box
-4. isExpert prop for simulation CTA visibility
-
-### Phase 3: Secondary Pages
-
-1. Protected Events: shadcn Table + Input filters + Badge settlements
-2. Validator Bonds: shadcn Table + bond health dots
-3. Delete their module.css files
-
-### Phase 4: Cleanup
-
-1. Remove unused CSS variables from index.css
-2. Delete empty scheme.module.css
-3. Remove css-modules-typescript-loader if no .module.css files remain
-   (expert table still needs it — keep for now)
-4. Verify no hardcoded hex colors remain in TSX — all via Tailwind tokens
-
-## Files Deleted After Full Migration
-
-```
-src/components/navigation/navigation.module.css
-src/components/navigation/navigation.module.css.d.ts
-src/components/banner/banner.module.css
-src/components/banner/banner.module.css.d.ts
-src/components/metric/metric.module.css
-src/components/metric/metric.module.css.d.ts
-src/components/complex-metric/complex-metric.module.css
-src/components/complex-metric/complex-metric.module.css.d.ts
-src/components/sam-detail/sam-detail.module.css
-src/components/sam-detail/sam-detail.module.css.d.ts
-src/pages/sam.module.css
-src/pages/sam.module.css.d.ts
-src/pages/validator-bonds.module.css
-src/pages/validator-bonds.module.css.d.ts
-src/pages/protected-events.module.css
-src/pages/protected-events.module.css.d.ts
-src/scheme.module.css
-src/scheme.module.css.d.ts
-```
-
-## Files Kept (Expert Mode)
-
-```
-src/components/table/table.module.css        (generic expert table)
-src/components/table/table.module.css.d.ts
-src/components/sam-table/sam-table.module.css (simulation/ghost rows)
-src/components/sam-table/sam-table.module.css.d.ts
-src/components/loader/loader.module.css      (terminal spinner)
-src/components/loader/loader.module.css.d.ts
-src/components/protected-events-table/protected-events-table.module.css
-src/components/validator-bonds-table/validator-bonds-table.module.css
-```
-
-These stay until expert mode is also migrated (out of scope for v2).
+Phase 2 is out of scope for this spec. Ship Phase 1 first.
