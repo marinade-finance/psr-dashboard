@@ -372,13 +372,19 @@ export const SamTable: React.FC<Props> = ({
         </TableCell>
 
         {/* Next Step */}
-        <TableCell className="px-3.5 py-3 max-w-[280px] lg:max-w-[280px] md:max-w-[200px]">
+        <TableCell className="px-3.5 py-3 max-w-[350px]">
           <div
             className="inline-flex items-start gap-[5px] text-xs leading-[1.35] px-2.5 py-1 rounded-md"
             style={{ background: tipStyle.bg, color: tipStyle.color }}
           >
             <span className="shrink-0">{tipStyle.icon}</span>
-            <span className="break-words">{tip.text}</span>
+            <span className="break-words">
+              {tip.text.replace(/~?\d+\.\d{3,}/g, m => {
+                const n = parseFloat(m.replace(/^~/, ''))
+                const prefix = m.startsWith('~') ? '~' : ''
+                return `${prefix}${Math.round(n * 100) / 100}`
+              })}
+            </span>
           </div>
         </TableCell>
 
