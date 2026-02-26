@@ -2,9 +2,9 @@ import React from 'react'
 import { useQuery } from 'react-query'
 
 import { Banner } from 'src/components/banner/banner'
-import { Loader } from 'src/components/loader/loader'
 import { PageLayout } from 'src/components/page-layout/page-layout'
 import { ProtectedEventsTable } from 'src/components/protected-events-table/protected-events-table'
+import { EventsSkeleton } from 'src/components/skeleton/skeleton'
 import { getBannerData } from 'src/services/banner'
 import { fetchProtectedEventsWithValidator } from 'src/services/validator-with-protected_event'
 
@@ -14,6 +14,11 @@ export const ProtectedEventsPage: React.FC<UserLevelProps> = ({ level }) => {
   const { data, status } = useQuery(
     'protected-events',
     fetchProtectedEventsWithValidator,
+    {
+      staleTime: 5 * 60 * 1000,
+      cacheTime: 30 * 60 * 1000,
+      refetchOnWindowFocus: false,
+    },
   )
 
   return (
@@ -24,7 +29,7 @@ export const ProtectedEventsPage: React.FC<UserLevelProps> = ({ level }) => {
           Error fetching data
         </p>
       )}
-      {status === 'loading' && <Loader />}
+      {status === 'loading' && <EventsSkeleton />}
       {status === 'success' && (
         <ProtectedEventsTable data={data} level={level} />
       )}

@@ -1,5 +1,9 @@
-import React from 'react'
+import React, { useCallback } from 'react'
+import { useQueryClient } from 'react-query'
 import { NavLink } from 'react-router-dom'
+
+import { fetchValidatorsWithBonds } from 'src/services/validator-with-bond'
+import { fetchProtectedEventsWithValidator } from 'src/services/validator-with-protected_event'
 
 export enum UserLevel {
   Basic = 'basic',
@@ -12,6 +16,28 @@ export type UserLevelProps = {
 
 export const Navigation: React.FC<UserLevelProps> = ({ level }) => {
   const prefix = level === UserLevel.Expert ? '/expert-' : '/'
+  const queryClient = useQueryClient()
+
+  // Prefetch data on nav hover so pages load instantly
+  const handleMouseEnter = useCallback(
+    (to: string) => {
+      const key = to.replace(/^\/(expert-)?/, '')
+      if (key === 'protected-events') {
+        void queryClient.prefetchQuery(
+          'protected-events',
+          fetchProtectedEventsWithValidator,
+          {
+            staleTime: 5 * 60 * 1000,
+          },
+        )
+      } else if (key === 'bonds') {
+        void queryClient.prefetchQuery('bonds', fetchValidatorsWithBonds, {
+          staleTime: 5 * 60 * 1000,
+        })
+      }
+    },
+    [queryClient],
+  )
 
   const navItems = [
     { to: prefix === '/' ? '/' : '/expert-', label: 'Stake Auction' },
@@ -35,6 +61,7 @@ export const Navigation: React.FC<UserLevelProps> = ({ level }) => {
             key={to}
             to={to}
             end={to === '/' || to === '/expert-'}
+            onMouseEnter={() => handleMouseEnter(to)}
             className={({ isActive }) =>
               `px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                 isActive
