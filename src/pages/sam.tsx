@@ -4,6 +4,7 @@ import { useQuery } from 'react-query'
 import { Banner } from 'src/components/banner/banner'
 import { Loader } from 'src/components/loader/loader'
 import { Navigation } from 'src/components/navigation/navigation'
+import { UserLevel } from 'src/components/navigation/navigation'
 import { SamDetail } from 'src/components/sam-detail/sam-detail'
 import { SamTable } from 'src/components/sam-table/sam-table'
 import { getBannerData } from 'src/services/banner'
@@ -13,7 +14,6 @@ import { fetchValidators } from 'src/services/validators'
 import styles from './sam.module.css'
 
 import type { AuctionResult } from '@marinade.finance/ds-sam-sdk'
-import type { UserLevel } from 'src/components/navigation/navigation'
 import type { SourceDataOverrides } from 'src/services/sam'
 
 type Props = {
@@ -232,17 +232,18 @@ export const SamPage: React.FC<Props> = ({ level }) => {
           detailValidator && (
             <SamDetail
               validator={detailValidator}
-              name={nameMap.get(selectedValidator)?.name ?? '---'}
-              countryIso={nameMap.get(selectedValidator)?.countryIso ?? null}
-              rank={
-                displayAuctionResult.auctionData.validators.findIndex(
-                  v => v.voteAccount === selectedValidator,
-                ) + 1
-              }
-              totalCount={displayAuctionResult.auctionData.validators.length}
+              meta={{
+                name: nameMap.get(selectedValidator ?? '')?.name,
+                countryIso: nameMap.get(selectedValidator ?? '')?.countryIso,
+                rank:
+                  displayAuctionResult.auctionData.validators.findIndex(
+                    v => v.voteAccount === selectedValidator,
+                  ) + 1,
+              }}
               epochsPerYear={data.epochsPerYear}
+              isExpert={level === UserLevel.Expert}
               onBack={handleBack}
-              onEnterSimulation={handleEnterSimulation}
+              onEdit={handleEnterSimulation}
             />
           )}
         {status === 'success' &&

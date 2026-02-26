@@ -77,6 +77,7 @@ type InputOpts = {
 export type ValidatorMeta = {
   name?: string
   countryIso?: string | null
+  rank?: number
 }
 
 type Props = {

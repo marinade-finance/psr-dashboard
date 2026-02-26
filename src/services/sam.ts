@@ -544,6 +544,9 @@ export function getRecommendation(
   return { text: 'Stake is at target', severity: 'positive' }
 }
 
+export const selectBondUtilization = (validator: AuctionValidator): number =>
+  Math.min(1, Math.max(0, validator.bondSamHealth ?? 0))
+
 export function isoToFlag(iso: string): string {
   const upper = iso.toUpperCase()
   const OFFSET = 0x1f1e6 - 0x41 // regional indicator A minus latin A

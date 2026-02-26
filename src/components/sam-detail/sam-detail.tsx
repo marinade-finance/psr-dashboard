@@ -7,95 +7,133 @@ import {
   bondTooltip,
   getRecommendation,
   isoToFlag,
-  selectConstraintText,
-  selectIsNonProductive,
+  selectBondUtilization,
   selectMaxAPY,
+  selectSamActiveStake,
+  selectSamTargetStake,
   selectStakeDelta,
 } from 'src/services/sam'
 
-import styles from './sam-detail.module.css'
-
 import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
+import type { ValidatorMeta } from 'src/components/sam-table/sam-table'
 
 type Props = {
   validator: AuctionValidator
-  name: string
-  countryIso: string | null
-  rank: number
-  totalCount: number
+  meta: ValidatorMeta | undefined
   epochsPerYear: number
+  isExpert: boolean
   onBack: () => void
-  onEnterSimulation: () => void
+  onEdit?: () => void
 }
 
-function bondProgressClass(color: Color): string {
+function bondDotColor(color: Color): string {
   switch (color) {
     case Color.GREEN:
-      return styles.bondProgressHealthy
+      return 'bg-green-400'
     case Color.YELLOW:
-      return styles.bondProgressWatch
+      return 'bg-yellow-400'
     case Color.RED:
-      return styles.bondProgressLow
+      return 'bg-red-400'
     default:
-      return styles.bondProgressNone
+      return 'bg-slate-500'
   }
 }
 
-function bondCardClass(color: Color): string {
+function bondLabel(color: Color): string {
   switch (color) {
     case Color.GREEN:
-      return styles.summaryCardHealthy
+      return 'Healthy'
     case Color.YELLOW:
-      return styles.summaryCardWatch
+      return 'Watch'
     case Color.RED:
-      return styles.summaryCardLow
+      return 'Low'
     default:
-      return styles.summaryCardNone
+      return 'None'
   }
 }
 
-function bondEpochsLabel(bondGoodForNEpochs: number): string {
-  if (bondGoodForNEpochs === Infinity || bondGoodForNEpochs > 999) {
-    return '∞ epochs covered'
+function bondProgressColor(color: Color): string {
+  switch (color) {
+    case Color.GREEN:
+      return 'bg-green-400'
+    case Color.YELLOW:
+      return 'bg-yellow-400'
+    case Color.RED:
+      return 'bg-red-400'
+    default:
+      return 'bg-slate-500'
   }
-  const n = Math.floor(bondGoodForNEpochs)
-  return `~${n} epoch${n !== 1 ? 's' : ''} covered`
 }
 
-function stakeDeltaValue(delta: number): string {
-  if (delta === 0) return '0 SOL'
-  const prefix = delta > 0 ? '+' : ''
-  return `${prefix}${formatSolAmount(delta, 0)} SOL`
+function bondCardBorder(color: Color): string {
+  switch (color) {
+    case Color.GREEN:
+      return 'border-green-500/40'
+    case Color.YELLOW:
+      return 'border-yellow-500/40'
+    case Color.RED:
+      return 'border-red-500/40'
+    default:
+      return 'border-slate-600/20'
+  }
+}
+
+function bondHealthTextColor(color: Color): string {
+  switch (color) {
+    case Color.GREEN:
+      return 'text-green-400'
+    case Color.YELLOW:
+      return 'text-yellow-400'
+    case Color.RED:
+      return 'text-red-400'
+    default:
+      return 'text-slate-400'
+  }
+}
+
+function severityBorderClass(severity: string): string {
+  switch (severity) {
+    case 'positive':
+      return 'border-l-4 border-l-green-500'
+    case 'warning':
+      return 'border-l-4 border-l-yellow-500'
+    case 'critical':
+      return 'border-l-4 border-l-red-500'
+    default:
+      return 'border-l-4 border-l-blue-500'
+  }
+}
+
+function epochsLabel(n: number): string {
+  if (n === Infinity || n > 999) return '\u221e epochs covered'
+  const rounded = Math.floor(n)
+  return `~${rounded} epoch${rounded !== 1 ? 's' : ''} covered`
 }
 
 export function SamDetail({
   validator,
-  name,
-  countryIso,
-  rank,
-  totalCount,
+  meta,
   epochsPerYear,
+  isExpert,
   onBack,
-  onEnterSimulation,
+  onEdit,
 }: Props): JSX.Element {
   const [copied, setCopied] = useState(false)
 
   const bondColor = bondHealthColor(validator)
   const recommendation = getRecommendation(validator, bondColor)
-  const isNonProductive = selectIsNonProductive(validator)
   const delta = selectStakeDelta(validator)
   const maxApy = selectMaxAPY(validator, epochsPerYear)
-  const constraintText = selectConstraintText(validator)
+  const bondUtil = selectBondUtilization(validator)
+  const activeStake = selectSamActiveStake(validator)
+  const targetStake = selectSamTargetStake(validator)
 
-  const bondBalance = validator.bondBalanceSol ?? 0
-  const targetStake = validator.auctionStake.marinadeSamTargetSol
-  const activeStake = validator.marinadeActivatedStakeSol
-
-  // Bond utilization: bondBalance / (bondBalance + some buffer) capped 0-1
-  // Use bondSamHealth as the fractional utilization [0,1]
-  const bondUtilPct = Math.min(1, Math.max(0, validator.bondSamHealth ?? 0))
+  const flag = meta?.countryIso ? isoToFlag(meta.countryIso) : null
+  const name = meta?.name ?? validator.voteAccount
+  const rank = meta?.rank
 
   const { revShare } = validator
+  const bondBalance = validator.bondBalanceSol ?? 0
 
   function copyPubkey() {
     void navigator.clipboard.writeText(validator.voteAccount).then(() => {
@@ -104,278 +142,248 @@ export function SamDetail({
     })
   }
 
-  const flag = countryIso ? isoToFlag(countryIso) : null
-  const displayName = flag ? `${flag} ${name}` : name
+  const deltaColor =
+    delta > 0 ? 'text-green-400' : delta < 0 ? 'text-red-400' : 'text-slate-400'
+
+  const apyTooltip = [
+    `Inflation: ${formatPercentage(revShare.inflationPmpe / 1000, 4)} / epoch`,
+    `MEV: ${formatPercentage(revShare.mevPmpe / 1000, 4)} / epoch`,
+    `Block: ${formatPercentage(revShare.blockPmpe / 1000, 4)} / epoch`,
+    `Bid: \u2609${formatSolAmount(revShare.auctionEffectiveBidPmpe, 4)}`,
+  ].join('\n')
 
   return (
-    <div>
+    <div className="p-4">
       {/* Back button */}
-      <button className={styles.backBtn} onClick={onBack}>
-        ← Back to list
+      <button
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 mb-5 bg-slate-900/60 border border-slate-700/30 rounded-md text-slate-400 text-sm cursor-pointer hover:border-blue-500/40 hover:text-slate-200 transition-colors"
+        onClick={onBack}
+      >
+        \u2190 Back to list
       </button>
 
-      {/* Header */}
-      <div className={styles.header}>
-        <span className={styles.validatorName}>
-          {displayName}
-          {isNonProductive && (
-            <span
-              style={{
-                display: 'inline-block',
-                marginLeft: 10,
-                padding: '2px 8px',
-                background: 'rgba(239,68,68,0.15)',
-                border: '1px solid rgba(239,68,68,0.35)',
-                borderRadius: 4,
-                fontSize: 12,
-                color: '#f87171',
-                verticalAlign: 'middle',
-              }}
-            >
-              non-productive
-            </span>
-          )}
-        </span>
-        <span className={styles.rankBadge}>
-          #{rank} of {totalCount}
-        </span>
+      {/* Header row */}
+      <div className="flex items-center gap-4 mb-4 flex-wrap">
+        <h1 className="text-xl font-bold text-slate-100 flex-1 min-w-0 truncate">
+          {flag && <span className="mr-1">{flag}</span>}
+          {name}
+        </h1>
+        {rank != null && (
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-blue-500/15 border border-blue-500/35 text-blue-300 text-xs font-semibold">
+            #{rank}
+          </span>
+        )}
       </div>
 
       {/* Pubkey click-to-copy */}
-      <div
-        style={{
-          marginBottom: 24,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-        }}
-      >
+      <div className="mb-6 flex items-center gap-2">
         <span
-          className={styles.pubkey}
+          className="font-mono text-xs text-slate-500 cursor-pointer hover:text-slate-400 hover:underline select-none"
           onClick={copyPubkey}
           title="Click to copy"
         >
           {validator.voteAccount}
         </span>
-        {copied && <span className={styles.copiedFeedback}>Copied</span>}
+        {copied && <span className="text-green-400 text-xs">Copied!</span>}
       </div>
 
       {/* Summary cards */}
-      <div className={styles.summaryCards}>
+      <div className="flex gap-3 mb-6 flex-wrap">
         {/* Max APY */}
-        <div className={styles.summaryCard}>
-          <div className={styles.summaryCardLabel}>Max APY</div>
-          <div className={styles.summaryCardValue}>
+        <div
+          className="flex-1 min-w-40 bg-slate-900/60 border border-slate-700/15 rounded-lg p-4 flex flex-col gap-1.5"
+          title={apyTooltip}
+        >
+          <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Max APY
+          </div>
+          <div className="text-2xl font-bold text-slate-100">
             {formatPercentage(maxApy, 2)}
           </div>
-          <div className={styles.summaryCardSub}>
+          <div className="text-xs text-slate-500">
             {formatPercentage(revShare.totalPmpe / 1000, 4)} / epoch
           </div>
         </div>
 
-        {/* Bond */}
-        <div className={`${styles.summaryCard} ${bondCardClass(bondColor)}`}>
-          <div className={styles.summaryCardLabel}>Bond Balance</div>
-          <div className={styles.summaryCardValue}>
-            {bondBalance != null
-              ? `${formatSolAmount(bondBalance, 2)} SOL`
-              : '—'}
+        {/* Bond health */}
+        <div
+          className={`flex-1 min-w-40 bg-slate-900/60 border rounded-lg p-4 flex flex-col gap-1.5 ${bondCardBorder(bondColor)}`}
+        >
+          <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Bond Health
           </div>
-          <div className={styles.summaryCardSub}>
-            {bondEpochsLabel(validator.bondGoodForNEpochs)}
+          <div className="flex items-center gap-2">
+            <span
+              className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${bondDotColor(bondColor)}`}
+            />
+            <span className="text-lg font-bold text-slate-100">
+              {bondLabel(bondColor)}
+            </span>
+          </div>
+          <div className="text-sm text-slate-300">
+            \u2609 {formatSolAmount(bondBalance, 2)} SOL
+          </div>
+          <div className="h-1.5 bg-slate-700/30 rounded-full overflow-hidden mt-1">
+            <div
+              className={`h-full rounded-full transition-all ${bondProgressColor(bondColor)}`}
+              style={{ width: `${bondUtil * 100}%` }}
+            />
+          </div>
+          <div className="text-xs text-slate-500">
+            {epochsLabel(validator.bondGoodForNEpochs)}
           </div>
         </div>
 
-        {/* Stake delta */}
-        <div className={styles.summaryCard}>
-          <div className={styles.summaryCardLabel}>Stake Δ (Next Epoch)</div>
-          <div
-            className={styles.summaryCardValue}
-            style={{
-              color: delta > 0 ? '#4ade80' : delta < 0 ? '#f87171' : '#94a3b8',
-            }}
-          >
-            {stakeDeltaValue(delta)}
+        {/* Stake \u0394 */}
+        <div className="flex-1 min-w-40 bg-slate-900/60 border border-slate-700/15 rounded-lg p-4 flex flex-col gap-1.5">
+          <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Stake \u0394
           </div>
-          <div className={styles.summaryCardSub}>
-            Target: {formatSolAmount(targetStake, 0)} SOL
+          <div className={`text-2xl font-bold ${deltaColor}`}>
+            {delta > 0 ? '\u2191 +' : delta < 0 ? '\u2193 ' : '\u2014 '}
+            {formatSolAmount(Math.abs(delta), 0)}
+          </div>
+          <div className="text-xs text-slate-500">
+            Target: \u2609 {formatSolAmount(targetStake, 0)}
           </div>
         </div>
       </div>
 
       {/* Detail columns */}
-      <div className={styles.detailGrid}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {/* APY breakdown */}
-        <div className={styles.detailCol}>
-          <div className={styles.detailColTitle}>APY Breakdown</div>
-          <div className={styles.detailRow}>
-            <span className={styles.detailRowLabel}>Inflation share</span>
-            <span className={styles.detailRowValue}>
-              {formatPercentage(revShare.inflationPmpe / 1000, 4)}
+        <div className="bg-slate-900/40 border border-slate-700/10 rounded-lg p-4 flex flex-col gap-3">
+          <div className="text-xs font-bold uppercase tracking-widest text-slate-600 pb-2 border-b border-slate-700/10">
+            APY Breakdown
+          </div>
+          <div className="flex justify-between items-baseline gap-2">
+            <span className="text-xs text-slate-500">Inflation</span>
+            <span className="text-xs text-slate-300 font-medium">
+              {formatPercentage(revShare.inflationPmpe / 1000, 4)} / epoch
             </span>
           </div>
-          <div className={styles.detailRow}>
-            <span className={styles.detailRowLabel}>MEV share</span>
-            <span className={styles.detailRowValue}>
-              {formatPercentage(revShare.mevPmpe / 1000, 4)}
+          <div className="flex justify-between items-baseline gap-2">
+            <span className="text-xs text-slate-500">MEV</span>
+            <span className="text-xs text-slate-300 font-medium">
+              {formatPercentage(revShare.mevPmpe / 1000, 4)} / epoch
             </span>
           </div>
-          <div className={styles.detailRow}>
-            <span className={styles.detailRowLabel}>Bid (effective)</span>
-            <span className={styles.detailRowValue}>
-              {formatPercentage(revShare.auctionEffectiveBidPmpe / 1000, 4)}
+          <div className="flex justify-between items-baseline gap-2">
+            <span className="text-xs text-slate-500">Block rewards</span>
+            <span className="text-xs text-slate-300 font-medium">
+              {formatPercentage(revShare.blockPmpe / 1000, 4)} / epoch
             </span>
           </div>
-          <div
-            className={styles.detailRow}
-            style={{
-              borderTop: '1px solid rgba(148,163,184,0.1)',
-              paddingTop: 6,
-              marginTop: 2,
-            }}
-          >
-            <span
-              className={styles.detailRowLabel}
-              style={{ fontWeight: 600, color: '#94a3b8' }}
-            >
-              Total
+          <div className="flex justify-between items-baseline gap-2 border-t border-slate-700/10 pt-1.5">
+            <span className="text-xs text-slate-400 font-semibold">
+              Effective bid
             </span>
-            <span
-              className={styles.detailRowValue}
-              style={{ fontWeight: 600, color: '#e2e8f0' }}
-            >
-              {formatPercentage(revShare.totalPmpe / 1000, 4)}
+            <span className="text-xs text-slate-200 font-semibold">
+              {formatPercentage(revShare.auctionEffectiveBidPmpe / 1000, 4)} /
+              epoch
             </span>
           </div>
-          <div className={styles.detailRow}>
-            <span className={styles.detailRowLabel}>Inflation commission</span>
-            <span className={styles.detailRowValue}>
+          <div className="flex justify-between items-baseline gap-2">
+            <span className="text-xs text-slate-500">Infl. commission</span>
+            <span className="text-xs text-slate-300 font-medium">
               {formatPercentage(validator.inflationCommissionDec, 0)}
             </span>
           </div>
           {validator.mevCommissionDec != null && (
-            <div className={styles.detailRow}>
-              <span className={styles.detailRowLabel}>MEV commission</span>
-              <span className={styles.detailRowValue}>
+            <div className="flex justify-between items-baseline gap-2">
+              <span className="text-xs text-slate-500">MEV commission</span>
+              <span className="text-xs text-slate-300 font-medium">
                 {formatPercentage(validator.mevCommissionDec, 0)}
               </span>
             </div>
           )}
         </div>
 
-        {/* Bond health */}
-        <div className={styles.detailCol}>
-          <div className={styles.detailColTitle}>Bond Health</div>
-          <div className={styles.detailRow}>
-            <span className={styles.detailRowLabel}>Balance</span>
-            <span className={styles.detailRowValue}>
-              {bondBalance != null
-                ? `${formatSolAmount(bondBalance, 2)} SOL`
-                : '—'}
+        {/* Bond health details */}
+        <div className="bg-slate-900/40 border border-slate-700/10 rounded-lg p-4 flex flex-col gap-3">
+          <div className="text-xs font-bold uppercase tracking-widest text-slate-600 pb-2 border-b border-slate-700/10">
+            Bond Health
+          </div>
+          <div className="flex justify-between items-baseline gap-2">
+            <span className="text-xs text-slate-500">Balance</span>
+            <span className="text-xs text-slate-300 font-medium">
+              \u2609 {formatSolAmount(bondBalance, 2)}
             </span>
           </div>
-          <div className={styles.detailRow}>
-            <span className={styles.detailRowLabel}>Epochs covered</span>
-            <span className={styles.detailRowValue}>
-              {bondEpochsLabel(validator.bondGoodForNEpochs)}
+          <div className="flex justify-between items-baseline gap-2">
+            <span className="text-xs text-slate-500">Epochs covered</span>
+            <span className="text-xs text-slate-300 font-medium">
+              {epochsLabel(validator.bondGoodForNEpochs)}
             </span>
           </div>
-          {/* Progress bar: bondSamHealth as utilization proxy */}
-          <div>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                fontSize: 11,
-                color: '#475569',
-                marginBottom: 4,
-              }}
+          <div className="flex justify-between items-baseline gap-2">
+            <span className="text-xs text-slate-500">Health label</span>
+            <span
+              className={`text-xs font-semibold ${bondHealthTextColor(bondColor)}`}
             >
-              <span>Health</span>
-              <span>{Math.round(bondUtilPct * 100)}%</span>
-            </div>
-            <div className={styles.bondProgress}>
-              <div
-                className={`${styles.bondProgressFill} ${bondProgressClass(bondColor)}`}
-                style={{ width: `${bondUtilPct * 100}%` }}
-              />
-            </div>
+              {bondLabel(bondColor)}
+            </span>
           </div>
-          <div
-            style={{
-              fontSize: 12,
-              color: '#94a3b8',
-              lineHeight: 1.5,
-              marginTop: 4,
-              padding: '8px 10px',
-              background: 'rgba(148,163,184,0.04)',
-              borderRadius: 4,
-            }}
-          >
+          <div className="text-xs text-slate-400 leading-relaxed mt-1 p-2 bg-slate-700/5 rounded">
             {bondTooltip(bondColor) ||
-              'No active stake — bond health not applicable.'}
+              'No active stake \u2014 bond health not applicable.'}
           </div>
         </div>
 
         {/* Stake movement */}
-        <div className={styles.detailCol}>
-          <div className={styles.detailColTitle}>Stake Movement</div>
-          <div className={styles.detailRow}>
-            <span className={styles.detailRowLabel}>Active stake</span>
-            <span className={styles.detailRowValue}>
-              {formatSolAmount(activeStake, 0)} SOL
+        <div className="bg-slate-900/40 border border-slate-700/10 rounded-lg p-4 flex flex-col gap-3">
+          <div className="text-xs font-bold uppercase tracking-widest text-slate-600 pb-2 border-b border-slate-700/10">
+            Stake Movement
+          </div>
+          <div className="flex justify-between items-baseline gap-2">
+            <span className="text-xs text-slate-500">Active</span>
+            <span className="text-xs text-slate-300 font-medium">
+              \u2609 {formatSolAmount(activeStake, 0)}
             </span>
           </div>
-          <div className={styles.detailRow}>
-            <span className={styles.detailRowLabel}>Target stake</span>
-            <span className={styles.detailRowValue}>
-              {formatSolAmount(targetStake, 0)} SOL
+          <div className="flex justify-between items-baseline gap-2">
+            <span className="text-xs text-slate-500">Target</span>
+            <span className="text-xs text-slate-300 font-medium">
+              \u2609 {formatSolAmount(targetStake, 0)}
             </span>
           </div>
-          <div className={styles.detailRow}>
-            <span className={styles.detailRowLabel}>Delta</span>
-            <span
-              className={styles.detailRowValue}
-              style={{
-                color:
-                  delta > 0 ? '#4ade80' : delta < 0 ? '#f87171' : '#94a3b8',
-              }}
-            >
-              {stakeDeltaValue(delta)}
+          <div className="flex justify-between items-baseline gap-2">
+            <span className="text-xs text-slate-500">Delta</span>
+            <span className={`text-xs font-semibold ${deltaColor}`}>
+              {delta > 0 ? '+' : ''}
+              {formatSolAmount(delta, 0)}
             </span>
-          </div>
-          <div
-            style={{
-              fontSize: 12,
-              color: '#94a3b8',
-              marginTop: 8,
-              padding: '8px 10px',
-              background: 'rgba(148,163,184,0.04)',
-              borderRadius: 4,
-              borderLeft: '2px solid rgba(148,163,184,0.15)',
-            }}
-          >
-            {constraintText}
           </div>
         </div>
       </div>
 
       {/* Recommendation box */}
-      <div className={styles.recommendationBox}>
-        <div className={styles.recommendationLabel}>Recommendation</div>
-        <div className={styles.recommendationText}>{recommendation.text}</div>
+      <div
+        className={`border border-slate-700/20 rounded-lg p-4 mb-6 bg-slate-900/40 flex flex-col gap-1.5 ${severityBorderClass(recommendation.severity)}`}
+      >
+        <div className="text-xs font-bold uppercase tracking-widest text-slate-500">
+          NEXT STEP
+        </div>
+        <div className="text-sm text-slate-300 leading-relaxed">
+          {recommendation.text}
+        </div>
       </div>
 
-      {/* Simulation CTA */}
-      <div className={styles.simulationCta}>
-        <span className={styles.simulationCtaText}>
-          Simulate how changes to commission or bid affect this validator's
-          position in the auction.
-        </span>
-        <button className={styles.simulationCtaBtn} onClick={onEnterSimulation}>
-          Open Simulation
-        </button>
-      </div>
+      {/* Expert-only simulation CTA */}
+      {isExpert && onEdit && (
+        <div className="flex items-center justify-between gap-4 flex-wrap bg-slate-950/60 border border-blue-500/20 rounded-lg p-4">
+          <span className="text-sm text-slate-400 flex-1">
+            Simulate how changes to commission or bid affect this
+            validator&apos;s position in the auction.
+          </span>
+          <button
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-md text-white text-sm font-semibold cursor-pointer transition-colors flex-shrink-0"
+            onClick={onEdit}
+          >
+            Open Simulation
+          </button>
+        </div>
+      )}
     </div>
   )
 }
