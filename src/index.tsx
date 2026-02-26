@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { Suspense, lazy } from 'react'
 import ReactDOM from 'react-dom'
 import './index.css'
 import TagManager from 'react-gtm-module'
@@ -9,11 +9,24 @@ import {
   useRouteError,
 } from 'react-router-dom'
 
+import { Loader } from './components/loader/loader'
 import { UserLevel } from './components/navigation/navigation'
 import { TooltipProvider } from './components/ui/tooltip'
-import { ProtectedEventsPage } from './pages/protected-events'
+
+// Eager load SAM (main page — needs to be fast)
 import { SamPage } from './pages/sam'
-import { ValidatorBondsPage } from './pages/validator-bonds'
+
+// Lazy load secondary pages
+const ProtectedEventsPage = lazy(() =>
+  import('./pages/protected-events').then(m => ({
+    default: m.ProtectedEventsPage,
+  })),
+)
+const ValidatorBondsPage = lazy(() =>
+  import('./pages/validator-bonds').then(m => ({
+    default: m.ValidatorBondsPage,
+  })),
+)
 
 const tagManagerArgs = {
   gtmId: 'GTM-TTZLQF7',
@@ -35,6 +48,12 @@ const ErrorPage = () => {
   )
 }
 
+const LazyFallback = () => (
+  <div className="min-h-screen bg-background-page flex items-center justify-center">
+    <Loader />
+  </div>
+)
+
 const router = createBrowserRouter([
   {
     path: '/',
@@ -43,12 +62,20 @@ const router = createBrowserRouter([
   },
   {
     path: '/bonds',
-    element: <ValidatorBondsPage />,
+    element: (
+      <Suspense fallback={<LazyFallback />}>
+        <ValidatorBondsPage />
+      </Suspense>
+    ),
     errorElement: <ErrorPage />,
   },
   {
     path: '/protected-events',
-    element: <ProtectedEventsPage />,
+    element: (
+      <Suspense fallback={<LazyFallback />}>
+        <ProtectedEventsPage />
+      </Suspense>
+    ),
     errorElement: <ErrorPage />,
   },
   {
@@ -58,12 +85,20 @@ const router = createBrowserRouter([
   },
   {
     path: '/expert-bonds',
-    element: <ValidatorBondsPage level={UserLevel.Expert} />,
+    element: (
+      <Suspense fallback={<LazyFallback />}>
+        <ValidatorBondsPage level={UserLevel.Expert} />
+      </Suspense>
+    ),
     errorElement: <ErrorPage />,
   },
   {
     path: '/expert-protected-events',
-    element: <ProtectedEventsPage level={UserLevel.Expert} />,
+    element: (
+      <Suspense fallback={<LazyFallback />}>
+        <ProtectedEventsPage level={UserLevel.Expert} />
+      </Suspense>
+    ),
     errorElement: <ErrorPage />,
   },
 ])
