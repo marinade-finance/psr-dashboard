@@ -66,10 +66,23 @@ End-to-end tests for all screens. Uses `@playwright/test`, chromium only.
 26. Press Escape → edit fields disappear
 27. Click "Exit Simulation" → banner disappears, original data restored
 
+### Validator Detail (SamDetail)
+
+28. Click first data row → detail view appears (list view hidden)
+29. Detail shows back button, validator name, rank badge ("# N of M")
+30. Detail shows 3 summary cards: MAX APY, BOND, STAKE Δ
+31. Detail shows recommendation box with non-empty text
+32. Click back button → returns to list view, table visible again
+33. Scroll position restored after returning from detail view
+    (scroll down first, click row, click back, verify scroll offset > 0)
+34. Detail shows country flag emoji if validator has country data
+    (skip if first row has no country — use `test.skip` with condition)
+35. Pubkey in detail view is click-to-copy (click → text shows "Copied")
+
 ### Metric Formatting
 
-28. SOL values contain commas (e.g., "1,234,567")
-29. APY values contain "%" sign
+36. SOL values contain commas (e.g., "1,234,567")
+37. APY values contain "%" sign
 
 ---
 

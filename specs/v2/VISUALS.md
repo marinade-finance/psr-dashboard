@@ -669,7 +669,7 @@ Shared structure across all SAM variants.
 - Validator name + truncated pubkey
 - No view mode tabs yet — Variant A renders directly (tabs ship
   with Phase 5 when Variant B is ready)
-- Click row → detail page (existing SamDetail)
+- Click row → detail page (SamDetail, created in this phase)
 
 ### Ship Later (Phases 3–6)
 

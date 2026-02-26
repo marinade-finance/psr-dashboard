@@ -79,7 +79,13 @@ for Tailwind tokens and shadcn component mapping.
 
 ### src/services/sam.ts
 
-- Add `getRecommendation(validator, bondColor)` → `{text, severity}`
+- Add `getRecommendation(validator, bondColor)` →
+  `{text: string, severity: 'success' | 'warning' | 'danger' | 'info'}`
+  - `success`: on track / stable (green accent, steps 9, 11)
+  - `warning`: watch state, non-productive (yellow accent, steps 3, 4, 7)
+  - `danger`: bond at risk, losing stake, no bond (red accent, steps 1, 2, 10)
+  - `info`: constraint-capped, raise bid, zero target (blue accent, steps 5, 6, 8)
+  - Step numbers reference SCREENS.md recommendation priority cascade
 - Add `selectStakeDelta(validator)` → number (target - active)
 - No other changes to auction logic, runAlt, backstop
 
