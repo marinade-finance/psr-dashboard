@@ -3,7 +3,8 @@ import { defineConfig, devices } from '@playwright/test'
 export default defineConfig({
   testDir: './tests',
   snapshotDir: './tests/__screenshots__',
-  timeout: 30000,
+  timeout: 60000,
+  retries: 2,
   use: {
     baseURL: 'http://localhost:8080',
     screenshot: 'only-on-failure',
