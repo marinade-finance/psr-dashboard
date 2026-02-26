@@ -3,9 +3,75 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    @apply bg-slate-950 text-slate-200 font-sans antialiased;
+  :root {
+    --background: #FFFFFF;
+    --background-page: #F3F7F7;
+    --foreground: #182120;
+    --card: #FFFFFF;
+    --card-foreground: #081211;
+    --secondary: #E7EEEF;
+    --secondary-foreground: #3A4E4D;
+    --tertiary: #DDE7E8;
+    --tertiary-foreground: #6F8383;
+    --muted: #F3F7F7;
+    --muted-foreground: #6C8383;
+    --border: #DDE7E8;
+    --border-grid: #E7EEEF;
+    --primary: #0C9790;
+    --primary-foreground: #F6F9F9;
+    --primary-alpha: rgba(12, 151, 144, 0.15);
+    --destructive: #DC2626;
+    --warning: #E59606;
+    --info: #6366F1;
+    --ring: rgba(154, 177, 178, 0.30);
+    --shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.05);
+    --cell-red: rgba(220, 38, 38, 0.12);
+    --cell-green: rgba(12, 151, 144, 0.12);
+    --cell-yellow: rgba(229, 150, 6, 0.12);
+    --cell-grey: rgba(100, 116, 139, 0.10);
   }
+
+  .dark {
+    --background: #030707;
+    --background-page: #050D0C;
+    --foreground: #F6F9F9;
+    --card: #0A1514;
+    --card-foreground: #F6F9F9;
+    --secondary: #212C2B;
+    --secondary-foreground: #F6F9F9;
+    --tertiary: #3A4E4D;
+    --tertiary-foreground: #9AB1B2;
+    --muted: #182120;
+    --muted-foreground: #6C8383;
+    --border: rgba(255, 255, 255, 0.15);
+    --border-grid: rgba(255, 255, 255, 0.06);
+    --primary: #179F99;
+    --primary-foreground: #042F2E;
+    --primary-alpha: rgba(23, 159, 153, 0.20);
+    --destructive: #F87171;
+    --warning: #FB923C;
+    --info: #818CF8;
+    --ring: rgba(111, 131, 131, 0.50);
+    --shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.20);
+    --cell-red: rgba(248, 113, 113, 0.20);
+    --cell-green: rgba(58, 195, 188, 0.15);
+    --cell-yellow: rgba(251, 146, 60, 0.18);
+    --cell-grey: rgba(128, 128, 128, 0.30);
+  }
+
+  html {
+    width: 100%;
+  }
+
+  body {
+    position: relative;
+    background-color: var(--background-page);
+    color: var(--foreground);
+    font-family: Inter, system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   button, input, select, textarea {
     font-family: inherit;
   }

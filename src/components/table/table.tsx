@@ -25,13 +25,13 @@ export enum Color {
 
 const TABLE_BASE = [
   'relative border-collapse [border-spacing:0]',
-  '[&_thead]:sticky [&_thead]:top-0 [&_thead]:bg-slate-800',
-  '[&_thead]:text-slate-200 [&_thead]:cursor-pointer',
+  '[&_thead]:sticky [&_thead]:top-0 [&_thead]:bg-card',
+  '[&_thead]:text-foreground [&_thead]:cursor-pointer',
   '[&_thead]:select-none [&_thead]:z-[1]',
-  '[&_tbody]:bg-slate-950',
+  '[&_tbody]:bg-background-page',
   '[&_th]:relative [&_th]:px-4 [&_th]:py-2 [&_th]:whitespace-nowrap',
   '[&_td]:relative [&_td]:px-4 [&_td]:py-1 [&_td]:whitespace-nowrap',
-  '[&_tbody_tr:hover]:bg-slate-800/60',
+  '[&_tbody_tr:hover]:bg-secondary',
 ].join(' ')
 
 function alignmentClassName(alignment?: Alignment): string {
@@ -41,13 +41,13 @@ function alignmentClassName(alignment?: Alignment): string {
 function colorClassName(color?: Color): string {
   switch (color) {
     case Color.RED:
-      return 'bg-red-400/20'
+      return 'bg-cell-red'
     case Color.GREEN:
-      return 'bg-teal-400/15'
+      return 'bg-cell-green'
     case Color.YELLOW:
-      return 'bg-amber-400/18'
+      return 'bg-cell-yellow'
     case Color.GREY:
-      return 'grey bg-gray-500/30'
+      return 'grey bg-cell-grey'
     default:
       return ''
   }
@@ -101,8 +101,8 @@ const renderHeader: <Item>(
             <span
               className={cn(
                 'ml-1 text-[10px] opacity-40',
-                isActive && '!opacity-100 !text-blue-500',
-                isDefault && '!opacity-60 !text-slate-400',
+                isActive && '!opacity-100 !text-primary',
+                isDefault && '!opacity-60 !text-muted-foreground',
               )}
             >
               {indicator}
