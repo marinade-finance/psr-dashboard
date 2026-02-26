@@ -21,8 +21,6 @@ import {
   formatStakeDelta,
 } from 'src/services/tip-engine'
 
-import styles from './sam-table.module.css'
-
 import type { UserLevel } from '../navigation/navigation'
 import type {
   AuctionResult,
@@ -76,55 +74,55 @@ const ApyTooltip: React.FC<{
       : 0
 
   return (
-    <div className={styles.apyTooltip}>
-      <div className={styles.apyTooltipTitle}>APY Composition</div>
-      <div className={styles.apyTooltipRow}>
+    <div className="absolute top-[-4px] left-[calc(100%-16px)] z-[100] bg-[var(--card)] border border-[var(--border)] rounded-[10px] px-4 py-3 min-w-[230px] shadow-lg">
+      <div className="text-[11px] text-[var(--muted)] mb-2 font-medium">APY Composition</div>
+      <div className="flex items-center text-xs mb-1 gap-[5px]">
         <span
-          className={styles.apyDot}
+          className="w-2 h-2 rounded-sm shrink-0"
           style={{ background: 'var(--chart-1)' }}
         />
-        <span className={styles.apyLabel}>Inflation</span>
-        <span className={styles.apyNote}>({inflComm.toFixed(0)}% comm.)</span>
-        <span className={styles.apyValue}>
+        <span className="text-[var(--secondary-foreground)]">Inflation</span>
+        <span className="text-[var(--muted)] text-[10px] flex-1">({inflComm.toFixed(0)}% comm.)</span>
+        <span className="text-[var(--foreground)] font-mono font-medium">
           {formatPercentage(breakdown.inflation, 2)}
         </span>
       </div>
-      <div className={styles.apyTooltipRow}>
+      <div className="flex items-center text-xs mb-1 gap-[5px]">
         <span
-          className={styles.apyDot}
+          className="w-2 h-2 rounded-sm shrink-0"
           style={{ background: 'var(--chart-2)' }}
         />
-        <span className={styles.apyLabel}>MEV Tips</span>
-        <span className={styles.apyNote}>({mevComm.toFixed(0)}% comm.)</span>
-        <span className={styles.apyValue}>
+        <span className="text-[var(--secondary-foreground)]">MEV Tips</span>
+        <span className="text-[var(--muted)] text-[10px] flex-1">({mevComm.toFixed(0)}% comm.)</span>
+        <span className="text-[var(--foreground)] font-mono font-medium">
           {formatPercentage(breakdown.mev, 2)}
         </span>
       </div>
-      <div className={styles.apyTooltipRow}>
+      <div className="flex items-center text-xs mb-1 gap-[5px]">
         <span
-          className={styles.apyDot}
+          className="w-2 h-2 rounded-sm shrink-0"
           style={{ background: 'var(--chart-3)' }}
         />
-        <span className={styles.apyLabel}>Block Rewards</span>
-        <span className={styles.apyNote}>({blockComm.toFixed(0)}% shared)</span>
-        <span className={styles.apyValue}>
+        <span className="text-[var(--secondary-foreground)]">Block Rewards</span>
+        <span className="text-[var(--muted)] text-[10px] flex-1">({blockComm.toFixed(0)}% shared)</span>
+        <span className="text-[var(--foreground)] font-mono font-medium">
           {formatPercentage(breakdown.blockRewards, 2)}
         </span>
       </div>
-      <div className={styles.apyTooltipRow}>
+      <div className="flex items-center text-xs mb-1 gap-[5px]">
         <span
-          className={styles.apyDot}
+          className="w-2 h-2 rounded-sm shrink-0"
           style={{ background: 'var(--chart-4)' }}
         />
-        <span className={styles.apyLabel}>Stake Bid</span>
-        <span className={styles.apyNote}>(your bid)</span>
-        <span className={styles.apyValue}>
+        <span className="text-[var(--secondary-foreground)]">Stake Bid</span>
+        <span className="text-[var(--muted)] text-[10px] flex-1">(your bid)</span>
+        <span className="text-[var(--foreground)] font-mono font-medium">
           {formatPercentage(breakdown.stakeBid, 2)}
         </span>
       </div>
-      <div className={styles.apyTooltipTotal}>
-        <span>Total</span>
-        <span>{formatPercentage(breakdown.total, 2)}</span>
+      <div className="border-t border-[var(--border-grid)] mt-1.5 pt-1.5 flex justify-between text-xs font-semibold">
+        <span className="text-[var(--secondary-foreground)]">Total</span>
+        <span className="text-[var(--primary)] font-mono">{formatPercentage(breakdown.total, 2)}</span>
       </div>
     </div>
   )
@@ -286,31 +284,40 @@ export const SamTable: React.FC<Props> = ({
     // Max APY
     const maxApy = selectMaxAPY(validator, epochsPerYear)
 
+    const rowClasses = [
+      'border-b border-[var(--border-grid)] bg-[var(--card)] transition-colors duration-[120ms] cursor-pointer',
+      !inSet && 'bg-[rgba(220,38,38,0.02)]',
+      isHovered && (inSet ? 'bg-[var(--primary-light-05)]' : 'bg-[rgba(220,38,38,0.05)]'),
+      !isHovered && inSet && 'hover:bg-[var(--primary-light-05)]',
+      !isHovered && !inSet && 'hover:bg-[rgba(220,38,38,0.05)]',
+      isSimulated && 'bg-[var(--primary-light-10)]',
+    ].filter(Boolean).join(' ')
+
     return (
       <tr
         key={voteAccount}
-        className={`${styles.row} ${!inSet ? styles.rowOutOfSet : ''} ${isHovered ? styles.rowHovered : ''} ${isSimulated ? styles.rowSimulated : ''}`}
+        className={rowClasses}
         onMouseEnter={() => setHoveredRow(voteAccount)}
         onMouseLeave={() => setHoveredRow(null)}
         onClick={() => onValidatorClick(voteAccount)}
       >
         {/* Rank */}
-        <td className={styles.cellRank}>{rank}</td>
+        <td className="px-3.5 py-3 text-center text-[var(--muted)] font-medium font-mono text-xs w-10">{rank}</td>
 
         {/* Validator */}
-        <td className={styles.cellValidator}>
-          <div className={styles.validatorInfo}>
-            <span className={styles.validatorName}>
+        <td className="px-3.5 py-3 min-w-[150px]">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[var(--foreground)] font-medium text-[13px]">
               {voteAccount.slice(0, 8)}...
             </span>
-            {hasAlert && <span className={styles.alertDot} />}
+            {hasAlert && <span className="w-1.5 h-1.5 rounded-full bg-[var(--destructive)] shrink-0 animate-pulse" />}
           </div>
-          <div className={styles.validatorPubkey}>{voteAccount}</div>
+          <div className="text-[var(--muted)] text-[11px] mt-px font-mono">{voteAccount}</div>
         </td>
 
         {/* Max APY with hover tooltip */}
         <td
-          className={styles.cellMaxApy}
+          className="px-3.5 py-3 relative"
           onMouseEnter={e => {
             e.stopPropagation()
             setHoveredApyRow(voteAccount)
@@ -318,7 +325,11 @@ export const SamTable: React.FC<Props> = ({
           onMouseLeave={() => setHoveredApyRow(null)}
         >
           <span
-            className={`${styles.apyBadge} ${inSet ? styles.apyBadgeInSet : styles.apyBadgeOutOfSet}`}
+            className={`inline-block px-2.5 py-[3px] rounded-md font-semibold text-[13px] font-mono ${
+              inSet
+                ? 'bg-[var(--primary-light)] text-[var(--primary)]'
+                : 'bg-[var(--destructive-light)] text-[var(--destructive)]'
+            }`}
           >
             {formatPercentage(maxApy, 2)}
           </span>
@@ -328,26 +339,26 @@ export const SamTable: React.FC<Props> = ({
         </td>
 
         {/* Bond Health */}
-        <td className={styles.cellBond}>
-          <div className={styles.bondRow}>
+        <td className="px-3.5 py-3">
+          <div className="flex items-center gap-1.5 mb-1">
             <span
-              className={styles.bondBadge}
+              className="inline-flex items-center gap-1 px-2 py-[3px] rounded-md text-[11px] font-medium"
               style={{ background: bondStyle.bg, color: bondStyle.color }}
             >
               <span
-                className={styles.bondDot}
+                className="w-[7px] h-[7px] rounded-full"
                 style={{ background: bondStyle.color }}
               />
               {bondStyle.label}
             </span>
-            <span className={styles.bondBalance}>
+            <span className="text-[var(--muted)] text-[11px] font-mono">
               {formatSolAmount(selectBondSize(validator), 0)}\u25CE
             </span>
           </div>
-          <div className={styles.bondRow}>
-            <div className={styles.bondUtilBar}>
+          <div className="flex items-center gap-1.5">
+            <div className="h-[3px] bg-[var(--secondary)] rounded-sm w-14 shrink-0">
               <div
-                className={styles.bondUtilFill}
+                className="h-full rounded-sm"
                 style={{
                   width: `${Math.min(bondUtilPct, 100)}%`,
                   background: bondStyle.color,
@@ -355,7 +366,7 @@ export const SamTable: React.FC<Props> = ({
               />
             </div>
             <span
-              className={styles.bondRunway}
+              className="text-[10px] font-mono whitespace-nowrap"
               style={{
                 color: bondRunway <= 10 ? bondStyle.color : 'var(--muted)',
               }}
@@ -366,28 +377,32 @@ export const SamTable: React.FC<Props> = ({
         </td>
 
         {/* Stake Delta */}
-        <td className={styles.cellDelta}>
-          <span className={styles.deltaValue} style={{ color: delta.color }}>
+        <td className="px-3.5 py-3">
+          <span className="font-semibold text-[13px] font-mono" style={{ color: delta.color }}>
             {delta.arrow} {delta.text}
             {delta.text !== '\u2014' && ' \u25CE'}
           </span>
         </td>
 
         {/* Next Step */}
-        <td className={styles.cellNextStep}>
+        <td className="px-3.5 py-3 max-w-[280px] lg:max-w-[280px] md:max-w-[200px]">
           <div
-            className={styles.tipBadge}
+            className="inline-flex items-start gap-[5px] text-xs leading-[1.35] px-2.5 py-1 rounded-md"
             style={{ background: tipStyle.bg, color: tipStyle.color }}
           >
-            <span className={styles.tipIcon}>{tipStyle.icon}</span>
-            <span className={styles.tipText}>{tip.text}</span>
+            <span className="shrink-0">{tipStyle.icon}</span>
+            <span className="break-words">{tip.text}</span>
           </div>
         </td>
 
         {/* Chevron */}
-        <td className={styles.cellChevron}>
+        <td className="px-2.5 py-3 w-10">
           <div
-            className={`${styles.chevronBtn} ${isHovered ? styles.chevronBtnHovered : ''}`}
+            className={`w-7 h-7 rounded-[7px] flex items-center justify-center border transition-all duration-[120ms] ${
+              isHovered
+                ? 'bg-[var(--primary-light)] border-[rgba(12,151,144,0.3)]'
+                : 'bg-[var(--muted-bg)] border-[var(--border-grid)]'
+            }`}
           >
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
@@ -407,20 +422,20 @@ export const SamTable: React.FC<Props> = ({
   return (
     <div
       ref={tableWrapRef}
-      className={`${styles.tableWrap} ${simulationModeActive ? styles.simulationModeActive : ''} ${isCalculating ? styles.calculating : ''}`}
+      className={`w-full ${isCalculating ? 'opacity-70 pointer-events-none' : ''}`}
     >
       {/* Stats Bar */}
-      <div className={styles.statsBar}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         {stats.map(stat => (
-          <div key={stat.label} className={styles.statCard}>
-            <div className={styles.statLabel}>
+          <div key={stat.label} className="bg-[var(--card)] rounded-xl px-5 py-4 border border-[var(--border)] shadow-[var(--shadow)]">
+            <div className="text-xs text-[var(--muted-foreground)] mb-1 font-sans flex items-center gap-1">
               {stat.label}
               {stat.help && <HelpTip text={stat.help} />}
             </div>
-            <div className={styles.statValueRow}>
-              <span className={styles.statValue}>{stat.value}</span>
+            <div className="flex items-baseline gap-0.5">
+              <span className="text-[22px] font-semibold text-[var(--foreground)] font-mono">{stat.value}</span>
               {stat.unit && (
-                <span className={styles.statUnit}>{stat.unit}</span>
+                <span className="text-sm text-[var(--muted-foreground)] font-mono">{stat.unit}</span>
               )}
             </div>
           </div>
@@ -428,26 +443,32 @@ export const SamTable: React.FC<Props> = ({
       </div>
 
       {/* Table */}
-      <div className={styles.tableContainer}>
-        <table className={styles.table}>
+      <div className="bg-[var(--card)] rounded-xl border border-[var(--border)] shadow-[var(--shadow)] overflow-hidden">
+        <table className="w-full border-collapse font-sans text-[13px]">
           <thead>
-            <tr className={styles.headerRow}>
-              <th className={styles.headerRank}>#</th>
-              <th className={styles.headerValidator}>Validator</th>
-              <th className={styles.headerMaxApy}>
+            <tr className="border-b border-[var(--border-grid)]">
+              <th className="px-3.5 py-[11px] text-left text-[11px] font-medium text-[var(--muted-foreground)] uppercase tracking-[0.06em] whitespace-nowrap bg-[#F3F7F7] w-10 text-center">
+                #
+              </th>
+              <th className="px-3.5 py-[11px] text-left text-[11px] font-medium text-[var(--muted-foreground)] uppercase tracking-[0.06em] whitespace-nowrap bg-[#F3F7F7] min-w-[150px]">
+                Validator
+              </th>
+              <th className="px-3.5 py-[11px] text-left text-[11px] font-medium text-[var(--muted-foreground)] uppercase tracking-[0.06em] whitespace-nowrap bg-[#F3F7F7] w-[100px]">
                 Max APY
                 <HelpTip text={HELP_TEXT.maxApy} />
               </th>
-              <th className={styles.headerBond}>
+              <th className="px-3.5 py-[11px] text-left text-[11px] font-medium text-[var(--muted-foreground)] uppercase tracking-[0.06em] whitespace-nowrap bg-[#F3F7F7] w-40">
                 Bond
                 <HelpTip text={HELP_TEXT.bondHealth} />
               </th>
-              <th className={styles.headerDelta}>
-                Stake \u0394
+              <th className="px-3.5 py-[11px] text-left text-[11px] font-medium text-[var(--muted-foreground)] uppercase tracking-[0.06em] whitespace-nowrap bg-[#F3F7F7] w-[120px]">
+                Stake {'\u0394'}
                 <HelpTip text={HELP_TEXT.stakeDelta} />
               </th>
-              <th className={styles.headerNextStep}>Next Step</th>
-              <th className={styles.headerChevron}></th>
+              <th className="px-3.5 py-[11px] text-left text-[11px] font-medium text-[var(--muted-foreground)] uppercase tracking-[0.06em] whitespace-nowrap bg-[#F3F7F7] min-w-[200px]">
+                Next Step
+              </th>
+              <th className="px-3.5 py-[11px] text-left text-[11px] font-medium text-[var(--muted-foreground)] uppercase tracking-[0.06em] whitespace-nowrap bg-[#F3F7F7] w-10"></th>
             </tr>
           </thead>
           <tbody>
@@ -455,10 +476,10 @@ export const SamTable: React.FC<Props> = ({
 
             {/* Winning Set Cutoff Divider */}
             {nonWinningValidators.length > 0 && (
-              <tr className={styles.cutoffRow}>
-                <td colSpan={7}>
-                  <div className={styles.cutoffBanner}>
-                    <div className={styles.cutoffLeft}>
+              <tr>
+                <td colSpan={7} className="p-0">
+                  <div className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-[var(--primary-light-10)] via-[var(--primary-light)] to-[var(--primary-light-10)] border-y-2 border-[var(--primary)]">
+                    <div className="flex items-center gap-1.5">
                       <svg
                         width="14"
                         height="14"
@@ -471,16 +492,16 @@ export const SamTable: React.FC<Props> = ({
                           opacity="0.8"
                         />
                       </svg>
-                      <span className={styles.cutoffLabel}>
+                      <span className="text-xs font-semibold text-[var(--primary)]">
                         Winning Set Cutoff
                       </span>
                     </div>
-                    <div className={styles.cutoffLine} />
-                    <span className={styles.cutoffApy}>
+                    <div className="flex-1 h-px bg-[var(--primary)] opacity-20" />
+                    <span className="text-xs text-[var(--primary)] font-mono font-semibold">
                       Winning APY: {formatPercentage(winningAPY, 2)}
                     </span>
-                    <div className={styles.cutoffLine} />
-                    <span className={styles.cutoffCount}>
+                    <div className="flex-1 h-px bg-[var(--primary)] opacity-20" />
+                    <span className="text-[11px] text-[var(--muted)]">
                       {winningCount} of {totalValidators} validators
                     </span>
                   </div>
@@ -492,11 +513,6 @@ export const SamTable: React.FC<Props> = ({
           </tbody>
         </table>
       </div>
-
-      {/* Pulse animation */}
-      <style>
-        {'@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }'}
-      </style>
     </div>
   )
 }
