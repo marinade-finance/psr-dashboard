@@ -28,6 +28,7 @@ interface ValidatorDetailProps {
   auctionResult: AuctionResult
   dsSamConfig: DsSamConfig
   epochsPerYear: number
+  nameMap?: Map<string, string>
   rank: number
   totalValidators: number
   onClose: () => void
@@ -45,12 +46,15 @@ export const ValidatorDetail = ({
   auctionResult,
   dsSamConfig: _dsSamConfig,
   epochsPerYear,
+  nameMap,
   rank,
   totalValidators,
   onClose,
   onSimulate,
   isCalculating,
 }: ValidatorDetailProps) => {
+  const voteAccount = selectVoteAccount(validator)
+  const validatorName = nameMap?.get(voteAccount)
   const winningApy = selectWinningAPY(auctionResult, epochsPerYear)
   const apyBreakdown = getApyBreakdown(validator, epochsPerYear)
   const bondUtilPct = calculateBondUtilization(validator)
@@ -117,7 +121,7 @@ export const ValidatorDetail = ({
     // Bond capacity factor
     factors.push({
       name: 'Bond capacity',
-      value: `${formatSolAmount(validator.bondBalanceSol, 0)}\u25CE`,
+      value: `${formatSolAmount(validator.bondBalanceSol, 0)} SOL`,
       note: `${bondUtilPct.toFixed(0)}% utilized, ~${Math.round(bondRunway)} epochs runway`,
       impact:
         bondUtilPct < 65
@@ -133,12 +137,12 @@ export const ValidatorDetail = ({
     const stakeGrowth = samTarget - samActive
     factors.push({
       name: 'Stake target',
-      value: `${formatSolAmount(samTarget, 0)}\u25CE`,
+      value: `${formatSolAmount(samTarget, 0)} SOL`,
       note:
         stakeGrowth > 0
-          ? `Gaining ${formatSolAmount(stakeGrowth, 0)}\u25CE next epoch`
+          ? `Gaining ${formatSolAmount(stakeGrowth, 0)} SOL next epoch`
           : stakeGrowth < 0
-            ? `Losing ${formatSolAmount(Math.abs(stakeGrowth), 0)}\u25CE`
+            ? `Losing ${formatSolAmount(Math.abs(stakeGrowth), 0)} SOL`
             : 'At target allocation',
       impact:
         stakeGrowth > 0 ? 'positive' : stakeGrowth < 0 ? 'negative' : 'neutral',
@@ -194,8 +198,13 @@ export const ValidatorDetail = ({
             <span className="text-lg font-bold font-mono text-primary">
               #{rank}
             </span>
-            <span className="text-sm font-mono text-muted-foreground">
-              {selectVoteAccount(validator).slice(0, 12)}...
+            {validatorName && (
+              <span className="text-sm font-medium text-foreground">
+                {validatorName}
+              </span>
+            )}
+            <span className="text-sm font-mono text-secondary-foreground">
+              {voteAccount.slice(0, 8)}...{voteAccount.slice(-4)}
             </span>
             <span
               className="px-2 py-0.5 rounded-md text-xs font-medium"

@@ -41,6 +41,15 @@ type ValidatorWithBondState = AuctionValidator & {
   bondHealth: 'healthy' | 'watch' | 'critical'
 }
 
+type SortColumn =
+  | 'rank'
+  | 'validator'
+  | 'maxApy'
+  | 'bond'
+  | 'stakeDelta'
+  | 'nextStep'
+type SortDirection = 'asc' | 'desc'
+
 type Props = {
   auctionResult: AuctionResult
   originalAuctionResult: AuctionResult | null
@@ -165,6 +174,28 @@ export const SamTable: React.FC<Props> = ({
   const [hoveredApyRow, setHoveredApyRow] = useState<string | null>(null)
   const [hoveredRow, setHoveredRow] = useState<string | null>(null)
 
+  // Sorting state
+  const [sortColumn, setSortColumn] = useState<SortColumn>('stakeDelta')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
+
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortColumn(column)
+      setSortDirection('desc')
+    }
+  }
+
+  const SortIndicator: React.FC<{ column: SortColumn }> = ({ column }) => {
+    if (sortColumn !== column) return null
+    return (
+      <span className="ml-1 text-primary">
+        {sortDirection === 'asc' ? '↑' : '↓'}
+      </span>
+    )
+  }
+
   // Current validators with bond health computed
   const validatorsWithBond: ValidatorWithBondState[] = useMemo(
     () =>
@@ -181,14 +212,43 @@ export const SamTable: React.FC<Props> = ({
     [validators],
   )
 
-  // Sort by SAM target stake descending (rank order)
+  // Sort validators based on current sort column and direction
   const sortedValidators = useMemo(() => {
-    return [...validatorsWithBond].sort(
-      (a, b) =>
-        b.auctionStake.marinadeSamTargetSol -
-        a.auctionStake.marinadeSamTargetSol,
-    )
-  }, [validatorsWithBond])
+    const sorted = [...validatorsWithBond].sort((a, b) => {
+      let cmp = 0
+      switch (sortColumn) {
+        case 'rank':
+        case 'stakeDelta':
+          cmp =
+            a.auctionStake.marinadeSamTargetSol -
+            a.marinadeActivatedStakeSol -
+            (b.auctionStake.marinadeSamTargetSol - b.marinadeActivatedStakeSol)
+          break
+        case 'validator':
+          const nameA = nameMap?.get(a.voteAccount) || a.voteAccount
+          const nameB = nameMap?.get(b.voteAccount) || b.voteAccount
+          cmp = nameA.localeCompare(nameB)
+          break
+        case 'maxApy':
+          cmp = selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
+          break
+        case 'bond':
+          cmp = a.bondBalanceSol - b.bondBalanceSol
+          break
+        case 'nextStep':
+          cmp =
+            b.auctionStake.marinadeSamTargetSol -
+            a.auctionStake.marinadeSamTargetSol
+          break
+        default:
+          cmp =
+            b.auctionStake.marinadeSamTargetSol -
+            a.auctionStake.marinadeSamTargetSol
+      }
+      return sortDirection === 'asc' ? cmp : -cmp
+    })
+    return sorted
+  }, [validatorsWithBond, sortColumn, sortDirection, nameMap, epochsPerYear])
 
   // Split into winners and non-winners
   const winningValidators = sortedValidators.filter(
@@ -211,7 +271,7 @@ export const SamTable: React.FC<Props> = ({
     {
       label: 'Total Auction Stake',
       value: formatSolAmount(samDistributedStake, 0),
-      unit: '\u25CE',
+      unit: 'SOL',
       help: undefined,
     },
     {
@@ -293,8 +353,8 @@ export const SamTable: React.FC<Props> = ({
               <span className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0 animate-pulse" />
             )}
           </div>
-          <div className="text-muted-foreground text-[11px] mt-px font-mono">
-            {voteAccount.slice(0, 12)}...
+          <div className="text-secondary-foreground text-[11px] mt-px font-mono">
+            {voteAccount.slice(0, 8)}...{voteAccount.slice(-4)}
           </div>
         </TableCell>
 
@@ -335,7 +395,7 @@ export const SamTable: React.FC<Props> = ({
               {bondStyle.label}
             </span>
             <span className="text-muted-foreground text-[11px] font-mono">
-              {formatSolAmount(selectBondSize(validator), 0)}\u25CE
+              {formatSolAmount(selectBondSize(validator), 0)} SOL
             </span>
           </div>
           <div className="flex items-center gap-1.5">
@@ -343,7 +403,7 @@ export const SamTable: React.FC<Props> = ({
               <div
                 className="h-full rounded-sm"
                 style={{
-                  width: `${Math.min(bondUtilPct, 100)}%`,
+                  width: `${Math.max(100 - bondUtilPct, 0)}%`,
                   background: bondStyle.color,
                 }}
               />
@@ -369,7 +429,7 @@ export const SamTable: React.FC<Props> = ({
             style={{ color: delta.color }}
           >
             {delta.arrow} {delta.text}
-            {delta.text !== '\u2014' && ' \u25CE'}
+            {delta.text !== '\u2014' && ' SOL'}
           </span>
         </TableCell>
 
@@ -396,14 +456,14 @@ export const SamTable: React.FC<Props> = ({
             className={`w-7 h-7 rounded-[7px] flex items-center justify-center border transition-all duration-[120ms] ${
               isHovered
                 ? 'bg-primary-light border-[rgba(12,151,144,0.3)]'
-                : 'bg-muted border-border-grid'
+                : 'bg-secondary border-border'
             }`}
           >
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
                 d="M4.5 3L7.5 6L4.5 9"
                 stroke={
-                  isHovered ? 'var(--primary)' : 'var(--muted-foreground)'
+                  isHovered ? 'var(--primary)' : 'var(--secondary-foreground)'
                 }
                 strokeWidth="1.5"
                 strokeLinecap="round"
@@ -451,26 +511,49 @@ export const SamTable: React.FC<Props> = ({
         <ShadTable className="font-sans text-[13px]">
           <TableHeader>
             <TableRow className="border-b border-border-grid">
-              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted w-10 text-center">
-                #
+              <TableHead
+                className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted w-10 text-center cursor-pointer hover:text-primary"
+                onClick={() => handleSort('rank')}
+              >
+                #<SortIndicator column="rank" />
               </TableHead>
-              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted min-w-[150px]">
+              <TableHead
+                className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted min-w-[150px] cursor-pointer hover:text-primary"
+                onClick={() => handleSort('validator')}
+              >
                 Validator
+                <SortIndicator column="validator" />
               </TableHead>
-              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted w-[100px]">
+              <TableHead
+                className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted w-[100px] cursor-pointer hover:text-primary"
+                onClick={() => handleSort('maxApy')}
+              >
                 Max APY
+                <SortIndicator column="maxApy" />
                 <HelpTip text={HELP_TEXT.maxApy} />
               </TableHead>
-              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted w-40">
+              <TableHead
+                className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted w-40 cursor-pointer hover:text-primary"
+                onClick={() => handleSort('bond')}
+              >
                 Bond
+                <SortIndicator column="bond" />
                 <HelpTip text={HELP_TEXT.bondHealth} />
               </TableHead>
-              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted w-[120px]">
+              <TableHead
+                className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted w-[120px] cursor-pointer hover:text-primary"
+                onClick={() => handleSort('stakeDelta')}
+              >
                 Stake {'\u0394'}
+                <SortIndicator column="stakeDelta" />
                 <HelpTip text={HELP_TEXT.stakeDelta} />
               </TableHead>
-              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted min-w-[200px]">
+              <TableHead
+                className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted min-w-[200px] cursor-pointer hover:text-primary"
+                onClick={() => handleSort('nextStep')}
+              >
                 Next Step
+                <SortIndicator column="nextStep" />
               </TableHead>
               <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted w-10"></TableHead>
             </TableRow>

@@ -201,6 +201,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
           auctionResult={displayAuctionResult}
           dsSamConfig={data.dcSamConfig}
           epochsPerYear={data.epochsPerYear}
+          nameMap={nameMap}
           rank={selectedValidatorData.rank}
           totalValidators={selectedValidatorData.totalValidators}
           onClose={handleCloseDetail}

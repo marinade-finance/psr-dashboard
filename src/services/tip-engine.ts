@@ -154,7 +154,7 @@ export const getValidatorTip = (
 
   if (bidPmpe < 10 && delta > 50000) {
     return {
-      text: `Low bid limits rank. Raising could gain ~${(delta / 1000).toFixed(0)}K\u25CE more stake.`,
+      text: `Low bid limits rank. Raising could gain ~${(delta / 1000).toFixed(0)}K SOL more stake.`,
       urgency: 'info',
       constraint: 'bid',
     }
@@ -162,7 +162,7 @@ export const getValidatorTip = (
 
   if (delta > 100000) {
     return {
-      text: `Gaining +${(delta / 1000).toFixed(0)}K\u25CE stake next epoch. Bond and bid well-positioned.`,
+      text: `Gaining +${(delta / 1000).toFixed(0)}K SOL stake next epoch. Bond and bid well-positioned.`,
       urgency: 'positive',
       constraint: 'none',
     }
@@ -172,7 +172,7 @@ export const getValidatorTip = (
     const runwayNote =
       bondGoodForEpochs > 20 ? 'Strong runway.' : 'Monitor bond.'
     return {
-      text: `On track: +${delta.toLocaleString()}\u25CE incoming. ${runwayNote}`,
+      text: `On track: +${delta.toLocaleString()} SOL incoming. ${runwayNote}`,
       urgency: 'positive',
       constraint: 'none',
     }
@@ -187,7 +187,7 @@ export const getValidatorTip = (
   }
 
   return {
-    text: `Losing ${Math.abs(delta).toLocaleString()}\u25CE stake. Raise bid or check if commission changed.`,
+    text: `Losing ${Math.abs(delta).toLocaleString()} SOL stake. Raise bid or check if commission changed.`,
     urgency: 'critical',
     constraint: 'bid',
   }
