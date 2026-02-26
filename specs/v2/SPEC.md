@@ -51,9 +51,10 @@ for Tailwind tokens and shadcn component mapping.
 ### src/components/sam-detail/sam-detail.tsx (new)
 
 - Single new component, ~200 lines
-- Props: validator data, name, rank, total count, onBack callback
+- Props: validator data, name, rank, total count, onBack callback,
+  `isExpert: boolean`
 - Sections: header, 3 summary cards, 3 detail columns, recommendation,
-  simulation CTA
+  simulation CTA (expert only — hidden when `!isExpert`)
 - `getRecommendation()` function composing existing logic:
   - `bondHealthColor()` for bond state
   - `bondTooltip()` for bond advice text
@@ -81,11 +82,21 @@ for Tailwind tokens and shadcn component mapping.
 
 - Add `getRecommendation(validator, bondColor)` →
   `{text: string, severity: 'success' | 'warning' | 'danger' | 'info'}`
-  - `success`: on track / stable (green accent, steps 9, 11)
-  - `warning`: watch state, non-productive (yellow accent, steps 3, 4, 7)
-  - `danger`: bond at risk, losing stake, no bond (red accent, steps 1, 2, 10)
-  - `info`: constraint-capped, raise bid, zero target (blue accent, steps 5, 6, 8)
+  - `success`: on track / stable (steps 9, 11)
+  - `warning`: watch state, non-productive (steps 3, 4, 7)
+  - `danger`: bond at risk, losing stake, no bond (steps 1, 2, 10)
+  - `info`: constraint-capped, raise bid, zero target (steps 5, 6, 8)
   - Step numbers reference SCREENS.md recommendation priority cascade
+  - Severity visual mapping:
+    - NEXT STEP column: always text-muted (severity unused in table)
+    - Detail recommendation box: border-l color matches severity
+      (`success` → green, `warning` → yellow, `danger` → red,
+      `info` → blue). Text stays text-primary in all cases.
+- Add `selectBondUtilization(validator)` → number (0–1)
+  - Formula: `marinadeSamTargetSol / bondSamStakeCapSol`
+  - If `bondSamStakeCapSol` is 0 or null → return 0
+  - Clamped to [0, 1]
+  - Used in detail page Progress bar and "X% used" sub-label
 - Add `selectStakeDelta(validator)` → number (target - active)
 - No other changes to auction logic, runAlt, backstop
 
