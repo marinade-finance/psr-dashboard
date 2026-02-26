@@ -5,6 +5,7 @@ export default defineConfig({
   snapshotDir: './tests/__screenshots__',
   timeout: 60000,
   retries: 2,
+  workers: 1,
   use: {
     baseURL: 'http://localhost:8080',
     screenshot: 'only-on-failure',

@@ -159,7 +159,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
     )
   }
 
-  const filtered = data.length !== filteredData.length
+  const filtered = preFilteredData.length !== data.length
 
   return (
     <div className="relative [&>table]:ml-2.5 [&_input]:bg-card [&_input]:text-foreground [&_input]:border-2 [&_input]:border-border-grid [&_input]:rounded-[5px] [&_input]:p-2 [&_input]:outline-none [&_input:focus]:border-border [&_input:focus]:text-foreground">

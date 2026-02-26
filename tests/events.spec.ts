@@ -186,10 +186,8 @@ test.describe('Protected Events page', () => {
 
     // Check reason column (column 5) for no "Bidding" text
     const reasonCells = page.locator('table tbody tr td:nth-child(5)')
-    const count = await reasonCells.count()
-
-    for (let i = 0; i < count; i++) {
-      const text = await reasonCells.nth(i).innerText()
+    const allTexts = await reasonCells.allInnerTexts()
+    for (const text of allTexts) {
       expect(text).not.toContain('Bidding')
     }
   })
