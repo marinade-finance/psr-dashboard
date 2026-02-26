@@ -51,6 +51,7 @@ type Props = {
   isCalculating: boolean
   hasSimulationApplied: boolean
   onValidatorClick: (voteAccount: string) => void
+  nameMap?: Map<string, string>
 }
 
 // APY Tooltip component for Max APY hover
@@ -144,6 +145,7 @@ export const SamTable: React.FC<Props> = ({
   isCalculating,
   hasSimulationApplied: _hasSimulationApplied,
   onValidatorClick,
+  nameMap,
 }) => {
   const {
     auctionData: { validators },
@@ -282,17 +284,17 @@ export const SamTable: React.FC<Props> = ({
         </TableCell>
 
         {/* Validator */}
-        <TableCell className="px-3.5 py-3 min-w-[150px]">
+        <TableCell className="px-3.5 py-3 min-w-[180px]">
           <div className="flex items-center gap-1.5">
             <span className="text-foreground font-medium text-[13px]">
-              {voteAccount.slice(0, 8)}...
+              {nameMap?.get(voteAccount) || `${voteAccount.slice(0, 8)}...`}
             </span>
             {hasAlert && (
               <span className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0 animate-pulse" />
             )}
           </div>
           <div className="text-muted-foreground text-[11px] mt-px font-mono">
-            {voteAccount}
+            {voteAccount.slice(0, 12)}...
           </div>
         </TableCell>
 

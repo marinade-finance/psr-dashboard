@@ -6,7 +6,11 @@ import { SamTable } from 'src/components/sam-table/sam-table'
 import { SamSkeleton } from 'src/components/skeleton/skeleton'
 import { ValidatorDetail } from 'src/components/validator-detail/validator-detail'
 import { loadSam, selectBondSize } from 'src/services/sam'
-import { fetchValidators, selectName, selectVoteAccount as selectValidatorVoteAccount } from 'src/services/validators'
+import {
+  fetchValidators,
+  selectName,
+  selectVoteAccount as selectValidatorVoteAccount,
+} from 'src/services/validators'
 
 import type {
   AuctionResult,
@@ -54,6 +58,24 @@ export const SamPage: React.FC<Props> = ({ level }) => {
       },
     },
   )
+
+  // Fetch validator names for display
+  const { data: validatorsData } = useQuery('validators', fetchValidators, {
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  })
+
+  // Build vote account → name lookup map
+  const nameMap = useMemo(() => {
+    const map = new Map<string, string>()
+    if (validatorsData?.validators) {
+      for (const v of validatorsData.validators) {
+        map.set(selectValidatorVoteAccount(v), selectName(v))
+      }
+    }
+    return map
+  }, [validatorsData])
 
   // Handle clicking on a validator row — always open detail view
   const handleValidatorClick = useCallback((voteAccount: string) => {
@@ -169,6 +191,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
           isCalculating={isCalculating}
           hasSimulationApplied={hasSimulationApplied}
           onValidatorClick={handleValidatorClick}
+          nameMap={nameMap}
         />
       )}
 
