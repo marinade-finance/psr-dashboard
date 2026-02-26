@@ -74,7 +74,7 @@ const TableCell = React.forwardRef<
   <td
     ref={ref}
     className={cn(
-      'relative px-4 py-2.5 whitespace-nowrap text-sm font-mono border-b border-border-grid',
+      'relative px-4 py-2.5 whitespace-nowrap text-sm border-b border-border-grid',
       className,
     )}
     {...props}

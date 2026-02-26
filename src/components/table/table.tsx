@@ -35,7 +35,7 @@ export enum Color {
 const alignmentClassName = (alignment?: Alignment) => {
   switch (alignment) {
     case Alignment.RIGHT:
-      return 'text-right'
+      return 'text-right font-mono'
     default:
       return 'text-left'
   }
@@ -247,7 +247,7 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
 
   return (
     <Card className="overflow-hidden p-0">
-      <ShadTable>
+      <ShadTable className="font-sans text-[13px]">
         <TableHeader>
           {renderHeader(
             columns,
