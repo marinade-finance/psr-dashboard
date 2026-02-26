@@ -206,7 +206,8 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
   }, [filteredData, sortCol, sortDir])
 
   const sortIndicator = (col: SortColumn) => {
-    if (sortCol !== col) return <span className="ml-1 text-muted-foreground/40">▲</span>
+    if (sortCol !== col)
+      return <span className="ml-1 text-muted-foreground/40">▲</span>
     return <span className="ml-1">{sortDir === 'asc' ? '▲' : '▼'}</span>
   }
 

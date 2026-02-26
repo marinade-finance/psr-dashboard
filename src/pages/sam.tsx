@@ -6,6 +6,7 @@ import { SamTable } from 'src/components/sam-table/sam-table'
 import { SamSkeleton } from 'src/components/skeleton/skeleton'
 import { ValidatorDetail } from 'src/components/validator-detail/validator-detail'
 import { loadSam, selectBondSize } from 'src/services/sam'
+import { fetchValidators, selectName, selectVoteAccount as selectValidatorVoteAccount } from 'src/services/validators'
 
 import type {
   AuctionResult,

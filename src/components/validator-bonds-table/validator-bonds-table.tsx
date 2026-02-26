@@ -53,7 +53,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
   })
 
   const handleSort = (column: string) => {
-    setSort((prev) => {
+    setSort(prev => {
       if (prev?.column === column) {
         if (prev.direction === 'asc') return { column, direction: 'desc' }
         if (prev.direction === 'desc') return null
@@ -102,7 +102,9 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
       let cmp = 0
       switch (sort.column) {
         case 'validator':
-          cmp = (selectName(a.validator) || selectVoteAccount(a.validator)).localeCompare(
+          cmp = (
+            selectName(a.validator) || selectVoteAccount(a.validator)
+          ).localeCompare(
             selectName(b.validator) || selectVoteAccount(b.validator),
           )
           break
@@ -257,7 +259,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedData.map((entry) => {
+            {sortedData.map(entry => {
               const { validator, bond, auction } = entry
               const voteAccount = selectVoteAccount(validator)
               const name = selectName(validator)
@@ -334,9 +336,11 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
                   <TableCell className="px-3.5 py-3 text-right font-mono text-[13px]">
                     <HelpTip text="Assumed cost per epoch for the SAM stake that this validator received.">
                       <span>
-                        {auction
-                          ? `☉ ${round(selectEffectiveCost(auction), 1)}`
-                          : <span className="text-muted-foreground">-</span>}
+                        {auction ? (
+                          `☉ ${round(selectEffectiveCost(auction), 1)}`
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
                       </span>
                     </HelpTip>
                   </TableCell>
