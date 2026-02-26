@@ -1,6 +1,7 @@
 import React from 'react'
 
 import { HelpTip } from 'src/components/help-tip/help-tip'
+import { Card } from 'src/components/ui/card'
 import { formatSolAmount, formatPercentage } from 'src/format'
 import { HELP_TEXT } from 'src/services/help-text'
 
@@ -54,10 +55,7 @@ export const StatsBar = ({
   return (
     <div className="grid grid-cols-4 gap-3 mb-6 max-lg:grid-cols-2 max-sm:grid-cols-1">
       {stats.map(stat => (
-        <div
-          key={stat.label}
-          className="bg-card rounded-xl px-5 py-4 border border-border shadow-xs"
-        >
+        <Card key={stat.label} className="px-5 py-4">
           <div className="text-2xs text-muted-foreground mb-1 font-sans flex items-center">
             {stat.label}
             {stat.help && <HelpTip text={stat.help} />}
@@ -72,7 +70,7 @@ export const StatsBar = ({
               </span>
             )}
           </div>
-        </div>
+        </Card>
       ))}
     </div>
   )

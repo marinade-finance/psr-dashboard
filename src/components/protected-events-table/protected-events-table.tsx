@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 
+import { Badge } from 'src/components/ui/badge'
+import { Input } from 'src/components/ui/input'
 import { formatSolAmount } from 'src/format'
 import {
   selectAmount,
@@ -24,17 +26,17 @@ const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
     case ProtectedEventStatus.DRYRUN:
       return (
         <HelpTip text="This settlement is not claimable as it was created during the testing period.">
-          <span className="rounded-sm px-1.5 py-0.5 float-left bg-muted text-muted-foreground text-xs font-medium">
+          <Badge variant="dryrun" className="float-left">
             Dryrun
-          </span>
+          </Badge>
         </HelpTip>
       )
     case ProtectedEventStatus.ESTIMATE:
       return (
         <HelpTip text="This is an estimate based on live data but may change during the epoch<br />before the settlements for this epoch are created on-chain.">
-          <span className="rounded-sm px-1.5 py-0.5 float-left bg-primary-light text-primary text-xs font-medium">
+          <Badge variant="estimate" className="float-left">
             Estimate
-          </span>
+          </Badge>
         </HelpTip>
       )
     default:
@@ -185,12 +187,11 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
           <label className="text-xs font-medium text-muted-foreground">
             Validator
           </label>
-          <input
-            type="text"
+          <Input
             value={validatorFilter}
             onChange={e => setValidatorFilter(e.target.value)}
             placeholder="Search by name or vote account"
-            className="px-3 py-2 rounded-lg border border-border bg-input text-sm text-foreground placeholder:text-muted-foreground/50 focus:ring-2 focus:ring-ring focus:outline-none w-64"
+            className="w-64"
           />
         </div>
         <div className="space-y-1">
@@ -198,18 +199,18 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
             Epoch range
           </label>
           <div className="flex items-center gap-2">
-            <input
+            <Input
               type="number"
               value={minEpochFilter}
               onChange={e => setMinEpochFilter(Number(e.target.value))}
-              className="w-24 px-3 py-2 rounded-lg border border-border bg-input text-sm font-mono text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
+              className="w-24"
             />
             <span className="text-muted-foreground text-sm">to</span>
-            <input
+            <Input
               type="number"
               value={maxEpochFilter}
               onChange={e => setMaxEpochFilter(Number(e.target.value))}
-              className="w-24 px-3 py-2 rounded-lg border border-border bg-input text-sm font-mono text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
+              className="w-24"
             />
           </div>
         </div>

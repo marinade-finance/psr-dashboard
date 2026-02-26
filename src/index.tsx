@@ -10,6 +10,7 @@ import {
 } from 'react-router-dom'
 
 import { UserLevel } from './components/navigation/navigation'
+import { TooltipProvider } from './components/ui/tooltip'
 import { ProtectedEventsPage } from './pages/protected-events'
 import { SamPage } from './pages/sam'
 import { ValidatorBondsPage } from './pages/validator-bonds'
@@ -72,7 +73,9 @@ const queryClient = new QueryClient()
 ReactDOM.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <TooltipProvider delayDuration={200}>
+        <RouterProvider router={router} />
+      </TooltipProvider>
     </QueryClientProvider>
   </React.StrictMode>,
   document.getElementById('root'),
