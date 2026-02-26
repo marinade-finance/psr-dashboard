@@ -226,7 +226,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
           {
             header: 'Validator',
             render: ({ protectedEvent }) => (
-              <span className="inline-block max-w-[160px] text-ellipsis overflow-hidden whitespace-nowrap">
+              <span className="inline-block max-w-[200px] text-ellipsis overflow-hidden whitespace-nowrap">
                 {protectedEvent.vote_account}
               </span>
             ),
@@ -238,7 +238,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
           {
             header: 'Name',
             render: ({ validator }) => (
-              <span className="inline-block max-w-[160px] text-ellipsis overflow-hidden whitespace-nowrap">
+              <span className="inline-block max-w-[180px] text-ellipsis overflow-hidden whitespace-nowrap">
                 {validator ? selectName(validator) : NO_NAME}
               </span>
             ),
@@ -265,7 +265,9 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
           {
             header: 'Reason',
             render: ({ protectedEvent }) => (
-              <>{selectProtectedStakeReason(protectedEvent)}</>
+              <span className="inline-block max-w-[350px] truncate">
+                {selectProtectedStakeReason(protectedEvent)}
+              </span>
             ),
             compare: (a, b) =>
               selectEprLossBps(a.protectedEvent) -

@@ -108,7 +108,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
 
   return (
     <div className="relative">
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <HelpTip text="Count of currently funded bonds">
           <Metric
             label="Bonds Funded"
@@ -142,7 +142,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
             header: 'Validator',
             tooltip: 'Validator Vote Account',
             render: ({ validator }) => (
-              <span className="inline-block max-w-[160px] text-ellipsis overflow-hidden whitespace-nowrap">
+              <span className="inline-block max-w-[200px] text-ellipsis overflow-hidden whitespace-nowrap">
                 {selectVoteAccount(validator)}
               </span>
             ),
@@ -154,7 +154,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
           {
             header: 'Name',
             render: ({ validator }) => (
-              <span className="inline-block max-w-[160px] text-ellipsis overflow-hidden whitespace-nowrap">
+              <span className="inline-block max-w-[180px] text-ellipsis overflow-hidden whitespace-nowrap">
                 {selectName(validator)}
               </span>
             ),
@@ -201,21 +201,27 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
               'Current commission settings in the bond configuration. If the configured commission is lower ' +
               'than the on-chain commission, the difference is drawn from the funded bond.<br/>' +
               'Ordered by in-bond inflation commission.',
-            render: ({ bond }) => (
-              <HelpTip
-                text={
-                  `Inflation commission: ${formatBps(bond?.inflation_commission_bps)}<br/>` +
-                  `MEV commission: ${formatBps(bond?.mev_commission_bps)}<br/>` +
-                  `Block rewards commission: ${formatBps(bond?.block_commission_bps)}`
-                }
-              >
-                <span>
-                  {formatBps(bond?.inflation_commission_bps)} /{' '}
-                  {formatBps(bond?.mev_commission_bps)} /{' '}
-                  {formatBps(bond?.block_commission_bps)}{' '}
-                </span>
-              </HelpTip>
-            ),
+            render: ({ bond }) => {
+              const inf = bond?.inflation_commission_bps
+              const mev = bond?.mev_commission_bps
+              const block = bond?.block_commission_bps
+              if (inf == null && mev == null && block == null) {
+                return <span className="text-muted-foreground">—</span>
+              }
+              return (
+                <HelpTip
+                  text={
+                    `Inflation commission: ${formatBps(inf)}<br/>` +
+                    `MEV commission: ${formatBps(mev)}<br/>` +
+                    `Block rewards commission: ${formatBps(block)}`
+                  }
+                >
+                  <span>
+                    {formatBps(inf)} / {formatBps(mev)} / {formatBps(block)}
+                  </span>
+                </HelpTip>
+              )
+            },
             compare: compareBondCommissions,
             alignment: Alignment.RIGHT,
           },

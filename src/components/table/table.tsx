@@ -236,25 +236,27 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
   }
 
   return (
-    <table className="relative border-collapse border-spacing-0 w-full [&_thead]:sticky [&_thead]:top-0 [&_thead]:bg-background-page [&_thead]:text-muted-foreground [&_thead]:cursor-pointer [&_thead]:select-none [&_thead]:z-[1] [&_tbody]:bg-card [&_th]:relative [&_th]:px-4 [&_th]:py-3 [&_th]:whitespace-nowrap [&_th]:text-2xs [&_th]:font-semibold [&_th]:uppercase [&_th]:tracking-wider [&_th]:border-b [&_th]:border-border [&_td]:relative [&_td]:px-4 [&_td]:py-0.5 [&_td]:whitespace-nowrap [&_td]:text-sm [&_td]:font-mono [&_td]:border-b [&_td]:border-border-grid [&_tbody_tr:hover]:bg-primary-light-05 [&_tbody_tr:last-child_td]:border-b-0">
-      <thead>
-        {renderHeader(
-          columns,
-          onSort,
-          userOrder,
-          defaultOrder,
-          showRowNumber ?? false,
-        )}
-      </thead>
-      <tbody>
-        {renderRows(
-          sortedData,
-          columns,
-          showRowNumber ?? false,
-          rowAttrsFn,
-          rowNumberRender,
-        )}
-      </tbody>
-    </table>
+    <div className="bg-card rounded-xl border border-border overflow-hidden">
+      <table className="relative border-collapse border-spacing-0 w-full [&_thead]:sticky [&_thead]:top-0 [&_thead]:bg-muted [&_thead]:text-muted-foreground [&_thead]:cursor-pointer [&_thead]:select-none [&_thead]:z-[1] [&_tbody]:bg-card [&_th]:relative [&_th]:px-4 [&_th]:py-3 [&_th]:whitespace-nowrap [&_th]:text-2xs [&_th]:font-semibold [&_th]:uppercase [&_th]:tracking-wider [&_th]:border-b [&_th]:border-border [&_td]:relative [&_td]:px-4 [&_td]:py-2.5 [&_td]:whitespace-nowrap [&_td]:text-sm [&_td]:font-mono [&_td]:border-b [&_td]:border-border-grid [&_tbody_tr:hover]:bg-primary-light-05 [&_tbody_tr:last-child_td]:border-b-0">
+        <thead>
+          {renderHeader(
+            columns,
+            onSort,
+            userOrder,
+            defaultOrder,
+            showRowNumber ?? false,
+          )}
+        </thead>
+        <tbody>
+          {renderRows(
+            sortedData,
+            columns,
+            showRowNumber ?? false,
+            rowAttrsFn,
+            rowNumberRender,
+          )}
+        </tbody>
+      </table>
+    </div>
   )
 }
