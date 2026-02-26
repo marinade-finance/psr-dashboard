@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo } from 'react'
 import { useQuery } from 'react-query'
 
 import { HelpTip } from 'src/components/help-tip/help-tip'
-import { Navigation } from 'src/components/navigation/navigation'
+import { PageLayout } from 'src/components/page-layout/page-layout'
 import { SamTable } from 'src/components/sam-table/sam-table'
 import { SamSkeleton } from 'src/components/skeleton/skeleton'
 import { ValidatorDetail } from 'src/components/validator-detail/validator-detail'

@@ -10,30 +10,55 @@ export type UserLevelProps = {
   level?: UserLevel
 }
 
-const NAV_BUTTON_CLASS =
-  'h-11 leading-[44px] px-4 bg-transparent text-muted-foreground cursor-pointer rounded-md text-sm font-medium transition-all duration-150 border-b-2 border-transparent -mb-px hover:text-foreground hover:bg-primary-light-05'
-
-const ACTIVE_CLASS = '[&>div]:text-primary [&>div]:border-b-primary'
-
-const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-  isActive ? ACTIVE_CLASS : ''
-
 export const Navigation: React.FC<UserLevelProps> = ({ level }) => {
-  const expert = level === UserLevel.Expert ? 'expert-' : ''
+  const prefix = level === UserLevel.Expert ? '/expert-' : '/'
+  
+  const navItems = [
+    { to: prefix === '/' ? '/' : '/expert-', label: 'Stake Auction' },
+    { to: `${prefix}protected-events`, label: 'Protected Events' },
+    { to: `${prefix}bonds`, label: 'Validator Bonds' },
+  ]
+
   return (
-    <div className="flex items-center bg-card border-b border-border px-6 gap-1">
-      <NavLink to={`/${expert}`} className={navLinkClass}>
-        <div className={NAV_BUTTON_CLASS}>Stake Auction Marketplace</div>
-      </NavLink>
-      <NavLink to={`/${expert}protected-events`} className={navLinkClass}>
-        <div className={NAV_BUTTON_CLASS}>Protected Events</div>
-      </NavLink>
-      <NavLink to={`/${expert}bonds`} className={navLinkClass}>
-        <div className={NAV_BUTTON_CLASS}>Validator Bonds</div>
-      </NavLink>
-      <a href="docs/" className="ml-auto no-underline">
-        <div className={NAV_BUTTON_CLASS}>Docs</div>
-      </a>
-    </div>
+    <nav className="flex items-center bg-card border-b border-border px-6 h-14">
+      {/* Brand */}
+      <div className="flex items-center gap-2 mr-8">
+        <span className="text-base font-semibold text-foreground">PSR Dashboard</span>
+      </div>
+
+      {/* Nav links */}
+      <div className="flex items-center gap-1">
+        {navItems.map(({ to, label }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={to === '/' || to === '/expert-'}
+            className={({ isActive }) =>
+              `px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                isActive
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+              }`
+            }
+          >
+            {label}
+          </NavLink>
+        ))}
+      </div>
+
+      {/* Right side - Docs link */}
+      <div className="ml-auto">
+        <a
+          href="docs/"
+          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+        >
+          Docs
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="opacity-50">
+            <path d="M3.5 1.5H10.5V8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M10.5 1.5L1.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </a>
+      </div>
+    </nav>
   )
 }
