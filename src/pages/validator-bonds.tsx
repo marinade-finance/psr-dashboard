@@ -15,7 +15,7 @@ export const ValidatorBondsPage: React.FC<UserLevelProps> = ({ level }) => {
   const { data, status } = useQuery('bonds', fetchValidatorsWithBonds)
 
   return (
-    <div className="bg-background-page">
+    <div className="bg-slate-950">
       <Navigation level={level} />
       <Banner {...getBannerData()} />
       {status === 'error' && <p>Error fetching data</p>}

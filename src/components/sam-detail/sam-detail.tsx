@@ -35,7 +35,7 @@ function bondDotColor(color: Color): string {
     case Color.RED:
       return 'bg-red-400'
     default:
-      return 'bg-muted-foreground'
+      return 'bg-slate-400'
   }
 }
 
@@ -61,7 +61,7 @@ function bondProgressColor(color: Color): string {
     case Color.RED:
       return 'bg-red-400'
     default:
-      return 'bg-muted-foreground'
+      return 'bg-slate-400'
   }
 }
 
@@ -74,7 +74,7 @@ function bondCardBorder(color: Color): string {
     case Color.RED:
       return 'border-red-500/40'
     default:
-      return 'border-border'
+      return 'border-slate-700/20'
   }
 }
 
@@ -87,7 +87,7 @@ function bondHealthTextColor(color: Color): string {
     case Color.RED:
       return 'text-red-400'
     default:
-      return 'text-muted-foreground'
+      return 'text-slate-400'
   }
 }
 
@@ -143,11 +143,7 @@ export function SamDetail({
   }
 
   const deltaColor =
-    delta > 0
-      ? 'text-green-400'
-      : delta < 0
-        ? 'text-red-400'
-        : 'text-muted-foreground'
+    delta > 0 ? 'text-green-400' : delta < 0 ? 'text-red-400' : 'text-slate-400'
 
   const apyTooltip = [
     `Inflation: ${formatPercentage(revShare.inflationPmpe / 1000, 4)} / epoch`,
@@ -160,7 +156,7 @@ export function SamDetail({
     <div className="p-4">
       {/* Back button */}
       <button
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 mb-5 bg-card border border-border rounded-md text-muted-foreground text-sm cursor-pointer hover:border-primary hover:text-foreground transition-colors"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 mb-5 bg-slate-800 border border-slate-700/20 rounded-md text-slate-400 text-sm cursor-pointer hover:border-blue-500 hover:text-slate-200 transition-colors"
         onClick={onBack}
       >
         \u2190 Back to list
@@ -168,12 +164,12 @@ export function SamDetail({
 
       {/* Header row */}
       <div className="flex items-center gap-4 mb-4 flex-wrap">
-        <h1 className="text-xl font-bold text-foreground flex-1 min-w-0 truncate">
+        <h1 className="text-xl font-bold text-slate-200 flex-1 min-w-0 truncate">
           {flag && <span className="mr-1">{flag}</span>}
           {name}
         </h1>
         {rank != null && (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-primary-alpha border border-primary text-primary text-xs font-semibold">
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500 text-blue-500 text-xs font-semibold">
             #{rank}
           </span>
         )}
@@ -182,7 +178,7 @@ export function SamDetail({
       {/* Pubkey click-to-copy */}
       <div className="mb-6 flex items-center gap-2">
         <span
-          className="font-mono text-xs text-muted-foreground cursor-pointer hover:text-muted-foreground hover:underline select-none"
+          className="font-mono text-xs text-slate-400 cursor-pointer hover:text-slate-400 hover:underline select-none"
           onClick={copyPubkey}
           title="Click to copy"
         >
@@ -195,59 +191,59 @@ export function SamDetail({
       <div className="flex gap-3 mb-6 flex-wrap">
         {/* Max APY */}
         <div
-          className="flex-1 min-w-40 bg-card border border-border-grid rounded-lg p-4 flex flex-col gap-1.5"
+          className="flex-1 min-w-40 bg-slate-800 border border-slate-700/10 rounded-lg p-4 flex flex-col gap-1.5"
           title={apyTooltip}
         >
-          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">
             Max APY
           </div>
-          <div className="text-2xl font-bold text-foreground">
+          <div className="text-2xl font-bold text-slate-200">
             {formatPercentage(maxApy, 2)}
           </div>
-          <div className="text-xs text-muted-foreground">
+          <div className="text-xs text-slate-400">
             {formatPercentage(revShare.totalPmpe / 1000, 4)} / epoch
           </div>
         </div>
 
         {/* Bond health */}
         <div
-          className={`flex-1 min-w-40 bg-card border rounded-lg p-4 flex flex-col gap-1.5 ${bondCardBorder(bondColor)}`}
+          className={`flex-1 min-w-40 bg-slate-800 border rounded-lg p-4 flex flex-col gap-1.5 ${bondCardBorder(bondColor)}`}
         >
-          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">
             Bond Health
           </div>
           <div className="flex items-center gap-2">
             <span
               className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${bondDotColor(bondColor)}`}
             />
-            <span className="text-lg font-bold text-foreground">
+            <span className="text-lg font-bold text-slate-200">
               {bondLabel(bondColor)}
             </span>
           </div>
-          <div className="text-sm text-secondary-foreground">
+          <div className="text-sm text-slate-200">
             \u2609 {formatSolAmount(bondBalance, 2)} SOL
           </div>
-          <div className="h-1.5 bg-secondary rounded-full overflow-hidden mt-1">
+          <div className="h-1.5 bg-slate-700/50 rounded-full overflow-hidden mt-1">
             <div
               className={`h-full rounded-full transition-all ${bondProgressColor(bondColor)}`}
               style={{ width: `${bondUtil * 100}%` }}
             />
           </div>
-          <div className="text-xs text-muted-foreground">
+          <div className="text-xs text-slate-400">
             {epochsLabel(validator.bondGoodForNEpochs)}
           </div>
         </div>
 
         {/* Stake \u0394 */}
-        <div className="flex-1 min-w-40 bg-card border border-border-grid rounded-lg p-4 flex flex-col gap-1.5">
-          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <div className="flex-1 min-w-40 bg-slate-800 border border-slate-700/10 rounded-lg p-4 flex flex-col gap-1.5">
+          <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">
             Stake \u0394
           </div>
           <div className={`text-2xl font-bold ${deltaColor}`}>
             {delta > 0 ? '\u2191 +' : delta < 0 ? '\u2193 ' : '\u2014 '}
             {formatSolAmount(Math.abs(delta), 0)}
           </div>
-          <div className="text-xs text-muted-foreground">
+          <div className="text-xs text-slate-400">
             Target: \u2609 {formatSolAmount(targetStake, 0)}
           </div>
         </div>
@@ -256,51 +252,47 @@ export function SamDetail({
       {/* Detail columns */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {/* APY breakdown */}
-        <div className="bg-card border border-border-grid rounded-lg p-4 flex flex-col gap-3">
-          <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground pb-2 border-b border-border-grid">
+        <div className="bg-slate-800 border border-slate-700/10 rounded-lg p-4 flex flex-col gap-3">
+          <div className="text-xs font-bold uppercase tracking-widest text-slate-400 pb-2 border-b border-slate-700/10">
             APY Breakdown
           </div>
           <div className="flex justify-between items-baseline gap-2">
-            <span className="text-xs text-muted-foreground">Inflation</span>
-            <span className="text-xs text-secondary-foreground font-medium">
+            <span className="text-xs text-slate-400">Inflation</span>
+            <span className="text-xs text-slate-200 font-medium">
               {formatPercentage(revShare.inflationPmpe / 1000, 4)} / epoch
             </span>
           </div>
           <div className="flex justify-between items-baseline gap-2">
-            <span className="text-xs text-muted-foreground">MEV</span>
-            <span className="text-xs text-secondary-foreground font-medium">
+            <span className="text-xs text-slate-400">MEV</span>
+            <span className="text-xs text-slate-200 font-medium">
               {formatPercentage(revShare.mevPmpe / 1000, 4)} / epoch
             </span>
           </div>
           <div className="flex justify-between items-baseline gap-2">
-            <span className="text-xs text-muted-foreground">Block rewards</span>
-            <span className="text-xs text-secondary-foreground font-medium">
+            <span className="text-xs text-slate-400">Block rewards</span>
+            <span className="text-xs text-slate-200 font-medium">
               {formatPercentage(revShare.blockPmpe / 1000, 4)} / epoch
             </span>
           </div>
-          <div className="flex justify-between items-baseline gap-2 border-t border-border-grid pt-1.5">
-            <span className="text-xs text-muted-foreground font-semibold">
+          <div className="flex justify-between items-baseline gap-2 border-t border-slate-700/10 pt-1.5">
+            <span className="text-xs text-slate-400 font-semibold">
               Effective bid
             </span>
-            <span className="text-xs text-foreground font-semibold">
+            <span className="text-xs text-slate-200 font-semibold">
               {formatPercentage(revShare.auctionEffectiveBidPmpe / 1000, 4)} /
               epoch
             </span>
           </div>
           <div className="flex justify-between items-baseline gap-2">
-            <span className="text-xs text-muted-foreground">
-              Infl. commission
-            </span>
-            <span className="text-xs text-secondary-foreground font-medium">
+            <span className="text-xs text-slate-400">Infl. commission</span>
+            <span className="text-xs text-slate-200 font-medium">
               {formatPercentage(validator.inflationCommissionDec, 0)}
             </span>
           </div>
           {validator.mevCommissionDec != null && (
             <div className="flex justify-between items-baseline gap-2">
-              <span className="text-xs text-muted-foreground">
-                MEV commission
-              </span>
-              <span className="text-xs text-secondary-foreground font-medium">
+              <span className="text-xs text-slate-400">MEV commission</span>
+              <span className="text-xs text-slate-200 font-medium">
                 {formatPercentage(validator.mevCommissionDec, 0)}
               </span>
             </div>
@@ -308,57 +300,55 @@ export function SamDetail({
         </div>
 
         {/* Bond health details */}
-        <div className="bg-card border border-border-grid rounded-lg p-4 flex flex-col gap-3">
-          <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground pb-2 border-b border-border-grid">
+        <div className="bg-slate-800 border border-slate-700/10 rounded-lg p-4 flex flex-col gap-3">
+          <div className="text-xs font-bold uppercase tracking-widest text-slate-400 pb-2 border-b border-slate-700/10">
             Bond Health
           </div>
           <div className="flex justify-between items-baseline gap-2">
-            <span className="text-xs text-muted-foreground">Balance</span>
-            <span className="text-xs text-secondary-foreground font-medium">
+            <span className="text-xs text-slate-400">Balance</span>
+            <span className="text-xs text-slate-200 font-medium">
               \u2609 {formatSolAmount(bondBalance, 2)}
             </span>
           </div>
           <div className="flex justify-between items-baseline gap-2">
-            <span className="text-xs text-muted-foreground">
-              Epochs covered
-            </span>
-            <span className="text-xs text-secondary-foreground font-medium">
+            <span className="text-xs text-slate-400">Epochs covered</span>
+            <span className="text-xs text-slate-200 font-medium">
               {epochsLabel(validator.bondGoodForNEpochs)}
             </span>
           </div>
           <div className="flex justify-between items-baseline gap-2">
-            <span className="text-xs text-muted-foreground">Health label</span>
+            <span className="text-xs text-slate-400">Health label</span>
             <span
               className={`text-xs font-semibold ${bondHealthTextColor(bondColor)}`}
             >
               {bondLabel(bondColor)}
             </span>
           </div>
-          <div className="text-xs text-muted-foreground leading-relaxed mt-1 p-2 bg-muted rounded">
+          <div className="text-xs text-slate-400 leading-relaxed mt-1 p-2 bg-slate-800/50 rounded">
             {bondTooltip(bondColor) ||
               'No active stake \u2014 bond health not applicable.'}
           </div>
         </div>
 
         {/* Stake movement */}
-        <div className="bg-card border border-border-grid rounded-lg p-4 flex flex-col gap-3">
-          <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground pb-2 border-b border-border-grid">
+        <div className="bg-slate-800 border border-slate-700/10 rounded-lg p-4 flex flex-col gap-3">
+          <div className="text-xs font-bold uppercase tracking-widest text-slate-400 pb-2 border-b border-slate-700/10">
             Stake Movement
           </div>
           <div className="flex justify-between items-baseline gap-2">
-            <span className="text-xs text-muted-foreground">Active</span>
-            <span className="text-xs text-secondary-foreground font-medium">
+            <span className="text-xs text-slate-400">Active</span>
+            <span className="text-xs text-slate-200 font-medium">
               \u2609 {formatSolAmount(activeStake, 0)}
             </span>
           </div>
           <div className="flex justify-between items-baseline gap-2">
-            <span className="text-xs text-muted-foreground">Target</span>
-            <span className="text-xs text-secondary-foreground font-medium">
+            <span className="text-xs text-slate-400">Target</span>
+            <span className="text-xs text-slate-200 font-medium">
               \u2609 {formatSolAmount(targetStake, 0)}
             </span>
           </div>
           <div className="flex justify-between items-baseline gap-2">
-            <span className="text-xs text-muted-foreground">Delta</span>
+            <span className="text-xs text-slate-400">Delta</span>
             <span className={`text-xs font-semibold ${deltaColor}`}>
               {delta > 0 ? '+' : ''}
               {formatSolAmount(delta, 0)}
@@ -369,25 +359,25 @@ export function SamDetail({
 
       {/* Recommendation box */}
       <div
-        className={`border border-border rounded-lg p-4 mb-6 bg-card flex flex-col gap-1.5 ${severityBorderClass(recommendation.severity)}`}
+        className={`border border-slate-700/20 rounded-lg p-4 mb-6 bg-slate-800 flex flex-col gap-1.5 ${severityBorderClass(recommendation.severity)}`}
       >
-        <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+        <div className="text-xs font-bold uppercase tracking-widest text-slate-400">
           NEXT STEP
         </div>
-        <div className="text-sm text-secondary-foreground leading-relaxed">
+        <div className="text-sm text-slate-200 leading-relaxed">
           {recommendation.text}
         </div>
       </div>
 
       {/* Expert-only simulation CTA */}
       {isExpert && onEdit && (
-        <div className="flex items-center justify-between gap-4 flex-wrap bg-background border border-primary rounded-lg p-4">
-          <span className="text-sm text-muted-foreground flex-1">
+        <div className="flex items-center justify-between gap-4 flex-wrap bg-slate-950 border border-blue-500 rounded-lg p-4">
+          <span className="text-sm text-slate-400 flex-1">
             Simulate how changes to commission or bid affect this
             validator&apos;s position in the auction.
           </span>
           <button
-            className="px-4 py-2 bg-primary hover:brightness-110 rounded-md text-primary-foreground text-sm font-semibold cursor-pointer transition-colors flex-shrink-0"
+            className="px-4 py-2 bg-blue-500 hover:brightness-110 rounded-md text-blue-500-foreground text-sm font-semibold cursor-pointer transition-colors flex-shrink-0"
             onClick={onEdit}
           >
             Open Simulation

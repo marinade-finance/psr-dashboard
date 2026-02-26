@@ -211,15 +211,15 @@ export const SamPage: React.FC<Props> = ({ level }) => {
       : null
 
   return (
-    <div className="bg-background-page">
+    <div className="bg-slate-950">
       <div className="relative">
         <Navigation level={level}>
           <button
             className={cn(
-              'simulatorToggle h-10 leading-[30px] px-5 py-[5px] m-[4px_0_4px_4px] border-none rounded cursor-pointer font-[inherit] text-[length:inherit] whitespace-nowrap transition-colors bg-primary text-primary-foreground hover:brightness-110',
-              simulationModeActive && 'bg-info text-primary-foreground',
+              'simulatorToggle h-10 leading-[30px] px-5 py-[5px] m-[4px_0_4px_4px] border-none rounded cursor-pointer font-[inherit] text-[length:inherit] whitespace-nowrap transition-colors bg-blue-500 text-white hover:brightness-110',
+              simulationModeActive && 'bg-indigo-500 text-white',
               isCalculating &&
-                'bg-muted text-muted-foreground cursor-not-allowed',
+                'bg-slate-800/50 text-slate-400 cursor-not-allowed',
             )}
             onClick={handleToggleSimulationMode}
             disabled={isCalculating}
