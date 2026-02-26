@@ -1,6 +1,9 @@
 import React, { useMemo, useState } from 'react'
 
 import { HelpTip } from 'src/components/help-tip/help-tip'
+import { Button } from 'src/components/ui/button'
+import { Input } from 'src/components/ui/input'
+import { Sheet, SheetContent } from 'src/components/ui/sheet'
 import { formatPercentage, formatSolAmount } from 'src/format'
 import { HELP_TEXT } from 'src/services/help-text'
 import { selectVoteAccount, selectWinningAPY } from 'src/services/sam'
@@ -161,13 +164,15 @@ export const ValidatorDetail = ({
     : 0
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-black/50 flex justify-end"
-      onClick={onClose}
+    <Sheet
+      open={true}
+      onOpenChange={open => {
+        if (!open) onClose()
+      }}
     >
-      <div
-        className="w-full max-w-4xl bg-background h-full overflow-y-auto shadow-xl"
-        onClick={e => e.stopPropagation()}
+      <SheetContent
+        side="right"
+        className="w-full max-w-4xl overflow-y-auto p-0"
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-border sticky top-0 bg-background z-10">
           <div className="flex items-center gap-3">
@@ -186,7 +191,9 @@ export const ValidatorDetail = ({
               </svg>
               Back to rankings
             </button>
-            <span className="text-lg font-bold font-mono text-primary">#{rank}</span>
+            <span className="text-lg font-bold font-mono text-primary">
+              #{rank}
+            </span>
             <span className="text-sm font-mono text-muted-foreground">
               {selectVoteAccount(validator).slice(0, 12)}...
             </span>
@@ -238,11 +245,17 @@ export const ValidatorDetail = ({
                             : '\u2014'}
                       </span>
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium text-foreground">{factor.name}</span>
-                        <span className="text-xs text-muted-foreground">{factor.note}</span>
+                        <span className="text-sm font-medium text-foreground">
+                          {factor.name}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {factor.note}
+                        </span>
                       </div>
                     </div>
-                    <span className="text-sm font-mono font-semibold">{factor.value}</span>
+                    <span className="text-sm font-mono font-semibold">
+                      {factor.value}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -373,31 +386,37 @@ export const ValidatorDetail = ({
               </h3>
               <div className="space-y-3 mt-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">Stake Bid (PMPE)</label>
-                  <input
+                  <label className="text-xs font-medium text-muted-foreground">
+                    Stake Bid (PMPE)
+                  </label>
+                  <Input
                     type="number"
                     value={editBid}
                     onChange={e => setEditBid(e.target.value)}
                     step="0.001"
                     min="0"
-                    className="w-full px-3 py-2 rounded-lg border border-border bg-input text-sm font-mono text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
+                    className="font-mono"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">Inflation Commission %</label>
-                  <input
+                  <label className="text-xs font-medium text-muted-foreground">
+                    Inflation Commission %
+                  </label>
+                  <Input
                     type="number"
                     value={editInflation}
                     onChange={e => setEditInflation(e.target.value)}
                     step="0.1"
                     min="0"
                     max="100"
-                    className="w-full px-3 py-2 rounded-lg border border-border bg-input text-sm font-mono text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
+                    className="font-mono"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">MEV Commission %</label>
-                  <input
+                  <label className="text-xs font-medium text-muted-foreground">
+                    MEV Commission %
+                  </label>
+                  <Input
                     type="number"
                     value={editMev}
                     onChange={e => setEditMev(e.target.value)}
@@ -405,12 +424,14 @@ export const ValidatorDetail = ({
                     min="0"
                     max="100"
                     placeholder="N/A"
-                    className="w-full px-3 py-2 rounded-lg border border-border bg-input text-sm font-mono text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
+                    className="font-mono"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">Block Rewards Commission %</label>
-                  <input
+                  <label className="text-xs font-medium text-muted-foreground">
+                    Block Rewards Commission %
+                  </label>
+                  <Input
                     type="number"
                     value={editBlock}
                     onChange={e => setEditBlock(e.target.value)}
@@ -418,16 +439,16 @@ export const ValidatorDetail = ({
                     min="0"
                     max="100"
                     placeholder="N/A"
-                    className="w-full px-3 py-2 rounded-lg border border-border bg-input text-sm font-mono text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
+                    className="font-mono"
                   />
                 </div>
-                <button
-                  className="w-full py-2 px-4 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 disabled:opacity-50 transition-colors"
+                <Button
+                  className="w-full"
                   onClick={handleRunSimulation}
                   disabled={isCalculating}
                 >
                   {isCalculating ? 'Simulating...' : 'Run Simulation'}
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -453,13 +474,17 @@ export const ValidatorDetail = ({
                 </div>
                 <div className="grid grid-cols-2 gap-3 mt-3">
                   <div>
-                    <span className="text-xs text-muted-foreground">Utilization</span>
+                    <span className="text-xs text-muted-foreground">
+                      Utilization
+                    </span>
                     <div className="text-sm font-semibold font-mono">
                       {bondUtilPct.toFixed(1)}%
                     </div>
                   </div>
                   <div>
-                    <span className="text-xs text-muted-foreground">Runway</span>
+                    <span className="text-xs text-muted-foreground">
+                      Runway
+                    </span>
                     <div className="text-sm font-semibold font-mono">
                       ~{Math.round(bondRunway)} epochs
                     </div>
@@ -469,16 +494,22 @@ export const ValidatorDetail = ({
             </div>
 
             <div className="bg-card rounded-xl border border-border p-5">
-              <h3 className="text-base font-semibold text-foreground flex items-center gap-2">Stake Overview</h3>
+              <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+                Stake Overview
+              </h3>
               <div className="space-y-3 mt-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Active Stake</span>
+                  <span className="text-xs text-muted-foreground">
+                    Active Stake
+                  </span>
                   <span className="text-sm font-semibold font-mono">
                     {formatSolAmount(validator.marinadeActivatedStakeSol, 0)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Target Stake</span>
+                  <span className="text-xs text-muted-foreground">
+                    Target Stake
+                  </span>
                   <span className="text-sm font-semibold font-mono">
                     {formatSolAmount(
                       validator.auctionStake.marinadeSamTargetSol,
@@ -487,7 +518,9 @@ export const ValidatorDetail = ({
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Stake Delta</span>
+                  <span className="text-xs text-muted-foreground">
+                    Stake Delta
+                  </span>
                   <span
                     className="text-sm font-semibold font-mono"
                     style={{ color: delta.color }}
@@ -499,7 +532,7 @@ export const ValidatorDetail = ({
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   )
 }

@@ -1,6 +1,14 @@
 import React, { useMemo, useRef, useState } from 'react'
 
 import { HelpTip } from 'src/components/help-tip/help-tip'
+import {
+  ShadTable,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from 'src/components/ui/table'
 import { formatPercentage, formatSolAmount } from 'src/format'
 import { HELP_TEXT } from 'src/services/help-text'
 import {
@@ -261,7 +269,7 @@ export const SamTable: React.FC<Props> = ({
       .join(' ')
 
     return (
-      <tr
+      <TableRow
         key={voteAccount}
         className={rowClasses}
         onMouseEnter={() => setHoveredRow(voteAccount)}
@@ -269,12 +277,12 @@ export const SamTable: React.FC<Props> = ({
         onClick={() => onValidatorClick(voteAccount)}
       >
         {/* Rank */}
-        <td className="px-3.5 py-3 text-center text-muted-foreground font-medium font-mono text-xs w-10">
+        <TableCell className="px-3.5 py-3 text-center text-muted-foreground font-medium font-mono text-xs w-10">
           {rank}
-        </td>
+        </TableCell>
 
         {/* Validator */}
-        <td className="px-3.5 py-3 min-w-[150px]">
+        <TableCell className="px-3.5 py-3 min-w-[150px]">
           <div className="flex items-center gap-1.5">
             <span className="text-foreground font-medium text-[13px]">
               {voteAccount.slice(0, 8)}...
@@ -286,10 +294,10 @@ export const SamTable: React.FC<Props> = ({
           <div className="text-muted-foreground text-[11px] mt-px font-mono">
             {voteAccount}
           </div>
-        </td>
+        </TableCell>
 
         {/* Max APY with hover tooltip */}
-        <td
+        <TableCell
           className="px-3.5 py-3 relative"
           onMouseEnter={e => {
             e.stopPropagation()
@@ -309,10 +317,10 @@ export const SamTable: React.FC<Props> = ({
           {hoveredApyRow === voteAccount && (
             <ApyTooltip validator={validator} epochsPerYear={epochsPerYear} />
           )}
-        </td>
+        </TableCell>
 
         {/* Bond Health */}
-        <td className="px-3.5 py-3">
+        <TableCell className="px-3.5 py-3">
           <div className="flex items-center gap-1.5 mb-1">
             <span
               className="inline-flex items-center gap-1 px-2 py-[3px] rounded-md text-[11px] font-medium"
@@ -350,10 +358,10 @@ export const SamTable: React.FC<Props> = ({
               ~{Math.round(bondRunway)}ep
             </span>
           </div>
-        </td>
+        </TableCell>
 
         {/* Stake Delta */}
-        <td className="px-3.5 py-3">
+        <TableCell className="px-3.5 py-3">
           <span
             className="font-semibold text-[13px] font-mono"
             style={{ color: delta.color }}
@@ -361,10 +369,10 @@ export const SamTable: React.FC<Props> = ({
             {delta.arrow} {delta.text}
             {delta.text !== '\u2014' && ' \u25CE'}
           </span>
-        </td>
+        </TableCell>
 
         {/* Next Step */}
-        <td className="px-3.5 py-3 max-w-[280px] lg:max-w-[280px] md:max-w-[200px]">
+        <TableCell className="px-3.5 py-3 max-w-[280px] lg:max-w-[280px] md:max-w-[200px]">
           <div
             className="inline-flex items-start gap-[5px] text-xs leading-[1.35] px-2.5 py-1 rounded-md"
             style={{ background: tipStyle.bg, color: tipStyle.color }}
@@ -372,10 +380,10 @@ export const SamTable: React.FC<Props> = ({
             <span className="shrink-0">{tipStyle.icon}</span>
             <span className="break-words">{tip.text}</span>
           </div>
-        </td>
+        </TableCell>
 
         {/* Chevron */}
-        <td className="px-2.5 py-3 w-10">
+        <TableCell className="px-2.5 py-3 w-10">
           <div
             className={`w-7 h-7 rounded-[7px] flex items-center justify-center border transition-all duration-[120ms] ${
               isHovered
@@ -395,8 +403,8 @@ export const SamTable: React.FC<Props> = ({
               />
             </svg>
           </div>
-        </td>
-      </tr>
+        </TableCell>
+      </TableRow>
     )
   }
 
@@ -432,40 +440,40 @@ export const SamTable: React.FC<Props> = ({
 
       {/* Table */}
       <div className="bg-card rounded-xl border border-border shadow-xs overflow-hidden">
-        <table className="w-full border-collapse font-sans text-[13px]">
-          <thead>
-            <tr className="border-b border-border-grid">
-              <th className="px-3.5 py-[11px] text-left text-[11px] font-medium text-muted-foreground uppercase tracking-[0.06em] whitespace-nowrap bg-muted w-10 text-center">
+        <ShadTable className="font-sans text-[13px]">
+          <TableHeader>
+            <TableRow className="border-b border-border-grid">
+              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted w-10 text-center">
                 #
-              </th>
-              <th className="px-3.5 py-[11px] text-left text-[11px] font-medium text-muted-foreground uppercase tracking-[0.06em] whitespace-nowrap bg-muted min-w-[150px]">
+              </TableHead>
+              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted min-w-[150px]">
                 Validator
-              </th>
-              <th className="px-3.5 py-[11px] text-left text-[11px] font-medium text-muted-foreground uppercase tracking-[0.06em] whitespace-nowrap bg-muted w-[100px]">
+              </TableHead>
+              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted w-[100px]">
                 Max APY
                 <HelpTip text={HELP_TEXT.maxApy} />
-              </th>
-              <th className="px-3.5 py-[11px] text-left text-[11px] font-medium text-muted-foreground uppercase tracking-[0.06em] whitespace-nowrap bg-muted w-40">
+              </TableHead>
+              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted w-40">
                 Bond
                 <HelpTip text={HELP_TEXT.bondHealth} />
-              </th>
-              <th className="px-3.5 py-[11px] text-left text-[11px] font-medium text-muted-foreground uppercase tracking-[0.06em] whitespace-nowrap bg-muted w-[120px]">
+              </TableHead>
+              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted w-[120px]">
                 Stake {'\u0394'}
                 <HelpTip text={HELP_TEXT.stakeDelta} />
-              </th>
-              <th className="px-3.5 py-[11px] text-left text-[11px] font-medium text-muted-foreground uppercase tracking-[0.06em] whitespace-nowrap bg-muted min-w-[200px]">
+              </TableHead>
+              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted min-w-[200px]">
                 Next Step
-              </th>
-              <th className="px-3.5 py-[11px] text-left text-[11px] font-medium text-muted-foreground uppercase tracking-[0.06em] whitespace-nowrap bg-muted w-10"></th>
-            </tr>
-          </thead>
-          <tbody>
+              </TableHead>
+              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted w-10"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {winningValidators.map((v, i) => renderRow(v, i))}
 
             {/* Winning Set Cutoff Divider */}
             {nonWinningValidators.length > 0 && (
-              <tr>
-                <td colSpan={7} className="p-0">
+              <TableRow>
+                <TableCell colSpan={7} className="p-0">
                   <div className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-primary-light-10 via-primary-light to-primary-light-10 border-y-2 border-primary">
                     <div className="flex items-center gap-1.5">
                       <svg
@@ -493,13 +501,13 @@ export const SamTable: React.FC<Props> = ({
                       {winningCount} of {totalValidators} validators
                     </span>
                   </div>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )}
 
             {nonWinningValidators.map((v, i) => renderRow(v, winningCount + i))}
-          </tbody>
-        </table>
+          </TableBody>
+        </ShadTable>
       </div>
     </div>
   )

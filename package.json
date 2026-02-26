@@ -51,6 +51,7 @@
   },
   "dependencies": {
     "@marinade.finance/ds-sam-sdk": "0.0.44",
+    "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@types/lodash.round": "^4.0.9",
@@ -65,6 +66,7 @@
     "react-query": "^3.39.3",
     "react-router-dom": "^6.30.2",
     "tailwind-merge": "^3.5.0",
+    "tailwindcss-animate": "^1.0.7",
     "tinyglobby": "^0.2.15"
   },
   "lint-staged": {

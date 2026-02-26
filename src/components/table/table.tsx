@@ -1,6 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react'
 
 import { Card } from 'src/components/ui/card'
+import {
+  ShadTable,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from 'src/components/ui/table'
 
 import { HelpTip } from '../help-tip/help-tip'
 
@@ -66,8 +74,8 @@ const renderHeader: <Item>(
   ]
 
   return (
-    <tr>
-      {showRowNumber ? <td>#</td> : null}
+    <TableRow>
+      {showRowNumber ? <TableHead>#</TableHead> : null}
       {columns.map((column, i) => {
         const isUserSorted = userOrderColumn === i
         const isDefaultSorted = !userOrder && defaultOrderColumn === i
@@ -84,7 +92,7 @@ const renderHeader: <Item>(
         }
 
         return (
-          <th
+          <TableHead
             key={i}
             className={alignmentClassName(column.alignment)}
             onClick={() => onSort(i)}
@@ -93,10 +101,10 @@ const renderHeader: <Item>(
             {column.header}
             {column.tooltip && <HelpTip text={column.tooltip} />}
             <span className={indicatorClass}>{indicator}</span>
-          </th>
+          </TableHead>
         )
       })}
-    </tr>
+    </TableRow>
   )
 }
 
@@ -136,22 +144,22 @@ const renderRow: <Item>(
   rowNumberRender,
 ) => {
   return (
-    <tr key={index} {...(rowAttrsFn ? rowAttrsFn(item, index) : {})}>
+    <TableRow key={index} {...(rowAttrsFn ? rowAttrsFn(item, index) : {})}>
       {showRowNumber ? (
-        <td>
+        <TableCell>
           {rowNumberRender ? rowNumberRender(item, index) : <>{index + 1}</>}
-        </td>
+        </TableCell>
       ) : null}
       {columns.map((column, i) => (
-        <td
+        <TableCell
           {...(column.cellAttrsFn ? column.cellAttrsFn(item) : {})}
           key={i}
           className={`${alignmentClassName(column.alignment)} ${column.background ? colorClassName(column.background(item)) : ''}`}
         >
           {column.render(item, index)}
-        </td>
+        </TableCell>
       ))}
-    </tr>
+    </TableRow>
   )
 }
 
@@ -239,8 +247,8 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
 
   return (
     <Card className="overflow-hidden p-0">
-      <table className="relative border-collapse border-spacing-0 w-full [&_thead]:sticky [&_thead]:top-0 [&_thead]:bg-muted [&_thead]:text-muted-foreground [&_thead]:cursor-pointer [&_thead]:select-none [&_thead]:z-[1] [&_tbody]:bg-card [&_th]:relative [&_th]:px-4 [&_th]:py-3 [&_th]:whitespace-nowrap [&_th]:text-2xs [&_th]:font-semibold [&_th]:uppercase [&_th]:tracking-wider [&_th]:border-b [&_th]:border-border [&_td]:relative [&_td]:px-4 [&_td]:py-2.5 [&_td]:whitespace-nowrap [&_td]:text-sm [&_td]:font-mono [&_td]:border-b [&_td]:border-border-grid [&_tbody_tr:hover]:bg-primary-light-05 [&_tbody_tr:last-child_td]:border-b-0">
-        <thead>
+      <ShadTable>
+        <TableHeader>
           {renderHeader(
             columns,
             onSort,
@@ -248,8 +256,8 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
             defaultOrder,
             showRowNumber ?? false,
           )}
-        </thead>
-        <tbody>
+        </TableHeader>
+        <TableBody>
           {renderRows(
             sortedData,
             columns,
@@ -257,8 +265,8 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
             rowAttrsFn,
             rowNumberRender,
           )}
-        </tbody>
-      </table>
+        </TableBody>
+      </ShadTable>
     </Card>
   )
 }
