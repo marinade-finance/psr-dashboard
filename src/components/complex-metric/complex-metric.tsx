@@ -7,9 +7,13 @@ type Props = {
 
 export const ComplexMetric: React.FC<Props> = ({ label, value }) => {
   return (
-    <div className="px-5 py-2.5 bg-card mr-2.5">
-      <div className="whitespace-nowrap">{label}</div>
-      <div className="whitespace-nowrap mt-2.5 text-2xl">{value}</div>
+    <div className="px-5 py-4 bg-card border border-border rounded-xl shadow-xs">
+      <div className="whitespace-nowrap text-2xs text-muted-foreground font-medium mb-1 uppercase tracking-wider">
+        {label}
+      </div>
+      <div className="whitespace-nowrap text-lg font-semibold text-foreground font-mono">
+        {value}
+      </div>
     </div>
   )
 }

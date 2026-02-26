@@ -108,7 +108,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
 
   return (
     <div className="relative">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-4 gap-3 mb-6 max-lg:grid-cols-2 max-sm:grid-cols-1">
         <HelpTip text="Count of currently funded bonds">
           <Metric
             label="Bonds Funded"

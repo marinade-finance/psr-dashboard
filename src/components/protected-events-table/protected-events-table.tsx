@@ -24,7 +24,7 @@ const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
     case ProtectedEventStatus.DRYRUN:
       return (
         <HelpTip text="This settlement is not claimable as it was created during the testing period.">
-          <span className="rounded-sm px-1 float-left bg-background-page text-foreground">
+          <span className="rounded-sm px-1.5 py-0.5 float-left bg-muted text-muted-foreground text-xs font-medium">
             Dryrun
           </span>
         </HelpTip>
@@ -32,7 +32,7 @@ const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
     case ProtectedEventStatus.ESTIMATE:
       return (
         <HelpTip text="This is an estimate based on live data but may change during the epoch<br />before the settlements for this epoch are created on-chain.">
-          <span className="rounded-sm px-1 float-left bg-[#91e4b7] text-black">
+          <span className="rounded-sm px-1.5 py-0.5 float-left bg-primary-light text-primary text-xs font-medium">
             Estimate
           </span>
         </HelpTip>
@@ -180,7 +180,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
         </HelpTip>
         {expertMetrics}
       </div>
-      <div className="flex items-center gap-4 px-6 mb-4">
+      <div className="flex items-center gap-4 mb-4">
         <div className="space-y-1">
           <label className="text-xs font-medium text-muted-foreground">
             Validator
