@@ -21,7 +21,7 @@ import type {
 
 const estimateEpochsPerYear = async () => {
   const FETCHED_EPOCHS = 11
-  const { validators } = await fetchValidatorsWithEpochs(FETCHED_EPOCHS)
+  const { validators } = await fetchValidatorsWithEpochs(FETCHED_EPOCHS, 1)
   const epochStats = validators.map(({ epoch_stats }) => epoch_stats).flat()
 
   const rangeStart = epochStats.reduce(
@@ -70,13 +70,15 @@ export const loadSam = async (
   dcSamConfig: DsSamConfig
 }> => {
   try {
-    const epochsPerYear = await estimateEpochsPerYear()
+    const [epochsPerYear, config] = await Promise.all([
+      estimateEpochsPerYear(),
+      loadSamConfig(),
+    ])
     console.log('epochsPerYear', epochsPerYear)
-    const config = await loadSamConfig()
     const dsSam = new DsSamSDK({
       ...config,
       inputsSource: InputsSource.APIS,
-      cacheInputs: false,
+      cacheInputs: true,
       debugVoteAccounts: [],
       logVerbosity: LogVerbosity.ERROR,
     })

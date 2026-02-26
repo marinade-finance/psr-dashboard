@@ -60,6 +60,9 @@ export const SamPage: React.FC<Props> = ({ level }) => {
     // isFetching,
   } = useQuery(['sam', simulationRunId], () => loadSam(simulationOverrides), {
     keepPreviousData: true,
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
     onSettled: () => {
       setIsCalculating(false)
       setEditingValidator(null)
