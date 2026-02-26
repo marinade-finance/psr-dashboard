@@ -3,7 +3,7 @@ import { useQuery } from 'react-query'
 
 import { Banner } from 'src/components/banner/banner'
 import { Loader } from 'src/components/loader/loader'
-import { Navigation } from 'src/components/navigation/navigation'
+import { PageLayout } from 'src/components/page-layout/page-layout'
 import { ProtectedEventsTable } from 'src/components/protected-events-table/protected-events-table'
 import { getBannerData } from 'src/services/banner'
 import { fetchProtectedEventsWithValidator } from 'src/services/validator-with-protected_event'
@@ -17,14 +17,17 @@ export const ProtectedEventsPage: React.FC<UserLevelProps> = ({ level }) => {
   )
 
   return (
-    <div className="bg-background-page min-h-screen">
-      <Navigation level={level} />
+    <PageLayout level={level} title="Protected Events">
       <Banner {...getBannerData()} />
-      {status === 'error' && <p>Error fetching data</p>}
+      {status === 'error' && (
+        <p className="text-destructive text-center text-sm py-8">
+          Error fetching data
+        </p>
+      )}
       {status === 'loading' && <Loader />}
       {status === 'success' && (
         <ProtectedEventsTable data={data} level={level} />
       )}
-    </div>
+    </PageLayout>
   )
 }

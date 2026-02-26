@@ -3,7 +3,7 @@ import { useQuery } from 'react-query'
 
 import { Banner } from 'src/components/banner/banner'
 import { Loader } from 'src/components/loader/loader'
-import { Navigation } from 'src/components/navigation/navigation'
+import { PageLayout } from 'src/components/page-layout/page-layout'
 import { ValidatorBondsTable } from 'src/components/validator-bonds-table/validator-bonds-table'
 import { getBannerData } from 'src/services/banner'
 import { fetchValidatorsWithBonds } from 'src/services/validator-with-bond'
@@ -15,10 +15,13 @@ export const ValidatorBondsPage: React.FC<UserLevelProps> = ({ level }) => {
   const { data, status } = useQuery('bonds', fetchValidatorsWithBonds)
 
   return (
-    <div className="bg-background-page min-h-screen">
-      <Navigation level={level} />
+    <PageLayout level={level} title="Validator Bonds">
       <Banner {...getBannerData()} />
-      {status === 'error' && <p>Error fetching data</p>}
+      {status === 'error' && (
+        <p className="text-destructive text-center text-sm py-8">
+          Error fetching data
+        </p>
+      )}
       {status === 'loading' && <Loader />}
       {status === 'success' && (
         <ValidatorBondsTable
@@ -30,6 +33,6 @@ export const ValidatorBondsPage: React.FC<UserLevelProps> = ({ level }) => {
           level={level}
         />
       )}
-    </div>
+    </PageLayout>
   )
 }

@@ -162,8 +162,8 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
   const filtered = data.length !== filteredData.length
 
   return (
-    <div className="relative [&>table]:ml-2.5 [&_input]:bg-background-page [&_input]:text-foreground [&_input]:border-2 [&_input]:border-border [&_input]:rounded-[5px] [&_input]:p-2 [&_input]:outline-none [&_input:focus]:border-muted-foreground">
-      <div className="flex p-2.5">
+    <div className="relative">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
         <Metric
           label="Total events"
           value={totalEvents.toLocaleString()}
@@ -197,30 +197,39 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
         />
         {expertMetrics}
       </div>
-      <div className="mb-2.5 [&_fieldset]:inline-block [&_fieldset]:ml-2.5 [&_fieldset]:border-transparent">
-        <fieldset>
-          <legend>Validator filter</legend>
+      <div className="flex items-center gap-4 px-6 mb-4">
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-muted-foreground">
+            Validator
+          </label>
           <input
             type="text"
             value={validatorFilter}
             onChange={e => setValidatorFilter(e.target.value)}
+            placeholder="Search by name or vote account"
+            className="px-3 py-2 rounded-lg border border-border bg-input text-sm text-foreground placeholder:text-muted-foreground/50 focus:ring-2 focus:ring-ring focus:outline-none w-64"
           />
-        </fieldset>
-        <fieldset>
-          <legend>Epoch filter</legend>
-          <input
-            className="w-[70px]"
-            type="number"
-            value={minEpochFilter}
-            onChange={e => setMinEpochFilter(Number(e.target.value))}
-          />
-          <input
-            className="w-[70px]"
-            type="number"
-            value={maxEpochFilter}
-            onChange={e => setMaxEpochFilter(Number(e.target.value))}
-          />
-        </fieldset>
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-muted-foreground">
+            Epoch range
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              value={minEpochFilter}
+              onChange={e => setMinEpochFilter(Number(e.target.value))}
+              className="w-24 px-3 py-2 rounded-lg border border-border bg-input text-sm font-mono text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
+            />
+            <span className="text-muted-foreground text-sm">to</span>
+            <input
+              type="number"
+              value={maxEpochFilter}
+              onChange={e => setMaxEpochFilter(Number(e.target.value))}
+              className="w-24 px-3 py-2 rounded-lg border border-border bg-input text-sm font-mono text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
+            />
+          </div>
+        </div>
       </div>
       <Table
         data={filteredData}
@@ -234,7 +243,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
           {
             header: 'Validator',
             render: ({ protectedEvent }) => (
-              <span className="inline-block w-[100px] pt-1 text-ellipsis overflow-hidden">
+              <span className="inline-block max-w-[160px] text-ellipsis overflow-hidden whitespace-nowrap">
                 {protectedEvent.vote_account}
               </span>
             ),
@@ -246,7 +255,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
           {
             header: 'Name',
             render: ({ validator }) => (
-              <span className="inline-block w-[100px] pt-1 text-ellipsis overflow-hidden">
+              <span className="inline-block max-w-[160px] text-ellipsis overflow-hidden whitespace-nowrap">
                 {validator ? selectName(validator) : NO_NAME}
               </span>
             ),

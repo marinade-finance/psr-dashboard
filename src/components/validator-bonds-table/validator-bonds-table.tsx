@@ -106,8 +106,8 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
   }
 
   return (
-    <div className="relative [&>table]:ml-2.5">
-      <div className="flex p-2.5">
+    <div className="relative">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
         <Metric
           label="Bonds Funded"
           value={totalFundedBonds.toLocaleString()}
@@ -141,7 +141,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
             header: 'Validator',
             headerAttrsFn: () => tooltipAttributes('Validator Vote Account'),
             render: ({ validator }) => (
-              <span className="inline-block w-[100px] pt-1 text-ellipsis overflow-hidden">
+              <span className="inline-block max-w-[160px] text-ellipsis overflow-hidden whitespace-nowrap">
                 {selectVoteAccount(validator)}
               </span>
             ),
@@ -153,7 +153,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
           {
             header: 'Name',
             render: ({ validator }) => (
-              <span className="inline-block w-[100px] pt-1 text-ellipsis overflow-hidden">
+              <span className="inline-block max-w-[160px] text-ellipsis overflow-hidden whitespace-nowrap">
                 {selectName(validator)}
               </span>
             ),
