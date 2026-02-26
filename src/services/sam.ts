@@ -1,11 +1,3 @@
-import {
-  DsSamSDK,
-  InputsSource,
-  AuctionConstraintType,
-  loadSamConfig,
-  LogVerbosity,
-} from '@marinade.finance/ds-sam-sdk'
-
 import { Color } from 'src/components/table/table'
 import { formatPercentage } from 'src/format'
 
@@ -70,17 +62,18 @@ export const loadSam = async (
   dcSamConfig: DsSamConfig
 }> => {
   try {
-    const [epochsPerYear, config] = await Promise.all([
+    const [epochsPerYear, sdk] = await Promise.all([
       estimateEpochsPerYear(),
-      loadSamConfig(),
+      import('@marinade.finance/ds-sam-sdk'),
     ])
     console.log('epochsPerYear', epochsPerYear)
-    const dsSam = new DsSamSDK({
+    const config = await sdk.loadSamConfig()
+    const dsSam = new sdk.DsSamSDK({
       ...config,
-      inputsSource: InputsSource.APIS,
+      inputsSource: sdk.InputsSource.APIS,
       cacheInputs: true,
       debugVoteAccounts: [],
-      logVerbosity: LogVerbosity.ERROR,
+      logVerbosity: sdk.LogVerbosity.ERROR,
     })
     const auctionResult = await dsSam.runFinalOnly(dataOverrides)
     return { auctionResult, epochsPerYear, dcSamConfig: dsSam.config }
@@ -95,18 +88,18 @@ export type { SourceDataOverrides }
 export const lastCapConstraintDescription = (
   constraint: AuctionConstraint,
 ): string => {
-  switch (constraint.constraintType) {
-    case AuctionConstraintType.COUNTRY:
+  switch (constraint.constraintType as string) {
+    case 'COUNTRY':
       return `COUNTRY (${constraint.constraintName}) stake concentration`
-    case AuctionConstraintType.ASO:
+    case 'ASO':
       return `ASO (${constraint.constraintName}) stake concentration`
-    case AuctionConstraintType.VALIDATOR:
+    case 'VALIDATOR':
       return 'VALIDATOR stake concentration'
-    case AuctionConstraintType.BOND:
+    case 'BOND':
       return 'BOND setup (bond balance is too low)'
-    case AuctionConstraintType.WANT:
+    case 'WANT':
       return 'WANT (max stake wanted)'
-    case 'MNDE' as AuctionConstraintType:
+    case 'MNDE':
       return 'MNDE (bid too low or too little mnde votes)'
     default:
       return '[unknown]'

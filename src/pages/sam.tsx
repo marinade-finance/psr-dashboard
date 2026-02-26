@@ -1,9 +1,9 @@
 import React, { useState, useCallback, useMemo } from 'react'
 import { useQuery } from 'react-query'
 
-import { Loader } from 'src/components/loader/loader'
 import { Navigation } from 'src/components/navigation/navigation'
 import { SamTable } from 'src/components/sam-table/sam-table'
+import { SamSkeleton } from 'src/components/skeleton/skeleton'
 import { ValidatorDetail } from 'src/components/validator-detail/validator-detail'
 import { loadSam, selectBondSize } from 'src/services/sam'
 
@@ -345,7 +345,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
             Error fetching data
           </p>
         )}
-        {status === 'loading' && <Loader />}
+        {status === 'loading' && <SamSkeleton />}
         {status === 'success' && displayAuctionResult && (
           <div className="p-6">
             <SamTable
