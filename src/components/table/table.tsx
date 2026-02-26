@@ -1,7 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
 
-import styles from './table.module.css'
-
 import type { HTMLAttributes } from 'react'
 
 export const enum OrderDirection {
@@ -24,25 +22,23 @@ export enum Color {
 
 const alignmentClassName = (alignment?: Alignment) => {
   switch (alignment) {
-    case Alignment.LEFT:
-      return styles.left
     case Alignment.RIGHT:
-      return styles.right
+      return 'text-right'
     default:
-      return styles.left
+      return 'text-left'
   }
 }
 
 const colorClassName = (color?: Color) => {
   switch (color) {
     case Color.RED:
-      return styles.red
+      return 'bg-destructive-light'
     case Color.GREEN:
-      return styles.green
+      return 'bg-primary-light-10'
     case Color.YELLOW:
-      return styles.yellow
+      return 'bg-warning-light'
     default:
-      return styles.noBg
+      return 'bg-[unset]'
   }
 }
 
@@ -60,7 +56,6 @@ const renderHeader: <Item>(
   showRowNumber: boolean,
 ) => {
   const [userOrderColumn, userOrderDirection] = userOrder ?? [null, null]
-  // Get the primary default order column (first in defaultOrder array)
   const [defaultOrderColumn, defaultOrderDirection] = defaultOrder[0] ?? [
     null,
     null,
@@ -73,14 +68,14 @@ const renderHeader: <Item>(
         const isUserSorted = userOrderColumn === i
         const isDefaultSorted = !userOrder && defaultOrderColumn === i
 
-        let indicatorClass = styles.sortIndicator
+        let indicatorClass = 'ml-1 text-[10px] opacity-40'
         let indicator = ''
 
         if (isUserSorted) {
-          indicatorClass = `${styles.sortIndicator} ${styles.sortIndicatorActive}`
+          indicatorClass = 'ml-1 text-[10px] opacity-100 text-primary'
           indicator = userOrderDirection === OrderDirection.ASC ? '▲' : '▼'
         } else if (isDefaultSorted) {
-          indicatorClass = `${styles.sortIndicator} ${styles.sortIndicatorDefault}`
+          indicatorClass = 'ml-1 text-[10px] opacity-60 text-muted-foreground'
           indicator = defaultOrderDirection === OrderDirection.ASC ? '▲' : '▼'
         }
 
@@ -176,7 +171,7 @@ type Props<Item> = {
   ) => HTMLAttributes<HTMLTableRowElement>
   rowNumberRender?: (item: Item, index: number) => JSX.Element
   onOrderChange?: (order: Order[]) => void
-  presorted?: boolean // Skip internal sorting when data is already sorted
+  presorted?: boolean
 }
 
 export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
@@ -198,13 +193,11 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
     return [...defaultOrder]
   }, [userOrder, defaultOrder])
 
-  // Notify parent when order changes
   useEffect(() => {
     onOrderChange?.(order)
   }, [order, onOrderChange])
 
   const sortedData = useMemo(() => {
-    // Skip sorting if data is presorted (e.g., has special rows like ghosts)
     if (presorted) {
       return data
     }
@@ -213,11 +206,8 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
       for (const [columnIndex, orderDirection] of order) {
         const compareResult = columns[columnIndex].compare(a, b)
         if (compareResult !== undefined && compareResult !== 0) {
-          // Handle special null values - Infinity means "a is null, always goes to end"
           if (compareResult === Infinity) return 1
-          // -Infinity means "b is null, always goes to end"
           if (compareResult === -Infinity) return -1
-          // Normal comparison - apply sort direction
           return orderDirection === OrderDirection.ASC
             ? compareResult
             : -compareResult
@@ -242,7 +232,7 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
   }
 
   return (
-    <table className={styles.table}>
+    <table className="relative border-collapse border-spacing-0 w-full [&_thead]:sticky [&_thead]:top-0 [&_thead]:bg-background-page [&_thead]:text-muted-foreground [&_thead]:cursor-pointer [&_thead]:select-none [&_thead]:z-[1] [&_tbody]:bg-card [&_th]:relative [&_th]:px-4 [&_th]:py-3 [&_th]:whitespace-nowrap [&_th]:text-2xs [&_th]:font-semibold [&_th]:uppercase [&_th]:tracking-wider [&_th]:border-b [&_th]:border-border [&_td]:relative [&_td]:px-4 [&_td]:py-0.5 [&_td]:whitespace-nowrap [&_td]:text-sm [&_td]:font-mono [&_td]:border-b [&_td]:border-border-grid [&_tbody_tr:hover]:bg-primary-light-05 [&_tbody_tr:last-child_td]:border-b-0">
       <thead>
         {renderHeader(
           columns,
