@@ -23,7 +23,7 @@ import {
   selectVoteAccount,
 } from 'src/services/validators'
 
-import { tooltipAttributes } from '../../services/utils'
+import { HelpTip } from '../help-tip/help-tip'
 import { Metric } from '../metric/metric'
 import { Alignment, OrderDirection, Table } from '../table/table'
 
@@ -67,13 +67,14 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
   if (level === UserLevel.Expert) {
     expertMetrics = (
       <>
-        <Metric
-          label="Max Protectable Stake"
-          value={formatPercentage(totalMaxProtectedStake / totalMarinadeStake)}
-          {...tooltipAttributes(
-            "How much of Marinade's stake can be potentially protected if all bonds in the system are used",
-          )}
-        />
+        <HelpTip text="How much of Marinade's stake can be potentially protected if all bonds in the system are used">
+          <Metric
+            label="Max Protectable Stake"
+            value={formatPercentage(
+              totalMaxProtectedStake / totalMarinadeStake,
+            )}
+          />
+        </HelpTip>
       </>
     )
     expertColumns = [
@@ -108,30 +109,30 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
   return (
     <div className="relative">
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
-        <Metric
-          label="Bonds Funded"
-          value={totalFundedBonds.toLocaleString()}
-          {...tooltipAttributes('Count of currently funded bonds')}
-        />
-        <Metric
-          label="Bonds Balance"
-          value={`☉ ${formatSolAmount(effectiveBalance)}`}
-          {...tooltipAttributes(
-            'Total effective amount of SOL deposited to the bonds',
-          )}
-        />
-        <Metric
-          label="Marinade Stake"
-          value={`☉ ${formatSolAmount(totalMarinadeStake)}`}
-          {...tooltipAttributes('How much stake is distributed by Marinade')}
-        />
-        <Metric
-          label="Protected Stake"
-          value={formatPercentage(totalProtectedStake / totalMarinadeStake)}
-          {...tooltipAttributes(
-            "How much of Marinade's stake is protected by validators' deposits to the bonds",
-          )}
-        />
+        <HelpTip text="Count of currently funded bonds">
+          <Metric
+            label="Bonds Funded"
+            value={totalFundedBonds.toLocaleString()}
+          />
+        </HelpTip>
+        <HelpTip text="Total effective amount of SOL deposited to the bonds">
+          <Metric
+            label="Bonds Balance"
+            value={`☉ ${formatSolAmount(effectiveBalance)}`}
+          />
+        </HelpTip>
+        <HelpTip text="How much stake is distributed by Marinade">
+          <Metric
+            label="Marinade Stake"
+            value={`☉ ${formatSolAmount(totalMarinadeStake)}`}
+          />
+        </HelpTip>
+        <HelpTip text="How much of Marinade's stake is protected by validators' deposits to the bonds">
+          <Metric
+            label="Protected Stake"
+            value={formatPercentage(totalProtectedStake / totalMarinadeStake)}
+          />
+        </HelpTip>
         <>{expertMetrics}</>
       </div>
       <Table
@@ -139,7 +140,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
         columns={[
           {
             header: 'Validator',
-            headerAttrsFn: () => tooltipAttributes('Validator Vote Account'),
+            tooltip: 'Validator Vote Account',
             render: ({ validator }) => (
               <span className="inline-block max-w-[160px] text-ellipsis overflow-hidden whitespace-nowrap">
                 {selectVoteAccount(validator)}
@@ -178,10 +179,8 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
           },
           {
             header: 'Max Stake Wanted [☉]',
-            headerAttrsFn: () =>
-              tooltipAttributes(
-                "The max-stake-wanted parameter set up in contract. If not set up, max stake is not limited. The validator won't get more stake than what they set up here. No already delegated stake will be lost by decreasing this setting.",
-              ),
+            tooltip:
+              "The max-stake-wanted parameter set up in contract. If not set up, max stake is not limited. The validator won't get more stake than what they set up here. No already delegated stake will be lost by decreasing this setting.",
             render: ({ bond }) => {
               const maxStakeWanted = bond ? selectMaxStakeWanted(bond) : 0
               return (
@@ -198,24 +197,24 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
           },
           {
             header: 'Bond Comm.',
-            headerAttrsFn: () =>
-              tooltipAttributes(
-                'Current commission settings in the bond configuration. If the configured commission is lower ' +
-                  'than the on-chain commission, the difference is drawn from the funded bond.<br/>' +
-                  'Ordered by in-bond inflation commission.',
-              ),
-            cellAttrsFn: ({ bond }) =>
-              tooltipAttributes(
-                `Inflation commission: ${formatBps(bond?.inflation_commission_bps)}<br/>` +
-                  `MEV commission: ${formatBps(bond?.mev_commission_bps)}<br/>` +
-                  `Block rewards commission: ${formatBps(bond?.block_commission_bps)}`,
-              ),
+            tooltip:
+              'Current commission settings in the bond configuration. If the configured commission is lower ' +
+              'than the on-chain commission, the difference is drawn from the funded bond.<br/>' +
+              'Ordered by in-bond inflation commission.',
             render: ({ bond }) => (
-              <>
-                {formatBps(bond?.inflation_commission_bps)} /{' '}
-                {formatBps(bond?.mev_commission_bps)} /{' '}
-                {formatBps(bond?.block_commission_bps)}{' '}
-              </>
+              <HelpTip
+                text={
+                  `Inflation commission: ${formatBps(bond?.inflation_commission_bps)}<br/>` +
+                  `MEV commission: ${formatBps(bond?.mev_commission_bps)}<br/>` +
+                  `Block rewards commission: ${formatBps(bond?.block_commission_bps)}`
+                }
+              >
+                <span>
+                  {formatBps(bond?.inflation_commission_bps)} /{' '}
+                  {formatBps(bond?.mev_commission_bps)} /{' '}
+                  {formatBps(bond?.block_commission_bps)}{' '}
+                </span>
+              </HelpTip>
             ),
             compare: compareBondCommissions,
             alignment: Alignment.RIGHT,
@@ -223,13 +222,13 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
           {
             header: 'Marinade stake [☉]',
             render: ({ validator }) => (
-              <span
-                {...tooltipAttributes(
-                  `Native: ${formatSolAmount(selectNativeMarinadeStake(validator))}, Liquid: ${formatSolAmount(selectLiquidMarinadeStake(validator))}`,
-                )}
+              <HelpTip
+                text={`Native: ${formatSolAmount(selectNativeMarinadeStake(validator))}, Liquid: ${formatSolAmount(selectLiquidMarinadeStake(validator))}`}
               >
-                {formatSolAmount(selectTotalMarinadeStake(validator))}
-              </span>
+                <span>
+                  {formatSolAmount(selectTotalMarinadeStake(validator))}
+                </span>
+              </HelpTip>
             ),
             compare: (a, b) =>
               selectTotalMarinadeStake(a.validator) -
@@ -238,18 +237,16 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
           },
           {
             header: 'Eff. Cost [☉]',
-            headerAttrsFn: () =>
-              tooltipAttributes(
-                'Estimated total cost per epoch for the SAM stake that this validator received. ' +
-                  'This estimation does not consider the commission bidding never claims more than the real rewards earned in the epoch. ' +
-                  'And the potential penalties for rapid bid changes. (sorts by Eff. Bid)',
-              ),
-            cellAttrsFn: () =>
-              tooltipAttributes(
-                'Assumed cost per epoch for the SAM stake that this validator received.',
-              ),
+            tooltip:
+              'Estimated total cost per epoch for the SAM stake that this validator received. ' +
+              'This estimation does not consider the commission bidding never claims more than the real rewards earned in the epoch. ' +
+              'And the potential penalties for rapid bid changes. (sorts by Eff. Bid)',
             render: ({ auction }) => (
-              <>{auction ? round(selectEffectiveCost(auction), 1) : '-'}</>
+              <HelpTip text="Assumed cost per epoch for the SAM stake that this validator received.">
+                <span>
+                  {auction ? round(selectEffectiveCost(auction), 1) : '-'}
+                </span>
+              </HelpTip>
             ),
             compare: ({ auction: a }, { auction: b }) =>
               a && b
@@ -274,12 +271,8 @@ function compareBondCommissions(
 ): number | undefined {
   const aVal = aBond?.inflation_commission_bps
   const bVal = bBond?.inflation_commission_bps
-  // Both null/undefined - equal
   if (aVal == null && bVal == null) return 0
-  // Only a is null - always push to end (use Infinity so it stays at end regardless of sort direction)
   if (aVal == null) return Infinity
-  // Only b is null - always push to end (use -Infinity so it stays at end regardless of sort direction)
   if (bVal == null) return -Infinity
-  // Both have values - normal numeric sort
   return aVal - bVal
 }

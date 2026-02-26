@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 
+import { HelpTip } from '../help-tip/help-tip'
+
 import type { HTMLAttributes } from 'react'
 
 export const enum OrderDirection {
@@ -87,6 +89,7 @@ const renderHeader: <Item>(
             {...(column.headerAttrsFn ? column.headerAttrsFn() : {})}
           >
             {column.header}
+            {column.tooltip && <HelpTip text={column.tooltip} />}
             <span className={indicatorClass}>{indicator}</span>
           </th>
         )
@@ -152,6 +155,7 @@ const renderRow: <Item>(
 
 type Column<Item> = {
   header: string
+  tooltip?: string
   headerAttrsFn?: () => HTMLAttributes<HTMLTableCellElement>
   cellAttrsFn?: (item: Item) => HTMLAttributes<HTMLTableCellElement>
   render: (item: Item, index?: number) => JSX.Element

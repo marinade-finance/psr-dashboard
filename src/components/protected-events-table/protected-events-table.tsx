@@ -9,7 +9,7 @@ import {
 import { ProtectedEventStatus } from 'src/services/validator-with-protected_event'
 import { selectName } from 'src/services/validators'
 
-import { tooltipAttributes } from '../../services/utils'
+import { HelpTip } from '../help-tip/help-tip'
 import { Metric } from '../metric/metric'
 import { UserLevel } from '../navigation/navigation'
 import { Alignment, OrderDirection, Table } from '../table/table'
@@ -23,25 +23,19 @@ const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
   switch (status) {
     case ProtectedEventStatus.DRYRUN:
       return (
-        <span
-          {...tooltipAttributes(
-            'This settlement is not claimable as it was created during the testing period.',
-          )}
-          className="rounded-sm px-1 cursor-help float-left bg-background-page text-foreground"
-        >
-          Dryrun
-        </span>
+        <HelpTip text="This settlement is not claimable as it was created during the testing period.">
+          <span className="rounded-sm px-1 float-left bg-background-page text-foreground">
+            Dryrun
+          </span>
+        </HelpTip>
       )
     case ProtectedEventStatus.ESTIMATE:
       return (
-        <span
-          {...tooltipAttributes(
-            'This is an estimate based on live data but may change during the epoch<br />before the settlements for this epoch are created on-chain.',
-          )}
-          className="rounded-sm px-1 cursor-help float-left bg-[#91e4b7] text-black"
-        >
-          Estimate
-        </span>
+        <HelpTip text="This is an estimate based on live data but may change during the epoch<br />before the settlements for this epoch are created on-chain.">
+          <span className="rounded-sm px-1 float-left bg-[#91e4b7] text-black">
+            Estimate
+          </span>
+        </HelpTip>
       )
     default:
       return <></>
@@ -52,25 +46,15 @@ const renderProtectedEventFunder = (protectedEvent: ProtectedEvent) => {
   switch (protectedEvent.meta.funder) {
     case 'Marinade':
       return (
-        <span
-          className="cursor-help"
-          {...tooltipAttributes(
-            "This settlement is funded by Marinade DAO because the yield loss<br />is beyond what the validator's are expected to cover.",
-          )}
-        >
-          Marinade
-        </span>
+        <HelpTip text="This settlement is funded by Marinade DAO because the yield loss<br />is beyond what the validator's are expected to cover.">
+          <span>Marinade</span>
+        </HelpTip>
       )
     case 'ValidatorBond':
       return (
-        <span
-          className="cursor-help"
-          {...tooltipAttributes(
-            'This settlement is funded by the validator because the yield loss<br />is within amount which the validator is expected to cover.',
-          )}
-        >
-          Validator
-        </span>
+        <HelpTip text="This settlement is funded by the validator because the yield loss<br />is within amount which the validator is expected to cover.">
+          <span>Validator</span>
+        </HelpTip>
       )
     default:
       return <></>
@@ -148,13 +132,12 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
   if (level === UserLevel.Expert) {
     expertMetrics = (
       <>
-        <Metric
-          label="Last Epoch Bids"
-          value={`☉ ${formatSolAmount(lastEpochBids)}`}
-          {...tooltipAttributes(
-            "Last Settled Epoch's Bids collectable By Users",
-          )}
-        />
+        <HelpTip text="Last Settled Epoch's Bids collectable By Users">
+          <Metric
+            label="Last Epoch Bids"
+            value={`☉ ${formatSolAmount(lastEpochBids)}`}
+          />
+        </HelpTip>
       </>
     )
   }
@@ -164,37 +147,37 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
   return (
     <div className="relative">
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
-        <Metric
-          label="Total events"
-          value={totalEvents.toLocaleString()}
-          {...tooltipAttributes('Total Count of Protected Events')}
-        />
-        <Metric
-          label="Total amount"
-          value={`☉ ${formatSolAmount(totalAmount)}`}
-          {...tooltipAttributes('Total Amount of SOL Claimable by Users')}
-        />
-        {filtered && (
+        <HelpTip text="Total Count of Protected Events">
+          <Metric label="Total events" value={totalEvents.toLocaleString()} />
+        </HelpTip>
+        <HelpTip text="Total Amount of SOL Claimable by Users">
           <Metric
-            label="Filtered Events"
-            value={filteredEvents.toLocaleString()}
-            {...tooltipAttributes('Count of Filtered Protected Events')}
+            label="Total amount"
+            value={`☉ ${formatSolAmount(totalAmount)}`}
           />
+        </HelpTip>
+        {filtered && (
+          <HelpTip text="Count of Filtered Protected Events">
+            <Metric
+              label="Filtered Events"
+              value={filteredEvents.toLocaleString()}
+            />
+          </HelpTip>
         )}
         {filtered && (
-          <Metric
-            label="Filtered Amount"
-            value={`☉ ${formatSolAmount(filteredAmount)}`}
-            {...tooltipAttributes('Filtered Amount of SOL Claimable By Users')}
-          />
+          <HelpTip text="Filtered Amount of SOL Claimable By Users">
+            <Metric
+              label="Filtered Amount"
+              value={`☉ ${formatSolAmount(filteredAmount)}`}
+            />
+          </HelpTip>
         )}
-        <Metric
-          label="Last Settled Amount"
-          value={`☉ ${formatSolAmount(lastSettledEpochAmount)}`}
-          {...tooltipAttributes(
-            "Last Settled Epoch's Amount of SOL Claimable By Users",
-          )}
-        />
+        <HelpTip text="Last Settled Epoch's Amount of SOL Claimable By Users">
+          <Metric
+            label="Last Settled Amount"
+            value={`☉ ${formatSolAmount(lastSettledEpochAmount)}`}
+          />
+        </HelpTip>
         {expertMetrics}
       </div>
       <div className="flex items-center gap-4 px-6 mb-4">
