@@ -25,9 +25,10 @@ export enum Color {
 
 const TABLE_BASE = [
   'relative border-collapse [border-spacing:0]',
-  '[&_thead]:sticky [&_thead]:top-0 [&_thead]:bg-card',
+  '[&_thead]:sticky [&_thead]:top-0 [&_thead]:bg-secondary',
   '[&_thead]:text-foreground [&_thead]:cursor-pointer',
   '[&_thead]:select-none [&_thead]:z-[1]',
+  '[&_thead]:border-b [&_thead]:border-border',
   '[&_tbody]:bg-background-page',
   '[&_th]:relative [&_th]:px-4 [&_th]:py-2 [&_th]:whitespace-nowrap',
   '[&_td]:relative [&_td]:px-4 [&_td]:py-1 [&_td]:whitespace-nowrap',

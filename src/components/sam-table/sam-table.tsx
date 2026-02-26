@@ -551,14 +551,14 @@ export const SamTable: React.FC<Props> = ({
   }
 
   const simulationCaption = simulationModeActive ? (
-    <div className="px-8 py-4 bg-gradient-to-br from-[rgba(15,25,60,1)] to-[rgba(40,45,80,1)] text-primary text-lg font-semibold tracking-wide text-center uppercase">
+    <div className="px-8 py-4 bg-gradient-to-br from-[rgba(15,25,60,1)] to-[rgba(40,45,80,1)] text-primary text-lg font-semibold tracking-wider text-center uppercase rounded-t-lg border-b border-border-grid">
       {isCalculating ? 'Calculating simulation...' : 'Simulation mode active'}
     </div>
   ) : undefined
 
   const renderBasicTable = () => (
     <Table
-      className="border-separate border-spacing-y-1 border-spacing-x-0 font-sans [&_thead_th]:font-medium [&_thead_th]:text-[11px] [&_thead_th]:tracking-wide [&_thead_th]:text-muted-foreground [&_thead_th]:px-4 [&_thead_th]:py-2 [&_tbody_tr]:transition-colors [&_tbody_td]:px-4 [&_tbody_td]:py-3 [&_tbody_td]:bg-card [&_tbody_td]:border-y [&_tbody_td]:border-border-grid [&_tbody_td:first-child]:border-l-[3px] [&_tbody_td:first-child]:border-l-transparent [&_tbody_td:first-child]:rounded-l-lg [&_tbody_td:last-child]:border-r [&_tbody_td:last-child]:border-r-border-grid [&_tbody_td:last-child]:rounded-r-lg [&_tbody_tr:hover_td]:bg-primary-alpha [&_tbody_tr:hover_td:first-child]:border-l-primary"
+      className="border-separate border-spacing-y-1 border-spacing-x-0 font-sans [&_thead_th]:font-medium [&_thead_th]:text-[11px] [&_thead_th]:tracking-wide [&_thead_th]:text-muted-foreground [&_thead_th]:uppercase [&_thead_th]:px-4 [&_thead_th]:py-2 [&_tbody_tr]:transition-colors [&_tbody_td]:px-4 [&_tbody_td]:py-3 [&_tbody_td]:bg-card [&_tbody_td]:border-y [&_tbody_td]:border-border-grid [&_tbody_td:first-child]:border-l-[3px] [&_tbody_td:first-child]:border-l-transparent [&_tbody_td:first-child]:rounded-l-lg [&_tbody_td:last-child]:border-r [&_tbody_td:last-child]:border-r-border-grid [&_tbody_td:last-child]:rounded-r-lg [&_tbody_tr:hover_td]:bg-primary-alpha [&_tbody_tr:hover_td:first-child]:border-l-primary"
       caption={simulationCaption}
       data={displayValidators}
       rowAttrsFn={(item, _index) => {
