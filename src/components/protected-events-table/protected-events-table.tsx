@@ -150,7 +150,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
       <>
         <Metric
           label="Last Epoch Bids"
-          value={`☉ ${formatSolAmount(lastEpochBids)}`}
+          value={`${formatSolAmount(lastEpochBids)} SOL`}
           {...tooltipAttributes(
             "Last Settled Epoch's Bids collectable By Users",
           )}
@@ -171,7 +171,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
         />
         <Metric
           label="Total amount"
-          value={`☉ ${formatSolAmount(totalAmount)}`}
+          value={`${formatSolAmount(totalAmount)} SOL`}
           {...tooltipAttributes('Total Amount of SOL Claimable by Users')}
         />
         {filtered && (
@@ -184,13 +184,13 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
         {filtered && (
           <Metric
             label="Filtered Amount"
-            value={`☉ ${formatSolAmount(filteredAmount)}`}
+            value={`${formatSolAmount(filteredAmount)} SOL`}
             {...tooltipAttributes('Filtered Amount of SOL Claimable By Users')}
           />
         )}
         <Metric
           label="Last Settled Amount"
-          value={`☉ ${formatSolAmount(lastSettledEpochAmount)}`}
+          value={`${formatSolAmount(lastSettledEpochAmount)} SOL`}
           {...tooltipAttributes(
             "Last Settled Epoch's Amount of SOL Claimable By Users",
           )}
@@ -259,7 +259,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
               ),
           },
           {
-            header: 'Settlement [☉]',
+            header: 'Settlement [SOL]',
             render: ({ protectedEvent, status }) => (
               <>
                 {renderProtectedEventStatus(status)}{' '}

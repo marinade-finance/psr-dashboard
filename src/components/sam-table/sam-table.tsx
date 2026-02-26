@@ -494,7 +494,7 @@ export const SamTable: React.FC<Props> = ({
           />
           <Metric
             label="T. Unprotected"
-            value={`\u2609 ${formatSolAmount(unprotectedStake, 0)}`}
+            value={`${formatSolAmount(unprotectedStake, 0)} SOL`}
             {...tooltipAttributes('Target delegation beyond bond coverage')}
           />
           <Metric
@@ -506,7 +506,7 @@ export const SamTable: React.FC<Props> = ({
           />
           <Metric
             label="Conc. TVL"
-            value={`\u2609 ${formatSolAmount(backstopTvl, 0)}`}
+            value={`${formatSolAmount(backstopTvl, 0)} SOL`}
             {...tooltipAttributes(
               'Target stake concentrated in top 5 validators',
             )}
@@ -531,7 +531,7 @@ export const SamTable: React.FC<Props> = ({
     apyMetrics = (
       <Metric
         label="Ideal APY"
-        value={`\u2609 ${formatPercentage(projectedApy / activeStake)}`}
+        value={formatPercentage(projectedApy / activeStake)}
         {...tooltipAttributes(
           'Estimated APY of currently active stake; assumes no Marinade fees; assumes all distributed stake is active',
         )}
@@ -541,7 +541,7 @@ export const SamTable: React.FC<Props> = ({
     apyMetrics = (
       <Metric
         label="Projected APY"
-        value={`\u2609 ${formatPercentage(projectedApy)}`}
+        value={formatPercentage(projectedApy)}
         subtitle="Estimated staker return"
         {...tooltipAttributes(
           'Estimated APY of currently active stake; assumes no Marinade fees',
@@ -641,7 +641,7 @@ export const SamTable: React.FC<Props> = ({
               `Infl: ${formattedOnChainCommission(item.validator)}<br/>` +
                 `MEV: ${formattedMevCommission(item.validator)}<br/>` +
                 `Block: ${formattedBlockRewardsCommission(item.validator)}<br/>` +
-                `Bid: \u2609${formatSolAmount(selectBid(item.validator), 4)}`,
+                `Bid: ${formatSolAmount(selectBid(item.validator), 4)} SOL`,
             ),
           render: item => (
             <>
@@ -673,9 +673,8 @@ export const SamTable: React.FC<Props> = ({
                     bondDotClass(validator.bondState),
                   )}
                 />
-                {bondLabel(validator.bondState)}
-                {' \u2609'}
-                {formatSolAmount(selectBondSize(validator), 0)}
+                {bondLabel(validator.bondState)}{' '}
+                {formatSolAmount(selectBondSize(validator), 0)} SOL
               </span>
             )
           },
@@ -695,8 +694,8 @@ export const SamTable: React.FC<Props> = ({
             ),
           cellAttrsFn: item =>
             tooltipAttributes(
-              `Active: \u2609${formatSolAmount(selectSamActiveStake(item.validator), 0)}<br/>` +
-                `Target: \u2609${formatSolAmount(selectSamTargetStake(item.validator), 0)}`,
+              `Active: ${formatSolAmount(selectSamActiveStake(item.validator), 0)} SOL<br/>` +
+                `Target: ${formatSolAmount(selectSamTargetStake(item.validator), 0)} SOL`,
             ),
           render: item => {
             const delta = selectStakeDelta(item.validator)
@@ -1000,7 +999,7 @@ export const SamTable: React.FC<Props> = ({
           alignment: Alignment.RIGHT,
         },
         {
-          header: 'Bond [\u2609]',
+          header: 'Bond [SOL]',
           headerAttrsFn: () => tooltipAttributes('Bond Balance.'),
           cellAttrsFn: item =>
             tooltipAttributes(bondTooltip(item.validator.bondState)),
@@ -1036,15 +1035,15 @@ export const SamTable: React.FC<Props> = ({
           alignment: Alignment.RIGHT,
         },
         {
-          header: 'Stake \u0394 [\u2609]',
+          header: 'Stake \u0394 [SOL]',
           headerAttrsFn: () =>
             tooltipAttributes(
               'Change from active to target stake (target \u2212 active). Sorts by target stake.',
             ),
           cellAttrsFn: item =>
             tooltipAttributes(
-              `Active: \u2609${formatSolAmount(selectSamActiveStake(item.validator), 0)}<br/>` +
-                `Target: \u2609${formatSolAmount(selectSamTargetStake(item.validator), 0)}`,
+              `Active: ${formatSolAmount(selectSamActiveStake(item.validator), 0)} SOL<br/>` +
+                `Target: ${formatSolAmount(selectSamTargetStake(item.validator), 0)} SOL`,
             ),
           render: item => {
             const delta = selectStakeDelta(item.validator)
@@ -1061,7 +1060,7 @@ export const SamTable: React.FC<Props> = ({
           alignment: Alignment.RIGHT,
         },
         {
-          header: 'Eff. Bid [\u2609]',
+          header: 'Eff. Bid [SOL]',
           headerAttrsFn: () =>
             tooltipAttributes(
               'Effective bid used in the auction calculation, combining the static bid and commission settings. ' +
@@ -1116,7 +1115,7 @@ export const SamTable: React.FC<Props> = ({
         <div className="flex flex-wrap gap-2">
           <Metric
             label="Total Auction Stake"
-            value={`\u2609 ${formatSolAmount(samDistributedStake)}`}
+            value={`${formatSolAmount(samDistributedStake)} SOL`}
             subtitle={
               level !== UserLevel.Expert
                 ? 'Total stake distributed via auction'
@@ -1128,7 +1127,7 @@ export const SamTable: React.FC<Props> = ({
           />
           <Metric
             label="Winning APY"
-            value={`\u2609 ${formatPercentage(winningAPY)}`}
+            value={formatPercentage(winningAPY)}
             subtitle={
               level !== UserLevel.Expert
                 ? 'Last winning validator APY'

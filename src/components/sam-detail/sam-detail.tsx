@@ -153,7 +153,7 @@ export function SamDetail({
     `Inflation: ${formatPercentage(revShare.inflationPmpe / 1000, 4)} / epoch`,
     `MEV: ${formatPercentage(revShare.mevPmpe / 1000, 4)} / epoch`,
     `Block: ${formatPercentage(revShare.blockPmpe / 1000, 4)} / epoch`,
-    `Bid: \u2609${formatSolAmount(revShare.auctionEffectiveBidPmpe, 4)}`,
+    `Bid: ${formatSolAmount(revShare.auctionEffectiveBidPmpe, 4)} SOL`,
   ].join('\n')
 
   return (
@@ -225,7 +225,7 @@ export function SamDetail({
             </span>
           </div>
           <div className="text-sm text-foreground">
-            \u2609 {formatSolAmount(bondBalance, 2)} SOL
+            {formatSolAmount(bondBalance, 2)} SOL
           </div>
           <div className="h-1.5 bg-secondary rounded-full overflow-hidden mt-1">
             <div
@@ -248,7 +248,7 @@ export function SamDetail({
             {formatSolAmount(Math.abs(delta), 0)}
           </div>
           <div className="text-xs text-muted-foreground">
-            Target: \u2609 {formatSolAmount(targetStake, 0)}
+            Target: {formatSolAmount(targetStake, 0)} SOL
           </div>
         </div>
       </div>
@@ -315,7 +315,7 @@ export function SamDetail({
           <div className="flex justify-between items-baseline gap-2">
             <span className="text-xs text-muted-foreground">Balance</span>
             <span className="text-xs text-foreground font-medium">
-              \u2609 {formatSolAmount(bondBalance, 2)}
+              {formatSolAmount(bondBalance, 2)} SOL
             </span>
           </div>
           <div className="flex justify-between items-baseline gap-2">
@@ -348,13 +348,13 @@ export function SamDetail({
           <div className="flex justify-between items-baseline gap-2">
             <span className="text-xs text-muted-foreground">Active</span>
             <span className="text-xs text-foreground font-medium">
-              \u2609 {formatSolAmount(activeStake, 0)}
+              {formatSolAmount(activeStake, 0)} SOL
             </span>
           </div>
           <div className="flex justify-between items-baseline gap-2">
             <span className="text-xs text-muted-foreground">Target</span>
             <span className="text-xs text-foreground font-medium">
-              \u2609 {formatSolAmount(targetStake, 0)}
+              {formatSolAmount(targetStake, 0)} SOL
             </span>
           </div>
           <div className="flex justify-between items-baseline gap-2">
