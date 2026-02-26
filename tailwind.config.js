@@ -27,6 +27,12 @@ module.exports = {
         'cell-green': 'var(--cell-green)',
         'cell-yellow': 'var(--cell-yellow)',
         'cell-grey': 'var(--cell-grey)',
+        status: {
+          green: 'var(--status-green)',
+          yellow: 'var(--status-yellow)',
+          red: 'var(--status-red)',
+          grey: 'var(--status-grey)',
+        },
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],

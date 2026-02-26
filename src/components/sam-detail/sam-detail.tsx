@@ -29,13 +29,13 @@ type Props = {
 function bondDotColor(color: Color): string {
   switch (color) {
     case Color.GREEN:
-      return 'bg-green-400'
+      return 'bg-status-green'
     case Color.YELLOW:
-      return 'bg-yellow-400'
+      return 'bg-status-yellow'
     case Color.RED:
-      return 'bg-red-400'
+      return 'bg-status-red'
     default:
-      return 'bg-muted-foreground'
+      return 'bg-status-grey'
   }
 }
 
@@ -55,24 +55,24 @@ function bondLabel(color: Color): string {
 function bondProgressColor(color: Color): string {
   switch (color) {
     case Color.GREEN:
-      return 'bg-green-400'
+      return 'bg-status-green'
     case Color.YELLOW:
-      return 'bg-yellow-400'
+      return 'bg-status-yellow'
     case Color.RED:
-      return 'bg-red-400'
+      return 'bg-status-red'
     default:
-      return 'bg-muted-foreground'
+      return 'bg-status-grey'
   }
 }
 
 function bondCardBorder(color: Color): string {
   switch (color) {
     case Color.GREEN:
-      return 'border-green-500/40'
+      return 'border-status-green/40'
     case Color.YELLOW:
-      return 'border-yellow-500/40'
+      return 'border-status-yellow/40'
     case Color.RED:
-      return 'border-red-500/40'
+      return 'border-status-red/40'
     default:
       return 'border-border-grid'
   }
@@ -81,11 +81,11 @@ function bondCardBorder(color: Color): string {
 function bondHealthTextColor(color: Color): string {
   switch (color) {
     case Color.GREEN:
-      return 'text-green-400'
+      return 'text-status-green'
     case Color.YELLOW:
-      return 'text-yellow-400'
+      return 'text-status-yellow'
     case Color.RED:
-      return 'text-red-400'
+      return 'text-status-red'
     default:
       return 'text-muted-foreground'
   }
@@ -94,11 +94,11 @@ function bondHealthTextColor(color: Color): string {
 function severityBorderClass(severity: string): string {
   switch (severity) {
     case 'positive':
-      return 'border-green-500/40'
+      return 'border-status-green/40'
     case 'warning':
-      return 'border-yellow-500/40'
+      return 'border-status-yellow/40'
     case 'critical':
-      return 'border-red-500/40'
+      return 'border-status-red/40'
     default:
       return 'border-border-grid'
   }
@@ -144,9 +144,9 @@ export function SamDetail({
 
   const deltaColor =
     delta > 0
-      ? 'text-green-400'
+      ? 'text-status-green'
       : delta < 0
-        ? 'text-red-400'
+        ? 'text-status-red'
         : 'text-muted-foreground'
 
   const apyTooltip = [
@@ -188,7 +188,7 @@ export function SamDetail({
         >
           {validator.voteAccount}
         </span>
-        {copied && <span className="text-green-400 text-xs">Copied!</span>}
+        {copied && <span className="text-status-green text-xs">Copied!</span>}
       </div>
 
       {/* Summary cards */}

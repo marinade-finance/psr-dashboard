@@ -24,7 +24,7 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
   const isExpert = level === UserLevel.Expert
   const prefix = isExpert ? 'expert-' : ''
   return (
-    <div className="navigation flex items-center bg-card border-b border-border-grid shadow-card [&_a]:no-underline">
+    <div className="navigation flex items-center h-12 bg-card/80 backdrop-blur-md border-b border-border-grid shadow-card [&_a]:no-underline">
       <NavLink to={`/${prefix}`}>
         {({ isActive }) => (
           <div className={cn(tab, isActive && tabActive)}>

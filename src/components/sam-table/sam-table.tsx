@@ -121,13 +121,13 @@ function bondLabel(color: Color): string {
 }
 
 const bondDotColor: Record<string, string> = {
-  [Color.GREEN]: 'bg-green-500',
-  [Color.YELLOW]: 'bg-yellow-500',
-  [Color.RED]: 'bg-red-500',
+  [Color.GREEN]: 'bg-status-green',
+  [Color.YELLOW]: 'bg-status-yellow',
+  [Color.RED]: 'bg-status-red',
 }
 
 function bondDotClass(color: Color): string {
-  return bondDotColor[color] ?? 'bg-muted-foreground'
+  return bondDotColor[color] ?? 'bg-status-grey'
 }
 
 function renderEditableCell(
@@ -384,14 +384,14 @@ export const SamTable: React.FC<Props> = ({
     }
     const delta = Math.abs(currentPosition - orig)
     if (currentPosition < orig) {
-      if (delta >= 5) return 'positionImproved [&_td]:bg-green-500/[0.35]'
-      if (delta >= 3) return 'positionImproved [&_td]:bg-green-500/[0.22]'
-      return 'positionImproved [&_td]:bg-green-500/[0.12]'
+      if (delta >= 5) return 'positionImproved [&_td]:bg-status-green/[0.35]'
+      if (delta >= 3) return 'positionImproved [&_td]:bg-status-green/[0.22]'
+      return 'positionImproved [&_td]:bg-status-green/[0.12]'
     }
     if (currentPosition > orig) {
-      if (delta >= 5) return 'positionWorsened [&_td]:bg-red-500/[0.35]'
-      if (delta >= 3) return 'positionWorsened [&_td]:bg-red-500/[0.22]'
-      return 'positionWorsened [&_td]:bg-red-500/[0.12]'
+      if (delta >= 5) return 'positionWorsened [&_td]:bg-status-red/[0.35]'
+      if (delta >= 3) return 'positionWorsened [&_td]:bg-status-red/[0.22]'
+      return 'positionWorsened [&_td]:bg-status-red/[0.12]'
     }
     return 'positionUnchanged [&_td]:bg-white/[0.12]'
   }
@@ -551,14 +551,14 @@ export const SamTable: React.FC<Props> = ({
   }
 
   const simulationCaption = simulationModeActive ? (
-    <div className="px-8 py-4 bg-gradient-to-br from-[rgba(15,25,60,1)] to-[rgba(40,45,80,1)] text-primary text-lg font-semibold tracking-wider text-center uppercase rounded-t-lg border-b border-border-grid">
+    <div className="px-8 py-4 bg-gradient-to-br from-[rgba(5,30,28,1)] to-[rgba(15,50,48,1)] text-primary text-lg font-semibold tracking-wider text-center uppercase rounded-t-lg border-b border-border-grid">
       {isCalculating ? 'Calculating simulation...' : 'Simulation mode active'}
     </div>
   ) : undefined
 
   const renderBasicTable = () => (
     <Table
-      className="border-separate border-spacing-y-1 border-spacing-x-0 font-sans [&_thead_th]:font-medium [&_thead_th]:text-[11px] [&_thead_th]:tracking-wide [&_thead_th]:text-muted-foreground [&_thead_th]:uppercase [&_thead_th]:px-4 [&_thead_th]:py-2 [&_tbody_tr]:transition-colors [&_tbody_td]:px-4 [&_tbody_td]:py-3 [&_tbody_td]:bg-card [&_tbody_td]:border-y [&_tbody_td]:border-border-grid [&_tbody_td:first-child]:rounded-l-xl [&_tbody_td:last-child]:rounded-r-xl [&_tbody_tr:hover_td]:bg-primary-alpha"
+      className="border-separate border-spacing-y-1 border-spacing-x-0 font-sans [&_thead_th]:font-medium [&_thead_th]:text-[11px] [&_thead_th]:tracking-wide [&_thead_th]:text-muted-foreground [&_thead_th]:px-4 [&_thead_th]:py-2 [&_tbody_tr]:transition-colors [&_tbody_td]:px-4 [&_tbody_td]:py-3 [&_tbody_td]:bg-card [&_tbody_td]:border-y [&_tbody_td]:border-border-grid [&_tbody_td:first-child]:rounded-l-xl [&_tbody_td:last-child]:rounded-r-xl [&_tbody_tr:hover_td]:bg-primary-alpha"
       caption={simulationCaption}
       data={displayValidators}
       rowAttrsFn={(item, _index) => {
@@ -705,9 +705,9 @@ export const SamTable: React.FC<Props> = ({
             return (
               <span
                 className={cn(
-                  delta > 0 && 'text-green-400',
-                  delta < 0 && 'text-red-400',
-                  delta === 0 && 'text-muted-foreground',
+                  delta > 0 && 'text-status-green',
+                  delta < 0 && 'text-status-red',
+                  delta === 0 && 'text-status-grey',
                 )}
               >
                 {arrow}
@@ -734,9 +734,9 @@ export const SamTable: React.FC<Props> = ({
             return (
               <span
                 className={cn(
-                  rec.severity === 'critical' && 'text-red-500',
-                  rec.severity === 'warning' && 'text-yellow-500',
-                  rec.severity === 'positive' && 'text-green-500',
+                  rec.severity === 'critical' && 'text-status-red',
+                  rec.severity === 'warning' && 'text-status-yellow',
+                  rec.severity === 'positive' && 'text-status-green',
                 )}
               >
                 {rec.text}
@@ -1105,9 +1105,9 @@ export const SamTable: React.FC<Props> = ({
       className={cn(
         'relative [&>table]:ml-2.5',
         simulationModeActive && [
-          '[&>table_tbody]:bg-blue-900/[0.08]',
-          '[&>table_tbody_tr]:bg-blue-900/[0.06]',
-          '[&>table_thead]:bg-gradient-to-br [&>table_thead]:from-[rgba(15,25,60,1)] [&>table_thead]:to-[rgba(40,45,80,1)] [&>table_thead]:transition-[background] [&>table_thead]:duration-[800ms] [&>table_thead]:ease-in-out',
+          '[&>table_tbody]:bg-[rgba(5,30,28,0.08)]',
+          '[&>table_tbody_tr]:bg-[rgba(5,30,28,0.06)]',
+          '[&>table_thead]:bg-gradient-to-br [&>table_thead]:from-[rgba(5,30,28,1)] [&>table_thead]:to-[rgba(15,50,48,1)] [&>table_thead]:transition-[background] [&>table_thead]:duration-[800ms] [&>table_thead]:ease-in-out',
         ],
         isCalculating && 'header-glow',
       )}

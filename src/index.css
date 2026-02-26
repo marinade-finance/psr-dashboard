@@ -29,13 +29,17 @@
     --cell-green: rgba(12, 151, 144, 0.12);
     --cell-yellow: rgba(229, 150, 6, 0.12);
     --cell-grey: rgba(100, 116, 139, 0.10);
+    --status-green: #16a34a;
+    --status-yellow: #ca8a04;
+    --status-red: #dc2626;
+    --status-grey: #6b7280;
   }
 
   .dark {
     --background: #030707;
     --background-page: #050D0C;
     --foreground: #F6F9F9;
-    --card: #0A1514;
+    --card: #0F1F1E;
     --card-foreground: #F6F9F9;
     --secondary: #212C2B;
     --secondary-foreground: #F6F9F9;
@@ -57,6 +61,10 @@
     --cell-green: rgba(58, 195, 188, 0.15);
     --cell-yellow: rgba(251, 146, 60, 0.18);
     --cell-grey: rgba(128, 128, 128, 0.30);
+    --status-green: #4ade80;
+    --status-yellow: #fbbf24;
+    --status-red: #f87171;
+    --status-grey: #6b7280;
   }
 
   html {
@@ -111,10 +119,10 @@
 
   @keyframes header-glow {
     0%, 100% {
-      background: linear-gradient(135deg, rgba(15, 25, 60, 1), rgba(40, 45, 80, 1));
+      background: linear-gradient(135deg, rgba(5, 30, 28, 1), rgba(15, 50, 48, 1));
     }
     50% {
-      background: linear-gradient(135deg, rgba(15, 70, 140, 1), rgba(55, 90, 170, 1));
+      background: linear-gradient(135deg, rgba(10, 60, 56, 1), rgba(20, 80, 76, 1));
     }
   }
 }
