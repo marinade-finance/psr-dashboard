@@ -41,6 +41,7 @@ import {
   getRecommendation,
   isoToFlag,
   selectStakeDelta,
+  lastCapConstraintDescription,
 } from 'src/services/sam'
 
 import styles from './sam-table.module.css'
@@ -1027,9 +1028,7 @@ export const SamTable: React.FC<Props> = ({
                 `Target: \u2609${formatSolAmount(selectSamTargetStake(item.validator), 0)}`,
             ),
           render: item => {
-            const delta =
-              selectSamTargetStake(item.validator) -
-              selectSamActiveStake(item.validator)
+            const delta = selectStakeDelta(item.validator)
             return (
               <>
                 {delta > 0 ? '+' : ''}
@@ -1067,13 +1066,7 @@ export const SamTable: React.FC<Props> = ({
           render: item => {
             const { lastCapConstraint } = item.validator
             if (!lastCapConstraint) return <>{'\u2014'}</>
-            return (
-              <>
-                {selectConstraintText(item.validator)
-                  .replace('Stake capped by ', '')
-                  .replace(' constraint', '')}
-              </>
-            )
+            return <>{lastCapConstraintDescription(lastCapConstraint)}</>
           },
           compare: (a, b) =>
             selectConstraintText(a.validator).localeCompare(
