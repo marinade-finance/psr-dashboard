@@ -102,9 +102,10 @@ type Props = {
   onCancelEditing: () => void
 }
 
-const CLICKABLE_ROW = 'cursor-pointer hover:bg-blue-500/10'
+const CLICKABLE_ROW =
+  'validatorRowClickable cursor-pointer hover:bg-blue-500/10'
 const GHOST_ROW =
-  '!cursor-default pointer-events-none [&_td]:line-through [&_td]:text-[#a0a0b0] [&_td]:!bg-[rgba(80,70,100,0.35)] [&_td_span]:line-through [&_td_div]:line-through'
+  'ghostRow !cursor-default pointer-events-none [&_td]:line-through [&_td]:text-[#a0a0b0] [&_td]:!bg-[rgba(80,70,100,0.35)] [&_td_span]:line-through [&_td_div]:line-through'
 
 function bondLabel(color: Color): string {
   switch (color) {
@@ -383,16 +384,16 @@ export const SamTable: React.FC<Props> = ({
     }
     const delta = Math.abs(currentPosition - orig)
     if (currentPosition < orig) {
-      if (delta >= 5) return '[&_td]:bg-green-500/[0.35]'
-      if (delta >= 3) return '[&_td]:bg-green-500/[0.22]'
-      return '[&_td]:bg-green-500/[0.12]'
+      if (delta >= 5) return 'positionImproved [&_td]:bg-green-500/[0.35]'
+      if (delta >= 3) return 'positionImproved [&_td]:bg-green-500/[0.22]'
+      return 'positionImproved [&_td]:bg-green-500/[0.12]'
     }
     if (currentPosition > orig) {
-      if (delta >= 5) return '[&_td]:bg-red-500/[0.35]'
-      if (delta >= 3) return '[&_td]:bg-red-500/[0.22]'
-      return '[&_td]:bg-red-500/[0.12]'
+      if (delta >= 5) return 'positionWorsened [&_td]:bg-red-500/[0.35]'
+      if (delta >= 3) return 'positionWorsened [&_td]:bg-red-500/[0.22]'
+      return 'positionWorsened [&_td]:bg-red-500/[0.12]'
     }
-    return '[&_td]:bg-white/[0.12]'
+    return 'positionUnchanged [&_td]:bg-white/[0.12]'
   }
 
   const sortedValidators = useMemo(
@@ -571,7 +572,7 @@ export const SamTable: React.FC<Props> = ({
         return {
           className: cn(
             CLICKABLE_ROW,
-            selectIsNonProductive(validator) && 'bg-[#806000]/[0.12]',
+            selectIsNonProductive(validator) && 'rowYellow bg-[#806000]/[0.12]',
           ),
           onClick: () => onValidatorClick(va),
         }
@@ -668,7 +669,7 @@ export const SamTable: React.FC<Props> = ({
               <span className="inline-flex items-center gap-1">
                 <span
                   className={cn(
-                    'w-2 h-2 rounded-full shrink-0 inline-block',
+                    'bondDot w-2 h-2 rounded-full shrink-0 inline-block',
                     bondDotClass(validator.bondState),
                   )}
                 />
@@ -779,7 +780,8 @@ export const SamTable: React.FC<Props> = ({
             .filter(d => !d.isGhost).length
           classes.push(
             CLICKABLE_ROW,
-            getPositionChangeClass(va, realIdx) || '[&_td]:bg-white/[0.12]',
+            getPositionChangeClass(va, realIdx) ||
+              'positionUnchanged [&_td]:bg-white/[0.12]',
           )
           onClick = () => onValidatorClick(va)
         } else if (simulationModeActive && !isEditing) {
@@ -790,7 +792,7 @@ export const SamTable: React.FC<Props> = ({
         }
 
         if (selectIsNonProductive(validator)) {
-          classes.push('bg-[#806000]/[0.12]')
+          classes.push('rowYellow bg-[#806000]/[0.12]')
         }
 
         return { className: classes.join(' ') || undefined, onClick }

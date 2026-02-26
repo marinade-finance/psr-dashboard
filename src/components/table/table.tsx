@@ -24,7 +24,7 @@ export enum Color {
 }
 
 const TABLE_BASE = [
-  'relative border-collapse',
+  'relative border-collapse [border-spacing:0]',
   '[&_thead]:sticky [&_thead]:top-0 [&_thead]:bg-[--bg-dark-1]',
   '[&_thead]:text-[--text-light-1] [&_thead]:cursor-pointer',
   '[&_thead]:select-none [&_thead]:z-[1]',
@@ -47,7 +47,7 @@ function colorClassName(color?: Color): string {
     case Color.YELLOW:
       return 'bg-[#806000]'
     case Color.GREY:
-      return 'bg-gray-500/30'
+      return 'grey bg-gray-500/30'
     default:
       return ''
   }

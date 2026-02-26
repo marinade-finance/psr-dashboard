@@ -17,8 +17,6 @@ import { Alignment, OrderDirection, Table } from '../table/table'
 import type { ProtectedEvent } from 'src/services/protected-events'
 import type { ProtectedEventWithValidator } from 'src/services/validator-with-protected_event'
 
-const TRUNCATED_CELL =
-  'inline-block w-[100px] pt-1 text-ellipsis overflow-hidden'
 const NO_NAME = '---'
 
 const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
@@ -29,7 +27,7 @@ const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
           {...tooltipAttributes(
             'This settlement is not claimable as it was created during the testing period.',
           )}
-          className="rounded-sm px-1 cursor-help float-left bg-[--bg-dark-1] text-[--text-light-1]"
+          className="badge rounded-sm px-1 cursor-help float-left bg-[--bg-dark-1] text-[--text-light-1]"
         >
           Dryrun
         </span>
@@ -40,7 +38,7 @@ const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
           {...tooltipAttributes(
             'This is an estimate based on live data but may change during the epoch<br />before the settlements for this epoch are created on-chain.',
           )}
-          className="rounded-sm px-1 cursor-help float-left bg-[#91e4b7] text-black"
+          className="badge rounded-sm px-1 cursor-help float-left bg-[#91e4b7] text-black"
         >
           Estimate
         </span>
@@ -165,7 +163,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
 
   return (
     <div className="relative [&>table]:ml-2.5 [&_input]:bg-[--bg-dark-1] [&_input]:text-[--text-light-1] [&_input]:border-2 [&_input]:border-[--bg-dark-2] [&_input]:rounded-[5px] [&_input]:p-2 [&_input]:outline-none [&_input:focus]:border-[--bg-dark-3] [&_input:focus]:text-[--text-light-2]">
-      <div className="flex gap-2 p-2.5 w-fit">
+      <div className="metricWrap flex gap-2 p-2.5 w-fit">
         <Metric
           label="Total events"
           value={totalEvents.toLocaleString()}
@@ -236,7 +234,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
           {
             header: 'Validator',
             render: ({ protectedEvent }) => (
-              <span className={TRUNCATED_CELL}>
+              <span className="inline-block w-[100px] pt-1 text-ellipsis overflow-hidden">
                 {protectedEvent.vote_account}
               </span>
             ),
@@ -248,7 +246,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
           {
             header: 'Name',
             render: ({ validator }) => (
-              <span className={TRUNCATED_CELL}>
+              <span className="inline-block w-[100px] pt-1 text-ellipsis overflow-hidden">
                 {validator ? selectName(validator) : NO_NAME}
               </span>
             ),
