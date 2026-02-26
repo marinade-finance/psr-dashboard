@@ -299,69 +299,61 @@ export const SamPage: React.FC<Props> = ({ level }) => {
     }
   }, [selectedValidator, displayAuctionResult])
 
+  const simulationActions = (
+    <>
+      {hasSimulationApplied && !isCalculating && (
+        <span className="text-xs text-info font-sans font-medium">
+          Simulation applied
+        </span>
+      )}
+      {isCalculating && (
+        <span className="text-xs text-info font-sans font-medium">
+          Calculating...
+        </span>
+      )}
+      <button
+        className={`px-4 py-2 rounded-lg text-[13px] font-medium font-sans transition-all disabled:opacity-60 disabled:cursor-not-allowed ${simulationModeActive ? 'bg-info text-white border border-info hover:brightness-90' : 'border border-border bg-secondary text-secondary-foreground hover:bg-tertiary hover:text-foreground'}`}
+        onClick={handleToggleSimulationMode}
+        disabled={isCalculating}
+      >
+        {simulationModeActive ? 'Exit What-If' : 'What-If Mode'}
+      </button>
+      <HelpTip text="Test how changing your bid or commission would affect your auction ranking. Click any validator row to edit parameters." />
+    </>
+  )
+
   return (
-    <div className="min-h-screen bg-background-page">
-      <div className="relative max-w-[1600px] mx-auto">
-        <Navigation level={level} />
-        {/* Page header row with title and action buttons */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-card">
-          <div className="flex flex-col gap-1">
-            <span className="text-xl font-semibold text-foreground font-sans">
-              Stake Auction Marketplace
-            </span>
-            <span className="text-[13px] text-muted-foreground font-sans">
-              Epoch 924 · Per-validator cap: 8% of TVL (MIP-19)
-            </span>
-          </div>
-          <div className="flex items-center gap-2.5">
-            {hasSimulationApplied && !isCalculating && (
-              <span className="text-xs text-info font-sans font-medium">
-                Simulation applied
-              </span>
-            )}
-            {isCalculating && (
-              <span className="text-xs text-info font-sans font-medium">
-                Calculating...
-              </span>
-            )}
-            <button
-              className={`px-4 py-2 rounded-lg text-[13px] font-medium font-sans transition-all disabled:opacity-60 disabled:cursor-not-allowed ${simulationModeActive ? 'bg-info text-white border border-info hover:brightness-90' : 'border border-border bg-secondary text-secondary-foreground hover:bg-tertiary hover:text-foreground'}`}
-              onClick={handleToggleSimulationMode}
-              disabled={isCalculating}
-            >
-              {simulationModeActive ? 'Exit What-If' : 'What-If Mode'}
-            </button>
-            <HelpTip text="Test how changing your bid or commission would affect your auction ranking. Click any validator row to edit parameters." />
-          </div>
-        </div>
-        {status === 'error' && (
-          <p className="text-destructive p-6 text-center text-sm">
-            Error fetching data
-          </p>
-        )}
-        {status === 'loading' && <SamSkeleton />}
-        {status === 'success' && displayAuctionResult && (
-          <div className="p-6">
-            <SamTable
-              auctionResult={displayAuctionResult}
-              originalAuctionResult={originalAuctionResult}
-              epochsPerYear={data.epochsPerYear}
-              dsSamConfig={data.dcSamConfig}
-              level={level}
-              simulationModeActive={simulationModeActive}
-              editingValidator={editingValidator}
-              simulatedValidator={simulatedValidator}
-              isCalculating={isCalculating}
-              hasSimulationApplied={hasSimulationApplied}
-              pendingEdits={pendingEdits}
-              onValidatorClick={handleValidatorClick}
-              onFieldChange={handleFieldChange}
-              onRunSimulation={handleRunSimulation}
-              onCancelEditing={handleCancelEditing}
-            />
-          </div>
-        )}
-      </div>
+    <PageLayout
+      level={level}
+      title="Stake Auction Marketplace"
+      subtitle="Epoch 924 · Per-validator cap: 8% of TVL (MIP-19)"
+      actions={simulationActions}
+    >
+      {status === 'error' && (
+        <p className="text-destructive text-center text-sm py-8">
+          Error fetching data
+        </p>
+      )}
+      {status === 'loading' && <SamSkeleton />}
+      {status === 'success' && displayAuctionResult && (
+        <SamTable
+          auctionResult={displayAuctionResult}
+          originalAuctionResult={originalAuctionResult}
+          epochsPerYear={data.epochsPerYear}
+          dsSamConfig={data.dcSamConfig}
+          level={level}
+          simulationModeActive={simulationModeActive}
+          editingValidator={editingValidator}
+          simulatedValidator={simulatedValidator}
+          isCalculating={isCalculating}
+          hasSimulationApplied={hasSimulationApplied}
+          pendingEdits={pendingEdits}
+          onValidatorClick={handleValidatorClick}
+          onFieldChange={handleFieldChange}
+          onRunSimulation={handleRunSimulation}
+          onCancelEditing={handleCancelEditing}
+        />
+      )}
 
       {selectedValidatorData && data && (
         <ValidatorDetail
@@ -376,6 +368,6 @@ export const SamPage: React.FC<Props> = ({ level }) => {
           isCalculating={isCalculating}
         />
       )}
-    </div>
+    </PageLayout>
   )
 }
