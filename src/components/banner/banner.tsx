@@ -1,27 +1,18 @@
 import React from 'react'
 
-import styles from './banner.module.css'
+import { Card } from 'src/components/ui/card'
 
-export type Props = {
-  title: string
-  body: JSX.Element
-  tooltipHtml?: string
-  'data-tooltip-id'?: string
-  'data-tooltip-html'?: string
+export interface Props {
+  title?: string
+  body?: React.ReactNode
 }
 
-export const Banner: React.FC<Props> = ({ title, body, ...tooltipsProps }) => {
-  if (!title) {
-    return null
-  }
+export const Banner: React.FC<Props> = ({ title, body }) => {
+  if (!title) return null
   return (
-    <div className={styles.bannerShoutout} {...tooltipsProps}>
-      <div>
-        <div className={styles.bannerTitle}>
-          <strong>{title}</strong>
-        </div>
-        {body}
-      </div>
-    </div>
+    <Card className="mb-6 px-5 py-4 bg-card border-info/20 border-l-4 border-l-info text-sm leading-relaxed text-foreground">
+      <div className="font-semibold text-base mb-1">{title}</div>
+      <div className="text-muted-foreground">{body}</div>
+    </Card>
   )
 }

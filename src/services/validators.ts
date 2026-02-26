@@ -43,9 +43,10 @@ export const fetchValidators = async (): Promise<ValidatorsResponse> =>
 
 export const fetchValidatorsWithEpochs = async (
   epochs: number,
+  limit = 9999,
 ): Promise<ValidatorsResponse> => {
   const res = await fetch(
-    `https://validators-api.marinade.finance/validators?limit=9999&epochs=${epochs}`,
+    `https://validators-api.marinade.finance/validators?limit=${limit}&epochs=${epochs}`,
   )
   return (await res.json()) as ValidatorsResponse
 }

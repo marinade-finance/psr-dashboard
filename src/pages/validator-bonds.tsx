@@ -2,26 +2,31 @@ import React from 'react'
 import { useQuery } from 'react-query'
 
 import { Banner } from 'src/components/banner/banner'
-import { Loader } from 'src/components/loader/loader'
-import { Navigation } from 'src/components/navigation/navigation'
+import { PageLayout } from 'src/components/page-layout/page-layout'
+import { BondsSkeleton } from 'src/components/skeleton/skeleton'
 import { ValidatorBondsTable } from 'src/components/validator-bonds-table/validator-bonds-table'
 import { getBannerData } from 'src/services/banner'
 import { fetchValidatorsWithBonds } from 'src/services/validator-with-bond'
 import { selectTotalMarinadeStake } from 'src/services/validators'
 
-import styles from './validator-bonds.module.css'
-
 import type { UserLevelProps } from 'src/components/navigation/navigation'
 
 export const ValidatorBondsPage: React.FC<UserLevelProps> = ({ level }) => {
-  const { data, status } = useQuery('bonds', fetchValidatorsWithBonds)
+  const { data, status } = useQuery('bonds', fetchValidatorsWithBonds, {
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  })
 
   return (
-    <div className={styles.page}>
-      <Navigation level={level} />
+    <PageLayout level={level} title="Validator Bonds">
       <Banner {...getBannerData()} />
-      {status === 'error' && <p>Error fetching data</p>}
-      {status === 'loading' && <Loader />}
+      {status === 'error' && (
+        <p className="text-destructive text-center text-sm py-8">
+          Error fetching data
+        </p>
+      )}
+      {status === 'loading' && <BondsSkeleton />}
       {status === 'success' && (
         <ValidatorBondsTable
           data={data.filter(
@@ -32,6 +37,6 @@ export const ValidatorBondsPage: React.FC<UserLevelProps> = ({ level }) => {
           level={level}
         />
       )}
-    </div>
+    </PageLayout>
   )
 }

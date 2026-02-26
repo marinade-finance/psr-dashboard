@@ -1,6 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react'
 
-import styles from './table.module.css'
+import { Card } from 'src/components/ui/card'
+import {
+  ShadTable,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from 'src/components/ui/table'
+
+import { HelpTip } from '../help-tip/help-tip'
 
 import type { HTMLAttributes } from 'react'
 
@@ -24,25 +34,23 @@ export enum Color {
 
 const alignmentClassName = (alignment?: Alignment) => {
   switch (alignment) {
-    case Alignment.LEFT:
-      return styles.left
     case Alignment.RIGHT:
-      return styles.right
+      return 'text-right font-mono'
     default:
-      return styles.left
+      return 'text-left'
   }
 }
 
 const colorClassName = (color?: Color) => {
   switch (color) {
     case Color.RED:
-      return styles.red
+      return 'bg-destructive-light'
     case Color.GREEN:
-      return styles.green
+      return 'bg-primary-light-10'
     case Color.YELLOW:
-      return styles.yellow
+      return 'bg-warning-light'
     default:
-      return styles.noBg
+      return 'bg-[unset]'
   }
 }
 
@@ -60,43 +68,43 @@ const renderHeader: <Item>(
   showRowNumber: boolean,
 ) => {
   const [userOrderColumn, userOrderDirection] = userOrder ?? [null, null]
-  // Get the primary default order column (first in defaultOrder array)
   const [defaultOrderColumn, defaultOrderDirection] = defaultOrder[0] ?? [
     null,
     null,
   ]
 
   return (
-    <tr>
-      {showRowNumber ? <td>#</td> : null}
+    <TableRow>
+      {showRowNumber ? <TableHead>#</TableHead> : null}
       {columns.map((column, i) => {
         const isUserSorted = userOrderColumn === i
         const isDefaultSorted = !userOrder && defaultOrderColumn === i
 
-        let indicatorClass = styles.sortIndicator
+        let indicatorClass = 'ml-1 text-[10px] opacity-40'
         let indicator = ''
 
         if (isUserSorted) {
-          indicatorClass = `${styles.sortIndicator} ${styles.sortIndicatorActive}`
+          indicatorClass = 'ml-1 text-[10px] opacity-100 text-primary'
           indicator = userOrderDirection === OrderDirection.ASC ? '▲' : '▼'
         } else if (isDefaultSorted) {
-          indicatorClass = `${styles.sortIndicator} ${styles.sortIndicatorDefault}`
+          indicatorClass = 'ml-1 text-[10px] opacity-60 text-muted-foreground'
           indicator = defaultOrderDirection === OrderDirection.ASC ? '▲' : '▼'
         }
 
         return (
-          <th
+          <TableHead
             key={i}
             className={alignmentClassName(column.alignment)}
             onClick={() => onSort(i)}
             {...(column.headerAttrsFn ? column.headerAttrsFn() : {})}
           >
             {column.header}
+            {column.tooltip && <HelpTip text={column.tooltip} />}
             <span className={indicatorClass}>{indicator}</span>
-          </th>
+          </TableHead>
         )
       })}
-    </tr>
+    </TableRow>
   )
 }
 
@@ -136,27 +144,28 @@ const renderRow: <Item>(
   rowNumberRender,
 ) => {
   return (
-    <tr key={index} {...(rowAttrsFn ? rowAttrsFn(item, index) : {})}>
+    <TableRow key={index} {...(rowAttrsFn ? rowAttrsFn(item, index) : {})}>
       {showRowNumber ? (
-        <td>
+        <TableCell>
           {rowNumberRender ? rowNumberRender(item, index) : <>{index + 1}</>}
-        </td>
+        </TableCell>
       ) : null}
       {columns.map((column, i) => (
-        <td
+        <TableCell
           {...(column.cellAttrsFn ? column.cellAttrsFn(item) : {})}
           key={i}
           className={`${alignmentClassName(column.alignment)} ${column.background ? colorClassName(column.background(item)) : ''}`}
         >
           {column.render(item, index)}
-        </td>
+        </TableCell>
       ))}
-    </tr>
+    </TableRow>
   )
 }
 
 type Column<Item> = {
   header: string
+  tooltip?: string
   headerAttrsFn?: () => HTMLAttributes<HTMLTableCellElement>
   cellAttrsFn?: (item: Item) => HTMLAttributes<HTMLTableCellElement>
   render: (item: Item, index?: number) => JSX.Element
@@ -176,7 +185,7 @@ type Props<Item> = {
   ) => HTMLAttributes<HTMLTableRowElement>
   rowNumberRender?: (item: Item, index: number) => JSX.Element
   onOrderChange?: (order: Order[]) => void
-  presorted?: boolean // Skip internal sorting when data is already sorted
+  presorted?: boolean
 }
 
 export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
@@ -198,13 +207,11 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
     return [...defaultOrder]
   }, [userOrder, defaultOrder])
 
-  // Notify parent when order changes
   useEffect(() => {
     onOrderChange?.(order)
   }, [order, onOrderChange])
 
   const sortedData = useMemo(() => {
-    // Skip sorting if data is presorted (e.g., has special rows like ghosts)
     if (presorted) {
       return data
     }
@@ -213,11 +220,8 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
       for (const [columnIndex, orderDirection] of order) {
         const compareResult = columns[columnIndex].compare(a, b)
         if (compareResult !== undefined && compareResult !== 0) {
-          // Handle special null values - Infinity means "a is null, always goes to end"
           if (compareResult === Infinity) return 1
-          // -Infinity means "b is null, always goes to end"
           if (compareResult === -Infinity) return -1
-          // Normal comparison - apply sort direction
           return orderDirection === OrderDirection.ASC
             ? compareResult
             : -compareResult
@@ -242,25 +246,27 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
   }
 
   return (
-    <table className={styles.table}>
-      <thead>
-        {renderHeader(
-          columns,
-          onSort,
-          userOrder,
-          defaultOrder,
-          showRowNumber ?? false,
-        )}
-      </thead>
-      <tbody>
-        {renderRows(
-          sortedData,
-          columns,
-          showRowNumber ?? false,
-          rowAttrsFn,
-          rowNumberRender,
-        )}
-      </tbody>
-    </table>
+    <Card className="overflow-hidden p-0">
+      <ShadTable className="font-sans text-[13px]">
+        <TableHeader>
+          {renderHeader(
+            columns,
+            onSort,
+            userOrder,
+            defaultOrder,
+            showRowNumber ?? false,
+          )}
+        </TableHeader>
+        <TableBody>
+          {renderRows(
+            sortedData,
+            columns,
+            showRowNumber ?? false,
+            rowAttrsFn,
+            rowNumberRender,
+          )}
+        </TableBody>
+      </ShadTable>
+    </Card>
   )
 }

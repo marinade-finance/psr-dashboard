@@ -1,7 +1,6 @@
 import {
   DsSamSDK,
   InputsSource,
-  AuctionConstraintType,
   loadSamConfig,
   LogVerbosity,
 } from '@marinade.finance/ds-sam-sdk'
@@ -21,7 +20,7 @@ import type {
 
 const estimateEpochsPerYear = async () => {
   const FETCHED_EPOCHS = 11
-  const { validators } = await fetchValidatorsWithEpochs(FETCHED_EPOCHS)
+  const { validators } = await fetchValidatorsWithEpochs(FETCHED_EPOCHS, 5)
   const epochStats = validators.map(({ epoch_stats }) => epoch_stats).flat()
 
   const rangeStart = epochStats.reduce(
@@ -70,9 +69,11 @@ export const loadSam = async (
   dcSamConfig: DsSamConfig
 }> => {
   try {
-    const epochsPerYear = await estimateEpochsPerYear()
+    const [epochsPerYear, config] = await Promise.all([
+      estimateEpochsPerYear(),
+      loadSamConfig(),
+    ])
     console.log('epochsPerYear', epochsPerYear)
-    const config = await loadSamConfig()
     const dsSam = new DsSamSDK({
       ...config,
       inputsSource: InputsSource.APIS,
@@ -93,18 +94,18 @@ export type { SourceDataOverrides }
 export const lastCapConstraintDescription = (
   constraint: AuctionConstraint,
 ): string => {
-  switch (constraint.constraintType) {
-    case AuctionConstraintType.COUNTRY:
+  switch (constraint.constraintType as string) {
+    case 'COUNTRY':
       return `COUNTRY (${constraint.constraintName}) stake concentration`
-    case AuctionConstraintType.ASO:
+    case 'ASO':
       return `ASO (${constraint.constraintName}) stake concentration`
-    case AuctionConstraintType.VALIDATOR:
+    case 'VALIDATOR':
       return 'VALIDATOR stake concentration'
-    case AuctionConstraintType.BOND:
+    case 'BOND':
       return 'BOND setup (bond balance is too low)'
-    case AuctionConstraintType.WANT:
+    case 'WANT':
       return 'WANT (max stake wanted)'
-    case 'MNDE' as AuctionConstraintType:
+    case 'MNDE':
       return 'MNDE (bid too low or too little mnde votes)'
     default:
       return '[unknown]'

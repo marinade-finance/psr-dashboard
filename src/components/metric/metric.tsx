@@ -1,20 +1,21 @@
 import React from 'react'
 
-import styles from './metric.module.css'
+import { Card } from 'src/components/ui/card'
 
 type Props = {
   label: string
   value: string
-  tooltipHtml?: string
-  'data-tooltip-id'?: string
-  'data-tooltip-html'?: string
 }
 
-export const Metric: React.FC<Props> = ({ label, value, ...tooltipsProps }) => {
+export const Metric: React.FC<Props> = ({ label, value }) => {
   return (
-    <div className={styles.metricWrap} {...tooltipsProps}>
-      <div>{label}</div>
-      <div>{value}</div>
-    </div>
+    <Card className="px-5 py-4">
+      <div className="text-2xs text-muted-foreground font-medium mb-1 uppercase tracking-wider">
+        {label}
+      </div>
+      <div className="whitespace-nowrap text-lg font-semibold text-foreground font-mono">
+        {value}
+      </div>
+    </Card>
   )
 }

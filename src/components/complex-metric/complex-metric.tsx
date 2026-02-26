@@ -1,24 +1,21 @@
 import React from 'react'
 
-import styles from './complex-metric.module.css'
+import { Card } from 'src/components/ui/card'
 
 type Props = {
   label: string
   value: React.ReactNode
-  tooltipHtml?: string
-  'data-tooltip-id'?: string
-  'data-tooltip-html'?: string
 }
 
-export const ComplexMetric: React.FC<Props> = ({
-  label,
-  value,
-  ...tooltipsProps
-}) => {
+export const ComplexMetric: React.FC<Props> = ({ label, value }) => {
   return (
-    <div className={styles.complexMetricWrap} {...tooltipsProps}>
-      <div>{label}</div>
-      {value}
-    </div>
+    <Card className="px-5 py-4">
+      <div className="whitespace-nowrap text-2xs text-muted-foreground font-medium mb-1 uppercase tracking-wider">
+        {label}
+      </div>
+      <div className="whitespace-nowrap text-lg font-semibold text-foreground font-mono">
+        {value}
+      </div>
+    </Card>
   )
 }

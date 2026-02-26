@@ -1,10 +1,163 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap');
+
 :root {
+  --radius: 0.625rem;
+
+  /* Legacy dark theme variables */
   --bg-dark-1: #1c1b23;
   --bg-dark-2: #2b2a34;
   --bg-dark-3: #353439;
   --bg-dark-4: #42414e;
   --text-light-1: #b8b8bc;
   --text-light-2: #fbfbfe;
+
+  /* Marinade Design System - Light Mode */
+  --primary: #0C9790;
+  --primary-light: rgba(12, 151, 144, 0.15);
+  --primary-light-10: rgba(12, 151, 144, 0.08);
+  --primary-light-05: rgba(12, 151, 144, 0.04);
+  --primary-90: rgba(12, 151, 144, 0.9);
+  --primary-foreground: #F6F9F9;
+
+  --foreground: #182120;
+  --secondary-foreground: #3A4E4D;
+  --muted-foreground: #6C8383;
+
+  --background: #FFFFFF;
+  --background-page: #F3F7F7;
+  --card: #FFFFFF;
+  --card-foreground: #081211;
+
+  --border: #DDE7E8;
+  --border-grid: #E7EEEF;
+  --input: #E7EEEF;
+  --secondary: #E7EEEF;
+  --muted: #F3F7F7;
+  --accent: #E7EEEF;
+  --tertiary: #DDE7E8;
+  --tertiary-foreground: #6F8383;
+
+  --ring: rgba(154, 177, 178, 0.3);
+
+  /* Semantic colors */
+  --destructive: #DC2626;
+  --destructive-light: rgba(220, 38, 38, 0.12);
+  --destructive-20: rgba(220, 38, 38, 0.2);
+
+  --warning: #E59606;
+  --warning-light: rgba(229, 150, 6, 0.12);
+  --warning-20: rgba(229, 150, 6, 0.2);
+  --warning-10: rgba(229, 150, 6, 0.1);
+
+  --info: #6366F1;
+  --info-light: rgba(99, 102, 241, 0.12);
+  --info-20: rgba(99, 102, 241, 0.2);
+
+  /* Chart colors for APY composition */
+  --chart-1: #0C9790; /* Inflation yield (teal) */
+  --chart-2: #818CF8; /* MEV tips (indigo) */
+  --chart-3: #FBBF24; /* Block rewards (amber) */
+  --chart-4: #C084FC; /* Stake bid (purple) */
+  --chart-5: #FB7185; /* Reserved (rose) */
+
+  /* Tag colors */
+  --tag-1: #CA8A04;
+  --tag-1-bg: rgba(234, 179, 8, 0.15);
+  --tag-2: #EA580C;
+  --tag-2-bg: rgba(234, 88, 12, 0.15);
+  --tag-3: #64748B;
+  --tag-3-bg: rgba(100, 116, 139, 0.15);
+  --tag-4: #3B82F6;
+  --tag-4-bg: rgba(59, 130, 246, 0.15);
+
+  /* Typography */
+  --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'Geist Mono', 'SF Mono', monospace;
+  --font-serif: 'PT Serif', serif;
+
+  /* Text scale */
+  --text-2xs: 12px;
+  --text-xs: 13px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 30px;
+
+  /* Border radius */
+  --radius-xs: 2px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-3xl: 24px;
+
+  /* Shadows */
+  --shadow-xs: 0 2px 8px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 14px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 4px 8px -1px rgba(0, 0, 0, 0.07), 0 10px 18px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.09), 0 4px 18px 3px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.10), 0 9px 33px 4px rgba(0, 0, 0, 0.08);
+}
+
+.dark {
+  --primary: #179F99;
+  --primary-light: rgba(23, 159, 153, 0.15);
+  --primary-light-10: rgba(23, 159, 153, 0.08);
+  --primary-light-05: rgba(23, 159, 153, 0.04);
+  --primary-90: rgba(23, 159, 153, 0.9);
+  --primary-foreground: #030707;
+
+  --foreground: #F6F9F9;
+  --secondary-foreground: #B8CFCF;
+  --muted-foreground: #7FA1A0;
+
+  --background: #030707;
+  --background-page: #0A1414;
+  --card: #0F1E1E;
+  --card-foreground: #F6F9F9;
+
+  --border: #1C3534;
+  --border-grid: #162B2A;
+  --input: #162B2A;
+  --secondary: #162B2A;
+  --muted: #0F1E1E;
+  --accent: #162B2A;
+  --tertiary: #1C3534;
+  --tertiary-foreground: #7FA1A0;
+
+  --ring: rgba(23, 159, 153, 0.3);
+
+  --destructive: #EF4444;
+  --destructive-light: rgba(239, 68, 68, 0.15);
+  --destructive-20: rgba(239, 68, 68, 0.2);
+
+  --warning: #F59E0B;
+  --warning-light: rgba(245, 158, 11, 0.15);
+  --warning-20: rgba(245, 158, 11, 0.2);
+  --warning-10: rgba(245, 158, 11, 0.1);
+
+  --info: #818CF8;
+  --info-light: rgba(129, 140, 248, 0.15);
+  --info-20: rgba(129, 140, 248, 0.2);
+
+  --chart-1: #179F99;
+  --chart-2: #A5B4FC;
+  --chart-3: #FCD34D;
+  --chart-4: #D8B4FE;
+  --chart-5: #FDA4AF;
+
+  --shadow-xs: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 1px 14px rgba(0, 0, 0, 0.15);
+  --shadow-md: 0 4px 8px -1px rgba(0, 0, 0, 0.3), 0 10px 18px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.35), 0 4px 18px 3px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 9px 33px 4px rgba(0, 0, 0, 0.35);
 }
 
 * {
@@ -15,9 +168,9 @@
 
 html,
 body {
-  background-color: var(--bg-dark-2);
-  font-family: monospace, 'Courier New', Courier;
-  color: var(--text-light-1);
+  background-color: var(--background-page);
+  font-family: var(--font-sans);
+  color: var(--foreground);
 }
 
 html {
@@ -26,4 +179,15 @@ html {
 
 body {
   position: relative;
+}
+
+/* Keyframe animations */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }

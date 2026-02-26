@@ -5,6 +5,7 @@ import HtmlWebpackPlugin from 'html-webpack-plugin'
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin'
 import { TsconfigPathsPlugin } from 'tsconfig-paths-webpack-plugin'
 import CopyPlugin from 'copy-webpack-plugin'
+import CompressionPlugin from 'compression-webpack-plugin'
 
 const webpackConfig = (env: {
   production: boolean
@@ -21,7 +22,45 @@ const webpackConfig = (env: {
   },
   output: {
     path: path.join(__dirname, '/build'),
-    filename: 'bundle.[chunkhash].js',
+    filename: '[name].[chunkhash].js',
+    chunkFilename: '[name].[chunkhash].js',
+    clean: true,
+  },
+  optimization: {
+    splitChunks: {
+      chunks: 'all',
+      cacheGroups: {
+        // Heavy vendor libs that rarely change — cached between deploys
+        vendor: {
+          test: /[\\/]node_modules[\\/](react|react-dom|react-router|@remix-run)[\\/]/,
+          name: 'vendor-react',
+          chunks: 'all',
+          priority: 20,
+        },
+        // SDK + data libs
+        sdk: {
+          test: /[\\/]node_modules[\\/](@marinade\.finance|decimal\.js|axios)[\\/]/,
+          name: 'vendor-sdk',
+          chunks: 'all',
+          priority: 15,
+        },
+        // UI libs (radix, tailwind-merge, cva)
+        ui: {
+          test: /[\\/]node_modules[\\/](@radix-ui|@floating-ui|tailwind-merge|class-variance-authority|clsx)[\\/]/,
+          name: 'vendor-ui',
+          chunks: 'all',
+          priority: 10,
+        },
+        // Everything else from node_modules
+        common: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'vendor-common',
+          chunks: 'all',
+          priority: 5,
+          minSize: 10000,
+        },
+      },
+    },
   },
   performance: {
     hints: false,
@@ -39,8 +78,21 @@ const webpackConfig = (env: {
         exclude: /dist/,
       },
       {
+        test: /\.module\.css$/i,
+        use: [
+          'style-loader',
+          'css-modules-typescript-loader',
+          {
+            loader: 'css-loader',
+            options: { modules: true },
+          },
+          'postcss-loader',
+        ],
+      },
+      {
         test: /\.css$/i,
-        use: ['style-loader', 'css-modules-typescript-loader', 'css-loader'],
+        exclude: /\.module\.css$/i,
+        use: ['style-loader', 'css-loader', 'postcss-loader'],
       },
     ],
   },
@@ -62,6 +114,17 @@ const webpackConfig = (env: {
     new ForkTsCheckerWebpackPlugin({
       typescript: { configFile: './tsconfig.json' },
     }),
+    // Gzip + Brotli compression for Cloudflare Pages
+    ...(env.production || !env.development
+      ? [
+          new CompressionPlugin({
+            algorithm: 'gzip',
+            test: /\.(js|css|html|svg)$/,
+            threshold: 8192,
+            minRatio: 0.8,
+          }),
+        ]
+      : []),
   ],
 })
 
