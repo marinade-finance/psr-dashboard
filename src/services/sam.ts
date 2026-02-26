@@ -77,7 +77,7 @@ export const loadSam = async (
     const dsSam = new DsSamSDK({
       ...config,
       inputsSource: InputsSource.APIS,
-      cacheInputs: true,
+      cacheInputs: false,
       debugVoteAccounts: [],
       logVerbosity: LogVerbosity.ERROR,
     })
