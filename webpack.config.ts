@@ -39,8 +39,21 @@ const webpackConfig = (env: {
         exclude: /dist/,
       },
       {
+        test: /\.module\.css$/i,
+        use: [
+          'style-loader',
+          'css-modules-typescript-loader',
+          {
+            loader: 'css-loader',
+            options: { modules: true },
+          },
+          'postcss-loader',
+        ],
+      },
+      {
         test: /\.css$/i,
-        use: ['style-loader', 'css-modules-typescript-loader', 'css-loader'],
+        exclude: /\.module\.css$/i,
+        use: ['style-loader', 'css-loader', 'postcss-loader'],
       },
     ],
   },
