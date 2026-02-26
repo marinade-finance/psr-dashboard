@@ -1,7 +1,5 @@
 import React from 'react'
 
-import styles from './complex-metric.module.css'
-
 type Props = {
   label: string
   value: React.ReactNode
@@ -16,9 +14,12 @@ export const ComplexMetric: React.FC<Props> = ({
   ...tooltipsProps
 }) => {
   return (
-    <div className={styles.complexMetricWrap} {...tooltipsProps}>
-      <div>{label}</div>
-      {value}
+    <div
+      className="px-5 py-2.5 bg-[var(--bg-dark-1)] mr-2.5 cursor-help"
+      {...tooltipsProps}
+    >
+      <div className="whitespace-nowrap">{label}</div>
+      <div className="whitespace-nowrap mt-2.5 text-2xl">{value}</div>
     </div>
   )
 }

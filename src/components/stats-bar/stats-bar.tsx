@@ -4,8 +4,6 @@ import { HelpTip } from 'src/components/help-tip/help-tip'
 import { formatSolAmount, formatPercentage } from 'src/format'
 import { HELP_TEXT } from 'src/services/help-text'
 
-import styles from './stats-bar.module.css'
-
 interface StatsBarProps {
   totalAuctionStake: number
   winningApy: number
@@ -54,16 +52,25 @@ export const StatsBar = ({
   ]
 
   return (
-    <div className={styles.container}>
+    <div className="grid grid-cols-4 gap-3 mb-6 max-lg:grid-cols-2 max-sm:grid-cols-1">
       {stats.map(stat => (
-        <div key={stat.label} className={styles.card}>
-          <div className={styles.label}>
+        <div
+          key={stat.label}
+          className="bg-[var(--card)] rounded-[var(--radius-xl)] px-5 py-4 border border-[var(--border)] shadow-[var(--shadow-xs)]"
+        >
+          <div className="text-[length:var(--text-2xs)] text-[var(--muted-foreground)] mb-1 font-sans flex items-center">
             {stat.label}
             {stat.help && <HelpTip text={stat.help} />}
           </div>
-          <div className={styles.valueContainer}>
-            <span className={styles.value}>{stat.value}</span>
-            {stat.unit && <span className={styles.unit}>{stat.unit}</span>}
+          <div className="flex items-baseline gap-0.5">
+            <span className="text-[22px] font-semibold text-[var(--foreground)] font-mono">
+              {stat.value}
+            </span>
+            {stat.unit && (
+              <span className="text-sm text-[var(--muted-foreground)] font-mono">
+                {stat.unit}
+              </span>
+            )}
           </div>
         </div>
       ))}

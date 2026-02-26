@@ -1,8 +1,6 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
 
-import styles from './navigation.module.css'
-
 export enum UserLevel {
   Basic = 'basic',
   Expert = 'expert',
@@ -12,36 +10,30 @@ export type UserLevelProps = {
   level?: UserLevel
 }
 
+const NAV_BUTTON_CLASS =
+  'h-11 leading-[44px] px-4 bg-transparent text-[var(--muted-foreground)] cursor-pointer rounded-[var(--radius-md)] text-sm font-medium transition-all duration-150 border-b-2 border-transparent -mb-px hover:text-[var(--foreground)] hover:bg-[var(--primary-light-05)]'
+
+const ACTIVE_CLASS =
+  '[&>div]:text-[var(--primary)] [&>div]:border-b-[var(--primary)]'
+
+const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+  isActive ? ACTIVE_CLASS : ''
+
 export const Navigation: React.FC<UserLevelProps> = ({ level }) => {
   const expert = level === UserLevel.Expert ? 'expert-' : ''
   return (
-    <div className={styles.navigation}>
-      <NavLink
-        to={`/${expert}`}
-        className={({ isActive, isPending: _isPending }) =>
-          isActive ? styles.active : ''
-        }
-      >
-        <div className={styles.navButton}>Stake Auction Marketplace</div>
+    <div className="flex items-center bg-[var(--card)] border-b border-[var(--border)] px-6 gap-1">
+      <NavLink to={`/${expert}`} className={navLinkClass}>
+        <div className={NAV_BUTTON_CLASS}>Stake Auction Marketplace</div>
       </NavLink>
-      <NavLink
-        to={`/${expert}protected-events`}
-        className={({ isActive, isPending: _isPending }) =>
-          isActive ? styles.active : ''
-        }
-      >
-        <div className={styles.navButton}>Protected Events</div>
+      <NavLink to={`/${expert}protected-events`} className={navLinkClass}>
+        <div className={NAV_BUTTON_CLASS}>Protected Events</div>
       </NavLink>
-      <NavLink
-        to={`/${expert}bonds`}
-        className={({ isActive, isPending: _isPending }) =>
-          isActive ? styles.active : ''
-        }
-      >
-        <div className={styles.navButton}>Validator Bonds</div>
+      <NavLink to={`/${expert}bonds`} className={navLinkClass}>
+        <div className={NAV_BUTTON_CLASS}>Validator Bonds</div>
       </NavLink>
-      <a href="docs/" style={{ marginLeft: 'auto' }}>
-        <div className={styles.navButton}>Docs</div>
+      <a href="docs/" className="ml-auto no-underline">
+        <div className={NAV_BUTTON_CLASS}>Docs</div>
       </a>
     </div>
   )
