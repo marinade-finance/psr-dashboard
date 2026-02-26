@@ -7,8 +7,6 @@ import { SamTable } from 'src/components/sam-table/sam-table'
 import { ValidatorDetail } from 'src/components/validator-detail/validator-detail'
 import { loadSam, selectBondSize } from 'src/services/sam'
 
-import styles from './sam.module.css'
-
 import type {
   AuctionResult,
   AuctionValidator,
@@ -298,34 +296,40 @@ export const SamPage: React.FC<Props> = ({ level }) => {
   }, [selectedValidator, displayAuctionResult])
 
   return (
-    <div className={styles.page}>
-      <div className={styles.pageContent}>
+    <div className="min-h-screen bg-background-page">
+      <div className="relative max-w-[1600px] mx-auto">
         <Navigation level={level} />
         {/* Page header row with title and action buttons */}
-        <div className={styles.pageHeader}>
-          <div className={styles.pageHeaderLeft}>
-            <span className={styles.pageTitle}>Stake Auction Marketplace</span>
-            <span className={styles.pageSubtitle}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-card">
+          <div className="flex flex-col gap-1">
+            <span className="text-xl font-semibold text-foreground font-sans">
+              Stake Auction Marketplace
+            </span>
+            <span className="text-[13px] text-muted-foreground font-sans">
               Epoch 924 · Per-validator cap: 8% of TVL (MIP-19)
             </span>
           </div>
-          <div className={styles.pageHeaderRight}>
+          <div className="flex items-center gap-2.5">
             {hasSimulationApplied && !isCalculating && (
-              <span className={styles.simulationNote}>Simulation applied</span>
+              <span className="text-xs text-info font-sans font-medium">
+                Simulation applied
+              </span>
             )}
             {isCalculating && (
-              <span className={styles.simulationNote}>Calculating...</span>
+              <span className="text-xs text-info font-sans font-medium">
+                Calculating...
+              </span>
             )}
             <a
               href="https://docs.marinade.finance/marinade-protocol/validators"
               target="_blank"
               rel="noopener noreferrer"
-              className={styles.headerBtn}
+              className="px-4 py-2 rounded-lg text-[13px] font-medium bg-secondary border border-border text-secondary-foreground font-sans transition-all hover:bg-tertiary hover:text-foreground"
             >
               Docs
             </a>
             <button
-              className={`${styles.headerBtn} ${simulationModeActive ? styles.headerBtnActive : styles.headerBtnPrimary}`}
+              className={`px-4 py-2 rounded-lg text-[13px] font-medium font-sans transition-all disabled:opacity-60 disabled:cursor-not-allowed ${simulationModeActive ? 'bg-info border-none text-white hover:brightness-90' : 'bg-primary border-none text-white hover:brightness-90'}`}
               onClick={handleToggleSimulationMode}
               disabled={isCalculating}
             >
@@ -334,11 +338,13 @@ export const SamPage: React.FC<Props> = ({ level }) => {
           </div>
         </div>
         {status === 'error' && (
-          <p className={styles.error}>Error fetching data</p>
+          <p className="text-destructive p-6 text-center text-sm">
+            Error fetching data
+          </p>
         )}
         {status === 'loading' && <Loader />}
         {status === 'success' && displayAuctionResult && (
-          <div className={styles.tableContainer}>
+          <div className="p-6">
             <SamTable
               auctionResult={displayAuctionResult}
               originalAuctionResult={originalAuctionResult}
