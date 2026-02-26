@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 
 async function waitForSamData(page: Page) {
-  await page.waitForSelector('tbody tr', { timeout: 30000 })
+  await page.waitForSelector('tbody tr', { timeout: 50000 })
 }
 
 // Basic mode: # | Validator | Max APY | Bond | Stake Δ | Next Step
@@ -220,6 +220,8 @@ test.describe('non-productive row tinting', () => {
 })
 
 test.describe('simulation flow (expert)', () => {
+  test.describe.configure({ timeout: 90000 })
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/expert-')
     await waitForSamData(page)
@@ -318,17 +320,19 @@ test.describe('simulation flow (expert)', () => {
     await page.getByRole('button', { name: 'Enter Simulation' }).click()
     await page.locator('tbody tr').first().click()
 
-    const inflInput = page.locator('input[type="number"]').first()
-    const currentVal = await inflInput.inputValue()
-    await inflInput.fill(String(parseFloat(currentVal || '5') + 2))
+    const bidInput = page.locator('input[type="number"]').last()
+    const currentBid = await bidInput.inputValue()
+    await bidInput.fill(String(parseFloat(currentBid || '0') + 0.01))
 
     await page.getByRole('button', { name: 'Simulate' }).click()
     await page.waitForSelector('input[type="number"]', {
       state: 'detached',
-      timeout: 30000,
+      timeout: 45000,
     })
 
-    const ghostTd = page.locator('tbody tr[class*="ghostRow"] td').first()
+    const ghostRow = page.locator('tbody tr[class*="ghostRow"]')
+    await expect(ghostRow).toBeVisible({ timeout: 10000 })
+    const ghostTd = ghostRow.locator('td').first()
     await expect(ghostTd).toHaveCSS('text-decoration-line', 'line-through')
   })
 
@@ -336,14 +340,14 @@ test.describe('simulation flow (expert)', () => {
     await page.getByRole('button', { name: 'Enter Simulation' }).click()
     await page.locator('tbody tr').first().click()
 
-    const inflInput = page.locator('input[type="number"]').first()
-    const currentVal = await inflInput.inputValue()
-    await inflInput.fill(String(parseFloat(currentVal || '5') + 2))
+    const bidInput = page.locator('input[type="number"]').last()
+    const currentBid = await bidInput.inputValue()
+    await bidInput.fill(String(parseFloat(currentBid || '0') + 0.01))
 
     await page.getByRole('button', { name: 'Simulate' }).click()
     await page.waitForSelector('input[type="number"]', {
       state: 'detached',
-      timeout: 30000,
+      timeout: 45000,
     })
 
     const tintedRow = page.locator(

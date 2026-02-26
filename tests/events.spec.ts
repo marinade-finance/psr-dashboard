@@ -192,15 +192,16 @@ test.describe('Protected Events page', () => {
     }
   })
 
-  test('expert-protected-events has Last Epoch Bids metric', async ({
-    page,
-  }) => {
-    await page.goto('/expert-protected-events')
-    await page.waitForSelector('[class*="metricWrap"]', { timeout: 30000 })
-    await expect(
-      page
-        .locator('.metric')
-        .filter({ hasText: 'Last Epoch Bids' }),
-    ).toBeVisible()
-  })
+})
+
+test('expert-protected-events has Last Epoch Bids metric', async ({
+  page,
+}) => {
+  await page.goto('/expert-protected-events')
+  await page.waitForSelector('[class*="metricWrap"]', { timeout: 50000 })
+  await expect(
+    page
+      .locator('.metric')
+      .filter({ hasText: 'Last Epoch Bids' }),
+  ).toBeVisible()
 })

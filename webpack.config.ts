@@ -66,6 +66,7 @@ const webpackConfig = (env: {
       patterns: [
         { from: 'public/docs', to: 'docs' },
         { from: 'public/_routes.json', to: '_routes.json' },
+        { from: 'public/serve.json', to: 'serve.json' },
       ],
     }),
     new webpack.DefinePlugin({
