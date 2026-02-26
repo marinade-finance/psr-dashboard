@@ -329,7 +329,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
               Docs
             </a>
             <button
-              className={`px-4 py-2 rounded-lg text-[13px] font-medium font-sans transition-all disabled:opacity-60 disabled:cursor-not-allowed ${simulationModeActive ? 'bg-info border-none text-white hover:brightness-90' : 'bg-primary border-none text-white hover:brightness-90'}`}
+              className={`px-4 py-2 rounded-lg text-[13px] font-medium font-sans transition-all disabled:opacity-60 disabled:cursor-not-allowed ${simulationModeActive ? 'bg-info border-none text-primary-foreground hover:brightness-90' : 'bg-primary border-none text-primary-foreground hover:brightness-90'}`}
               onClick={handleToggleSimulationMode}
               disabled={isCalculating}
             >

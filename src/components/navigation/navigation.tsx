@@ -11,10 +11,9 @@ export type UserLevelProps = {
 }
 
 const NAV_BUTTON_CLASS =
-  'h-11 leading-[44px] px-4 bg-transparent text-[var(--muted-foreground)] cursor-pointer rounded-[var(--radius-md)] text-sm font-medium transition-all duration-150 border-b-2 border-transparent -mb-px hover:text-[var(--foreground)] hover:bg-[var(--primary-light-05)]'
+  'h-11 leading-[44px] px-4 bg-transparent text-muted-foreground cursor-pointer rounded-md text-sm font-medium transition-all duration-150 border-b-2 border-transparent -mb-px hover:text-foreground hover:bg-primary-light-05'
 
-const ACTIVE_CLASS =
-  '[&>div]:text-[var(--primary)] [&>div]:border-b-[var(--primary)]'
+const ACTIVE_CLASS = '[&>div]:text-primary [&>div]:border-b-primary'
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   isActive ? ACTIVE_CLASS : ''
@@ -22,7 +21,7 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
 export const Navigation: React.FC<UserLevelProps> = ({ level }) => {
   const expert = level === UserLevel.Expert ? 'expert-' : ''
   return (
-    <div className="flex items-center bg-[var(--card)] border-b border-[var(--border)] px-6 gap-1">
+    <div className="flex items-center bg-card border-b border-border px-6 gap-1">
       <NavLink to={`/${expert}`} className={navLinkClass}>
         <div className={NAV_BUTTON_CLASS}>Stake Auction Marketplace</div>
       </NavLink>

@@ -56,18 +56,18 @@ export const StatsBar = ({
       {stats.map(stat => (
         <div
           key={stat.label}
-          className="bg-[var(--card)] rounded-[var(--radius-xl)] px-5 py-4 border border-[var(--border)] shadow-[var(--shadow-xs)]"
+          className="bg-card rounded-xl px-5 py-4 border border-border shadow-xs"
         >
-          <div className="text-[length:var(--text-2xs)] text-[var(--muted-foreground)] mb-1 font-sans flex items-center">
+          <div className="text-2xs text-muted-foreground mb-1 font-sans flex items-center">
             {stat.label}
             {stat.help && <HelpTip text={stat.help} />}
           </div>
           <div className="flex items-baseline gap-0.5">
-            <span className="text-[22px] font-semibold text-[var(--foreground)] font-mono">
+            <span className="text-[22px] font-semibold text-foreground font-mono">
               {stat.value}
             </span>
             {stat.unit && (
-              <span className="text-sm text-[var(--muted-foreground)] font-mono">
+              <span className="text-sm text-muted-foreground font-mono">
                 {stat.unit}
               </span>
             )}
