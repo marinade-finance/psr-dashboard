@@ -159,18 +159,23 @@ const renderRow: <Item>(
           {rowNumberRender ? rowNumberRender(item, index) : <>{index + 1}</>}
         </td>
       ) : null}
-      {columns.map((column, i) => (
-        <td
-          {...(column.cellAttrsFn ? column.cellAttrsFn(item) : {})}
-          key={i}
-          className={cn(
-            alignmentClassName(column.alignment),
-            column.background && colorClassName(column.background(item)),
-          )}
-        >
-          {column.render(item, index)}
-        </td>
-      ))}
+      {columns.map((column, i) => {
+        const cellAttrs = column.cellAttrsFn ? column.cellAttrsFn(item) : {}
+        const { className: cellClassName, ...restCellAttrs } = cellAttrs
+        return (
+          <td
+            {...restCellAttrs}
+            key={i}
+            className={cn(
+              alignmentClassName(column.alignment),
+              column.background && colorClassName(column.background(item)),
+              cellClassName,
+            )}
+          >
+            {column.render(item, index)}
+          </td>
+        )
+      })}
     </tr>
   )
 }
