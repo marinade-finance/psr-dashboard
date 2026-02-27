@@ -148,12 +148,11 @@
     background-color: var(--background-page);
     color: var(--foreground);
     font-family:
-      Inter,
+      Geist,
       system-ui,
       -apple-system,
       sans-serif;
     text-rendering: optimizeLegibility;
-    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
     font-optical-sizing: auto;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
