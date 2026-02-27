@@ -33,7 +33,7 @@ const TABLE_BASE = [
   '[&_thead_th:last-child]:rounded-tr-xl',
   '[&_tbody]:bg-background-page',
   '[&_th]:relative [&_th]:px-4 [&_th]:py-2 [&_th]:whitespace-nowrap [&_th]:text-sm [&_th]:font-medium [&_th]:text-muted-foreground',
-  '[&_td]:relative [&_td]:px-4 [&_td]:py-1 [&_td]:whitespace-nowrap',
+  '[&_td]:relative [&_td]:px-4 [&_td]:py-1 [&_td]:whitespace-nowrap [&_td]:align-top',
   '[&_tbody_tr:hover]:bg-secondary',
 ].join(' ')
 
