@@ -5,7 +5,8 @@
 
 /* Theme tokens — maps CSS variables to Tailwind utilities */
 @theme {
-  --font-sans: Inter, system-ui, -apple-system, sans-serif;
+  --font-sans: Geist, system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
   --shadow-card: var(--shadow);
 
   --color-background: var(--background);
@@ -39,6 +40,14 @@
   --color-status-yellow: var(--status-yellow);
   --color-status-red: var(--status-red);
   --color-status-grey: var(--status-grey);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-input: var(--input);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
 }
 
 @layer base {
@@ -62,7 +71,7 @@
     --destructive: #dc2626;
     --destructive-foreground: #f6f9f9;
     --popover: #ffffff;
-    --popover-foreground: #182120;
+    --popover-foreground: #042f2e;
     --warning: #e59606;
     --info: #6366f1;
     --ring: rgba(154, 177, 178, 0.3);
@@ -75,13 +84,21 @@
     --status-yellow: #ca8a04;
     --status-red: #dc2626;
     --status-grey: #6b7280;
+    --accent: #e7eeef;
+    --accent-foreground: #081211;
+    --input: #e7eeef;
+    --chart-1: #0c9790;
+    --chart-2: #818cf8;
+    --chart-3: #fbbf24;
+    --chart-4: #c084fc;
+    --chart-5: #fb7185;
   }
 
   .dark {
     --background: #030707;
     --background-page: #050d0c;
     --foreground: #f6f9f9;
-    --card: #0f1f1e;
+    --card: #050d0c;
     --card-foreground: #f6f9f9;
     --secondary: #212c2b;
     --secondary-foreground: #f6f9f9;
@@ -96,7 +113,7 @@
     --primary-alpha: rgba(23, 159, 153, 0.2);
     --destructive: #f87171;
     --destructive-foreground: #042f2e;
-    --popover: #0f1f1e;
+    --popover: #182120;
     --popover-foreground: #f6f9f9;
     --warning: #fb923c;
     --info: #818cf8;
@@ -110,6 +127,14 @@
     --status-yellow: #fbbf24;
     --status-red: #f87171;
     --status-grey: #6b7280;
+    --accent: #212c2b;
+    --accent-foreground: #f0fdfa;
+    --input: rgba(255, 255, 255, 0.15);
+    --chart-1: #3ac3bc;
+    --chart-2: #6366f1;
+    --chart-3: #f59e0b;
+    --chart-4: #a855f7;
+    --chart-5: #f43f5e;
   }
 
   html {
