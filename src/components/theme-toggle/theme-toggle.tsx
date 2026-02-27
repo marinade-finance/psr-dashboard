@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react'
 
+import { Button } from 'src/components/ui/button'
+
 function getInitialDark(): boolean {
   const stored = localStorage.getItem('theme')
   if (stored) return stored === 'dark'
@@ -20,10 +22,12 @@ export function ThemeToggle() {
   }, [dark])
 
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
+      size="icon"
       onClick={() => setDark(d => !d)}
-      className="ml-2 mr-2 inline-flex items-center justify-center rounded-full p-2 border-none bg-transparent text-muted-foreground hover:text-foreground hover:bg-secondary transition-all duration-150 cursor-pointer"
+      className="ml-2 mr-2 rounded-full text-muted-foreground hover:text-foreground"
       aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
     >
       {dark ? (
@@ -63,6 +67,6 @@ export function ThemeToggle() {
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
         </svg>
       )}
-    </button>
+    </Button>
   )
 }

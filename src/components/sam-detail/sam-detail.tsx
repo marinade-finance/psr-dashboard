@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 
 import { Color } from 'src/components/table/table'
+import { Badge } from 'src/components/ui/badge'
+import { Button } from 'src/components/ui/button'
 import { formatPercentage, formatSolAmount } from 'src/format'
 import {
   bondHealthColor,
@@ -159,12 +161,13 @@ export function SamDetail({
   return (
     <div className="p-4">
       {/* Back button */}
-      <button
-        className="inline-flex items-center gap-2 px-4 py-2 mb-5 bg-card border border-border-grid rounded-lg text-muted-foreground text-sm cursor-pointer hover:border-primary hover:text-foreground transition-colors"
+      <Button
+        variant="outline"
+        className="mb-5 text-muted-foreground hover:border-primary hover:text-foreground"
         onClick={onBack}
       >
-        \u2190 Back to list
-      </button>
+        &#8592; Back to list
+      </Button>
 
       {/* Header row */}
       <div className="flex items-center gap-4 mb-4 flex-wrap">
@@ -173,9 +176,9 @@ export function SamDetail({
           {name}
         </h1>
         {rank != null && (
-          <span className="inline-flex items-center px-3 py-1 rounded-full bg-primary-alpha border border-primary text-primary text-xs font-semibold">
+          <Badge className="px-3 py-1 rounded-full bg-primary-alpha border border-primary text-primary font-semibold">
             #{rank}
-          </span>
+          </Badge>
         )}
       </div>
 
@@ -386,12 +389,9 @@ export function SamDetail({
             Simulate how changes to commission or bid affect this
             validator&apos;s position in the auction.
           </span>
-          <button
-            className="px-4 py-2 bg-primary hover:brightness-110 rounded-lg text-primary-foreground text-sm font-semibold cursor-pointer transition-colors flex-shrink-0"
-            onClick={onEdit}
-          >
+          <Button className="flex-shrink-0" onClick={onEdit}>
             Open Simulation
-          </button>
+          </Button>
         </div>
       )}
     </div>

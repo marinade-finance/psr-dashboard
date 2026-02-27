@@ -28,6 +28,9 @@
   --color-border: var(--border);
   --color-border-grid: var(--border-grid);
   --color-ring: var(--ring);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-cell-red: var(--cell-red);
   --color-cell-green: var(--cell-green);
   --color-cell-yellow: var(--cell-yellow);
@@ -57,6 +60,9 @@
     --primary-foreground: #f6f9f9;
     --primary-alpha: rgba(12, 151, 144, 0.15);
     --destructive: #dc2626;
+    --destructive-foreground: #f6f9f9;
+    --popover: #ffffff;
+    --popover-foreground: #182120;
     --warning: #e59606;
     --info: #6366f1;
     --ring: rgba(154, 177, 178, 0.3);
@@ -89,6 +95,9 @@
     --primary-foreground: #042f2e;
     --primary-alpha: rgba(23, 159, 153, 0.2);
     --destructive: #f87171;
+    --destructive-foreground: #042f2e;
+    --popover: #0f1f1e;
+    --popover-foreground: #f6f9f9;
     --warning: #fb923c;
     --info: #818cf8;
     --ring: rgba(111, 131, 131, 0.5);

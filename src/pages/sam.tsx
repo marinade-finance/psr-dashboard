@@ -7,6 +7,7 @@ import { Navigation } from 'src/components/navigation/navigation'
 import { UserLevel } from 'src/components/navigation/navigation'
 import { SamDetail } from 'src/components/sam-detail/sam-detail'
 import { SamTable } from 'src/components/sam-table/sam-table'
+import { Button } from 'src/components/ui/button'
 import { cn } from 'src/lib/utils'
 import { getBannerData } from 'src/services/banner'
 import { loadSam } from 'src/services/sam'
@@ -214,11 +215,10 @@ export const SamPage: React.FC<Props> = ({ level }) => {
     <div className="bg-background-page">
       <div className="relative">
         <Navigation level={level}>
-          <button
+          <Button
             className={cn(
-              'simulatorToggle h-10 leading-[30px] px-5 py-[5px] m-[4px_0_4px_4px] border-none rounded-lg cursor-pointer font-[inherit] text-[length:inherit] whitespace-nowrap transition-colors bg-primary text-primary-foreground hover:brightness-110',
-              simulationModeActive &&
-                'bg-primary/80 text-primary-foreground ring-2 ring-primary',
+              'simulatorToggle h-10 px-5 m-[4px_0_4px_4px]',
+              simulationModeActive && 'bg-primary/80 ring-2 ring-primary',
               isCalculating &&
                 'bg-muted text-muted-foreground cursor-not-allowed',
             )}
@@ -226,7 +226,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
             disabled={isCalculating}
           >
             {simulationModeActive ? 'Exit Simulation' : 'Enter Simulation'}
-          </button>
+          </Button>
         </Navigation>
         <Banner {...getBannerData()} />
         {status === 'error' && <p>Error fetching data</p>}

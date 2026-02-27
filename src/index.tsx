@@ -12,6 +12,7 @@ import { Tooltip } from 'react-tooltip'
 
 import 'react-tooltip/dist/react-tooltip.css'
 import { UserLevel } from './components/navigation/navigation'
+import { TooltipProvider } from './components/ui/tooltip'
 import { ProtectedEventsPage } from './pages/protected-events'
 import { SamPage } from './pages/sam'
 import { ValidatorBondsPage } from './pages/validator-bonds'
@@ -85,7 +86,9 @@ void queryClient.prefetchQuery(
 ReactDOM.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <TooltipProvider>
+        <RouterProvider router={router} />
+      </TooltipProvider>
       <Tooltip id="tooltip" style={{ zIndex: 2, width: 400 }} />
     </QueryClientProvider>
   </React.StrictMode>,

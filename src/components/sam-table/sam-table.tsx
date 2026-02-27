@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import { Button } from 'src/components/ui/button'
+import { Input } from 'src/components/ui/input'
 import { formatPercentage, formatSolAmount } from 'src/format'
 import { cn } from 'src/lib/utils'
 import {
@@ -146,9 +148,9 @@ function renderEditableCell(
   return (
     <div className="relative inline-block">
       <span className="invisible">{displayValue}</span>
-      <input
+      <Input
         type="number"
-        className="absolute right-0 top-1/2 -translate-y-1/2 w-[50px] px-1 py-0.5 bg-secondary border border-border-grid rounded text-foreground text-xs text-right box-border focus:outline-hidden focus:border-primary placeholder:text-muted-foreground [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+        className="absolute right-0 top-1/2 -translate-y-1/2 w-[50px] h-auto px-1 py-0.5 text-xs text-right [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
         value={inputValue}
         step={opts.step}
         min={opts.min}
@@ -816,9 +818,10 @@ export const SamTable: React.FC<Props> = ({
             <span>{realIdx}</span>
             {isEditing && (
               <div className="absolute left-0 top-1/2 -translate-y-1/2 flex gap-1 z-10">
-                <button
+                <Button
+                  size="sm"
                   className={cn(
-                    'min-w-[60px] px-2 py-[3px] bg-primary text-primary-foreground border-none rounded cursor-pointer text-[11px] font-medium transition-colors whitespace-nowrap shadow-[0_1px_3px_rgba(0,0,0,0.3)] text-center hover:brightness-110 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed',
+                    'min-w-[60px] h-auto py-[3px] text-[11px] shadow-[0_1px_3px_rgba(0,0,0,0.3)]',
                     isCalculating && 'bg-muted text-muted-foreground',
                   )}
                   onClick={e => {
@@ -828,9 +831,11 @@ export const SamTable: React.FC<Props> = ({
                   disabled={isCalculating}
                 >
                   {isCalculating ? 'Simulating' : 'Simulate'}
-                </button>
-                <button
-                  className="px-1.5 py-[3px] bg-muted-foreground text-primary-foreground border-none rounded cursor-pointer text-[11px] font-medium transition-colors shadow-[0_1px_3px_rgba(0,0,0,0.3)] hover:enabled:bg-destructive"
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="h-auto px-1.5 py-[3px] text-[11px] shadow-[0_1px_3px_rgba(0,0,0,0.3)] hover:enabled:bg-destructive hover:enabled:text-destructive-foreground"
                   onClick={e => {
                     e.stopPropagation()
                     onCancelEditing()
@@ -839,7 +844,7 @@ export const SamTable: React.FC<Props> = ({
                   title="Cancel editing (Esc)"
                 >
                   {'\u2715'}
-                </button>
+                </Button>
               </div>
             )}
           </div>

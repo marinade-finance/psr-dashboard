@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 
+import { Badge } from 'src/components/ui/badge'
+import { Input } from 'src/components/ui/input'
 import { formatSolAmount } from 'src/format'
 import {
   selectAmount,
@@ -23,25 +25,27 @@ const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
   switch (status) {
     case ProtectedEventStatus.DRYRUN:
       return (
-        <span
+        <Badge
+          variant="secondary"
           {...tooltipAttributes(
             'This settlement is not claimable as it was created during the testing period.',
           )}
-          className="badge rounded px-1.5 py-0.5 cursor-help float-left bg-secondary text-foreground text-xs"
+          className="badge cursor-help float-left"
         >
           Dryrun
-        </span>
+        </Badge>
       )
     case ProtectedEventStatus.ESTIMATE:
       return (
-        <span
+        <Badge
+          variant="default"
           {...tooltipAttributes(
             'This is an estimate based on live data but may change during the epoch<br />before the settlements for this epoch are created on-chain.',
           )}
-          className="badge rounded px-1.5 py-0.5 cursor-help float-left bg-primary text-primary-foreground text-xs"
+          className="badge cursor-help float-left"
         >
           Estimate
-        </span>
+        </Badge>
       )
     default:
       return <></>
@@ -162,7 +166,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
   const filtered = preFilteredData.length !== data.length
 
   return (
-    <div className="relative [&>table]:ml-2.5 [&_input]:bg-secondary [&_input]:text-foreground [&_input]:border [&_input]:border-border-grid [&_input]:rounded-md [&_input]:p-2 [&_input]:outline-hidden [&_input:focus]:border-primary [&_input:focus]:text-foreground">
+    <div className="relative [&>table]:ml-2.5">
       <div className="metricWrap flex gap-2 p-2.5 w-fit">
         <Metric
           label="Total events"
@@ -200,7 +204,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
       <div className="mb-2.5 [&_fieldset]:inline-block [&_fieldset]:ml-2.5 [&_fieldset]:border-transparent [&_legend]:text-[11px] [&_legend]:uppercase [&_legend]:tracking-wider [&_legend]:font-medium [&_legend]:text-muted-foreground [&_legend]:mb-1">
         <fieldset>
           <legend>Validator filter</legend>
-          <input
+          <Input
             type="text"
             value={validatorFilter}
             onChange={e => setValidatorFilter(e.target.value)}
@@ -208,13 +212,13 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
         </fieldset>
         <fieldset>
           <legend>Epoch filter</legend>
-          <input
+          <Input
             className="w-[70px]"
             type="number"
             value={minEpochFilter}
             onChange={e => setMinEpochFilter(Number(e.target.value))}
           />
-          <input
+          <Input
             className="w-[70px]"
             type="number"
             value={maxEpochFilter}
