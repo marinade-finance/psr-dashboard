@@ -45,7 +45,7 @@ export const Navigation: React.FC<UserLevelProps> = ({ level }) => {
   ]
 
   return (
-    <nav className="flex items-center bg-card border-b-2 border-border px-6 h-14 w-full font-mono">
+    <nav className="flex items-center border-b border-border px-6 h-14 w-full font-mono">
       {/* Brand */}
       <NavLink
         to="/"
@@ -70,8 +70,8 @@ export const Navigation: React.FC<UserLevelProps> = ({ level }) => {
             className={({ isActive }) =>
               `px-3 py-1.5 text-sm font-medium font-mono ${
                 isActive
-                  ? 'text-primary border border-border'
-                  : 'text-muted-foreground hover:text-foreground border border-transparent'
+                  ? 'text-foreground font-bold'
+                  : 'text-muted-foreground hover:text-foreground'
               }`
             }
           >
@@ -86,7 +86,7 @@ export const Navigation: React.FC<UserLevelProps> = ({ level }) => {
       <div className="ml-auto flex items-center gap-2">
         <a
           href="docs/"
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-all border border-border"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:transition-all border border-border"
         >
           [ Docs ]
         </a>

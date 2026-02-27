@@ -196,7 +196,7 @@ export const ValidatorDetail = ({
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
           <div className="space-y-6">
-            <div className="bg-card border border-border p-5">
+            <div className="border border-border p-5">
               <h3 className="text-base font-semibold text-foreground font-mono flex items-center gap-2">
                 :: Why Rank #{rank}?
                 <HelpTip text="Factors that determine your auction ranking." />
@@ -232,7 +232,7 @@ export const ValidatorDetail = ({
               </div>
             </div>
 
-            <div className="bg-card border border-border p-5">
+            <div className="border border-border p-5">
               <h3 className="text-base font-semibold text-foreground font-mono flex items-center gap-2">
                 :: APY Composition
                 <HelpTip text={HELP_TEXT.maxApy} />
@@ -263,7 +263,7 @@ export const ValidatorDetail = ({
               </div>
             </div>
 
-            <div className="bg-card border border-border p-5">
+            <div className="border border-border p-5">
               <h3 className="text-base font-semibold text-foreground font-mono flex items-center gap-2">
                 :: Next Step
               </h3>
@@ -275,7 +275,7 @@ export const ValidatorDetail = ({
           </div>
 
           <div className="space-y-6">
-            <div className="bg-card border border-border p-5">
+            <div className="border border-border p-5">
               <h3 className="text-base font-semibold text-foreground font-mono flex items-center gap-2">
                 :: What-If Simulation
                 <HelpTip text={HELP_TEXT.simulation} />
@@ -348,7 +348,7 @@ export const ValidatorDetail = ({
               </div>
             </div>
 
-            <div className="bg-card border border-border p-5">
+            <div className="border border-border p-5">
               <h3 className="text-base font-semibold text-foreground font-mono flex items-center gap-2">
                 :: Bond Health
                 <HelpTip text={HELP_TEXT.bondHealth} />
@@ -381,7 +381,7 @@ export const ValidatorDetail = ({
               </div>
             </div>
 
-            <div className="bg-card border border-border p-5">
+            <div className="border border-border p-5">
               <h3 className="text-base font-semibold text-foreground font-mono">
                 :: Stake Overview
               </h3>

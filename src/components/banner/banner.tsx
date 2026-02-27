@@ -10,7 +10,7 @@ export interface Props {
 export const Banner: React.FC<Props> = ({ title, body }) => {
   if (!title) return null
   return (
-    <Card className="mb-6 px-5 py-4 bg-card border-l-4 border-l-primary text-sm leading-relaxed text-foreground font-mono">
+    <Card className="mb-6 px-5 py-4 border-l-4 border-l-primary text-sm leading-relaxed text-foreground font-mono">
       <div className="font-semibold text-base mb-1">
         {'>> '}
         {title}

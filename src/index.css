@@ -7,12 +7,12 @@
 :root {
   --radius: 0;
 
-  --primary: #0C9790;
-  --primary-light: rgba(12, 151, 144, 0.15);
-  --primary-light-10: rgba(12, 151, 144, 0.08);
-  --primary-light-05: rgba(12, 151, 144, 0.04);
-  --primary-90: rgba(12, 151, 144, 0.9);
-  --primary-foreground: #FDF6ED;
+  --primary: #3D2B1F;
+  --primary-light: transparent;
+  --primary-light-10: transparent;
+  --primary-light-05: transparent;
+  --primary-90: rgba(61, 43, 31, 0.9);
+  --primary-foreground: #F5E6D3;
 
   --foreground: #3D2B1F;
   --secondary-foreground: #3D2B1F;
@@ -20,37 +20,37 @@
 
   --background: #F5E6D3;
   --background-page: #F5E6D3;
-  --card: #FDF6ED;
+  --card: #F5E6D3;
   --card-foreground: #3D2B1F;
 
-  --border: #D4C4A8;
-  --border-grid: #D4C4A8;
-  --input: #FDF6ED;
-  --secondary: #EDD9C4;
-  --muted: #EDD9C4;
-  --accent: #EDD9C4;
+  --border: #C4AD8C;
+  --border-grid: #C4AD8C;
+  --input: #F5E6D3;
+  --secondary: #F5E6D3;
+  --muted: #F5E6D3;
+  --accent: #F5E6D3;
   --tertiary: #D4C4A8;
   --tertiary-foreground: #8B7355;
 
-  --ring: rgba(12, 151, 144, 0.3);
+  --ring: rgba(61, 43, 31, 0.3);
 
-  --destructive: #9B2226;
-  --destructive-light: rgba(155, 34, 38, 0.12);
-  --destructive-20: rgba(155, 34, 38, 0.2);
+  --destructive: #3D2B1F;
+  --destructive-light: transparent;
+  --destructive-20: transparent;
 
-  --warning: #BB8B41;
-  --warning-light: rgba(187, 139, 65, 0.12);
-  --warning-20: rgba(187, 139, 65, 0.2);
-  --warning-10: rgba(187, 139, 65, 0.1);
+  --warning: #3D2B1F;
+  --warning-light: transparent;
+  --warning-20: transparent;
+  --warning-10: transparent;
 
-  --info: #0C9790;
-  --info-light: rgba(12, 151, 144, 0.12);
-  --info-20: rgba(12, 151, 144, 0.2);
+  --info: #3D2B1F;
+  --info-light: transparent;
+  --info-20: transparent;
 
-  --chart-1: #0C9790;
-  --chart-2: #BB8B41;
-  --chart-3: #9B2226;
-  --chart-4: #2D6A4F;
+  --chart-1: #3D2B1F;
+  --chart-2: #8B7355;
+  --chart-3: #3D2B1F;
+  --chart-4: #5C4033;
   --chart-5: #8B7355;
 
   --tag-1: #BB8B41;

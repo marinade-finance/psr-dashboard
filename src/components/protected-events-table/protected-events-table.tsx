@@ -212,7 +212,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
   }
 
   const headClass =
-    'px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted cursor-pointer select-none whitespace-nowrap'
+    'px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] cursor-pointer select-none whitespace-nowrap'
 
   let expertMetrics
   if (level === UserLevel.Expert) {
@@ -297,7 +297,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
           </div>
         </div>
       </div>
-      <div className="bg-card border border-border overflow-hidden">
+      <div className="border border-border overflow-hidden">
         <ShadTable>
           <TableHeader>
             <TableRow className="border-b border-border-grid">
@@ -342,7 +342,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
               return (
                 <TableRow
                   key={`${protectedEvent.vote_account}-${protectedEvent.epoch}-${idx}`}
-                  className="border-b border-border-grid bg-card transition-colors duration-[120ms] hover:bg-primary-light-05"
+                  className="border-b border-border-grid transition-colors duration-[120ms] "
                 >
                   <TableCell className="px-3.5 py-3 text-right font-mono text-[13px]">
                     {protectedEvent.epoch}

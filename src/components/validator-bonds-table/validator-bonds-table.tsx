@@ -44,7 +44,7 @@ type Props = {
 type SortConfig = { column: string; direction: 'asc' | 'desc' } | null
 
 const HEAD_CLS =
-  'px-3.5 py-[11px] text-[11px] font-medium tracking-[0.06em] bg-muted uppercase cursor-pointer select-none'
+  'px-3.5 py-[11px] text-[11px] font-medium tracking-[0.06em] uppercase cursor-pointer select-none'
 
 export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
   const [sort, setSort] = useState<SortConfig>({
@@ -192,7 +192,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
         )}
       </div>
 
-      <div className="bg-card border border-border overflow-hidden">
+      <div className="border border-border overflow-hidden">
         <ShadTable className="font-sans text-[13px]">
           <TableHeader>
             <TableRow className="border-b border-border-grid">
@@ -277,7 +277,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
               return (
                 <TableRow
                   key={voteAccount}
-                  className="border-b border-border-grid bg-card transition-colors duration-[120ms] hover:bg-primary-light-05"
+                  className="border-b border-border-grid transition-colors duration-[120ms] "
                 >
                   {/* Validator: name + address */}
                   <TableCell className="px-3.5 py-3 min-w-[200px]">

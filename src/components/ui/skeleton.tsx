@@ -22,7 +22,7 @@ function Skeleton({
   return (
     <div
       className={cn(
-        'bg-muted font-mono text-border overflow-hidden',
+        'font-mono text-border overflow-hidden',
         className,
       )}
       {...props}

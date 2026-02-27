@@ -74,7 +74,7 @@ const ApyTooltip: React.FC<{
       : 0
 
   return (
-    <div className="absolute top-[-4px] left-[calc(100%-16px)] z-[100] bg-card border border-border px-4 py-3 min-w-[230px]">
+    <div className="absolute top-[-4px] left-[calc(100%-16px)] z-[100] border border-border px-4 py-3 min-w-[230px]" style={{ backgroundColor: '#F5E6D3' }}>
       <div className="text-[11px] text-muted-foreground mb-2 font-mono">
         APY Composition
       </div>
@@ -121,7 +121,7 @@ const ApyTooltip: React.FC<{
       </div>
       <div className="border-t border-border mt-1.5 pt-1.5 flex justify-between text-xs font-semibold font-mono">
         <span className="text-foreground">Total</span>
-        <span className="text-primary">
+        <span className="text-foreground">
           {formatPercentage(breakdown.total, 2)}
         </span>
       </div>
@@ -154,7 +154,7 @@ export const SamTable: React.FC<Props> = ({
 
   const tableWrapRef = useRef<HTMLDivElement>(null)
   const [hoveredApyRow, setHoveredApyRow] = useState<string | null>(null)
-  const [hoveredRow, setHoveredRow] = useState<string | null>(null)
+
 
   const validatorsWithBond: ValidatorWithBondState[] = useMemo(
     () =>
@@ -253,8 +253,7 @@ export const SamTable: React.FC<Props> = ({
       <TableRow
         key={voteAccount}
         className={`border-b border-border-grid cursor-pointer ${isSimulated ? 'bg-muted' : ''}`}
-        onMouseEnter={() => setHoveredRow(voteAccount)}
-        onMouseLeave={() => setHoveredRow(null)}
+
         onClick={() => onValidatorClick(voteAccount)}
       >
         {/* Rank */}
@@ -334,7 +333,7 @@ export const SamTable: React.FC<Props> = ({
         {/* Chevron */}
         <TableCell className="px-2.5 py-3 w-10">
           <span
-            className={`font-mono text-sm ${hoveredRow === voteAccount ? 'text-primary' : 'text-muted-foreground'}`}
+            className="font-mono text-sm text-muted-foreground"
           >
             {'>'}
           </span>
@@ -353,7 +352,7 @@ export const SamTable: React.FC<Props> = ({
         {stats.map(stat => (
           <div
             key={stat.label}
-            className="bg-card px-5 py-4 border border-border"
+            className="px-5 py-4 border border-border"
           >
             <div className="text-[11px] text-muted-foreground mb-1 font-mono flex items-center gap-1 uppercase tracking-wider">
               {':: '}
@@ -375,32 +374,32 @@ export const SamTable: React.FC<Props> = ({
       </div>
 
       {/* Table */}
-      <div className="bg-card border border-border overflow-hidden">
+      <div className="border border-border overflow-hidden">
         <ShadTable className="font-mono text-[13px]">
           <TableHeader>
             <TableRow className="border-b border-border-grid">
-              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted w-10 text-center">
+              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] w-10 text-center">
                 #
               </TableHead>
-              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted min-w-[150px]">
+              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] min-w-[150px]">
                 Validator
               </TableHead>
-              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted w-[100px]">
+              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] w-[100px]">
                 Max APY
                 <HelpTip text={HELP_TEXT.maxApy} />
               </TableHead>
-              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted w-40">
+              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] w-40">
                 Bond
                 <HelpTip text={HELP_TEXT.bondHealth} />
               </TableHead>
-              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted w-[120px]">
+              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] w-[120px]">
                 Stake {'\u0394'}
                 <HelpTip text={HELP_TEXT.stakeDelta} />
               </TableHead>
-              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted min-w-[200px]">
+              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] min-w-[200px]">
                 Next Step
               </TableHead>
-              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted w-10"></TableHead>
+              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] w-10"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

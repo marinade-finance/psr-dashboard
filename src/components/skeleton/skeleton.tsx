@@ -3,7 +3,7 @@ import React from 'react'
 import { Skeleton } from 'src/components/ui/skeleton'
 
 const StatCard: React.FC = () => (
-  <div className="bg-card px-5 py-4 border border-border">
+  <div className="px-5 py-4 border border-border">
     <Skeleton className="h-3 w-20 mb-3" />
     <Skeleton className="h-5 w-28" />
   </div>
@@ -32,8 +32,8 @@ export const SamSkeleton: React.FC = () => (
       <StatCard />
       <StatCard />
     </div>
-    <div className="bg-card border border-border overflow-hidden">
-      <div className="flex items-center gap-4 px-4 py-3 bg-muted border-b border-border">
+    <div className="border border-border overflow-hidden">
+      <div className="flex items-center gap-4 px-4 py-3 border-b border-border">
         <Skeleton className="h-3 w-6" />
         <Skeleton className="h-3 w-24" />
         <Skeleton className="h-3 w-16" />
@@ -57,8 +57,8 @@ export const BondsSkeleton: React.FC = () => (
       <StatCard />
       <StatCard />
     </div>
-    <div className="bg-card border border-border overflow-hidden">
-      <div className="flex items-center gap-4 px-4 py-3 bg-muted border-b border-border">
+    <div className="border border-border overflow-hidden">
+      <div className="flex items-center gap-4 px-4 py-3 border-b border-border">
         <Skeleton className="h-3 w-28" />
         <Skeleton className="h-3 w-20" />
         <Skeleton className="h-3 w-24" />
@@ -100,8 +100,8 @@ export const EventsSkeleton: React.FC = () => (
       <Skeleton className="h-9 w-24" />
       <Skeleton className="h-9 w-24" />
     </div>
-    <div className="bg-card border border-border overflow-hidden">
-      <div className="flex items-center gap-4 px-4 py-3 bg-muted border-b border-border">
+    <div className="border border-border overflow-hidden">
+      <div className="flex items-center gap-4 px-4 py-3 border-b border-border">
         <Skeleton className="h-3 w-12" />
         <Skeleton className="h-3 w-28" />
         <Skeleton className="h-3 w-20" />

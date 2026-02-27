@@ -24,7 +24,7 @@ const TableHeader = React.forwardRef<
   <thead
     ref={ref}
     className={cn(
-      'sticky top-0 bg-muted text-muted-foreground cursor-pointer select-none z-[1]',
+      'sticky top-0 text-muted-foreground cursor-pointer select-none z-[1]',
       className,
     )}
     {...props}
@@ -36,7 +36,7 @@ const TableBody = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <tbody ref={ref} className={cn('bg-card', className)} {...props} />
+  <tbody ref={ref} className={cn('', className)} {...props} />
 ))
 TableBody.displayName = 'TableBody'
 
@@ -47,7 +47,7 @@ const TableRow = React.forwardRef<
   <tr
     ref={ref}
     className={cn(
-      'hover:bg-primary-light-05 [&:last-child_td]:border-b-0',
+      '[&:last-child_td]:border-b-0',
       className,
     )}
     {...props}
