@@ -33,7 +33,7 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
         <div className={styles.navButton}>Validator Bonds</div>
       </NavLink>
       <a
-        href="/docs/"
+        href={isExpert ? '/docs/?from=expert' : '/docs/'}
         className={styles.docsButton}
         style={{ marginLeft: 'auto' }}
       >
