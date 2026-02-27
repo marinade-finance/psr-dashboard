@@ -51,7 +51,7 @@ const rpad = (s: string, w: number): string =>
   s.length >= w ? s.slice(0, w) : ' '.repeat(w - s.length) + s
 
 // Column widths
-const W = { rank: 3, name: 24, apy: 8, bond: 22, delta: 14, tip: 0 }
+const W = { rank: 3, name: 24, apy: 8, bond: 28, delta: 15, tip: 0 }
 const SEP = ' │ '
 
 // APY Tooltip component
@@ -194,9 +194,12 @@ export const SamTable: React.FC<Props> = ({
         : bondHealth === 'watch'
           ? 'WARN'
           : ' OK '
-    const bondAmt = formatSolAmount(selectBondSize(validator), 0)
-    const bondStr = `[${healthTag}] ${bondAmt}◎ ~${Math.round(bondRunway)}ep`
-    const deltaStr = `${delta.arrow} ${delta.text}${delta.text !== '—' ? ' ◎' : ''}`
+    const bondAmt = rpad(formatSolAmount(selectBondSize(validator), 0) + '◎', 8)
+    const runway = Math.round(bondRunway)
+    const epStr = runway > 9999 ? 'Inf' : `${runway}`
+    const bondStr = `[${healthTag}] ${bondAmt} ${rpad('~' + epStr + 'ep', 10)}`
+    const deltaRaw = `${delta.arrow} ${delta.text}${delta.text !== '—' ? ' ◎' : ''}`
+    const deltaStr = rpad(deltaRaw, W.delta)
     const tipText = `${tipStyle.icon} ${tip.text.replace(/~?\d+\.\d{3,}/g, m => {
       const n = parseFloat(m.replace(/^~/, ''))
       const prefix = m.startsWith('~') ? '~' : ''
@@ -227,7 +230,7 @@ export const SamTable: React.FC<Props> = ({
         <span className="text-muted-foreground">{SEP}</span>
         <span>{pad(bondStr, W.bond)}</span>
         <span className="text-muted-foreground">{SEP}</span>
-        <span>{rpad(deltaStr, W.delta)}</span>
+        <span>{deltaStr}</span>
         <span className="text-muted-foreground">{SEP}</span>
         <span className="text-muted-foreground">{tipText}</span>
       </div>
