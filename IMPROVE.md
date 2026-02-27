@@ -3,6 +3,13 @@
 Design improvements extracted from `feature/my-feature` branch inspection and
 general UX critique.
 
+## Done
+
+- All colors and shadows in component files now use Tailwind semantic utilities
+  (no hardcoded hex/rgba in `src/`). Shadow vars (`shadow-hover`, `shadow-button`)
+  and sim animation vars moved to `src/index.css`; `header-glow` keyframe uses
+  CSS vars. `metric.tsx` and `sam-table.tsx` reference only semantic utilities.
+
 ---
 
 ## 1. Brand identity in nav — DONE

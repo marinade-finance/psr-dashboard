@@ -541,7 +541,7 @@ export const SamTable: React.FC<Props> = ({
   }
 
   const simulationCaption = simulationModeActive ? (
-    <div className="px-8 py-4 bg-linear-to-br from-[rgba(5,30,28,1)] to-[rgba(15,50,48,1)] text-primary text-lg font-semibold tracking-wider text-center uppercase rounded-t-xl border-b border-border-grid">
+    <div className="px-8 py-4 bg-linear-to-br from-sim-from to-sim-to text-primary text-lg font-semibold tracking-wider text-center uppercase rounded-t-xl border-b border-border-grid">
       {isCalculating ? 'Calculating simulation...' : 'Simulation mode active'}
     </div>
   ) : undefined
@@ -798,7 +798,7 @@ export const SamTable: React.FC<Props> = ({
                 <Button
                   size="sm"
                   className={cn(
-                    'min-w-[60px] h-auto py-[3px] text-[11px] shadow-[0_1px_3px_rgba(0,0,0,0.3)]',
+                    'min-w-[60px] h-auto py-[3px] text-[11px] shadow-button',
                     isCalculating && 'bg-muted text-muted-foreground',
                   )}
                   onClick={e => {
@@ -812,7 +812,7 @@ export const SamTable: React.FC<Props> = ({
                 <Button
                   size="sm"
                   variant="secondary"
-                  className="h-auto px-1.5 py-[3px] text-[11px] shadow-[0_1px_3px_rgba(0,0,0,0.3)] hover:enabled:bg-destructive hover:enabled:text-destructive-foreground"
+                  className="h-auto px-1.5 py-[3px] text-[11px] shadow-button hover:enabled:bg-destructive hover:enabled:text-destructive-foreground"
                   onClick={e => {
                     e.stopPropagation()
                     onCancelEditing()
@@ -1081,9 +1081,9 @@ export const SamTable: React.FC<Props> = ({
       className={cn(
         'relative',
         simulationModeActive && [
-          '[&_table_tbody]:bg-[rgba(5,30,28,0.08)]',
-          '[&_table_tbody_tr]:bg-[rgba(5,30,28,0.06)]',
-          '[&_table_thead]:bg-linear-to-br [&_table_thead]:from-[rgba(5,30,28,1)] [&_table_thead]:to-[rgba(15,50,48,1)] [&_table_thead]:transition-[background] [&_table_thead]:duration-[800ms] [&_table_thead]:ease-in-out',
+          '[&_table_tbody]:bg-sim-tbody',
+          '[&_table_tbody_tr]:bg-sim-row',
+          '[&_table_thead]:bg-linear-to-br [&_table_thead]:from-sim-from [&_table_thead]:to-sim-to [&_table_thead]:transition-[background] [&_table_thead]:duration-[800ms] [&_table_thead]:ease-in-out',
         ],
         isCalculating && 'header-glow',
       )}

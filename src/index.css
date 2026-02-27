@@ -8,6 +8,8 @@
   --font-sans: Geist, system-ui, -apple-system, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, monospace;
   --shadow-card: var(--shadow);
+  --shadow-hover: var(--shadow-hover-val);
+  --shadow-button: var(--shadow-button-val);
 
   --color-background: var(--background);
   --color-background-page: var(--background-page);
@@ -52,8 +54,6 @@
   --color-sim-to: var(--sim-to);
   --color-sim-tbody: var(--sim-tbody);
   --color-sim-row: var(--sim-row);
-  --shadow-hover: var(--shadow-hover-val);
-  --shadow-button: var(--shadow-button-val);
 }
 
 @layer base {
@@ -212,8 +212,8 @@
     50% {
       background: linear-gradient(
         135deg,
-        rgba(10, 60, 56, 1),
-        rgba(20, 80, 76, 1)
+        var(--sim-glow-from),
+        var(--sim-glow-to)
       );
     }
   }
