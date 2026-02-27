@@ -3,7 +3,7 @@ import React from 'react'
 import { Skeleton } from 'src/components/ui/skeleton'
 
 const StatCard: React.FC = () => (
-  <div className="bg-card rounded-xl px-5 py-4 border border-border shadow-xs">
+  <div className="bg-card px-5 py-4 border border-border">
     <Skeleton className="h-3 w-20 mb-3" />
     <Skeleton className="h-5 w-28" />
   </div>
@@ -26,16 +26,13 @@ const SkeletonRow: React.FC = () => (
 
 export const SamSkeleton: React.FC = () => (
   <div className="space-y-6">
-    {/* Stats bar */}
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
       <StatCard />
       <StatCard />
       <StatCard />
       <StatCard />
     </div>
-
-    {/* Table */}
-    <div className="bg-card rounded-xl border border-border overflow-hidden">
+    <div className="bg-card border border-border overflow-hidden">
       <div className="flex items-center gap-4 px-4 py-3 bg-muted border-b border-border">
         <Skeleton className="h-3 w-6" />
         <Skeleton className="h-3 w-24" />
@@ -60,7 +57,7 @@ export const BondsSkeleton: React.FC = () => (
       <StatCard />
       <StatCard />
     </div>
-    <div className="bg-card rounded-xl border border-border overflow-hidden">
+    <div className="bg-card border border-border overflow-hidden">
       <div className="flex items-center gap-4 px-4 py-3 bg-muted border-b border-border">
         <Skeleton className="h-3 w-28" />
         <Skeleton className="h-3 w-20" />
@@ -99,11 +96,11 @@ export const EventsSkeleton: React.FC = () => (
       <StatCard />
     </div>
     <div className="flex items-center gap-4 mb-4">
-      <Skeleton className="h-9 w-64 rounded-lg" />
-      <Skeleton className="h-9 w-24 rounded-lg" />
-      <Skeleton className="h-9 w-24 rounded-lg" />
+      <Skeleton className="h-9 w-64" />
+      <Skeleton className="h-9 w-24" />
+      <Skeleton className="h-9 w-24" />
     </div>
-    <div className="bg-card rounded-xl border border-border overflow-hidden">
+    <div className="bg-card border border-border overflow-hidden">
       <div className="flex items-center gap-4 px-4 py-3 bg-muted border-b border-border">
         <Skeleton className="h-3 w-12" />
         <Skeleton className="h-3 w-28" />
@@ -122,8 +119,8 @@ export const EventsSkeleton: React.FC = () => (
             <Skeleton className="h-3 w-20" />
           </div>
           <Skeleton className="h-4 w-16" />
-          <Skeleton className="h-5 w-20 rounded-sm" />
-          <Skeleton className="h-5 w-16 rounded-sm" />
+          <Skeleton className="h-5 w-20" />
+          <Skeleton className="h-5 w-16" />
         </div>
       ))}
     </div>

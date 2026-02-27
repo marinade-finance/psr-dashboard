@@ -8,7 +8,10 @@ const Table = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <table
     ref={ref}
-    className={cn('w-full border-collapse border-spacing-0', className)}
+    className={cn(
+      'w-full border-collapse border-spacing-0 font-mono',
+      className,
+    )}
     {...props}
   />
 ))
@@ -59,7 +62,7 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      'relative px-4 py-3 whitespace-nowrap text-2xs font-semibold uppercase tracking-wider border-b border-border',
+      'relative px-4 py-3 whitespace-nowrap text-2xs font-semibold uppercase tracking-wider border-b-2 border-border font-mono',
       className,
     )}
     {...props}
@@ -74,7 +77,7 @@ const TableCell = React.forwardRef<
   <td
     ref={ref}
     className={cn(
-      'relative px-4 py-2.5 whitespace-nowrap text-sm border-b border-border-grid',
+      'relative px-4 py-2.5 whitespace-nowrap text-sm border-b border-border-grid font-mono',
       className,
     )}
     {...props}

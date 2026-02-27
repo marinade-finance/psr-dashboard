@@ -56,7 +56,8 @@ export const StatsBar = ({
     <div className="grid grid-cols-4 gap-3 mb-6 max-lg:grid-cols-2 max-sm:grid-cols-1">
       {stats.map(stat => (
         <Card key={stat.label} className="px-5 py-4">
-          <div className="text-2xs text-muted-foreground mb-1 font-sans flex items-center">
+          <div className="text-2xs text-muted-foreground mb-1 font-mono flex items-center uppercase tracking-wider">
+            {':: '}
             {stat.label}
             {stat.help && <HelpTip text={stat.help} />}
           </div>

@@ -6,19 +6,19 @@ import { cn } from 'src/lib/utils'
 import type { VariantProps } from 'class-variance-authority'
 
 const badgeVariants = cva(
-  'inline-flex items-center rounded-sm px-1.5 py-0.5 text-xs font-medium',
+  'inline-flex items-center px-1.5 py-0.5 text-xs font-medium font-mono border',
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground',
-        secondary: 'bg-secondary text-secondary-foreground',
-        outline: 'border border-border text-foreground',
-        destructive: 'bg-destructive text-white',
-        estimate: 'bg-primary-light text-primary',
-        dryrun: 'bg-muted text-muted-foreground',
-        healthy: 'bg-primary-light-10 text-primary',
-        watch: 'bg-warning-light text-warning',
-        critical: 'bg-destructive-light text-destructive',
+        default: 'bg-primary text-primary-foreground border-primary',
+        secondary: 'bg-secondary text-secondary-foreground border-border',
+        outline: 'border-border text-foreground',
+        destructive: 'bg-destructive text-white border-destructive',
+        estimate: 'bg-primary-light text-primary border-primary/30',
+        dryrun: 'bg-muted text-muted-foreground border-border',
+        healthy: 'bg-primary-light-10 text-primary border-primary/20',
+        watch: 'bg-warning-light text-warning border-warning/30',
+        critical: 'bg-destructive-light text-destructive border-destructive/30',
       },
     },
     defaultVariants: {

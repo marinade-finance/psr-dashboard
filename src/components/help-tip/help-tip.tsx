@@ -19,7 +19,7 @@ export const HelpTip = ({ text, children }: HelpTipProps) => {
     <span className="cursor-help">{children}</span>
   ) : (
     <span
-      className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-secondary text-muted-foreground text-[9px] font-bold cursor-help ml-1 select-none font-sans"
+      className="inline-flex items-center justify-center w-4 h-4 border border-border text-muted-foreground text-[9px] font-bold cursor-help ml-1 select-none font-mono"
       role="button"
       aria-label="Help"
     >
