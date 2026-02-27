@@ -9,15 +9,13 @@ import { getBannerData } from 'src/services/banner'
 import { fetchValidatorsWithBonds } from 'src/services/validator-with-bond'
 import { selectTotalMarinadeStake } from 'src/services/validators'
 
-import styles from './validator-bonds.module.css'
-
 import type { UserLevelProps } from 'src/components/navigation/navigation'
 
 export const ValidatorBondsPage: React.FC<UserLevelProps> = ({ level }) => {
   const { data, status } = useQuery('bonds', fetchValidatorsWithBonds)
 
   return (
-    <div className={styles.page}>
+    <div className="bg-background-page">
       <Navigation level={level} />
       <Banner {...getBannerData()} />
       {status === 'error' && <p>Error fetching data</p>}

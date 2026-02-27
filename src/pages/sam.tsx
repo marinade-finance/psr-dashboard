@@ -1,24 +1,24 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useRef, useMemo } from 'react'
 import { useQuery } from 'react-query'
 
 import { Banner } from 'src/components/banner/banner'
 import { Loader } from 'src/components/loader/loader'
 import { Navigation } from 'src/components/navigation/navigation'
+import { UserLevel } from 'src/components/navigation/navigation'
+import { SamDetail } from 'src/components/sam-detail/sam-detail'
 import { SamTable } from 'src/components/sam-table/sam-table'
+import { cn } from 'src/lib/utils'
 import { getBannerData } from 'src/services/banner'
 import { loadSam } from 'src/services/sam'
-
-import styles from './sam.module.css'
+import { fetchValidators } from 'src/services/validators'
 
 import type { AuctionResult } from '@marinade.finance/ds-sam-sdk'
-import type { UserLevel } from 'src/components/navigation/navigation'
 import type { SourceDataOverrides } from 'src/services/sam'
 
 type Props = {
   level: UserLevel
 }
 
-// Track pending edits before they're applied (for input field values)
 export type PendingEdits = {
   inflationCommission?: string
   mevCommission?: string
@@ -27,119 +27,135 @@ export type PendingEdits = {
 }
 
 export const SamPage: React.FC<Props> = ({ level }) => {
-  // Simulation mode is active (validators are clickable)
+  const [viewMode, setViewMode] = useState<'list' | 'detail'>('list')
+  const [selectedValidator, setSelectedValidator] = useState<string | null>(
+    null,
+  )
   const [simulationModeActive, setSimulationModeActive] = useState(false)
-  // Which validator is currently being edited (null = none)
   const [editingValidator, setEditingValidator] = useState<string | null>(null)
-  // Is a simulation calculation running
   const [isCalculating, setIsCalculating] = useState(false)
-  // Counter to force cache invalidation
   const [simulationRunId, setSimulationRunId] = useState(0)
-  // The actual overrides sent to the SDK (for the simulated validator)
   const [simulationOverrides, setSimulationOverrides] =
     useState<SourceDataOverrides | null>(null)
-  // Which validator has been simulated
   const [simulatedValidator, setSimulatedValidator] = useState<string | null>(
     null,
   )
-  // Track pending input values (before simulation is run)
   const [pendingEdits, setPendingEdits] = useState<PendingEdits>({})
-
-  // Original auction result (saved when entering simulation mode)
   const [originalAuctionResult, setOriginalAuctionResult] =
     useState<AuctionResult | null>(null)
 
-  const {
-    data,
-    status,
-    // isFetching,
-  } = useQuery(['sam', simulationRunId], () => loadSam(simulationOverrides), {
-    keepPreviousData: true,
-    onSettled: () => {
-      setIsCalculating(false)
-      setEditingValidator(null)
-      setPendingEdits({})
-    },
-  })
+  const scrollPositionRef = useRef<number>(0)
 
-  // Toggle simulation mode on/off
+  const { data, status } = useQuery(
+    ['sam', simulationRunId],
+    () => loadSam(simulationOverrides),
+    {
+      keepPreviousData: true,
+      onSettled: () => {
+        setIsCalculating(false)
+        setEditingValidator(null)
+        setPendingEdits({})
+      },
+    },
+  )
+
+  const { data: validatorsData } = useQuery('validators', fetchValidators)
+
+  const nameMap = useMemo(() => {
+    const map = new Map<string, { name: string; countryIso: string | null }>()
+    if (!validatorsData) return map
+    for (const v of validatorsData.validators) {
+      map.set(v.vote_account, {
+        name: v.info_name ?? '---',
+        countryIso: v.dc_country_iso,
+      })
+    }
+    return map
+  }, [validatorsData])
+
   const handleToggleSimulationMode = useCallback(() => {
     setSimulationModeActive(prev => {
       if (prev) {
-        // Exiting simulation mode - reset state but don't refetch
-        // We'll use originalAuctionResult as display data
         setSimulationOverrides(null)
         setSimulatedValidator(null)
         setEditingValidator(null)
         setPendingEdits({})
-        // Don't clear originalAuctionResult - we need it for display
-        // Don't increment simulationRunId - no need to refetch
-      } else {
-        // Entering simulation mode - save original results only if not already cached
-        // (if cached, it means we just exited and re-entered without refetch)
-        if (!originalAuctionResult && data?.auctionResult) {
-          setOriginalAuctionResult(data.auctionResult)
-        }
+      } else if (!originalAuctionResult && data?.auctionResult) {
+        setOriginalAuctionResult(data.auctionResult)
       }
       return !prev
     })
   }, [data, originalAuctionResult])
 
-  // Handle clicking on a validator row (when in simulation mode)
   const handleValidatorClick = useCallback(
     (voteAccount: string) => {
-      if (!simulationModeActive) return
-
-      // Toggle off if clicking the same validator
-      if (voteAccount === editingValidator) {
-        setEditingValidator(null)
+      if (simulationModeActive) {
+        if (voteAccount === editingValidator) {
+          setEditingValidator(null)
+          setPendingEdits({})
+          return
+        }
+        setEditingValidator(voteAccount)
         setPendingEdits({})
         return
       }
-
-      // Start editing this validator
-      setEditingValidator(voteAccount)
-      setPendingEdits({})
+      scrollPositionRef.current = window.scrollY
+      setSelectedValidator(voteAccount)
+      setViewMode('detail')
     },
     [simulationModeActive, editingValidator],
   )
 
-  // Cancel editing without running simulation
+  const handleBack = useCallback(() => {
+    setViewMode('list')
+    setSelectedValidator(null)
+    requestAnimationFrame(() => {
+      window.scrollTo(0, scrollPositionRef.current)
+    })
+  }, [])
+
+  const handleEnterSimulation = useCallback(() => {
+    handleBack()
+    if (!simulationModeActive) {
+      setSimulationModeActive(true)
+      if (!originalAuctionResult && data?.auctionResult) {
+        setOriginalAuctionResult(data.auctionResult)
+      }
+    }
+  }, [handleBack, simulationModeActive, originalAuctionResult, data])
+
   const handleCancelEditing = useCallback(() => {
     setEditingValidator(null)
     setPendingEdits({})
   }, [])
 
-  // Handle input field changes (just update pending edits locally)
   const handleFieldChange = useCallback(
-    (
-      field:
-        | 'inflationCommission'
-        | 'mevCommission'
-        | 'blockRewardsCommission'
-        | 'bidPmpe',
-      value: string,
-    ) => {
-      setPendingEdits(prev => ({
-        ...prev,
-        [field]: value,
-      }))
-    },
+    (field: keyof PendingEdits, value: string) =>
+      setPendingEdits(prev => ({ ...prev, [field]: value })),
     [],
   )
 
-  // Run simulation for the currently editing validator
   const handleRunSimulation = useCallback(() => {
-    if (!editingValidator || !originalAuctionResult || !data) return
-
-    // Find the CURRENT validator (with displayed/simulated values)
-    const currentValidator = data.auctionResult.auctionData.validators.find(
+    if (!editingValidator || !originalAuctionResult || !data) {
+      return
+    }
+    const current = data.auctionResult.auctionData.validators.find(
       v => v.voteAccount === editingValidator,
     )
-    if (!currentValidator) return
+    if (!current) {
+      return
+    }
 
-    // Build overrides using displayed values (current data merged with pending edits)
-    // This ensures that when re-editing a simulated validator, we preserve previous changes
+    const resolve = (
+      edit: string | undefined,
+      fallback: number | null,
+    ): number =>
+      edit !== undefined
+        ? parseFloat(edit)
+        : fallback !== null
+          ? fallback * 100
+          : NaN
+
     const overrides: SourceDataOverrides = {
       inflationCommissions: new Map(),
       mevCommissions: new Map(),
@@ -147,92 +163,119 @@ export const SamPage: React.FC<Props> = ({ level }) => {
       cpmpes: new Map(),
     }
 
-    // Inflation commission: use pending edit or current displayed value
-    const inflationValue =
-      pendingEdits.inflationCommission !== undefined
-        ? parseFloat(pendingEdits.inflationCommission)
-        : currentValidator.inflationCommissionDec * 100
-    if (!isNaN(inflationValue)) {
-      overrides.inflationCommissions.set(editingValidator, inflationValue)
+    const infl = resolve(
+      pendingEdits.inflationCommission,
+      current.inflationCommissionDec,
+    )
+    if (!isNaN(infl)) {
+      overrides.inflationCommissions.set(editingValidator, infl)
     }
 
-    // MEV commission: use pending edit or current displayed value
-    const mevValue =
-      pendingEdits.mevCommission !== undefined
-        ? parseFloat(pendingEdits.mevCommission)
-        : currentValidator.mevCommissionDec !== null
-          ? currentValidator.mevCommissionDec * 100
-          : NaN
-    if (!isNaN(mevValue)) {
-      // mev commission is in bps
-      overrides.mevCommissions.set(editingValidator, mevValue * 100)
+    const mev = resolve(pendingEdits.mevCommission, current.mevCommissionDec)
+    if (!isNaN(mev)) {
+      overrides.mevCommissions.set(editingValidator, mev * 100)
     }
 
-    // Block rewards commission: use pending edit or current displayed value
-    const blockValue =
-      pendingEdits.blockRewardsCommission !== undefined
-        ? parseFloat(pendingEdits.blockRewardsCommission)
-        : currentValidator.blockRewardsCommissionDec !== null
-          ? currentValidator.blockRewardsCommissionDec * 100
-          : NaN
-    if (!isNaN(blockValue)) {
-      // block rewards commission is in bps
-      overrides.blockRewardsCommissions.set(editingValidator, blockValue * 100)
+    const blk = resolve(
+      pendingEdits.blockRewardsCommission,
+      current.blockRewardsCommissionDec,
+    )
+    if (!isNaN(blk)) {
+      overrides.blockRewardsCommissions.set(editingValidator, blk * 100)
     }
 
-    // Bid PMPE: use pending edit or current displayed value
-    const bidValue =
+    const bid =
       pendingEdits.bidPmpe !== undefined
         ? parseFloat(pendingEdits.bidPmpe)
-        : currentValidator.revShare.bidPmpe
-    if (!isNaN(bidValue)) {
-      // User enters SOL, SDK expects lamports
-      overrides.cpmpes.set(editingValidator, bidValue * 1e9)
+        : current.revShare.bidPmpe
+    if (!isNaN(bid)) {
+      overrides.cpmpes.set(editingValidator, bid * 1e9)
     }
 
     setSimulationOverrides(overrides)
     setSimulatedValidator(editingValidator)
     setIsCalculating(true)
     setSimulationRunId(prev => prev + 1)
-    // editingValidator and pendingEdits are cleared in onSettled when calculation completes
   }, [editingValidator, pendingEdits, originalAuctionResult, data])
 
-  const hasSimulationApplied = simulatedValidator !== null
-
-  // When simulation mode is off but we have cached original data, use it
-  // This avoids refetching when exiting simulation mode
   const displayAuctionResult =
     simulationModeActive || !originalAuctionResult
       ? data?.auctionResult
       : originalAuctionResult
 
+  const detailValidator =
+    viewMode === 'detail' && selectedValidator && displayAuctionResult
+      ? (displayAuctionResult.auctionData.validators.find(
+          v => v.voteAccount === selectedValidator,
+        ) ?? null)
+      : null
+
   return (
-    <div className={styles.page}>
-      <div className={styles.pageContent}>
-        <Navigation level={level} />
+    <div className="bg-background-page">
+      <div className="relative">
+        <Navigation level={level}>
+          <button
+            className={cn(
+              'simulatorToggle h-10 leading-[30px] px-5 py-[5px] m-[4px_0_4px_4px] border-none rounded-lg cursor-pointer font-[inherit] text-[length:inherit] whitespace-nowrap transition-colors bg-primary text-primary-foreground hover:brightness-110',
+              simulationModeActive &&
+                'bg-primary/80 text-primary-foreground ring-2 ring-primary',
+              isCalculating &&
+                'bg-muted text-muted-foreground cursor-not-allowed',
+            )}
+            onClick={handleToggleSimulationMode}
+            disabled={isCalculating}
+          >
+            {simulationModeActive ? 'Exit Simulation' : 'Enter Simulation'}
+          </button>
+        </Navigation>
         <Banner {...getBannerData()} />
         {status === 'error' && <p>Error fetching data</p>}
         {status === 'loading' && <Loader />}
-        {status === 'success' && displayAuctionResult && (
-          <SamTable
-            auctionResult={displayAuctionResult}
-            originalAuctionResult={originalAuctionResult}
-            epochsPerYear={data.epochsPerYear}
-            dsSamConfig={data.dcSamConfig}
-            level={level}
-            simulationModeActive={simulationModeActive}
-            onToggleSimulationMode={handleToggleSimulationMode}
-            editingValidator={editingValidator}
-            simulatedValidator={simulatedValidator}
-            isCalculating={isCalculating}
-            hasSimulationApplied={hasSimulationApplied}
-            pendingEdits={pendingEdits}
-            onValidatorClick={handleValidatorClick}
-            onFieldChange={handleFieldChange}
-            onRunSimulation={handleRunSimulation}
-            onCancelEditing={handleCancelEditing}
-          />
-        )}
+        {status === 'success' &&
+          displayAuctionResult &&
+          viewMode === 'detail' &&
+          detailValidator && (
+            <SamDetail
+              validator={detailValidator}
+              meta={{
+                name: nameMap.get(selectedValidator ?? '')?.name,
+                countryIso: nameMap.get(selectedValidator ?? '')?.countryIso,
+                rank:
+                  displayAuctionResult.auctionData.validators.findIndex(
+                    v => v.voteAccount === selectedValidator,
+                  ) + 1,
+              }}
+              epochsPerYear={data.epochsPerYear}
+              isExpert={level === UserLevel.Expert}
+              onBack={handleBack}
+              onEdit={handleEnterSimulation}
+            />
+          )}
+        {status === 'success' &&
+          displayAuctionResult &&
+          viewMode === 'list' && (
+            <SamTable
+              auctionResult={displayAuctionResult}
+              tvlJoinApyDiff={data.tvlJoinApyDiff}
+              tvlLeaveApyDiff={data.tvlLeaveApyDiff}
+              backstopDiff={data.backstopDiff}
+              backstopTvl={data.backstopTvl}
+              originalAuctionResult={originalAuctionResult}
+              epochsPerYear={data.epochsPerYear}
+              dsSamConfig={data.dcSamConfig}
+              level={level}
+              simulationModeActive={simulationModeActive}
+              editingValidator={editingValidator}
+              simulatedValidator={simulatedValidator}
+              isCalculating={isCalculating}
+              pendingEdits={pendingEdits}
+              validatorMeta={nameMap}
+              onValidatorClick={handleValidatorClick}
+              onFieldChange={handleFieldChange}
+              onRunSimulation={handleRunSimulation}
+              onCancelEditing={handleCancelEditing}
+            />
+          )}
       </div>
     </div>
   )

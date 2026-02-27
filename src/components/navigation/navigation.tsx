@@ -1,7 +1,8 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
 
-import styles from './navigation.module.css'
+import { ThemeToggle } from 'src/components/theme-toggle/theme-toggle'
+import { cn } from 'src/lib/utils'
 
 export enum UserLevel {
   Basic = 'basic',
@@ -12,37 +13,57 @@ export type UserLevelProps = {
   level?: UserLevel
 }
 
-export const Navigation: React.FC<UserLevelProps> = ({ level }) => {
-  const expert = level === UserLevel.Expert ? 'expert-' : ''
+const tab =
+  'h-10 leading-[30px] px-5 py-[5px] bg-background-page text-foreground m-[4px_0_4px_4px] cursor-pointer rounded-lg border-none text-[length:inherit] no-underline inline-block hover:bg-secondary hover:text-card-foreground transition-colors duration-150 border-b-2 border-b-transparent'
+const tabActive = 'bg-tertiary text-card-foreground border-b-2 border-b-primary'
+
+export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
+  level,
+  children,
+}) => {
+  const isExpert = level === UserLevel.Expert
+  const prefix = isExpert ? 'expert-' : ''
   return (
-    <div className={styles.navigation}>
-      <NavLink
-        to={`/${expert}`}
-        className={({ isActive, isPending: _isPending }) =>
-          isActive ? styles.active : ''
-        }
-      >
-        <div className={styles.navButton}>Stake Auction Marketplace</div>
+    <div className="navigation flex items-center h-12 bg-card/80 backdrop-blur-md border-b border-border-grid shadow-card [&_a]:no-underline">
+      <NavLink to={`/${prefix}`}>
+        {({ isActive }) => (
+          <div className={cn(tab, isActive && tabActive)}>
+            Stake Auction Marketplace
+          </div>
+        )}
       </NavLink>
-      <NavLink
-        to={`/${expert}protected-events`}
-        className={({ isActive, isPending: _isPending }) =>
-          isActive ? styles.active : ''
-        }
-      >
-        <div className={styles.navButton}>Protected Events</div>
+      <NavLink to={`/${prefix}protected-events`}>
+        {({ isActive }) => (
+          <div className={cn(tab, isActive && tabActive)}>Protected Events</div>
+        )}
       </NavLink>
-      <NavLink
-        to={`/${expert}bonds`}
-        className={({ isActive, isPending: _isPending }) =>
-          isActive ? styles.active : ''
-        }
-      >
-        <div className={styles.navButton}>Validator Bonds</div>
+      <NavLink to={`/${prefix}bonds`}>
+        {({ isActive }) => (
+          <div className={cn(tab, isActive && tabActive)}>Validator Bonds</div>
+        )}
       </NavLink>
-      <a href="docs/" style={{ marginLeft: 'auto' }}>
-        <div className={styles.navButton}>Docs</div>
+      <a
+        href="/docs/"
+        className={cn(
+          tab,
+          'docsButton ml-auto bg-secondary hover:bg-tertiary hover:text-card-foreground',
+        )}
+      >
+        Docs
       </a>
+      {isExpert && (
+        <a
+          href="/docs/?from=expert#GUIDE-EXPERT"
+          className={cn(
+            tab,
+            'bg-secondary hover:bg-tertiary hover:text-card-foreground',
+          )}
+        >
+          Expert Guide
+        </a>
+      )}
+      {children}
+      <ThemeToggle />
     </div>
   )
 }

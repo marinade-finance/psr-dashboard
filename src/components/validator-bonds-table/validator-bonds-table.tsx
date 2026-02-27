@@ -23,7 +23,6 @@ import {
   selectVoteAccount,
 } from 'src/services/validators'
 
-import styles from './validator-bonds-table.module.css'
 import { tooltipAttributes } from '../../services/utils'
 import { Metric } from '../metric/metric'
 import { Alignment, OrderDirection, Table } from '../table/table'
@@ -79,7 +78,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
     )
     expertColumns = [
       {
-        header: 'Max protected stake [☉]',
+        header: 'Max protected stake [SOL]',
         render: (entry: ValidatorWithBond) => (
           <>{formatSolAmount(selectMaxProtectedStake(entry))}</>
         ),
@@ -107,8 +106,8 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
   }
 
   return (
-    <div className={styles.tableWrap}>
-      <div className={styles.metricWrap}>
+    <div className="relative [&>table]:ml-2.5">
+      <div className="metricWrap flex gap-2 p-2.5 w-fit">
         <Metric
           label="Bonds Funded"
           value={totalFundedBonds.toLocaleString()}
@@ -116,14 +115,14 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
         />
         <Metric
           label="Bonds Balance"
-          value={`☉ ${formatSolAmount(effectiveBalance)}`}
+          value={`${formatSolAmount(effectiveBalance)} SOL`}
           {...tooltipAttributes(
             'Total effective amount of SOL deposited to the bonds',
           )}
         />
         <Metric
           label="Marinade Stake"
-          value={`☉ ${formatSolAmount(totalMarinadeStake)}`}
+          value={`${formatSolAmount(totalMarinadeStake)} SOL`}
           {...tooltipAttributes('How much stake is distributed by Marinade')}
         />
         <Metric
@@ -142,7 +141,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
             header: 'Validator',
             headerAttrsFn: () => tooltipAttributes('Validator Vote Account'),
             render: ({ validator }) => (
-              <span className={styles.pubkey}>
+              <span className="inline-block w-[100px] pt-1 text-ellipsis overflow-hidden">
                 {selectVoteAccount(validator)}
               </span>
             ),
@@ -154,13 +153,15 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
           {
             header: 'Name',
             render: ({ validator }) => (
-              <span className={styles.pubkey}>{selectName(validator)}</span>
+              <span className="inline-block w-[100px] pt-1 text-ellipsis overflow-hidden">
+                {selectName(validator)}
+              </span>
             ),
             compare: (a, b) =>
               selectName(a.validator).localeCompare(selectName(b.validator)),
           },
           {
-            header: 'Bond balance [☉]',
+            header: 'Bond balance [SOL]',
             render: ({ bond }) => (
               <>
                 {formatSolAmount(
@@ -176,7 +177,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
             alignment: Alignment.RIGHT,
           },
           {
-            header: 'Max Stake Wanted [☉]',
+            header: 'Max Stake Wanted [SOL]',
             headerAttrsFn: () =>
               tooltipAttributes(
                 "The max-stake-wanted parameter set up in contract. If not set up, max stake is not limited. The validator won't get more stake than what they set up here. No already delegated stake will be lost by decreasing this setting.",
@@ -220,7 +221,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
             alignment: Alignment.RIGHT,
           },
           {
-            header: 'Marinade stake [☉]',
+            header: 'Marinade stake [SOL]',
             render: ({ validator }) => (
               <span
                 {...tooltipAttributes(
@@ -236,7 +237,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
             alignment: Alignment.RIGHT,
           },
           {
-            header: 'Eff. Cost [☉]',
+            header: 'Eff. Cost [SOL]',
             headerAttrsFn: () =>
               tooltipAttributes(
                 'Estimated total cost per epoch for the SAM stake that this validator received. ' +

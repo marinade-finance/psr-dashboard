@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 
-import styles from './table.module.css'
+import { cn } from 'src/lib/utils'
 
 import type { HTMLAttributes } from 'react'
 
@@ -20,29 +20,37 @@ export enum Color {
   RED,
   GREEN,
   YELLOW,
+  GREY,
 }
 
-const alignmentClassName = (alignment?: Alignment) => {
-  switch (alignment) {
-    case Alignment.LEFT:
-      return styles.left
-    case Alignment.RIGHT:
-      return styles.right
-    default:
-      return styles.left
-  }
+const TABLE_BASE = [
+  'relative border-collapse [border-spacing:0]',
+  '[&_thead]:sticky [&_thead]:top-0 [&_thead]:bg-secondary',
+  '[&_thead]:text-foreground [&_thead]:cursor-pointer',
+  '[&_thead]:select-none [&_thead]:z-[1]',
+  '[&_thead]:border-b [&_thead]:border-border',
+  '[&_tbody]:bg-background-page',
+  '[&_th]:relative [&_th]:px-4 [&_th]:py-2 [&_th]:whitespace-nowrap [&_th]:text-sm [&_th]:font-medium [&_th]:text-muted-foreground',
+  '[&_td]:relative [&_td]:px-4 [&_td]:py-1 [&_td]:whitespace-nowrap',
+  '[&_tbody_tr:hover]:bg-secondary',
+].join(' ')
+
+function alignmentClassName(alignment?: Alignment): string {
+  return alignment === Alignment.RIGHT ? 'text-right' : 'text-left'
 }
 
-const colorClassName = (color?: Color) => {
+function colorClassName(color?: Color): string {
   switch (color) {
     case Color.RED:
-      return styles.red
+      return 'bg-cell-red'
     case Color.GREEN:
-      return styles.green
+      return 'bg-cell-green'
     case Color.YELLOW:
-      return styles.yellow
+      return 'bg-cell-yellow'
+    case Color.GREY:
+      return 'grey bg-cell-grey'
     default:
-      return styles.noBg
+      return ''
   }
 }
 
@@ -68,19 +76,18 @@ const renderHeader: <Item>(
 
   return (
     <tr>
-      {showRowNumber ? <td>#</td> : null}
+      {showRowNumber ? <th>#</th> : null}
       {columns.map((column, i) => {
         const isUserSorted = userOrderColumn === i
         const isDefaultSorted = !userOrder && defaultOrderColumn === i
 
-        let indicatorClass = styles.sortIndicator
+        const isActive = isUserSorted
+        const isDefault = isDefaultSorted
         let indicator = ''
 
         if (isUserSorted) {
-          indicatorClass = `${styles.sortIndicator} ${styles.sortIndicatorActive}`
           indicator = userOrderDirection === OrderDirection.ASC ? '▲' : '▼'
         } else if (isDefaultSorted) {
-          indicatorClass = `${styles.sortIndicator} ${styles.sortIndicatorDefault}`
           indicator = defaultOrderDirection === OrderDirection.ASC ? '▲' : '▼'
         }
 
@@ -92,7 +99,15 @@ const renderHeader: <Item>(
             {...(column.headerAttrsFn ? column.headerAttrsFn() : {})}
           >
             {column.header}
-            <span className={indicatorClass}>{indicator}</span>
+            <span
+              className={cn(
+                'ml-1 text-[11px] opacity-40',
+                isActive && 'opacity-100! text-primary!',
+                isDefault && 'opacity-60! text-muted-foreground!',
+              )}
+            >
+              {indicator}
+            </span>
           </th>
         )
       })}
@@ -146,7 +161,10 @@ const renderRow: <Item>(
         <td
           {...(column.cellAttrsFn ? column.cellAttrsFn(item) : {})}
           key={i}
-          className={`${alignmentClassName(column.alignment)} ${column.background ? colorClassName(column.background(item)) : ''}`}
+          className={cn(
+            alignmentClassName(column.alignment),
+            column.background && colorClassName(column.background(item)),
+          )}
         >
           {column.render(item, index)}
         </td>
@@ -177,6 +195,8 @@ type Props<Item> = {
   rowNumberRender?: (item: Item, index: number) => JSX.Element
   onOrderChange?: (order: Order[]) => void
   presorted?: boolean // Skip internal sorting when data is already sorted
+  caption?: React.ReactNode
+  className?: string
 }
 
 export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
@@ -188,6 +208,8 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
   rowNumberRender,
   onOrderChange,
   presorted,
+  caption,
+  className,
 }) => {
   const [userOrder, setUserOrder] = useState<Order | null>(null)
 
@@ -242,7 +264,8 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
   }
 
   return (
-    <table className={styles.table}>
+    <table className={cn(TABLE_BASE, className)}>
+      {caption && <caption>{caption}</caption>}
       <thead>
         {renderHeader(
           columns,

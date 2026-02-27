@@ -29,51 +29,44 @@
         line-height: 1.7;
       }
       header {
-        background: var(--bg-dark-2);
-        border-bottom: 1px solid var(--bg-dark-3);
-        padding: 12px 20px;
+        background: var(--bg-dark-1);
+        padding: 0 8px;
         display: flex;
         align-items: center;
-        justify-content: space-between;
         position: sticky;
         top: 0;
         z-index: 10;
       }
-      .back {
+      .btn {
+        height: 40px;
+        line-height: 30px;
+        padding: 5px 20px;
+        background: var(--bg-dark-2);
         color: var(--text-light-1);
-        text-decoration: none;
-        font-size: 13px;
-        padding: 5px 12px;
-        background-color: var(--bg-dark-3);
+        margin: 4px 0 4px 4px;
+        cursor: pointer;
+        border: none;
         border-radius: 4px;
-        transition: all 0.15s;
+        font-size: inherit;
+        font-family: inherit;
       }
-      .back:hover {
-        background-color: var(--bg-dark-4);
-        color: var(--text-light-2);
+      .btn:hover {
+        background: var(--bg-dark-3);
+      }
+      .back {
+        text-decoration: none;
       }
       .tabs {
         display: flex;
-        gap: 4px;
+        margin-left: auto;
       }
       .tab {
-        padding: 8px 16px;
-        border: none;
-        border-radius: 4px;
         background: var(--bg-dark-3);
-        color: var(--text-light-1);
-        cursor: pointer;
-        font-size: 13px;
-        font-family: inherit;
-        transition: all 0.15s;
       }
-      .tab:hover {
-        background-color: var(--bg-dark-4);
-        color: var(--text-light-2);
-      }
+      .tab:hover,
       .tab.active {
-        background: var(--accent);
-        color: var(--bg-dark-1);
+        background: var(--bg-dark-4);
+        color: var(--text-light-2);
       }
       main {
         max-width: 900px;
@@ -174,7 +167,7 @@
         #content {
           padding: 20px;
         }
-        .tab {
+        .btn {
           padding: 6px 12px;
           font-size: 12px;
         }
@@ -183,9 +176,9 @@
   </head>
   <body>
     <header>
-      <a href="../" class="back">← Dashboard</a>
+      <a id="back" href="../" class="btn back">← Dashboard</a>
       <div class="tabs">
-        <button class="tab active" data-doc="GUIDE.md">Guide</button>
+        <button class="btn tab active" data-doc="GUIDE">Guide</button>
       </div>
     </header>
     <main>
@@ -193,48 +186,39 @@
     </main>
     <script>
       const content = document.getElementById('content')
-      const tabs = document.querySelectorAll('.tab')
+      const tabs = document.querySelector('.tabs')
+      const expert = new URLSearchParams(location.search).get('from') === 'expert'
 
-      function loadDoc(filename) {
-        content.innerHTML = 'loading...'
-        fetch(filename)
-          .then(r => r.text())
-          .then(md => {
-            content.innerHTML = marked.parse(md)
-          })
-          .catch(() => {
-            content.innerHTML = '<p>Error loading doc</p>'
-          })
+      if (expert) {
+        document.getElementById('back').href = '/expert-'
+        const btn = document.createElement('button')
+        btn.className = 'btn tab'
+        btn.dataset.doc = 'GUIDE-EXPERT'
+        btn.textContent = 'Expert Guide'
+        tabs.appendChild(btn)
       }
 
-      tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-          tabs.forEach(t => t.classList.remove('active'))
-          tab.classList.add('active')
-          loadDoc(tab.dataset.doc)
-          history.replaceState(
-            null,
-            '',
-            '?doc=' + tab.dataset.doc.replace('.md', ''),
-          )
-        })
+      function loadDoc(name) {
+        content.innerHTML = 'loading...'
+        fetch(name + '.md')
+          .then(r => r.text())
+          .then(md => { content.innerHTML = marked.parse(md) })
+          .catch(() => { content.innerHTML = '<p>Error loading doc</p>' })
+        history.replaceState(null, '', '#' + name)
+      }
+
+      function activateTab(doc) {
+        tabs.querySelectorAll('.tab').forEach(t =>
+          t.classList.toggle('active', t.dataset.doc === doc))
+        loadDoc(doc)
+      }
+
+      tabs.addEventListener('click', e => {
+        const tab = e.target.closest('.tab')
+        if (tab) activateTab(tab.dataset.doc)
       })
 
-      // Load from URL param or default
-      const params = new URLSearchParams(window.location.search)
-      const doc = params.get('doc')
-      if (doc) {
-        const tab = document.querySelector(`[data-doc="${doc}.md"]`)
-        if (tab) {
-          tabs.forEach(t => t.classList.remove('active'))
-          tab.classList.add('active')
-          loadDoc(doc + '.md')
-        } else {
-          loadDoc('GUIDE.md')
-        }
-      } else {
-        loadDoc('GUIDE.md')
-      }
+      activateTab(location.hash.slice(1) || 'GUIDE')
     </script>
   </body>
 </html>

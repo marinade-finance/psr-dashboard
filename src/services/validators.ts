@@ -14,6 +14,7 @@ export type ValidatorEpoch = {
 export type Validator = {
   vote_account: string
   info_name: string | null
+  dc_country_iso: string | null
   marinade_stake: string
   marinade_native_stake: string
   activated_stake: string
