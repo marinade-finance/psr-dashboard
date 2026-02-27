@@ -21,11 +21,11 @@
 .table th,
 .table td {
   position: relative;
-  padding: 2px 20px;
+  padding: 4px 16px;
   white-space: nowrap;
 }
 .table th {
-  padding-bottom: 10px;
+  padding-bottom: 8px;
   padding-top: 8px;
 }
 
@@ -51,6 +51,10 @@
 
 .yellow {
   background-color: #806000;
+}
+
+.grey {
+  background-color: rgba(128, 128, 128, 0.3);
 }
 
 .noBg {

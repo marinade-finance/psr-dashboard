@@ -1,5 +1,6 @@
 .navigation {
   display: flex;
+  align-items: center;
   background-color: var(--bg-dark-1);
 }
 
@@ -9,10 +10,11 @@
   padding: 5px 20px;
   background-color: var(--bg-dark-2);
   color: var(--text-light-1);
-  margin: 4px;
-  margin-right: 0px;
+  margin: 4px 0 4px 4px;
   cursor: pointer;
   border-radius: 4px;
+  border: none;
+  font-size: inherit;
 }
 
 .navButton:hover {
@@ -20,6 +22,17 @@
 }
 
 .active > .navButton {
+  background-color: var(--bg-dark-4);
+  color: var(--text-light-2);
+}
+
+.docsButton {
+  composes: navButton;
+  display: inline-block;
+  background-color: var(--bg-dark-3);
+}
+
+.docsButton:hover {
   background-color: var(--bg-dark-4);
   color: var(--text-light-2);
 }

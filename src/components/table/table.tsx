@@ -20,6 +20,7 @@ export enum Color {
   RED,
   GREEN,
   YELLOW,
+  GREY,
 }
 
 const alignmentClassName = (alignment?: Alignment) => {
@@ -41,6 +42,8 @@ const colorClassName = (color?: Color) => {
       return styles.green
     case Color.YELLOW:
       return styles.yellow
+    case Color.GREY:
+      return styles.grey
     default:
       return styles.noBg
   }
@@ -177,6 +180,7 @@ type Props<Item> = {
   rowNumberRender?: (item: Item, index: number) => JSX.Element
   onOrderChange?: (order: Order[]) => void
   presorted?: boolean // Skip internal sorting when data is already sorted
+  caption?: React.ReactNode
 }
 
 export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
@@ -188,6 +192,7 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
   rowNumberRender,
   onOrderChange,
   presorted,
+  caption,
 }) => {
   const [userOrder, setUserOrder] = useState<Order | null>(null)
 
@@ -243,6 +248,7 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
 
   return (
     <table className={styles.table}>
+      {caption && <caption>{caption}</caption>}
       <thead>
         {renderHeader(
           columns,

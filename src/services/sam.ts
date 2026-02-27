@@ -1,5 +1,7 @@
 import {
   DsSamSDK,
+  Auction,
+  Debug,
   InputsSource,
   AuctionConstraintType,
   loadSamConfig,
@@ -12,6 +14,7 @@ import { formatPercentage } from 'src/format'
 import { fetchValidatorsWithEpochs } from './validators'
 
 import type {
+  AggregatedData,
   AuctionResult,
   AuctionValidator,
   AuctionConstraint,
@@ -62,29 +65,103 @@ const estimateEpochsPerYear = async () => {
   return SECONDS_PER_YEAR / (rangeDuration / rangeEpochs)
 }
 
-export const loadSam = async (
-  dataOverrides?: SourceDataOverrides | null,
-): Promise<{
+type SamResult = {
   auctionResult: AuctionResult
+  tvlJoinApyDiff: number
+  tvlLeaveApyDiff: number
+  backstopDiff: number
+  backstopTvl: number
   epochsPerYear: number
   dcSamConfig: DsSamConfig
-}> => {
-  try {
-    const epochsPerYear = await estimateEpochsPerYear()
-    console.log('epochsPerYear', epochsPerYear)
-    const config = await loadSamConfig()
-    const dsSam = new DsSamSDK({
-      ...config,
-      inputsSource: InputsSource.APIS,
-      cacheInputs: false,
-      debugVoteAccounts: [],
-      logVerbosity: LogVerbosity.ERROR,
-    })
-    const auctionResult = await dsSam.runFinalOnly(dataOverrides)
-    return { auctionResult, epochsPerYear, dcSamConfig: dsSam.config }
-  } catch (err) {
-    console.log(err)
-    throw err
+}
+
+export const loadSam = async (
+  dataOverrides?: SourceDataOverrides | null,
+): Promise<SamResult> => {
+  const epochsPerYear = await estimateEpochsPerYear()
+  console.log('epochsPerYear', epochsPerYear)
+  const config = await loadSamConfig()
+  const dsSam = new DsSamSDK({
+    ...config,
+    inputsSource: InputsSource.APIS,
+    cacheInputs: false,
+    debugVoteAccounts: [],
+    logVerbosity: LogVerbosity.ERROR,
+  })
+
+  const auctionResult = await dsSam.runFinalOnly(dataOverrides)
+
+  const runAlt = async (mutate: (data: AggregatedData) => void) => {
+    const aggregatedData = await dsSam.getAggregatedData(dataOverrides)
+    mutate(aggregatedData)
+    const debug = new Debug(new Set(), LogVerbosity.ERROR)
+    const constraints = dsSam.getAuctionConstraints(aggregatedData, debug)
+    const validators = dsSam.transformValidators(aggregatedData)
+    const data = { ...aggregatedData, validators }
+    return new Auction(data, constraints, dsSam.config, debug).evaluate()
+  }
+
+  // +10% / -10% TVL sensitivity
+  const joinResult = await runAlt((data: AggregatedData) => {
+    // eslint-disable-next-line no-param-reassign
+    data.stakeAmounts.marinadeSamTvlSol *= 1.1
+    // eslint-disable-next-line no-param-reassign
+    data.stakeAmounts.marinadeRemainingSamSol *= 1.1
+  })
+  const tvlJoinApyDiff = selectTvlApyDiff(
+    auctionResult,
+    joinResult,
+    epochsPerYear,
+  )
+
+  const leaveResult = await runAlt((data: AggregatedData) => {
+    // eslint-disable-next-line no-param-reassign
+    data.stakeAmounts.marinadeSamTvlSol *= 0.9
+    // eslint-disable-next-line no-param-reassign
+    data.stakeAmounts.marinadeRemainingSamSol *= 0.9
+  })
+  const tvlLeaveApyDiff = selectTvlApyDiff(
+    auctionResult,
+    leaveResult,
+    epochsPerYear,
+  )
+
+  // Backstop: block top 5 validators by target stake
+  const top5 = auctionResult.auctionData.validators
+    .slice()
+    .sort(
+      (a, b) =>
+        b.auctionStake.marinadeSamTargetSol -
+        a.auctionStake.marinadeSamTargetSol,
+    )
+    .slice(0, 5)
+    .map(validator => ({
+      voteAccount: validator.voteAccount,
+      targetStake: validator.auctionStake.marinadeSamTargetSol,
+    }))
+
+  const top5Accounts = new Set(top5.map(t => t.voteAccount))
+  const backstopResult = await runAlt(data => {
+    // eslint-disable-next-line no-param-reassign
+    data.validators = data.validators.filter(
+      v => !top5Accounts.has(v.voteAccount),
+    )
+  })
+  const backstopDiff = selectTargetApyDiff(
+    auctionResult,
+    backstopResult,
+    epochsPerYear,
+  )
+  const backstopTvl = top5.reduce((sum, t) => sum + t.targetStake, 0)
+
+  return {
+    auctionResult,
+    tvlJoinApyDiff,
+    tvlLeaveApyDiff,
+    backstopDiff,
+    backstopTvl,
+    epochsPerYear,
+    dcSamConfig: dsSam.config,
   }
 }
 
@@ -117,8 +194,6 @@ export const selectSamTargetStake = (validator: AuctionValidator) =>
   validator.auctionStake.marinadeSamTargetSol
 export const selectSamActiveStake = (validator: AuctionValidator) =>
   validator.marinadeActivatedStakeSol
-export const selectMaxWantedStake = (validator: AuctionValidator) =>
-  validator.maxStakeWanted
 export const selectConstraintText = ({
   lastCapConstraint,
 }: AuctionValidator) =>
@@ -174,28 +249,32 @@ export const selectTotalActiveStake = (auctionResult: AuctionResult) =>
     0,
   )
 
+export const selectIsNonProductive = (validator: AuctionValidator) =>
+  validator.revShare.bondObligationPmpe <
+  validator.revShare.effParticipatingBidPmpe * 0.9
+
 export const selectProductiveStake = (auctionResult: AuctionResult) =>
   auctionResult.auctionData.validators.reduce(
     (acc, entry) =>
-      entry.revShare.bidPmpe >= entry.revShare.effParticipatingBidPmpe * 0.9
+      !selectIsNonProductive(entry)
         ? acc + entry.marinadeActivatedStakeSol
         : acc,
     0,
   )
 
-const overridesMessage = (
+function overridesMessage(
   label: string,
   overrideValue: number | null | undefined,
   type: 'percentage' | 'number' = 'percentage',
-): string => {
-  if (overrideValue != null) {
-    const formattedValue =
-      type === 'percentage'
-        ? `${formatPercentage(overrideValue, 0)}`
-        : overrideValue.toString()
-    return `<b>Overrides ${label}: ${formattedValue}</b><br/>`
+): string {
+  if (overrideValue == null) {
+    return ''
   }
-  return ''
+  const formatted =
+    type === 'percentage'
+      ? formatPercentage(overrideValue, 0)
+      : String(overrideValue)
+  return `<b>Overrides ${label}: ${formatted}</b><br/>`
 }
 
 export const selectBid = (validator: AuctionValidator) =>
@@ -204,13 +283,12 @@ export const selectBid = (validator: AuctionValidator) =>
 export const selectBondBid = (validator: AuctionValidator) =>
   validator.values?.commissions?.bidCpmpeInBondDec ?? validator.bidCpmpe
 
-export const overridesCpmpeMessage = (validator: AuctionValidator): string => {
-  return overridesMessage(
+export const overridesCpmpeMessage = (validator: AuctionValidator): string =>
+  overridesMessage(
     'CPMPE',
     validator.values?.commissions?.bidCpmpeOverrideDec,
     'number',
   )
-}
 
 export const selectCommission = (validator: AuctionValidator): number =>
   validator.inflationCommissionDec
@@ -218,30 +296,26 @@ export const selectCommission = (validator: AuctionValidator): number =>
 export const selectFormattedInBondCommission = (
   validator: AuctionValidator,
 ): string => {
-  const inBondCommission =
-    validator.values?.commissions?.inflationCommissionInBondDec
-  return inBondCommission == null ? '-' : formatPercentage(inBondCommission, 0)
+  const dec = validator.values?.commissions?.inflationCommissionInBondDec
+  return dec == null ? '-' : formatPercentage(dec, 0)
 }
 
 export const formattedOnChainCommission = (
   validator: AuctionValidator,
 ): string => {
-  const onChainCommission =
+  const dec =
     validator.values?.commissions?.inflationCommissionOnchainDec ||
     selectCommission(validator)
-  return onChainCommission == null
-    ? '-'
-    : formatPercentage(onChainCommission, 0)
+  return dec == null ? '-' : formatPercentage(dec, 0)
 }
 
 export const overridesCommissionMessage = (
   validator: AuctionValidator,
-): string => {
-  return overridesMessage(
+): string =>
+  overridesMessage(
     'inflation commission',
     validator.values?.commissions?.inflationCommissionOverrideDec,
   )
-}
 
 export const selectCommissionPmpe = (validator: AuctionValidator) =>
   validator.revShare.inflationPmpe
@@ -251,29 +325,24 @@ export const selectMevCommission = (
 ): number | null => validator.mevCommissionDec
 
 export const formattedMevCommission = (validator: AuctionValidator): string => {
-  const mevCommission = selectMevCommission(validator)
-  return mevCommission == null ? '-' : formatPercentage(mevCommission, 0)
+  const dec = selectMevCommission(validator)
+  return dec == null ? '-' : formatPercentage(dec, 0)
 }
 
 export const formattedInBondMevCommission = (
   validator: AuctionValidator,
 ): string => {
-  const inBondMevCommission =
-    validator.values?.commissions?.mevCommissionInBondDec
-  return inBondMevCommission == null
-    ? '-'
-    : formatPercentage(inBondMevCommission, 0)
+  const dec = validator.values?.commissions?.mevCommissionInBondDec
+  return dec == null ? '-' : formatPercentage(dec, 0)
 }
 
 export const formattedOnChainMevCommission = (
   validator: AuctionValidator,
 ): string => {
-  const onChainMevCommission =
+  const dec =
     validator.values?.commissions?.mevCommissionOnchainDec ||
     selectMevCommission(validator)
-  return onChainMevCommission == null
-    ? '-'
-    : formatPercentage(onChainMevCommission, 0)
+  return dec == null ? '-' : formatPercentage(dec, 0)
 }
 
 export const selectMevCommissionPmpe = (validator: AuctionValidator) =>
@@ -281,12 +350,11 @@ export const selectMevCommissionPmpe = (validator: AuctionValidator) =>
 
 export const overridesMevCommissionMessage = (
   validator: AuctionValidator,
-): string => {
-  return overridesMessage(
+): string =>
+  overridesMessage(
     'MEV commission',
     validator.values?.commissions?.mevCommissionOverrideDec,
   )
-}
 
 export const selectBlockRewardsCommission = (
   validator: AuctionValidator,
@@ -295,20 +363,8 @@ export const selectBlockRewardsCommission = (
 export const formattedBlockRewardsCommission = (
   validator: AuctionValidator,
 ): string => {
-  const blockRewardsCommission = selectBlockRewardsCommission(validator)
-  return blockRewardsCommission == null
-    ? formatPercentage(1, 0)
-    : formatPercentage(blockRewardsCommission, 0)
-}
-
-export const formattedInBondBlockRewardsCommission = (
-  validator: AuctionValidator,
-): string => {
-  const inBondBlockRewardsCommission =
-    validator.values?.commissions?.blockRewardsCommissionInBondDec
-  return inBondBlockRewardsCommission == null
-    ? '-'
-    : formatPercentage(inBondBlockRewardsCommission, 0)
+  const v = selectBlockRewardsCommission(validator)
+  return formatPercentage(v ?? 1, 0)
 }
 
 export const selectBlockRewardsCommissionPmpe = (validator: AuctionValidator) =>
@@ -316,12 +372,11 @@ export const selectBlockRewardsCommissionPmpe = (validator: AuctionValidator) =>
 
 export const overridesBlockRewardsCommissionMessage = (
   validator: AuctionValidator,
-): string => {
-  return overridesMessage(
+): string =>
+  overridesMessage(
     'block rewards commission',
     validator.values?.commissions?.blockRewardsCommissionOverrideDec,
   )
-}
 
 export const selectBondSize = (validator: AuctionValidator) =>
   validator.bondBalanceSol
@@ -338,18 +393,17 @@ export const selectEffectiveCost = (validator: AuctionValidator) =>
   (validator.marinadeActivatedStakeSol / 1000) *
   validator.revShare.auctionEffectiveBidPmpe
 
-export const bondColorState = (validator: AuctionValidator): Color => {
-  const stake = validator.auctionStake.marinadeSamTargetSol
-  if (!stake) {
+export const bondHealthColor = (validator: AuctionValidator): Color => {
+  if (!validator.auctionStake.marinadeSamTargetSol) {
     return undefined
   }
   if (validator.bondGoodForNEpochs > 10) {
     return Color.GREEN
-  } else if (validator.bondGoodForNEpochs > 2) {
-    return Color.YELLOW
-  } else {
-    return Color.RED
   }
+  if (validator.bondGoodForNEpochs > 2) {
+    return Color.YELLOW
+  }
+  return Color.RED
 }
 
 export const bondTooltip = (color: Color) => {
@@ -365,25 +419,80 @@ export const bondTooltip = (color: Color) => {
   }
 }
 
-export const maxSamStakeTooltip = (
-  validator: AuctionValidator,
-  cfg: { maxTvlDelegation: number; minBondBalanceSol: number },
-) => {
-  // the matches are approximate so that we start displaying the limiting
-  // warning a bit (10%) before it actually happens
-  if (
-    0.9 * cfg.maxTvlDelegation <=
-    validator.auctionStake.marinadeSamTargetSol
-  ) {
-    return 'You have the maximum stake a single validator can get from Marinade.'
-  } else if (
-    0.9 * validator.maxBondDelegation <=
-    validator.auctionStake.marinadeSamTargetSol
-  ) {
-    return 'Your bond is limiting your stake allocation. Hint: Top up your bond to receive more stake.'
-  } else if (validator.bondBalanceSol <= cfg.minBondBalanceSol) {
-    return `You bond is lower than the minimum amount of ${cfg.minBondBalanceSol} SOL.  Hint: Top up your bond to start receiving stake from Marinade.`
-  } else {
-    return ''
+export const selectActuallyUnprotectedStake = (
+  auctionResult: AuctionResult,
+): number =>
+  auctionResult.auctionData.validators.reduce((sum, validator) => {
+    const target = validator.auctionStake.marinadeSamTargetSol
+    if (target == null) {
+      return sum
+    }
+    return (
+      sum +
+      Math.max(
+        0,
+        target - (validator.bondSamStakeCapSol - validator.unprotectedStakeSol),
+      )
+    )
+  }, 0)
+
+export const selectTargetProtectedPct = (
+  auctionResult: AuctionResult,
+): number => {
+  const totalTarget = selectSamDistributedStake(
+    auctionResult.auctionData.validators,
+  )
+  if (totalTarget === 0) {
+    return 1
   }
+  return 1 - selectActuallyUnprotectedStake(auctionResult) / totalTarget
+}
+
+export const selectTargetApyDiff = (
+  baseResult: AuctionResult,
+  altResult: AuctionResult,
+  epochsPerYear: number,
+): number => {
+  const profitOf = (r: AuctionResult) =>
+    r.auctionData.validators.reduce(
+      (acc, entry) =>
+        acc +
+        ((entry.revShare.auctionEffectiveBidPmpe +
+          entry.revShare.inflationPmpe +
+          entry.revShare.mevPmpe) *
+          entry.auctionStake.marinadeSamTargetSol) /
+          1000,
+      0,
+    )
+
+  const tvl = baseResult.auctionData.stakeAmounts.marinadeSamTvlSol
+  const baseApy = Math.pow(1 + profitOf(baseResult) / tvl, epochsPerYear) - 1
+  const altApy = Math.pow(1 + profitOf(altResult) / tvl, epochsPerYear) - 1
+  return altApy - baseApy
+}
+
+export const selectTvlApyDiff = (
+  baseResult: AuctionResult,
+  altResult: AuctionResult,
+  epochsPerYear: number,
+): number => {
+  const profitOf = (r: AuctionResult) =>
+    r.auctionData.validators.reduce(
+      (acc, entry) =>
+        acc +
+        ((entry.revShare.auctionEffectiveBidPmpe +
+          entry.revShare.inflationPmpe +
+          entry.revShare.mevPmpe) *
+          entry.marinadeActivatedStakeSol) /
+          1000,
+      0,
+    )
+
+  const baseTvl = baseResult.auctionData.stakeAmounts.marinadeSamTvlSol
+  const altTvl = altResult.auctionData.stakeAmounts.marinadeSamTvlSol
+
+  const baseApy =
+    Math.pow(1 + profitOf(baseResult) / baseTvl, epochsPerYear) - 1
+  const altApy = Math.pow(1 + profitOf(altResult) / altTvl, epochsPerYear) - 1
+  return altApy - baseApy
 }

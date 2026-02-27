@@ -3,6 +3,8 @@
 interface CssExports {
   'page': string;
   'pageContent': string;
+  'simulatorToggle': string;
+  'simulatorToggleActive': string;
 }
 export const cssExports: CssExports;
 export default cssExports;

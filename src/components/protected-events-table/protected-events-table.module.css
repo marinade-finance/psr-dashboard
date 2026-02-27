@@ -33,7 +33,9 @@
 
 .metricWrap {
   display: flex;
+  gap: 8px;
   padding: 10px;
+  width: fit-content;
 }
 
 .funder {
