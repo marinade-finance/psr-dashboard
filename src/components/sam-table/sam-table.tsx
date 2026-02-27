@@ -547,7 +547,7 @@ export const SamTable: React.FC<Props> = ({
 
   const renderBasicTable = () => (
     <Table
-      className="border-separate border-spacing-y-1 border-spacing-x-0 font-sans [&_tbody_tr]:transition-colors [&_tbody_td]:px-4 [&_tbody_td]:py-3 [&_tbody_td]:bg-card [&_tbody_td]:border-y [&_tbody_td]:border-border-grid [&_tbody_td:first-child]:rounded-l-xl [&_tbody_td:last-child]:rounded-r-xl [&_tbody_tr:hover_td]:bg-primary-alpha"
+      className="border-separate border-spacing-y-1 border-spacing-x-0 font-sans [&_tbody_tr]:transition-colors [&_tbody_td]:px-4 [&_tbody_td]:py-3 [&_tbody_td]:align-top [&_tbody_td]:bg-card [&_tbody_td]:border-y [&_tbody_td]:border-border-grid [&_tbody_td:first-child]:rounded-l-xl [&_tbody_td:last-child]:rounded-r-xl [&_tbody_tr:hover_td]:bg-primary-alpha"
       caption={simulationCaption}
       data={displayValidators}
       rowAttrsFn={(item, _index) => {
