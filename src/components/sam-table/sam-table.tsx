@@ -1079,9 +1079,9 @@ export const SamTable: React.FC<Props> = ({
       className={cn(
         'relative',
         simulationModeActive && [
-          '[&>table_tbody]:bg-[rgba(5,30,28,0.08)]',
-          '[&>table_tbody_tr]:bg-[rgba(5,30,28,0.06)]',
-          '[&>table_thead]:bg-linear-to-br [&>table_thead]:from-[rgba(5,30,28,1)] [&>table_thead]:to-[rgba(15,50,48,1)] [&>table_thead]:transition-[background] [&>table_thead]:duration-[800ms] [&>table_thead]:ease-in-out',
+          '[&_table_tbody]:bg-[rgba(5,30,28,0.08)]',
+          '[&_table_tbody_tr]:bg-[rgba(5,30,28,0.06)]',
+          '[&_table_thead]:bg-linear-to-br [&_table_thead]:from-[rgba(5,30,28,1)] [&_table_thead]:to-[rgba(15,50,48,1)] [&_table_thead]:transition-[background] [&_table_thead]:duration-[800ms] [&_table_thead]:ease-in-out',
         ],
         isCalculating && 'header-glow',
       )}
@@ -1127,7 +1127,9 @@ export const SamTable: React.FC<Props> = ({
         {expertMetrics}
       </div>
 
-      {level === UserLevel.Expert ? renderExpertTable() : renderBasicTable()}
+      <div className="overflow-x-auto">
+        {level === UserLevel.Expert ? renderExpertTable() : renderBasicTable()}
+      </div>
     </div>
   )
 }

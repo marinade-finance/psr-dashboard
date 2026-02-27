@@ -15,7 +15,7 @@ export const Metric: React.FC<Props> = ({
   subtitle,
   'data-tooltip-html': tooltipHtml,
 }) => (
-  <div className="metric px-5 py-2.5 bg-card rounded-xl shadow-card border border-border-grid transition-shadow hover:shadow-[0_4px_12px_rgba(0,0,0,0.15)]">
+  <div className="metric px-5 py-2.5 bg-card rounded-xl shadow-card border border-border-grid transition-shadow hover:shadow-[0_4px_12px_rgba(0,0,0,0.15)] min-w-[calc(50%-4px)] sm:min-w-0">
     <div className="flex items-center gap-1 whitespace-nowrap text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
       {label}
       {tooltipHtml && (
