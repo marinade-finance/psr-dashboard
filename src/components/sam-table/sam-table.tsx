@@ -764,10 +764,13 @@ export const SamTable: React.FC<Props> = ({
             compare: (a, b) =>
               selectBondSize(a.validator) - selectBondSize(b.validator),
             alignment: Alignment.RIGHT,
-            background: item =>
-              selectBondSize(item.validator) <= 0
-                ? Color.GREY
-                : item.validator.bondState,
+            background:
+              level === UserLevel.Expert
+                ? item =>
+                    selectBondSize(item.validator) <= 0
+                      ? Color.GREY
+                      : item.validator.bondState
+                : undefined,
           },
           {
             header: 'Max APY',
