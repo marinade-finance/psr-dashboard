@@ -297,7 +297,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
           </div>
         </div>
       </div>
-      <div className="bg-card rounded-xl border border-border shadow-xs overflow-hidden">
+      <div className="bg-card border border-border overflow-hidden">
         <ShadTable>
           <TableHeader>
             <TableRow className="border-b border-border-grid">

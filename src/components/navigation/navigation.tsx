@@ -68,10 +68,10 @@ export const Navigation: React.FC<UserLevelProps> = ({ level }) => {
             end={to === '/' || to === '/expert-'}
             onMouseEnter={() => handleMouseEnter(to)}
             className={({ isActive }) =>
-              `px-3 py-1.5 text-sm font-medium transition-all border border-transparent ${
+              `px-3 py-1.5 text-sm font-medium font-mono ${
                 isActive
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'text-muted-foreground hover:text-foreground hover:border-border'
+                  ? 'text-primary border border-border'
+                  : 'text-muted-foreground hover:text-foreground border border-transparent'
               }`
             }
           >

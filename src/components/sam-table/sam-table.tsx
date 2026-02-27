@@ -22,7 +22,6 @@ import {
 import {
   getApyBreakdown,
   getBondHealth,
-  getBondHealthStyle,
   getValidatorTip,
   getTipStyle,
   calculateBondUtilization,
@@ -36,7 +35,6 @@ import type {
   DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
 
-// Validator with computed bond state
 type ValidatorWithBondState = AuctionValidator & {
   bondHealth: 'healthy' | 'watch' | 'critical'
 }
@@ -54,7 +52,14 @@ type Props = {
   nameMap?: Map<string, string>
 }
 
-// APY Tooltip component for Max APY hover
+// ASCII progress bar helper
+const asciiBar = (pct: number, width: number = 10): string => {
+  const filled = Math.round((Math.min(pct, 100) / 100) * width)
+  const empty = width - filled
+  return '[' + '█'.repeat(filled) + '░'.repeat(empty) + ']'
+}
+
+// APY Tooltip component
 const ApyTooltip: React.FC<{
   validator: AuctionValidator
   epochsPerYear: number
@@ -69,65 +74,54 @@ const ApyTooltip: React.FC<{
       : 0
 
   return (
-    <div className="absolute top-[-4px] left-[calc(100%-16px)] z-[100] bg-card border border-border rounded-lg px-4 py-3 min-w-[230px] shadow-lg">
-      <div className="text-[11px] text-muted-foreground mb-2 font-medium">
+    <div className="absolute top-[-4px] left-[calc(100%-16px)] z-[100] bg-card border border-border px-4 py-3 min-w-[230px]">
+      <div className="text-[11px] text-muted-foreground mb-2 font-mono">
         APY Composition
       </div>
-      <div className="flex items-center text-xs mb-1 gap-[5px]">
-        <span
-          className="w-2 h-2 rounded-sm shrink-0"
-          style={{ background: 'var(--chart-1)' }}
-        />
-        <span className="text-secondary-foreground">Inflation</span>
-        <span className="text-muted-foreground text-[10px] flex-1">
+      <div className="text-xs mb-1 font-mono">
+        <span className="text-muted-foreground">| </span>
+        <span className="text-foreground">Inflation</span>
+        <span className="text-muted-foreground text-[10px]">
+          {' '}
           ({inflComm.toFixed(0)}% comm.)
         </span>
-        <span className="text-foreground font-mono font-medium">
+        <span className="text-foreground font-mono float-right">
           {formatPercentage(breakdown.inflation, 2)}
         </span>
       </div>
-      <div className="flex items-center text-xs mb-1 gap-[5px]">
-        <span
-          className="w-2 h-2 rounded-sm shrink-0"
-          style={{ background: 'var(--chart-2)' }}
-        />
-        <span className="text-secondary-foreground">MEV Tips</span>
-        <span className="text-muted-foreground text-[10px] flex-1">
+      <div className="text-xs mb-1 font-mono">
+        <span className="text-muted-foreground">| </span>
+        <span className="text-foreground">MEV Tips</span>
+        <span className="text-muted-foreground text-[10px]">
+          {' '}
           ({mevComm.toFixed(0)}% comm.)
         </span>
-        <span className="text-foreground font-mono font-medium">
+        <span className="text-foreground font-mono float-right">
           {formatPercentage(breakdown.mev, 2)}
         </span>
       </div>
-      <div className="flex items-center text-xs mb-1 gap-[5px]">
-        <span
-          className="w-2 h-2 rounded-sm shrink-0"
-          style={{ background: 'var(--chart-3)' }}
-        />
-        <span className="text-secondary-foreground">Block Rewards</span>
-        <span className="text-muted-foreground text-[10px] flex-1">
+      <div className="text-xs mb-1 font-mono">
+        <span className="text-muted-foreground">| </span>
+        <span className="text-foreground">Block Rewards</span>
+        <span className="text-muted-foreground text-[10px]">
+          {' '}
           ({blockComm.toFixed(0)}% shared)
         </span>
-        <span className="text-foreground font-mono font-medium">
+        <span className="text-foreground font-mono float-right">
           {formatPercentage(breakdown.blockRewards, 2)}
         </span>
       </div>
-      <div className="flex items-center text-xs mb-1 gap-[5px]">
-        <span
-          className="w-2 h-2 rounded-sm shrink-0"
-          style={{ background: 'var(--chart-4)' }}
-        />
-        <span className="text-secondary-foreground">Stake Bid</span>
-        <span className="text-muted-foreground text-[10px] flex-1">
-          (your bid)
-        </span>
-        <span className="text-foreground font-mono font-medium">
+      <div className="text-xs mb-1 font-mono">
+        <span className="text-muted-foreground">| </span>
+        <span className="text-foreground">Stake Bid</span>
+        <span className="text-muted-foreground text-[10px]"> (your bid)</span>
+        <span className="text-foreground font-mono float-right">
           {formatPercentage(breakdown.stakeBid, 2)}
         </span>
       </div>
-      <div className="border-t border-border-grid mt-1.5 pt-1.5 flex justify-between text-xs font-semibold">
-        <span className="text-secondary-foreground">Total</span>
-        <span className="text-primary font-mono">
+      <div className="border-t border-border mt-1.5 pt-1.5 flex justify-between text-xs font-semibold font-mono">
+        <span className="text-foreground">Total</span>
+        <span className="text-primary">
           {formatPercentage(breakdown.total, 2)}
         </span>
       </div>
@@ -158,14 +152,10 @@ export const SamTable: React.FC<Props> = ({
     epochsPerYear,
   )
 
-  // Ref for click-outside detection
   const tableWrapRef = useRef<HTMLDivElement>(null)
-
-  // Hovered row for APY tooltip
   const [hoveredApyRow, setHoveredApyRow] = useState<string | null>(null)
   const [hoveredRow, setHoveredRow] = useState<string | null>(null)
 
-  // Current validators with bond health computed
   const validatorsWithBond: ValidatorWithBondState[] = useMemo(
     () =>
       validators
@@ -181,7 +171,6 @@ export const SamTable: React.FC<Props> = ({
     [validators],
   )
 
-  // Sort by SAM target stake descending (rank order)
   const sortedValidators = useMemo(() => {
     return [...validatorsWithBond].sort(
       (a, b) =>
@@ -190,7 +179,6 @@ export const SamTable: React.FC<Props> = ({
     )
   }, [validatorsWithBond])
 
-  // Split into winners and non-winners
   const winningValidators = sortedValidators.filter(
     v => v.auctionStake.marinadeSamTargetSol > 0,
   )
@@ -198,7 +186,6 @@ export const SamTable: React.FC<Props> = ({
     v => v.auctionStake.marinadeSamTargetSol === 0,
   )
 
-  // Stats for the stats bar
   const totalValidators = sortedValidators.length
   const winningCount = winningValidators.length
 
@@ -236,16 +223,13 @@ export const SamTable: React.FC<Props> = ({
 
   const renderRow = (validator: ValidatorWithBondState, index: number) => {
     const voteAccount = selectVoteAccount(validator)
-    const inSet = validator.auctionStake.marinadeSamTargetSol > 0
     const rank = index + 1
-    const isHovered = hoveredRow === voteAccount
     const isSimulated = simulatedValidator === voteAccount
 
     // Bond health
     const bondUtilPct = calculateBondUtilization(validator)
     const bondRunway = validator.bondGoodForNEpochs ?? 0
     const bondHealth = validator.bondHealth
-    const bondStyle = getBondHealthStyle(bondHealth)
     const hasAlert = bondRunway <= 5 || bondUtilPct >= 85
 
     // Stake delta
@@ -258,39 +242,34 @@ export const SamTable: React.FC<Props> = ({
     // Max APY
     const maxApy = selectMaxAPY(validator, epochsPerYear)
 
-    const rowClasses = [
-      'border-b border-border-grid bg-card transition-colors duration-[120ms] cursor-pointer',
-      !inSet && 'bg-[rgba(220,38,38,0.02)]',
-      isHovered &&
-        (inSet ? 'bg-primary-light-05' : 'bg-[rgba(220,38,38,0.05)]'),
-      !isHovered && inSet && 'hover:bg-primary-light-05',
-      !isHovered && !inSet && 'hover:bg-[rgba(220,38,38,0.05)]',
-      isSimulated && 'bg-primary-light-10',
-    ]
-      .filter(Boolean)
-      .join(' ')
+    const healthLabel =
+      bondHealth === 'critical'
+        ? '[CRITICAL]'
+        : bondHealth === 'watch'
+          ? '[WATCH]'
+          : '[HEALTHY]'
 
     return (
       <TableRow
         key={voteAccount}
-        className={rowClasses}
+        className={`border-b border-border-grid cursor-pointer ${isSimulated ? 'bg-muted' : ''}`}
         onMouseEnter={() => setHoveredRow(voteAccount)}
         onMouseLeave={() => setHoveredRow(null)}
         onClick={() => onValidatorClick(voteAccount)}
       >
         {/* Rank */}
-        <TableCell className="px-3.5 py-3 text-center text-muted-foreground font-medium font-mono text-xs w-10">
+        <TableCell className="px-3.5 py-3 text-center text-muted-foreground font-mono text-xs w-10">
           {rank}
         </TableCell>
 
         {/* Validator */}
         <TableCell className="px-3.5 py-3 min-w-[180px]">
           <div className="flex items-center gap-1.5">
-            <span className="text-foreground font-medium text-[13px]">
+            <span className="text-foreground text-[13px] font-mono">
               {nameMap?.get(voteAccount) || `${voteAccount.slice(0, 8)}...`}
             </span>
             {hasAlert && (
-              <span className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0 animate-pulse" />
+              <span className="text-foreground font-mono text-xs">!</span>
             )}
           </div>
           <div className="text-muted-foreground text-[11px] mt-px font-mono">
@@ -298,7 +277,7 @@ export const SamTable: React.FC<Props> = ({
           </div>
         </TableCell>
 
-        {/* Max APY with hover tooltip */}
+        {/* Max APY */}
         <TableCell
           className="px-3.5 py-3 relative"
           onMouseEnter={e => {
@@ -307,13 +286,7 @@ export const SamTable: React.FC<Props> = ({
           }}
           onMouseLeave={() => setHoveredApyRow(null)}
         >
-          <span
-            className={`inline-block px-2.5 py-[3px] rounded-md font-semibold text-[13px] font-mono ${
-              inSet
-                ? 'bg-primary-light text-primary'
-                : 'bg-destructive-light text-destructive'
-            }`}
-          >
+          <span className="font-mono text-[13px] text-foreground">
             {formatPercentage(maxApy, 2)}
           </span>
           {hoveredApyRow === voteAccount && (
@@ -323,49 +296,22 @@ export const SamTable: React.FC<Props> = ({
 
         {/* Bond Health */}
         <TableCell className="px-3.5 py-3">
-          <div className="flex items-center gap-1.5 mb-1">
-            <span
-              className="inline-flex items-center gap-1 px-2 py-[3px] rounded-md text-[11px] font-medium"
-              style={{ background: bondStyle.bg, color: bondStyle.color }}
-            >
-              <span
-                className="w-[7px] h-[7px] rounded-full"
-                style={{ background: bondStyle.color }}
-              />
-              {bondStyle.label}
-            </span>
-            <span className="text-muted-foreground text-[11px] font-mono">
-              {formatSolAmount(selectBondSize(validator), 0)}\u25CE
+          <div className="flex items-center gap-1.5 mb-1 font-mono text-[11px]">
+            <span className="text-foreground">{healthLabel}</span>
+            <span className="text-muted-foreground">
+              {formatSolAmount(selectBondSize(validator), 0)}
+              {'\u25CE'}
             </span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="h-[3px] bg-secondary rounded-sm w-14 shrink-0">
-              <div
-                className="h-full rounded-sm"
-                style={{
-                  width: `${Math.min(bondUtilPct, 100)}%`,
-                  background: bondStyle.color,
-                }}
-              />
-            </div>
-            <span
-              className="text-[10px] font-mono whitespace-nowrap"
-              style={{
-                color:
-                  bondRunway <= 10
-                    ? bondStyle.color
-                    : 'var(--muted-foreground)',
-              }}
-            >
-              ~{Math.round(bondRunway)}ep
-            </span>
+          <div className="font-mono text-[11px] text-muted-foreground">
+            {asciiBar(bondUtilPct)} ~{Math.round(bondRunway)}ep
           </div>
         </TableCell>
 
         {/* Stake Delta */}
         <TableCell className="px-3.5 py-3">
           <span
-            className="font-semibold text-[13px] font-mono"
+            className="font-mono text-[13px]"
             style={{ color: delta.color }}
           >
             {delta.arrow} {delta.text}
@@ -375,42 +321,23 @@ export const SamTable: React.FC<Props> = ({
 
         {/* Next Step */}
         <TableCell className="px-3.5 py-3 max-w-[350px]">
-          <div
-            className="inline-flex items-start gap-[5px] text-xs leading-[1.35] px-2.5 py-1 rounded-md"
-            style={{ background: tipStyle.bg, color: tipStyle.color }}
-          >
-            <span className="shrink-0">{tipStyle.icon}</span>
-            <span className="break-words">
-              {tip.text.replace(/~?\d+\.\d{3,}/g, m => {
-                const n = parseFloat(m.replace(/^~/, ''))
-                const prefix = m.startsWith('~') ? '~' : ''
-                return `${prefix}${Math.round(n * 100) / 100}`
-              })}
-            </span>
-          </div>
+          <span className="font-mono text-xs text-foreground">
+            <span className="text-muted-foreground">{tipStyle.icon} </span>
+            {tip.text.replace(/~?\d+\.\d{3,}/g, m => {
+              const n = parseFloat(m.replace(/^~/, ''))
+              const prefix = m.startsWith('~') ? '~' : ''
+              return `${prefix}${Math.round(n * 100) / 100}`
+            })}
+          </span>
         </TableCell>
 
         {/* Chevron */}
         <TableCell className="px-2.5 py-3 w-10">
-          <div
-            className={`w-7 h-7 rounded-[7px] flex items-center justify-center border transition-all duration-[120ms] ${
-              isHovered
-                ? 'bg-primary-light border-[rgba(12,151,144,0.3)]'
-                : 'bg-muted border-border-grid'
-            }`}
+          <span
+            className={`font-mono text-sm ${hoveredRow === voteAccount ? 'text-primary' : 'text-muted-foreground'}`}
           >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path
-                d="M4.5 3L7.5 6L4.5 9"
-                stroke={
-                  isHovered ? 'var(--primary)' : 'var(--muted-foreground)'
-                }
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
+            {'>'}
+          </span>
         </TableCell>
       </TableRow>
     )
@@ -426,9 +353,10 @@ export const SamTable: React.FC<Props> = ({
         {stats.map(stat => (
           <div
             key={stat.label}
-            className="bg-card rounded-xl px-5 py-4 border border-border shadow-xs"
+            className="bg-card px-5 py-4 border border-border"
           >
-            <div className="text-xs text-muted-foreground mb-1 font-sans flex items-center gap-1">
+            <div className="text-[11px] text-muted-foreground mb-1 font-mono flex items-center gap-1 uppercase tracking-wider">
+              {':: '}
               {stat.label}
               {stat.help && <HelpTip text={stat.help} />}
             </div>
@@ -447,8 +375,8 @@ export const SamTable: React.FC<Props> = ({
       </div>
 
       {/* Table */}
-      <div className="bg-card rounded-xl border border-border shadow-xs overflow-hidden">
-        <ShadTable className="font-sans text-[13px]">
+      <div className="bg-card border border-border overflow-hidden">
+        <ShadTable className="font-mono text-[13px]">
           <TableHeader>
             <TableRow className="border-b border-border-grid">
               <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted w-10 text-center">
@@ -482,32 +410,10 @@ export const SamTable: React.FC<Props> = ({
             {nonWinningValidators.length > 0 && (
               <TableRow>
                 <TableCell colSpan={7} className="p-0">
-                  <div className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-primary-light-10 via-primary-light to-primary-light-10 border-y-2 border-primary">
-                    <div className="flex items-center gap-1.5">
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 16 16"
-                        fill="none"
-                      >
-                        <path
-                          d="M8 2L10 6H14L11 9L12 13L8 10.5L4 13L5 9L2 6H6L8 2Z"
-                          fill="var(--primary)"
-                          opacity="0.8"
-                        />
-                      </svg>
-                      <span className="text-xs font-semibold text-primary">
-                        Winning Set Cutoff
-                      </span>
-                    </div>
-                    <div className="flex-1 h-px bg-primary opacity-20" />
-                    <span className="text-xs text-primary font-mono font-semibold">
-                      Winning APY: {formatPercentage(winningAPY, 2)}
-                    </span>
-                    <div className="flex-1 h-px bg-primary opacity-20" />
-                    <span className="text-[11px] text-muted-foreground">
-                      {winningCount} of {totalValidators} validators
-                    </span>
+                  <div className="text-center py-2 border-y-2 border-border font-mono text-xs text-muted-foreground">
+                    {'══════════ WINNING SET CUTOFF ══════════'}
+                    {'  '}Winning APY: {formatPercentage(winningAPY, 2)}
+                    {'  '}({winningCount} of {totalValidators})
                   </div>
                 </TableCell>
               </TableRow>

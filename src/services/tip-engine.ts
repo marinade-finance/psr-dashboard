@@ -22,9 +22,9 @@ export interface TipStyle {
 
 const EPOCH_HOURS = 52
 
-const VAR_DESTRUCTIVE = 'var(--destructive)'
-const VAR_PRIMARY = 'var(--primary)'
+const VAR_FOREGROUND = 'var(--foreground)'
 const VAR_MUTED_FOREGROUND = 'var(--muted-foreground)'
+const BG_TRANSPARENT = 'transparent'
 
 export const getBondHealth = (
   bondUtilPct: number,
@@ -38,24 +38,15 @@ export const getBondHealth = (
 export const getBondHealthStyle = (
   health: 'healthy' | 'watch' | 'critical',
 ): { color: string; bg: string; label: string } => {
-  if (health === 'critical') {
-    return {
-      color: VAR_DESTRUCTIVE,
-      bg: 'var(--destructive-light)',
-      label: 'Critical',
-    }
-  }
-  if (health === 'watch') {
-    return {
-      color: 'var(--warning)',
-      bg: 'var(--warning-light)',
-      label: 'Watch',
-    }
-  }
   return {
-    color: VAR_PRIMARY,
-    bg: 'var(--primary-light-10)',
-    label: 'Healthy',
+    color: VAR_FOREGROUND,
+    bg: BG_TRANSPARENT,
+    label:
+      health === 'critical'
+        ? 'CRITICAL'
+        : health === 'watch'
+          ? 'WATCH'
+          : 'HEALTHY',
   }
 }
 
@@ -63,33 +54,33 @@ export const getTipStyle = (urgency: TipUrgency): TipStyle => {
   switch (urgency) {
     case 'critical':
       return {
-        color: VAR_DESTRUCTIVE,
-        bg: 'var(--destructive-light)',
-        icon: '\u26A0',
+        color: VAR_FOREGROUND,
+        bg: BG_TRANSPARENT,
+        icon: '!!',
       }
     case 'warning':
       return {
-        color: 'var(--warning)',
-        bg: 'var(--warning-light)',
-        icon: '\u2197',
+        color: VAR_FOREGROUND,
+        bg: BG_TRANSPARENT,
+        icon: '>>',
       }
     case 'info':
       return {
-        color: 'var(--info)',
-        bg: 'var(--info-light)',
-        icon: '\uD83D\uDCA1',
+        color: VAR_FOREGROUND,
+        bg: BG_TRANSPARENT,
+        icon: '--',
       }
     case 'positive':
       return {
-        color: VAR_PRIMARY,
-        bg: 'var(--primary-light-10)',
-        icon: '\u2713',
+        color: VAR_FOREGROUND,
+        bg: BG_TRANSPARENT,
+        icon: 'ok',
       }
     default:
       return {
         color: VAR_MUTED_FOREGROUND,
-        bg: 'var(--muted)',
-        icon: '\u2192',
+        bg: BG_TRANSPARENT,
+        icon: '--',
       }
   }
 }
@@ -136,7 +127,6 @@ export const getValidatorTip = (
   }
 
   if (health === 'watch' && bidPmpe < 15) {
-    // bidPmpe is in PMPE (per mille per epoch), divide by 10 to get percentage
     return {
       text: `Bid at ${(bidPmpe / 10).toFixed(2)}% is below median. Raise to 0.15-0.25% to gain rank.`,
       urgency: 'warning',
@@ -226,7 +216,6 @@ export const getApyBreakdown = (
     return { inflation: 0, mev: 0, blockRewards: 0, stakeBid: 0, total: 0 }
   }
 
-  // Convert PMPE to approximate APY contribution
   const pmpeToApy = (pmpe: number) =>
     Math.pow(1 + pmpe / 1e3, epochsPerYear) - 1
 
@@ -255,14 +244,14 @@ export const formatStakeDelta = (
   if (delta > 0) {
     return {
       text: `+${delta.toLocaleString()}`,
-      color: VAR_PRIMARY,
+      color: 'var(--primary)',
       arrow: '\u2191',
     }
   }
   if (delta < 0) {
     return {
       text: delta.toLocaleString(),
-      color: VAR_DESTRUCTIVE,
+      color: VAR_FOREGROUND,
       arrow: '\u2193',
     }
   }
