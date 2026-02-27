@@ -109,19 +109,6 @@ const CLICKABLE_ROW =
 const GHOST_ROW =
   'ghostRow cursor-default! pointer-events-none [&_td]:line-through [&_td]:text-muted-foreground [&_td]:bg-cell-grey! [&_td_span]:line-through [&_td_div]:line-through'
 
-function bondLabel(color: Color): string {
-  switch (color) {
-    case Color.GREEN:
-      return 'Healthy'
-    case Color.YELLOW:
-      return 'Watch'
-    case Color.RED:
-      return 'Low'
-    default:
-      return 'None'
-  }
-}
-
 const bondDotColor: Record<string, string> = {
   [Color.GREEN]: 'bg-status-green',
   [Color.YELLOW]: 'bg-status-yellow',
@@ -608,7 +595,7 @@ export const SamTable: React.FC<Props> = ({
                   sim && 'font-bold italic',
                 )}
               >
-                {flag && <span className="text-sm shrink-0">{flag} </span>}
+                {flag && <span className="text-sm shrink-0">{flag}</span>}
                 <span className="font-medium">
                   {name.length > 24 ? name.slice(0, 24) + '\u2026' : name}
                 </span>
@@ -668,15 +655,14 @@ export const SamTable: React.FC<Props> = ({
           render: item => {
             const { validator } = item
             return (
-              <span className="inline-flex items-center gap-1">
+              <span className="inline-flex items-center gap-1.5">
+                {formatSolAmount(selectBondSize(validator), 0)} SOL
                 <span
                   className={cn(
                     'bondDot w-2 h-2 rounded-full shrink-0 inline-block',
                     bondDotClass(validator.bondState),
                   )}
                 />
-                {bondLabel(validator.bondState)}{' '}
-                {formatSolAmount(selectBondSize(validator), 0)} SOL
               </span>
             )
           },
@@ -701,18 +687,18 @@ export const SamTable: React.FC<Props> = ({
             ),
           render: item => {
             const delta = selectStakeDelta(item.validator)
-            const arrow =
-              delta > 0 ? '\u2191 +' : delta < 0 ? '\u2193 ' : '\u2014 '
+            const arrow = delta > 0 ? '\u2191' : delta < 0 ? '\u2193' : '\u2014'
             return (
               <span
                 className={cn(
+                  'inline-flex items-center gap-1',
                   delta > 0 && 'text-status-green',
                   delta < 0 && 'text-status-red',
                   delta === 0 && 'text-status-grey',
                 )}
               >
-                {arrow}
-                {formatSolAmount(delta, 0)}
+                {delta !== 0 && (delta > 0 ? '+' : '')}
+                {formatSolAmount(delta, 0)} {arrow}
               </span>
             )
           },
