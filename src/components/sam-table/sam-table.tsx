@@ -81,8 +81,11 @@ const ApyTooltip: React.FC<{
 
   return (
     <div
-      className="absolute top-0 left-full ml-2 z-[100] whitespace-pre font-mono text-[11px] leading-[1.4] text-foreground"
-      style={{ backgroundColor: '#F5E6D3' }}
+      className="whitespace-pre font-mono text-[11px] leading-[1.5] text-foreground border border-border p-1"
+      style={{
+        backgroundColor: '#F5E6D3',
+        boxShadow: '2px 2px 0 rgba(61,43,31,0.15)',
+      }}
     >
       {lines.map((line, i) => (
         <div key={i}>{line}</div>
@@ -116,6 +119,10 @@ export const SamTable: React.FC<Props> = ({
 
   const _tableWrapRef = useRef<HTMLDivElement>(null)
   const [hoveredApyRow, setHoveredApyRow] = useState<string | null>(null)
+  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number }>({
+    x: 0,
+    y: 0,
+  })
 
   const validatorsWithBond: ValidatorWithBondState[] = useMemo(
     () =>
@@ -208,17 +215,14 @@ export const SamTable: React.FC<Props> = ({
         <span>{pad(name, W.name)}</span>
         <span className="text-muted-foreground">{SEP}</span>
         <span
-          onMouseEnter={() => setHoveredApyRow(voteAccount)}
+          onMouseEnter={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect()
+            setTooltipPos({ x: rect.right + 8, y: rect.top })
+            setHoveredApyRow(voteAccount)
+          }}
           onMouseLeave={() => setHoveredApyRow(null)}
-          style={{ position: 'relative', display: 'inline' }}
         >
           {rpad(formatPercentage(maxApy, 2), W.apy)}
-          {hoveredApyRow === voteAccount && (
-            <ApyTooltip
-              validator={validator}
-              epochsPerYear={epochsPerYear}
-            />
-          )}
         </span>
         <span className="text-muted-foreground">{SEP}</span>
         <span>{pad(bondStr, W.bond)}</span>
@@ -295,6 +299,26 @@ export const SamTable: React.FC<Props> = ({
           renderTerminalRow(v, winningCount + i),
         )}
       </div>
+
+      {/* APY Tooltip — fixed overlay */}
+      {hoveredApyRow && (() => {
+        const v = sortedValidators.find(
+          v => selectVoteAccount(v) === hoveredApyRow,
+        )
+        if (!v) return null
+        return (
+          <div
+            style={{
+              position: 'fixed',
+              top: tooltipPos.y,
+              left: tooltipPos.x,
+              zIndex: 200,
+            }}
+          >
+            <ApyTooltip validator={v} epochsPerYear={epochsPerYear} />
+          </div>
+        )
+      })()}
     </div>
   )
 }
