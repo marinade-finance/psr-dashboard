@@ -1,97 +1,82 @@
+// Validator Bonds page tests: data loading, metrics (4 basic + values),
+// default sort (indicator + value ordering), expert mode (extra metric,
+// extra columns, column count comparison).
 import { test, expect } from './fixtures/mock-api'
 
-test.describe('Validator Bonds page', () => {
+function parseNum(s: string): number {
+  return parseFloat(s.replace(/[^0-9.\-]/g, ''))
+}
+
+test.describe('Bonds basic', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/bonds')
     await page.waitForSelector('[class*="metricWrap"]', { timeout: 30000 })
   })
 
-  test('navigates to /bonds and table loads', async ({ page }) => {
+  test('table loads at /bonds', async ({ page }) => {
     await expect(page).toHaveURL('/bonds')
     await expect(page.locator('table')).toBeVisible()
   })
 
-  test('shows Bonds Funded metric', async ({ page }) => {
-    await expect(
-      page.locator('.metric').filter({ hasText: 'Bonds Funded' }),
-    ).toBeVisible()
+  test('all 4 metrics visible with values', async ({ page }) => {
+    for (const label of [
+      'Bonds Funded',
+      'Bonds Balance',
+      'Marinade Stake',
+      'Protected Stake',
+    ]) {
+      await expect(page.locator('.metric').filter({ hasText: label })).toBeVisible()
+    }
+    const text = await page.locator('[class*="metricWrap"]').innerText()
+    expect(text).toMatch(/\d/)
   })
 
-  test('shows Bonds Balance metric', async ({ page }) => {
-    await expect(
-      page.locator('.metric').filter({ hasText: 'Bonds Balance' }),
-    ).toBeVisible()
-  })
-
-  test('shows Marinade Stake metric', async ({ page }) => {
-    await expect(
-      page.locator('.metric').filter({ hasText: 'Marinade Stake' }),
-    ).toBeVisible()
-  })
-
-  test('shows Protected Stake metric', async ({ page }) => {
-    await expect(
-      page.locator('.metric').filter({ hasText: 'Protected Stake' }),
-    ).toBeVisible()
-  })
-
-  test('metrics contain non-empty values', async ({ page }) => {
-    const metricsText = await page
-      .locator('[class*="metricWrap"]')
-      .innerText()
-    expect(metricsText).toMatch(/\d/)
-  })
-
-  test('table has Bond balance column sorted descending by default', async ({
-    page,
-  }) => {
-    // Wait for rows to appear
+  test('Bond balance sorted descending with correct values', async ({ page }) => {
     const rows = page.locator('table tbody tr')
     await expect(rows.first()).toBeVisible()
 
-    // Get all bond balance values from the table
-    const bondBalanceHeader = page.locator('table th').filter({
-      hasText: 'Bond balance',
-    })
-    await expect(bondBalanceHeader).toBeVisible()
+    const h = page.locator('table th').filter({ hasText: 'Bond balance' })
+    await expect(h).toBeVisible()
 
-    // Verify the column exists with data
     const cells = page.locator('table tbody tr td:nth-child(3)')
-    const count = await cells.count()
-    expect(count).toBeGreaterThan(0)
-
-    // Collect numeric values (skip rows with '-')
-    const values: number[] = []
-    for (let i = 0; i < Math.min(count, 20); i++) {
-      const text = await cells.nth(i).innerText()
-      const num = parseFloat(text.replace(/,/g, ''))
-      if (!isNaN(num)) {
-        values.push(num)
-      }
+    const n = await cells.count()
+    const vals: number[] = []
+    for (let i = 0; i < Math.min(n, 20); i++) {
+      const v = parseNum(await cells.nth(i).innerText())
+      if (!isNaN(v)) vals.push(v)
     }
-
-    // Check descending order for rows with values
-    for (let i = 1; i < values.length; i++) {
-      expect(values[i]).toBeLessThanOrEqual(values[i - 1])
+    expect(vals.length).toBeGreaterThan(1)
+    for (let i = 1; i < vals.length; i++) {
+      expect(vals[i]).toBeLessThanOrEqual(vals[i - 1])
     }
   })
+})
 
-  test('expert-bonds has Max Protectable Stake metric', async ({ page }) => {
+test.describe('Bonds expert', () => {
+  test.beforeEach(async ({ page }) => {
     await page.goto('/expert-bonds')
     await page.waitForSelector('[class*="metricWrap"]', { timeout: 30000 })
+  })
+
+  test('Max Protectable Stake metric visible', async ({ page }) => {
     await expect(
-      page
-        .locator('.metric')
-        .filter({ hasText: 'Max Protectable Stake' }),
+      page.locator('.metric').filter({ hasText: 'Max Protectable Stake' }),
     ).toBeVisible()
   })
 
-  test('expert-bonds has extra columns', async ({ page }) => {
-    await page.goto('/expert-bonds')
+  test('expert has extra columns (Max protected stake, Protected stake)', async ({
+    page,
+  }) => {
+    const headers = await page.locator('table th').allInnerTexts()
+    expect(headers.some(h => h.includes('Max protected stake'))).toBe(true)
+    expect(headers.some(h => h.includes('Protected stake'))).toBe(true)
+  })
+
+  test('expert has more columns than basic', async ({ page }) => {
+    const expertCount = await page.locator('table th').count()
+    await page.goto('/bonds')
     await page.waitForSelector('table', { timeout: 30000 })
-    const headers = page.locator('table th')
-    const headerTexts = await headers.allInnerTexts()
-    expect(headerTexts.some(h => h.includes('Max protected stake'))).toBe(true)
-    expect(headerTexts.some(h => h.includes('Protected stake'))).toBe(true)
+    const basicCount = await page.locator('table th').count()
+    expect(expertCount).toBeGreaterThan(basicCount)
   })
 })

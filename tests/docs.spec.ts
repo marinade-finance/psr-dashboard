@@ -1,3 +1,6 @@
+// Docs page tests: content rendering, title, tabs (Guide default, Expert
+// Guide with ?from=expert), hash navigation, back button links (basic →
+// ../, expert → /expert-), docs link from navigation.
 import { test, expect } from '@playwright/test'
 
 test.describe('Docs page', () => {
@@ -12,17 +15,17 @@ test.describe('Docs page', () => {
     await expect(page).toHaveTitle('Docs | PSR Dashboard')
   })
 
-  test('back button links to dashboard', async ({ page }) => {
+  test('back button: basic links to ../, expert links to /expert-', async ({ page }) => {
     await page.goto('/docs/')
-    const back = page.locator('#back')
-    await expect(back).toBeVisible()
-    await expect(back).toHaveAttribute('href', '../')
+    await expect(page.locator('#back')).toHaveAttribute('href', '../')
+
+    await page.goto('/docs/?from=expert')
+    await expect(page.locator('#back')).toHaveAttribute('href', '/expert-')
   })
 
   test('Guide tab is active by default', async ({ page }) => {
     await page.goto('/docs/')
-    const guideTab = page.locator('.tab[data-doc="GUIDE"]')
-    await expect(guideTab).toHaveClass(/active/)
+    await expect(page.locator('.tab[data-doc="GUIDE"]')).toHaveClass(/active/)
   })
 
   test('guide content has Data Sources section', async ({ page }) => {
@@ -33,45 +36,33 @@ test.describe('Docs page', () => {
   test('guide content has table with API endpoints', async ({ page }) => {
     await page.goto('/docs/')
     await expect(page.locator('#content table').first()).toBeVisible()
-    await expect(page.locator('#content table').first()).toContainText(
-      'Validators API',
-    )
+    await expect(page.locator('#content table').first()).toContainText('Validators API')
   })
 
   test('expert guide tab appears with ?from=expert', async ({ page }) => {
     await page.goto('/docs/?from=expert')
-    const expertTab = page.locator('.tab[data-doc="GUIDE-EXPERT"]')
-    await expect(expertTab).toBeVisible()
-    await expect(expertTab).toHaveText('Expert Guide')
+    const tab = page.locator('.tab[data-doc="GUIDE-EXPERT"]')
+    await expect(tab).toBeVisible()
+    await expect(tab).toHaveText('Expert Guide')
   })
 
-  test('expert guide tab is not visible without ?from=expert', async ({
-    page,
-  }) => {
+  test('expert guide tab is not visible without ?from=expert', async ({ page }) => {
     await page.goto('/docs/')
-    const expertTab = page.locator('.tab[data-doc="GUIDE-EXPERT"]')
-    await expect(expertTab).toHaveCount(0)
+    await expect(page.locator('.tab[data-doc="GUIDE-EXPERT"]')).toHaveCount(0)
   })
 
   test('clicking Expert Guide tab loads expert content', async ({ page }) => {
     await page.goto('/docs/?from=expert')
-    const expertTab = page.locator('.tab[data-doc="GUIDE-EXPERT"]')
-    await expertTab.click()
-    await expect(expertTab).toHaveClass(/active/)
+    const tab = page.locator('.tab[data-doc="GUIDE-EXPERT"]')
+    await tab.click()
+    await expect(tab).toHaveClass(/active/)
     await expect(page.locator('#content')).toContainText('Expert View Guide')
-  })
-
-  test('back button links to /expert- when from=expert', async ({ page }) => {
-    await page.goto('/docs/?from=expert')
-    const back = page.locator('#back')
-    await expect(back).toHaveAttribute('href', '/expert-')
   })
 
   test('hash navigation loads correct doc', async ({ page }) => {
     await page.goto('/docs/?from=expert#GUIDE-EXPERT')
     await expect(page.locator('#content')).toContainText('Expert View Guide')
-    const expertTab = page.locator('.tab[data-doc="GUIDE-EXPERT"]')
-    await expect(expertTab).toHaveClass(/active/)
+    await expect(page.locator('.tab[data-doc="GUIDE-EXPERT"]')).toHaveClass(/active/)
   })
 })
 
@@ -79,23 +70,16 @@ test.describe('Docs link from navigation', () => {
   test('basic mode Docs link navigates to /docs/', async ({ page }) => {
     await page.goto('/')
     await page.waitForSelector('.navigation', { timeout: 15000 })
-    const docsLink = page.locator('.docsButton').first()
-    await expect(docsLink).toBeVisible()
-    await expect(docsLink).toHaveAttribute('href', '/docs/')
+    const docs = page.locator('.docsButton').first()
+    await expect(docs).toBeVisible()
+    await expect(docs).toHaveAttribute('href', '/docs/')
   })
 
-  test('expert mode has Expert Guide link to /docs/?from=expert', async ({
-    page,
-  }) => {
+  test('expert mode has Expert Guide link to /docs/?from=expert', async ({ page }) => {
     await page.goto('/expert-')
     await page.waitForSelector('.navigation', { timeout: 15000 })
-    const expertGuideLink = page
-      .locator('.navigation a')
-      .filter({ hasText: 'Expert Guide' })
-    await expect(expertGuideLink).toBeVisible()
-    await expect(expertGuideLink).toHaveAttribute(
-      'href',
-      '/docs/?from=expert#GUIDE-EXPERT',
-    )
+    const link = page.locator('.navigation a').filter({ hasText: 'Expert Guide' })
+    await expect(link).toBeVisible()
+    await expect(link).toHaveAttribute('href', '/docs/?from=expert#GUIDE-EXPERT')
   })
 })

@@ -1,4 +1,14 @@
+// Navigation tests: tab links, route navigation, active class per route,
+// expert routes load, docs link, expert guide link, deep link active state.
 import { test, expect } from './fixtures/mock-api'
+
+const ROUTES = [
+  { path: '/', tab: 'Stake Auction Marketplace' },
+  { path: '/protected-events', tab: 'Protected Events' },
+  { path: '/bonds', tab: 'Validator Bonds' },
+] as const
+
+const EXPERT_ROUTES = ['/expert-', '/expert-bonds', '/expert-protected-events']
 
 test.describe('Navigation', () => {
   test.beforeEach(async ({ page }) => {
@@ -6,114 +16,66 @@ test.describe('Navigation', () => {
     await page.waitForSelector('[class*="navigation"]', { timeout: 15000 })
   })
 
-  test('3 tab links are visible', async ({ page }) => {
+  test('3 tab links and docs link visible', async ({ page }) => {
     const nav = page.locator('[class*="navigation"]')
-    await expect(nav.getByRole('link', { name: 'Stake Auction Marketplace' })).toBeVisible()
-    await expect(nav.getByRole('link', { name: 'Protected Events' })).toBeVisible()
-    await expect(nav.getByRole('link', { name: 'Validator Bonds' })).toBeVisible()
+    for (const { tab } of ROUTES) {
+      await expect(nav.getByRole('link', { name: tab })).toBeVisible()
+    }
+    const docs = page.locator('[class*="docsButton"]').first()
+    await expect(docs).toBeVisible()
+    await expect(docs).toHaveText('Docs')
   })
 
-  test('docs link is visible', async ({ page }) => {
-    const docsLink = page.locator('[class*="docsButton"]').first()
-    await expect(docsLink).toBeVisible()
-    await expect(docsLink).toHaveText('Docs')
-  })
+  for (const { path, tab } of ROUTES) {
+    test(`clicking ${tab} navigates to ${path}`, async ({ page }) => {
+      if (path !== '/') {
+        // already on /, click the tab
+        await page.locator('[class*="navigation"]').getByRole('link', { name: tab }).click()
+      } else {
+        // navigate away first, then click back
+        await page.goto('/bonds')
+        await page.waitForSelector('[class*="navigation"]')
+        await page.locator('[class*="navigation"]').getByRole('link', { name: tab }).click()
+      }
+      await expect(page).toHaveURL(path)
+    })
+  }
 
-  test('clicking Stake Auction Marketplace tab changes URL to /', async ({
-    page,
-  }) => {
-    // Navigate away first
-    await page.goto('/bonds')
-    await page.waitForSelector('[class*="navigation"]')
+  for (const { path, tab } of ROUTES) {
+    test(`active class on ${tab} when at ${path}`, async ({ page }) => {
+      await page.goto(path)
+      await page.waitForSelector('[class*="navigation"]')
+      const link = page.locator('[class*="navigation"] a').filter({ hasText: tab })
+      const cls = await link.getAttribute('class')
+      expect(cls).toMatch(/active/)
+    })
+  }
 
-    await page.locator('[class*="navigation"]').getByRole('link', { name: 'Stake Auction Marketplace' }).click()
-    await expect(page).toHaveURL('/')
-  })
+  for (const path of EXPERT_ROUTES) {
+    test(`${path} loads with navigation`, async ({ page }) => {
+      await page.goto(path)
+      await page.waitForSelector('[class*="navigation"]', { timeout: 15000 })
+      await expect(page).toHaveURL(path)
+      await expect(page.locator('[class*="navigation"]')).toBeVisible()
+    })
+  }
 
-  test('clicking Protected Events tab changes URL to /protected-events', async ({
-    page,
-  }) => {
-    await page.locator('[class*="navigation"]').getByRole('link', { name: 'Protected Events' }).click()
-    await expect(page).toHaveURL('/protected-events')
-  })
+  test('basic mode hides Expert Guide, expert mode shows it', async ({ page }) => {
+    const expert = page.locator('[class*="navigation"] a').filter({ hasText: 'Expert Guide' })
+    await expect(expert).not.toBeVisible()
 
-  test('clicking Validator Bonds tab changes URL to /bonds', async ({
-    page,
-  }) => {
-    await page.locator('[class*="navigation"]').getByRole('link', { name: 'Validator Bonds' }).click()
-    await expect(page).toHaveURL('/bonds')
-  })
-
-  test('active CSS class is applied to current tab on /', async ({ page }) => {
-    const samLink = page
-      .locator('[class*="navigation"] a')
-      .filter({ hasText: 'Stake Auction Marketplace' })
-    const className = await samLink.getAttribute('class')
-    expect(className).toMatch(/active/)
-  })
-
-  test('active CSS class is applied to Protected Events on /protected-events', async ({
-    page,
-  }) => {
-    await page.goto('/protected-events')
-    await page.waitForSelector('[class*="navigation"]')
-
-    const link = page
-      .locator('[class*="navigation"] a')
-      .filter({ hasText: 'Protected Events' })
-    const className = await link.getAttribute('class')
-    expect(className).toMatch(/active/)
-  })
-
-  test('active CSS class is applied to Validator Bonds on /bonds', async ({
-    page,
-  }) => {
-    await page.goto('/bonds')
-    await page.waitForSelector('[class*="navigation"]')
-
-    const link = page
-      .locator('[class*="navigation"] a')
-      .filter({ hasText: 'Validator Bonds' })
-    const className = await link.getAttribute('class')
-    expect(className).toMatch(/active/)
-  })
-
-  test('/expert- loads correctly', async ({ page }) => {
-    await page.goto('/expert-')
-    await page.waitForSelector('[class*="navigation"]', { timeout: 15000 })
-    await expect(page).toHaveURL('/expert-')
-    // Navigation should still be present
-    await expect(page.locator('[class*="navigation"]')).toBeVisible()
-  })
-
-  test('/expert-bonds loads correctly', async ({ page }) => {
-    await page.goto('/expert-bonds')
-    await page.waitForSelector('[class*="navigation"]', { timeout: 15000 })
-    await expect(page).toHaveURL('/expert-bonds')
-    await expect(page.locator('[class*="navigation"]')).toBeVisible()
-  })
-
-  test('/expert-protected-events loads correctly', async ({ page }) => {
-    await page.goto('/expert-protected-events')
-    await page.waitForSelector('[class*="navigation"]', { timeout: 15000 })
-    await expect(page).toHaveURL('/expert-protected-events')
-    await expect(page.locator('[class*="navigation"]')).toBeVisible()
-  })
-
-  test('basic mode does not show Expert Guide link', async ({ page }) => {
-    const expertGuideLink = page
-      .locator('[class*="navigation"] a')
-      .filter({ hasText: 'Expert Guide' })
-    await expect(expertGuideLink).not.toBeVisible()
-  })
-
-  test('expert mode shows Expert Guide link', async ({ page }) => {
     await page.goto('/expert-')
     await page.waitForSelector('[class*="navigation"]')
+    await expect(
+      page.locator('[class*="navigation"] a').filter({ hasText: 'Expert Guide' }),
+    ).toBeVisible()
+  })
 
-    const expertGuideLink = page
-      .locator('[class*="navigation"] a')
-      .filter({ hasText: 'Expert Guide' })
-    await expect(expertGuideLink).toBeVisible()
+  test('deep link /bonds has Validator Bonds tab active', async ({ page }) => {
+    await page.goto('/bonds')
+    await page.waitForSelector('[class*="navigation"]')
+    const link = page.locator('[class*="navigation"] a').filter({ hasText: 'Validator Bonds' })
+    const cls = await link.getAttribute('class')
+    expect(cls).toMatch(/active/)
   })
 })
