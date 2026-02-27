@@ -109,8 +109,8 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
   }
 
   return (
-    <div className="relative [&>table]:ml-2.5">
-      <div className="metricWrap flex gap-2 p-2.5 w-fit">
+    <div className="relative">
+      <div className="metricWrap flex flex-wrap gap-2 p-2.5">
         <Metric
           label="Bonds Funded"
           value={totalFundedBonds.toLocaleString()}

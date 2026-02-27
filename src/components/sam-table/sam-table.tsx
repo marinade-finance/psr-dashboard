@@ -107,6 +107,7 @@ type Props = {
   onFieldChange: (field: EditField, value: string) => void
   onRunSimulation: () => void
   onCancelEditing: () => void
+  onToggleSimulation: () => void
 }
 
 const CLICKABLE_ROW =
@@ -181,6 +182,7 @@ export const SamTable: React.FC<Props> = ({
   onFieldChange,
   onRunSimulation,
   onCancelEditing,
+  onToggleSimulation,
 }) => {
   const {
     auctionData: { validators },
@@ -456,64 +458,70 @@ export const SamTable: React.FC<Props> = ({
           label="Stake to Move"
           value={`${formatPercentage(stakeToMove)}`}
           {...tooltipAttributes(
-            'Stake that has to move to match auction results',
+            'Percentage of total auction stake that needs to be redistributed to match the current auction target. High values mean on-chain delegation diverges significantly from the target distribution.',
           )}
         />
         <Metric
           label="Active Stake"
           value={`${formatPercentage(activeStake)}`}
-          {...tooltipAttributes('Share of active stake earning rewards')}
+          {...tooltipAttributes(
+            'Ratio of currently activated stake vs total SAM target stake. Less than 100% means some distributed stake is still in the activation queue and not yet earning rewards.',
+          )}
         />
         <Metric
           label="Productive Stake"
           value={`${formatPercentage(productiveStake)}`}
           {...tooltipAttributes(
-            'Share of active stake where bid covers at least 90% of effective bid (accounting for commission)',
+            'Ratio of active stake on validators paying ≥90% of the effective bid. Measures how much stake is delegated to validators meeting their revenue commitments.',
           )}
         />
         <Metric
           label="Avg. Stake"
           value={`${formatSolAmount(avgStake, 0)}`}
-          {...tooltipAttributes('Average stake per validator')}
+          {...tooltipAttributes(
+            'Average SOL stake per winning validator. Calculated as total auction stake divided by number of winning validators.',
+          )}
         />
         <Metric
           label="T. Protected"
           value={formatPercentage(targetProtectedPct)}
           {...tooltipAttributes(
-            'Percentage of target delegation covered by bond reserves',
+            "Percentage of total SAM target stake backed by validator bond coverage. Unprotected stake is where target stake exceeds the validator's bond capacity.",
           )}
         />
         <Metric
           label="T. Unprotected"
           value={`${formatSolAmount(unprotectedStake, 0)} SOL`}
-          {...tooltipAttributes('Target delegation beyond bond coverage')}
+          {...tooltipAttributes(
+            'Total SOL where target stake exceeds validator bond-only capacity. Represents stake lacking bond coverage if validators fail to pay their bids.',
+          )}
         />
         <Metric
           label="Conc. Risk"
           value={fmtDiff(backstopDiff)}
           {...tooltipAttributes(
-            'APY impact if top 5 validators by target stake left (full auction re-run without them)',
+            'APY impact if the top 5 validators by target stake departed. Positive = those validators had below-average bids, APY improves. Negative = they contributed above-average revenue, APY declines.',
           )}
         />
         <Metric
           label="Conc. TVL"
           value={`${formatSolAmount(backstopTvl, 0)} SOL`}
           {...tooltipAttributes(
-            'Target stake concentrated in top 5 validators',
+            'Total target stake concentrated in the top 5 validators by target stake. Complements Conc. Risk by showing absolute SOL exposure to the largest validators.',
           )}
         />
         <Metric
           label="+10% TVL"
           value={fmtDiff(tvlJoinApyDiff)}
           {...tooltipAttributes(
-            'APY impact if 10% more TVL joins (full auction re-run with increased TVL)',
+            'APY impact if 10% more TVL enters the pool. Typically negative — more TVL dilutes per-SOL revenue since validators bid the same amount spread over more SOL.',
           )}
         />
         <Metric
           label="-10% TVL"
           value={fmtDiff(tvlLeaveApyDiff)}
           {...tooltipAttributes(
-            'APY impact if 10% of TVL leaves (full auction re-run with decreased TVL)',
+            'APY impact if 10% of TVL leaves the pool. Typically positive — less TVL concentrates per-SOL revenue since same bids are spread over fewer SOL.',
           )}
         />
       </>
@@ -523,7 +531,7 @@ export const SamTable: React.FC<Props> = ({
         label="Ideal APY"
         value={formatPercentage(projectedApy / activeStake)}
         {...tooltipAttributes(
-          'Estimated APY of currently active stake; assumes no Marinade fees; assumes all distributed stake is active',
+          'Expected staker return on stake that is currently active and earning rewards. Divides projected revenue by active stake ratio — higher than Projected APY when some distributed stake is still activating. Assumes no Marinade fees.',
         )}
       />
     )
@@ -532,9 +540,8 @@ export const SamTable: React.FC<Props> = ({
       <Metric
         label="Projected APY"
         value={formatPercentage(projectedApy)}
-        subtitle="Estimated staker return"
         {...tooltipAttributes(
-          'Estimated APY of currently active stake; assumes no Marinade fees',
+          'Expected staker return based on total revenue from all winning validators at current stake levels. Assumes ~182 epochs/year, no Marinade fees.',
         )}
       />
     )
@@ -582,6 +589,8 @@ export const SamTable: React.FC<Props> = ({
       columns={[
         {
           header: 'Validator',
+          headerAttrsFn: () => ({ className: 'w-[160px] max-w-[160px]' }),
+          cellAttrsFn: () => ({ className: 'w-[160px] max-w-[160px]' }),
           render: item => {
             const va = selectVoteAccount(item.validator)
             const meta = validatorMeta?.get(va)
@@ -617,7 +626,7 @@ export const SamTable: React.FC<Props> = ({
                 </span>
                 <span
                   className={cn(
-                    'text-xs whitespace-normal max-w-xs',
+                    'text-xs whitespace-normal max-w-[140px]',
                     rec.severity === 'critical' && 'text-status-red',
                     rec.severity === 'warning' && 'text-status-yellow',
                     rec.severity === 'positive' && 'text-status-green',
@@ -1086,29 +1095,19 @@ export const SamTable: React.FC<Props> = ({
         isCalculating && 'header-glow',
       )}
     >
-      <div className="flex flex-wrap gap-2 p-2.5">
+      <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 p-2.5">
         <Metric
           label="Total Auction Stake"
           value={`${formatSolAmount(samDistributedStake)} SOL`}
-          subtitle={
-            level !== UserLevel.Expert
-              ? 'Total stake distributed via auction'
-              : undefined
-          }
           {...tooltipAttributes(
-            'How much stake is distributed by Marinade to validators based on SAM',
+            'Total SOL distributed by Marinade to validators via the SAM last-price auction. All winning validators receive stake up to this amount each epoch.',
           )}
         />
         <Metric
           label="Winning APY"
           value={formatPercentage(winningAPY)}
-          subtitle={
-            level !== UserLevel.Expert
-              ? 'Last winning validator APY'
-              : undefined
-          }
           {...tooltipAttributes(
-            'Estimated APY of the last validator winning the auction based on ideal count of epochs in the year; assumes no Marinade fees',
+            'Estimated APY of the last (marginal) validator to receive stake in this auction. In a last-price auction, all winners pay this clearing rate — not their maximum bid. Assumes ~182 epochs/year, no Marinade fees.',
           )}
         />
         {apyMetrics}
@@ -1121,12 +1120,28 @@ export const SamTable: React.FC<Props> = ({
             </div>
           }
           {...tooltipAttributes(
-            'Number of validators that won stake in this SAM auction',
+            'Validators currently receiving SAM stake (left) out of all validators tracked (right). Only validators with a funded bond, adequate uptime (>80%), and effective commission ≤7% are eligible.',
           )}
         />
         {expertMetrics}
       </div>
 
+      {level === UserLevel.Expert && (
+        <div className="flex justify-end px-2.5 pb-2">
+          <Button
+            className={cn(
+              'simulatorToggle',
+              simulationModeActive && 'bg-primary/80 ring-2 ring-primary',
+              isCalculating &&
+                'bg-muted text-muted-foreground cursor-not-allowed',
+            )}
+            onClick={onToggleSimulation}
+            disabled={isCalculating}
+          >
+            {simulationModeActive ? 'Exit Simulation' : 'Enter Simulation'}
+          </Button>
+        </div>
+      )}
       <div className="overflow-x-auto">
         {level === UserLevel.Expert ? renderExpertTable() : renderBasicTable()}
       </div>

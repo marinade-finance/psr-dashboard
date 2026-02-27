@@ -6,8 +6,6 @@ import { Loader } from 'src/components/loader/loader'
 import { Navigation, UserLevel } from 'src/components/navigation/navigation'
 import { SamDetail } from 'src/components/sam-detail/sam-detail'
 import { SamTable } from 'src/components/sam-table/sam-table'
-import { Button } from 'src/components/ui/button'
-import { cn } from 'src/lib/utils'
 import { getBannerData } from 'src/services/banner'
 import { loadSam } from 'src/services/sam'
 import { fetchValidators } from 'src/services/validators'
@@ -212,20 +210,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
 
   return (
     <div className="bg-background-page">
-      <Navigation level={level}>
-        <Button
-          className={cn(
-            'simulatorToggle h-10 px-5 m-[4px_0_4px_4px]',
-            simulationModeActive && 'bg-primary/80 ring-2 ring-primary',
-            isCalculating &&
-              'bg-muted text-muted-foreground cursor-not-allowed',
-          )}
-          onClick={handleToggleSimulationMode}
-          disabled={isCalculating}
-        >
-          {simulationModeActive ? 'Exit Simulation' : 'Enter Simulation'}
-        </Button>
-      </Navigation>
+      <Navigation level={level} />
       <Banner {...getBannerData()} />
       {status === 'error' && <p>Error fetching data</p>}
       {status === 'loading' && <Loader />}
@@ -270,6 +255,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
           onFieldChange={handleFieldChange}
           onRunSimulation={handleRunSimulation}
           onCancelEditing={handleCancelEditing}
+          onToggleSimulation={handleToggleSimulationMode}
         />
       )}
     </div>

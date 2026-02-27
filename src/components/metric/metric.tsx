@@ -15,7 +15,7 @@ export const Metric: React.FC<Props> = ({
   subtitle,
   'data-tooltip-html': tooltipHtml,
 }) => (
-  <div className="metric px-5 py-2.5 bg-card rounded-xl shadow-card border border-border-grid transition-shadow hover:shadow-[0_4px_12px_rgba(0,0,0,0.15)] min-w-[calc(50%-4px)] sm:min-w-0">
+  <div className="metric px-5 py-2.5 bg-card rounded-xl shadow-card border border-border-grid transition-shadow hover:shadow-[0_4px_12px_rgba(0,0,0,0.15)] min-w-0 overflow-hidden sm:min-w-[120px]">
     <div className="flex items-center gap-1 whitespace-nowrap text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
       {label}
       {tooltipHtml && (
@@ -30,7 +30,9 @@ export const Metric: React.FC<Props> = ({
         </TooltipProvider>
       )}
     </div>
-    <div className="metricValue whitespace-nowrap mt-2.5 text-2xl">{value}</div>
+    <div className="metricValue mt-2.5 text-2xl truncate sm:whitespace-nowrap">
+      {value}
+    </div>
     {subtitle && (
       <div className="subtitle mt-1 text-xs text-muted-foreground whitespace-nowrap">
         {subtitle}
