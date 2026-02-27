@@ -214,7 +214,6 @@ export const selectWinningAPY = (
 
 export const selectProjectedAPY = (
   auctionResult: AuctionResult,
-  config: DsSamConfig,
   epochsPerYear: number,
 ) => {
   const profit = auctionResult.auctionData.validators.reduce(

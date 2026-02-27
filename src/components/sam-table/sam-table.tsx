@@ -62,7 +62,6 @@ import type { Order } from '../table/table'
 import type {
   AuctionResult,
   AuctionValidator,
-  DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
 import type { PendingEdits } from 'src/pages/sam'
 
@@ -95,7 +94,6 @@ type Props = {
   backstopTvl: number
   originalAuctionResult: AuctionResult | null
   epochsPerYear: number
-  dsSamConfig: DsSamConfig
   level: UserLevel
   simulationModeActive: boolean
   editingValidator: string | null
@@ -170,7 +168,6 @@ export const SamTable: React.FC<Props> = ({
   backstopTvl,
   originalAuctionResult,
   epochsPerYear,
-  dsSamConfig,
   level,
   simulationModeActive,
   editingValidator,
@@ -189,11 +186,7 @@ export const SamTable: React.FC<Props> = ({
   } = auctionResult
   const samDistributedStake = Math.round(selectSamDistributedStake(validators))
   const winningAPY = selectWinningAPY(auctionResult, epochsPerYear)
-  const projectedApy = selectProjectedAPY(
-    auctionResult,
-    dsSamConfig,
-    epochsPerYear,
-  )
+  const projectedApy = selectProjectedAPY(auctionResult, epochsPerYear)
   const stakeToMove = selectStakeToMove(auctionResult) / samDistributedStake
   const activeStake =
     selectTotalActiveStake(auctionResult) / samDistributedStake
@@ -553,7 +546,7 @@ export const SamTable: React.FC<Props> = ({
     </div>
   ) : undefined
 
-  const renderBasicTable = () => (
+  const basicTable = (
     <Table
       className="border-separate border-spacing-y-1 border-spacing-x-0 font-sans [&_tbody_tr]:transition-colors [&_tbody_td]:px-4 [&_tbody_td]:py-3 [&_tbody_td]:align-top [&_tbody_td]:bg-card [&_tbody_td]:border-y [&_tbody_td]:border-border-grid [&_tbody_td:first-child]:rounded-l-xl [&_tbody_td:last-child]:rounded-r-xl [&_tbody_tr:hover_td]:bg-primary-alpha"
       caption={simulationCaption}
@@ -741,7 +734,7 @@ export const SamTable: React.FC<Props> = ({
     />
   )
 
-  const renderExpertTable = () => (
+  const expertTable = (
     <Table
       caption={simulationCaption}
       data={displayValidators}
@@ -1143,7 +1136,7 @@ export const SamTable: React.FC<Props> = ({
         </div>
       )}
       <div className="overflow-x-auto">
-        {level === UserLevel.Expert ? renderExpertTable() : renderBasicTable()}
+        {level === UserLevel.Expert ? expertTable : basicTable}
       </div>
     </div>
   )

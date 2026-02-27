@@ -56,21 +56,14 @@ function colorClassName(color?: Color): string {
   }
 }
 
-const renderHeader: <Item>(
+function renderHeader<Item>(
   columns: Column<Item>[],
   onSort: (i: number) => void,
   userOrder: [number, OrderDirection] | null,
   defaultOrder: Order[],
   showRowNumber: boolean,
-) => JSX.Element = (
-  columns,
-  onSort,
-  userOrder,
-  defaultOrder,
-  showRowNumber: boolean,
-) => {
+): JSX.Element {
   const [userOrderColumn, userOrderDirection] = userOrder ?? [null, null]
-  // Get the primary default order column (first in defaultOrder array)
   const [defaultOrderColumn, defaultOrderDirection] = defaultOrder[0] ?? [
     null,
     null,
@@ -82,17 +75,12 @@ const renderHeader: <Item>(
       {columns.map((column, i) => {
         const isUserSorted = userOrderColumn === i
         const isDefaultSorted = !userOrder && defaultOrderColumn === i
-
-        const isActive = isUserSorted
-        const isDefault = isDefaultSorted
         let indicator = ''
-
         if (isUserSorted) {
           indicator = userOrderDirection === OrderDirection.ASC ? '▲' : '▼'
         } else if (isDefaultSorted) {
           indicator = defaultOrderDirection === OrderDirection.ASC ? '▲' : '▼'
         }
-
         return (
           <th
             key={i}
@@ -104,8 +92,8 @@ const renderHeader: <Item>(
             <span
               className={cn(
                 'ml-1 text-[11px] opacity-40',
-                isActive && 'opacity-100! text-primary!',
-                isDefault && 'opacity-60! text-muted-foreground!',
+                isUserSorted && 'opacity-100! text-primary!',
+                isDefaultSorted && 'opacity-60! text-muted-foreground!',
               )}
             >
               {indicator}
@@ -117,25 +105,23 @@ const renderHeader: <Item>(
   )
 }
 
-const renderRows: <Item>(
-  _: Item[],
-  __: Column<Item>[],
-  ___: boolean,
-  ____?: (item: Item, index: number) => HTMLAttributes<HTMLTableRowElement>,
-  _____?: (item: Item, index: number) => JSX.Element,
-) => JSX.Element[] = (
-  items,
-  columns,
-  showRowNumber,
-  rowAttrsFn,
-  rowNumberRender,
-) =>
-  items.map((item, i) =>
+function renderRows<Item>(
+  items: Item[],
+  columns: Column<Item>[],
+  showRowNumber: boolean,
+  rowAttrsFn?: (
+    item: Item,
+    index: number,
+  ) => HTMLAttributes<HTMLTableRowElement>,
+  rowNumberRender?: (item: Item, index: number) => JSX.Element,
+): JSX.Element[] {
+  return items.map((item, i) =>
     renderRow(item, columns, i, showRowNumber, rowAttrsFn, rowNumberRender),
   )
+}
 
-const renderRow: <Item>(
-  _: Item,
+function renderRow<Item>(
+  item: Item,
   columns: Column<Item>[],
   index: number,
   showRowNumber: boolean,
@@ -144,14 +130,7 @@ const renderRow: <Item>(
     index: number,
   ) => HTMLAttributes<HTMLTableRowElement>,
   rowNumberRender?: (item: Item, index: number) => JSX.Element,
-) => JSX.Element = (
-  item,
-  columns,
-  index,
-  showRowNumber,
-  rowAttrsFn,
-  rowNumberRender,
-) => {
+): JSX.Element {
   return (
     <tr key={index} {...(rowAttrsFn ? rowAttrsFn(item, index) : {})}>
       {showRowNumber ? (
@@ -230,13 +209,11 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
     return [...defaultOrder]
   }, [userOrder, defaultOrder])
 
-  // Notify parent when order changes
   useEffect(() => {
     onOrderChange?.(order)
   }, [order, onOrderChange])
 
   const sortedData = useMemo(() => {
-    // Skip sorting if data is presorted (e.g., has special rows like ghosts)
     if (presorted) {
       return data
     }
@@ -245,11 +222,8 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
       for (const [columnIndex, orderDirection] of order) {
         const compareResult = columns[columnIndex].compare(a, b)
         if (compareResult !== undefined && compareResult !== 0) {
-          // Handle special null values - Infinity means "a is null, always goes to end"
           if (compareResult === Infinity) return 1
-          // -Infinity means "b is null, always goes to end"
           if (compareResult === -Infinity) return -1
-          // Normal comparison - apply sort direction
           return orderDirection === OrderDirection.ASC
             ? compareResult
             : -compareResult
