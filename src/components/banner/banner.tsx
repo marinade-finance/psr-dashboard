@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 
 export type Props = {
   title: string
@@ -8,21 +8,35 @@ export type Props = {
   'data-tooltip-html'?: string
 }
 
-export const Banner: React.FC<Props> = ({ title, body, ...tooltipsProps }) => {
-  if (!title) {
+export const Banner: React.FC<Props> = ({ title, body: _body, ...tooltipsProps }) => {
+  const [dismissed, setDismissed] = useState(
+    () => localStorage.getItem('banner') === title,
+  )
+
+  if (!title || dismissed) {
     return null
   }
+
+  const handleDismiss = () => {
+    localStorage.setItem('banner', title)
+    setDismissed(true)
+  }
+
   return (
     <div
-      className="px-2.5 pt-2.5 bg-background-page [&_a]:text-primary [&_a]:no-underline [&_a]:transition-colors [&_a:visited]:text-primary [&_a:hover]:text-primary [&_a:hover]:underline [&_a:focus]:text-primary [&_a:focus]:underline [&_a:active]:text-primary [&_p]:my-2.5"
+      className="flex items-center justify-between bg-primary/10 border-b border-primary/20 text-sm px-4 py-2 [&_a]:text-primary [&_a]:no-underline [&_a:hover]:underline"
       {...tooltipsProps}
     >
-      <div className="p-5 bg-card text-lg leading-[1.4] border border-border rounded-xl shadow-card max-w-4xl mx-auto">
-        <div className="mb-5">
-          <strong>{title}</strong>
-        </div>
-        {body}
-      </div>
+      <span>
+        <strong>{title}</strong>
+      </span>
+      <button
+        onClick={handleDismiss}
+        className="ml-4 text-foreground/60 hover:text-foreground leading-none cursor-pointer bg-transparent border-none text-base"
+        aria-label="Dismiss"
+      >
+        ×
+      </button>
     </div>
   )
 }

@@ -213,47 +213,48 @@ export const SamPage: React.FC<Props> = ({ level }) => {
 
   return (
     <div className="bg-background-page">
-      <div className="relative">
-        <Navigation level={level}>
-          <Button
-            className={cn(
-              'simulatorToggle h-10 px-5 m-[4px_0_4px_4px]',
-              simulationModeActive && 'bg-primary/80 ring-2 ring-primary',
-              isCalculating &&
-                'bg-muted text-muted-foreground cursor-not-allowed',
-            )}
-            onClick={handleToggleSimulationMode}
-            disabled={isCalculating}
-          >
-            {simulationModeActive ? 'Exit Simulation' : 'Enter Simulation'}
-          </Button>
-        </Navigation>
-        <Banner {...getBannerData()} />
-        {status === 'error' && <p>Error fetching data</p>}
-        {status === 'loading' && <Loader />}
-        {status === 'success' &&
-          displayAuctionResult &&
-          viewMode === 'detail' &&
-          detailValidator && (
-            <SamDetail
-              validator={detailValidator}
-              meta={{
-                name: nameMap.get(selectedValidator ?? '')?.name,
-                countryIso: nameMap.get(selectedValidator ?? '')?.countryIso,
-                rank:
-                  displayAuctionResult.auctionData.validators.findIndex(
-                    v => v.voteAccount === selectedValidator,
-                  ) + 1,
-              }}
-              epochsPerYear={data.epochsPerYear}
-              isExpert={level === UserLevel.Expert}
-              onBack={handleBack}
-              onEdit={handleEnterSimulation}
-            />
-          )}
-        {status === 'success' &&
-          displayAuctionResult &&
-          viewMode === 'list' && (
+      <Navigation level={level} />
+      <Banner {...getBannerData()} />
+      {status === 'error' && <p>Error fetching data</p>}
+      {status === 'loading' && <Loader />}
+      {status === 'success' &&
+        displayAuctionResult &&
+        viewMode === 'detail' &&
+        detailValidator && (
+          <SamDetail
+            validator={detailValidator}
+            meta={{
+              name: nameMap.get(selectedValidator ?? '')?.name,
+              countryIso: nameMap.get(selectedValidator ?? '')?.countryIso,
+              rank:
+                displayAuctionResult.auctionData.validators.findIndex(
+                  v => v.voteAccount === selectedValidator,
+                ) + 1,
+            }}
+            epochsPerYear={data.epochsPerYear}
+            isExpert={level === UserLevel.Expert}
+            onBack={handleBack}
+            onEdit={handleEnterSimulation}
+          />
+        )}
+      {status === 'success' &&
+        displayAuctionResult &&
+        viewMode === 'list' && (
+          <>
+            <div className="flex justify-end px-2.5 pt-2.5">
+              <Button
+                className={cn(
+                  'simulatorToggle h-10 px-5',
+                  simulationModeActive && 'bg-primary/80 ring-2 ring-primary',
+                  isCalculating &&
+                    'bg-muted text-muted-foreground cursor-not-allowed',
+                )}
+                onClick={handleToggleSimulationMode}
+                disabled={isCalculating}
+              >
+                {simulationModeActive ? 'Exit Simulation' : 'Enter Simulation'}
+              </Button>
+            </div>
             <SamTable
               auctionResult={displayAuctionResult}
               tvlJoinApyDiff={data.tvlJoinApyDiff}
@@ -275,8 +276,8 @@ export const SamPage: React.FC<Props> = ({ level }) => {
               onRunSimulation={handleRunSimulation}
               onCancelEditing={handleCancelEditing}
             />
-          )}
-      </div>
+          </>
+        )}
     </div>
   )
 }
