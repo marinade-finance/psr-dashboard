@@ -1079,7 +1079,7 @@ export const SamTable: React.FC<Props> = ({
     <div
       ref={tableWrapRef}
       className={cn(
-        'relative overflow-x-auto',
+        'relative',
         simulationModeActive && [
           '[&_table_tbody]:bg-[rgba(5,30,28,0.08)]',
           '[&_table_tbody_tr]:bg-[rgba(5,30,28,0.06)]',

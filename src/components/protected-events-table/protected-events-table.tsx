@@ -165,7 +165,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
   const filtered = preFilteredData.length !== data.length
 
   return (
-    <div className="relative overflow-x-auto">
+    <div className="relative">
       <div className="metricWrap flex flex-wrap gap-2 p-2.5">
         <Metric
           label="Total events"
@@ -225,79 +225,82 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
           />
         </fieldset>
       </div>
-      <Table
-        data={filteredData}
-        columns={[
-          {
-            header: 'Epoch',
-            render: ({ protectedEvent }) => <>{protectedEvent.epoch}</>,
-            compare: (a, b) => a.protectedEvent.epoch - b.protectedEvent.epoch,
-            alignment: Alignment.RIGHT,
-          },
-          {
-            header: 'Validator',
-            render: ({ protectedEvent }) => (
-              <span className={TRUNCATED_CELL}>
-                {protectedEvent.vote_account}
-              </span>
-            ),
-            compare: (a, b) =>
-              a.protectedEvent.vote_account.localeCompare(
-                b.protectedEvent.vote_account,
+      <div className="overflow-x-auto">
+        <Table
+          data={filteredData}
+          columns={[
+            {
+              header: 'Epoch',
+              render: ({ protectedEvent }) => <>{protectedEvent.epoch}</>,
+              compare: (a, b) =>
+                a.protectedEvent.epoch - b.protectedEvent.epoch,
+              alignment: Alignment.RIGHT,
+            },
+            {
+              header: 'Validator',
+              render: ({ protectedEvent }) => (
+                <span className={TRUNCATED_CELL}>
+                  {protectedEvent.vote_account}
+                </span>
               ),
-          },
-          {
-            header: 'Name',
-            render: ({ validator }) => (
-              <span className={TRUNCATED_CELL}>
-                {validator ? selectName(validator) : NO_NAME}
-              </span>
-            ),
-            compare: (a, b) =>
-              (a.validator
-                ? (selectName(a.validator) ?? NO_NAME)
-                : NO_NAME
-              ).localeCompare(
-                b.validator ? (selectName(b.validator) ?? NO_NAME) : NO_NAME,
+              compare: (a, b) =>
+                a.protectedEvent.vote_account.localeCompare(
+                  b.protectedEvent.vote_account,
+                ),
+            },
+            {
+              header: 'Name',
+              render: ({ validator }) => (
+                <span className={TRUNCATED_CELL}>
+                  {validator ? selectName(validator) : NO_NAME}
+                </span>
               ),
-          },
-          {
-            header: 'Settlement [SOL]',
-            render: ({ protectedEvent, status }) => (
-              <>
-                {renderProtectedEventStatus(status)}{' '}
-                {formatSolAmount(selectAmount(protectedEvent))}
-              </>
-            ),
-            compare: (a, b) =>
-              selectAmount(a.protectedEvent) - selectAmount(b.protectedEvent),
-            alignment: Alignment.RIGHT,
-          },
-          {
-            header: 'Reason',
-            render: ({ protectedEvent }) => (
-              <>{selectProtectedStakeReason(protectedEvent)}</>
-            ),
-            compare: (a, b) =>
-              selectEprLossBps(a.protectedEvent) -
-              selectEprLossBps(b.protectedEvent),
-          },
-          {
-            header: 'Funder',
-            render: ({ protectedEvent }) =>
-              renderProtectedEventFunder(protectedEvent),
-            compare: (a, b) =>
-              a.protectedEvent.meta.funder.localeCompare(
-                b.protectedEvent.meta.funder,
+              compare: (a, b) =>
+                (a.validator
+                  ? (selectName(a.validator) ?? NO_NAME)
+                  : NO_NAME
+                ).localeCompare(
+                  b.validator ? (selectName(b.validator) ?? NO_NAME) : NO_NAME,
+                ),
+            },
+            {
+              header: 'Settlement [SOL]',
+              render: ({ protectedEvent, status }) => (
+                <>
+                  {renderProtectedEventStatus(status)}{' '}
+                  {formatSolAmount(selectAmount(protectedEvent))}
+                </>
               ),
-          },
-        ]}
-        defaultOrder={[
-          [0, OrderDirection.DESC],
-          [3, OrderDirection.DESC],
-          [4, OrderDirection.DESC],
-        ]}
-      />
+              compare: (a, b) =>
+                selectAmount(a.protectedEvent) - selectAmount(b.protectedEvent),
+              alignment: Alignment.RIGHT,
+            },
+            {
+              header: 'Reason',
+              render: ({ protectedEvent }) => (
+                <>{selectProtectedStakeReason(protectedEvent)}</>
+              ),
+              compare: (a, b) =>
+                selectEprLossBps(a.protectedEvent) -
+                selectEprLossBps(b.protectedEvent),
+            },
+            {
+              header: 'Funder',
+              render: ({ protectedEvent }) =>
+                renderProtectedEventFunder(protectedEvent),
+              compare: (a, b) =>
+                a.protectedEvent.meta.funder.localeCompare(
+                  b.protectedEvent.meta.funder,
+                ),
+            },
+          ]}
+          defaultOrder={[
+            [0, OrderDirection.DESC],
+            [3, OrderDirection.DESC],
+            [4, OrderDirection.DESC],
+          ]}
+        />
+      </div>
     </div>
   )
 }

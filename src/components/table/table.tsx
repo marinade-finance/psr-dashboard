@@ -1,5 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react'
 
+import {
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  Table as UiTable,
+} from 'src/components/ui/table'
 import { cn } from 'src/lib/utils'
 
 import type { HTMLAttributes } from 'react'
@@ -32,6 +41,7 @@ const TABLE_BASE = [
   '[&_thead_th:first-child]:rounded-tl-xl',
   '[&_thead_th:last-child]:rounded-tr-xl',
   '[&_tbody]:bg-background-page',
+  '[&_tbody_tr]:bg-background-page',
   '[&_th]:relative [&_th]:px-4 [&_th]:py-2 [&_th]:whitespace-nowrap [&_th]:text-sm [&_th]:font-medium [&_th]:text-muted-foreground',
   '[&_td]:relative [&_td]:px-4 [&_td]:py-1 [&_td]:whitespace-nowrap [&_td]:align-top',
   '[&_tbody_tr:hover]:bg-secondary',
@@ -70,8 +80,8 @@ function renderHeader<Item>(
   ]
 
   return (
-    <tr>
-      {showRowNumber ? <th>#</th> : null}
+    <TableRow>
+      {showRowNumber ? <TableHead>#</TableHead> : null}
       {columns.map((column, i) => {
         const isUserSorted = userOrderColumn === i
         const isDefaultSorted = !userOrder && defaultOrderColumn === i
@@ -82,7 +92,7 @@ function renderHeader<Item>(
           indicator = defaultOrderDirection === OrderDirection.ASC ? '▲' : '▼'
         }
         return (
-          <th
+          <TableHead
             key={i}
             className={alignmentClassName(column.alignment)}
             onClick={() => onSort(i)}
@@ -98,10 +108,10 @@ function renderHeader<Item>(
             >
               {indicator}
             </span>
-          </th>
+          </TableHead>
         )
       })}
-    </tr>
+    </TableRow>
   )
 }
 
@@ -132,17 +142,17 @@ function renderRow<Item>(
   rowNumberRender?: (item: Item, index: number) => JSX.Element,
 ): JSX.Element {
   return (
-    <tr key={index} {...(rowAttrsFn ? rowAttrsFn(item, index) : {})}>
+    <TableRow key={index} {...(rowAttrsFn ? rowAttrsFn(item, index) : {})}>
       {showRowNumber ? (
-        <td>
+        <TableCell>
           {rowNumberRender ? rowNumberRender(item, index) : <>{index + 1}</>}
-        </td>
+        </TableCell>
       ) : null}
       {columns.map((column, i) => {
         const cellAttrs = column.cellAttrsFn ? column.cellAttrsFn(item) : {}
         const { className: cellClassName, ...restCellAttrs } = cellAttrs
         return (
-          <td
+          <TableCell
             {...restCellAttrs}
             key={i}
             className={cn(
@@ -152,10 +162,10 @@ function renderRow<Item>(
             )}
           >
             {column.render(item, index)}
-          </td>
+          </TableCell>
         )
       })}
-    </tr>
+    </TableRow>
   )
 }
 
@@ -248,9 +258,9 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
   }
 
   return (
-    <table className={cn(TABLE_BASE, className)}>
-      {caption && <caption>{caption}</caption>}
-      <thead>
+    <UiTable className={cn(TABLE_BASE, className)}>
+      {caption && <TableCaption>{caption}</TableCaption>}
+      <TableHeader>
         {renderHeader(
           columns,
           onSort,
@@ -258,8 +268,8 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
           defaultOrder,
           showRowNumber ?? false,
         )}
-      </thead>
-      <tbody>
+      </TableHeader>
+      <TableBody>
         {renderRows(
           sortedData,
           columns,
@@ -267,7 +277,7 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
           rowAttrsFn,
           rowNumberRender,
         )}
-      </tbody>
-    </table>
+      </TableBody>
+    </UiTable>
   )
 }

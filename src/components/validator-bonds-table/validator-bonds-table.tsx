@@ -109,7 +109,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
   }
 
   return (
-    <div className="relative overflow-x-auto">
+    <div className="relative">
       <div className="metricWrap flex flex-wrap gap-2 p-2.5">
         <Metric
           label="Bonds Funded"
@@ -137,134 +137,136 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
         />
         {expertMetrics}
       </div>
-      <Table
-        data={data}
-        columns={[
-          {
-            header: 'Validator',
-            headerAttrsFn: () => tooltipAttributes('Validator Vote Account'),
-            render: ({ validator }) => (
-              <span className={TRUNCATED_CELL}>
-                {selectVoteAccount(validator)}
-              </span>
-            ),
-            compare: (a, b) =>
-              selectVoteAccount(a.validator).localeCompare(
-                selectVoteAccount(b.validator),
+      <div className="overflow-x-auto">
+        <Table
+          data={data}
+          columns={[
+            {
+              header: 'Validator',
+              headerAttrsFn: () => tooltipAttributes('Validator Vote Account'),
+              render: ({ validator }) => (
+                <span className={TRUNCATED_CELL}>
+                  {selectVoteAccount(validator)}
+                </span>
               ),
-          },
-          {
-            header: 'Name',
-            render: ({ validator }) => (
-              <span className={TRUNCATED_CELL}>{selectName(validator)}</span>
-            ),
-            compare: (a, b) =>
-              selectName(a.validator).localeCompare(selectName(b.validator)),
-          },
-          {
-            header: 'Bond balance [SOL]',
-            render: ({ bond }) => (
-              <>
-                {formatSolAmount(
-                  Number(
-                    lamportsToSol(bond?.effective_amount?.toString() ?? '0'),
-                  ),
-                )}
-              </>
-            ),
-            compare: (a, b) =>
-              Number(a.bond?.effective_amount ?? 0) -
-              Number(b.bond?.effective_amount ?? 0),
-            alignment: Alignment.RIGHT,
-          },
-          {
-            header: 'Max Stake Wanted [SOL]',
-            headerAttrsFn: () =>
-              tooltipAttributes(
-                "The max-stake-wanted parameter set up in contract. If not set up, max stake is not limited. The validator won't get more stake than what they set up here. No already delegated stake will be lost by decreasing this setting.",
-              ),
-            render: ({ bond }) => {
-              const maxStakeWanted = bond ? selectMaxStakeWanted(bond) : 0
-              return (
-                <>
-                  {maxStakeWanted > 0 ? formatSolAmount(maxStakeWanted) : '-'}
-                </>
-              )
+              compare: (a, b) =>
+                selectVoteAccount(a.validator).localeCompare(
+                  selectVoteAccount(b.validator),
+                ),
             },
-            compare: ({ bond: a }, { bond: b }) =>
-              a && b
-                ? selectMaxStakeWanted(a) - selectMaxStakeWanted(b)
-                : undefined,
-            alignment: Alignment.RIGHT,
-          },
-          {
-            header: 'Bond Comm.',
-            headerAttrsFn: () =>
-              tooltipAttributes(
-                'Current commission settings in the bond configuration. If the configured commission is lower ' +
-                  'than the on-chain commission, the difference is drawn from the funded bond.<br/>' +
-                  'Ordered by in-bond inflation commission.',
+            {
+              header: 'Name',
+              render: ({ validator }) => (
+                <span className={TRUNCATED_CELL}>{selectName(validator)}</span>
               ),
-            cellAttrsFn: ({ bond }) =>
-              tooltipAttributes(
-                `Inflation commission: ${formatBps(bond?.inflation_commission_bps)}<br/>` +
-                  `MEV commission: ${formatBps(bond?.mev_commission_bps)}<br/>` +
-                  `Block rewards commission: ${formatBps(bond?.block_commission_bps)}`,
+              compare: (a, b) =>
+                selectName(a.validator).localeCompare(selectName(b.validator)),
+            },
+            {
+              header: 'Bond balance [SOL]',
+              render: ({ bond }) => (
+                <>
+                  {formatSolAmount(
+                    Number(
+                      lamportsToSol(bond?.effective_amount?.toString() ?? '0'),
+                    ),
+                  )}
+                </>
               ),
-            render: ({ bond }) => (
-              <>
-                {formatBps(bond?.inflation_commission_bps)} /{' '}
-                {formatBps(bond?.mev_commission_bps)} /{' '}
-                {formatBps(bond?.block_commission_bps)}{' '}
-              </>
-            ),
-            compare: compareBondCommissions,
-            alignment: Alignment.RIGHT,
-          },
-          {
-            header: 'Marinade stake [SOL]',
-            render: ({ validator }) => (
-              <span
-                {...tooltipAttributes(
-                  `Native: ${formatSolAmount(selectNativeMarinadeStake(validator))}, Liquid: ${formatSolAmount(selectLiquidMarinadeStake(validator))}`,
-                )}
-              >
-                {formatSolAmount(selectTotalMarinadeStake(validator))}
-              </span>
-            ),
-            compare: (a, b) =>
-              selectTotalMarinadeStake(a.validator) -
-              selectTotalMarinadeStake(b.validator),
-            alignment: Alignment.RIGHT,
-          },
-          {
-            header: 'Eff. Cost [SOL]',
-            headerAttrsFn: () =>
-              tooltipAttributes(
-                'Estimated total cost per epoch for the SAM stake that this validator received. ' +
-                  'This estimation does not consider the commission bidding never claims more than the real rewards earned in the epoch. ' +
-                  'And the potential penalties for rapid bid changes. (sorts by Eff. Bid)',
+              compare: (a, b) =>
+                Number(a.bond?.effective_amount ?? 0) -
+                Number(b.bond?.effective_amount ?? 0),
+              alignment: Alignment.RIGHT,
+            },
+            {
+              header: 'Max Stake Wanted [SOL]',
+              headerAttrsFn: () =>
+                tooltipAttributes(
+                  "The max-stake-wanted parameter set up in contract. If not set up, max stake is not limited. The validator won't get more stake than what they set up here. No already delegated stake will be lost by decreasing this setting.",
+                ),
+              render: ({ bond }) => {
+                const maxStakeWanted = bond ? selectMaxStakeWanted(bond) : 0
+                return (
+                  <>
+                    {maxStakeWanted > 0 ? formatSolAmount(maxStakeWanted) : '-'}
+                  </>
+                )
+              },
+              compare: ({ bond: a }, { bond: b }) =>
+                a && b
+                  ? selectMaxStakeWanted(a) - selectMaxStakeWanted(b)
+                  : undefined,
+              alignment: Alignment.RIGHT,
+            },
+            {
+              header: 'Bond Comm.',
+              headerAttrsFn: () =>
+                tooltipAttributes(
+                  'Current commission settings in the bond configuration. If the configured commission is lower ' +
+                    'than the on-chain commission, the difference is drawn from the funded bond.<br/>' +
+                    'Ordered by in-bond inflation commission.',
+                ),
+              cellAttrsFn: ({ bond }) =>
+                tooltipAttributes(
+                  `Inflation commission: ${formatBps(bond?.inflation_commission_bps)}<br/>` +
+                    `MEV commission: ${formatBps(bond?.mev_commission_bps)}<br/>` +
+                    `Block rewards commission: ${formatBps(bond?.block_commission_bps)}`,
+                ),
+              render: ({ bond }) => (
+                <>
+                  {formatBps(bond?.inflation_commission_bps)} /{' '}
+                  {formatBps(bond?.mev_commission_bps)} /{' '}
+                  {formatBps(bond?.block_commission_bps)}{' '}
+                </>
               ),
-            cellAttrsFn: () =>
-              tooltipAttributes(
-                'Assumed cost per epoch for the SAM stake that this validator received.',
+              compare: compareBondCommissions,
+              alignment: Alignment.RIGHT,
+            },
+            {
+              header: 'Marinade stake [SOL]',
+              render: ({ validator }) => (
+                <span
+                  {...tooltipAttributes(
+                    `Native: ${formatSolAmount(selectNativeMarinadeStake(validator))}, Liquid: ${formatSolAmount(selectLiquidMarinadeStake(validator))}`,
+                  )}
+                >
+                  {formatSolAmount(selectTotalMarinadeStake(validator))}
+                </span>
               ),
-            render: ({ auction }) => (
-              <>{auction ? round(selectEffectiveCost(auction), 1) : '-'}</>
-            ),
-            compare: ({ auction: a }, { auction: b }) =>
-              a && b
-                ? selectEffectiveBid(a) - selectEffectiveBid(b)
-                : undefined,
-            alignment: Alignment.RIGHT,
-          },
-          ...expertColumns,
-        ]}
-        defaultOrder={[
-          [2, OrderDirection.DESC],
-          [4, OrderDirection.DESC],
-        ]}
-      />
+              compare: (a, b) =>
+                selectTotalMarinadeStake(a.validator) -
+                selectTotalMarinadeStake(b.validator),
+              alignment: Alignment.RIGHT,
+            },
+            {
+              header: 'Eff. Cost [SOL]',
+              headerAttrsFn: () =>
+                tooltipAttributes(
+                  'Estimated total cost per epoch for the SAM stake that this validator received. ' +
+                    'This estimation does not consider the commission bidding never claims more than the real rewards earned in the epoch. ' +
+                    'And the potential penalties for rapid bid changes. (sorts by Eff. Bid)',
+                ),
+              cellAttrsFn: () =>
+                tooltipAttributes(
+                  'Assumed cost per epoch for the SAM stake that this validator received.',
+                ),
+              render: ({ auction }) => (
+                <>{auction ? round(selectEffectiveCost(auction), 1) : '-'}</>
+              ),
+              compare: ({ auction: a }, { auction: b }) =>
+                a && b
+                  ? selectEffectiveBid(a) - selectEffectiveBid(b)
+                  : undefined,
+              alignment: Alignment.RIGHT,
+            },
+            ...expertColumns,
+          ]}
+          defaultOrder={[
+            [2, OrderDirection.DESC],
+            [4, OrderDirection.DESC],
+          ]}
+        />
+      </div>
     </div>
   )
 }
