@@ -611,7 +611,7 @@ export const SamTable: React.FC<Props> = ({
                   {name.length > 24 ? name.slice(0, 24) + '\u2026' : name}
                 </span>
                 <span
-                  className="text-[11px] text-muted-foreground cursor-pointer hover:text-foreground hover:underline"
+                  className="text-xs text-muted-foreground cursor-pointer hover:text-foreground hover:underline"
                   onClick={e => handleCopy(e, va)}
                   title={isCopied ? 'Copied!' : 'Click to copy'}
                 >
@@ -818,7 +818,7 @@ export const SamTable: React.FC<Props> = ({
               <div className="absolute left-0 top-1/2 -translate-y-1/2 flex gap-1 z-10">
                 <button
                   className={cn(
-                    'min-w-[60px] px-2 py-[3px] bg-primary text-primary-foreground border-none rounded cursor-pointer text-[10px] font-medium transition-colors whitespace-nowrap shadow-[0_1px_3px_rgba(0,0,0,0.3)] text-center hover:brightness-110 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed',
+                    'min-w-[60px] px-2 py-[3px] bg-primary text-primary-foreground border-none rounded cursor-pointer text-[11px] font-medium transition-colors whitespace-nowrap shadow-[0_1px_3px_rgba(0,0,0,0.3)] text-center hover:brightness-110 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed',
                     isCalculating && 'bg-muted text-muted-foreground',
                   )}
                   onClick={e => {
@@ -830,7 +830,7 @@ export const SamTable: React.FC<Props> = ({
                   {isCalculating ? 'Simulating' : 'Simulate'}
                 </button>
                 <button
-                  className="px-1.5 py-[3px] bg-muted-foreground text-primary-foreground border-none rounded cursor-pointer text-[10px] font-medium transition-colors shadow-[0_1px_3px_rgba(0,0,0,0.3)] hover:enabled:bg-destructive"
+                  className="px-1.5 py-[3px] bg-muted-foreground text-primary-foreground border-none rounded cursor-pointer text-[11px] font-medium transition-colors shadow-[0_1px_3px_rgba(0,0,0,0.3)] hover:enabled:bg-destructive"
                   onClick={e => {
                     e.stopPropagation()
                     onCancelEditing()

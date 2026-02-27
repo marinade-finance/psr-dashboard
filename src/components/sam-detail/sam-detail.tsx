@@ -198,7 +198,7 @@ export function SamDetail({
           className="flex-1 min-w-40 bg-card border border-border-grid rounded-xl p-4 flex flex-col gap-1.5 shadow-card"
           title={apyTooltip}
         >
-          <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+          <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             Max APY
           </div>
           <div className="text-2xl font-bold text-foreground">
@@ -213,7 +213,7 @@ export function SamDetail({
         <div
           className={`flex-1 min-w-40 bg-card border rounded-xl p-4 flex flex-col gap-1.5 shadow-card ${bondCardBorder(bondColor)}`}
         >
-          <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+          <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             Bond Health
           </div>
           <div className="flex items-center gap-2">
@@ -240,7 +240,7 @@ export function SamDetail({
 
         {/* Stake \u0394 */}
         <div className="flex-1 min-w-40 bg-card border border-border-grid rounded-xl p-4 flex flex-col gap-1.5 shadow-card">
-          <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+          <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             Stake \u0394
           </div>
           <div className={`text-2xl font-bold ${deltaColor}`}>
@@ -257,7 +257,7 @@ export function SamDetail({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {/* APY breakdown */}
         <div className="bg-card border border-border-grid rounded-xl p-4 flex flex-col gap-3 shadow-card">
-          <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground pb-2 border-b border-border-grid">
+          <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground pb-2 border-b border-border-grid">
             APY Breakdown
           </div>
           <div className="flex justify-between items-baseline gap-2">
@@ -309,7 +309,7 @@ export function SamDetail({
 
         {/* Bond health details */}
         <div className="bg-card border border-border-grid rounded-xl p-4 flex flex-col gap-3 shadow-card">
-          <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground pb-2 border-b border-border-grid">
+          <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground pb-2 border-b border-border-grid">
             Bond Health
           </div>
           <div className="flex justify-between items-baseline gap-2">
@@ -342,7 +342,7 @@ export function SamDetail({
 
         {/* Stake movement */}
         <div className="bg-card border border-border-grid rounded-xl p-4 flex flex-col gap-3 shadow-card">
-          <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground pb-2 border-b border-border-grid">
+          <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground pb-2 border-b border-border-grid">
             Stake Movement
           </div>
           <div className="flex justify-between items-baseline gap-2">
@@ -371,7 +371,7 @@ export function SamDetail({
       <div
         className={`border border-border-grid rounded-xl p-4 mb-6 bg-card flex flex-col gap-1.5 shadow-card ${severityBorderClass(recommendation.severity)}`}
       >
-        <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+        <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
           Next Step
         </div>
         <div className="text-sm text-foreground leading-relaxed">

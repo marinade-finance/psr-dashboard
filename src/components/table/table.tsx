@@ -101,7 +101,7 @@ const renderHeader: <Item>(
             {column.header}
             <span
               className={cn(
-                'ml-1 text-[10px] opacity-40',
+                'ml-1 text-[11px] opacity-40',
                 isActive && 'opacity-100! text-primary!',
                 isDefault && 'opacity-60! text-muted-foreground!',
               )}

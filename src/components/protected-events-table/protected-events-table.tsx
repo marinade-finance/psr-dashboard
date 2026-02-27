@@ -197,7 +197,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
         />
         {expertMetrics}
       </div>
-      <div className="mb-2.5 [&_fieldset]:inline-block [&_fieldset]:ml-2.5 [&_fieldset]:border-transparent [&_legend]:text-[10px] [&_legend]:uppercase [&_legend]:tracking-wider [&_legend]:font-medium [&_legend]:text-muted-foreground [&_legend]:mb-1">
+      <div className="mb-2.5 [&_fieldset]:inline-block [&_fieldset]:ml-2.5 [&_fieldset]:border-transparent [&_legend]:text-[11px] [&_legend]:uppercase [&_legend]:tracking-wider [&_legend]:font-medium [&_legend]:text-muted-foreground [&_legend]:mb-1">
         <fieldset>
           <legend>Validator filter</legend>
           <input
