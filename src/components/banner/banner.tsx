@@ -3,12 +3,9 @@ import React, { useState } from 'react'
 export type Props = {
   title: string
   body: JSX.Element
-  tooltipHtml?: string
-  'data-tooltip-id'?: string
-  'data-tooltip-html'?: string
 }
 
-export const Banner: React.FC<Props> = ({ title, body, ...tooltipsProps }) => {
+export const Banner: React.FC<Props> = ({ title, body }) => {
   const [dismissed, setDismissed] = useState(
     () => localStorage.getItem('banner') === title,
   )
@@ -23,10 +20,7 @@ export const Banner: React.FC<Props> = ({ title, body, ...tooltipsProps }) => {
   }
 
   return (
-    <div
-      className="px-2.5 pt-2.5 bg-background-page [&_a]:text-primary [&_a]:no-underline [&_a]:transition-colors [&_a:visited]:text-primary [&_a:hover]:text-primary [&_a:hover]:underline [&_a:focus]:text-primary [&_a:focus]:underline [&_a:active]:text-primary [&_p]:my-2.5"
-      {...tooltipsProps}
-    >
+    <div className="px-2.5 pt-2.5 bg-background-page [&_a]:text-primary [&_a]:no-underline [&_a]:transition-colors [&_a:visited]:text-primary [&_a:hover]:text-primary [&_a:hover]:underline [&_a:focus]:text-primary [&_a:focus]:underline [&_a:active]:text-primary [&_p]:my-2.5">
       <div className="relative p-5 bg-card text-lg leading-[1.4] border border-border rounded-xl shadow-card max-w-4xl mx-auto">
         <div className="mb-5">
           <strong>{title}</strong>

@@ -4,10 +4,8 @@ import { Tooltip, TooltipProvider } from 'src/components/ui/tooltip'
 
 type Props = {
   label: string
-  value: string
+  value: React.ReactNode
   subtitle?: string
-  tooltipHtml?: string
-  'data-tooltip-id'?: string
   'data-tooltip-html'?: string
 }
 

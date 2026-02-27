@@ -50,7 +50,7 @@ function colorClassName(color?: Color): string {
     case Color.YELLOW:
       return 'bg-cell-yellow'
     case Color.GREY:
-      return 'grey bg-cell-grey'
+      return 'bg-cell-grey'
     default:
       return ''
   }
@@ -200,6 +200,9 @@ type Props<Item> = {
   caption?: React.ReactNode
   className?: string
 }
+
+export const TRUNCATED_CELL =
+  'inline-block w-[100px] pt-1 text-ellipsis overflow-hidden'
 
 export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
   data,

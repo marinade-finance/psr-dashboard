@@ -54,19 +54,6 @@ function bondLabel(color: Color): string {
   }
 }
 
-function bondProgressColor(color: Color): string {
-  switch (color) {
-    case Color.GREEN:
-      return 'bg-status-green'
-    case Color.YELLOW:
-      return 'bg-status-yellow'
-    case Color.RED:
-      return 'bg-status-red'
-    default:
-      return 'bg-status-grey'
-  }
-}
-
 function bondCardBorder(color: Color): string {
   switch (color) {
     case Color.GREEN:
@@ -232,7 +219,7 @@ export function SamDetail({
           </div>
           <div className="h-1.5 bg-secondary rounded-full overflow-hidden mt-1">
             <div
-              className={`h-full rounded-full transition-all ${bondProgressColor(bondColor)}`}
+              className={`h-full rounded-full transition-all ${bondDotColor(bondColor)}`}
               style={{ width: `${bondUtil * 100}%` }}
             />
           </div>

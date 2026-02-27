@@ -25,7 +25,12 @@ import {
 
 import { tooltipAttributes } from '../../services/utils'
 import { Metric } from '../metric/metric'
-import { Alignment, OrderDirection, Table } from '../table/table'
+import {
+  Alignment,
+  OrderDirection,
+  Table,
+  TRUNCATED_CELL,
+} from '../table/table'
 
 import type { ValidatorWithBond } from 'src/services/validator-with-bond'
 
@@ -66,15 +71,13 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
   }[] = []
   if (level === UserLevel.Expert) {
     expertMetrics = (
-      <>
-        <Metric
-          label="Max Protectable Stake"
-          value={formatPercentage(totalMaxProtectedStake / totalMarinadeStake)}
-          {...tooltipAttributes(
-            "How much of Marinade's stake can be potentially protected if all bonds in the system are used",
-          )}
-        />
-      </>
+      <Metric
+        label="Max Protectable Stake"
+        value={formatPercentage(totalMaxProtectedStake / totalMarinadeStake)}
+        {...tooltipAttributes(
+          "How much of Marinade's stake can be potentially protected if all bonds in the system are used",
+        )}
+      />
     )
     expertColumns = [
       {
@@ -132,7 +135,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
             "How much of Marinade's stake is protected by validators' deposits to the bonds",
           )}
         />
-        <>{expertMetrics}</>
+        {expertMetrics}
       </div>
       <Table
         data={data}
@@ -141,7 +144,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
             header: 'Validator',
             headerAttrsFn: () => tooltipAttributes('Validator Vote Account'),
             render: ({ validator }) => (
-              <span className="inline-block w-[100px] pt-1 text-ellipsis overflow-hidden">
+              <span className={TRUNCATED_CELL}>
                 {selectVoteAccount(validator)}
               </span>
             ),
@@ -153,9 +156,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
           {
             header: 'Name',
             render: ({ validator }) => (
-              <span className="inline-block w-[100px] pt-1 text-ellipsis overflow-hidden">
-                {selectName(validator)}
-              </span>
+              <span className={TRUNCATED_CELL}>{selectName(validator)}</span>
             ),
             compare: (a, b) =>
               selectName(a.validator).localeCompare(selectName(b.validator)),

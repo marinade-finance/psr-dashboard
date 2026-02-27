@@ -48,10 +48,15 @@ import {
 } from 'src/services/sam'
 
 import { tooltipAttributes } from '../../services/utils'
-import { ComplexMetric } from '../complex-metric/complex-metric'
 import { Metric } from '../metric/metric'
 import { UserLevel } from '../navigation/navigation'
-import { Alignment, Color, OrderDirection, Table } from '../table/table'
+import {
+  Alignment,
+  Color,
+  OrderDirection,
+  Table,
+  TRUNCATED_CELL,
+} from '../table/table'
 
 import type { Order } from '../table/table'
 import type {
@@ -832,12 +837,7 @@ export const SamTable: React.FC<Props> = ({
             const va = selectVoteAccount(item.validator)
             const sim = !item.isGhost && simulatedValidator === va
             return (
-              <span
-                className={cn(
-                  'inline-block w-[100px] pt-1 text-ellipsis overflow-hidden',
-                  sim && 'font-bold italic',
-                )}
-              >
+              <span className={cn(TRUNCATED_CELL, sim && 'font-bold italic')}>
                 {va}
               </span>
             )
@@ -1117,7 +1117,7 @@ export const SamTable: React.FC<Props> = ({
             )}
           />
           {apyMetrics}
-          <ComplexMetric
+          <Metric
             label="Winning Validators"
             value={
               <div>

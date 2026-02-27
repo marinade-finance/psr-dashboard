@@ -14,7 +14,12 @@ import { selectName } from 'src/services/validators'
 import { tooltipAttributes } from '../../services/utils'
 import { Metric } from '../metric/metric'
 import { UserLevel } from '../navigation/navigation'
-import { Alignment, OrderDirection, Table } from '../table/table'
+import {
+  Alignment,
+  OrderDirection,
+  Table,
+  TRUNCATED_CELL,
+} from '../table/table'
 
 import type { ProtectedEvent } from 'src/services/protected-events'
 import type { ProtectedEventWithValidator } from 'src/services/validator-with-protected_event'
@@ -48,7 +53,7 @@ const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
         </Badge>
       )
     default:
-      return <></>
+      return null
   }
 }
 
@@ -77,7 +82,7 @@ const renderProtectedEventFunder = (protectedEvent: ProtectedEvent) => {
         </span>
       )
     default:
-      return <></>
+      return null
   }
 }
 
@@ -115,9 +120,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
     return matchesEpoch && matchesValidator
   })
   const filteredData = preFilteredData.filter(
-    ({ protectedEvent, validator: _validator }) => {
-      return protectedEvent.reason !== 'Bidding'
-    },
+    ({ protectedEvent }) => protectedEvent.reason !== 'Bidding',
   )
   const lastSettledEpoch = data.reduce(
     (epoch, { protectedEvent, status }) =>
@@ -151,15 +154,11 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
   let expertMetrics
   if (level === UserLevel.Expert) {
     expertMetrics = (
-      <>
-        <Metric
-          label="Last Epoch Bids"
-          value={`${formatSolAmount(lastEpochBids)} SOL`}
-          {...tooltipAttributes(
-            "Last Settled Epoch's Bids collectable By Users",
-          )}
-        />
-      </>
+      <Metric
+        label="Last Epoch Bids"
+        value={`${formatSolAmount(lastEpochBids)} SOL`}
+        {...tooltipAttributes("Last Settled Epoch's Bids collectable By Users")}
+      />
     )
   }
 
@@ -238,7 +237,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
           {
             header: 'Validator',
             render: ({ protectedEvent }) => (
-              <span className="inline-block w-[100px] pt-1 text-ellipsis overflow-hidden">
+              <span className={TRUNCATED_CELL}>
                 {protectedEvent.vote_account}
               </span>
             ),
@@ -250,7 +249,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
           {
             header: 'Name',
             render: ({ validator }) => (
-              <span className="inline-block w-[100px] pt-1 text-ellipsis overflow-hidden">
+              <span className={TRUNCATED_CELL}>
                 {validator ? selectName(validator) : NO_NAME}
               </span>
             ),
