@@ -165,7 +165,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
   const filtered = preFilteredData.length !== data.length
 
   return (
-    <div className="relative">
+    <div className="relative overflow-x-auto">
       <div className="metricWrap flex flex-wrap gap-2 p-2.5">
         <Metric
           label="Total events"

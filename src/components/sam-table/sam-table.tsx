@@ -1086,7 +1086,7 @@ export const SamTable: React.FC<Props> = ({
     <div
       ref={tableWrapRef}
       className={cn(
-        'relative',
+        'relative overflow-x-auto',
         simulationModeActive && [
           '[&_table_tbody]:bg-[rgba(5,30,28,0.08)]',
           '[&_table_tbody_tr]:bg-[rgba(5,30,28,0.06)]',
@@ -1095,7 +1095,7 @@ export const SamTable: React.FC<Props> = ({
         isCalculating && 'header-glow',
       )}
     >
-      <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 p-2.5">
+      <div className="flex flex-wrap gap-2 p-2.5">
         <Metric
           label="Total Auction Stake"
           value={`${formatSolAmount(samDistributedStake)} SOL`}
