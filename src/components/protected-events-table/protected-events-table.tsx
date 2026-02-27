@@ -1,15 +1,5 @@
 import React, { useMemo, useState } from 'react'
 
-import { Badge } from 'src/components/ui/badge'
-import { Input } from 'src/components/ui/input'
-import {
-  ShadTable,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from 'src/components/ui/table'
 import { formatSolAmount } from 'src/format'
 import {
   selectAmount,
@@ -20,7 +10,6 @@ import { ProtectedEventStatus } from 'src/services/validator-with-protected_even
 import { selectName } from 'src/services/validators'
 
 import { HelpTip } from '../help-tip/help-tip'
-import { Metric } from '../metric/metric'
 import { UserLevel } from '../navigation/navigation'
 
 import type { ProtectedEvent } from 'src/services/protected-events'
@@ -31,64 +20,80 @@ const NO_NAME = '---'
 type SortColumn = 'epoch' | 'validator' | 'settlement' | 'reason' | 'funder'
 type SortDir = 'asc' | 'desc'
 
-const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
-  switch (status) {
-    case ProtectedEventStatus.DRYRUN:
-      return (
-        <HelpTip text="This settlement is not claimable as it was created during the testing period.">
-          <Badge variant="dryrun">Dryrun</Badge>
-        </HelpTip>
-      )
-    case ProtectedEventStatus.ESTIMATE:
-      return (
-        <HelpTip text="This is an estimate based on live data but may change during the epoch<br />before the settlements for this epoch are created on-chain.">
-          <Badge variant="estimate">Estimate</Badge>
-        </HelpTip>
-      )
+// Pad/truncate string to exact width
+const pad = (s: string, w: number): string =>
+  s.length >= w ? s.slice(0, w) : s + ' '.repeat(w - s.length)
+const rpad = (s: string, w: number): string =>
+  s.length >= w ? s.slice(0, w) : ' '.repeat(w - s.length) + s
+
+// Column widths
+const W = { epoch: 6, validator: 22, settlement: 14, reason: 20, funder: 12 }
+const SEP = ' │ '
+
+const getReasonText = (reason: string): string => {
+  if (reason.startsWith('BidTooLow')) return '[BID LOW]'
+  if (reason.startsWith('Uptime')) {
+    const match = reason.match(/([\d.]+)%/)
+    const pct = match ? match[1] : '?'
+    return `[UPTIME ${pct}%]`
+  }
+  if (
+    reason.startsWith('Commission') ||
+    reason.startsWith('Inflation Commission')
+  )
+    return '[COMMISSION]'
+  if (reason === 'Blacklist') return '[BLACKLIST]'
+  return `[${reason.toUpperCase()}]`
+}
+
+const getReasonHelpText = (reason: string): string | null => {
+  if (
+    reason.startsWith('Commission') ||
+    reason.startsWith('Inflation Commission')
+  )
+    return reason.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  return null
+}
+
+const getFunderText = (protectedEvent: ProtectedEvent): string => {
+  switch (protectedEvent.meta.funder) {
+    case 'Marinade':
+      return '[MARINADE]'
+    case 'ValidatorBond':
+      return '[VALIDATOR]'
+    default:
+      return ''
+  }
+}
+
+const getFunderHelpText = (protectedEvent: ProtectedEvent): string | null => {
+  switch (protectedEvent.meta.funder) {
+    case 'Marinade':
+      return 'This settlement is funded by Marinade DAO because the yield loss<br />is beyond what the validator\'s are expected to cover.'
+    case 'ValidatorBond':
+      return 'This settlement is funded by the validator because the yield loss<br />is within amount which the validator is expected to cover.'
     default:
       return null
   }
 }
 
-const getReasonBadge = (reason: string) => {
-  if (reason.startsWith('BidTooLow')) {
-    return <Badge variant="watch">Bid Too Low</Badge>
+const getStatusText = (status: ProtectedEventStatus): string => {
+  switch (status) {
+    case ProtectedEventStatus.DRYRUN:
+      return '[DRYRUN]'
+    case ProtectedEventStatus.ESTIMATE:
+      return '[ESTIMATE]'
+    default:
+      return ''
   }
-  if (reason.startsWith('Uptime')) {
-    const match = reason.match(/([\d.]+)%/)
-    const pct = match ? match[1] : '?'
-    return <Badge variant="watch">Uptime {pct}%</Badge>
-  }
-  if (
-    reason.startsWith('Commission') ||
-    reason.startsWith('Inflation Commission')
-  ) {
-    return (
-      <HelpTip text={reason.replace(/</g, '&lt;').replace(/>/g, '&gt;')}>
-        <Badge variant="secondary">Commission Change</Badge>
-      </HelpTip>
-    )
-  }
-  if (reason === 'Blacklist') {
-    return <Badge variant="destructive">Blacklist</Badge>
-  }
-  return <Badge variant="secondary">{reason}</Badge>
 }
 
-const renderFunderBadge = (protectedEvent: ProtectedEvent) => {
-  switch (protectedEvent.meta.funder) {
-    case 'Marinade':
-      return (
-        <HelpTip text="This settlement is funded by Marinade DAO because the yield loss<br />is beyond what the validator's are expected to cover.">
-          <Badge variant="default">Marinade</Badge>
-        </HelpTip>
-      )
-    case 'ValidatorBond':
-      return (
-        <HelpTip text="This settlement is funded by the validator because the yield loss<br />is within amount which the validator is expected to cover.">
-          <Badge variant="secondary">Validator</Badge>
-        </HelpTip>
-      )
+const getStatusHelpText = (status: ProtectedEventStatus): string | null => {
+  switch (status) {
+    case ProtectedEventStatus.DRYRUN:
+      return 'This settlement is not claimable as it was created during the testing period.'
+    case ProtectedEventStatus.ESTIMATE:
+      return 'This is an estimate based on live data but may change during the epoch<br />before the settlements for this epoch are created on-chain.'
     default:
       return null
   }
@@ -206,174 +211,192 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
   }, [filteredData, sortCol, sortDir])
 
   const sortIndicator = (col: SortColumn) => {
-    if (sortCol !== col)
-      return <span className="ml-1 text-muted-foreground/40">▲</span>
-    return <span className="ml-1">{sortDir === 'asc' ? '▲' : '▼'}</span>
-  }
-
-  const headClass =
-    'px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] cursor-pointer select-none whitespace-nowrap'
-
-  let expertMetrics
-  if (level === UserLevel.Expert) {
-    expertMetrics = (
-      <HelpTip text="Last Settled Epoch's Bids collectable By Users">
-        <Metric
-          label="Last Epoch Bids"
-          value={`☉ ${formatSolAmount(lastEpochBids)}`}
-        />
-      </HelpTip>
-    )
+    if (sortCol !== col) return ' ▲'
+    return sortDir === 'asc' ? ' ▲' : ' ▼'
   }
 
   const filtered = data.length !== filteredData.length
 
+  // Header separator line
+  const headerLine =
+    '─'.repeat(W.epoch) +
+    '─┼─' +
+    '─'.repeat(W.validator) +
+    '─┼─' +
+    '─'.repeat(W.settlement) +
+    '─┼─' +
+    '─'.repeat(W.reason) +
+    '─┼─' +
+    '─'.repeat(W.funder)
+
   return (
-    <div className="relative">
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
-        <HelpTip text="Total Count of Protected Events">
-          <Metric label="Total events" value={totalEvents.toLocaleString()} />
-        </HelpTip>
-        <HelpTip text="Total Amount of SOL Claimable by Users">
-          <Metric
-            label="Total amount"
-            value={`☉ ${formatSolAmount(totalAmount)}`}
-          />
-        </HelpTip>
+    <div className="w-full font-mono text-[12px] leading-[1.6] text-foreground">
+      {/* Stats */}
+      <div className="mb-4 whitespace-pre leading-[1.8]">
+        <span className="text-muted-foreground">{':: '}</span>
+        TOTAL EVENTS{' '}
+        <span className="font-bold">{totalEvents.toLocaleString()}</span>
+        <HelpTip text="Total Count of Protected Events" />
+        {'    '}
+        <span className="text-muted-foreground">{':: '}</span>
+        TOTAL AMOUNT{' '}
+        <span className="font-bold">☉ {formatSolAmount(totalAmount)}</span>
+        <HelpTip text="Total Amount of SOL Claimable by Users" />
+        {'    '}
         {filtered && (
-          <HelpTip text="Count of Filtered Protected Events">
-            <Metric
-              label="Filtered Events"
-              value={filteredEvents.toLocaleString()}
-            />
-          </HelpTip>
+          <>
+            <span className="text-muted-foreground">{':: '}</span>
+            FILTERED{' '}
+            <span className="font-bold">{filteredEvents.toLocaleString()}</span>
+            <HelpTip text="Count of Filtered Protected Events" />
+            {'    '}
+            <span className="text-muted-foreground">{':: '}</span>
+            FILTERED AMT{' '}
+            <span className="font-bold">☉ {formatSolAmount(filteredAmount)}</span>
+            <HelpTip text="Filtered Amount of SOL Claimable By Users" />
+            {'    '}
+          </>
         )}
-        {filtered && (
-          <HelpTip text="Filtered Amount of SOL Claimable By Users">
-            <Metric
-              label="Filtered Amount"
-              value={`☉ ${formatSolAmount(filteredAmount)}`}
-            />
-          </HelpTip>
+        <span className="text-muted-foreground">{':: '}</span>
+        LAST SETTLED{' '}
+        <span className="font-bold">☉ {formatSolAmount(lastSettledEpochAmount)}</span>
+        <HelpTip text="Last Settled Epoch's Amount of SOL Claimable By Users" />
+        {level === UserLevel.Expert && (
+          <>
+            {'    '}
+            <span className="text-muted-foreground">{':: '}</span>
+            LAST EPOCH BIDS{' '}
+            <span className="font-bold">☉ {formatSolAmount(lastEpochBids)}</span>
+            <HelpTip text="Last Settled Epoch's Bids collectable By Users" />
+          </>
         )}
-        <HelpTip text="Last Settled Epoch's Amount of SOL Claimable By Users">
-          <Metric
-            label="Last Settled Amount"
-            value={`☉ ${formatSolAmount(lastSettledEpochAmount)}`}
-          />
-        </HelpTip>
-        {expertMetrics}
       </div>
-      <div className="flex items-center gap-4 mb-4">
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">
-            Validator
-          </label>
-          <Input
+
+      {/* Filters */}
+      <div className="flex items-end gap-4 mb-4">
+        <div>
+          <div className="text-muted-foreground mb-1">Validator</div>
+          <input
             value={validatorFilter}
             onChange={e => setValidatorFilter(e.target.value)}
             placeholder="Search by name or vote account"
-            className="w-64"
+            className="font-mono text-[12px] bg-transparent border border-muted-foreground/30 px-2 py-1 w-64 text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-foreground"
           />
         </div>
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">
-            Epoch range
-          </label>
+        <div>
+          <div className="text-muted-foreground mb-1">Epoch range</div>
           <div className="flex items-center gap-2">
-            <Input
+            <input
               type="number"
               value={minEpochFilter}
               onChange={e => setMinEpochFilter(Number(e.target.value))}
-              className="w-24"
+              className="font-mono text-[12px] bg-transparent border border-muted-foreground/30 px-2 py-1 w-24 text-foreground outline-none focus:border-foreground"
             />
-            <span className="text-muted-foreground text-sm">to</span>
-            <Input
+            <span className="text-muted-foreground">to</span>
+            <input
               type="number"
               value={maxEpochFilter}
               onChange={e => setMaxEpochFilter(Number(e.target.value))}
-              className="w-24"
+              className="font-mono text-[12px] bg-transparent border border-muted-foreground/30 px-2 py-1 w-24 text-foreground outline-none focus:border-foreground"
             />
           </div>
         </div>
       </div>
-      <div className="border border-border overflow-hidden">
-        <ShadTable>
-          <TableHeader>
-            <TableRow className="border-b border-border-grid">
-              <TableHead
-                className={`${headClass} w-16 text-right`}
-                onClick={() => handleSort('epoch')}
-              >
-                Epoch{sortIndicator('epoch')}
-              </TableHead>
-              <TableHead
-                className={`${headClass} min-w-[200px]`}
-                onClick={() => handleSort('validator')}
-              >
-                Validator{sortIndicator('validator')}
-              </TableHead>
-              <TableHead
-                className={`${headClass} w-[160px] text-right`}
-                onClick={() => handleSort('settlement')}
-              >
-                Settlement [☉]{sortIndicator('settlement')}
-              </TableHead>
-              <TableHead
-                className={`${headClass} w-[160px]`}
-                onClick={() => handleSort('reason')}
-              >
-                Reason{sortIndicator('reason')}
-              </TableHead>
-              <TableHead
-                className={`${headClass} w-[100px]`}
-                onClick={() => handleSort('funder')}
-              >
-                Funder{sortIndicator('funder')}
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedData.map(({ protectedEvent, validator, status }, idx) => {
-              const name = validator ? selectName(validator) : NO_NAME
-              const reason = selectProtectedStakeReason(protectedEvent)
-              const statusBadge = renderProtectedEventStatus(status)
 
-              return (
-                <TableRow
-                  key={`${protectedEvent.vote_account}-${protectedEvent.epoch}-${idx}`}
-                  className="border-b border-border-grid transition-colors duration-[120ms] "
-                >
-                  <TableCell className="px-3.5 py-3 text-right font-mono text-[13px]">
-                    {protectedEvent.epoch}
-                  </TableCell>
-                  <TableCell className="px-3.5 py-3 min-w-[200px]">
-                    <div className="text-foreground font-medium text-[13px]">
-                      {name}
-                    </div>
-                    <div className="text-muted-foreground text-[11px] mt-px font-mono truncate max-w-[280px]">
-                      {protectedEvent.vote_account}
-                    </div>
-                  </TableCell>
-                  <TableCell className="px-3.5 py-3 text-right">
-                    <div className="flex flex-col items-end gap-1">
-                      {statusBadge}
-                      <span className="font-mono font-semibold text-[13px]">
-                        {formatSolAmount(selectAmount(protectedEvent))}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="px-3.5 py-3">
-                    {getReasonBadge(reason)}
-                  </TableCell>
-                  <TableCell className="px-3.5 py-3">
-                    {renderFunderBadge(protectedEvent)}
-                  </TableCell>
-                </TableRow>
-              )
-            })}
-          </TableBody>
-        </ShadTable>
+      {/* Table */}
+      <div className="overflow-x-auto whitespace-pre">
+        {/* Header */}
+        <div className="text-muted-foreground">
+          <span
+            className="cursor-pointer select-none"
+            onClick={() => handleSort('epoch')}
+          >
+            {rpad('EPOCH' + sortIndicator('epoch'), W.epoch)}
+          </span>
+          <span>{SEP}</span>
+          <span
+            className="cursor-pointer select-none"
+            onClick={() => handleSort('validator')}
+          >
+            {pad('VALIDATOR' + sortIndicator('validator'), W.validator)}
+          </span>
+          <span>{SEP}</span>
+          <span
+            className="cursor-pointer select-none"
+            onClick={() => handleSort('settlement')}
+          >
+            {rpad('SETTLE [☉]' + sortIndicator('settlement'), W.settlement)}
+          </span>
+          <span>{SEP}</span>
+          <span
+            className="cursor-pointer select-none"
+            onClick={() => handleSort('reason')}
+          >
+            {pad('REASON' + sortIndicator('reason'), W.reason)}
+          </span>
+          <span>{SEP}</span>
+          <span
+            className="cursor-pointer select-none"
+            onClick={() => handleSort('funder')}
+          >
+            {pad('FUNDER' + sortIndicator('funder'), W.funder)}
+          </span>
+        </div>
+        <div className="text-muted-foreground">{headerLine}</div>
+
+        {/* Rows */}
+        {sortedData.map(({ protectedEvent, validator, status }, idx) => {
+          const name = validator ? selectName(validator) : NO_NAME
+          const reason = selectProtectedStakeReason(protectedEvent)
+          const statusText = getStatusText(status)
+          const statusHelp = getStatusHelpText(status)
+          const reasonText = getReasonText(reason)
+          const reasonHelp = getReasonHelpText(reason)
+          const funderText = getFunderText(protectedEvent)
+          const funderHelp = getFunderHelpText(protectedEvent)
+          const amountStr = formatSolAmount(selectAmount(protectedEvent))
+          const settlementStr = statusText
+            ? `${statusText} ${amountStr}`
+            : amountStr
+
+          return (
+            <div key={`${protectedEvent.vote_account}-${protectedEvent.epoch}-${idx}`}>
+              <span>{rpad(String(protectedEvent.epoch), W.epoch)}</span>
+              <span className="text-muted-foreground">{SEP}</span>
+              <span>{pad(name, W.validator)}</span>
+              <span className="text-muted-foreground">{SEP}</span>
+              <span>
+                {statusHelp ? (
+                  <HelpTip text={statusHelp}>
+                    <span>{rpad(settlementStr, W.settlement)}</span>
+                  </HelpTip>
+                ) : (
+                  rpad(settlementStr, W.settlement)
+                )}
+              </span>
+              <span className="text-muted-foreground">{SEP}</span>
+              <span>
+                {reasonHelp ? (
+                  <HelpTip text={reasonHelp}>
+                    <span>{pad(reasonText, W.reason)}</span>
+                  </HelpTip>
+                ) : (
+                  pad(reasonText, W.reason)
+                )}
+              </span>
+              <span className="text-muted-foreground">{SEP}</span>
+              <span>
+                {funderHelp ? (
+                  <HelpTip text={funderHelp}>
+                    <span>{pad(funderText, W.funder)}</span>
+                  </HelpTip>
+                ) : (
+                  pad(funderText, W.funder)
+                )}
+              </span>
+            </div>
+          )
+        })}
       </div>
     </div>
   )

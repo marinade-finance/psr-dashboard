@@ -39,6 +39,19 @@ interface ValidatorDetailProps {
   isCalculating: boolean
 }
 
+// Dot-leader between label and value
+const dotLine = (label: string, value: string, width: number = 40): string => {
+  const dots = Math.max(2, width - label.length - value.length)
+  return `${label} ${'·'.repeat(dots)} ${value}`
+}
+
+// ASCII progress bar
+const asciiBar = (pct: number, width: number = 10): string => {
+  const filled = Math.round((Math.min(pct, 100) / 100) * width)
+  const empty = width - filled
+  return '█'.repeat(filled) + '░'.repeat(empty)
+}
+
 export const ValidatorDetail = ({
   validator,
   auctionResult,
@@ -61,6 +74,7 @@ export const ValidatorDetail = ({
 
   const inSet = validator.auctionStake.marinadeSamTargetSol > 0
   const currentMaxApy = apyBreakdown.total
+  const voteAccount = selectVoteAccount(validator)
 
   const healthLabel =
     bondHealth === 'critical'
@@ -159,6 +173,9 @@ export const ValidatorDetail = ({
     return factors
   }, [validator, currentMaxApy, winningApy, bondUtilPct, bondRunway])
 
+  const impactChar = (impact: string) =>
+    impact === 'positive' ? 'ok' : impact === 'negative' ? '!!' : '--'
+
   return (
     <Sheet
       open={true}
@@ -168,256 +185,148 @@ export const ValidatorDetail = ({
     >
       <SheetContent
         side="right"
-        className="w-full max-w-4xl overflow-y-auto p-0"
+        className="w-full max-w-4xl overflow-y-auto p-0 bg-background"
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border sticky top-0 bg-background z-10">
-          <div className="flex items-center gap-3 font-mono">
+        {/* Terminal Header */}
+        <div className="px-4 py-3 border-b border-border sticky top-0 bg-background z-10 font-mono text-[12px]">
+          <div className="flex items-center justify-between">
             <button
-              className="text-sm text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground"
               onClick={onClose}
             >
               {'<'} Back
             </button>
-            <span className="text-lg font-bold text-primary">#{rank}</span>
-            <span className="text-sm text-muted-foreground">
-              {selectVoteAccount(validator).slice(0, 12)}...
-            </span>
-            <span className="text-xs text-foreground">
-              {inSet ? '[IN SET]' : '[OUT]'}
-            </span>
+            <button
+              className="text-muted-foreground hover:text-foreground"
+              onClick={onClose}
+            >
+              [x]
+            </button>
           </div>
-          <button
-            className="text-2xl text-muted-foreground hover:text-foreground font-mono"
-            onClick={onClose}
-          >
-            x
-          </button>
+          <div className="mt-2 text-foreground whitespace-pre">
+            {`═══ VALIDATOR: #${rank} ${inSet ? '[IN SET]' : '[OUT]'} (${voteAccount}) ═══`}
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
-          <div className="space-y-6">
-            <div className="border border-border p-5">
-              <h3 className="text-base font-semibold text-foreground font-mono flex items-center gap-2">
-                :: Why Rank #{rank}?
-                <HelpTip text="Factors that determine your auction ranking." />
-              </h3>
-              <div className="space-y-2 mt-3">
-                {rankFactors.map(factor => (
-                  <div
-                    key={factor.name}
-                    className="flex items-center justify-between p-3 border border-border font-mono"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs">
-                        {factor.impact === 'positive'
-                          ? 'ok'
-                          : factor.impact === 'negative'
-                            ? '!!'
-                            : '--'}
-                      </span>
-                      <div className="flex flex-col">
-                        <span className="text-sm text-foreground">
-                          {factor.name}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {factor.note}
-                        </span>
-                      </div>
-                    </div>
-                    <span className="text-sm font-mono font-semibold">
-                      {factor.value}
-                    </span>
-                  </div>
-                ))}
+        <div className="p-4 font-mono text-[12px] text-foreground space-y-4">
+          {/* Why Rank Section */}
+          <div>
+            <div className="text-muted-foreground whitespace-pre">{`┌──── WHY RANK #${rank}? ────┐`}</div>
+            {rankFactors.map(factor => (
+              <div key={factor.name} className="whitespace-pre">
+                {`│ ${impactChar(factor.impact)}  ${factor.name}: ${factor.value} (${factor.note})`}
               </div>
-            </div>
-
-            <div className="border border-border p-5">
-              <h3 className="text-base font-semibold text-foreground font-mono flex items-center gap-2">
-                :: APY Composition
-                <HelpTip text={HELP_TEXT.maxApy} />
-              </h3>
-              <div className="space-y-1 mt-3 font-mono text-xs">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">| Inflation</span>
-                  <span>{formatPercentage(apyBreakdown.inflation, 2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">| MEV</span>
-                  <span>{formatPercentage(apyBreakdown.mev, 2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">| Blocks</span>
-                  <span>{formatPercentage(apyBreakdown.blockRewards, 2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">| Bid</span>
-                  <span>{formatPercentage(apyBreakdown.stakeBid, 2)}</span>
-                </div>
-                <div className="flex justify-between border-t border-border pt-1 font-semibold">
-                  <span>Total</span>
-                  <span className="text-primary">
-                    {formatPercentage(apyBreakdown.total, 2)}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="border border-border p-5">
-              <h3 className="text-base font-semibold text-foreground font-mono flex items-center gap-2">
-                :: Next Step
-              </h3>
-              <div className="mt-3 font-mono text-sm text-foreground">
-                <span className="text-muted-foreground">{tipStyle.icon} </span>
-                {tip.text}
-              </div>
-            </div>
+            ))}
+            <div className="text-muted-foreground whitespace-pre">└──────────────────────────────┘</div>
           </div>
 
-          <div className="space-y-6">
-            <div className="border border-border p-5">
-              <h3 className="text-base font-semibold text-foreground font-mono flex items-center gap-2">
-                :: What-If Simulation
-                <HelpTip text={HELP_TEXT.simulation} />
-              </h3>
-              <div className="space-y-3 mt-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-mono text-muted-foreground">
-                    Stake Bid (PMPE)
-                  </label>
-                  <Input
-                    type="number"
-                    value={editBid}
-                    onChange={e => setEditBid(e.target.value)}
-                    step="0.001"
-                    min="0"
-                    className="font-mono"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-mono text-muted-foreground">
-                    Inflation Commission %
-                  </label>
-                  <Input
-                    type="number"
-                    value={editInflation}
-                    onChange={e => setEditInflation(e.target.value)}
-                    step="0.1"
-                    min="0"
-                    max="100"
-                    className="font-mono"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-mono text-muted-foreground">
-                    MEV Commission %
-                  </label>
-                  <Input
-                    type="number"
-                    value={editMev}
-                    onChange={e => setEditMev(e.target.value)}
-                    step="0.1"
-                    min="0"
-                    max="100"
-                    placeholder="N/A"
-                    className="font-mono"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-mono text-muted-foreground">
-                    Block Rewards Commission %
-                  </label>
-                  <Input
-                    type="number"
-                    value={editBlock}
-                    onChange={e => setEditBlock(e.target.value)}
-                    step="0.1"
-                    min="0"
-                    max="100"
-                    placeholder="N/A"
-                    className="font-mono"
-                  />
-                </div>
-                <Button
-                  className="w-full"
-                  onClick={handleRunSimulation}
-                  disabled={isCalculating}
-                >
-                  {isCalculating ? 'Simulating...' : '[ Run Simulation ]'}
-                </Button>
-              </div>
+          {/* APY Composition */}
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground whitespace-pre">{`┌──── APY COMPOSITION ────┐`}</span>
+              <HelpTip text={HELP_TEXT.maxApy} />
             </div>
+            <div className="whitespace-pre">{`│ ${dotLine('Inflation', formatPercentage(apyBreakdown.inflation, 2), 30)}`}</div>
+            <div className="whitespace-pre">{`│ ${dotLine('MEV', formatPercentage(apyBreakdown.mev, 2), 30)}`}</div>
+            <div className="whitespace-pre">{`│ ${dotLine('Blocks', formatPercentage(apyBreakdown.blockRewards, 2), 30)}`}</div>
+            <div className="whitespace-pre">{`│ ${dotLine('Bid', formatPercentage(apyBreakdown.stakeBid, 2), 30)}`}</div>
+            <div className="whitespace-pre">{`│ ${'─'.repeat(32)}`}</div>
+            <div className="whitespace-pre text-primary">{`│ ${dotLine('TOTAL', formatPercentage(apyBreakdown.total, 2), 30)}`}</div>
+            <div className="text-muted-foreground whitespace-pre">└──────────────────────────────┘</div>
+          </div>
 
-            <div className="border border-border p-5">
-              <h3 className="text-base font-semibold text-foreground font-mono flex items-center gap-2">
-                :: Bond Health
-                <HelpTip text={HELP_TEXT.bondHealth} />
-              </h3>
-              <div className="mt-3 font-mono">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-foreground">{healthLabel}</span>
-                  <span className="text-sm">
-                    {formatSolAmount(validator.bondBalanceSol, 0)} SOL
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-3 mt-3">
-                  <div>
-                    <span className="text-xs text-muted-foreground">
-                      :: Utilization
-                    </span>
-                    <div className="text-sm font-semibold">
-                      {bondUtilPct.toFixed(1)}%
-                    </div>
-                  </div>
-                  <div>
-                    <span className="text-xs text-muted-foreground">
-                      :: Runway
-                    </span>
-                    <div className="text-sm font-semibold">
-                      ~{Math.round(bondRunway)} epochs
-                    </div>
-                  </div>
-                </div>
-              </div>
+          {/* Bond Health */}
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground whitespace-pre">{`┌──── BOND HEALTH ────┐`}</span>
+              <HelpTip text={HELP_TEXT.bondHealth} />
             </div>
+            <div className="whitespace-pre">{`│ ${healthLabel}  ${formatSolAmount(validator.bondBalanceSol, 0)} SOL`}</div>
+            <div className="whitespace-pre">{`│ [${asciiBar(bondUtilPct)}] ${bondUtilPct.toFixed(1)}%  ~${Math.round(bondRunway)} epochs runway`}</div>
+            <div className="text-muted-foreground whitespace-pre">└──────────────────────────────┘</div>
+          </div>
 
-            <div className="border border-border p-5">
-              <h3 className="text-base font-semibold text-foreground font-mono">
-                :: Stake Overview
-              </h3>
-              <div className="space-y-3 mt-3 font-mono">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    Active Stake
-                  </span>
-                  <span className="text-sm font-semibold">
-                    {formatSolAmount(validator.marinadeActivatedStakeSol, 0)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    Target Stake
-                  </span>
-                  <span className="text-sm font-semibold">
-                    {formatSolAmount(
-                      validator.auctionStake.marinadeSamTargetSol,
-                      0,
-                    )}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    Stake Delta
-                  </span>
-                  <span
-                    className="text-sm font-semibold"
-                    style={{ color: delta.color }}
-                  >
-                    {delta.arrow} {delta.text}
-                  </span>
-                </div>
-              </div>
+          {/* Stake Overview */}
+          <div>
+            <div className="text-muted-foreground whitespace-pre">{`┌──── STAKE OVERVIEW ────┐`}</div>
+            <div className="whitespace-pre">{`│ ${dotLine('Active Stake', `${formatSolAmount(validator.marinadeActivatedStakeSol, 0)} ◎`, 36)}`}</div>
+            <div className="whitespace-pre">{`│ ${dotLine('Target Stake', `${formatSolAmount(validator.auctionStake.marinadeSamTargetSol, 0)} ◎`, 36)}`}</div>
+            <div className="whitespace-pre" style={{ color: delta.color }}>{`│ ${dotLine('Stake Delta', `${delta.arrow} ${delta.text}`, 36)}`}</div>
+            <div className="text-muted-foreground whitespace-pre">└──────────────────────────────┘</div>
+          </div>
+
+          {/* Next Step */}
+          <div>
+            <div className="text-muted-foreground whitespace-pre">{`┌──── NEXT STEP ────┐`}</div>
+            <div className="whitespace-pre">{`│ ${tipStyle.icon} ${tip.text}`}</div>
+            <div className="text-muted-foreground whitespace-pre">└──────────────────────────────┘</div>
+          </div>
+
+          {/* Simulation */}
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground whitespace-pre">{`┌──── WHAT-IF SIMULATION ────┐`}</span>
+              <HelpTip text={HELP_TEXT.simulation} />
             </div>
+            <div className="space-y-2 mt-1 pl-2">
+              <div>
+                <label className="text-muted-foreground">{`> `}Stake Bid (PMPE)</label>
+                <Input
+                  type="number"
+                  value={editBid}
+                  onChange={e => setEditBid(e.target.value)}
+                  step="0.001"
+                  min="0"
+                  className="font-mono text-[12px] mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-muted-foreground">{`> `}Inflation Commission %</label>
+                <Input
+                  type="number"
+                  value={editInflation}
+                  onChange={e => setEditInflation(e.target.value)}
+                  step="0.1"
+                  min="0"
+                  max="100"
+                  className="font-mono text-[12px] mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-muted-foreground">{`> `}MEV Commission %</label>
+                <Input
+                  type="number"
+                  value={editMev}
+                  onChange={e => setEditMev(e.target.value)}
+                  step="0.1"
+                  min="0"
+                  max="100"
+                  placeholder="N/A"
+                  className="font-mono text-[12px] mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-muted-foreground">{`> `}Block Rewards Commission %</label>
+                <Input
+                  type="number"
+                  value={editBlock}
+                  onChange={e => setEditBlock(e.target.value)}
+                  step="0.1"
+                  min="0"
+                  max="100"
+                  placeholder="N/A"
+                  className="font-mono text-[12px] mt-1"
+                />
+              </div>
+              <Button
+                className="w-full font-mono text-[12px] mt-2"
+                onClick={handleRunSimulation}
+                disabled={isCalculating}
+              >
+                {isCalculating ? 'Simulating...' : '[ Run Simulation ]'}
+              </Button>
+            </div>
+            <div className="text-muted-foreground whitespace-pre mt-2">└──────────────────────────────┘</div>
           </div>
         </div>
       </SheetContent>

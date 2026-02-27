@@ -24,15 +24,6 @@ import {
 } from 'src/services/validators'
 
 import { HelpTip } from '../help-tip/help-tip'
-import { Metric } from '../metric/metric'
-import {
-  ShadTable,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from '../ui/table'
 
 import type { ValidatorWithBond } from 'src/services/validator-with-bond'
 
@@ -43,8 +34,24 @@ type Props = {
 
 type SortConfig = { column: string; direction: 'asc' | 'desc' } | null
 
-const HEAD_CLS =
-  'px-3.5 py-[11px] text-[11px] font-medium tracking-[0.06em] uppercase cursor-pointer select-none'
+// Pad/truncate string to exact width
+const pad = (s: string, w: number): string =>
+  s.length >= w ? s.slice(0, w) : s + ' '.repeat(w - s.length)
+const rpad = (s: string, w: number): string =>
+  s.length >= w ? s.slice(0, w) : ' '.repeat(w - s.length) + s
+
+// Column widths
+const W = {
+  validator: 22,
+  bondBal: 12,
+  maxWanted: 12,
+  comm: 16,
+  mrnStake: 12,
+  effCost: 10,
+  maxProt: 14,
+  protPct: 10,
+}
+const SEP = ' │ '
 
 export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
   const [sort, setSort] = useState<SortConfig>({
@@ -62,13 +69,9 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
     })
   }
 
-  const sortIndicator = (column: string) => {
-    if (sort?.column !== column) return null
-    return (
-      <span className="text-primary ml-1">
-        {sort.direction === 'asc' ? '▲' : '▼'}
-      </span>
-    )
+  const sortArrow = (column: string) => {
+    if (sort?.column !== column) return ''
+    return sort.direction === 'asc' ? ' ▲' : ' ▼'
   }
 
   const totalMarinadeStake = data.reduce(
@@ -153,218 +156,164 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
 
   const isExpert = level === UserLevel.Expert
 
-  return (
-    <div className="relative">
-      <div className="grid grid-cols-4 gap-3 mb-6 max-lg:grid-cols-2 max-sm:grid-cols-1">
-        <HelpTip text="Count of currently funded bonds">
-          <Metric
-            label="Bonds Funded"
-            value={totalFundedBonds.toLocaleString()}
-          />
-        </HelpTip>
-        <HelpTip text="Total effective amount of SOL deposited to the bonds">
-          <Metric
-            label="Bonds Balance"
-            value={`☉ ${formatSolAmount(effectiveBalance)}`}
-          />
-        </HelpTip>
-        <HelpTip text="How much stake is distributed by Marinade">
-          <Metric
-            label="Marinade Stake"
-            value={`☉ ${formatSolAmount(totalMarinadeStake)}`}
-          />
-        </HelpTip>
-        <HelpTip text="How much of Marinade's stake is protected by validators' deposits to the bonds">
-          <Metric
-            label="Protected Stake"
-            value={formatPercentage(totalProtectedStake / totalMarinadeStake)}
-          />
-        </HelpTip>
-        {isExpert && (
-          <HelpTip text="How much of Marinade's stake can be potentially protected if all bonds in the system are used">
-            <Metric
-              label="Max Protectable Stake"
-              value={formatPercentage(
-                totalMaxProtectedStake / totalMarinadeStake,
-              )}
+  // Build header columns
+  const cols = [
+    { key: 'validator', label: 'VALIDATOR', width: W.validator, align: 'left' as const },
+    { key: 'bondBalance', label: 'BOND BAL', width: W.bondBal, align: 'right' as const },
+    { key: 'maxStakeWanted', label: 'MAX WANTED', width: W.maxWanted, align: 'right' as const },
+    { key: 'bondComm', label: 'COMM', width: W.comm, align: 'right' as const },
+    { key: 'marinadeStake', label: 'MRN STAKE', width: W.mrnStake, align: 'right' as const },
+    { key: 'effCost', label: 'EFF COST', width: W.effCost, align: 'right' as const },
+  ]
+  if (isExpert) {
+    cols.push(
+      { key: 'maxProtectedStake', label: 'MAX PROT', width: W.maxProt, align: 'right' as const },
+      { key: 'protectedStakePct', label: 'PROT %', width: W.protPct, align: 'right' as const },
+    )
+  }
+
+  const headerLine = cols
+    .map(c => '─'.repeat(c.width))
+    .join('─┼─')
+
+  const renderHeader = () => {
+    return cols.map((c, i) => {
+      const label = c.label + sortArrow(c.key)
+      const text = c.align === 'right' ? rpad(label, c.width) : pad(label, c.width)
+      return (
+        <React.Fragment key={c.key}>
+          {i > 0 && <span className="text-muted-foreground">{SEP}</span>}
+          <span
+            className="cursor-pointer select-none"
+            onClick={() => handleSort(c.key)}
+          >
+            {text}
+          </span>
+          {c.key === 'bondComm' && (
+            <HelpTip
+              text={
+                'Current commission settings in the bond configuration. If the configured commission is lower ' +
+                'than the on-chain commission, the difference is drawn from the funded bond.'
+              }
             />
-          </HelpTip>
+          )}
+          {c.key === 'effCost' && (
+            <HelpTip text="Estimated total cost per epoch for the SAM stake that this validator received." />
+          )}
+        </React.Fragment>
+      )
+    })
+  }
+
+  return (
+    <div className="w-full font-mono text-[12px] leading-[1.6] text-foreground">
+      {/* Stats */}
+      <div className="mb-4 whitespace-pre leading-[1.8]">
+        <span className="text-muted-foreground">{':: '}</span>
+        BONDS FUNDED{' '}
+        <span className="font-bold">{totalFundedBonds.toLocaleString()}</span>
+        {'    '}
+        <span className="text-muted-foreground">{':: '}</span>
+        BONDS BALANCE{' '}
+        <span className="font-bold">{formatSolAmount(effectiveBalance)}◎</span>
+        {'    '}
+        <span className="text-muted-foreground">{':: '}</span>
+        MARINADE STAKE{' '}
+        <span className="font-bold">{formatSolAmount(totalMarinadeStake)}◎</span>
+        {'    '}
+        <span className="text-muted-foreground">{':: '}</span>
+        PROTECTED STAKE{' '}
+        <span className="font-bold">
+          {formatPercentage(totalProtectedStake / totalMarinadeStake)}
+        </span>
+        <HelpTip text="How much of Marinade's stake is protected by validators' deposits to the bonds" />
+        {isExpert && (
+          <>
+            {'    '}
+            <span className="text-muted-foreground">{':: '}</span>
+            MAX PROTECTABLE{' '}
+            <span className="font-bold">
+              {formatPercentage(totalMaxProtectedStake / totalMarinadeStake)}
+            </span>
+            <HelpTip text="How much of Marinade's stake can be potentially protected if all bonds in the system are used" />
+          </>
         )}
       </div>
 
-      <div className="border border-border overflow-hidden">
-        <ShadTable className="font-sans text-[13px]">
-          <TableHeader>
-            <TableRow className="border-b border-border-grid">
-              <TableHead
-                className={`${HEAD_CLS} text-left min-w-[200px]`}
-                onClick={() => handleSort('validator')}
-              >
-                Validator{sortIndicator('validator')}
-              </TableHead>
-              <TableHead
-                className={`${HEAD_CLS} text-right`}
-                onClick={() => handleSort('bondBalance')}
-              >
-                Bond Balance{sortIndicator('bondBalance')}
-              </TableHead>
-              <TableHead
-                className={`${HEAD_CLS} text-right`}
-                onClick={() => handleSort('maxStakeWanted')}
-              >
-                Max Stake Wanted{sortIndicator('maxStakeWanted')}
-              </TableHead>
-              <TableHead
-                className={`${HEAD_CLS} text-right`}
-                onClick={() => handleSort('bondComm')}
-              >
-                Bond Comm.{sortIndicator('bondComm')}
-                <HelpTip
-                  text={
-                    'Current commission settings in the bond configuration. If the configured commission is lower ' +
-                    'than the on-chain commission, the difference is drawn from the funded bond.<br/>' +
-                    'Ordered by in-bond inflation commission.'
-                  }
-                />
-              </TableHead>
-              <TableHead
-                className={`${HEAD_CLS} text-right`}
-                onClick={() => handleSort('marinadeStake')}
-              >
-                Marinade Stake{sortIndicator('marinadeStake')}
-              </TableHead>
-              <TableHead
-                className={`${HEAD_CLS} text-right`}
-                onClick={() => handleSort('effCost')}
-              >
-                Eff. Cost{sortIndicator('effCost')}
-                <HelpTip text="Estimated total cost per epoch for the SAM stake that this validator received. This estimation does not consider the commission bidding never claims more than the real rewards earned in the epoch. And the potential penalties for rapid bid changes." />
-              </TableHead>
-              {isExpert && (
-                <>
-                  <TableHead
-                    className={`${HEAD_CLS} text-right`}
-                    onClick={() => handleSort('maxProtectedStake')}
-                  >
-                    Max Protected Stake{sortIndicator('maxProtectedStake')}
-                  </TableHead>
-                  <TableHead
-                    className={`${HEAD_CLS} text-right`}
-                    onClick={() => handleSort('protectedStakePct')}
-                  >
-                    Protected Stake %{sortIndicator('protectedStakePct')}
-                  </TableHead>
-                </>
-              )}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedData.map(entry => {
-              const { validator, bond, auction } = entry
-              const voteAccount = selectVoteAccount(validator)
-              const name = selectName(validator)
-              const bondBalance = Number(
-                lamportsToSol(bond?.effective_amount?.toString() ?? '0'),
-              )
-              const maxStakeWanted = bond ? selectMaxStakeWanted(bond) : 0
-              const inf = bond?.inflation_commission_bps
-              const mev = bond?.mev_commission_bps
-              const block = bond?.block_commission_bps
-              const totalStake = selectTotalMarinadeStake(validator)
-              const nativeStake = selectNativeMarinadeStake(validator)
-              const liquidStake = selectLiquidMarinadeStake(validator)
+      {/* Table */}
+      <div className="overflow-x-auto whitespace-pre">
+        {/* Header */}
+        <div className="text-muted-foreground">{renderHeader()}</div>
+        <div className="text-muted-foreground">{headerLine}</div>
 
-              return (
-                <TableRow
-                  key={voteAccount}
-                  className="border-b border-border-grid transition-colors duration-[120ms] "
-                >
-                  {/* Validator: name + address */}
-                  <TableCell className="px-3.5 py-3 min-w-[200px]">
-                    <div className="font-medium text-foreground text-[13px] truncate max-w-[240px]">
-                      {name || voteAccount.slice(0, 12) + '…'}
-                    </div>
-                    <div className="text-muted-foreground text-[11px] font-mono truncate">
-                      {voteAccount.slice(0, 12)}…
-                    </div>
-                  </TableCell>
+        {/* Rows */}
+        {sortedData.map(entry => {
+          const { validator, bond, auction } = entry
+          const voteAccount = selectVoteAccount(validator)
+          const name = selectName(validator)
+          const bondBalance = Number(
+            lamportsToSol(bond?.effective_amount?.toString() ?? '0'),
+          )
+          const maxStakeWanted = bond ? selectMaxStakeWanted(bond) : 0
+          const inf = bond?.inflation_commission_bps
+          const mev = bond?.mev_commission_bps
+          const block = bond?.block_commission_bps
+          const totalStake = selectTotalMarinadeStake(validator)
+          const nativeStake = selectNativeMarinadeStake(validator)
+          const liquidStake = selectLiquidMarinadeStake(validator)
 
-                  {/* Bond Balance */}
-                  <TableCell className="px-3.5 py-3 text-right font-mono font-semibold text-[13px]">
-                    ☉ {formatSolAmount(bondBalance)}
-                  </TableCell>
+          const validatorStr = pad(
+            name || voteAccount.slice(0, 18) + '…',
+            W.validator,
+          )
+          const bondBalStr = rpad(`${formatSolAmount(bondBalance)}◎`, W.bondBal)
+          const maxWantedStr = rpad(
+            maxStakeWanted > 0 ? formatSolAmount(maxStakeWanted) : '-',
+            W.maxWanted,
+          )
+          const commStr =
+            inf == null && mev == null && block == null
+              ? rpad('—', W.comm)
+              : rpad(
+                  `${formatBps(inf)}/${formatBps(mev)}/${formatBps(block)}`,
+                  W.comm,
+                )
+          const stakeStr = rpad(`${formatSolAmount(totalStake)}◎`, W.mrnStake)
+          const costStr = rpad(
+            auction ? `${round(selectEffectiveCost(auction), 1)}◎` : '-',
+            W.effCost,
+          )
 
-                  {/* Max Stake Wanted */}
-                  <TableCell className="px-3.5 py-3 text-right font-mono text-[13px]">
-                    {maxStakeWanted > 0 ? (
-                      formatSolAmount(maxStakeWanted)
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
+          const expertCols = isExpert
+            ? [
+                rpad(formatSolAmount(selectMaxProtectedStake(entry)), W.maxProt),
+                rpad(
+                  formatPercentage(
+                    nativeStake > 0
+                      ? selectProtectedStake(entry) / nativeStake
+                      : 0,
+                  ),
+                  W.protPct,
+                ),
+              ]
+            : []
 
-                  {/* Bond Commission */}
-                  <TableCell className="px-3.5 py-3 text-right font-mono text-[13px]">
-                    {inf == null && mev == null && block == null ? (
-                      <span className="text-muted-foreground">—</span>
-                    ) : (
-                      <HelpTip
-                        text={
-                          `Inflation commission: ${formatBps(inf)}<br/>` +
-                          `MEV commission: ${formatBps(mev)}<br/>` +
-                          `Block rewards commission: ${formatBps(block)}`
-                        }
-                      >
-                        <span>
-                          {formatBps(inf)} / {formatBps(mev)} /{' '}
-                          {formatBps(block)}
-                        </span>
-                      </HelpTip>
-                    )}
-                  </TableCell>
+          const allCells = [validatorStr, bondBalStr, maxWantedStr, commStr, stakeStr, costStr, ...expertCols]
 
-                  {/* Marinade Stake */}
-                  <TableCell className="px-3.5 py-3 text-right font-mono font-semibold text-[13px]">
-                    <HelpTip
-                      text={`Native: ${formatSolAmount(nativeStake)}, Liquid: ${formatSolAmount(liquidStake)}`}
-                    >
-                      <span>☉ {formatSolAmount(totalStake)}</span>
-                    </HelpTip>
-                  </TableCell>
-
-                  {/* Eff. Cost */}
-                  <TableCell className="px-3.5 py-3 text-right font-mono text-[13px]">
-                    <HelpTip text="Assumed cost per epoch for the SAM stake that this validator received.">
-                      <span>
-                        {auction ? (
-                          `☉ ${round(selectEffectiveCost(auction), 1)}`
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </span>
-                    </HelpTip>
-                  </TableCell>
-
-                  {/* Expert columns */}
-                  {isExpert && (
-                    <>
-                      <TableCell className="px-3.5 py-3 text-right font-mono text-[13px]">
-                        {formatSolAmount(selectMaxProtectedStake(entry))}
-                      </TableCell>
-                      <TableCell className="px-3.5 py-3 text-right font-mono text-[13px]">
-                        {formatPercentage(
-                          nativeStake > 0
-                            ? selectProtectedStake(entry) / nativeStake
-                            : 0,
-                        )}
-                      </TableCell>
-                    </>
-                  )}
-                </TableRow>
-              )
-            })}
-          </TableBody>
-        </ShadTable>
+          return (
+            <div
+              key={voteAccount}
+              className="cursor-pointer hover:opacity-70"
+            >
+              {allCells.map((cell, i) => (
+                <React.Fragment key={i}>
+                  {i > 0 && <span className="text-muted-foreground">{SEP}</span>}
+                  <span>{cell}</span>
+                </React.Fragment>
+              ))}
+            </div>
+          )
+        })}
       </div>
     </div>
   )

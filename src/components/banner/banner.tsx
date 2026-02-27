@@ -1,7 +1,5 @@
 import React from 'react'
 
-import { Card } from 'src/components/ui/card'
-
 export interface Props {
   title?: string
   body?: React.ReactNode
@@ -10,15 +8,9 @@ export interface Props {
 export const Banner: React.FC<Props> = ({ title, body }) => {
   if (!title) return null
   return (
-    <Card className="mb-6 px-5 py-4 border-l-4 border-l-primary text-sm leading-relaxed text-foreground font-mono">
-      <div className="font-semibold text-base mb-1">
-        {'>> '}
-        {title}
-      </div>
-      <div className="text-muted-foreground">
-        {':: '}
-        {body}
-      </div>
-    </Card>
+    <div className="font-mono text-[12px] mb-4 border border-border px-4 py-3">
+      <div className="font-bold text-foreground">{'>> '}{title}</div>
+      <div className="text-muted-foreground mt-1">{body}</div>
+    </div>
   )
 }

@@ -126,3 +126,15 @@ body {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
 }
+
+/* Terminal text wrapping on mobile */
+@media (max-width: 640px) {
+  .whitespace-pre {
+    font-size: 11px;
+  }
+}
+
+/* Smooth horizontal scroll on touch */
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+}
