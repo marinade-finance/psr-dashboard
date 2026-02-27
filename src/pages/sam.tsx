@@ -213,7 +213,20 @@ export const SamPage: React.FC<Props> = ({ level }) => {
 
   return (
     <div className="bg-background-page">
-      <Navigation level={level} />
+      <Navigation level={level}>
+        <Button
+          className={cn(
+            'simulatorToggle h-10 px-5 m-[4px_0_4px_4px]',
+            simulationModeActive && 'bg-primary/80 ring-2 ring-primary',
+            isCalculating &&
+              'bg-muted text-muted-foreground cursor-not-allowed',
+          )}
+          onClick={handleToggleSimulationMode}
+          disabled={isCalculating}
+        >
+          {simulationModeActive ? 'Exit Simulation' : 'Enter Simulation'}
+        </Button>
+      </Navigation>
       <Banner {...getBannerData()} />
       {status === 'error' && <p>Error fetching data</p>}
       {status === 'loading' && <Loader />}
@@ -237,47 +250,29 @@ export const SamPage: React.FC<Props> = ({ level }) => {
             onEdit={handleEnterSimulation}
           />
         )}
-      {status === 'success' &&
-        displayAuctionResult &&
-        viewMode === 'list' && (
-          <>
-            <div className="flex justify-end px-2.5 pt-2.5">
-              <Button
-                className={cn(
-                  'simulatorToggle h-10 px-5',
-                  simulationModeActive && 'bg-primary/80 ring-2 ring-primary',
-                  isCalculating &&
-                    'bg-muted text-muted-foreground cursor-not-allowed',
-                )}
-                onClick={handleToggleSimulationMode}
-                disabled={isCalculating}
-              >
-                {simulationModeActive ? 'Exit Simulation' : 'Enter Simulation'}
-              </Button>
-            </div>
-            <SamTable
-              auctionResult={displayAuctionResult}
-              tvlJoinApyDiff={data.tvlJoinApyDiff}
-              tvlLeaveApyDiff={data.tvlLeaveApyDiff}
-              backstopDiff={data.backstopDiff}
-              backstopTvl={data.backstopTvl}
-              originalAuctionResult={originalAuctionResult}
-              epochsPerYear={data.epochsPerYear}
-              dsSamConfig={data.dcSamConfig}
-              level={level}
-              simulationModeActive={simulationModeActive}
-              editingValidator={editingValidator}
-              simulatedValidator={simulatedValidator}
-              isCalculating={isCalculating}
-              pendingEdits={pendingEdits}
-              validatorMeta={nameMap}
-              onValidatorClick={handleValidatorClick}
-              onFieldChange={handleFieldChange}
-              onRunSimulation={handleRunSimulation}
-              onCancelEditing={handleCancelEditing}
-            />
-          </>
-        )}
+      {status === 'success' && displayAuctionResult && viewMode === 'list' && (
+        <SamTable
+          auctionResult={displayAuctionResult}
+          tvlJoinApyDiff={data.tvlJoinApyDiff}
+          tvlLeaveApyDiff={data.tvlLeaveApyDiff}
+          backstopDiff={data.backstopDiff}
+          backstopTvl={data.backstopTvl}
+          originalAuctionResult={originalAuctionResult}
+          epochsPerYear={data.epochsPerYear}
+          dsSamConfig={data.dcSamConfig}
+          level={level}
+          simulationModeActive={simulationModeActive}
+          editingValidator={editingValidator}
+          simulatedValidator={simulatedValidator}
+          isCalculating={isCalculating}
+          pendingEdits={pendingEdits}
+          validatorMeta={nameMap}
+          onValidatorClick={handleValidatorClick}
+          onFieldChange={handleFieldChange}
+          onRunSimulation={handleRunSimulation}
+          onCancelEditing={handleCancelEditing}
+        />
+      )}
     </div>
   )
 }
