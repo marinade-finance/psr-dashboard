@@ -14,32 +14,27 @@ export const Metric: React.FC<Props> = ({
   value,
   subtitle,
   'data-tooltip-html': tooltipHtml,
-}) => {
-  const inner = (
-    <div className="metric px-5 py-2.5 bg-card cursor-help rounded-xl shadow-card border border-border-grid transition-shadow hover:shadow-[0_4px_12px_rgba(0,0,0,0.15)]">
-      <div className="whitespace-nowrap text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
-        {label}
-      </div>
-      <div className="metricValue whitespace-nowrap mt-2.5 text-2xl">
-        {value}
-      </div>
-      {subtitle && (
-        <div className="subtitle mt-1 text-xs text-muted-foreground whitespace-nowrap">
-          {subtitle}
-        </div>
+}) => (
+  <div className="metric px-5 py-2.5 bg-card rounded-xl shadow-card border border-border-grid transition-shadow hover:shadow-[0_4px_12px_rgba(0,0,0,0.15)]">
+    <div className="flex items-center gap-1 whitespace-nowrap text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
+      {label}
+      {tooltipHtml && (
+        <TooltipProvider>
+          <Tooltip
+            content={<span dangerouslySetInnerHTML={{ __html: tooltipHtml }} />}
+          >
+            <span className="cursor-help text-[10px] leading-none text-muted-foreground/60 hover:text-muted-foreground border border-muted-foreground/30 rounded-full w-3.5 h-3.5 inline-flex items-center justify-center select-none">
+              ?
+            </span>
+          </Tooltip>
+        </TooltipProvider>
       )}
     </div>
-  )
-
-  if (!tooltipHtml) return inner
-
-  return (
-    <TooltipProvider>
-      <Tooltip
-        content={<span dangerouslySetInnerHTML={{ __html: tooltipHtml }} />}
-      >
-        {inner}
-      </Tooltip>
-    </TooltipProvider>
-  )
-}
+    <div className="metricValue whitespace-nowrap mt-2.5 text-2xl">{value}</div>
+    {subtitle && (
+      <div className="subtitle mt-1 text-xs text-muted-foreground whitespace-nowrap">
+        {subtitle}
+      </div>
+    )}
+  </div>
+)
