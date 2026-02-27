@@ -48,6 +48,12 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-sim-from: var(--sim-from);
+  --color-sim-to: var(--sim-to);
+  --color-sim-tbody: var(--sim-tbody);
+  --color-sim-row: var(--sim-row);
+  --shadow-hover: var(--shadow-hover-val);
+  --shadow-button: var(--shadow-button-val);
 }
 
 @layer base {
@@ -92,6 +98,14 @@
     --chart-3: #fbbf24;
     --chart-4: #c084fc;
     --chart-5: #fb7185;
+    --sim-from: rgba(5, 30, 28, 1);
+    --sim-to: rgba(15, 50, 48, 1);
+    --sim-glow-from: rgba(10, 60, 56, 1);
+    --sim-glow-to: rgba(20, 80, 76, 1);
+    --sim-tbody: rgba(5, 30, 28, 0.08);
+    --sim-row: rgba(5, 30, 28, 0.06);
+    --shadow-hover-val: 0 4px 12px rgba(0, 0, 0, 0.15);
+    --shadow-button-val: 0 1px 3px rgba(0, 0, 0, 0.3);
   }
 
   .dark {
@@ -135,6 +149,14 @@
     --chart-3: #f59e0b;
     --chart-4: #a855f7;
     --chart-5: #f43f5e;
+    --sim-from: rgba(5, 30, 28, 1);
+    --sim-to: rgba(15, 50, 48, 1);
+    --sim-glow-from: rgba(10, 60, 56, 1);
+    --sim-glow-to: rgba(20, 80, 76, 1);
+    --sim-tbody: rgba(5, 30, 28, 0.08);
+    --sim-row: rgba(5, 30, 28, 0.06);
+    --shadow-hover-val: 0 4px 12px rgba(0, 0, 0, 0.15);
+    --shadow-button-val: 0 1px 3px rgba(0, 0, 0, 0.3);
   }
 
   html {
@@ -185,11 +207,7 @@
   @keyframes header-glow {
     0%,
     100% {
-      background: linear-gradient(
-        135deg,
-        rgba(5, 30, 28, 1),
-        rgba(15, 50, 48, 1)
-      );
+      background: linear-gradient(135deg, var(--sim-from), var(--sim-to));
     }
     50% {
       background: linear-gradient(
