@@ -1,9 +1,8 @@
-import * as React from 'react'
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 import { cn } from 'src/lib/utils'
 
-const BLOCK_CHARS = ['░', '▒', '█', '▓', '░']
+const CHARS = '*&$#^@!%~+=<>'
 
 function Skeleton({
   className,
@@ -12,25 +11,23 @@ function Skeleton({
   const [frame, setFrame] = useState(0)
 
   useEffect(() => {
-    const id = setInterval(
-      () => setFrame(f => (f + 1) % BLOCK_CHARS.length),
-      300,
-    )
+    const id = setInterval(() => setFrame(f => f + 1), 70)
     return () => clearInterval(id)
   }, [])
 
+  const chars = Array.from(
+    { length: 8 },
+    (_, i) => CHARS[(frame + i * 3) % CHARS.length],
+  ).join('')
+
   return (
     <div
-      className={cn(
-        'font-mono text-border overflow-hidden',
-        className,
-      )}
+      className={cn('font-mono text-border text-[11px] overflow-hidden', className)}
       {...props}
     >
-      <span className="opacity-60" aria-hidden="true">
-        {BLOCK_CHARS[frame].repeat(20)}
-      </span>
+      {chars}
     </div>
   )
 }
+
 export { Skeleton }

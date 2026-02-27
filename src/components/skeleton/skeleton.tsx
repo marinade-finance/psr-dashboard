@@ -1,49 +1,53 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 
-const TerminalLoadingLine: React.FC<{ width?: number }> = ({
-  width = 60,
-}) => {
-  const chars = '░'.repeat(width)
+const CHARS = '*&$#^@!%~+=<>{}[]'
+
+const CyclingLine: React.FC<{ width?: number }> = ({ width = 40 }) => {
+  const [frame, setFrame] = useState(0)
+
+  useEffect(() => {
+    const id = setInterval(() => setFrame(f => f + 1), 60)
+    return () => clearInterval(id)
+  }, [])
+
+  const line = Array.from(
+    { length: width },
+    (_, i) => CHARS[(frame + i * 3) % CHARS.length],
+  ).join('')
+
   return (
-    <div className="font-mono text-[12px] text-border animate-pulse">
-      {chars}
+    <div className="font-mono text-[12px] text-border leading-[1.6]">
+      {line}
     </div>
   )
 }
 
-export const SamSkeleton: React.FC = () => (
-  <div className="font-mono text-[12px] space-y-1">
-    <TerminalLoadingLine width={80} />
-    <TerminalLoadingLine width={120} />
-    <div className="text-muted-foreground my-2">
-      {'─'.repeat(120)}
-    </div>
-    {Array.from({ length: 12 }, (_, i) => (
-      <TerminalLoadingLine key={i} width={100 + (i % 3) * 10} />
-    ))}
-  </div>
-)
+const LoadingBlock: React.FC<{ lines?: number }> = ({ lines = 8 }) => {
+  const [frame, setFrame] = useState(0)
 
-export const BondsSkeleton: React.FC = () => (
-  <div className="font-mono text-[12px] space-y-1">
-    <TerminalLoadingLine width={80} />
-    <div className="text-muted-foreground my-2">
-      {'─'.repeat(100)}
-    </div>
-    {Array.from({ length: 12 }, (_, i) => (
-      <TerminalLoadingLine key={i} width={90 + (i % 4) * 8} />
-    ))}
-  </div>
-)
+  useEffect(() => {
+    const id = setInterval(() => setFrame(f => f + 1), 80)
+    return () => clearInterval(id)
+  }, [])
 
-export const EventsSkeleton: React.FC = () => (
-  <div className="font-mono text-[12px] space-y-1">
-    <TerminalLoadingLine width={80} />
-    <div className="text-muted-foreground my-2">
-      {'─'.repeat(100)}
+  const chars = Array.from(
+    { length: 16 },
+    (_, i) => CHARS[(frame + i * 5) % CHARS.length],
+  ).join('')
+
+  return (
+    <div className="font-mono text-[12px] leading-[1.8] text-foreground py-8">
+      <div className="text-muted-foreground mb-2">
+        :: LOADING...
+      </div>
+      <div className="text-border tracking-widest mb-4">{chars}</div>
+      {Array.from({ length: lines }, (_, i) => (
+        <CyclingLine key={i} width={50 + (i % 4) * 15} />
+      ))}
     </div>
-    {Array.from({ length: 12 }, (_, i) => (
-      <TerminalLoadingLine key={i} width={85 + (i % 5) * 7} />
-    ))}
-  </div>
-)
+  )
+}
+
+export const SamSkeleton: React.FC = () => <LoadingBlock lines={12} />
+export const BondsSkeleton: React.FC = () => <LoadingBlock lines={10} />
+export const EventsSkeleton: React.FC = () => <LoadingBlock lines={10} />

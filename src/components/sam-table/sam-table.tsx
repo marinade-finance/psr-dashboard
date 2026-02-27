@@ -50,18 +50,9 @@ const pad = (s: string, w: number): string =>
 const rpad = (s: string, w: number): string =>
   s.length >= w ? s.slice(0, w) : ' '.repeat(w - s.length) + s
 
-// ASCII progress bar
-const asciiBar = (pct: number, width: number = 10): string => {
-  const filled = Math.round((Math.min(pct, 100) / 100) * width)
-  const empty = width - filled
-  return '█'.repeat(filled) + '░'.repeat(empty)
-}
-
 // Column widths
-const W = { rank: 4, name: 22, apy: 9, bond: 30, delta: 16, tip: 52 }
+const W = { rank: 3, name: 24, apy: 8, bond: 22, delta: 14, tip: 0 }
 const SEP = ' │ '
-const TOTAL_W =
-  W.rank + W.name + W.apy + W.bond + W.delta + W.tip + SEP.length * 5
 
 // APY Tooltip component
 const ApyTooltip: React.FC<{
@@ -171,7 +162,7 @@ export const SamTable: React.FC<Props> = ({
     '─┼─' +
     '─'.repeat(W.delta) +
     '─┼─' +
-    '─'.repeat(W.tip)
+    '─'.repeat(60)
 
   const renderTerminalRow = (
     validator: ValidatorWithBondState,
@@ -196,7 +187,8 @@ export const SamTable: React.FC<Props> = ({
         : bondHealth === 'watch'
           ? 'WARN'
           : ' OK '
-    const bondStr = `[${healthTag}] ${rpad(formatSolAmount(selectBondSize(validator), 0) + '◎', 8)} ${asciiBar(bondUtilPct, 8)} ~${Math.round(bondRunway)}ep`
+    const bondAmt = formatSolAmount(selectBondSize(validator), 0)
+    const bondStr = `[${healthTag}] ${bondAmt}◎ ~${Math.round(bondRunway)}ep`
     const deltaStr = `${delta.arrow} ${delta.text}${delta.text !== '—' ? ' ◎' : ''}`
     const tipText = `${tipStyle.icon} ${tip.text.replace(/~?\d+\.\d{3,}/g, m => {
       const n = parseFloat(m.replace(/^~/, ''))
@@ -233,7 +225,7 @@ export const SamTable: React.FC<Props> = ({
         <span className="text-muted-foreground">{SEP}</span>
         <span>{rpad(deltaStr, W.delta)}</span>
         <span className="text-muted-foreground">{SEP}</span>
-        <span className="text-muted-foreground">{pad(tipText, W.tip)}</span>
+        <span className="text-muted-foreground">{tipText}</span>
       </div>
     )
   }
@@ -280,7 +272,7 @@ export const SamTable: React.FC<Props> = ({
           <span>{SEP}</span>
           <span>{rpad('STAKE Δ', W.delta)}</span>
           <span>{SEP}</span>
-          <span>{pad('NEXT STEP', W.tip)}</span>
+          <span>NEXT STEP</span>
         </div>
         <div className="text-muted-foreground">{headerLine}</div>
 
@@ -290,22 +282,11 @@ export const SamTable: React.FC<Props> = ({
         {/* Cutoff */}
         {nonWinningValidators.length > 0 && (
           <div className="text-muted-foreground">
-            {'═'.repeat(
-              W.rank +
-                W.name +
-                W.apy +
-                W.bond +
-                W.delta +
-                W.tip +
-                SEP.length * 5,
-            )}
+            {'═'.repeat(140)}
             {'\n'}
-            {pad(
-              `  ▲ WINNING SET CUTOFF ▲  Winning APY: ${formatPercentage(winningAPY, 2)}  (${winningCount} of ${totalValidators})`,
-              TOTAL_W,
-            )}
+            {`  ▲ WINNING SET CUTOFF ▲  Winning APY: ${formatPercentage(winningAPY, 2)}  (${winningCount} of ${totalValidators})`}
             {'\n'}
-            {'═'.repeat(TOTAL_W)}
+            {'═'.repeat(140)}
           </div>
         )}
 
