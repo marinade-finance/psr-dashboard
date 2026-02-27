@@ -1,128 +1,49 @@
 import React from 'react'
 
-import { Skeleton } from 'src/components/ui/skeleton'
-
-const StatCard: React.FC = () => (
-  <div className="px-5 py-4 border border-border">
-    <Skeleton className="h-3 w-20 mb-3" />
-    <Skeleton className="h-5 w-28" />
-  </div>
-)
-
-const SkeletonRow: React.FC = () => (
-  <div className="flex items-center gap-4 px-4 py-3 border-b border-border-grid">
-    <Skeleton className="h-4 w-6" />
-    <div className="flex flex-col gap-1">
-      <Skeleton className="h-4 w-28" />
-      <Skeleton className="h-3 w-20" />
+const TerminalLoadingLine: React.FC<{ width?: number }> = ({
+  width = 60,
+}) => {
+  const chars = '░'.repeat(width)
+  return (
+    <div className="font-mono text-[12px] text-border animate-pulse">
+      {chars}
     </div>
-    <Skeleton className="h-4 w-16" />
-    <Skeleton className="h-4 w-20" />
-    <Skeleton className="h-4 w-16" />
-    <Skeleton className="h-4 w-40 flex-shrink-0" />
-    <Skeleton className="h-4 w-5 ml-auto" />
-  </div>
-)
+  )
+}
 
 export const SamSkeleton: React.FC = () => (
-  <div className="space-y-6">
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-      <StatCard />
-      <StatCard />
-      <StatCard />
-      <StatCard />
+  <div className="font-mono text-[12px] space-y-1">
+    <TerminalLoadingLine width={80} />
+    <TerminalLoadingLine width={120} />
+    <div className="text-muted-foreground my-2">
+      {'─'.repeat(120)}
     </div>
-    <div className="border border-border overflow-hidden">
-      <div className="flex items-center gap-4 px-4 py-3 border-b border-border">
-        <Skeleton className="h-3 w-6" />
-        <Skeleton className="h-3 w-24" />
-        <Skeleton className="h-3 w-16" />
-        <Skeleton className="h-3 w-20" />
-        <Skeleton className="h-3 w-16" />
-        <Skeleton className="h-3 w-40 flex-shrink-0" />
-        <Skeleton className="h-3 w-5 ml-auto" />
-      </div>
-      {Array.from({ length: 12 }, (_, i) => (
-        <SkeletonRow key={i} />
-      ))}
-    </div>
+    {Array.from({ length: 12 }, (_, i) => (
+      <TerminalLoadingLine key={i} width={100 + (i % 3) * 10} />
+    ))}
   </div>
 )
 
 export const BondsSkeleton: React.FC = () => (
-  <div className="space-y-6">
-    <div className="grid grid-cols-4 gap-3 max-lg:grid-cols-2 max-sm:grid-cols-1">
-      <StatCard />
-      <StatCard />
-      <StatCard />
-      <StatCard />
+  <div className="font-mono text-[12px] space-y-1">
+    <TerminalLoadingLine width={80} />
+    <div className="text-muted-foreground my-2">
+      {'─'.repeat(100)}
     </div>
-    <div className="border border-border overflow-hidden">
-      <div className="flex items-center gap-4 px-4 py-3 border-b border-border">
-        <Skeleton className="h-3 w-28" />
-        <Skeleton className="h-3 w-20" />
-        <Skeleton className="h-3 w-24" />
-        <Skeleton className="h-3 w-20" />
-        <Skeleton className="h-3 w-24" />
-        <Skeleton className="h-3 w-16" />
-      </div>
-      {Array.from({ length: 12 }, (_, i) => (
-        <div
-          key={i}
-          className="flex items-center gap-4 px-4 py-3 border-b border-border-grid"
-        >
-          <div className="flex flex-col gap-1">
-            <Skeleton className="h-4 w-28" />
-            <Skeleton className="h-3 w-20" />
-          </div>
-          <Skeleton className="h-4 w-16" />
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-4 w-16" />
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-4 w-12" />
-        </div>
-      ))}
-    </div>
+    {Array.from({ length: 12 }, (_, i) => (
+      <TerminalLoadingLine key={i} width={90 + (i % 4) * 8} />
+    ))}
   </div>
 )
 
 export const EventsSkeleton: React.FC = () => (
-  <div className="space-y-6">
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-      <StatCard />
-      <StatCard />
-      <StatCard />
-      <StatCard />
-      <StatCard />
+  <div className="font-mono text-[12px] space-y-1">
+    <TerminalLoadingLine width={80} />
+    <div className="text-muted-foreground my-2">
+      {'─'.repeat(100)}
     </div>
-    <div className="flex items-center gap-4 mb-4">
-      <Skeleton className="h-9 w-64" />
-      <Skeleton className="h-9 w-24" />
-      <Skeleton className="h-9 w-24" />
-    </div>
-    <div className="border border-border overflow-hidden">
-      <div className="flex items-center gap-4 px-4 py-3 border-b border-border">
-        <Skeleton className="h-3 w-12" />
-        <Skeleton className="h-3 w-28" />
-        <Skeleton className="h-3 w-20" />
-        <Skeleton className="h-3 w-24" />
-        <Skeleton className="h-3 w-12" />
-      </div>
-      {Array.from({ length: 12 }, (_, i) => (
-        <div
-          key={i}
-          className="flex items-center gap-4 px-4 py-3 border-b border-border-grid"
-        >
-          <Skeleton className="h-4 w-10" />
-          <div className="flex flex-col gap-1">
-            <Skeleton className="h-4 w-28" />
-            <Skeleton className="h-3 w-20" />
-          </div>
-          <Skeleton className="h-4 w-16" />
-          <Skeleton className="h-5 w-20" />
-          <Skeleton className="h-5 w-16" />
-        </div>
-      ))}
-    </div>
+    {Array.from({ length: 12 }, (_, i) => (
+      <TerminalLoadingLine key={i} width={85 + (i % 5) * 7} />
+    ))}
   </div>
 )

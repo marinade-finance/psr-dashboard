@@ -1,7 +1,5 @@
 import React from 'react'
 
-import { Card } from 'src/components/ui/card'
-
 type Props = {
   label: string
   value: React.ReactNode
@@ -9,14 +7,11 @@ type Props = {
 
 export const ComplexMetric: React.FC<Props> = ({ label, value }) => {
   return (
-    <Card className="px-5 py-4">
-      <div className="whitespace-nowrap text-2xs text-muted-foreground font-medium mb-1 uppercase tracking-wider font-mono">
-        {':: '}
-        {label}
+    <div className="font-mono text-[12px] border border-border px-4 py-3">
+      <div className="text-muted-foreground text-[11px] uppercase tracking-wider">
+        :: {label}
       </div>
-      <div className="whitespace-nowrap text-lg font-semibold text-foreground font-mono">
-        {value}
-      </div>
-    </Card>
+      <div className="text-foreground font-bold text-lg">{value}</div>
+    </div>
   )
 }

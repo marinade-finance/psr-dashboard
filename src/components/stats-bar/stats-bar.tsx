@@ -1,7 +1,6 @@
 import React from 'react'
 
 import { HelpTip } from 'src/components/help-tip/help-tip'
-import { Card } from 'src/components/ui/card'
 import { formatSolAmount, formatPercentage } from 'src/format'
 import { HELP_TEXT } from 'src/services/help-text'
 
@@ -20,59 +19,28 @@ export const StatsBar = ({
   winningCount,
   totalValidators,
 }: StatsBarProps) => {
-  const stats: {
-    label: string
-    value: string
-    unit: string
-    help: string | undefined
-  }[] = [
-    {
-      label: 'Total Auction Stake',
-      value: formatSolAmount(totalAuctionStake, 0),
-      unit: '\u25CE',
-      help: undefined,
-    },
-    {
-      label: 'Winning APY',
-      value: formatPercentage(winningApy, 2),
-      unit: '',
-      help: HELP_TEXT.winningApy,
-    },
-    {
-      label: 'Projected APY',
-      value: formatPercentage(projectedApy, 2),
-      unit: '',
-      help: undefined,
-    },
-    {
-      label: 'Winning Validators',
-      value: `${winningCount} / ${totalValidators}`,
-      unit: '',
-      help: undefined,
-    },
-  ]
-
   return (
-    <div className="grid grid-cols-4 gap-3 mb-6 max-lg:grid-cols-2 max-sm:grid-cols-1">
-      {stats.map(stat => (
-        <Card key={stat.label} className="px-5 py-4">
-          <div className="text-2xs text-muted-foreground mb-1 font-mono flex items-center uppercase tracking-wider">
-            {':: '}
-            {stat.label}
-            {stat.help && <HelpTip text={stat.help} />}
-          </div>
-          <div className="flex items-baseline gap-0.5">
-            <span className="text-[22px] font-semibold text-foreground font-mono">
-              {stat.value}
-            </span>
-            {stat.unit && (
-              <span className="text-sm text-muted-foreground font-mono">
-                {stat.unit}
-              </span>
-            )}
-          </div>
-        </Card>
-      ))}
+    <div className="font-mono text-[12px] leading-[1.8] mb-4">
+      <span className="text-muted-foreground">{':: '}</span>
+      TOTAL AUCTION STAKE{' '}
+      <span className="font-bold">
+        {formatSolAmount(totalAuctionStake, 0)}◎
+      </span>
+      {'    '}
+      <span className="text-muted-foreground">{':: '}</span>
+      WINNING APY{' '}
+      <span className="font-bold">{formatPercentage(winningApy, 2)}</span>
+      <HelpTip text={HELP_TEXT.winningApy} />
+      {'    '}
+      <span className="text-muted-foreground">{':: '}</span>
+      PROJECTED APY{' '}
+      <span className="font-bold">{formatPercentage(projectedApy, 2)}</span>
+      {'    '}
+      <span className="text-muted-foreground">{':: '}</span>
+      WINNING{' '}
+      <span className="font-bold">
+        {winningCount} / {totalValidators}
+      </span>
     </div>
   )
 }

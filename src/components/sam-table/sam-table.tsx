@@ -1,14 +1,6 @@
 import React, { useMemo, useRef, useState } from 'react'
 
 import { HelpTip } from 'src/components/help-tip/help-tip'
-import {
-  ShadTable,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from 'src/components/ui/table'
 import { formatPercentage, formatSolAmount } from 'src/format'
 import { HELP_TEXT } from 'src/services/help-text'
 import {
@@ -52,12 +44,24 @@ type Props = {
   nameMap?: Map<string, string>
 }
 
-// ASCII progress bar helper
+// Pad/truncate string to exact width
+const pad = (s: string, w: number): string =>
+  s.length >= w ? s.slice(0, w) : s + ' '.repeat(w - s.length)
+const rpad = (s: string, w: number): string =>
+  s.length >= w ? s.slice(0, w) : ' '.repeat(w - s.length) + s
+
+// ASCII progress bar
 const asciiBar = (pct: number, width: number = 10): string => {
   const filled = Math.round((Math.min(pct, 100) / 100) * width)
   const empty = width - filled
-  return '[' + '█'.repeat(filled) + '░'.repeat(empty) + ']'
+  return '█'.repeat(filled) + '░'.repeat(empty)
 }
+
+// Column widths
+const W = { rank: 4, name: 22, apy: 9, bond: 30, delta: 16, tip: 52 }
+const SEP = ' │ '
+const TOTAL_W =
+  W.rank + W.name + W.apy + W.bond + W.delta + W.tip + SEP.length * 5
 
 // APY Tooltip component
 const ApyTooltip: React.FC<{
@@ -73,58 +77,25 @@ const ApyTooltip: React.FC<{
       ? validator.blockRewardsCommissionDec * 100
       : 0
 
+  const lines = [
+    `┌─── APY COMPOSITION ───────────┐`,
+    `│ Inflation  (${rpad(inflComm.toFixed(0) + '%', 4)} comm)  ${rpad(formatPercentage(breakdown.inflation, 2), 8)} │`,
+    `│ MEV Tips   (${rpad(mevComm.toFixed(0) + '%', 4)} comm)  ${rpad(formatPercentage(breakdown.mev, 2), 8)} │`,
+    `│ Block Rwds (${rpad(blockComm.toFixed(0) + '%', 4)} shrd)  ${rpad(formatPercentage(breakdown.blockRewards, 2), 8)} │`,
+    `│ Stake Bid  (your bid)  ${rpad(formatPercentage(breakdown.stakeBid, 2), 8)} │`,
+    `├───────────────────────────────┤`,
+    `│ TOTAL              ${rpad(formatPercentage(breakdown.total, 2), 10)} │`,
+    `└───────────────────────────────┘`,
+  ]
+
   return (
-    <div className="absolute top-[-4px] left-[calc(100%-16px)] z-[100] border border-border px-4 py-3 min-w-[230px]" style={{ backgroundColor: '#F5E6D3' }}>
-      <div className="text-[11px] text-muted-foreground mb-2 font-mono">
-        APY Composition
-      </div>
-      <div className="text-xs mb-1 font-mono">
-        <span className="text-muted-foreground">| </span>
-        <span className="text-foreground">Inflation</span>
-        <span className="text-muted-foreground text-[10px]">
-          {' '}
-          ({inflComm.toFixed(0)}% comm.)
-        </span>
-        <span className="text-foreground font-mono float-right">
-          {formatPercentage(breakdown.inflation, 2)}
-        </span>
-      </div>
-      <div className="text-xs mb-1 font-mono">
-        <span className="text-muted-foreground">| </span>
-        <span className="text-foreground">MEV Tips</span>
-        <span className="text-muted-foreground text-[10px]">
-          {' '}
-          ({mevComm.toFixed(0)}% comm.)
-        </span>
-        <span className="text-foreground font-mono float-right">
-          {formatPercentage(breakdown.mev, 2)}
-        </span>
-      </div>
-      <div className="text-xs mb-1 font-mono">
-        <span className="text-muted-foreground">| </span>
-        <span className="text-foreground">Block Rewards</span>
-        <span className="text-muted-foreground text-[10px]">
-          {' '}
-          ({blockComm.toFixed(0)}% shared)
-        </span>
-        <span className="text-foreground font-mono float-right">
-          {formatPercentage(breakdown.blockRewards, 2)}
-        </span>
-      </div>
-      <div className="text-xs mb-1 font-mono">
-        <span className="text-muted-foreground">| </span>
-        <span className="text-foreground">Stake Bid</span>
-        <span className="text-muted-foreground text-[10px]"> (your bid)</span>
-        <span className="text-foreground font-mono float-right">
-          {formatPercentage(breakdown.stakeBid, 2)}
-        </span>
-      </div>
-      <div className="border-t border-border mt-1.5 pt-1.5 flex justify-between text-xs font-semibold font-mono">
-        <span className="text-foreground">Total</span>
-        <span className="text-foreground">
-          {formatPercentage(breakdown.total, 2)}
-        </span>
-      </div>
+    <div
+      className="absolute top-0 left-full ml-2 z-[100] whitespace-pre font-mono text-[11px] leading-[1.4] text-foreground"
+      style={{ backgroundColor: '#F5E6D3' }}
+    >
+      {lines.map((line, i) => (
+        <div key={i}>{line}</div>
+      ))}
     </div>
   )
 }
@@ -152,9 +123,8 @@ export const SamTable: React.FC<Props> = ({
     epochsPerYear,
   )
 
-  const tableWrapRef = useRef<HTMLDivElement>(null)
+  const _tableWrapRef = useRef<HTMLDivElement>(null)
   const [hoveredApyRow, setHoveredApyRow] = useState<string | null>(null)
-
 
   const validatorsWithBond: ValidatorWithBondState[] = useMemo(
     () =>
@@ -189,238 +159,160 @@ export const SamTable: React.FC<Props> = ({
   const totalValidators = sortedValidators.length
   const winningCount = winningValidators.length
 
-  const stats: {
-    label: string
-    value: string
-    unit: string
-    help: string | undefined
-  }[] = [
-    {
-      label: 'Total Auction Stake',
-      value: formatSolAmount(samDistributedStake, 0),
-      unit: '\u25CE',
-      help: undefined,
-    },
-    {
-      label: 'Winning APY',
-      value: formatPercentage(winningAPY, 2),
-      unit: '',
-      help: HELP_TEXT.winningApy,
-    },
-    {
-      label: 'Projected APY',
-      value: formatPercentage(projectedApy, 2),
-      unit: '',
-      help: undefined,
-    },
-    {
-      label: 'Winning Validators',
-      value: `${winningCount} / ${totalValidators}`,
-      unit: '',
-      help: undefined,
-    },
-  ]
+  // Header separator line
+  const headerLine =
+    '─'.repeat(W.rank) +
+    '─┼─' +
+    '─'.repeat(W.name) +
+    '─┼─' +
+    '─'.repeat(W.apy) +
+    '─┼─' +
+    '─'.repeat(W.bond) +
+    '─┼─' +
+    '─'.repeat(W.delta) +
+    '─┼─' +
+    '─'.repeat(W.tip)
 
-  const renderRow = (validator: ValidatorWithBondState, index: number) => {
+  const renderTerminalRow = (
+    validator: ValidatorWithBondState,
+    index: number,
+  ) => {
     const voteAccount = selectVoteAccount(validator)
     const rank = index + 1
-    const isSimulated = simulatedValidator === voteAccount
-
-    // Bond health
     const bondUtilPct = calculateBondUtilization(validator)
     const bondRunway = validator.bondGoodForNEpochs ?? 0
     const bondHealth = validator.bondHealth
-    const hasAlert = bondRunway <= 5 || bondUtilPct >= 85
-
-    // Stake delta
     const delta = formatStakeDelta(validator)
-
-    // Tip
     const tip = getValidatorTip(validator, winningAPY, epochsPerYear)
     const tipStyle = getTipStyle(tip.urgency)
-
-    // Max APY
     const maxApy = selectMaxAPY(validator, epochsPerYear)
+    const isSimulated = simulatedValidator === voteAccount
 
-    const healthLabel =
+    const name =
+      nameMap?.get(voteAccount) || `${voteAccount.slice(0, 16)}...`
+    const healthTag =
       bondHealth === 'critical'
-        ? '[CRITICAL]'
+        ? 'CRIT'
         : bondHealth === 'watch'
-          ? '[WATCH]'
-          : '[HEALTHY]'
+          ? 'WARN'
+          : ' OK '
+    const bondStr = `[${healthTag}] ${rpad(formatSolAmount(selectBondSize(validator), 0) + '◎', 8)} ${asciiBar(bondUtilPct, 8)} ~${Math.round(bondRunway)}ep`
+    const deltaStr = `${delta.arrow} ${delta.text}${delta.text !== '—' ? ' ◎' : ''}`
+    const tipText = `${tipStyle.icon} ${tip.text.replace(/~?\d+\.\d{3,}/g, m => {
+      const n = parseFloat(m.replace(/^~/, ''))
+      const prefix = m.startsWith('~') ? '~' : ''
+      return `${prefix}${Math.round(n * 100) / 100}`
+    })}`
 
     return (
-      <TableRow
+      <div
         key={voteAccount}
-        className={`border-b border-border-grid cursor-pointer ${isSimulated ? 'bg-muted' : ''}`}
-
+        className={`cursor-pointer hover:opacity-70 ${isSimulated ? 'font-bold' : ''}`}
         onClick={() => onValidatorClick(voteAccount)}
+        style={{ position: 'relative' }}
       >
-        {/* Rank */}
-        <TableCell className="px-3.5 py-3 text-center text-muted-foreground font-mono text-xs w-10">
-          {rank}
-        </TableCell>
-
-        {/* Validator */}
-        <TableCell className="px-3.5 py-3 min-w-[180px]">
-          <div className="flex items-center gap-1.5">
-            <span className="text-foreground text-[13px] font-mono">
-              {nameMap?.get(voteAccount) || `${voteAccount.slice(0, 8)}...`}
-            </span>
-            {hasAlert && (
-              <span className="text-foreground font-mono text-xs">!</span>
-            )}
-          </div>
-          <div className="text-muted-foreground text-[11px] mt-px font-mono">
-            {voteAccount.slice(0, 12)}...
-          </div>
-        </TableCell>
-
-        {/* Max APY */}
-        <TableCell
-          className="px-3.5 py-3 relative"
-          onMouseEnter={e => {
-            e.stopPropagation()
-            setHoveredApyRow(voteAccount)
-          }}
+        <span>{pad(String(rank), W.rank)}</span>
+        <span className="text-muted-foreground">{SEP}</span>
+        <span>{pad(name, W.name)}</span>
+        <span className="text-muted-foreground">{SEP}</span>
+        <span
+          onMouseEnter={() => setHoveredApyRow(voteAccount)}
           onMouseLeave={() => setHoveredApyRow(null)}
+          style={{ position: 'relative', display: 'inline' }}
         >
-          <span className="font-mono text-[13px] text-foreground">
-            {formatPercentage(maxApy, 2)}
-          </span>
+          {rpad(formatPercentage(maxApy, 2), W.apy)}
           {hoveredApyRow === voteAccount && (
-            <ApyTooltip validator={validator} epochsPerYear={epochsPerYear} />
+            <ApyTooltip
+              validator={validator}
+              epochsPerYear={epochsPerYear}
+            />
           )}
-        </TableCell>
-
-        {/* Bond Health */}
-        <TableCell className="px-3.5 py-3">
-          <div className="flex items-center gap-1.5 mb-1 font-mono text-[11px]">
-            <span className="text-foreground">{healthLabel}</span>
-            <span className="text-muted-foreground">
-              {formatSolAmount(selectBondSize(validator), 0)}
-              {'\u25CE'}
-            </span>
-          </div>
-          <div className="font-mono text-[11px] text-muted-foreground">
-            {asciiBar(bondUtilPct)} ~{Math.round(bondRunway)}ep
-          </div>
-        </TableCell>
-
-        {/* Stake Delta */}
-        <TableCell className="px-3.5 py-3">
-          <span
-            className="font-mono text-[13px]"
-            style={{ color: delta.color }}
-          >
-            {delta.arrow} {delta.text}
-            {delta.text !== '\u2014' && ' \u25CE'}
-          </span>
-        </TableCell>
-
-        {/* Next Step */}
-        <TableCell className="px-3.5 py-3 max-w-[350px]">
-          <span className="font-mono text-xs text-foreground">
-            <span className="text-muted-foreground">{tipStyle.icon} </span>
-            {tip.text.replace(/~?\d+\.\d{3,}/g, m => {
-              const n = parseFloat(m.replace(/^~/, ''))
-              const prefix = m.startsWith('~') ? '~' : ''
-              return `${prefix}${Math.round(n * 100) / 100}`
-            })}
-          </span>
-        </TableCell>
-
-        {/* Chevron */}
-        <TableCell className="px-2.5 py-3 w-10">
-          <span
-            className="font-mono text-sm text-muted-foreground"
-          >
-            {'>'}
-          </span>
-        </TableCell>
-      </TableRow>
+        </span>
+        <span className="text-muted-foreground">{SEP}</span>
+        <span>{pad(bondStr, W.bond)}</span>
+        <span className="text-muted-foreground">{SEP}</span>
+        <span>{rpad(deltaStr, W.delta)}</span>
+        <span className="text-muted-foreground">{SEP}</span>
+        <span className="text-muted-foreground">{pad(tipText, W.tip)}</span>
+      </div>
     )
   }
 
   return (
     <div
-      ref={tableWrapRef}
-      className={`w-full ${isCalculating ? 'opacity-70 pointer-events-none' : ''}`}
+      className={`w-full font-mono text-[12px] leading-[1.6] text-foreground ${isCalculating ? 'opacity-70 pointer-events-none' : ''}`}
     >
-      {/* Stats Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        {stats.map(stat => (
-          <div
-            key={stat.label}
-            className="px-5 py-4 border border-border"
-          >
-            <div className="text-[11px] text-muted-foreground mb-1 font-mono flex items-center gap-1 uppercase tracking-wider">
-              {':: '}
-              {stat.label}
-              {stat.help && <HelpTip text={stat.help} />}
-            </div>
-            <div className="flex items-baseline gap-0.5">
-              <span className="text-[22px] font-semibold text-foreground font-mono">
-                {stat.value}
-              </span>
-              {stat.unit && (
-                <span className="text-sm text-muted-foreground font-mono">
-                  {stat.unit}
-                </span>
-              )}
-            </div>
-          </div>
-        ))}
+      {/* Stats */}
+      <div className="mb-4 whitespace-pre leading-[1.8]">
+        <span className="text-muted-foreground">{':: '}</span>
+        TOTAL AUCTION STAKE{' '}
+        <span className="font-bold">
+          {formatSolAmount(samDistributedStake, 0)}◎
+        </span>
+        {'    '}
+        <span className="text-muted-foreground">{':: '}</span>
+        WINNING APY{' '}
+        <span className="font-bold">{formatPercentage(winningAPY, 2)}</span>
+        <HelpTip text={HELP_TEXT.winningApy} />
+        {'    '}
+        <span className="text-muted-foreground">{':: '}</span>
+        PROJECTED APY{' '}
+        <span className="font-bold">{formatPercentage(projectedApy, 2)}</span>
+        {'    '}
+        <span className="text-muted-foreground">{':: '}</span>
+        WINNING{' '}
+        <span className="font-bold">
+          {winningCount}/{totalValidators}
+        </span>
       </div>
 
       {/* Table */}
-      <div className="border border-border overflow-hidden">
-        <ShadTable className="font-mono text-[13px]">
-          <TableHeader>
-            <TableRow className="border-b border-border-grid">
-              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] w-10 text-center">
-                #
-              </TableHead>
-              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] min-w-[150px]">
-                Validator
-              </TableHead>
-              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] w-[100px]">
-                Max APY
-                <HelpTip text={HELP_TEXT.maxApy} />
-              </TableHead>
-              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] w-40">
-                Bond
-                <HelpTip text={HELP_TEXT.bondHealth} />
-              </TableHead>
-              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] w-[120px]">
-                Stake {'\u0394'}
-                <HelpTip text={HELP_TEXT.stakeDelta} />
-              </TableHead>
-              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] min-w-[200px]">
-                Next Step
-              </TableHead>
-              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] w-10"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {winningValidators.map((v, i) => renderRow(v, i))}
+      <div className="overflow-x-auto whitespace-pre">
+        {/* Header */}
+        <div className="text-muted-foreground">
+          <span>{pad('#', W.rank)}</span>
+          <span>{SEP}</span>
+          <span>{pad('VALIDATOR', W.name)}</span>
+          <span>{SEP}</span>
+          <span>{rpad('MAX APY', W.apy)}</span>
+          <span>{SEP}</span>
+          <span>{pad('BOND', W.bond)}</span>
+          <span>{SEP}</span>
+          <span>{rpad('STAKE Δ', W.delta)}</span>
+          <span>{SEP}</span>
+          <span>{pad('NEXT STEP', W.tip)}</span>
+        </div>
+        <div className="text-muted-foreground">{headerLine}</div>
 
-            {/* Winning Set Cutoff Divider */}
-            {nonWinningValidators.length > 0 && (
-              <TableRow>
-                <TableCell colSpan={7} className="p-0">
-                  <div className="text-center py-2 border-y-2 border-border font-mono text-xs text-muted-foreground">
-                    {'══════════ WINNING SET CUTOFF ══════════'}
-                    {'  '}Winning APY: {formatPercentage(winningAPY, 2)}
-                    {'  '}({winningCount} of {totalValidators})
-                  </div>
-                </TableCell>
-              </TableRow>
+        {/* Winning validators */}
+        {winningValidators.map((v, i) => renderTerminalRow(v, i))}
+
+        {/* Cutoff */}
+        {nonWinningValidators.length > 0 && (
+          <div className="text-muted-foreground">
+            {'═'.repeat(
+              W.rank +
+                W.name +
+                W.apy +
+                W.bond +
+                W.delta +
+                W.tip +
+                SEP.length * 5,
             )}
+            {'\n'}
+            {pad(
+              `  ▲ WINNING SET CUTOFF ▲  Winning APY: ${formatPercentage(winningAPY, 2)}  (${winningCount} of ${totalValidators})`,
+              TOTAL_W,
+            )}
+            {'\n'}
+            {'═'.repeat(TOTAL_W)}
+          </div>
+        )}
 
-            {nonWinningValidators.map((v, i) => renderRow(v, winningCount + i))}
-          </TableBody>
-        </ShadTable>
+        {/* Non-winning validators */}
+        {nonWinningValidators.map((v, i) =>
+          renderTerminalRow(v, winningCount + i),
+        )}
       </div>
     </div>
   )
