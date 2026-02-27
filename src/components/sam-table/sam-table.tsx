@@ -588,25 +588,42 @@ export const SamTable: React.FC<Props> = ({
             const name = meta?.name ?? va
             const isCopied = copiedVa === va
             const sim = !item.isGhost && simulatedValidator === va
+            const rec = getRecommendation(
+              item.validator,
+              item.validator.bondState,
+            )
             return (
-              <span
-                className={cn(
-                  'inline-flex items-center gap-1',
-                  sim && 'font-bold italic',
-                )}
-              >
-                {flag && <span className="text-sm shrink-0">{flag}</span>}
-                <span className="font-medium">
-                  {name.length > 24 ? name.slice(0, 24) + '\u2026' : name}
+              <span className="inline-flex flex-col gap-0.5">
+                <span
+                  className={cn(
+                    'inline-flex items-center gap-1',
+                    sim && 'font-bold italic',
+                  )}
+                >
+                  {flag && <span className="text-sm shrink-0">{flag}</span>}
+                  <span className="font-medium">
+                    {name.length > 24 ? name.slice(0, 24) + '\u2026' : name}
+                  </span>
+                  <span
+                    className="text-xs text-muted-foreground cursor-pointer hover:text-foreground hover:underline"
+                    onClick={e => handleCopy(e, va)}
+                    title={isCopied ? 'Copied!' : 'Click to copy'}
+                  >
+                    {isCopied
+                      ? 'Copied'
+                      : va.slice(0, 4) + '\u2026' + va.slice(-4)}
+                  </span>
                 </span>
                 <span
-                  className="text-xs text-muted-foreground cursor-pointer hover:text-foreground hover:underline"
-                  onClick={e => handleCopy(e, va)}
-                  title={isCopied ? 'Copied!' : 'Click to copy'}
+                  className={cn(
+                    'text-xs whitespace-normal max-w-xs',
+                    rec.severity === 'critical' && 'text-status-red',
+                    rec.severity === 'warning' && 'text-status-yellow',
+                    rec.severity === 'positive' && 'text-status-green',
+                    rec.severity === 'neutral' && 'text-muted-foreground',
+                  )}
                 >
-                  {isCopied
-                    ? 'Copied'
-                    : va.slice(0, 4) + '\u2026' + va.slice(-4)}
+                  {rec.text}
                 </span>
               </span>
             )
@@ -706,35 +723,6 @@ export const SamTable: React.FC<Props> = ({
             selectSamTargetStake(a.validator) -
             selectSamTargetStake(b.validator),
           alignment: Alignment.RIGHT,
-        },
-        {
-          header: 'Next Step',
-          headerAttrsFn: () =>
-            tooltipAttributes(
-              'Recommended action based on bond health and stake status.',
-            ),
-          render: item => {
-            const rec = getRecommendation(
-              item.validator,
-              item.validator.bondState,
-            )
-            return (
-              <span
-                className={cn(
-                  rec.severity === 'critical' && 'text-status-red',
-                  rec.severity === 'warning' && 'text-status-yellow',
-                  rec.severity === 'positive' && 'text-status-green',
-                )}
-              >
-                {rec.text}
-              </span>
-            )
-          },
-          compare: (a, b) => {
-            const ra = getRecommendation(a.validator, a.validator.bondState)
-            const rb = getRecommendation(b.validator, b.validator.bondState)
-            return ra.severity.localeCompare(rb.severity)
-          },
         },
       ]}
       defaultOrder={defaultOrder}
