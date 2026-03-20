@@ -75,6 +75,7 @@ Columns: Epoch, Validator, Name, Settlement, Reason, Funder.
 Default sort: Epoch desc, Settlement desc, Reason desc.
 
 Badges in Settlement column:
+
 - **Estimate** (green) — pending settlement, may change
 - **Dryrun** (dark) — test event, not claimable
 
