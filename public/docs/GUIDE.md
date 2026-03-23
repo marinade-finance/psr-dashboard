@@ -9,8 +9,8 @@ It displays DS SAM max yield auction results, validator bonds on-chain, and prot
 
 The dashboard aggregates data from multiple Marinade APIs:
 
-| API                  | Endpoint                                                                                                     | Purpose                                                                    |
-| -------------------- | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| API                  | Endpoint                                                                                                     | Purpose                                                                     |
+| -------------------- | ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
 | Validators API       | [`validators-api.marinade.finance/validators`](https://validators-api.marinade.finance/docs)                 | Validator information, commissions, stake amounts (updated once per hour)   |
 | Validator Bonds API  | [`validator-bonds-api.marinade.finance/bonds`](https://validator-bonds-api.marinade.finance/docs)            | Bond balances, configurations, commission overrides (updated once per hour) |
 | Protected Events API | [`validator-bonds-api.marinade.finance/protected-events`](https://validator-bonds-api.marinade.finance/docs) | Settlement claims and protected event history (updated once per epoch)      |
@@ -102,17 +102,17 @@ Both methods can be combined. The effective bid combines all components to deter
 
 ### Table Columns
 
-| Column         | Description                                                             |
-| -------------- | ----------------------------------------------------------------------- |
-| **Validator**  | Vote account public key                                                 |
+| Column         | Description                                                              |
+| -------------- | ------------------------------------------------------------------------ |
+| **Validator**  | Vote account public key                                                  |
 | **Infl.**      | Inflation commission - percentage of inflation rewards kept by validator |
 | **MEV**        | MEV commission - percentage of MEV rewards kept by validator             |
 | **Block**      | Block rewards commission - percentage of block rewards kept by validator |
-| **St. Bid**    | Static bid per 1000 SOL set in bond configuration                       |
-| **Bond**       | Current bond balance in SOL                                             |
+| **St. Bid**    | Static bid per 1000 SOL set in bond configuration                        |
+| **Bond**       | Current bond balance in SOL                                              |
 | **Max APY**    | Maximum APY offered based on validator's bid and commission settings     |
-| **SAM Active** | Currently active stake delegated by SAM                                 |
-| **SAM Target** | Target stake based on auction results                                   |
+| **SAM Active** | Currently active stake delegated by SAM                                  |
+| **SAM Target** | Target stake based on auction results                                    |
 | **Eff. Bid**   | Effective bid combining static bid and commission settings               |
 
 ### Participation Requirements

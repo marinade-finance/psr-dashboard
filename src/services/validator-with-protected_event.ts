@@ -79,7 +79,14 @@ export const fetchProtectedEventsWithValidator = async (): Promise<
   let maxScoredEpoch = 0
   for (const entry of scoring) {
     maxScoredEpoch = Math.max(entry.epoch, maxScoredEpoch)
+  }
+
+  const auctionCoversCurrentEpoch = maxStatsEpoch >= maxScoredEpoch
+  for (const entry of scoring) {
     if (entry.epoch <= latestProcessedEpoch) {
+      continue
+    }
+    if (auctionCoversCurrentEpoch && entry.epoch === maxScoredEpoch) {
       continue
     }
     const validator = validatorsMap[entry.voteAccount] ?? null
@@ -110,7 +117,7 @@ export const fetchProtectedEventsWithValidator = async (): Promise<
     }
   }
 
-  if (maxStatsEpoch > maxScoredEpoch) {
+  if (maxStatsEpoch >= maxScoredEpoch) {
     for (const entry of auctionResult.auctionData.validators) {
       const validator = validatorsMap[entry.voteAccount] ?? null
       const penalty =

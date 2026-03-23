@@ -187,7 +187,8 @@
     <script>
       const content = document.getElementById('content')
       const tabs = document.querySelector('.tabs')
-      const expert = new URLSearchParams(location.search).get('from') === 'expert'
+      const expert =
+        new URLSearchParams(location.search).get('from') === 'expert'
 
       if (expert) {
         document.getElementById('back').href = '/expert-'
@@ -202,14 +203,19 @@
         content.innerHTML = 'loading...'
         fetch(name + '.md')
           .then(r => r.text())
-          .then(md => { content.innerHTML = marked.parse(md) })
-          .catch(() => { content.innerHTML = '<p>Error loading doc</p>' })
+          .then(md => {
+            content.innerHTML = marked.parse(md)
+          })
+          .catch(() => {
+            content.innerHTML = '<p>Error loading doc</p>'
+          })
         history.replaceState(null, '', '#' + name)
       }
 
       function activateTab(doc) {
-        tabs.querySelectorAll('.tab').forEach(t =>
-          t.classList.toggle('active', t.dataset.doc === doc))
+        tabs
+          .querySelectorAll('.tab')
+          .forEach(t => t.classList.toggle('active', t.dataset.doc === doc))
         loadDoc(doc)
       }
 

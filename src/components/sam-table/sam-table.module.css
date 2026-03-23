@@ -1,10 +1,6 @@
 .simulationBanner {
   padding: 16px 32px;
-  background: linear-gradient(
-    135deg,
-    rgba(15, 25, 60, 1),
-    rgba(40, 45, 80, 1)
-  );
+  background: linear-gradient(135deg, rgba(15, 25, 60, 1), rgba(40, 45, 80, 1));
   color: #93c5fd;
   font-size: 18px;
   font-weight: 600;
