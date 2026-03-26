@@ -2,11 +2,12 @@
 // Please do not change this file!
 interface CssExports {
   'badge': string;
-  'badgeDryRun': string;
-  'badgeEstimate': string;
+  'badges': string;
   'metricWrap': string;
+  'notif': string;
   'pubkey': string;
   'tableWrap': string;
+  'validatorCell': string;
 }
 export const cssExports: CssExports;
 export default cssExports;
