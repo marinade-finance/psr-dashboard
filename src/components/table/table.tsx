@@ -83,15 +83,18 @@ const renderHeader = <Item,>(
           indicator = defaultOrderDirection === OrderDirection.ASC ? '▲' : '▼'
         }
 
+        const isSortable = column.sortable !== false && !!column.compare
+
         return (
           <th
             key={i}
             className={alignmentClassName(column.alignment)}
-            onClick={() => onSort(i)}
+            onClick={isSortable ? () => onSort(i) : undefined}
+            style={isSortable ? undefined : { cursor: 'default' }}
             {...(column.headerAttrsFn ? column.headerAttrsFn() : {})}
           >
             {column.header}
-            <span className={indicatorClass}>{indicator}</span>
+            {isSortable && <span className={indicatorClass}>{indicator}</span>}
           </th>
         )
       })}
@@ -135,7 +138,8 @@ type Column<Item> = {
   headerAttrsFn?: () => HTMLAttributes<HTMLTableCellElement>
   cellAttrsFn?: (item: Item) => HTMLAttributes<HTMLTableCellElement>
   render: (item: Item, index?: number) => JSX.Element
-  compare: (a: Item, b: Item) => number
+  compare?: (a: Item, b: Item) => number
+  sortable?: boolean
   background?: (item: Item) => Color | undefined
   alignment?: Alignment
 }
@@ -179,6 +183,10 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
     onOrderChange?.(order)
   }, [order, onOrderChange])
 
+  // `columns` is deliberately omitted from deps: call sites pass inline array
+  // literals, so including it would re-sort on every parent render. Sort
+  // results are stable as long as comparators derive their result from the
+  // row data passed in (a, b) — that contract holds for all current consumers.
   const sortedData = useMemo(() => {
     if (presorted) {
       return data
@@ -186,7 +194,7 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
     const items = [...data]
     items.sort((a, b) => {
       for (const [columnIndex, orderDirection] of order) {
-        const compareResult = columns[columnIndex].compare(a, b)
+        const compareResult = columns[columnIndex].compare?.(a, b)
         if (compareResult !== undefined && compareResult !== 0) {
           if (compareResult === Infinity) return 1
           if (compareResult === -Infinity) return -1
@@ -201,6 +209,8 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
   }, [order, data, presorted])
 
   const onSort = (columnIndex: number) => {
+    const column = columns[columnIndex]
+    if (column.sortable === false || !column.compare) return
     const [prevColumn, prevOrder] = userOrder ?? [null, null]
     if (columnIndex === prevColumn) {
       if (prevOrder === OrderDirection.ASC) {
