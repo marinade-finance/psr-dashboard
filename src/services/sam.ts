@@ -231,6 +231,29 @@ export const selectProjectedAPY = (
   return Math.pow(1 + profit / tvl, epochsPerYear) - 1
 }
 
+export const selectIdealAPY = (
+  auctionResult: AuctionResult,
+  epochsPerYear: number,
+) => {
+  const profit = auctionResult.auctionData.validators.reduce(
+    (acc, entry) =>
+      acc +
+      ((entry.revShare.auctionEffectiveBidPmpe +
+        entry.revShare.inflationPmpe +
+        entry.revShare.mevPmpe) *
+        entry.marinadeActivatedStakeSol) /
+        1000,
+    0,
+  )
+  const activeStake = auctionResult.auctionData.validators.reduce(
+    (acc, entry) => acc + entry.marinadeActivatedStakeSol,
+    0,
+  )
+  return activeStake > 0
+    ? Math.pow(1 + profit / activeStake, epochsPerYear) - 1
+    : 0
+}
+
 export const selectStakeToMove = (auctionResult: AuctionResult) =>
   auctionResult.auctionData.validators.reduce(
     (acc, entry) =>
