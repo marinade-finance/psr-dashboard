@@ -3,15 +3,18 @@ import React from 'react'
 import type { Props } from 'src/components/banner/banner'
 
 export const getBannerData = (): Props => ({
-  title: 'Validator Stake Cap Increasing — Step 2 Live at Epoch 946',
+  title: 'Bond Notifications Are Now Live',
   body: (
     <>
       <p>
-        Per-validator stake cap raised from 8% to 15% of TVL, moving yet a bit
-        closer to MIP-19 completion. Following the successful Step 1 raise at
-        Epoch 924, top-performing validators can now acquire even more stake by
-        adjusting <code>maxStakeWanted</code>, topping up bonds and offering
-        competitive bids.
+        Stay on top of your bond without manual checks. Subscribe to get alerts
+        for underfunding, auction exits, eligibility changes, and more — via
+        Telegram or email.
+      </p>
+      <p>
+        <a href="https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market/bond-notifications">
+          Learn more
+        </a>
       </p>
     </>
   ),
