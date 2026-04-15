@@ -3,13 +3,16 @@ import React from 'react'
 import styles from './banner.module.css'
 
 export type Props = {
-  title: string
+  title?: string
   body: JSX.Element
   'data-tooltip-id'?: string
   'data-tooltip-html'?: string
 }
 
 export const Banner: React.FC<Props> = ({ title, body, ...tooltipsProps }) => {
+  if (!title) {
+    return null
+  }
   return (
     <div className={styles.bannerShoutout} {...tooltipsProps}>
       <div>
