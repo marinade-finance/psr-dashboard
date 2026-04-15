@@ -127,7 +127,6 @@ export const selectEprLossBps = (protectedEvent: ProtectedEvent) => {
   if (isProtectedEvent(protectedEvent.reason)) {
     const reason = protectedEvent.reason.ProtectedEvent
     if (isCommissionIncreaseReason(reason)) {
-      // return reason.CommissionIncrease.epr_loss_bps
       return (
         10000 -
         (10000 * (100 - reason.CommissionIncrease.current_commission)) /

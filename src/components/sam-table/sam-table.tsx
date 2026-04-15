@@ -199,7 +199,7 @@ export const SamTable: React.FC<Props> = ({
         ...v,
         bondState: bondHealthColor(v, dsSamConfig.minBondEpochs),
       })),
-    [validators],
+    [validators, dsSamConfig.minBondEpochs],
   )
 
   const hasDataChanged = useMemo(() => {

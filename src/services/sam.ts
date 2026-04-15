@@ -310,7 +310,7 @@ export const formattedOnChainCommission = (
   validator: AuctionValidator,
 ): string => {
   const dec =
-    validator.values?.commissions?.inflationCommissionOnchainDec ||
+    validator.values?.commissions?.inflationCommissionOnchainDec ??
     selectCommission(validator)
   return dec == null ? '-' : formatPercentage(dec, 0)
 }
@@ -346,7 +346,7 @@ export const formattedOnChainMevCommission = (
   validator: AuctionValidator,
 ): string => {
   const dec =
-    validator.values?.commissions?.mevCommissionOnchainDec ||
+    validator.values?.commissions?.mevCommissionOnchainDec ??
     selectMevCommission(validator)
   return dec == null ? '-' : formatPercentage(dec, 0)
 }
