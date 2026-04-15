@@ -20,6 +20,7 @@ export enum Color {
   RED,
   GREEN,
   YELLOW,
+  ORANGE,
   GREY,
 }
 
@@ -42,6 +43,8 @@ const colorClassName = (color?: Color) => {
       return styles.green
     case Color.YELLOW:
       return styles.yellow
+    case Color.ORANGE:
+      return styles.orange
     case Color.GREY:
       return styles.grey
     default:

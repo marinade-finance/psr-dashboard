@@ -404,6 +404,9 @@ export const overridesBlockRewardsCommissionMessage = (
 export const selectBondSize = (validator: AuctionValidator) =>
   validator.bondBalanceSol
 
+export const selectBondHealth = (validator: AuctionValidator) =>
+  validator.bondGoodForNEpochs
+
 export const selectMaxAPY = (
   validator: AuctionValidator,
   epochsPerYear: number,
@@ -420,11 +423,14 @@ export const bondHealthColor = (validator: AuctionValidator): Color => {
   if (!validator.auctionStake.marinadeSamTargetSol) {
     return undefined
   }
-  if (validator.bondGoodForNEpochs > 10) {
+  if (validator.bondGoodForNEpochs > 15) {
     return Color.GREEN
   }
-  if (validator.bondGoodForNEpochs > 2) {
+  if (validator.bondGoodForNEpochs >= 8) {
     return Color.YELLOW
+  }
+  if (validator.bondGoodForNEpochs >= 5) {
+    return Color.ORANGE
   }
   return Color.RED
 }
@@ -432,11 +438,13 @@ export const bondHealthColor = (validator: AuctionValidator): Color => {
 export const bondTooltip = (color: Color) => {
   switch (color) {
     case Color.RED:
-      return 'Your bond balance is not sufficient to cover bidding costs and is limiting the maximum stake you can get. Top up your bond to increase your stake and stay in the auction.'
-    case Color.GREEN:
-      return 'You have enough in the bond to cover at least 2 epochs of bids.'
+      return 'Bond covers fewer than 5 epochs. Top up immediately — your bond balance is limiting max stake.'
+    case Color.ORANGE:
+      return 'Bond covers 5–7 epochs. Consider topping up soon to stay safely in the auction.'
     case Color.YELLOW:
-      return 'Your bond balance is sufficient only to cover one epoch of bids. Top up your bond with enough SOL to stay in the auction'
+      return 'Bond covers 8–12 epochs. Getting low — top up to maintain a comfortable buffer.'
+    case Color.GREEN:
+      return 'Bond covers 16+ epochs. Bond balance is healthy.'
     default:
       return ''
   }

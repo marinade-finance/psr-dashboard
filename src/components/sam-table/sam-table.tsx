@@ -20,6 +20,7 @@ import {
   selectSamActiveStake,
   bondHealthColor,
   bondTooltip,
+  selectBondHealth,
   selectProductiveStake,
   selectIsNonProductive,
   selectTargetProtectedPct,
@@ -232,7 +233,7 @@ export const SamTable: React.FC<Props> = ({
   const inputVal = (field: keyof PendingEdits, fallback: string) =>
     pendingEdits[field] ?? fallback
 
-  const defaultOrder: Order[] = useMemo(() => [[8, OrderDirection.DESC]], [])
+  const defaultOrder: Order[] = useMemo(() => [[9, OrderDirection.DESC]], [])
 
   const [currentOrder, setCurrentOrder] = useState<Order[]>(defaultOrder)
 
@@ -262,12 +263,14 @@ export const SamTable: React.FC<Props> = ({
         case 5:
           return selectBondSize(a) - selectBondSize(b)
         case 6:
-          return selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
+          return selectBondHealth(a) - selectBondHealth(b)
         case 7:
-          return selectSamActiveStake(a) - selectSamActiveStake(b)
+          return selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
         case 8:
-          return selectSamTargetStake(a) - selectSamTargetStake(b)
+          return selectSamActiveStake(a) - selectSamActiveStake(b)
         case 9:
+          return selectSamTargetStake(a) - selectSamTargetStake(b)
+        case 10:
           return selectEffectiveBid(a) - selectEffectiveBid(b)
         default:
           return 0
@@ -766,13 +769,23 @@ export const SamTable: React.FC<Props> = ({
             compare: (a, b) =>
               selectBondSize(a.validator) - selectBondSize(b.validator),
             alignment: Alignment.RIGHT,
-            background:
-              level === UserLevel.Expert
-                ? item =>
-                    selectBondSize(item.validator) <= 0
-                      ? Color.GREY
-                      : item.validator.bondState
-                : undefined,
+          },
+          {
+            header: 'Bond Ep.',
+            headerAttrsFn: () =>
+              tooltipAttributes(
+                'Estimated number of epochs the current bond balance can cover bidding costs.',
+              ),
+            cellAttrsFn: item =>
+              tooltipAttributes(bondTooltip(item.validator.bondState)),
+            render: item => <>{Math.round(selectBondHealth(item.validator))}</>,
+            compare: (a, b) =>
+              selectBondHealth(a.validator) - selectBondHealth(b.validator),
+            alignment: Alignment.RIGHT,
+            background: item =>
+              selectBondSize(item.validator) <= 0
+                ? Color.GREY
+                : item.validator.bondState,
           },
           {
             header: 'Max APY',
