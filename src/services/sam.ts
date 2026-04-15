@@ -212,12 +212,8 @@ export const selectWinningAPY = (
   epochsPerYear: number,
 ) => Math.pow(1 + auctionResult.winningTotalPmpe / 1e3, epochsPerYear) - 1
 
-export const selectProjectedAPY = (
-  auctionResult: AuctionResult,
-  config: DsSamConfig,
-  epochsPerYear: number,
-) => {
-  const profit = auctionResult.auctionData.validators.reduce(
+const selectActiveProfit = (validators: AuctionValidator[]) =>
+  validators.reduce(
     (acc, entry) =>
       acc +
       ((entry.revShare.auctionEffectiveBidPmpe +
@@ -227,6 +223,13 @@ export const selectProjectedAPY = (
         1000,
     0,
   )
+
+export const selectProjectedAPY = (
+  auctionResult: AuctionResult,
+  config: DsSamConfig,
+  epochsPerYear: number,
+) => {
+  const profit = selectActiveProfit(auctionResult.auctionData.validators)
   const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
   return Math.pow(1 + profit / tvl, epochsPerYear) - 1
 }
@@ -235,17 +238,9 @@ export const selectIdealAPY = (
   auctionResult: AuctionResult,
   epochsPerYear: number,
 ) => {
-  const profit = auctionResult.auctionData.validators.reduce(
-    (acc, entry) =>
-      acc +
-      ((entry.revShare.auctionEffectiveBidPmpe +
-        entry.revShare.inflationPmpe +
-        entry.revShare.mevPmpe) *
-        entry.marinadeActivatedStakeSol) /
-        1000,
-    0,
-  )
-  const activeStake = auctionResult.auctionData.validators.reduce(
+  const validators = auctionResult.auctionData.validators
+  const profit = selectActiveProfit(validators)
+  const activeStake = validators.reduce(
     (acc, entry) => acc + entry.marinadeActivatedStakeSol,
     0,
   )
@@ -513,23 +508,17 @@ export const selectTvlApyDiff = (
   altResult: AuctionResult,
   epochsPerYear: number,
 ): number => {
-  const profitOf = (r: AuctionResult) =>
-    r.auctionData.validators.reduce(
-      (acc, entry) =>
-        acc +
-        ((entry.revShare.auctionEffectiveBidPmpe +
-          entry.revShare.inflationPmpe +
-          entry.revShare.mevPmpe) *
-          entry.marinadeActivatedStakeSol) /
-          1000,
-      0,
-    )
-
   const baseTvl = baseResult.auctionData.stakeAmounts.marinadeSamTvlSol
   const altTvl = altResult.auctionData.stakeAmounts.marinadeSamTvlSol
-
   const baseApy =
-    Math.pow(1 + profitOf(baseResult) / baseTvl, epochsPerYear) - 1
-  const altApy = Math.pow(1 + profitOf(altResult) / altTvl, epochsPerYear) - 1
+    Math.pow(
+      1 + selectActiveProfit(baseResult.auctionData.validators) / baseTvl,
+      epochsPerYear,
+    ) - 1
+  const altApy =
+    Math.pow(
+      1 + selectActiveProfit(altResult.auctionData.validators) / altTvl,
+      epochsPerYear,
+    ) - 1
   return altApy - baseApy
 }

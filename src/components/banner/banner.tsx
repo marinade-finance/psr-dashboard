@@ -5,7 +5,6 @@ import styles from './banner.module.css'
 export type Props = {
   title: string
   body: JSX.Element
-  tooltipHtml?: string
   'data-tooltip-id'?: string
   'data-tooltip-html'?: string
 }

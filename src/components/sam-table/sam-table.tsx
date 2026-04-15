@@ -57,9 +57,7 @@ import type {
 } from '@marinade.finance/ds-sam-sdk'
 import type { PendingEdits } from 'src/pages/sam'
 
-type ValidatorWithBondState = AuctionValidator & {
-  bondState: Color | undefined
-}
+type ValidatorWithBondState = AuctionValidator & { bondState?: Color }
 type DisplayValidator = { validator: ValidatorWithBondState; isGhost: boolean }
 type EditField =
   | 'inflationCommission'
@@ -787,6 +785,9 @@ export const SamTable: React.FC<Props> = ({
             cellAttrsFn: item =>
               tooltipAttributes(bondTooltip(item.validator.bondState)),
             render: item => {
+              if (!item.validator.auctionStake.marinadeSamTargetSol) {
+                return <>-</>
+              }
               const h = Math.round(
                 selectBondHealth(item.validator, dsSamConfig.minBondEpochs),
               )

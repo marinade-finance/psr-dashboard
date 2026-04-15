@@ -264,7 +264,6 @@ const calculateLowCreditsEstimates = (
             events.push(event)
           }
         }
-        events.push()
       }
     }
   }
@@ -297,7 +296,6 @@ const calculateCommissionIncreaseEstimates = (
             events.push(event)
           }
         }
-        events.push()
       }
     }
   }
