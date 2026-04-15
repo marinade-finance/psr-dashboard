@@ -424,7 +424,7 @@ export const selectEffectiveCost = (validator: AuctionValidator) =>
 export const bondHealthColor = (
   validator: AuctionValidator,
   minBondEpochs: number,
-): Color => {
+): Color | undefined => {
   if (!validator.auctionStake.marinadeSamTargetSol) {
     return undefined
   }

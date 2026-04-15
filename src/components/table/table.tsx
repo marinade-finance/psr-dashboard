@@ -167,7 +167,7 @@ type Column<Item> = {
   cellAttrsFn?: (item: Item) => HTMLAttributes<HTMLTableCellElement>
   render: (item: Item, index?: number) => JSX.Element
   compare: (a: Item, b: Item) => number
-  background?: (item: Item) => Color
+  background?: (item: Item) => Color | undefined
   alignment?: Alignment
 }
 
