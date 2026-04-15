@@ -435,7 +435,7 @@ export const bondHealthColor = (
   if (health >= 8) {
     return Color.YELLOW
   }
-  if (health >= 5) {
+  if (health >= 3) {
     return Color.ORANGE
   }
   return Color.RED
@@ -446,7 +446,7 @@ export const bondTooltip = (color: Color) => {
     case Color.RED:
       return 'Bond is critically low — stake is being limited and you risk being charged a bond risk fee. Top up immediately.'
     case Color.ORANGE:
-      return 'Bond is significantly limiting your maximum stake — 5–7 epochs above the minimum. Top up soon to avoid undelegation.'
+      return 'Bond is significantly limiting your maximum stake — 3–7 epochs above the minimum. Top up soon to avoid undelegation.'
     case Color.YELLOW:
       return 'Bond is limiting your maximum stake — 8–15 epochs above the minimum. Top up to increase your stake capacity.'
     case Color.GREEN:
