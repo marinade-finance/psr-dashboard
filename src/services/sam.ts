@@ -429,13 +429,13 @@ export const bondHealthColor = (
     return undefined
   }
   const health = selectBondHealth(validator, minBondEpochs)
-  if (health > 15) {
+  if (health >= 13) {
     return Color.GREEN
   }
   if (health >= 8) {
     return Color.YELLOW
   }
-  if (health >= 3) {
+  if (health >= 2) {
     return Color.ORANGE
   }
   return Color.RED
@@ -444,13 +444,13 @@ export const bondHealthColor = (
 export const bondTooltip = (color: Color) => {
   switch (color) {
     case Color.RED:
-      return 'Bond covers fewer than 3 epochs of revenue — stake is being limited and you risk being charged a bond risk fee. Top up immediately.'
+      return 'Bond covers 1 or fewer epochs of revenue — stake is being limited and you risk being charged a bond risk fee. Top up immediately.'
     case Color.ORANGE:
-      return 'Bond covers 3–7 epochs of revenue — top up soon to avoid bond risk fee charges.'
+      return 'Bond covers 2–7 epochs of revenue — top up immediately to avoid bond risk fee charges.'
     case Color.YELLOW:
-      return 'Bond covers 8–15 epochs of revenue — stake is being limited, top up to increase capacity.'
+      return 'Bond covers 8–12 epochs of revenue — stake is starting to be limited, top up to increase capacity.'
     case Color.GREEN:
-      return 'Bond covers more than 15 epochs of revenue — runway is healthy.'
+      return 'Bond covers 13+ epochs of revenue — bond is not limiting your stake.'
     default:
       return ''
   }
