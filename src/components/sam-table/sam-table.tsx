@@ -778,7 +778,13 @@ export const SamTable: React.FC<Props> = ({
               ),
             cellAttrsFn: item =>
               tooltipAttributes(bondTooltip(item.validator.bondState)),
-            render: item => <>{Math.round(selectBondHealth(item.validator))}</>,
+            render: item => (
+              <>
+                {item.validator.auctionStake.marinadeSamTargetSol
+                  ? Math.round(selectBondHealth(item.validator))
+                  : 0}
+              </>
+            ),
             compare: (a, b) =>
               selectBondHealth(a.validator) - selectBondHealth(b.validator),
             alignment: Alignment.RIGHT,
