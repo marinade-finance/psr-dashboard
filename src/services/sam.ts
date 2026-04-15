@@ -28,27 +28,17 @@ const estimateEpochsPerYear = async () => {
   const epochStats = validators.map(({ epoch_stats }) => epoch_stats).flat()
 
   const rangeStart = epochStats.reduce(
-    (acc, { epoch, epoch_start_at, epoch_end_at }) => {
-      if (epoch_start_at === null || epoch_end_at === null) {
-        return acc
-      }
-      if (epoch < acc.epoch) {
-        return { epoch, timestamp: new Date(epoch_start_at).getTime() / 1e3 }
-      }
-      return acc
+    (acc, { epoch, epoch_start_at }) => {
+      if (epoch_start_at === null || epoch >= acc.epoch) return acc
+      return { epoch, timestamp: new Date(epoch_start_at).getTime() / 1e3 }
     },
     { epoch: Infinity, timestamp: Infinity },
   )
 
   const rangeEnd = epochStats.reduce(
-    (acc, { epoch, epoch_start_at, epoch_end_at }) => {
-      if (epoch_start_at === null || epoch_end_at === null) {
-        return acc
-      }
-      if (acc.epoch < epoch) {
-        return { epoch, timestamp: new Date(epoch_end_at).getTime() / 1e3 }
-      }
-      return acc
+    (acc, { epoch, epoch_end_at }) => {
+      if (epoch_end_at === null || epoch <= acc.epoch) return acc
+      return { epoch, timestamp: new Date(epoch_end_at).getTime() / 1e3 }
     },
     { epoch: 0, timestamp: 0 },
   )
@@ -212,21 +202,19 @@ export const selectWinningAPY = (
   epochsPerYear: number,
 ) => Math.pow(1 + auctionResult.winningTotalPmpe / 1e3, epochsPerYear) - 1
 
+const totalProfitPmpe = (v: AuctionValidator) =>
+  v.revShare.auctionEffectiveBidPmpe +
+  v.revShare.inflationPmpe +
+  v.revShare.mevPmpe
+
 const selectActiveProfit = (validators: AuctionValidator[]) =>
   validators.reduce(
-    (acc, entry) =>
-      acc +
-      ((entry.revShare.auctionEffectiveBidPmpe +
-        entry.revShare.inflationPmpe +
-        entry.revShare.mevPmpe) *
-        entry.marinadeActivatedStakeSol) /
-        1000,
+    (acc, v) => acc + (totalProfitPmpe(v) * v.marinadeActivatedStakeSol) / 1000,
     0,
   )
 
 export const selectProjectedAPY = (
   auctionResult: AuctionResult,
-  config: DsSamConfig,
   epochsPerYear: number,
 ) => {
   const profit = selectActiveProfit(auctionResult.auctionData.validators)
@@ -238,10 +226,10 @@ export const selectIdealAPY = (
   auctionResult: AuctionResult,
   epochsPerYear: number,
 ) => {
-  const validators = auctionResult.auctionData.validators
-  const profit = selectActiveProfit(validators)
-  const activeStake = validators.reduce(
-    (acc, entry) => acc + entry.marinadeActivatedStakeSol,
+  const vs = auctionResult.auctionData.validators
+  const profit = selectActiveProfit(vs)
+  const activeStake = vs.reduce(
+    (acc, v) => acc + v.marinadeActivatedStakeSol,
     0,
   )
   return activeStake > 0
@@ -402,7 +390,7 @@ export const selectBondSize = (validator: AuctionValidator) =>
 export const selectBondHealth = (
   validator: AuctionValidator,
   minBondEpochs: number,
-) => Math.max(0, validator.bondGoodForNEpochs - minBondEpochs)
+) => validator.bondGoodForNEpochs - minBondEpochs
 
 export const selectMaxAPY = (
   validator: AuctionValidator,
@@ -485,22 +473,16 @@ export const selectTargetApyDiff = (
   altResult: AuctionResult,
   epochsPerYear: number,
 ): number => {
-  const profitOf = (r: AuctionResult) =>
+  const targetProfit = (r: AuctionResult) =>
     r.auctionData.validators.reduce(
-      (acc, entry) =>
-        acc +
-        ((entry.revShare.auctionEffectiveBidPmpe +
-          entry.revShare.inflationPmpe +
-          entry.revShare.mevPmpe) *
-          entry.auctionStake.marinadeSamTargetSol) /
-          1000,
+      (acc, v) =>
+        acc + (totalProfitPmpe(v) * v.auctionStake.marinadeSamTargetSol) / 1000,
       0,
     )
-
   const tvl = baseResult.auctionData.stakeAmounts.marinadeSamTvlSol
-  const baseApy = Math.pow(1 + profitOf(baseResult) / tvl, epochsPerYear) - 1
-  const altApy = Math.pow(1 + profitOf(altResult) / tvl, epochsPerYear) - 1
-  return altApy - baseApy
+  const apy = (r: AuctionResult) =>
+    Math.pow(1 + targetProfit(r) / tvl, epochsPerYear) - 1
+  return apy(altResult) - apy(baseResult)
 }
 
 export const selectTvlApyDiff = (
@@ -508,17 +490,14 @@ export const selectTvlApyDiff = (
   altResult: AuctionResult,
   epochsPerYear: number,
 ): number => {
-  const baseTvl = baseResult.auctionData.stakeAmounts.marinadeSamTvlSol
-  const altTvl = altResult.auctionData.stakeAmounts.marinadeSamTvlSol
-  const baseApy =
-    Math.pow(
-      1 + selectActiveProfit(baseResult.auctionData.validators) / baseTvl,
-      epochsPerYear,
-    ) - 1
-  const altApy =
-    Math.pow(
-      1 + selectActiveProfit(altResult.auctionData.validators) / altTvl,
-      epochsPerYear,
-    ) - 1
-  return altApy - baseApy
+  const apy = (r: AuctionResult) => {
+    const tvl = r.auctionData.stakeAmounts.marinadeSamTvlSol
+    return (
+      Math.pow(
+        1 + selectActiveProfit(r.auctionData.validators) / tvl,
+        epochsPerYear,
+      ) - 1
+    )
+  }
+  return apy(altResult) - apy(baseResult)
 }

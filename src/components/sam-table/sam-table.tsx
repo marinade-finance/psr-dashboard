@@ -155,11 +155,7 @@ export const SamTable: React.FC<Props> = ({
   } = auctionResult
   const samDistributedStake = Math.round(selectSamDistributedStake(validators))
   const winningAPY = selectWinningAPY(auctionResult, epochsPerYear)
-  const projectedApy = selectProjectedAPY(
-    auctionResult,
-    dsSamConfig,
-    epochsPerYear,
-  )
+  const projectedApy = selectProjectedAPY(auctionResult, epochsPerYear)
   const idealApy = selectIdealAPY(auctionResult, epochsPerYear)
   const stakeToMove = selectStakeToMove(auctionResult) / samDistributedStake
   const activeStake =

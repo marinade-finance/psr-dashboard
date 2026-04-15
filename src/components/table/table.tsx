@@ -99,20 +99,6 @@ const renderHeader = <Item,>(
   )
 }
 
-const renderRows = <Item,>(
-  items: Item[],
-  columns: Column<Item>[],
-  showRowNumber: boolean,
-  rowAttrsFn?: (
-    item: Item,
-    index: number,
-  ) => HTMLAttributes<HTMLTableRowElement>,
-  rowNumberRender?: (item: Item, index: number) => JSX.Element,
-): JSX.Element[] =>
-  items.map((item, i) =>
-    renderRow(item, columns, i, showRowNumber, rowAttrsFn, rowNumberRender),
-  )
-
 const renderRow = <Item,>(
   item: Item,
   columns: Column<Item>[],
@@ -240,12 +226,15 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
         )}
       </thead>
       <tbody>
-        {renderRows(
-          sortedData,
-          columns,
-          showRowNumber ?? false,
-          rowAttrsFn,
-          rowNumberRender,
+        {sortedData.map((item, i) =>
+          renderRow(
+            item,
+            columns,
+            i,
+            showRowNumber ?? false,
+            rowAttrsFn,
+            rowNumberRender,
+          ),
         )}
       </tbody>
     </table>
