@@ -777,7 +777,7 @@ export const SamTable: React.FC<Props> = ({
             alignment: Alignment.RIGHT,
           },
           {
-            header: 'Bond For [ep]',
+            header: 'B. For',
             headerAttrsFn: () =>
               tooltipAttributes(
                 'Epochs of bond runway above the minimum required — hits 0 when undelegation begins.',
