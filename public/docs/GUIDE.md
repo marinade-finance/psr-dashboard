@@ -110,7 +110,7 @@ Both methods can be combined. The effective bid combines all components to deter
 | **Block**      | Block rewards commission - percentage of block rewards kept by validator |
 | **St. Bid**    | Static bid per 1000 SOL set in bond configuration                        |
 | **Bond**       | Current bond balance in SOL                                              |
-| **Good [ep]**     | Epochs the bond is good for above the minimum required. Hits 0 when undelegation begins. Color: green = 13+, yellow = 6–12, orange = 2–5, red ≤ 1 |
+| **Cover. [ep]**     | Epochs the bond covers above the minimum required. Hits 0 when undelegation begins. Color: green = 13+, yellow = 6–12, orange = 2–5, red ≤ 1 |
 | **Max APY**    | Maximum APY offered based on validator's bid and commission settings     |
 | **SAM Active** | Currently active stake delegated by SAM                                  |
 | **SAM Target** | Target stake based on auction results                                    |
