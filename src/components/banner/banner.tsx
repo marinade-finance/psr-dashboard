@@ -10,9 +10,6 @@ export type Props = {
 }
 
 export const Banner: React.FC<Props> = ({ title, body, ...tooltipsProps }) => {
-  if (!title) {
-    return null
-  }
   return (
     <div className={styles.bannerShoutout} {...tooltipsProps}>
       <div>
