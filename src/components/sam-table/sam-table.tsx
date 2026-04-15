@@ -14,6 +14,7 @@ import {
   selectVoteAccount,
   selectWinningAPY,
   selectProjectedAPY,
+  selectIdealAPY,
   selectStakeToMove,
   selectTotalActiveStake,
   selectSamActiveStake,
@@ -158,6 +159,7 @@ export const SamTable: React.FC<Props> = ({
     dsSamConfig,
     epochsPerYear,
   )
+  const idealApy = selectIdealAPY(auctionResult, epochsPerYear)
   const stakeToMove = selectStakeToMove(auctionResult) / samDistributedStake
   const activeStake =
     selectTotalActiveStake(auctionResult) / samDistributedStake
@@ -456,7 +458,7 @@ export const SamTable: React.FC<Props> = ({
     apyMetrics = (
       <Metric
         label="Ideal APY"
-        value={`☉ ${formatPercentage(projectedApy / activeStake)}`}
+        value={`☉ ${formatPercentage(idealApy)}`}
         {...tooltipAttributes(
           'Estimated APY of currently active stake; assumes no Marinade fees; assumes all distributed stake is active',
         )}
