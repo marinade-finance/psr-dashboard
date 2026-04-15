@@ -448,7 +448,7 @@ export const bondTooltip = (color: Color) => {
     case Color.ORANGE:
       return 'Bond covers 5–7 epochs. Consider topping up soon to stay safely in the auction.'
     case Color.YELLOW:
-      return 'Bond covers 8–12 epochs. Getting low — top up to maintain a comfortable buffer.'
+      return 'Bond covers 8–15 epochs. Getting low — top up to maintain a comfortable buffer.'
     case Color.GREEN:
       return 'Bond covers 16+ epochs. Bond balance is healthy.'
     default:
