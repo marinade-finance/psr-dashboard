@@ -448,7 +448,7 @@ export const bondTooltip = (color: Color) => {
     case Color.ORANGE:
       return 'Bond covers 2–5 epochs of revenue — top up immediately to avoid bond risk fee charges.'
     case Color.YELLOW:
-      return 'Bond covers 6–12 epochs of revenue — stake is starting to be limited, top up to increase capacity.'
+      return 'Bond covers 6–12 epochs of revenue — stake is limited, top up to increase capacity.'
     case Color.GREEN:
       return 'Bond covers 13+ epochs of revenue — bond is not limiting your stake.'
     default:
