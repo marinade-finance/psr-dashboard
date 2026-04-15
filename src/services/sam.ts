@@ -444,13 +444,13 @@ export const bondHealthColor = (
 export const bondTooltip = (color: Color) => {
   switch (color) {
     case Color.RED:
-      return 'Bond covers fewer than 5 epochs. Top up immediately — your bond balance is limiting max stake.'
+      return 'Bond runway is critical or in deficit — undelegation is imminent or already in progress. Top up immediately.'
     case Color.ORANGE:
-      return 'Bond covers 5–7 epochs. Consider topping up soon to stay safely in the auction.'
+      return 'Bond is significantly limiting your maximum stake — 5–7 epochs above the minimum. Top up soon to avoid undelegation.'
     case Color.YELLOW:
-      return 'Bond covers 8–15 epochs. Getting low — top up to maintain a comfortable buffer.'
+      return 'Bond is limiting your maximum stake — 8–15 epochs above the minimum. Top up to increase your stake capacity.'
     case Color.GREEN:
-      return 'Bond covers 16+ epochs. Bond balance is healthy.'
+      return 'Bond runway is healthy — 16+ epochs above the minimum.'
     default:
       return ''
   }
