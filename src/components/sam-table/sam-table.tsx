@@ -777,10 +777,10 @@ export const SamTable: React.FC<Props> = ({
             alignment: Alignment.RIGHT,
           },
           {
-            header: 'Bond Ep.',
+            header: 'TTL',
             headerAttrsFn: () =>
               tooltipAttributes(
-                'Estimated number of epochs the current bond balance can cover bidding costs.',
+                'Epochs of bond runway above the minimum required — hits 0 when undelegation begins.',
               ),
             cellAttrsFn: item =>
               tooltipAttributes(bondTooltip(item.validator.bondState)),
