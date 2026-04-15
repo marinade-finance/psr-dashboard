@@ -404,8 +404,10 @@ export const overridesBlockRewardsCommissionMessage = (
 export const selectBondSize = (validator: AuctionValidator) =>
   validator.bondBalanceSol
 
-export const selectBondHealth = (validator: AuctionValidator) =>
-  validator.bondGoodForNEpochs
+export const selectBondHealth = (
+  validator: AuctionValidator,
+  minBondEpochs: number,
+) => Math.max(0, validator.bondGoodForNEpochs - minBondEpochs)
 
 export const selectMaxAPY = (
   validator: AuctionValidator,
@@ -419,17 +421,21 @@ export const selectEffectiveCost = (validator: AuctionValidator) =>
   (validator.marinadeActivatedStakeSol / 1000) *
   validator.revShare.auctionEffectiveBidPmpe
 
-export const bondHealthColor = (validator: AuctionValidator): Color => {
+export const bondHealthColor = (
+  validator: AuctionValidator,
+  minBondEpochs: number,
+): Color => {
   if (!validator.auctionStake.marinadeSamTargetSol) {
     return undefined
   }
-  if (validator.bondGoodForNEpochs > 15) {
+  const health = selectBondHealth(validator, minBondEpochs)
+  if (health > 15) {
     return Color.GREEN
   }
-  if (validator.bondGoodForNEpochs >= 8) {
+  if (health >= 8) {
     return Color.YELLOW
   }
-  if (validator.bondGoodForNEpochs >= 5) {
+  if (health >= 5) {
     return Color.ORANGE
   }
   return Color.RED

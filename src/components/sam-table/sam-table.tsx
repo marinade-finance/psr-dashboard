@@ -201,7 +201,7 @@ export const SamTable: React.FC<Props> = ({
     () =>
       validators.map(v => ({
         ...v,
-        bondState: bondHealthColor(v),
+        bondState: bondHealthColor(v, dsSamConfig.minBondEpochs),
       })),
     [validators],
   )
@@ -263,7 +263,10 @@ export const SamTable: React.FC<Props> = ({
         case 5:
           return selectBondSize(a) - selectBondSize(b)
         case 6:
-          return selectBondHealth(a) - selectBondHealth(b)
+          return (
+            selectBondHealth(a, dsSamConfig.minBondEpochs) -
+            selectBondHealth(b, dsSamConfig.minBondEpochs)
+          )
         case 7:
           return selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
         case 8:
@@ -351,7 +354,10 @@ export const SamTable: React.FC<Props> = ({
         v => v.voteAccount === simulatedValidator,
       )
       if (orig) {
-        const originalValidator = { ...orig, bondState: bondHealthColor(orig) }
+        const originalValidator = {
+          ...orig,
+          bondState: bondHealthColor(orig, dsSamConfig.minBondEpochs),
+        }
         const originalPosition = getOriginalPosition(simulatedValidator)
         const currentSimulatedIndex = display.findIndex(
           d => d.validator.voteAccount === simulatedValidator,
@@ -780,13 +786,14 @@ export const SamTable: React.FC<Props> = ({
               tooltipAttributes(bondTooltip(item.validator.bondState)),
             render: item => (
               <>
-                {item.validator.auctionStake.marinadeSamTargetSol
-                  ? Math.round(selectBondHealth(item.validator))
-                  : 0}
+                {Math.round(
+                  selectBondHealth(item.validator, dsSamConfig.minBondEpochs),
+                )}
               </>
             ),
             compare: (a, b) =>
-              selectBondHealth(a.validator) - selectBondHealth(b.validator),
+              selectBondHealth(a.validator, dsSamConfig.minBondEpochs) -
+              selectBondHealth(b.validator, dsSamConfig.minBondEpochs),
             alignment: Alignment.RIGHT,
             background: item =>
               selectBondSize(item.validator) <= 0
