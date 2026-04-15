@@ -444,13 +444,13 @@ export const bondHealthColor = (
 export const bondTooltip = (color: Color) => {
   switch (color) {
     case Color.RED:
-      return 'Bond covers fewer than 3 epochs — stake is being limited and you risk being charged a bond risk fee. Top up immediately.'
+      return 'Bond covers fewer than 3 epochs of revenue — stake is being limited and you risk being charged a bond risk fee. Top up immediately.'
     case Color.ORANGE:
-      return 'Bond covers 3–7 more epochs — top up soon to avoid bond risk fee charges.'
+      return 'Bond covers 3–7 epochs of revenue — top up soon to avoid bond risk fee charges.'
     case Color.YELLOW:
-      return 'Bond covers 8–15 epochs — stake is being limited, top up to increase capacity.'
+      return 'Bond covers 8–15 epochs of revenue — stake is being limited, top up to increase capacity.'
     case Color.GREEN:
-      return 'Bond covers more than 15 epochs — runway is healthy.'
+      return 'Bond covers more than 15 epochs of revenue — runway is healthy.'
     default:
       return ''
   }
