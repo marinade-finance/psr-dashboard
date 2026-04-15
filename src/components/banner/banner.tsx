@@ -3,7 +3,7 @@ import React from 'react'
 import styles from './banner.module.css'
 
 export type Props = {
-  title?: string
+  title: string
   body: JSX.Element
   'data-tooltip-id'?: string
   'data-tooltip-html'?: string
