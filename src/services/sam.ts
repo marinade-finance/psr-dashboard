@@ -561,3 +561,23 @@ export function isoToFlag(iso: string): string {
     .map(ch => String.fromCodePoint(ch.codePointAt(0) + OFFSET))
     .join('')
 }
+
+export const bondColorState = (
+  validator: AuctionValidator,
+): Color | undefined => bondHealthColor(validator, 0)
+
+export const maxSamStakeTooltip = (
+  validator: AuctionValidator,
+  cfg: { maxTvlDelegation: number; minBondBalanceSol: number },
+): string => {
+  if (0.9 * cfg.maxTvlDelegation <= validator.auctionStake.marinadeSamTargetSol)
+    return 'You have the maximum stake a single validator can get from Marinade.'
+  if (
+    0.9 * validator.maxBondDelegation <=
+    validator.auctionStake.marinadeSamTargetSol
+  )
+    return 'Your bond is limiting your stake allocation. Hint: Top up your bond to receive more stake.'
+  if (validator.bondBalanceSol <= cfg.minBondBalanceSol)
+    return `Your bond is lower than the minimum amount of ${cfg.minBondBalanceSol} SOL. Hint: Top up your bond to start receiving stake from Marinade.`
+  return ''
+}
