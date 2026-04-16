@@ -163,43 +163,6 @@ function renderEditableCell(
   )
 }
 
-function renderEditableCell(
-  isEditing: boolean,
-  displayValue: string,
-  field: EditField,
-  inputValue: string,
-  onFieldChange: (field: EditField, value: string) => void,
-  onRunSimulation: () => void,
-  onCancelEditing: () => void,
-  opts: InputOpts,
-): JSX.Element {
-  if (!isEditing) {
-    return <>{displayValue}</>
-  }
-  return (
-    <div className="relative inline-block">
-      <span className="invisible">{displayValue}</span>
-      <Input
-        type="number"
-        className="absolute right-0 top-1/2 -translate-y-1/2 w-[50px] h-auto px-1 py-0.5 text-xs text-right [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
-        value={inputValue}
-        step={opts.step}
-        min={opts.min}
-        max={opts.max}
-        placeholder={opts.placeholder}
-        onChange={e => onFieldChange(field, e.target.value)}
-        onKeyDown={e => {
-          if (e.key === 'Enter') {
-            onRunSimulation()
-          } else if (e.key === 'Escape') {
-            onCancelEditing()
-          }
-        }}
-      />
-    </div>
-  )
-}
-
 export const SamTable: React.FC<Props> = ({
   auctionResult,
   tvlJoinApyDiff,
