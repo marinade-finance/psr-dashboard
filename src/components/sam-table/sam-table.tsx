@@ -167,7 +167,7 @@ export const SamTable: React.FC<Props> = ({
   auctionResult,
   originalAuctionResult: _originalAuctionResult,
   epochsPerYear,
-  dsSamConfig,
+  dsSamConfig: _dsSamConfig,
   level: _level,
   simulatedValidator,
   isCalculating,
@@ -179,11 +179,7 @@ export const SamTable: React.FC<Props> = ({
   } = auctionResult
   const samDistributedStake = Math.round(selectSamDistributedStake(validators))
   const winningAPY = selectWinningAPY(auctionResult, epochsPerYear)
-  const projectedApy = selectProjectedAPY(
-    auctionResult,
-    dsSamConfig,
-    epochsPerYear,
-  )
+  const projectedApy = selectProjectedAPY(auctionResult, epochsPerYear)
 
   // Ref for click-outside detection
   const tableWrapRef = useRef<HTMLDivElement>(null)
@@ -348,11 +344,10 @@ export const SamTable: React.FC<Props> = ({
 
     const rowClasses = [
       'border-b border-border-grid bg-card transition-colors duration-[120ms] cursor-pointer',
-      !inSet && 'bg-[rgba(220,38,38,0.02)]',
-      isHovered &&
-        (inSet ? 'bg-primary-light-05' : 'bg-[rgba(220,38,38,0.05)]'),
-      !isHovered && inSet && 'hover:bg-primary-light-05',
-      !isHovered && !inSet && 'hover:bg-[rgba(220,38,38,0.05)]',
+      !inSet && 'bg-destructive/[0.02]',
+      isHovered && (inSet ? 'bg-primary-light' : 'bg-destructive/[0.05]'),
+      !isHovered && inSet && 'hover:bg-primary-light',
+      !isHovered && !inSet && 'hover:bg-destructive/[0.05]',
       isSimulated && 'bg-primary-light-10',
     ]
       .filter(Boolean)
@@ -483,7 +478,7 @@ export const SamTable: React.FC<Props> = ({
           <div
             className={`w-7 h-7 rounded-[7px] flex items-center justify-center border transition-all duration-[120ms] ${
               isHovered
-                ? 'bg-primary-light border-[rgba(12,151,144,0.3)]'
+                ? 'bg-primary-light border-primary/30'
                 : 'bg-secondary border-border'
             }`}
           >
@@ -514,14 +509,14 @@ export const SamTable: React.FC<Props> = ({
         {stats.map(stat => (
           <div
             key={stat.label}
-            className="bg-card rounded-xl px-5 py-4 border border-border shadow-xs"
+            className="bg-card rounded-xl px-5 py-4 border border-border shadow-card"
           >
-            <div className="text-xs text-muted-foreground mb-1 font-sans flex items-center gap-1">
+            <div className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground mb-1 flex items-center gap-1">
               {stat.label}
               {stat.help && <HelpTip text={stat.help} />}
             </div>
             <div className="flex items-baseline gap-0.5">
-              <span className="text-[22px] font-semibold text-foreground font-mono">
+              <span className="text-2xl font-semibold text-foreground font-mono">
                 {stat.value}
               </span>
               {stat.unit && (
@@ -535,7 +530,7 @@ export const SamTable: React.FC<Props> = ({
       </div>
 
       {/* Table */}
-      <div className="bg-card rounded-xl border border-border shadow-xs overflow-hidden">
+      <div className="bg-card rounded-xl border border-border shadow-card overflow-hidden">
         <ShadTable className="font-sans text-[13px]">
           <TableHeader>
             <TableRow className="border-b border-border-grid">

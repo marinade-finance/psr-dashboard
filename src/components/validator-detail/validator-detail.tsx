@@ -213,12 +213,14 @@ export const ValidatorDetail = ({
               {inSet ? 'In Set' : 'Out of Set'}
             </span>
           </div>
-          <button
-            className="text-2xl text-muted-foreground hover:text-foreground transition-colors"
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onClose}
+            className="text-muted-foreground hover:text-foreground"
           >
             &times;
-          </button>
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
@@ -371,10 +373,7 @@ export const ValidatorDetail = ({
               </h3>
               <div
                 className="p-3 rounded-lg flex items-center gap-2 text-sm mt-3"
-                style={{
-                  background: tipStyle.bg,
-                  borderLeftColor: tipStyle.color,
-                }}
+                style={{ background: tipStyle.bg, color: tipStyle.color }}
               >
                 <span>{tipStyle.icon}</span>
                 <span>{tip.text}</span>
