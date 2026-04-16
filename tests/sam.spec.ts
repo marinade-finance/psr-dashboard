@@ -25,7 +25,7 @@ test.describe('SAM basic', () => {
 
   test('all 3 metrics visible', async ({ page }) => {
     for (const label of ['Total Auction Stake', 'Winning APY', 'Winning Validators']) {
-      await expect(page.getByText(label)).toBeVisible()
+      await expect(page.getByText(label).first()).toBeVisible()
     }
   })
 

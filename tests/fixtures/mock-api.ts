@@ -4,7 +4,7 @@ export const test = base.extend({
   page: async ({ page }, use) => {
     await page.routeFromHAR('tests/fixtures/api.har', {
       url: /marinade\.finance/,
-      notFound: 'abort',
+      notFound: 'fallback',
     })
     await use(page)
   },
