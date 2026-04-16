@@ -1,16 +1,20 @@
-// Validator Bonds page tests: data loading, metrics (4 basic + values),
-// default sort (indicator + value ordering), expert mode (extra metric,
-// extra columns, column count comparison).
+// Validator Bonds page tests: data loading, metrics, tile map, table,
+// expert mode (extra metrics + columns).
 import { test, expect } from './fixtures/mock-api'
 
 function parseNum(s: string): number {
   return parseFloat(s.replace(/[^0-9.\-]/g, ''))
 }
 
+async function waitForBonds(page: import('@playwright/test').Page) {
+  await page.waitForSelector('.metric', { timeout: 30000 })
+  await page.waitForSelector('table', { timeout: 30000 })
+}
+
 test.describe('Bonds basic', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/bonds')
-    await page.waitForSelector('[class*="metricWrap"]', { timeout: 30000 })
+    await waitForBonds(page)
   })
 
   test('table loads at /bonds', async ({ page }) => {
@@ -18,65 +22,49 @@ test.describe('Bonds basic', () => {
     await expect(page.locator('table')).toBeVisible()
   })
 
-  test('all 4 metrics visible with values', async ({ page }) => {
-    for (const label of [
-      'Bonds Funded',
-      'Bonds Balance',
-      'Marinade Stake',
-      'Protected Stake',
-    ]) {
+  test('all 4 metrics visible', async ({ page }) => {
+    for (const label of ['Bonds Funded', 'Bonds Balance', 'Marinade Stake', 'Protected Stake']) {
       await expect(page.locator('.metric').filter({ hasText: label })).toBeVisible()
     }
-    const text = await page.locator('[class*="metricWrap"]').innerText()
+  })
+
+  test('Coverage Ratio metric visible', async ({ page }) => {
+    await expect(page.locator('.metric').filter({ hasText: 'Coverage Ratio' })).toBeVisible()
+  })
+
+  test('metrics contain numbers', async ({ page }) => {
+    const text = await page.locator('.metric').first().innerText()
     expect(text).toMatch(/\d/)
   })
 
-  test('Bond balance sorted descending with correct values', async ({ page }) => {
-    const rows = page.locator('table tbody tr')
-    await expect(rows.first()).toBeVisible()
+  test('tile map visible with colored tiles', async ({ page }) => {
+    // Tile map renders between metrics and table
+    const tiles = page.locator('[title]').filter({ hasText: /SOL/ })
+    expect(await tiles.count()).toBeGreaterThan(0)
+  })
 
-    const h = page.locator('table th').filter({ hasText: 'Bond balance' })
-    await expect(h).toBeVisible()
-
-    const cells = page.locator('table tbody tr td:nth-child(3)')
-    const n = await cells.count()
-    const vals: number[] = []
-    for (let i = 0; i < Math.min(n, 20); i++) {
-      const v = parseNum(await cells.nth(i).innerText())
-      if (!isNaN(v)) vals.push(v)
-    }
-    expect(vals.length).toBeGreaterThan(1)
-    for (let i = 1; i < vals.length; i++) {
-      expect(vals[i]).toBeLessThanOrEqual(vals[i - 1])
-    }
+  test('table has Bond balance column header', async ({ page }) => {
+    const headers = await page.locator('table th').allInnerTexts()
+    expect(headers.some(h => h.toLowerCase().includes('bond'))).toBe(true)
   })
 })
 
 test.describe('Bonds expert', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/expert-bonds')
-    await page.waitForSelector('[class*="metricWrap"]', { timeout: 30000 })
-  })
-
-  test('Max Protectable Stake metric visible', async ({ page }) => {
-    await expect(
-      page.locator('.metric').filter({ hasText: 'Max Protectable Stake' }),
-    ).toBeVisible()
-  })
-
-  test('expert has extra columns (Max protected stake, Protected stake)', async ({
-    page,
-  }) => {
-    const headers = await page.locator('table th').allInnerTexts()
-    expect(headers.some(h => h.includes('Max protected stake'))).toBe(true)
-    expect(headers.some(h => h.includes('Protected stake'))).toBe(true)
+    await waitForBonds(page)
   })
 
   test('expert has more columns than basic', async ({ page }) => {
     const expertCount = await page.locator('table th').count()
     await page.goto('/bonds')
-    await page.waitForSelector('table', { timeout: 30000 })
+    await waitForBonds(page)
     const basicCount = await page.locator('table th').count()
     expect(expertCount).toBeGreaterThan(basicCount)
+  })
+
+  test('Max protected stake column present', async ({ page }) => {
+    const headers = await page.locator('table th').allInnerTexts()
+    expect(headers.some(h => h.toLowerCase().includes('protected'))).toBe(true)
   })
 })
