@@ -39,6 +39,80 @@ type Props = {
   level: UserLevel
 }
 
+const MIN_TILE = 32
+const MAX_TILE = 120
+
+function coverageClass(ratio: number, hasBond: boolean): string {
+  if (!hasBond) return 'bg-muted/50 border-border'
+  if (ratio >= 0.9) return 'bg-green-500/20 border-green-500'
+  if (ratio >= 0.5) return 'bg-yellow-500/20 border-yellow-500'
+  return 'bg-red-500/20 border-red-500'
+}
+
+function coverageBarColor(ratio: number, hasBond: boolean): string {
+  if (!hasBond) return 'bg-muted-foreground/30'
+  if (ratio >= 0.9) return 'bg-green-500'
+  if (ratio >= 0.5) return 'bg-yellow-500'
+  return 'bg-red-500'
+}
+
+const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
+  data,
+}) => {
+  const active = data.filter(e => selectTotalMarinadeStake(e.validator) > 0)
+  const maxStake = Math.max(
+    ...active.map(e => selectTotalMarinadeStake(e.validator)),
+  )
+
+  return (
+    <div className="px-4 pb-4">
+      <div className="flex flex-wrap gap-1 p-4 bg-card rounded-xl border border-border shadow-card">
+        {active.map(entry => {
+          const stake = selectTotalMarinadeStake(entry.validator)
+          const protectedStake = selectProtectedStake(entry)
+          const hasBond = entry.bond !== null
+          const ratio = stake > 0 ? protectedStake / stake : 0
+          const norm = Math.sqrt(stake / maxStake)
+          const size = Math.round(MIN_TILE + norm * (MAX_TILE - MIN_TILE))
+          const name = selectName(entry.validator)
+          const showText = size >= 48
+
+          return (
+            <div
+              key={selectVoteAccount(entry.validator)}
+              className={`relative flex flex-col justify-between border rounded overflow-hidden shrink-0 ${coverageClass(ratio, hasBond)}`}
+              style={{ width: size, height: size }}
+              {...tooltipAttributes(
+                `${name}<br/>Stake: ${formatSolAmount(stake)} SOL<br/>` +
+                  `Coverage: ${formatPercentage(ratio)}`,
+              )}
+            >
+              {showText && (
+                <div className="flex-1 px-1 pt-1 overflow-hidden">
+                  <div className="text-[10px] font-medium leading-tight truncate">
+                    {name}
+                  </div>
+                  {size >= 64 && (
+                    <div className="text-[9px] text-muted-foreground truncate">
+                      {formatSolAmount(stake)}
+                    </div>
+                  )}
+                </div>
+              )}
+              <div className="h-1 w-full bg-muted/30 shrink-0">
+                <div
+                  className={`h-full ${coverageBarColor(ratio, hasBond)}`}
+                  style={{ width: `${Math.round(ratio * 100)}%` }}
+                />
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
   const totalMarinadeStake = data.reduce(
     (sum, { validator }) => sum + selectTotalMarinadeStake(validator),
@@ -130,13 +204,21 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
         />
         <Metric
           label="Protected Stake"
-          value={formatPercentage(totalProtectedStake / totalMarinadeStake)}
+          value={`${formatSolAmount(totalProtectedStake)} SOL`}
           {...tooltipAttributes(
             "How much of Marinade's stake is protected by validators' deposits to the bonds",
           )}
         />
+        <Metric
+          label="Coverage Ratio"
+          value={formatPercentage(totalProtectedStake / totalMarinadeStake)}
+          {...tooltipAttributes(
+            'Total protected stake as a percentage of total Marinade stake across all validators',
+          )}
+        />
         {expertMetrics}
       </div>
+      <ValidatorBondsTileMap data={data} />
       <div className="px-4 pb-4">
         <div className="bg-card rounded-xl border border-border shadow-card overflow-hidden">
           <Table
