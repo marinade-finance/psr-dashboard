@@ -11,6 +11,14 @@ import {
 import { Color } from 'src/components/table/table'
 import { formatPercentage } from 'src/format'
 
+import {
+  bondHealthColor as _bondHealthColor,
+  bondRunwayEpochs,
+  bondUtilizationPct,
+  compoundApy,
+  isNonProductive as _isNonProductive,
+  stakeDelta as _stakeDelta,
+} from './calculations'
 import { fetchValidatorsWithEpochs } from './validators'
 
 import type {
@@ -256,8 +264,7 @@ export const selectTotalActiveStake = (auctionResult: AuctionResult) =>
   )
 
 export const selectIsNonProductive = (validator: AuctionValidator) =>
-  validator.revShare.bondObligationPmpe <
-  validator.revShare.effParticipatingBidPmpe * 0.9
+  _isNonProductive(validator)
 
 export const selectProductiveStake = (auctionResult: AuctionResult) =>
   auctionResult.auctionData.validators.reduce(
@@ -390,12 +397,12 @@ export const selectBondSize = (validator: AuctionValidator) =>
 export const selectBondHealth = (
   validator: AuctionValidator,
   minBondEpochs: number,
-) => validator.bondGoodForNEpochs - minBondEpochs
+) => bondRunwayEpochs(validator, minBondEpochs)
 
 export const selectMaxAPY = (
   validator: AuctionValidator,
   epochsPerYear: number,
-) => Math.pow(1 + validator.revShare.totalPmpe / 1e3, epochsPerYear) - 1
+) => compoundApy(validator.revShare.totalPmpe, epochsPerYear)
 
 export const selectEffectiveBid = (validator: AuctionValidator) =>
   validator.revShare.auctionEffectiveBidPmpe
@@ -407,22 +414,7 @@ export const selectEffectiveCost = (validator: AuctionValidator) =>
 export const bondHealthColor = (
   validator: AuctionValidator,
   minBondEpochs: number,
-): Color | undefined => {
-  if (!validator.auctionStake.marinadeSamTargetSol) {
-    return undefined
-  }
-  const health = selectBondHealth(validator, minBondEpochs)
-  if (health >= 13) {
-    return Color.GREEN
-  }
-  if (health >= 6) {
-    return Color.YELLOW
-  }
-  if (health >= 2) {
-    return Color.ORANGE
-  }
-  return Color.RED
-}
+): Color | undefined => _bondHealthColor(validator, minBondEpochs)
 
 export const bondTooltip = (color: Color) => {
   switch (color) {
@@ -503,8 +495,7 @@ export const selectTvlApyDiff = (
 }
 
 export const selectStakeDelta = (validator: AuctionValidator): number =>
-  validator.auctionStake.marinadeSamTargetSol -
-  validator.marinadeActivatedStakeSol
+  _stakeDelta(validator)
 
 export type Recommendation = { text: string; severity: string }
 
@@ -550,7 +541,7 @@ export function getRecommendation(
 }
 
 export const selectBondUtilization = (validator: AuctionValidator): number =>
-  Math.min(1, Math.max(0, validator.bondSamHealth ?? 0))
+  bondUtilizationPct(validator) / 100
 
 export function isoToFlag(iso: string): string {
   const upper = iso.toUpperCase()

@@ -46,5 +46,6 @@ export default defineConfig({
   appType: 'mpa',
   test: {
     environment: 'node',
+    include: ['src/**/*.test.ts'],
   },
 })
