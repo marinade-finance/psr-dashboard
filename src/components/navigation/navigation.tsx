@@ -95,11 +95,18 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
           <div className={cn(tab, isActive && tabActive)}>Validator Bonds</div>
         )}
       </NavLink>
+      <NavLink to={`/${prefix}old`}>
+        {({ isActive }) => (
+          <div className={cn(tab, 'ml-auto', isActive && tabActive)}>
+            Classic UI
+          </div>
+        )}
+      </NavLink>
       <a
         href="/docs/"
         className={cn(
           tab,
-          'docsButton ml-auto bg-secondary hover:bg-tertiary hover:text-card-foreground',
+          'docsButton bg-secondary hover:bg-tertiary hover:text-card-foreground',
         )}
       >
         Docs
