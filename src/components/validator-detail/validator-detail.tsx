@@ -1,4 +1,3 @@
-/** @new v2 */
 import React, { useMemo, useState } from 'react'
 
 import { HelpTip } from 'src/components/help-tip/help-tip'
@@ -203,7 +202,13 @@ export const ValidatorDetail = ({
               {voteAccount.slice(0, 8)}...{voteAccount.slice(-4)}
             </span>
             <span
-              className={`px-2 py-0.5 rounded-md text-xs font-medium ${inSet ? 'bg-[var(--primary-light)] text-primary' : 'bg-[var(--destructive-light)] text-destructive'}`}
+              className="px-2 py-0.5 rounded-md text-xs font-medium"
+              style={{
+                background: inSet
+                  ? 'var(--primary-light)'
+                  : 'var(--destructive-light)',
+                color: inSet ? 'var(--primary)' : 'var(--destructive)',
+              }}
             >
               {inSet ? 'In Set' : 'Out of Set'}
             </span>
@@ -295,49 +300,65 @@ export const ValidatorDetail = ({
               </h3>
               <div className="flex h-4 rounded-full overflow-hidden mt-3">
                 <div
-                  className="transition-all bg-chart-1"
+                  className="transition-all"
                   style={{
                     width: `${(apyBreakdown.inflation / apyBreakdown.total) * 100}%`,
+                    background: 'var(--chart-1)',
                   }}
                   title={`Inflation: ${formatPercentage(apyBreakdown.inflation, 2)}`}
                 />
                 <div
-                  className="transition-all bg-chart-2"
+                  className="transition-all"
                   style={{
                     width: `${(apyBreakdown.mev / apyBreakdown.total) * 100}%`,
+                    background: 'var(--chart-2)',
                   }}
                   title={`MEV: ${formatPercentage(apyBreakdown.mev, 2)}`}
                 />
                 <div
-                  className="transition-all bg-chart-3"
+                  className="transition-all"
                   style={{
                     width: `${(apyBreakdown.blockRewards / apyBreakdown.total) * 100}%`,
+                    background: 'var(--chart-3)',
                   }}
                   title={`Block Rewards: ${formatPercentage(apyBreakdown.blockRewards, 2)}`}
                 />
                 <div
-                  className="transition-all bg-chart-4"
+                  className="transition-all"
                   style={{
                     width: `${(apyBreakdown.stakeBid / apyBreakdown.total) * 100}%`,
+                    background: 'var(--chart-4)',
                   }}
                   title={`Stake Bid: ${formatPercentage(apyBreakdown.stakeBid, 2)}`}
                 />
               </div>
               <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
                 <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <span className="w-2 h-2 rounded-full shrink-0 bg-chart-1" />
+                  <span
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{ background: 'var(--chart-1)' }}
+                  />
                   Inflation {formatPercentage(apyBreakdown.inflation, 2)}
                 </span>
                 <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <span className="w-2 h-2 rounded-full shrink-0 bg-chart-2" />
+                  <span
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{ background: 'var(--chart-2)' }}
+                  />
                   MEV {formatPercentage(apyBreakdown.mev, 2)}
                 </span>
                 <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <span className="w-2 h-2 rounded-full shrink-0 bg-chart-3" />
+                  <span
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{ background: 'var(--chart-3)' }}
+                  />
                   Blocks {formatPercentage(apyBreakdown.blockRewards, 2)}
                 </span>
                 <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <span className="w-2 h-2 rounded-full shrink-0 bg-chart-4" />
+                  <span
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{ background: 'var(--chart-4)' }}
+                  />
                   Bid {formatPercentage(apyBreakdown.stakeBid, 2)}
                 </span>
               </div>
@@ -349,7 +370,7 @@ export const ValidatorDetail = ({
                 <HelpTip text="Actionable recommendation based on your current position and constraints." />
               </h3>
               <div
-                className="p-3 rounded-lg border-l-4 flex items-center gap-2 text-sm mt-3"
+                className="p-3 rounded-lg flex items-center gap-2 text-sm mt-3"
                 style={{
                   background: tipStyle.bg,
                   borderLeftColor: tipStyle.color,

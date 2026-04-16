@@ -77,19 +77,19 @@ type Props = {
   tvlLeaveApyDiff: number
   backstopDiff: number
   backstopTvl: number
-  originalAuctionResult: AuctionResult | null
+  originalAuctionResult?: AuctionResult | null
   epochsPerYear: number
   dsSamConfig: DsSamConfig
   level: UserLevel
-  simulationModeActive: boolean
-  editingValidator: string | null
-  simulatedValidator: string | null
-  isCalculating: boolean
-  pendingEdits: PendingEdits
-  onValidatorClick: (voteAccount: string) => void
-  onFieldChange: (field: EditField, value: string) => void
-  onRunSimulation: () => void
-  onCancelEditing: () => void
+  simulationModeActive?: boolean
+  editingValidator?: string | null
+  simulatedValidator?: string | null
+  isCalculating?: boolean
+  pendingEdits?: PendingEdits
+  onValidatorClick?: (voteAccount: string) => void
+  onFieldChange?: (field: EditField, value: string) => void
+  onRunSimulation?: () => void
+  onCancelEditing?: () => void
   onToggleSimulation?: () => void
   validatorMeta?: Map<string, { name?: string; countryIso?: string | null }>
 }
@@ -137,19 +137,19 @@ export const ClassicSamTable: React.FC<Props> = ({
   tvlLeaveApyDiff,
   backstopDiff,
   backstopTvl,
-  originalAuctionResult,
+  originalAuctionResult = null,
   epochsPerYear,
   dsSamConfig,
   level,
-  simulationModeActive,
-  editingValidator,
-  simulatedValidator,
-  isCalculating,
-  pendingEdits,
-  onValidatorClick,
-  onFieldChange,
-  onRunSimulation,
-  onCancelEditing,
+  simulationModeActive = false,
+  editingValidator = null,
+  simulatedValidator = null,
+  isCalculating = false,
+  pendingEdits = {},
+  onValidatorClick = () => undefined,
+  onFieldChange = () => undefined,
+  onRunSimulation = () => undefined,
+  onCancelEditing = () => undefined,
 }) => {
   const {
     auctionData: { validators },

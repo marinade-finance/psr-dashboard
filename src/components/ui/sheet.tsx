@@ -17,12 +17,21 @@ export function Sheet({ open, onOpenChange, children }: SheetProps) {
     return () => document.removeEventListener('keydown', handler)
   }, [open, onOpenChange])
 
+  useEffect(() => {
+    if (!open) return undefined
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [open])
+
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex">
+    <div className="fixed inset-0 z-50">
       <div
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm"
+        className="fixed inset-0 bg-black/50"
+        style={{ animation: 'sheet-fade-in 150ms ease' }}
         onClick={() => onOpenChange(false)}
       />
       {children}
@@ -41,15 +50,26 @@ export function SheetContent({
   className,
   children,
 }: SheetContentProps) {
-  const base =
-    'relative z-50 bg-background shadow-xl overflow-y-auto flex-shrink-0'
+  const base = 'fixed z-50 bg-background shadow-xl overflow-y-auto'
   const sideClass =
     side === 'right'
-      ? 'ml-auto h-full'
+      ? 'inset-y-0 right-0 h-full border-l border-border'
       : side === 'left'
-        ? 'mr-auto h-full'
+        ? 'inset-y-0 left-0 h-full border-r border-border'
         : side === 'top'
-          ? 'w-full mt-auto'
-          : 'w-full mb-auto'
-  return <div className={cn(base, sideClass, className)}>{children}</div>
+          ? 'inset-x-0 top-0 border-b border-border'
+          : 'inset-x-0 bottom-0 border-t border-border'
+
+  const animationStyle =
+    side === 'right'
+      ? { animation: 'sheet-slide-in-right 300ms ease' }
+      : side === 'left'
+        ? { animation: 'sheet-slide-in-right 300ms ease reverse' }
+        : {}
+
+  return (
+    <div className={cn(base, sideClass, className)} style={animationStyle}>
+      {children}
+    </div>
+  )
 }
