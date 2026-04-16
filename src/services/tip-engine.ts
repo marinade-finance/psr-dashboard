@@ -31,34 +31,31 @@ export interface TipStyle {
 
 export { getBondHealth }
 
-const CLS_DESTRUCTIVE = 'text-destructive'
-const CLS_DESTRUCTIVE_BG = 'bg-destructive/10'
-const CLS_WARNING = 'text-warning'
-const CLS_WARNING_BG = 'bg-warning/10'
-const CLS_PRIMARY = 'text-primary'
-const CLS_PRIMARY_BG = 'bg-primary/10'
-const CLS_MUTED = 'text-muted-foreground'
+const VAR_DESTRUCTIVE = 'var(--destructive)'
+const VAR_WARNING = 'var(--warning)'
+const VAR_MUTED_FG = 'var(--muted-foreground)'
+const VAR_PRIMARY = 'var(--primary)'
 
 export const getBondHealthStyle = (
   health: 'healthy' | 'watch' | 'critical',
 ): { color: string; bg: string; label: string } => {
   if (health === 'critical') {
     return {
-      color: CLS_DESTRUCTIVE,
-      bg: CLS_DESTRUCTIVE_BG,
+      color: VAR_DESTRUCTIVE,
+      bg: 'var(--destructive-light)',
       label: 'Critical',
     }
   }
   if (health === 'watch') {
     return {
-      color: CLS_WARNING,
-      bg: CLS_WARNING_BG,
+      color: VAR_WARNING,
+      bg: 'var(--warning-light)',
       label: 'Watch',
     }
   }
   return {
-    color: CLS_PRIMARY,
-    bg: CLS_PRIMARY_BG,
+    color: VAR_PRIMARY,
+    bg: 'var(--primary-light-10)',
     label: 'Healthy',
   }
 }
@@ -67,32 +64,32 @@ export const getTipStyle = (urgency: TipUrgency): TipStyle => {
   switch (urgency) {
     case 'critical':
       return {
-        color: CLS_DESTRUCTIVE,
-        bg: CLS_DESTRUCTIVE_BG,
+        color: VAR_DESTRUCTIVE,
+        bg: 'var(--destructive-light)',
         icon: '\u26A0',
       }
     case 'warning':
       return {
-        color: CLS_WARNING,
-        bg: CLS_WARNING_BG,
+        color: VAR_WARNING,
+        bg: 'var(--warning-light)',
         icon: '\u2197',
       }
     case 'info':
       return {
-        color: 'text-info',
-        bg: 'bg-info/10',
+        color: 'var(--info)',
+        bg: 'var(--info-light)',
         icon: '\uD83D\uDCA1',
       }
     case 'positive':
       return {
-        color: CLS_PRIMARY,
-        bg: CLS_PRIMARY_BG,
+        color: VAR_PRIMARY,
+        bg: 'var(--primary-light-10)',
         icon: '\u2713',
       }
     default:
       return {
-        color: CLS_MUTED,
-        bg: 'bg-muted',
+        color: VAR_MUTED_FG,
+        bg: 'var(--muted)',
         icon: '\u2192',
       }
   }
@@ -140,7 +137,6 @@ export const getValidatorTip = (
   }
 
   if (health === 'watch' && bidPmpe < 15) {
-    // bidPmpe is in PMPE (per mille per epoch), divide by 10 to get percentage
     return {
       text: `Bid at ${(bidPmpe / 10).toFixed(2)}% is below median. Raise to 0.15-0.25% to gain rank.`,
       urgency: 'warning',
@@ -233,7 +229,7 @@ export const formatStakeDelta = (
   const inSet = samTarget > 0
 
   if (!inSet) {
-    return { text: '\u2014', color: CLS_MUTED, arrow: '' }
+    return { text: '\u2014', color: VAR_MUTED_FG, arrow: '' }
   }
 
   const delta = Math.round(samTarget - samActive)
@@ -241,16 +237,16 @@ export const formatStakeDelta = (
   if (delta > 0) {
     return {
       text: `+${delta.toLocaleString()}`,
-      color: CLS_PRIMARY,
+      color: VAR_PRIMARY,
       arrow: '\u2191',
     }
   }
   if (delta < 0) {
     return {
       text: delta.toLocaleString(),
-      color: CLS_DESTRUCTIVE,
+      color: VAR_DESTRUCTIVE,
       arrow: '\u2193',
     }
   }
-  return { text: '0', color: CLS_MUTED, arrow: '\u2192' }
+  return { text: '0', color: VAR_MUTED_FG, arrow: '\u2192' }
 }

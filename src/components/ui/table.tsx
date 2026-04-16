@@ -90,3 +90,5 @@ export const TableCaption = React.forwardRef<
   />
 ))
 TableCaption.displayName = 'TableCaption'
+
+export { Table as ShadTable }

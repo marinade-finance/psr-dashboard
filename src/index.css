@@ -74,6 +74,11 @@
     --primary: #0c9790;
     --primary-foreground: #f6f9f9;
     --primary-alpha: rgba(12, 151, 144, 0.15);
+    --primary-light: rgba(12, 151, 144, 0.08);
+    --primary-light-10: rgba(12, 151, 144, 0.1);
+    --destructive-light: rgba(220, 38, 38, 0.1);
+    --warning-light: rgba(229, 150, 6, 0.1);
+    --info-light: rgba(99, 102, 241, 0.1);
     --destructive: #dc2626;
     --destructive-foreground: #f6f9f9;
     --popover: #ffffff;
@@ -125,6 +130,11 @@
     --primary: #179f99;
     --primary-foreground: #042f2e;
     --primary-alpha: rgba(23, 159, 153, 0.2);
+    --primary-light: rgba(23, 159, 153, 0.08);
+    --primary-light-10: rgba(23, 159, 153, 0.1);
+    --destructive-light: rgba(248, 113, 113, 0.15);
+    --warning-light: rgba(251, 146, 60, 0.15);
+    --info-light: rgba(129, 140, 248, 0.15);
     --destructive: #f87171;
     --destructive-foreground: #042f2e;
     --popover: #182120;
