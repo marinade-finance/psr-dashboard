@@ -24,8 +24,6 @@ import {
 import type { ProtectedEvent } from 'src/services/protected-events'
 import type { ProtectedEventWithValidator } from 'src/services/validator-with-protected_event'
 
-const NO_NAME = '---'
-
 const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
   switch (status) {
     case ProtectedEventStatus.DRYRUN:
@@ -57,33 +55,34 @@ const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
   }
 }
 
-const renderProtectedEventFunder = (protectedEvent: ProtectedEvent) => {
-  switch (protectedEvent.meta.funder) {
-    case 'Marinade':
-      return (
-        <span
-          className="cursor-help"
-          {...tooltipAttributes(
-            "This settlement is funded by Marinade DAO because the yield loss<br />is beyond what the validator's are expected to cover.",
-          )}
-        >
-          Marinade
-        </span>
-      )
-    case 'ValidatorBond':
-      return (
-        <span
-          className="cursor-help"
-          {...tooltipAttributes(
-            'This settlement is funded by the validator because the yield loss<br />is within amount which the validator is expected to cover.',
-          )}
-        >
-          Validator
-        </span>
-      )
-    default:
-      return null
+const renderFunderBadge = (protectedEvent: ProtectedEvent) => {
+  if (protectedEvent.meta.funder === 'ValidatorBond') {
+    return (
+      <Badge
+        variant="outline"
+        {...tooltipAttributes(
+          "The validator's own bond covered this settlement — the validator paid.",
+        )}
+        className="cursor-help bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/30"
+      >
+        Validator Bond
+      </Badge>
+    )
   }
+  if (protectedEvent.meta.funder === 'Marinade') {
+    return (
+      <Badge
+        variant="outline"
+        {...tooltipAttributes(
+          "Marinade's backstop covered this settlement — the validator's bond was insufficient.",
+        )}
+        className="cursor-help bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30"
+      >
+        Marinade
+      </Badge>
+    )
+  }
+  return null
 }
 
 type Props = {
@@ -132,17 +131,23 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
 
   const totalEvents = data.length
   const filteredEvents = filteredData.length
-  const totalAmount = data.reduce(
-    (sum, { protectedEvent }) => sum + selectAmount(protectedEvent),
+
+  const validatorBondTotal = data.reduce(
+    (sum, { protectedEvent }) =>
+      protectedEvent.meta.funder === 'ValidatorBond'
+        ? sum + selectAmount(protectedEvent)
+        : sum,
     0,
   )
-  const filteredAmount = filteredData.reduce(
-    (sum, { protectedEvent }) => sum + selectAmount(protectedEvent),
+  const marinadePaidTotal = data.reduce(
+    (sum, { protectedEvent }) =>
+      protectedEvent.meta.funder === 'Marinade'
+        ? sum + selectAmount(protectedEvent)
+        : sum,
     0,
   )
-  const lastSettledEpochAmount = filteredData
-    .filter(({ protectedEvent: { epoch } }) => epoch === lastSettledEpoch)
-    .reduce((sum, { protectedEvent }) => sum + selectAmount(protectedEvent), 0)
+  const totalAmount = validatorBondTotal + marinadePaidTotal
+
   const lastEpochBids = preFilteredData
     .filter(
       ({ protectedEvent }) =>
@@ -151,54 +156,55 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
     )
     .reduce((sum, { protectedEvent }) => sum + selectAmount(protectedEvent), 0)
 
-  let expertMetrics
-  if (level === UserLevel.Expert) {
-    expertMetrics = (
-      <Metric
-        label="Last Epoch Bids"
-        value={`${formatSolAmount(lastEpochBids)} SOL`}
-        {...tooltipAttributes("Last Settled Epoch's Bids collectable By Users")}
-      />
-    )
-  }
-
   const filtered = preFilteredData.length !== data.length
 
   return (
     <div className="relative">
       <div className="metricWrap grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 px-4 pb-4">
         <Metric
-          label="Total events"
+          label="Total Protected"
           value={totalEvents.toLocaleString()}
-          {...tooltipAttributes('Total Count of Protected Events')}
+          {...tooltipAttributes(
+            'Total number of protected events paid out to stakers',
+          )}
         />
         <Metric
-          label="Total amount"
+          label="Validator Bond Paid"
+          value={`${formatSolAmount(validatorBondTotal)} SOL`}
+          {...tooltipAttributes(
+            "SOL paid from validators' own bonds — validator covered their stakers' loss",
+          )}
+        />
+        <Metric
+          label="Marinade Paid"
+          value={`${formatSolAmount(marinadePaidTotal)} SOL`}
+          {...tooltipAttributes(
+            "SOL paid by Marinade's backstop — validator bond was insufficient",
+          )}
+        />
+        <Metric
+          label="Total SOL to Stakers"
           value={`${formatSolAmount(totalAmount)} SOL`}
-          {...tooltipAttributes('Total Amount of SOL Claimable by Users')}
+          {...tooltipAttributes(
+            'Total SOL paid out to stakers across all protected events',
+          )}
         />
         {filtered && (
           <Metric
             label="Filtered Events"
             value={filteredEvents.toLocaleString()}
-            {...tooltipAttributes('Count of Filtered Protected Events')}
+            {...tooltipAttributes('Count of filtered protected events')}
           />
         )}
-        {filtered && (
+        {level === UserLevel.Expert && (
           <Metric
-            label="Filtered Amount"
-            value={`${formatSolAmount(filteredAmount)} SOL`}
-            {...tooltipAttributes('Filtered Amount of SOL Claimable By Users')}
+            label="Last Epoch Bids"
+            value={`${formatSolAmount(lastEpochBids)} SOL`}
+            {...tooltipAttributes(
+              "Last settled epoch's bids collectable by users",
+            )}
           />
         )}
-        <Metric
-          label="Last Settled Amount"
-          value={`${formatSolAmount(lastSettledEpochAmount)} SOL`}
-          {...tooltipAttributes(
-            "Last Settled Epoch's Amount of SOL Claimable By Users",
-          )}
-        />
-        {expertMetrics}
       </div>
       <div className="px-4 mb-4 [&_fieldset]:inline-block [&_fieldset]:mr-2.5 [&_fieldset]:border-transparent [&_legend]:text-[11px] [&_legend]:uppercase [&_legend]:tracking-wider [&_legend]:font-medium [&_legend]:text-muted-foreground [&_legend]:mb-1">
         <fieldset>
@@ -232,17 +238,12 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
             data={filteredData}
             columns={[
               {
-                header: 'Epoch',
-                render: ({ protectedEvent }) => <>{protectedEvent.epoch}</>,
-                compare: (a, b) =>
-                  a.protectedEvent.epoch - b.protectedEvent.epoch,
-                alignment: Alignment.RIGHT,
-              },
-              {
                 header: 'Validator',
-                render: ({ protectedEvent }) => (
+                render: ({ protectedEvent, validator }) => (
                   <span className={TRUNCATED_CELL}>
-                    {protectedEvent.vote_account}
+                    {validator
+                      ? (selectName(validator) ?? protectedEvent.vote_account)
+                      : protectedEvent.vote_account}
                   </span>
                 ),
                 compare: (a, b) =>
@@ -251,33 +252,10 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
                   ),
               },
               {
-                header: 'Name',
-                render: ({ validator }) => (
-                  <span className={TRUNCATED_CELL}>
-                    {validator ? selectName(validator) : NO_NAME}
-                  </span>
-                ),
+                header: 'Epoch',
+                render: ({ protectedEvent }) => <>{protectedEvent.epoch}</>,
                 compare: (a, b) =>
-                  (a.validator
-                    ? (selectName(a.validator) ?? NO_NAME)
-                    : NO_NAME
-                  ).localeCompare(
-                    b.validator
-                      ? (selectName(b.validator) ?? NO_NAME)
-                      : NO_NAME,
-                  ),
-              },
-              {
-                header: 'Settlement [SOL]',
-                render: ({ protectedEvent, status }) => (
-                  <>
-                    {renderProtectedEventStatus(status)}{' '}
-                    {formatSolAmount(selectAmount(protectedEvent))}
-                  </>
-                ),
-                compare: (a, b) =>
-                  selectAmount(a.protectedEvent) -
-                  selectAmount(b.protectedEvent),
+                  a.protectedEvent.epoch - b.protectedEvent.epoch,
                 alignment: Alignment.RIGHT,
               },
               {
@@ -286,13 +264,38 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
                   <>{selectProtectedStakeReason(protectedEvent)}</>
                 ),
                 compare: (a, b) =>
-                  selectEprLossBps(a.protectedEvent) -
-                  selectEprLossBps(b.protectedEvent),
+                  selectProtectedStakeReason(a.protectedEvent).localeCompare(
+                    selectProtectedStakeReason(b.protectedEvent),
+                  ),
               },
               {
-                header: 'Funder',
+                header: 'Staker Loss',
+                render: ({ protectedEvent }) => {
+                  const bps = selectEprLossBps(protectedEvent)
+                  return <>{bps ? `${Math.round(bps)} bps` : '—'}</>
+                },
+                compare: (a, b) =>
+                  selectEprLossBps(a.protectedEvent) -
+                  selectEprLossBps(b.protectedEvent),
+                alignment: Alignment.RIGHT,
+              },
+              {
+                header: 'Paid Out',
+                render: ({ protectedEvent, status }) => (
+                  <>
+                    {renderProtectedEventStatus(status)}{' '}
+                    {formatSolAmount(selectAmount(protectedEvent))} SOL
+                  </>
+                ),
+                compare: (a, b) =>
+                  selectAmount(a.protectedEvent) -
+                  selectAmount(b.protectedEvent),
+                alignment: Alignment.RIGHT,
+              },
+              {
+                header: 'Funded by',
                 render: ({ protectedEvent }) =>
-                  renderProtectedEventFunder(protectedEvent),
+                  renderFunderBadge(protectedEvent),
                 compare: (a, b) =>
                   a.protectedEvent.meta.funder.localeCompare(
                     b.protectedEvent.meta.funder,
@@ -300,8 +303,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
               },
             ]}
             defaultOrder={[
-              [0, OrderDirection.DESC],
-              [3, OrderDirection.DESC],
+              [1, OrderDirection.DESC],
               [4, OrderDirection.DESC],
             ]}
           />
