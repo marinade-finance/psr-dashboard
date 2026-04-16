@@ -14,12 +14,12 @@ export const Metric: React.FC<Props> = ({
   value,
   'data-tooltip-html': tooltipHtml,
 }) => (
-  <div className="metric px-5 py-2.5 bg-card rounded-xl shadow-card border border-border-grid transition-shadow hover:shadow-hover">
-    <div className="flex items-center gap-1 whitespace-nowrap text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
+  <div className="metric px-5 py-4 bg-card rounded-xl shadow-card border border-border transition-shadow hover:shadow-hover">
+    <div className="flex items-center gap-1 whitespace-nowrap text-[11px] uppercase tracking-wider font-medium text-muted-foreground mb-1">
       {label}
       {tooltipHtml && <HelpTip html={tooltipHtml} />}
     </div>
-    <div className="metricValue mt-2.5 text-2xl truncate sm:whitespace-nowrap">
+    <div className="metricValue text-2xl font-semibold font-mono truncate sm:whitespace-nowrap">
       {value}
     </div>
   </div>
