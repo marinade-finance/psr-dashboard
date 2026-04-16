@@ -8,7 +8,7 @@ export const formatSolAmount = (amount: number, digits = 2) =>
     maximumFractionDigits: digits,
   })
 
-export const formatPercentageString = (
+const formatPercentageString = (
   amount: number,
   fractionDigits: number = 2,
 ): string => {

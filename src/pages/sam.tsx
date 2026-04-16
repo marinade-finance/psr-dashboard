@@ -144,42 +144,42 @@ export const SamPage: React.FC<Props> = ({ level }) => {
       return
     }
 
-    const resolve = (
+    const resolveDec = (
       edit: string | undefined,
-      fallback: number | null,
+      fallbackDec: number | null,
     ): number =>
       edit !== undefined
-        ? parseFloat(edit)
-        : fallback !== null
-          ? fallback * 100
+        ? parseFloat(edit) / 100
+        : fallbackDec !== null
+          ? fallbackDec
           : NaN
 
     const overrides: SourceDataOverrides = {
-      inflationCommissions: new Map(),
-      mevCommissions: new Map(),
-      blockRewardsCommissions: new Map(),
-      cpmpes: new Map(),
+      inflationCommissionsDec: new Map(),
+      mevCommissionsDec: new Map(),
+      blockRewardsCommissionsDec: new Map(),
+      cpmpesDec: new Map(),
     }
 
-    const infl = resolve(
+    const infl = resolveDec(
       pendingEdits.inflationCommission,
       current.inflationCommissionDec,
     )
     if (!isNaN(infl)) {
-      overrides.inflationCommissions.set(editingValidator, infl)
+      overrides.inflationCommissionsDec.set(editingValidator, infl)
     }
 
-    const mev = resolve(pendingEdits.mevCommission, current.mevCommissionDec)
+    const mev = resolveDec(pendingEdits.mevCommission, current.mevCommissionDec)
     if (!isNaN(mev)) {
-      overrides.mevCommissions.set(editingValidator, mev * 100)
+      overrides.mevCommissionsDec.set(editingValidator, mev)
     }
 
-    const blk = resolve(
+    const blk = resolveDec(
       pendingEdits.blockRewardsCommission,
       current.blockRewardsCommissionDec,
     )
     if (!isNaN(blk)) {
-      overrides.blockRewardsCommissions.set(editingValidator, blk * 100)
+      overrides.blockRewardsCommissionsDec.set(editingValidator, blk)
     }
 
     const bid =
@@ -187,7 +187,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
         ? parseFloat(pendingEdits.bidPmpe)
         : current.revShare.bidPmpe
     if (!isNaN(bid)) {
-      overrides.cpmpes.set(editingValidator, bid * 1e9)
+      overrides.cpmpesDec.set(editingValidator, bid)
     }
 
     setSimulationOverrides(overrides)
@@ -243,6 +243,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
           backstopTvl={data.backstopTvl}
           originalAuctionResult={originalAuctionResult}
           epochsPerYear={data.epochsPerYear}
+          dsSamConfig={data.dcSamConfig}
           level={level}
           simulationModeActive={simulationModeActive}
           editingValidator={editingValidator}

@@ -29,6 +29,7 @@ export enum Color {
   RED,
   GREEN,
   YELLOW,
+  ORANGE,
   GREY,
 }
 
@@ -59,6 +60,8 @@ function colorClassName(color?: Color): string {
       return 'bg-cell-green'
     case Color.YELLOW:
       return 'bg-cell-yellow'
+    case Color.ORANGE:
+      return 'bg-cell-orange'
     case Color.GREY:
       return 'bg-cell-grey'
     default:
@@ -175,7 +178,7 @@ type Column<Item> = {
   cellAttrsFn?: (item: Item) => HTMLAttributes<HTMLTableCellElement>
   render: (item: Item, index?: number) => JSX.Element
   compare: (a: Item, b: Item) => number
-  background?: (item: Item) => Color
+  background?: (item: Item) => Color | undefined
   alignment?: Alignment
 }
 
@@ -190,7 +193,7 @@ type Props<Item> = {
   ) => HTMLAttributes<HTMLTableRowElement>
   rowNumberRender?: (item: Item, index: number) => JSX.Element
   onOrderChange?: (order: Order[]) => void
-  presorted?: boolean // Skip internal sorting when data is already sorted
+  presorted?: boolean
   caption?: React.ReactNode
   className?: string
 }

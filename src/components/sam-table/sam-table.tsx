@@ -17,6 +17,7 @@ import {
   selectVoteAccount,
   selectWinningAPY,
   selectProjectedAPY,
+  selectIdealAPY,
   selectStakeToMove,
   selectTotalActiveStake,
   selectSamActiveStake,
@@ -62,10 +63,11 @@ import type { Order } from '../table/table'
 import type {
   AuctionResult,
   AuctionValidator,
+  DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
 import type { PendingEdits } from 'src/pages/sam'
 
-type ValidatorWithBondState = AuctionValidator & { bondState: Color }
+type ValidatorWithBondState = AuctionValidator & { bondState?: Color }
 type DisplayValidator = { validator: ValidatorWithBondState; isGhost: boolean }
 type EditField =
   | 'inflationCommission'
@@ -94,6 +96,7 @@ type Props = {
   backstopTvl: number
   originalAuctionResult: AuctionResult | null
   epochsPerYear: number
+  dsSamConfig: DsSamConfig
   level: UserLevel
   simulationModeActive: boolean
   editingValidator: string | null
@@ -160,6 +163,43 @@ function renderEditableCell(
   )
 }
 
+function renderEditableCell(
+  isEditing: boolean,
+  displayValue: string,
+  field: EditField,
+  inputValue: string,
+  onFieldChange: (field: EditField, value: string) => void,
+  onRunSimulation: () => void,
+  onCancelEditing: () => void,
+  opts: InputOpts,
+): JSX.Element {
+  if (!isEditing) {
+    return <>{displayValue}</>
+  }
+  return (
+    <div className="relative inline-block">
+      <span className="invisible">{displayValue}</span>
+      <Input
+        type="number"
+        className="absolute right-0 top-1/2 -translate-y-1/2 w-[50px] h-auto px-1 py-0.5 text-xs text-right [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+        value={inputValue}
+        step={opts.step}
+        min={opts.min}
+        max={opts.max}
+        placeholder={opts.placeholder}
+        onChange={e => onFieldChange(field, e.target.value)}
+        onKeyDown={e => {
+          if (e.key === 'Enter') {
+            onRunSimulation()
+          } else if (e.key === 'Escape') {
+            onCancelEditing()
+          }
+        }}
+      />
+    </div>
+  )
+}
+
 export const SamTable: React.FC<Props> = ({
   auctionResult,
   tvlJoinApyDiff,
@@ -168,6 +208,7 @@ export const SamTable: React.FC<Props> = ({
   backstopTvl,
   originalAuctionResult,
   epochsPerYear,
+  dsSamConfig,
   level,
   simulationModeActive,
   editingValidator,
@@ -187,6 +228,7 @@ export const SamTable: React.FC<Props> = ({
   const samDistributedStake = Math.round(selectSamDistributedStake(validators))
   const winningAPY = selectWinningAPY(auctionResult, epochsPerYear)
   const projectedApy = selectProjectedAPY(auctionResult, epochsPerYear)
+  const idealApy = selectIdealAPY(auctionResult, epochsPerYear)
   const stakeToMove = selectStakeToMove(auctionResult) / samDistributedStake
   const activeStake =
     selectTotalActiveStake(auctionResult) / samDistributedStake
@@ -236,9 +278,9 @@ export const SamTable: React.FC<Props> = ({
     () =>
       validators.map(v => ({
         ...v,
-        bondState: bondHealthColor(v),
+        bondState: bondHealthColor(v, dsSamConfig.minBondEpochs),
       })),
-    [validators],
+    [validators, dsSamConfig.minBondEpochs],
   )
 
   const hasDataChanged = useMemo(() => {
@@ -410,7 +452,10 @@ export const SamTable: React.FC<Props> = ({
         v => v.voteAccount === simulatedValidator,
       )
       if (orig) {
-        const originalValidator = { ...orig, bondState: bondHealthColor(orig) }
+        const originalValidator = {
+          ...orig,
+          bondState: bondHealthColor(orig, dsSamConfig.minBondEpochs),
+        }
         const originalPosition = getOriginalPosition(simulatedValidator)
         const currentSimulatedIndex = display.findIndex(
           d => d.validator.voteAccount === simulatedValidator,
@@ -522,7 +567,7 @@ export const SamTable: React.FC<Props> = ({
     apyMetrics = (
       <Metric
         label="Ideal APY"
-        value={formatPercentage(projectedApy / activeStake)}
+        value={formatPercentage(idealApy)}
         {...tooltipAttributes(
           'Expected staker return on stake that is currently active and earning rewards. Divides projected revenue by active stake ratio — higher than Projected APY when some distributed stake is still activating. Assumes no Marinade fees.',
         )}

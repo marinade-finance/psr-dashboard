@@ -28,27 +28,17 @@ const estimateEpochsPerYear = async () => {
   const epochStats = validators.map(({ epoch_stats }) => epoch_stats).flat()
 
   const rangeStart = epochStats.reduce(
-    (acc, { epoch, epoch_start_at, epoch_end_at }) => {
-      if (epoch_start_at === null || epoch_end_at === null) {
-        return acc
-      }
-      if (epoch < acc.epoch) {
-        return { epoch, timestamp: new Date(epoch_start_at).getTime() / 1e3 }
-      }
-      return acc
+    (acc, { epoch, epoch_start_at }) => {
+      if (epoch_start_at === null || epoch >= acc.epoch) return acc
+      return { epoch, timestamp: new Date(epoch_start_at).getTime() / 1e3 }
     },
     { epoch: Infinity, timestamp: Infinity },
   )
 
   const rangeEnd = epochStats.reduce(
-    (acc, { epoch, epoch_start_at, epoch_end_at }) => {
-      if (epoch_start_at === null || epoch_end_at === null) {
-        return acc
-      }
-      if (acc.epoch < epoch) {
-        return { epoch, timestamp: new Date(epoch_end_at).getTime() / 1e3 }
-      }
-      return acc
+    (acc, { epoch, epoch_end_at }) => {
+      if (epoch_end_at === null || epoch <= acc.epoch) return acc
+      return { epoch, timestamp: new Date(epoch_end_at).getTime() / 1e3 }
     },
     { epoch: 0, timestamp: 0 },
   )
@@ -212,22 +202,39 @@ export const selectWinningAPY = (
   epochsPerYear: number,
 ) => Math.pow(1 + auctionResult.winningTotalPmpe / 1e3, epochsPerYear) - 1
 
+const totalProfitPmpe = (v: AuctionValidator) =>
+  v.revShare.auctionEffectiveBidPmpe +
+  v.revShare.inflationPmpe +
+  v.revShare.mevPmpe
+
+const selectActiveProfit = (validators: AuctionValidator[]) =>
+  validators.reduce(
+    (acc, v) => acc + (totalProfitPmpe(v) * v.marinadeActivatedStakeSol) / 1000,
+    0,
+  )
+
 export const selectProjectedAPY = (
   auctionResult: AuctionResult,
   epochsPerYear: number,
 ) => {
-  const profit = auctionResult.auctionData.validators.reduce(
-    (acc, entry) =>
-      acc +
-      ((entry.revShare.auctionEffectiveBidPmpe +
-        entry.revShare.inflationPmpe +
-        entry.revShare.mevPmpe) *
-        entry.marinadeActivatedStakeSol) /
-        1000,
-    0,
-  )
+  const profit = selectActiveProfit(auctionResult.auctionData.validators)
   const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
   return Math.pow(1 + profit / tvl, epochsPerYear) - 1
+}
+
+export const selectIdealAPY = (
+  auctionResult: AuctionResult,
+  epochsPerYear: number,
+) => {
+  const vs = auctionResult.auctionData.validators
+  const profit = selectActiveProfit(vs)
+  const activeStake = vs.reduce(
+    (acc, v) => acc + v.marinadeActivatedStakeSol,
+    0,
+  )
+  return activeStake > 0
+    ? Math.pow(1 + profit / activeStake, epochsPerYear) - 1
+    : 0
 }
 
 export const selectStakeToMove = (auctionResult: AuctionResult) =>
@@ -303,7 +310,7 @@ export const formattedOnChainCommission = (
   validator: AuctionValidator,
 ): string => {
   const dec =
-    validator.values?.commissions?.inflationCommissionOnchainDec ||
+    validator.values?.commissions?.inflationCommissionOnchainDec ??
     selectCommission(validator)
   return dec == null ? '-' : formatPercentage(dec, 0)
 }
@@ -339,7 +346,7 @@ export const formattedOnChainMevCommission = (
   validator: AuctionValidator,
 ): string => {
   const dec =
-    validator.values?.commissions?.mevCommissionOnchainDec ||
+    validator.values?.commissions?.mevCommissionOnchainDec ??
     selectMevCommission(validator)
   return dec == null ? '-' : formatPercentage(dec, 0)
 }
@@ -380,6 +387,11 @@ export const overridesBlockRewardsCommissionMessage = (
 export const selectBondSize = (validator: AuctionValidator) =>
   validator.bondBalanceSol
 
+export const selectBondHealth = (
+  validator: AuctionValidator,
+  minBondEpochs: number,
+) => validator.bondGoodForNEpochs - minBondEpochs
+
 export const selectMaxAPY = (
   validator: AuctionValidator,
   epochsPerYear: number,
@@ -392,15 +404,22 @@ export const selectEffectiveCost = (validator: AuctionValidator) =>
   (validator.marinadeActivatedStakeSol / 1000) *
   validator.revShare.auctionEffectiveBidPmpe
 
-export const bondHealthColor = (validator: AuctionValidator): Color => {
+export const bondHealthColor = (
+  validator: AuctionValidator,
+  minBondEpochs: number,
+): Color | undefined => {
   if (!validator.auctionStake.marinadeSamTargetSol) {
     return undefined
   }
-  if (validator.bondGoodForNEpochs > 10) {
+  const health = selectBondHealth(validator, minBondEpochs)
+  if (health >= 13) {
     return Color.GREEN
   }
-  if (validator.bondGoodForNEpochs > 2) {
+  if (health >= 6) {
     return Color.YELLOW
+  }
+  if (health >= 2) {
+    return Color.ORANGE
   }
   return Color.RED
 }
@@ -408,11 +427,13 @@ export const bondHealthColor = (validator: AuctionValidator): Color => {
 export const bondTooltip = (color: Color) => {
   switch (color) {
     case Color.RED:
-      return 'Your bond balance is not sufficient to cover bidding costs and is limiting the maximum stake you can get. Top up your bond to increase your stake and stay in the auction.'
-    case Color.GREEN:
-      return 'You have enough in the bond to cover at least 2 epochs of bids.'
+      return 'Bond coverage critically low — undelegation imminent. Top up immediately.'
+    case Color.ORANGE:
+      return 'Bond coverage low — top up soon to avoid bond risk fee charges.'
     case Color.YELLOW:
-      return 'Your bond balance is sufficient only to cover one epoch of bids. Top up your bond with enough SOL to stay in the auction'
+      return 'Bond coverage moderate — top up to increase stake capacity.'
+    case Color.GREEN:
+      return 'Bond coverage healthy — bond is not limiting your stake.'
     default:
       return ''
   }
@@ -452,22 +473,16 @@ export const selectTargetApyDiff = (
   altResult: AuctionResult,
   epochsPerYear: number,
 ): number => {
-  const profitOf = (r: AuctionResult) =>
+  const targetProfit = (r: AuctionResult) =>
     r.auctionData.validators.reduce(
-      (acc, entry) =>
-        acc +
-        ((entry.revShare.auctionEffectiveBidPmpe +
-          entry.revShare.inflationPmpe +
-          entry.revShare.mevPmpe) *
-          entry.auctionStake.marinadeSamTargetSol) /
-          1000,
+      (acc, v) =>
+        acc + (totalProfitPmpe(v) * v.auctionStake.marinadeSamTargetSol) / 1000,
       0,
     )
-
   const tvl = baseResult.auctionData.stakeAmounts.marinadeSamTvlSol
-  const baseApy = Math.pow(1 + profitOf(baseResult) / tvl, epochsPerYear) - 1
-  const altApy = Math.pow(1 + profitOf(altResult) / tvl, epochsPerYear) - 1
-  return altApy - baseApy
+  const apy = (r: AuctionResult) =>
+    Math.pow(1 + targetProfit(r) / tvl, epochsPerYear) - 1
+  return apy(altResult) - apy(baseResult)
 }
 
 export const selectTvlApyDiff = (
@@ -475,25 +490,16 @@ export const selectTvlApyDiff = (
   altResult: AuctionResult,
   epochsPerYear: number,
 ): number => {
-  const profitOf = (r: AuctionResult) =>
-    r.auctionData.validators.reduce(
-      (acc, entry) =>
-        acc +
-        ((entry.revShare.auctionEffectiveBidPmpe +
-          entry.revShare.inflationPmpe +
-          entry.revShare.mevPmpe) *
-          entry.marinadeActivatedStakeSol) /
-          1000,
-      0,
+  const apy = (r: AuctionResult) => {
+    const tvl = r.auctionData.stakeAmounts.marinadeSamTvlSol
+    return (
+      Math.pow(
+        1 + selectActiveProfit(r.auctionData.validators) / tvl,
+        epochsPerYear,
+      ) - 1
     )
-
-  const baseTvl = baseResult.auctionData.stakeAmounts.marinadeSamTvlSol
-  const altTvl = altResult.auctionData.stakeAmounts.marinadeSamTvlSol
-
-  const baseApy =
-    Math.pow(1 + profitOf(baseResult) / baseTvl, epochsPerYear) - 1
-  const altApy = Math.pow(1 + profitOf(altResult) / altTvl, epochsPerYear) - 1
-  return altApy - baseApy
+  }
+  return apy(altResult) - apy(baseResult)
 }
 
 export const selectStakeDelta = (validator: AuctionValidator): number =>
@@ -548,7 +554,7 @@ export const selectBondUtilization = (validator: AuctionValidator): number =>
 
 export function isoToFlag(iso: string): string {
   const upper = iso.toUpperCase()
-  const OFFSET = 0x1f1e6 - 0x41 // regional indicator A minus latin A
+  const OFFSET = 0x1f1e6 - 0x41
   return Array.from(upper)
     .map(ch => String.fromCodePoint(ch.codePointAt(0) + OFFSET))
     .join('')

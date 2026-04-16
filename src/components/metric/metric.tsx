@@ -5,6 +5,7 @@ import { HelpTip } from 'src/components/help-tip/help-tip'
 type Props = {
   label: string
   value: React.ReactNode
+  'data-tooltip-id'?: string
   'data-tooltip-html'?: string
 }
 

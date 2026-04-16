@@ -106,13 +106,12 @@ const calcTargetCreditsByEpoch = (validators: Validator[]) => {
   }
 
   const result: Map<number, number> = new Map()
-  sumOfWeightsPerEpoch.forEach((sumOfWeights, epoch) => {
+  for (const [epoch, sumOfWeights] of sumOfWeightsPerEpoch) {
     result.set(
       epoch,
       Math.round((sumOfWeightedCreditsPerEpoch.get(epoch) ?? 0) / sumOfWeights),
     )
-  })
-
+  }
   return result
 }
 
@@ -264,7 +263,6 @@ const calculateLowCreditsEstimates = (
             events.push(event)
           }
         }
-        events.push()
       }
     }
   }
@@ -297,7 +295,6 @@ const calculateCommissionIncreaseEstimates = (
             events.push(event)
           }
         }
-        events.push()
       }
     }
   }
