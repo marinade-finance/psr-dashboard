@@ -5,6 +5,7 @@ interface CssExports {
   'grey': string;
   'left': string;
   'noBg': string;
+  'orange': string;
   'red': string;
   'right': string;
   'sortIndicator': string;

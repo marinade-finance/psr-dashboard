@@ -20,6 +20,7 @@ import {
   selectSamActiveStake,
   bondHealthColor,
   bondTooltip,
+  selectBondHealth,
   selectProductiveStake,
   selectIsNonProductive,
   selectTargetProtectedPct,
@@ -56,7 +57,7 @@ import type {
 } from '@marinade.finance/ds-sam-sdk'
 import type { PendingEdits } from 'src/pages/sam'
 
-type ValidatorWithBondState = AuctionValidator & { bondState: Color }
+type ValidatorWithBondState = AuctionValidator & { bondState?: Color }
 type DisplayValidator = { validator: ValidatorWithBondState; isGhost: boolean }
 type EditField =
   | 'inflationCommission'
@@ -154,11 +155,7 @@ export const SamTable: React.FC<Props> = ({
   } = auctionResult
   const samDistributedStake = Math.round(selectSamDistributedStake(validators))
   const winningAPY = selectWinningAPY(auctionResult, epochsPerYear)
-  const projectedApy = selectProjectedAPY(
-    auctionResult,
-    dsSamConfig,
-    epochsPerYear,
-  )
+  const projectedApy = selectProjectedAPY(auctionResult, epochsPerYear)
   const idealApy = selectIdealAPY(auctionResult, epochsPerYear)
   const stakeToMove = selectStakeToMove(auctionResult) / samDistributedStake
   const activeStake =
@@ -200,9 +197,9 @@ export const SamTable: React.FC<Props> = ({
     () =>
       validators.map(v => ({
         ...v,
-        bondState: bondHealthColor(v),
+        bondState: bondHealthColor(v, dsSamConfig.minBondEpochs),
       })),
-    [validators],
+    [validators, dsSamConfig.minBondEpochs],
   )
 
   const hasDataChanged = useMemo(() => {
@@ -232,7 +229,7 @@ export const SamTable: React.FC<Props> = ({
   const inputVal = (field: keyof PendingEdits, fallback: string) =>
     pendingEdits[field] ?? fallback
 
-  const defaultOrder: Order[] = useMemo(() => [[8, OrderDirection.DESC]], [])
+  const defaultOrder: Order[] = useMemo(() => [[9, OrderDirection.DESC]], [])
 
   const [currentOrder, setCurrentOrder] = useState<Order[]>(defaultOrder)
 
@@ -262,12 +259,17 @@ export const SamTable: React.FC<Props> = ({
         case 5:
           return selectBondSize(a) - selectBondSize(b)
         case 6:
-          return selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
+          return (
+            selectBondHealth(a, dsSamConfig.minBondEpochs) -
+            selectBondHealth(b, dsSamConfig.minBondEpochs)
+          )
         case 7:
-          return selectSamActiveStake(a) - selectSamActiveStake(b)
+          return selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
         case 8:
-          return selectSamTargetStake(a) - selectSamTargetStake(b)
+          return selectSamActiveStake(a) - selectSamActiveStake(b)
         case 9:
+          return selectSamTargetStake(a) - selectSamTargetStake(b)
+        case 10:
           return selectEffectiveBid(a) - selectEffectiveBid(b)
         default:
           return 0
@@ -348,7 +350,10 @@ export const SamTable: React.FC<Props> = ({
         v => v.voteAccount === simulatedValidator,
       )
       if (orig) {
-        const originalValidator = { ...orig, bondState: bondHealthColor(orig) }
+        const originalValidator = {
+          ...orig,
+          bondState: bondHealthColor(orig, dsSamConfig.minBondEpochs),
+        }
         const originalPosition = getOriginalPosition(simulatedValidator)
         const currentSimulatedIndex = display.findIndex(
           d => d.validator.voteAccount === simulatedValidator,
@@ -766,13 +771,32 @@ export const SamTable: React.FC<Props> = ({
             compare: (a, b) =>
               selectBondSize(a.validator) - selectBondSize(b.validator),
             alignment: Alignment.RIGHT,
-            background:
-              level === UserLevel.Expert
-                ? item =>
-                    selectBondSize(item.validator) <= 0
-                      ? Color.GREY
-                      : item.validator.bondState
-                : undefined,
+          },
+          {
+            header: 'Cover. [ep]',
+            headerAttrsFn: () =>
+              tooltipAttributes(
+                'Epochs of bond runway above the minimum required — hits 0 when undelegation begins.',
+              ),
+            cellAttrsFn: item =>
+              tooltipAttributes(bondTooltip(item.validator.bondState)),
+            render: item => {
+              if (!item.validator.auctionStake.marinadeSamTargetSol) {
+                return <>-</>
+              }
+              const h = Math.round(
+                selectBondHealth(item.validator, dsSamConfig.minBondEpochs),
+              )
+              return <>{h > 100 ? '>100' : h}</>
+            },
+            compare: (a, b) =>
+              selectBondHealth(a.validator, dsSamConfig.minBondEpochs) -
+              selectBondHealth(b.validator, dsSamConfig.minBondEpochs),
+            alignment: Alignment.RIGHT,
+            background: item =>
+              selectBondSize(item.validator) <= 0
+                ? Color.GREY
+                : item.validator.bondState,
           },
           {
             header: 'Max APY',

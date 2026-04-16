@@ -42,19 +42,23 @@
 }
 
 .red {
-  background-color: #871c18;
+  background-color: rgba(220, 60, 50, 0.18);
 }
 
 .green {
-  background-color: #004d40;
+  background-color: rgba(40, 190, 110, 0.18);
 }
 
 .yellow {
-  background-color: #806000;
+  background-color: rgba(210, 185, 20, 0.19);
+}
+
+.orange {
+  background-color: rgba(220, 110, 30, 0.16);
 }
 
 .grey {
-  background-color: rgba(128, 128, 128, 0.3);
+  background-color: rgba(128, 128, 128, 0.15);
 }
 
 .noBg {
