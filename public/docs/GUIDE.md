@@ -102,19 +102,19 @@ Both methods can be combined. The effective bid combines all components to deter
 
 ### Table Columns
 
-| Column         | Description                                                              |
-| -------------- | ------------------------------------------------------------------------ |
-| **Validator**  | Vote account public key                                                  |
-| **Infl.**      | Inflation commission - percentage of inflation rewards kept by validator |
-| **MEV**        | MEV commission - percentage of MEV rewards kept by validator             |
-| **Block**      | Block rewards commission - percentage of block rewards kept by validator |
-| **St. Bid**    | Static bid per 1000 SOL set in bond configuration                        |
-| **Bond**       | Current bond balance in SOL                                              |
-| **Cover. [ep]**     | Epochs the bond covers above the minimum required. Hits 0 when undelegation begins. Color: green = 13+, yellow = 6–12, orange = 2–5, red ≤ 1 |
-| **Max APY**    | Maximum APY offered based on validator's bid and commission settings     |
-| **SAM Active** | Currently active stake delegated by SAM                                  |
-| **SAM Target** | Target stake based on auction results                                    |
-| **Eff. Bid**   | Effective bid combining static bid and commission settings               |
+| Column          | Description                                                                                                                                                                                                                                                                         |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Validator**   | Vote account public key                                                                                                                                                                                                                                                             |
+| **Infl.**       | Inflation commission - percentage of inflation rewards kept by validator                                                                                                                                                                                                            |
+| **MEV**         | MEV commission - percentage of MEV rewards kept by validator                                                                                                                                                                                                                        |
+| **Block**       | Block rewards commission - percentage of block rewards kept by validator                                                                                                                                                                                                            |
+| **St. Bid**     | Static bid per 1000 SOL set in bond configuration                                                                                                                                                                                                                                   |
+| **Bond**        | Current bond balance in SOL                                                                                                                                                                                                                                                         |
+| **Cover. [ep]** | How many more epochs the bond can cover bid payments before Marinade starts limiting stake and charging fees. At 0, undelegation begins. Negative values mean the validator has already been charged for that many epochs. Color: green = 13+, yellow = 6–12, orange = 2–5, red ≤ 1 |
+| **Max APY**     | Maximum APY offered based on validator's bid and commission settings                                                                                                                                                                                                                |
+| **SAM Active**  | Currently active stake delegated by SAM                                                                                                                                                                                                                                             |
+| **SAM Target**  | Target stake based on auction results                                                                                                                                                                                                                                               |
+| **Eff. Bid**    | Effective bid combining static bid and commission settings                                                                                                                                                                                                                          |
 
 ### Participation Requirements
 
