@@ -18,6 +18,7 @@ import {
   compoundApy,
   isNonProductive as _isNonProductive,
   stakeDelta as _stakeDelta,
+  selectMaxWantedStake as _selectMaxWantedStake,
 } from './calculations'
 import { fetchValidatorsWithEpochs } from './validators'
 
@@ -538,6 +539,16 @@ export function getRecommendation(
     return { text: 'Stake is decreasing toward target', severity: 'neutral' }
   }
   return { text: 'Stake is at target', severity: 'positive' }
+}
+
+export const selectMaxWantedStake = (validator: AuctionValidator): number =>
+  _selectMaxWantedStake(validator)
+
+export const formattedInBondBlockRewardsCommission = (
+  validator: AuctionValidator,
+): string => {
+  const dec = validator.values?.commissions?.blockRewardsCommissionInBondDec
+  return dec == null ? '-' : formatPercentage(dec, 0)
 }
 
 export const selectBondUtilization = (validator: AuctionValidator): number =>
