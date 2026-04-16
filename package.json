@@ -16,6 +16,7 @@
     "check": "pnpm lint && pnpm format:check",
     "fix": "pnpm format && pnpm lint:fix",
     "prepare": "husky",
+    "test": "vitest run",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:update": "playwright test --update-snapshots"
@@ -38,7 +39,8 @@
     "ts-jest": "^28.0.8",
     "ts-node": "^10.9.2",
     "typescript": "4.9.5",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "vitest": "^3.0.0"
   },
   "dependencies": {
     "@marinade.finance/ds-sam-sdk": "0.0.46",

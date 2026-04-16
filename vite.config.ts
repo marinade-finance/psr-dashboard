@@ -44,4 +44,7 @@ export default defineConfig({
   },
   build: { outDir: 'build' },
   appType: 'mpa',
+  test: {
+    environment: 'node',
+  },
 })
