@@ -29,6 +29,7 @@ const MIN_TILE = 28
 const MAX_TILE = 120
 
 const TIER_LARGE = 100_000
+const TIER_HIGH = 50_000
 const TIER_MID = 20_000
 
 function coverageColor(ratio: number, hasBond: boolean): string {
@@ -53,21 +54,18 @@ type TierRow = {
 }
 
 function buildTierRows(active: ValidatorWithBond[]): TierRow[] {
-  const large = active.filter(
-    e => selectTotalMarinadeStake(e.validator) >= TIER_LARGE,
-  )
-  const mid = active.filter(
-    e =>
-      selectTotalMarinadeStake(e.validator) >= TIER_MID &&
-      selectTotalMarinadeStake(e.validator) < TIER_LARGE,
-  )
-  const small = active.filter(
-    e => selectTotalMarinadeStake(e.validator) < TIER_MID,
-  )
+  const s = (e: ValidatorWithBond) => selectTotalMarinadeStake(e.validator)
   return [
-    { label: '>100k', entries: large },
-    { label: '20k–100k', entries: mid },
-    { label: '<20k', entries: small },
+    { label: '>100k', entries: active.filter(e => s(e) >= TIER_LARGE) },
+    {
+      label: '50k–100k',
+      entries: active.filter(e => s(e) >= TIER_HIGH && s(e) < TIER_LARGE),
+    },
+    {
+      label: '20k–50k',
+      entries: active.filter(e => s(e) >= TIER_MID && s(e) < TIER_HIGH),
+    },
+    { label: '<20k', entries: active.filter(e => s(e) < TIER_MID) },
   ].filter(r => r.entries.length > 0)
 }
 
@@ -125,13 +123,13 @@ const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
                   return (
                     <div
                       key={selectVoteAccount(entry.validator)}
-                      className="relative flex flex-col justify-between rounded-lg overflow-hidden shrink-0 cursor-default"
+                      className="relative flex flex-col rounded-lg overflow-hidden shrink-0 cursor-default"
                       style={{
                         width: size,
                         height: size,
                         background: tileBg,
                         boxShadow:
-                          'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.30)',
+                          'inset 0 1px 0 rgba(255,255,255,0.10), inset 0 -1px 0 rgba(0,0,0,0.25)',
                       }}
                       {...tooltipAttributes(
                         `${name}<br/>` +
@@ -140,43 +138,51 @@ const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
                           (!hasBond ? '<br/>No bond' : ''),
                       )}
                     >
-                      {size >= 44 && (
-                        <div className="flex-1 px-1.5 pt-1.5 overflow-hidden">
+                      {size >= 36 && (
+                        <div className="flex-1 px-1.5 pt-1 overflow-hidden">
                           <div
-                            className="text-[10px] font-semibold leading-tight truncate"
-                            style={{ color: 'rgba(255,255,255,0.9)' }}
+                            className="text-[10px] font-bold leading-tight truncate"
+                            style={{
+                              color: 'rgba(255,255,255,0.95)',
+                              textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                            }}
                           >
                             {name}
                           </div>
-                          {size >= 60 && (
+                          {size >= 56 && (
                             <div
-                              className="text-[9px] leading-tight truncate mt-0.5"
-                              style={{ color: 'rgba(255,255,255,0.6)' }}
+                              className="text-[9px] leading-tight truncate mt-0.5 font-medium"
+                              style={{
+                                color: 'rgba(255,255,255,0.72)',
+                                textShadow: '0 1px 2px rgba(0,0,0,0.4)',
+                              }}
                             >
                               {formatSolAmount(stake)} SOL
                             </div>
                           )}
-                          {size >= 80 && (
+                          {size >= 76 && (
                             <div
-                              className="text-[9px] leading-tight truncate mt-0.5"
-                              style={{ color: 'rgba(255,255,255,0.55)' }}
+                              className="text-[9px] leading-tight truncate mt-0.5 font-medium"
+                              style={{
+                                color: 'rgba(255,255,255,0.65)',
+                                textShadow: '0 1px 2px rgba(0,0,0,0.4)',
+                              }}
                             >
                               {coveragePct}% cov.
                             </div>
                           )}
                         </div>
                       )}
-                      {/* Bond health bar */}
+                      {/* Coverage bar — always at bottom via mt-auto */}
                       <div
-                        className="shrink-0 w-full"
-                        style={{ height: 5, background: 'rgba(0,0,0,0.3)' }}
+                        className="mt-auto shrink-0 w-full"
+                        style={{ height: 7, background: 'rgba(0,0,0,0.35)' }}
                       >
                         <div
                           style={{
                             height: '100%',
                             width: `${coveragePct}%`,
                             background: barFill,
-                            transition: 'width 0.3s ease',
                           }}
                         />
                       </div>
