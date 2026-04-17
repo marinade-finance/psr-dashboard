@@ -8,3 +8,4 @@
 | [3/4-v2-view.md](3/4-v2-view.md) | shipped | feature/my-feature (v2) UI port onto Tailwind scaffolding |
 | [3/5-audit.md](3/5-audit.md) | shipped | Post-port audit: simplify v2 code, remove unnecessary complexity |
 | [3/SCREENS.md](3/SCREENS.md) | shipped | UI screen inventory: SAM, Bonds, Protected Events |
+| [3/TESTS.md](3/TESTS.md) | partial | Playwright E2E tests: screen specs + component tests |
