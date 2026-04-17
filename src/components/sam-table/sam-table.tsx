@@ -1,6 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react'
 
 import { HelpTip } from 'src/components/help-tip/help-tip'
+import { Card } from 'src/components/ui/card'
 import {
   ShadTable,
   TableHeader,
@@ -507,10 +508,7 @@ export const SamTable: React.FC<Props> = ({
       {/* Stats Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         {stats.map(stat => (
-          <div
-            key={stat.label}
-            className="bg-card rounded-xl px-5 py-4 border border-border shadow-card"
-          >
+          <Card key={stat.label} className="px-5 py-4">
             <div className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground mb-1 flex items-center gap-1">
               {stat.label}
               {stat.help && <HelpTip text={stat.help} />}
@@ -525,7 +523,7 @@ export const SamTable: React.FC<Props> = ({
                 </span>
               )}
             </div>
-          </div>
+          </Card>
         ))}
       </div>
 
