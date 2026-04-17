@@ -20,7 +20,6 @@ import {
   stakeDelta as _stakeDelta,
   selectMaxWantedStake as _selectMaxWantedStake,
 } from './calculations'
-import { fetchValidatorsWithEpochs } from './validators'
 
 import type {
   AggregatedData,
@@ -31,38 +30,8 @@ import type {
   SourceDataOverrides,
 } from '@marinade.finance/ds-sam-sdk'
 
-const estimateEpochsPerYear = async () => {
-  const FETCHED_EPOCHS = 11
-  const { validators } = await fetchValidatorsWithEpochs(FETCHED_EPOCHS)
-  const epochStats = validators.map(({ epoch_stats }) => epoch_stats).flat()
-
-  const rangeStart = epochStats.reduce(
-    (acc, { epoch, epoch_start_at }) => {
-      if (epoch_start_at === null || epoch >= acc.epoch) return acc
-      return { epoch, timestamp: new Date(epoch_start_at).getTime() / 1e3 }
-    },
-    { epoch: Infinity, timestamp: Infinity },
-  )
-
-  const rangeEnd = epochStats.reduce(
-    (acc, { epoch, epoch_end_at }) => {
-      if (epoch_end_at === null || epoch <= acc.epoch) return acc
-      return { epoch, timestamp: new Date(epoch_end_at).getTime() / 1e3 }
-    },
-    { epoch: 0, timestamp: 0 },
-  )
-
-  const SECONDS_PER_YEAR = 365.25 * 24 * 3600
-  const DEFAULT_EPOCH_DURATION = 0.4 * 432000
-  const DEFAULT_EPOCHS_PER_YEAR = SECONDS_PER_YEAR / DEFAULT_EPOCH_DURATION
-  const rangeDuration = rangeEnd.timestamp - rangeStart.timestamp
-  const rangeEpochs = rangeEnd.epoch - rangeStart.epoch + 1
-  if (!isFinite(rangeStart.epoch) || rangeEnd.epoch === 0) {
-    return DEFAULT_EPOCHS_PER_YEAR
-  }
-
-  return SECONDS_PER_YEAR / (rangeDuration / rangeEpochs)
-}
+// Solana epoch = 432000 slots × 0.4s/slot = 172800s = 48h exactly
+const EPOCHS_PER_YEAR = (365.25 * 24 * 3600) / 172800
 
 type SamResult = {
   auctionResult: AuctionResult
@@ -77,8 +46,7 @@ type SamResult = {
 export const loadSam = async (
   dataOverrides?: SourceDataOverrides | null,
 ): Promise<SamResult> => {
-  const epochsPerYear = await estimateEpochsPerYear()
-  console.log('epochsPerYear', epochsPerYear)
+  const epochsPerYear = EPOCHS_PER_YEAR
   const config = await loadSamConfig()
   const dsSam = new DsSamSDK({
     ...config,
