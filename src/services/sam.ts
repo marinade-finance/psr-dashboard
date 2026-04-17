@@ -387,10 +387,8 @@ export const overridesBlockRewardsCommissionMessage = (
 export const selectBondSize = (validator: AuctionValidator) =>
   validator.bondBalanceSol
 
-export const selectBondHealth = (
-  validator: AuctionValidator,
-  minBondEpochs: number,
-) => validator.bondGoodForNEpochs - minBondEpochs
+export const selectBondHealth = (validator: AuctionValidator) =>
+  validator.bondGoodForNEpochs
 
 export const selectMaxAPY = (
   validator: AuctionValidator,
@@ -406,12 +404,11 @@ export const selectEffectiveCost = (validator: AuctionValidator) =>
 
 export const bondHealthColor = (
   validator: AuctionValidator,
-  minBondEpochs: number,
 ): Color | undefined => {
   if (!validator.auctionStake.marinadeSamTargetSol) {
     return undefined
   }
-  const health = selectBondHealth(validator, minBondEpochs)
+  const health = selectBondHealth(validator)
   if (health >= 13) {
     return Color.GREEN
   }
