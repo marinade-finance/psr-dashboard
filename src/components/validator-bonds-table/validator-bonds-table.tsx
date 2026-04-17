@@ -28,59 +28,52 @@ type Props = {
 const MIN_TILE = 28
 const MAX_TILE = 120
 
-/**
- * Map bid pmpe + coverage ratio to an HSL tile background color.
- * When bid=0, coverage ratio nudges the hue toward teal so covered
- * validators are visually distinct from uncovered ones.
- */
-function tileColor(bid: number, coverage: number): string {
-  if (bid < 1) {
-    // No bid: grey-blue for 0% coverage → subtle teal hint at 100% coverage
-    const t = Math.min(coverage, 1)
-    const h = Math.round(220 + t * (185 - 220))
-    const s = Math.round(14 + t * (22 - 14))
-    const l = Math.round(20 + t * (24 - 20))
-    return `hsl(${h},${s}%,${l}%)`
-  }
-  if (bid < 50) {
-    const t = bid / 50
-    const h = Math.round(220 + t * (174 - 220))
-    const s = Math.round(14 + t * (62 - 14))
-    const l = Math.round(22 + t * (30 - 22))
-    return `hsl(${h},${s}%,${l}%)`
-  }
-  if (bid < 150) {
-    const t = (bid - 50) / 100
-    const h = Math.round(174 + t * (172 - 174))
-    const s = Math.round(62 + t * (52 - 62))
-    const l = Math.round(30 + t * (28 - 30))
-    return `hsl(${h},${s}%,${l}%)`
-  }
-  if (bid < 300) {
-    const t = (bid - 150) / 150
-    const h = Math.round(172 + t * (142 - 172))
-    const s = Math.round(52 + t * (65 - 52))
-    const l = Math.round(28 + t * (26 - 28))
-    return `hsl(${h},${s}%,${l}%)`
-  }
-  const t = Math.min((bid - 300) / 200, 1)
-  const h = Math.round(142 + t * (130 - 142))
-  const s = Math.round(65 + t * (55 - 65))
-  const l = Math.round(26 + t * (32 - 26))
-  return `hsl(${h},${s}%,${l}%)`
+const TIER_LARGE = 100_000
+const TIER_MID = 20_000
+
+function coverageColor(ratio: number, hasBond: boolean): string {
+  if (!hasBond) return 'hsl(220, 8%, 28%)'
+  if (ratio >= 0.95) return 'hsl(168, 55%, 32%)'
+  if (ratio >= 0.7) return 'hsl(172, 45%, 28%)'
+  if (ratio >= 0.4) return 'hsl(38, 65%, 30%)'
+  return 'hsl(0, 50%, 30%)'
 }
 
-/** Legend swatch color (bid only, no coverage). */
-function bidHeatColor(bid: number): string {
-  return tileColor(bid, 1)
+function coverageBarFill(ratio: number, hasBond: boolean): string {
+  if (!hasBond) return 'rgba(120,130,150,0.50)'
+  if (ratio >= 0.95) return 'hsl(168, 60%, 48%)'
+  if (ratio >= 0.7) return 'hsl(172, 52%, 42%)'
+  if (ratio >= 0.4) return 'hsl(38, 72%, 50%)'
+  return 'hsl(0, 58%, 48%)'
 }
 
-/** Coverage bar accent color — teal matching page primary. */
-function coverageBarColor(bid: number): string {
-  if (bid < 1) return 'rgba(27,154,139,0.80)'
-  if (bid < 150) return 'rgba(20,184,166,0.88)'
-  if (bid < 300) return 'rgba(27,154,139,0.92)'
-  return 'rgba(22,163,74,0.92)'
+type TierRow = {
+  label: string
+  entries: ValidatorWithBond[]
+}
+
+function buildTierRows(active: ValidatorWithBond[]): TierRow[] {
+  const large = active.filter(
+    e => selectTotalMarinadeStake(e.validator) >= TIER_LARGE,
+  )
+  const mid = active.filter(
+    e =>
+      selectTotalMarinadeStake(e.validator) >= TIER_MID &&
+      selectTotalMarinadeStake(e.validator) < TIER_LARGE,
+  )
+  const small = active.filter(
+    e => selectTotalMarinadeStake(e.validator) < TIER_MID,
+  )
+  return [
+    { label: '>100k', entries: large },
+    { label: '20k–100k', entries: mid },
+    { label: '<20k', entries: small },
+  ].filter(r => r.entries.length > 0)
+}
+
+function tierMaxStake(entries: ValidatorWithBond[]): number {
+  if (entries.length === 0) return 1
+  return Math.max(...entries.map(e => selectTotalMarinadeStake(e.validator)))
 }
 
 const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
@@ -93,85 +86,103 @@ const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
         selectTotalMarinadeStake(b.validator) -
         selectTotalMarinadeStake(a.validator),
     )
-  const maxStake =
-    active.length > 0 ? selectTotalMarinadeStake(active[0].validator) : 1
+
+  const tiers = buildTierRows(active)
 
   return (
     <div className="px-4 pb-4">
-      <div className="flex flex-wrap gap-px p-3 bg-card rounded-xl border border-border shadow-card">
-        {active.map(entry => {
-          const stake = selectTotalMarinadeStake(entry.validator)
-          const protectedStake = selectProtectedStake(entry)
-          const ratio = stake > 0 ? protectedStake / stake : 0
-          const bid = entry.auction?.revShare.bidPmpe ?? 0
-          const norm = Math.sqrt(stake / maxStake)
-          const size = Math.round(MIN_TILE + norm * (MAX_TILE - MIN_TILE))
-          const name = selectName(entry.validator)
-          const showText = size >= 56
-          const tileBg = tileColor(bid, ratio)
-          const barColor = coverageBarColor(bid)
-          const coveragePct = Math.min(Math.round(ratio * 100), 100)
-          const barH = size >= 72 ? 4 : 3
-
+      <div className="bg-card rounded-xl border border-border shadow-card overflow-hidden">
+        {tiers.map((tier, i) => {
+          const maxStake = tierMaxStake(tier.entries)
           return (
             <div
-              key={selectVoteAccount(entry.validator)}
-              className="relative flex flex-col justify-between rounded-lg overflow-hidden shrink-0 cursor-default"
-              style={{
-                width: size,
-                height: size,
-                background: tileBg,
-                boxShadow:
-                  'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.30)',
-              }}
-              {...tooltipAttributes(
-                `${name}<br/>` +
-                  `Stake: ${formatSolAmount(stake)} SOL<br/>` +
-                  `Bid: ${bid >= 1 ? `${Math.round(bid)} pmpe` : 'none'}<br/>` +
-                  `Coverage: ${formatPercentage(ratio)}`,
-              )}
+              key={tier.label}
+              className={`flex items-stretch${i > 0 ? ' border-t border-border/40' : ''}`}
             >
-              {showText && (
-                <div className="flex-1 px-1.5 pt-1.5 overflow-hidden">
-                  <div
-                    className="text-[10px] font-semibold leading-tight truncate"
-                    style={{ color: 'rgba(255,255,255,0.88)' }}
-                  >
-                    {name}
-                  </div>
-                  {size >= 72 && (
-                    <div
-                      className="text-[9px] leading-tight truncate mt-0.5"
-                      style={{ color: 'rgba(255,255,255,0.42)' }}
-                    >
-                      {formatSolAmount(stake)} SOL
-                    </div>
-                  )}
-                  {size >= 90 && (
-                    <div
-                      className="text-[9px] leading-tight truncate mt-0.5"
-                      style={{ color: 'rgba(255,255,255,0.42)' }}
-                    >
-                      {bid >= 1
-                        ? `${Math.round(bid)} pmpe`
-                        : `${coveragePct}% cov.`}
-                    </div>
-                  )}
-                </div>
-              )}
-              {/* Coverage bar — width proportional to protected/total stake */}
+              {/* Stake tier label */}
               <div
-                className="shrink-0 w-full"
-                style={{ height: barH, background: 'rgba(0,0,0,0.35)' }}
+                className="flex items-center justify-center shrink-0 text-[10px] text-muted-foreground font-mono"
+                style={{ width: 56, minHeight: 40 }}
               >
-                <div
-                  style={{
-                    height: '100%',
-                    width: `${coveragePct}%`,
-                    background: barColor,
-                    transition: 'width 0.3s ease',
-                  }}
-                />
+                {tier.label}
+              </div>
+              {/* Tiles */}
+              <div className="flex flex-wrap gap-px p-2 flex-1 min-w-0">
+                {tier.entries.map(entry => {
+                  const stake = selectTotalMarinadeStake(entry.validator)
+                  const protectedStake = selectProtectedStake(entry)
+                  const ratio = stake > 0 ? protectedStake / stake : 0
+                  const hasBond = entry.bond !== null
+                  const norm = Math.sqrt(stake / maxStake)
+                  const size = Math.round(
+                    MIN_TILE + norm * (MAX_TILE - MIN_TILE),
+                  )
+                  const name = selectName(entry.validator)
+                  const coveragePct = Math.min(Math.round(ratio * 100), 100)
+                  const tileBg = coverageColor(ratio, hasBond)
+                  const barFill = coverageBarFill(ratio, hasBond)
+
+                  return (
+                    <div
+                      key={selectVoteAccount(entry.validator)}
+                      className="relative flex flex-col justify-between rounded-lg overflow-hidden shrink-0 cursor-default"
+                      style={{
+                        width: size,
+                        height: size,
+                        background: tileBg,
+                        boxShadow:
+                          'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.30)',
+                      }}
+                      {...tooltipAttributes(
+                        `${name}<br/>` +
+                          `Stake: ${formatSolAmount(stake)} SOL<br/>` +
+                          `Coverage: ${formatPercentage(ratio)}` +
+                          (!hasBond ? '<br/>No bond' : ''),
+                      )}
+                    >
+                      {size >= 44 && (
+                        <div className="flex-1 px-1.5 pt-1.5 overflow-hidden">
+                          <div
+                            className="text-[10px] font-semibold leading-tight truncate"
+                            style={{ color: 'rgba(255,255,255,0.9)' }}
+                          >
+                            {name}
+                          </div>
+                          {size >= 60 && (
+                            <div
+                              className="text-[9px] leading-tight truncate mt-0.5"
+                              style={{ color: 'rgba(255,255,255,0.6)' }}
+                            >
+                              {formatSolAmount(stake)} SOL
+                            </div>
+                          )}
+                          {size >= 80 && (
+                            <div
+                              className="text-[9px] leading-tight truncate mt-0.5"
+                              style={{ color: 'rgba(255,255,255,0.55)' }}
+                            >
+                              {coveragePct}% cov.
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {/* Bond health bar */}
+                      <div
+                        className="shrink-0 w-full"
+                        style={{ height: 5, background: 'rgba(0,0,0,0.3)' }}
+                      >
+                        <div
+                          style={{
+                            height: '100%',
+                            width: `${coveragePct}%`,
+                            background: barFill,
+                            transition: 'width 0.3s ease',
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )
@@ -185,48 +196,40 @@ const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
         <div className="flex items-center gap-1.5">
           <div
             className="rounded-sm shrink-0"
-            style={{ width: 10, height: 10, background: bidHeatColor(0) }}
+            style={{ width: 10, height: 10, background: 'hsl(220, 8%, 28%)' }}
           />
-          <span>No bid</span>
+          <span>No bond</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div
             className="rounded-sm shrink-0"
-            style={{ width: 10, height: 10, background: bidHeatColor(100) }}
+            style={{ width: 10, height: 10, background: 'hsl(0, 50%, 30%)' }}
           />
-          <span>Low</span>
+          <span>&lt;40% covered</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div
             className="rounded-sm shrink-0"
-            style={{ width: 10, height: 10, background: bidHeatColor(250) }}
+            style={{ width: 10, height: 10, background: 'hsl(38, 65%, 30%)' }}
           />
-          <span>Mid</span>
+          <span>40–70%</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div
             className="rounded-sm shrink-0"
-            style={{ width: 10, height: 10, background: bidHeatColor(400) }}
+            style={{ width: 10, height: 10, background: 'hsl(172, 45%, 28%)' }}
           />
-          <span>High bid</span>
+          <span>70–95%</span>
         </div>
-        <div className="flex items-center gap-1.5 ml-2">
+        <div className="flex items-center gap-1.5">
           <div
-            className="rounded-sm shrink-0 overflow-hidden"
-            style={{ width: 22, height: 5, background: 'rgba(0,0,0,0.35)' }}
-          >
-            <div
-              style={{
-                width: '60%',
-                height: '100%',
-                background: 'rgba(27,154,139,0.80)',
-              }}
-            />
-          </div>
-          <span>Coverage</span>
+            className="rounded-sm shrink-0"
+            style={{ width: 10, height: 10, background: 'hsl(168, 55%, 32%)' }}
+          />
+          <span>≥95% covered</span>
         </div>
         <span className="ml-auto" style={{ color: 'rgba(255,255,255,0.18)' }}>
-          Tile size ∝ √stake
+          Tile size ∝ √stake (per tier)
         </span>
       </div>
     </div>
