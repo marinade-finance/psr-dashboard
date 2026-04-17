@@ -69,11 +69,6 @@ function buildTierRows(active: ValidatorWithBond[]): TierRow[] {
   ].filter(r => r.entries.length > 0)
 }
 
-function tierMaxStake(entries: ValidatorWithBond[]): number {
-  if (entries.length === 0) return 1
-  return Math.max(...entries.map(e => selectTotalMarinadeStake(e.validator)))
-}
-
 const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
   data,
 }) => {
@@ -85,13 +80,15 @@ const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
         selectTotalMarinadeStake(a.validator),
     )
 
+  const globalMaxStake =
+    active.length > 0 ? selectTotalMarinadeStake(active[0].validator) : 1
+
   const tiers = buildTierRows(active)
 
   return (
     <div className="px-4 pb-4">
       <div className="bg-card rounded-xl border border-border shadow-card overflow-hidden">
         {tiers.map((tier, i) => {
-          const maxStake = tierMaxStake(tier.entries)
           return (
             <div
               key={tier.label}
@@ -111,7 +108,7 @@ const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
                   const protectedStake = selectProtectedStake(entry)
                   const ratio = stake > 0 ? protectedStake / stake : 0
                   const hasBond = entry.bond !== null
-                  const norm = Math.sqrt(stake / maxStake)
+                  const norm = Math.sqrt(stake / globalMaxStake)
                   const size = Math.round(
                     MIN_TILE + norm * (MAX_TILE - MIN_TILE),
                   )
