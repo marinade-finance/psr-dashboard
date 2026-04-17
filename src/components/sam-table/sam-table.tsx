@@ -14,6 +14,7 @@ import { formatPercentage, formatSolAmount } from 'src/format'
 import { HELP_TEXT } from 'src/services/help-text'
 import {
   selectBondSize,
+  selectExpectedStakeChange,
   selectMaxAPY,
   selectSamDistributedStake,
   selectVoteAccount,
@@ -63,6 +64,43 @@ type SortColumn =
   | 'nextStep'
 type SortDirection = 'asc' | 'desc'
 
+function makeCompareFn(
+  col: SortColumn,
+  dir: SortDirection,
+  validatorMeta: Map<string, ValidatorMeta> | undefined,
+  epochsPerYear: number,
+): (a: AuctionValidator, b: AuctionValidator) => number {
+  return (a, b) => {
+    let cmp = 0
+    switch (col) {
+      case 'rank':
+      case 'stakeDelta':
+        cmp =
+          a.auctionStake.marinadeSamTargetSol -
+          a.marinadeActivatedStakeSol -
+          (b.auctionStake.marinadeSamTargetSol - b.marinadeActivatedStakeSol)
+        break
+      case 'validator': {
+        const nameA = validatorMeta?.get(a.voteAccount)?.name ?? a.voteAccount
+        const nameB = validatorMeta?.get(b.voteAccount)?.name ?? b.voteAccount
+        cmp = nameA.localeCompare(nameB)
+        break
+      }
+      case 'maxApy':
+        cmp = selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
+        break
+      case 'bond':
+        cmp = a.bondBalanceSol - b.bondBalanceSol
+        break
+      default:
+        cmp =
+          b.auctionStake.marinadeSamTargetSol -
+          a.auctionStake.marinadeSamTargetSol
+    }
+    return dir === 'asc' ? cmp : -cmp
+  }
+}
+
 type Props = {
   auctionResult: AuctionResult
   originalAuctionResult: AuctionResult | null
@@ -78,6 +116,7 @@ type Props = {
   editingValidator?: string | null
   pendingEdits?: PendingEdits
   validatorMeta?: Map<string, ValidatorMeta>
+  stakeChanges?: Map<string, number>
   onValidatorClick: (voteAccount: string) => void
   onFieldChange?: (field: string, value: string) => void
   onRunSimulation?: () => void
@@ -176,6 +215,7 @@ export const SamTable: React.FC<Props> = ({
   simulatedValidators = new Set(),
   isCalculating,
   validatorMeta,
+  stakeChanges,
   onValidatorClick,
   onClearValidator,
   onResetSimulation,
@@ -233,83 +273,27 @@ export const SamTable: React.FC<Props> = ({
   )
 
   // Sort validators based on current sort column and direction
-  const sortedValidators = useMemo(() => {
-    const sorted = [...validatorsWithBond].sort((a, b) => {
-      let cmp = 0
-      switch (sortColumn) {
-        case 'rank':
-        case 'stakeDelta':
-          cmp =
-            a.auctionStake.marinadeSamTargetSol -
-            a.marinadeActivatedStakeSol -
-            (b.auctionStake.marinadeSamTargetSol - b.marinadeActivatedStakeSol)
-          break
-        case 'validator': {
-          const nameA = validatorMeta?.get(a.voteAccount)?.name ?? a.voteAccount
-          const nameB = validatorMeta?.get(b.voteAccount)?.name ?? b.voteAccount
-          cmp = nameA.localeCompare(nameB)
-          break
-        }
-        case 'maxApy':
-          cmp = selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
-          break
-        case 'bond':
-          cmp = a.bondBalanceSol - b.bondBalanceSol
-          break
-        case 'nextStep':
-          cmp =
-            b.auctionStake.marinadeSamTargetSol -
-            a.auctionStake.marinadeSamTargetSol
-          break
-        default:
-          cmp =
-            b.auctionStake.marinadeSamTargetSol -
-            a.auctionStake.marinadeSamTargetSol
-      }
-      return sortDirection === 'asc' ? cmp : -cmp
-    })
-    return sorted
-  }, [
-    validatorsWithBond,
-    sortColumn,
-    sortDirection,
-    validatorMeta,
-    epochsPerYear,
-  ])
+  const sortedValidators = useMemo(
+    () =>
+      [...validatorsWithBond].sort(
+        makeCompareFn(sortColumn, sortDirection, validatorMeta, epochsPerYear),
+      ),
+    [
+      validatorsWithBond,
+      sortColumn,
+      sortDirection,
+      validatorMeta,
+      epochsPerYear,
+    ],
+  )
 
   // Simulation: original position map (same sort as current)
   const originalPositionsMap = useMemo(() => {
     if (!originalAuctionResult) return null
-    const compareFn = (a: AuctionValidator, b: AuctionValidator) => {
-      let cmp = 0
-      switch (sortColumn) {
-        case 'rank':
-        case 'stakeDelta':
-          cmp =
-            a.auctionStake.marinadeSamTargetSol -
-            a.marinadeActivatedStakeSol -
-            (b.auctionStake.marinadeSamTargetSol - b.marinadeActivatedStakeSol)
-          break
-        case 'validator': {
-          const nameA = validatorMeta?.get(a.voteAccount)?.name ?? a.voteAccount
-          const nameB = validatorMeta?.get(b.voteAccount)?.name ?? b.voteAccount
-          cmp = nameA.localeCompare(nameB)
-          break
-        }
-        case 'maxApy':
-          cmp = selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
-          break
-        case 'bond':
-          cmp = a.bondBalanceSol - b.bondBalanceSol
-          break
-        default:
-          cmp =
-            b.auctionStake.marinadeSamTargetSol -
-            a.auctionStake.marinadeSamTargetSol
-      }
-      return sortDirection === 'asc' ? cmp : -cmp
-    }
-    return buildOriginalPositionsMap(originalAuctionResult, compareFn)
+    return buildOriginalPositionsMap(
+      originalAuctionResult,
+      makeCompareFn(sortColumn, sortDirection, validatorMeta, epochsPerYear),
+    )
   }, [
     originalAuctionResult,
     sortColumn,
@@ -370,6 +354,13 @@ export const SamTable: React.FC<Props> = ({
     d => !d.isGhost && d.validator.auctionStake.marinadeSamTargetSol === 0,
   )
 
+  const totalRedelegation = useMemo(() => {
+    if (!stakeChanges) return 0
+    return [...stakeChanges.values()]
+      .filter(x => x > 0)
+      .reduce((s, x) => s + x, 0)
+  }, [stakeChanges])
+
   // Stats for the stats bar
   const totalValidators = sortedValidators.length
   const winningCount = winningValidators.length
@@ -403,6 +394,12 @@ export const SamTable: React.FC<Props> = ({
       value: `${winningCount} / ${totalValidators}`,
       unit: '',
       help: undefined,
+    },
+    {
+      label: 'Re-delegation',
+      value: formatSolAmount(Math.round(totalRedelegation), 0),
+      unit: 'SOL',
+      help: 'Total SAM stake expected to move next epoch (~0.7% of TVL rebalancing budget)',
     },
   ]
 
@@ -486,8 +483,11 @@ export const SamTable: React.FC<Props> = ({
     const bondStyle = getBondHealthStyle(bondHealth)
     const hasAlert = bondRunway <= 5 || bondUtilPct >= 85
 
-    // Stake delta
+    // Stake delta (fallback) and expected change
     const delta = formatStakeDelta(validator)
+    const expectedChange = stakeChanges
+      ? selectExpectedStakeChange(voteAccount, stakeChanges)
+      : null
 
     // Tip
     const tip = getValidatorTip(validator, winningAPY, epochsPerYear)
@@ -618,15 +618,41 @@ export const SamTable: React.FC<Props> = ({
           </div>
         </TableCell>
 
-        {/* Stake Delta */}
+        {/* Stake / Next Δ */}
         <TableCell className="px-3.5 py-3">
-          <span
-            className="font-semibold text-[13px] font-mono"
-            style={{ color: delta.color }}
-          >
-            {delta.arrow} {delta.text}
-            {delta.text !== '\u2014' && ' SOL'}
-          </span>
+          {expectedChange !== null ? (
+            <div className="flex flex-col gap-0.5">
+              <span className="text-muted-foreground text-[11px] font-mono">
+                {formatSolAmount(validator.marinadeActivatedStakeSol, 0)} SOL
+              </span>
+              {expectedChange === 0 ? (
+                <span className="text-muted-foreground text-[12px] font-mono">
+                  &#x2192; 0
+                </span>
+              ) : (
+                <span
+                  className="font-semibold text-[13px] font-mono"
+                  style={{
+                    color:
+                      expectedChange > 0
+                        ? 'var(--status-green)'
+                        : 'var(--destructive)',
+                  }}
+                >
+                  {expectedChange > 0 ? '+' : ''}
+                  {formatSolAmount(Math.round(expectedChange), 0)} SOL
+                </span>
+              )}
+            </div>
+          ) : (
+            <span
+              className="font-semibold text-[13px] font-mono"
+              style={{ color: delta.color }}
+            >
+              {delta.arrow} {delta.text}
+              {delta.text !== '\u2014' && ' SOL'}
+            </span>
+          )}
         </TableCell>
 
         {/* Next Step */}
@@ -745,12 +771,12 @@ export const SamTable: React.FC<Props> = ({
                 <HelpTip text={HELP_TEXT.bondHealth} />
               </TableHead>
               <TableHead
-                className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted w-[120px] cursor-pointer hover:text-primary"
+                className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted w-[140px] cursor-pointer hover:text-primary"
                 onClick={() => handleSort('stakeDelta')}
               >
-                Stake {'\u0394'}
+                Stake / Next {'\u0394'}
                 <SortIndicator column="stakeDelta" />
-                <HelpTip text={HELP_TEXT.stakeDelta} />
+                <HelpTip text="Current active stake and expected change next epoch based on auction results and rebalancing budget (~0.7% TVL/epoch)" />
               </TableHead>
               <TableHead
                 className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted min-w-[200px] cursor-pointer hover:text-primary"

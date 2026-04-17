@@ -7,7 +7,11 @@ import { Navigation } from 'src/components/navigation/navigation'
 import { SamTable } from 'src/components/sam-table/sam-table'
 import { ValidatorDetail } from 'src/components/validator-detail/validator-detail'
 import { getBannerData } from 'src/services/banner'
-import { loadSam, selectBondSize } from 'src/services/sam'
+import {
+  buildExpectedStakeChanges,
+  loadSam,
+  selectBondSize,
+} from 'src/services/sam'
 import { mergeOverrides, removeFromOverrides } from 'src/services/simulation'
 import { fetchValidators } from 'src/services/validators'
 
@@ -69,11 +73,6 @@ export const SamPage: React.FC<Props> = ({ level }) => {
     }
     return map
   }, [validatorsData])
-
-  const nameStringMap = useMemo(
-    () => new Map([...nameMap.entries()].map(([k, v]) => [k, v.name])),
-    [nameMap],
-  )
 
   const ensureOriginalSaved = useCallback(() => {
     if (!originalAuctionResult && data?.auctionResult) {
@@ -234,6 +233,12 @@ export const SamPage: React.FC<Props> = ({ level }) => {
       ? data?.auctionResult
       : originalAuctionResult
 
+  const stakeChanges = useMemo(() => {
+    if (!displayAuctionResult) return undefined
+    const { validators, stakeAmounts } = displayAuctionResult.auctionData
+    return buildExpectedStakeChanges(validators, stakeAmounts.marinadeSamTvlSol)
+  }, [displayAuctionResult])
+
   const sheetValidatorData = useMemo(() => {
     if (!selectedValidator || !displayAuctionResult) return null
     const validators = displayAuctionResult.auctionData.validators
@@ -277,6 +282,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
           isCalculating={isCalculating}
           pendingEdits={pendingEdits}
           validatorMeta={nameMap}
+          stakeChanges={stakeChanges}
           onValidatorClick={handleValidatorClick}
           onFieldChange={handleFieldChange}
           onRunSimulation={handleRunSimulation}
@@ -295,7 +301,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
             auctionResult={displayAuctionResult}
             dsSamConfig={data.dcSamConfig}
             epochsPerYear={data.epochsPerYear}
-            nameMap={nameStringMap}
+            nameMap={nameMap}
             rank={sheetValidatorData.rank}
             totalValidators={sheetValidatorData.totalValidators}
             onClose={handleBack}

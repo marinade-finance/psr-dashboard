@@ -8,8 +8,8 @@ import {
   LogVerbosity,
 } from '@marinade.finance/ds-sam-sdk'
 
-import { Color } from 'src/components/table/table'
 import { formatPercentage } from 'src/format'
+import { Color } from 'src/services/types'
 
 import {
   bondHealthColor as _bondHealthColor,
@@ -511,6 +511,58 @@ export function getRecommendation(
 
 export const selectMaxWantedStake = (validator: AuctionValidator): number =>
   _selectMaxWantedStake(validator)
+
+export const EPOCH_REBALANCE_RATE = 0.007 // ~0.7% of TVL moves per epoch
+
+/**
+ * Expected stake change for each validator next epoch.
+ * Sorts by totalPmpe descending (highest bidder priority), greedily allocates
+ * inflows up to budget = 0.7% * TVL, distributes outflows proportionally
+ * among validators over their target.
+ */
+export function buildExpectedStakeChanges(
+  validators: AuctionValidator[],
+  tvlSol: number,
+): Map<string, number> {
+  const budget = tvlSol * EPOCH_REBALANCE_RATE
+
+  const rawDelta = (v: AuctionValidator) =>
+    v.auctionStake.marinadeSamTargetSol - v.marinadeActivatedStakeSol
+
+  const sorted = [...validators].sort(
+    (a, b) => (b.revShare.totalPmpe ?? 0) - (a.revShare.totalPmpe ?? 0),
+  )
+
+  const result = new Map<string, number>()
+  let remaining = budget
+  for (const v of sorted) {
+    const delta = rawDelta(v)
+    if (delta > 0 && remaining > 0) {
+      const alloc = Math.min(delta, remaining)
+      result.set(v.voteAccount, alloc)
+      remaining -= alloc
+    }
+  }
+
+  const totalInflows = [...result.values()].reduce((s, x) => s + x, 0)
+  if (totalInflows === 0) return result
+
+  const losers = validators.filter(v => rawDelta(v) < 0)
+  const totalExcess = losers.reduce((s, v) => s + Math.abs(rawDelta(v)), 0)
+  if (totalExcess > 0) {
+    for (const v of losers) {
+      const share = Math.abs(rawDelta(v)) / totalExcess
+      result.set(v.voteAccount, -totalInflows * share)
+    }
+  }
+
+  return result
+}
+
+export const selectExpectedStakeChange = (
+  voteAccount: string,
+  stakeChanges: Map<string, number>,
+): number => stakeChanges.get(voteAccount) ?? 0
 
 export const formattedInBondBlockRewardsCommission = (
   validator: AuctionValidator,
