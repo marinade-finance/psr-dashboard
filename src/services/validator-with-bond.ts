@@ -1,6 +1,10 @@
 import { fetchBonds, selectEffectiveAmount } from './bonds'
 import { loadSam } from './sam'
-import { fetchValidators, selectTotalMarinadeStake } from './validators'
+import {
+  fetchValidators,
+  hasMarinadeStake,
+  selectTotalMarinadeStake,
+} from './validators'
 
 import type { BondRecord } from './bonds'
 import type { Validator } from './validators'
@@ -64,5 +68,7 @@ export const fetchValidatorsWithBonds = async (): Promise<
     }
   }
 
-  return Object.values(validatorsWithBonds)
+  return Object.values(validatorsWithBonds).filter(
+    ({ validator, bond }) => hasMarinadeStake(validator) || bond !== null,
+  )
 }

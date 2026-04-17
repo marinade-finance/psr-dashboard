@@ -2,7 +2,7 @@ import { fetchProtectedEvents } from './protected-events'
 import { calculateProtectedEventEstimates } from './protected-events-estimator'
 import { loadSam } from './sam'
 import { fetchScoring } from './scoring'
-import { fetchValidatorsWithEpochs } from './validators'
+import { fetchValidatorsWithEpochs, hasMarinadeStake } from './validators'
 
 import type { ProtectedEvent } from './protected-events'
 import type { Validator } from './validators'
@@ -30,7 +30,9 @@ export const fetchProtectedEventsWithValidator = async (): Promise<
     scoring,
     { auctionResult },
   ] = await Promise.all([
-    fetchValidatorsWithEpochs(3),
+    fetchValidatorsWithEpochs(3).then(r => ({
+      validators: r.validators.filter(hasMarinadeStake),
+    })),
     fetchProtectedEvents(),
     fetchScoring(),
     loadSam(),

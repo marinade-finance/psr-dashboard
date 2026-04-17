@@ -42,16 +42,14 @@ export type ValidatorsResponse = {
 export const fetchValidators = async (): Promise<ValidatorsResponse> =>
   fetchValidatorsWithEpochs(0)
 
+export const hasMarinadeStake = (v: Validator) =>
+  Number(v.marinade_stake) > 0 || Number(v.marinade_native_stake) > 0
+
 export const fetchValidatorsWithEpochs = async (
   epochs: number,
 ): Promise<ValidatorsResponse> => {
   const res = await fetch(
     `https://validators-api.marinade.finance/validators?limit=9999&epochs=${epochs}`,
   )
-  const data = (await res.json()) as ValidatorsResponse
-  return {
-    validators: data.validators.filter(
-      v => Number(v.marinade_stake) > 0 || Number(v.marinade_native_stake) > 0,
-    ),
-  }
+  return (await res.json()) as ValidatorsResponse
 }
