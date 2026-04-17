@@ -1,146 +1,16 @@
-/**
- * Tests for tip-engine v2 logic from origin/feature/my-feature.
- * Functions are inlined here since that branch isn't merged yet.
- */
 import { describe, it, expect } from 'vitest'
 
+import {
+  getValidatorTip,
+  getApyBreakdown,
+  getBondHealthStyle,
+  getTipStyle,
+  formatStakeDelta,
+  calculateBondUtilization,
+  calculateMaxApy,
+} from '../tip-engine'
+
 import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
-
-// --- inlined from feature/my-feature:src/services/tip-engine.ts ---
-
-type TipUrgency = 'critical' | 'warning' | 'info' | 'positive' | 'neutral'
-type TipConstraint = 'rank' | 'bond' | 'bid' | 'none'
-
-interface ValidatorTip {
-  text: string
-  urgency: TipUrgency
-  constraint: TipConstraint
-}
-
-const EPOCH_HOURS = 52
-
-function getBondHealth(
-  bondUtilPct: number,
-  epochsRunway: number,
-): 'healthy' | 'watch' | 'critical' {
-  if (epochsRunway <= 5 || bondUtilPct >= 85) return 'critical'
-  if (epochsRunway <= 10 || bondUtilPct >= 65) return 'watch'
-  return 'healthy'
-}
-
-function calculateBondUtilization(validator: AuctionValidator): number {
-  const bondBalance = validator.bondBalanceSol
-  const samActive = validator.marinadeActivatedStakeSol
-  if (bondBalance <= 0) return 100
-  return Math.min((samActive / (bondBalance * 5000)) * 100, 100)
-}
-
-function calculateMaxApy(
-  validator: AuctionValidator,
-  epochsPerYear: number,
-): number {
-  return Math.pow(1 + validator.revShare.totalPmpe / 1e3, epochsPerYear) - 1
-}
-
-function getValidatorTip(
-  validator: AuctionValidator,
-  winningApy: number,
-  epochsPerYear: number,
-): ValidatorTip {
-  const inSet = validator.auctionStake.marinadeSamTargetSol > 0
-  const samActive = validator.marinadeActivatedStakeSol
-  const samTarget = validator.auctionStake.marinadeSamTargetSol
-  const delta = samTarget - samActive
-  const bondGoodForEpochs = validator.bondGoodForNEpochs ?? 0
-  const bondUtilPct = calculateBondUtilization(validator)
-  const health = getBondHealth(bondUtilPct, bondGoodForEpochs)
-  const maxApy = calculateMaxApy(validator, epochsPerYear)
-  const bidPmpe = validator.revShare.bidPmpe
-
-  if (!inSet) {
-    const gap = (winningApy - maxApy).toFixed(2)
-    return {
-      text: `Outside winning set. Increase bid by ~${gap}% or lower commission to qualify.`,
-      urgency: 'critical',
-      constraint: 'rank',
-    }
-  }
-
-  if (health === 'critical' && bondGoodForEpochs <= 5) {
-    const days = Math.round((bondGoodForEpochs * EPOCH_HOURS) / 24)
-    return {
-      text: `Bond depletes in ~${bondGoodForEpochs} epochs (${days}d). Top up to avoid forced unstaking.`,
-      urgency: 'critical',
-      constraint: 'bond',
-    }
-  }
-
-  if (health === 'critical') {
-    return {
-      text: 'Bond utilization >85%. Top up bond or reduce WANT to lower exposure.',
-      urgency: 'critical',
-      constraint: 'bond',
-    }
-  }
-
-  if (health === 'watch' && bidPmpe < 15) {
-    return {
-      text: `Bid at ${(bidPmpe / 10).toFixed(2)}% is below median. Raise to 0.15-0.25% to gain rank.`,
-      urgency: 'warning',
-      constraint: 'bid',
-    }
-  }
-
-  if (health === 'watch') {
-    return {
-      text: `Bond runway ~${bondGoodForEpochs} epochs. Consider topping up before next cycle.`,
-      urgency: 'warning',
-      constraint: 'bond',
-    }
-  }
-
-  if (bidPmpe < 10 && delta > 50000) {
-    return {
-      text: `Low bid limits rank. Raising could gain ~${(delta / 1000).toFixed(0)}K SOL more stake.`,
-      urgency: 'info',
-      constraint: 'bid',
-    }
-  }
-
-  if (delta > 100000) {
-    return {
-      text: `Gaining +${(delta / 1000).toFixed(0)}K SOL stake next epoch. Bond and bid well-positioned.`,
-      urgency: 'positive',
-      constraint: 'none',
-    }
-  }
-
-  if (delta > 0) {
-    const runwayNote =
-      bondGoodForEpochs > 20 ? 'Strong runway.' : 'Monitor bond.'
-    return {
-      text: `On track: +${delta.toLocaleString()} SOL incoming. ${runwayNote}`,
-      urgency: 'positive',
-      constraint: 'none',
-    }
-  }
-
-  if (delta === 0) {
-    return {
-      text: 'At target allocation. Raise bid to grow, or reduce WANT to free bond capacity.',
-      urgency: 'neutral',
-      constraint: 'none',
-    }
-  }
-
-  return {
-    text: `Losing ${Math.abs(delta).toLocaleString()} SOL stake. Raise bid or check if commission changed.`,
-    urgency: 'critical',
-    constraint: 'bid',
-  }
-}
-
-// --- helpers ---
 
 function makeValidator(
   overrides: Record<string, unknown> = {},
@@ -166,78 +36,222 @@ function makeValidator(
   } as unknown as AuctionValidator
 }
 
-// --- getBondHealth tests ---
+const EPOCHS_PER_YEAR = 182
 
-describe('getBondHealth (tip-engine v2)', () => {
-  it('critical: epochsRunway = 5', () => {
-    expect(getBondHealth(0, 5)).toBe('critical')
+// --- calculateBondUtilization ---
+
+describe('calculateBondUtilization', () => {
+  it('delegates to bondUtilizationPct: 10k active / (100 * 5000) * 100 = 2%', () => {
+    const v = makeValidator({
+      bondBalanceSol: 100,
+      marinadeActivatedStakeSol: 10000,
+    })
+    expect(calculateBondUtilization(v)).toBe(2)
   })
 
-  it('critical: epochsRunway = 4', () => {
-    expect(getBondHealth(0, 4)).toBe('critical')
-  })
-
-  it('critical: bondUtilPct = 85', () => {
-    expect(getBondHealth(85, 20)).toBe('critical')
-  })
-
-  it('critical: bondUtilPct = 90', () => {
-    expect(getBondHealth(90, 20)).toBe('critical')
-  })
-
-  it('watch: epochsRunway = 10', () => {
-    expect(getBondHealth(0, 10)).toBe('watch')
-  })
-
-  it('watch: bondUtilPct = 65', () => {
-    expect(getBondHealth(65, 20)).toBe('watch')
-  })
-
-  it('healthy: 64% util, 11 epochs', () => {
-    expect(getBondHealth(64, 11)).toBe('healthy')
+  it('zero bond → 100', () => {
+    const v = makeValidator({
+      bondBalanceSol: 0,
+      marinadeActivatedStakeSol: 1000,
+    })
+    expect(calculateBondUtilization(v)).toBe(100)
   })
 })
 
-// --- getValidatorTip — all 10 priority rules ---
+// --- calculateMaxApy ---
 
-describe('getValidatorTip (tip-engine v2)', () => {
-  const epochsPerYear = 182
+describe('calculateMaxApy', () => {
+  it('returns compoundApy of totalPmpe', () => {
+    const v = makeValidator()
+    // totalPmpe = 28
+    const expected = Math.pow(1 + 28 / 1e3, EPOCHS_PER_YEAR) - 1
+    expect(calculateMaxApy(v, EPOCHS_PER_YEAR)).toBeCloseTo(expected, 10)
+  })
 
-  it('rule 1: not in set → critical/rank', () => {
+  it('zero totalPmpe → 0', () => {
+    const v = makeValidator({
+      revShare: {
+        inflationPmpe: 0,
+        mevPmpe: 0,
+        blockPmpe: 0,
+        bidPmpe: 0,
+        totalPmpe: 0,
+        bondObligationPmpe: 0,
+        auctionEffectiveBidPmpe: 0,
+        effParticipatingBidPmpe: 0,
+      },
+    })
+    expect(calculateMaxApy(v, EPOCHS_PER_YEAR)).toBe(0)
+  })
+})
+
+// --- getApyBreakdown ---
+
+describe('getApyBreakdown', () => {
+  it('has all expected keys', () => {
+    const v = makeValidator()
+    const bd = getApyBreakdown(v, EPOCHS_PER_YEAR)
+    expect(bd).toHaveProperty('inflation')
+    expect(bd).toHaveProperty('mev')
+    expect(bd).toHaveProperty('blockRewards')
+    expect(bd).toHaveProperty('stakeBid')
+    expect(bd).toHaveProperty('total')
+  })
+
+  it('stakeBid maps to bid pmpe (not named "bid")', () => {
+    const v = makeValidator()
+    const bd = getApyBreakdown(v, EPOCHS_PER_YEAR)
+    expect(bd.stakeBid).toBeGreaterThan(0)
+    expect((bd as Record<string, unknown>).bid).toBeUndefined()
+  })
+
+  it('total = compoundApy(totalPmpe)', () => {
+    const v = makeValidator()
+    const bd = getApyBreakdown(v, EPOCHS_PER_YEAR)
+    const expected = Math.pow(1 + 28 / 1e3, EPOCHS_PER_YEAR) - 1
+    expect(bd.total).toBeCloseTo(expected, 10)
+  })
+})
+
+// --- getBondHealthStyle ---
+
+describe('getBondHealthStyle', () => {
+  it('critical → destructive color', () => {
+    const s = getBondHealthStyle('critical')
+    expect(s.color).toContain('destructive')
+    expect(s.label).toBe('Critical')
+  })
+
+  it('watch → warning color', () => {
+    const s = getBondHealthStyle('watch')
+    expect(s.color).toContain('warning')
+    expect(s.label).toBe('Watch')
+  })
+
+  it('healthy → primary color', () => {
+    const s = getBondHealthStyle('healthy')
+    expect(s.color).toContain('primary')
+    expect(s.label).toBe('Healthy')
+  })
+})
+
+// --- getTipStyle ---
+
+describe('getTipStyle', () => {
+  it('critical → destructive', () => {
+    expect(getTipStyle('critical').color).toContain('destructive')
+  })
+
+  it('warning → warning', () => {
+    expect(getTipStyle('warning').color).toContain('warning')
+  })
+
+  it('info → info', () => {
+    expect(getTipStyle('info').color).toContain('info')
+  })
+
+  it('positive → primary', () => {
+    expect(getTipStyle('positive').color).toContain('primary')
+  })
+
+  it('neutral → muted', () => {
+    expect(getTipStyle('neutral').color).toContain('muted')
+  })
+
+  it('each urgency has non-empty icon', () => {
+    const urgencies = [
+      'critical',
+      'warning',
+      'info',
+      'positive',
+      'neutral',
+    ] as const
+    for (const u of urgencies) {
+      expect(getTipStyle(u).icon.length).toBeGreaterThan(0)
+    }
+  })
+})
+
+// --- formatStakeDelta ---
+
+describe('formatStakeDelta', () => {
+  it('not in set (target=0) → dash text, no arrow', () => {
     const v = makeValidator({ auctionStake: { marinadeSamTargetSol: 0 } })
-    const tip = getValidatorTip(v, 0.15, epochsPerYear)
+    const r = formatStakeDelta(v)
+    expect(r.text).toBe('—')
+    expect(r.arrow).toBe('')
+  })
+
+  it('gaining stake → positive formatted with +', () => {
+    const v = makeValidator({
+      auctionStake: { marinadeSamTargetSol: 20000 },
+      marinadeActivatedStakeSol: 10000,
+    })
+    const r = formatStakeDelta(v)
+    expect(r.text).toContain('+')
+    expect(r.arrow).toBe('↑')
+  })
+
+  it('losing stake → negative, destructive color, down arrow', () => {
+    const v = makeValidator({
+      auctionStake: { marinadeSamTargetSol: 5000 },
+      marinadeActivatedStakeSol: 10000,
+    })
+    const r = formatStakeDelta(v)
+    expect(r.text).not.toContain('+')
+    expect(r.color).toContain('destructive')
+    expect(r.arrow).toBe('↓')
+  })
+
+  it('at target (delta=0) → "0", neutral color, right arrow', () => {
+    const v = makeValidator({
+      auctionStake: { marinadeSamTargetSol: 10000 },
+      marinadeActivatedStakeSol: 10000,
+    })
+    const r = formatStakeDelta(v)
+    expect(r.text).toBe('0')
+    expect(r.arrow).toBe('→')
+  })
+})
+
+// --- getValidatorTip — all priority branches ---
+
+describe('getValidatorTip', () => {
+  it('not in set → critical/rank', () => {
+    const v = makeValidator({ auctionStake: { marinadeSamTargetSol: 0 } })
+    const tip = getValidatorTip(v, 0.15, EPOCHS_PER_YEAR)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('rank')
     expect(tip.text).toContain('Outside winning set')
   })
 
-  it('rule 2: critical health + epochs <= 5 → critical/bond with days calc using 52h', () => {
+  it('critical health + epochs <= 5 → critical/bond with epoch count and days (48h)', () => {
     const v = makeValidator({
       bondGoodForNEpochs: 4,
       bondBalanceSol: 1,
       marinadeActivatedStakeSol: 999999,
     })
-    const tip = getValidatorTip(v, 0.1, epochsPerYear)
+    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
     expect(tip.text).toContain('Bond depletes')
-    const days = Math.round((4 * EPOCH_HOURS) / 24)
-    expect(tip.text).toContain(`${days}d`)
+    // 4 epochs × 48h / 24h = 8 days (NOT 52h math)
+    expect(tip.text).toContain('8d')
   })
 
-  it('rule 3: critical health but epochs > 5 (high util) → critical/bond util msg', () => {
+  it('critical health (high util, epochs > 5) → critical/bond util message', () => {
     const v = makeValidator({
       bondGoodForNEpochs: 8,
       bondBalanceSol: 1,
       marinadeActivatedStakeSol: 999999,
     })
-    const tip = getValidatorTip(v, 0.1, epochsPerYear)
+    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
     expect(tip.text).toContain('utilization')
   })
 
-  it('rule 4: watch + bidPmpe < 15 → warning/bid', () => {
+  it('watch + bidPmpe < 15 → warning/bid', () => {
     const v = makeValidator({
       bondGoodForNEpochs: 8,
       bondBalanceSol: 100,
@@ -253,25 +267,25 @@ describe('getValidatorTip (tip-engine v2)', () => {
         effParticipatingBidPmpe: 10,
       },
     })
-    const tip = getValidatorTip(v, 0.1, epochsPerYear)
+    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR)
     expect(tip.urgency).toBe('warning')
     expect(tip.constraint).toBe('bid')
     expect(tip.text).toContain('below median')
   })
 
-  it('rule 5: watch + bidPmpe >= 15 → warning/bond runway', () => {
+  it('watch + bidPmpe >= 15 → warning/bond runway', () => {
     const v = makeValidator({
       bondGoodForNEpochs: 8,
       bondBalanceSol: 100,
       marinadeActivatedStakeSol: 10000,
     })
-    const tip = getValidatorTip(v, 0.1, epochsPerYear)
+    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR)
     expect(tip.urgency).toBe('warning')
     expect(tip.constraint).toBe('bond')
     expect(tip.text).toContain('runway')
   })
 
-  it('rule 6: low bid, large delta > 50k → info/bid', () => {
+  it('healthy + low bid (< 10 pmpe) + large delta (> 50k) → info/bid', () => {
     const v = makeValidator({
       auctionStake: { marinadeSamTargetSol: 100000 },
       marinadeActivatedStakeSol: 40000,
@@ -286,51 +300,82 @@ describe('getValidatorTip (tip-engine v2)', () => {
         effParticipatingBidPmpe: 5,
       },
     })
-    const tip = getValidatorTip(v, 0.1, epochsPerYear)
+    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR)
     expect(tip.urgency).toBe('info')
     expect(tip.constraint).toBe('bid')
   })
 
-  it('rule 7: delta > 100k → positive/none large gain msg', () => {
+  it('healthy + delta > 100k → positive/none large gain', () => {
     const v = makeValidator({
       auctionStake: { marinadeSamTargetSol: 200000 },
       marinadeActivatedStakeSol: 50000,
     })
-    const tip = getValidatorTip(v, 0.1, epochsPerYear)
+    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR)
     expect(tip.urgency).toBe('positive')
     expect(tip.constraint).toBe('none')
     expect(tip.text).toContain('Gaining')
   })
 
-  it('rule 8: delta > 0 (small gain) with strong runway → positive/none', () => {
+  it('healthy + small gain (0 < delta <= 100k) with strong runway (> 20 epochs) → positive, "Strong runway"', () => {
     const v = makeValidator({
       bondGoodForNEpochs: 25,
       auctionStake: { marinadeSamTargetSol: 15000 },
       marinadeActivatedStakeSol: 10000,
     })
-    const tip = getValidatorTip(v, 0.1, epochsPerYear)
+    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR)
     expect(tip.urgency).toBe('positive')
     expect(tip.text).toContain('Strong runway')
   })
 
-  it('rule 9: delta === 0 → neutral/none', () => {
+  it('healthy + small gain with weak runway (<= 20 epochs) → positive, "Monitor bond"', () => {
+    const v = makeValidator({
+      bondGoodForNEpochs: 15,
+      auctionStake: { marinadeSamTargetSol: 15000 },
+      marinadeActivatedStakeSol: 10000,
+    })
+    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR)
+    expect(tip.urgency).toBe('positive')
+    expect(tip.text).toContain('Monitor bond')
+  })
+
+  it('delta === 0 → neutral/none at-target message', () => {
     const v = makeValidator({
       auctionStake: { marinadeSamTargetSol: 10000 },
       marinadeActivatedStakeSol: 10000,
     })
-    const tip = getValidatorTip(v, 0.1, epochsPerYear)
+    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR)
     expect(tip.urgency).toBe('neutral')
     expect(tip.constraint).toBe('none')
+    expect(tip.text).toContain('At target')
   })
 
-  it('rule 10: delta < 0 → critical/bid losing stake', () => {
+  it('delta < 0 → critical/bid losing stake message', () => {
     const v = makeValidator({
       auctionStake: { marinadeSamTargetSol: 5000 },
       marinadeActivatedStakeSol: 10000,
     })
-    const tip = getValidatorTip(v, 0.1, epochsPerYear)
+    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bid')
     expect(tip.text).toContain('Losing')
+  })
+
+  it('gap text in not-in-set uses winningApy - maxApy', () => {
+    // totalPmpe = 0 → maxApy ≈ 0, winningApy = 0.15 → gap ≈ "0.15"
+    const v = makeValidator({
+      auctionStake: { marinadeSamTargetSol: 0 },
+      revShare: {
+        inflationPmpe: 0,
+        mevPmpe: 0,
+        blockPmpe: 0,
+        bidPmpe: 0,
+        totalPmpe: 0,
+        bondObligationPmpe: 0,
+        auctionEffectiveBidPmpe: 0,
+        effParticipatingBidPmpe: 0,
+      },
+    })
+    const tip = getValidatorTip(v, 0.15, EPOCHS_PER_YEAR)
+    expect(tip.text).toContain('0.15')
   })
 })
