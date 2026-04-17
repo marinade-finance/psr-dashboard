@@ -19,7 +19,3 @@ export const Select = React.forwardRef<
   />
 ))
 Select.displayName = 'Select'
-
-export const SelectOption: React.FC<
-  React.OptionHTMLAttributes<HTMLOptionElement>
-> = props => <option {...props} />

@@ -5,8 +5,6 @@ import { Button } from 'src/components/ui/button'
 export type Props = {
   title: string
   body: JSX.Element
-  'data-tooltip-id'?: string
-  'data-tooltip-html'?: string
 }
 
 export const Banner: React.FC<Props> = ({ title, body }) => {

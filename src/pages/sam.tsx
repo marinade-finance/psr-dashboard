@@ -28,8 +28,6 @@ type Props = {
   level: UserLevel
 }
 
-export type { PendingEdits } from 'src/services/simulation'
-
 export const SamPage: React.FC<Props> = ({ level }) => {
   const [selectedValidator, setSelectedValidator] = useState<string | null>(
     null,

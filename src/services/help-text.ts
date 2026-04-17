@@ -1,4 +1,3 @@
-/** @new v2 */
 export const HELP_TEXT = {
   maxApy:
     'Maximum APY offered to stakers. Composed of inflation rewards, MEV tips, block rewards, and your stake bid. Higher Max APY = higher rank in the auction.',

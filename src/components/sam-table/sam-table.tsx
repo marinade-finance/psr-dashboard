@@ -42,7 +42,7 @@ import type {
   AuctionResult,
   AuctionValidator,
 } from '@marinade.finance/ds-sam-sdk'
-import type { PendingEdits } from 'src/pages/sam'
+import type { PendingEdits } from 'src/services/simulation'
 
 export type ValidatorMeta = {
   name?: string

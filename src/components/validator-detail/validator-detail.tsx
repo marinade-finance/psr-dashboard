@@ -45,7 +45,6 @@ interface ValidatorDetailProps {
 export const ValidatorDetail = ({
   validator,
   auctionResult,
-  dsSamConfig: _dsSamConfig,
   epochsPerYear,
   nameMap,
   rank,

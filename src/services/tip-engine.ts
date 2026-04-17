@@ -1,4 +1,3 @@
-/** @new v2 */
 import {
   getBondHealth,
   bondRunwayDays,
@@ -201,16 +200,18 @@ export const calculateMaxApy = (
   epochsPerYear: number,
 ): number => compoundApy(validator.revShare.totalPmpe, epochsPerYear)
 
-export const getApyBreakdown = (
-  validator: AuctionValidator,
-  epochsPerYear: number,
-): {
+export type ApyBreakdownDisplay = {
   inflation: number
   mev: number
   blockRewards: number
   stakeBid: number
   total: number
-} => {
+}
+
+export const getApyBreakdown = (
+  validator: AuctionValidator,
+  epochsPerYear: number,
+): ApyBreakdownDisplay => {
   const bd = apyBreakdown(validator, epochsPerYear)
   return {
     inflation: bd.inflation,

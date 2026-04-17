@@ -12,13 +12,13 @@ import { formatPercentage } from 'src/format'
 import { Color } from 'src/services/types'
 
 import {
-  bondHealthColor as _bondHealthColor,
+  bondHealthColor,
   bondRunwayEpochs,
   bondUtilizationPct,
   compoundApy,
-  isNonProductive as _isNonProductive,
-  stakeDelta as _stakeDelta,
-  selectMaxWantedStake as _selectMaxWantedStake,
+  isNonProductive,
+  stakeDelta,
+  selectMaxWantedStake,
 } from './calculations'
 
 import type {
@@ -46,7 +46,6 @@ type SamResult = {
 export const loadSam = async (
   dataOverrides?: SourceDataOverrides | null,
 ): Promise<SamResult> => {
-  const epochsPerYear = EPOCHS_PER_YEAR
   const config = await loadSamConfig()
   const dsSam = new DsSamSDK({
     ...config,
@@ -78,7 +77,7 @@ export const loadSam = async (
   const tvlJoinApyDiff = selectTvlApyDiff(
     auctionResult,
     joinResult,
-    epochsPerYear,
+    EPOCHS_PER_YEAR,
   )
 
   const leaveResult = await runAlt((data: AggregatedData) => {
@@ -90,7 +89,7 @@ export const loadSam = async (
   const tvlLeaveApyDiff = selectTvlApyDiff(
     auctionResult,
     leaveResult,
-    epochsPerYear,
+    EPOCHS_PER_YEAR,
   )
 
   // Backstop: block top 5 validators by target stake
@@ -117,7 +116,7 @@ export const loadSam = async (
   const backstopDiff = selectTargetApyDiff(
     auctionResult,
     backstopResult,
-    epochsPerYear,
+    EPOCHS_PER_YEAR,
   )
   const backstopTvl = top5.reduce((sum, t) => sum + t.targetStake, 0)
 
@@ -127,7 +126,7 @@ export const loadSam = async (
     tvlLeaveApyDiff,
     backstopDiff,
     backstopTvl,
-    epochsPerYear,
+    epochsPerYear: EPOCHS_PER_YEAR,
     dcSamConfig: dsSam.config,
   }
 }
@@ -232,8 +231,7 @@ export const selectTotalActiveStake = (auctionResult: AuctionResult) =>
     0,
   )
 
-export const selectIsNonProductive = (validator: AuctionValidator) =>
-  _isNonProductive(validator)
+export const selectIsNonProductive = isNonProductive
 
 export const selectProductiveStake = (auctionResult: AuctionResult) =>
   auctionResult.auctionData.validators.reduce(
@@ -380,10 +378,7 @@ export const selectEffectiveCost = (validator: AuctionValidator) =>
   (validator.marinadeActivatedStakeSol / 1000) *
   validator.revShare.auctionEffectiveBidPmpe
 
-export const bondHealthColor = (
-  validator: AuctionValidator,
-  minBondEpochs: number,
-): Color | undefined => _bondHealthColor(validator, minBondEpochs)
+export { bondHealthColor }
 
 export const bondTooltip = (color: Color) => {
   switch (color) {
@@ -463,8 +458,7 @@ export const selectTvlApyDiff = (
   return apy(altResult) - apy(baseResult)
 }
 
-export const selectStakeDelta = (validator: AuctionValidator): number =>
-  _stakeDelta(validator)
+export const selectStakeDelta = stakeDelta
 
 export type Recommendation = { text: string; severity: string }
 
@@ -509,8 +503,7 @@ export function getRecommendation(
   return { text: 'Stake is at target', severity: 'positive' }
 }
 
-export const selectMaxWantedStake = (validator: AuctionValidator): number =>
-  _selectMaxWantedStake(validator)
+export { selectMaxWantedStake }
 
 export const EPOCH_REBALANCE_RATE = 0.007 // ~0.7% of TVL moves per epoch
 

@@ -110,8 +110,6 @@ export function detectChangedValidators(
   return changed
 }
 
-// Splices ghost rows into display for all changed validators.
-// Processes in descending insert-index order to prevent index drift.
 export function insertGhostRows<T extends { voteAccount: string }>(
   display: DisplayValidator<T>[],
   changedVAs: Set<string>,
@@ -120,8 +118,6 @@ export function insertGhostRows<T extends { voteAccount: string }>(
   toDisplayValidator: (orig: AuctionValidator) => T,
 ): DisplayValidator<T>[] {
   const result = [...display]
-
-  // Collect (insertIndex, ghostItem) pairs, then sort descending
   const inserts: Array<{ insertIndex: number; item: DisplayValidator<T> }> = []
 
   for (const va of changedVAs) {
@@ -148,7 +144,6 @@ export function insertGhostRows<T extends { voteAccount: string }>(
     })
   }
 
-  // Apply in reverse order so earlier inserts don't shift later indices
   inserts.sort((a, b) => b.insertIndex - a.insertIndex)
   for (const { insertIndex, item } of inserts) {
     result.splice(insertIndex, 0, item)

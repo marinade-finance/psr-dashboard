@@ -6,7 +6,6 @@ import { Card } from 'src/components/ui/card'
 type Props = {
   label: string
   value: React.ReactNode
-  'data-tooltip-id'?: string
   'data-tooltip-html'?: string
 }
 

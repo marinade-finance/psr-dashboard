@@ -238,9 +238,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
               {
                 header: 'Validator',
                 render: ({ protectedEvent, validator }) => {
-                  const name = validator
-                    ? (selectName(validator) ?? null)
-                    : null
+                  const name = validator ? selectName(validator) : null
                   const va = protectedEvent.vote_account
                   return (
                     <div>
