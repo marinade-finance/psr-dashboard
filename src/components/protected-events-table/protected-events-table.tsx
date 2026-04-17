@@ -304,10 +304,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
                   ),
               },
             ]}
-            defaultOrder={[
-              [2, OrderDirection.DESC],
-              [3, OrderDirection.DESC],
-            ]}
+            defaultOrder={[[1, OrderDirection.DESC]]}
           />
         </div>
       </div>
