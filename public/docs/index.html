@@ -4,185 +4,308 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Docs | PSR Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400&display=swap"
+      rel="stylesheet"
+    />
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
       :root {
-        --bg-dark-1: #1c1b23;
-        --bg-dark-2: #2b2a34;
-        --bg-dark-3: #353439;
-        --bg-dark-4: #42414e;
-        --text-light-1: #b8b8bc;
-        --text-light-2: #fbfbfe;
-        --accent: #82d9c9;
-        --accent-hover: #6bc4b4;
+        --bg: #ffffff;
+        --bg-subtle: #f8fafc;
+        --bg-code: #f1f5f9;
+        --border: #e2e8f0;
+        --text: #0f172a;
+        --text-secondary: #64748b;
+        --accent: #1b9a8b;
+        --accent-hover: #14796c;
+        --header-height: 56px;
       }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f0f12;
+          --bg-subtle: #16161a;
+          --bg-code: #1e1e24;
+          --border: #27272e;
+          --text: #f1f5f9;
+          --text-secondary: #94a3b8;
+          --accent: #4dd9c9;
+          --accent-hover: #6ee7da;
+        }
+      }
+
       * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
       }
-      body {
-        font-family:
-          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        background: var(--bg-dark-1);
-        color: var(--text-light-1);
-        line-height: 1.7;
+
+      html {
+        font-size: 15px;
       }
+
+      body {
+        font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.7;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* ── Header ── */
       header {
-        background: var(--bg-dark-1);
-        padding: 0 8px;
-        display: flex;
-        align-items: center;
         position: sticky;
         top: 0;
-        z-index: 10;
+        z-index: 100;
+        height: var(--header-height);
+        background: var(--bg);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 24px;
       }
-      .btn {
-        height: 40px;
-        line-height: 30px;
-        padding: 5px 20px;
-        background: var(--bg-dark-2);
-        color: var(--text-light-1);
-        margin: 4px 0 4px 4px;
-        cursor: pointer;
-        border: none;
-        border-radius: 4px;
-        font-size: inherit;
-        font-family: inherit;
-      }
-      .btn:hover {
-        background: var(--bg-dark-3);
-      }
-      .back {
+
+      .header-back {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-secondary);
         text-decoration: none;
+        padding: 5px 10px;
+        border-radius: 6px;
+        transition: color 0.15s, background 0.15s;
       }
+      .header-back:hover {
+        color: var(--text);
+        background: var(--bg-subtle);
+      }
+
+      .header-divider {
+        width: 1px;
+        height: 18px;
+        background: var(--border);
+        margin: 0 4px;
+      }
+
+      .header-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+        margin-right: auto;
+      }
+
       .tabs {
         display: flex;
-        margin-left: auto;
+        gap: 2px;
       }
+
       .tab {
-        background: var(--bg-dark-3);
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 5px 12px;
+        border-radius: 6px;
+        transition: color 0.15s, background 0.15s;
       }
-      .tab:hover,
+      .tab:hover {
+        color: var(--text);
+        background: var(--bg-subtle);
+      }
       .tab.active {
-        background: var(--bg-dark-4);
-        color: var(--text-light-2);
+        color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 10%, transparent);
       }
+
+      /* ── Content ── */
       main {
-        max-width: 900px;
+        max-width: 780px;
         margin: 0 auto;
-        padding: 32px 20px;
+        padding: 48px 24px 80px;
       }
-      #content {
-        background: var(--bg-dark-2);
-        border: 1px solid var(--bg-dark-3);
-        border-radius: 8px;
-        padding: 32px;
-      }
+
+      /* ── Prose ── */
       #content h1 {
-        font-size: 1.5rem;
-        color: var(--text-light-2);
-        margin-bottom: 24px;
-        padding-bottom: 12px;
-        border-bottom: 2px solid var(--bg-dark-3);
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 8px;
+        line-height: 1.3;
       }
+
+      #content > :first-child + * {
+        margin-top: 4px;
+      }
+
       #content h2 {
         font-size: 1.2rem;
-        color: var(--text-light-2);
-        margin: 32px 0 12px;
+        font-weight: 600;
+        color: var(--text);
+        margin: 40px 0 12px;
+        padding-top: 40px;
+        border-top: 1px solid var(--border);
       }
+
       #content h3 {
         font-size: 1rem;
-        color: var(--text-light-2);
-        margin: 24px 0 8px;
+        font-weight: 600;
+        color: var(--text);
+        margin: 28px 0 8px;
       }
+
       #content p {
-        margin-bottom: 12px;
+        color: var(--text-secondary);
+        margin-bottom: 14px;
       }
-      #content code {
-        font-family: 'SF Mono', Monaco, Consolas, monospace;
-        background: var(--bg-dark-1);
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-size: 0.85em;
+
+      #content strong {
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      #content a {
         color: var(--accent);
+        text-decoration: none;
       }
+      #content a:hover {
+        color: var(--accent-hover);
+        text-decoration: underline;
+      }
+
+      #content code {
+        font-family: 'Geist Mono', 'SF Mono', Menlo, Consolas, monospace;
+        font-size: 0.82em;
+        background: var(--bg-code);
+        color: var(--text);
+        padding: 2px 5px;
+        border-radius: 4px;
+        border: 1px solid var(--border);
+      }
+
       #content pre {
-        background: var(--bg-dark-1);
-        border: 1px solid var(--bg-dark-3);
+        background: var(--bg-code);
+        border: 1px solid var(--border);
         border-radius: 8px;
-        padding: 16px;
+        padding: 16px 20px;
         overflow-x: auto;
         margin: 16px 0;
       }
       #content pre code {
         background: none;
+        border: none;
         padding: 0;
-        color: var(--text-light-1);
+        font-size: 0.875em;
+        color: var(--text-secondary);
       }
+
       #content ul,
       #content ol {
-        margin: 12px 0 12px 24px;
+        margin: 12px 0 12px 20px;
+        color: var(--text-secondary);
       }
       #content li {
-        margin: 4px 0;
+        margin: 5px 0;
       }
-      #content a {
-        color: var(--accent);
+      #content li strong {
+        color: var(--text);
       }
-      #content a:hover {
-        color: var(--accent-hover);
-      }
-      #content strong {
-        color: var(--text-light-2);
-      }
+
       #content hr {
         border: none;
-        border-top: 1px solid var(--bg-dark-3);
-        margin: 32px 0;
+        border-top: 1px solid var(--border);
+        margin: 36px 0;
       }
+
+      #content blockquote {
+        border-left: 3px solid var(--accent);
+        margin: 16px 0;
+        padding: 10px 16px;
+        background: color-mix(in srgb, var(--accent) 6%, transparent);
+        border-radius: 0 6px 6px 0;
+      }
+      #content blockquote p {
+        margin: 0;
+        color: var(--text);
+      }
+
+      /* ── Tables ── */
       #content table {
         width: 100%;
         border-collapse: collapse;
-        margin: 16px 0;
-      }
-      #content th,
-      #content td {
-        border: 1px solid var(--bg-dark-3);
-        padding: 8px 12px;
-        text-align: left;
+        margin: 20px 0;
+        font-size: 0.875rem;
       }
       #content th {
-        background: var(--bg-dark-1);
-        color: var(--text-light-2);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-secondary);
+        background: var(--bg-subtle);
+        padding: 10px 14px;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
       }
-      @media (max-width: 600px) {
+      #content td {
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--border);
+        color: var(--text-secondary);
+        vertical-align: top;
+      }
+      #content td strong,
+      #content td a {
+        color: var(--text);
+      }
+      #content tr:last-child td {
+        border-bottom: none;
+      }
+
+      /* Loading state */
+      .loading {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        padding: 40px 0;
+      }
+
+      @media (max-width: 640px) {
         header {
-          flex-wrap: wrap;
-          gap: 12px;
+          padding: 0 16px;
         }
         main {
-          padding: 20px 16px;
+          padding: 32px 16px 60px;
         }
-        #content {
-          padding: 20px;
+        #content h1 {
+          font-size: 1.4rem;
         }
-        .btn {
-          padding: 6px 12px;
-          font-size: 12px;
+        #content h2 {
+          font-size: 1.1rem;
+        }
+        .header-title {
+          display: none;
         }
       }
     </style>
   </head>
   <body>
     <header>
-      <a id="back" href="../" class="btn back">← Dashboard</a>
+      <a id="back" href="../" class="header-back">← Dashboard</a>
+      <div class="header-divider"></div>
+      <span class="header-title">PSR Dashboard Docs</span>
       <div class="tabs">
-        <button class="btn tab active" data-doc="GUIDE">Guide</button>
+        <button class="tab active" data-doc="GUIDE">Guide</button>
       </div>
     </header>
     <main>
-      <div id="content">loading...</div>
+      <div id="content" class="loading">Loading…</div>
     </main>
     <script>
       const content = document.getElementById('content')
@@ -193,21 +316,24 @@
       if (expert) {
         document.getElementById('back').href = '/expert-'
         const btn = document.createElement('button')
-        btn.className = 'btn tab'
+        btn.className = 'tab'
         btn.dataset.doc = 'GUIDE-EXPERT'
         btn.textContent = 'Expert Guide'
         tabs.appendChild(btn)
       }
 
       function loadDoc(name) {
-        content.innerHTML = 'loading...'
+        content.className = 'loading'
+        content.textContent = 'Loading…'
         fetch(name + '.md')
           .then(r => r.text())
           .then(md => {
+            content.className = ''
             content.innerHTML = marked.parse(md)
           })
           .catch(() => {
-            content.innerHTML = '<p>Error loading doc</p>'
+            content.className = ''
+            content.innerHTML = '<p>Error loading doc.</p>'
           })
         history.replaceState(null, '', '#' + name)
       }
