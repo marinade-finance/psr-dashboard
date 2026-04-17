@@ -108,10 +108,6 @@ type Props = {
   level: UserLevel
   simulatedValidators?: Set<string>
   isCalculating: boolean
-  tvlJoinApyDiff?: number
-  tvlLeaveApyDiff?: number
-  backstopDiff?: number
-  backstopTvl?: number
   simulationModeActive?: boolean
   editingValidator?: string | null
   pendingEdits?: PendingEdits

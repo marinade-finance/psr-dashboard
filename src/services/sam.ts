@@ -1,7 +1,5 @@
 import {
   DsSamSDK,
-  Auction,
-  Debug,
   InputsSource,
   AuctionConstraintType,
   loadSamConfig,
@@ -22,7 +20,6 @@ import {
 } from './calculations'
 
 import type {
-  AggregatedData,
   AuctionResult,
   AuctionValidator,
   AuctionConstraint,
@@ -35,10 +32,6 @@ const EPOCHS_PER_YEAR = (365.25 * 24 * 3600) / 172800
 
 type SamResult = {
   auctionResult: AuctionResult
-  tvlJoinApyDiff: number
-  tvlLeaveApyDiff: number
-  backstopDiff: number
-  backstopTvl: number
   epochsPerYear: number
   dcSamConfig: DsSamConfig
 }
@@ -57,75 +50,8 @@ export const loadSam = async (
 
   const auctionResult = await dsSam.runFinalOnly(dataOverrides)
 
-  const runAlt = async (mutate: (data: AggregatedData) => void) => {
-    const aggregatedData = await dsSam.getAggregatedData(dataOverrides)
-    mutate(aggregatedData)
-    const debug = new Debug(new Set(), LogVerbosity.ERROR)
-    const constraints = dsSam.getAuctionConstraints(aggregatedData, debug)
-    const validators = dsSam.transformValidators(aggregatedData)
-    const data = { ...aggregatedData, validators }
-    return new Auction(data, constraints, dsSam.config, debug).evaluate()
-  }
-
-  // +10% / -10% TVL sensitivity
-  const joinResult = await runAlt((data: AggregatedData) => {
-    // eslint-disable-next-line no-param-reassign
-    data.stakeAmounts.marinadeSamTvlSol *= 1.1
-    // eslint-disable-next-line no-param-reassign
-    data.stakeAmounts.marinadeRemainingSamSol *= 1.1
-  })
-  const tvlJoinApyDiff = selectTvlApyDiff(
-    auctionResult,
-    joinResult,
-    EPOCHS_PER_YEAR,
-  )
-
-  const leaveResult = await runAlt((data: AggregatedData) => {
-    // eslint-disable-next-line no-param-reassign
-    data.stakeAmounts.marinadeSamTvlSol *= 0.9
-    // eslint-disable-next-line no-param-reassign
-    data.stakeAmounts.marinadeRemainingSamSol *= 0.9
-  })
-  const tvlLeaveApyDiff = selectTvlApyDiff(
-    auctionResult,
-    leaveResult,
-    EPOCHS_PER_YEAR,
-  )
-
-  // Backstop: block top 5 validators by target stake
-  const top5 = auctionResult.auctionData.validators
-    .slice()
-    .sort(
-      (a, b) =>
-        b.auctionStake.marinadeSamTargetSol -
-        a.auctionStake.marinadeSamTargetSol,
-    )
-    .slice(0, 5)
-    .map(validator => ({
-      voteAccount: validator.voteAccount,
-      targetStake: validator.auctionStake.marinadeSamTargetSol,
-    }))
-
-  const top5Accounts = new Set(top5.map(t => t.voteAccount))
-  const backstopResult = await runAlt(data => {
-    // eslint-disable-next-line no-param-reassign
-    data.validators = data.validators.filter(
-      v => !top5Accounts.has(v.voteAccount),
-    )
-  })
-  const backstopDiff = selectTargetApyDiff(
-    auctionResult,
-    backstopResult,
-    EPOCHS_PER_YEAR,
-  )
-  const backstopTvl = top5.reduce((sum, t) => sum + t.targetStake, 0)
-
   return {
     auctionResult,
-    tvlJoinApyDiff,
-    tvlLeaveApyDiff,
-    backstopDiff,
-    backstopTvl,
     epochsPerYear: EPOCHS_PER_YEAR,
     dcSamConfig: dsSam.config,
   }
@@ -424,39 +350,6 @@ export const selectTargetProtectedPct = (
   return 1 - selectActuallyUnprotectedStake(auctionResult) / totalTarget
 }
 
-export const selectTargetApyDiff = (
-  baseResult: AuctionResult,
-  altResult: AuctionResult,
-  epochsPerYear: number,
-): number => {
-  const targetProfit = (r: AuctionResult) =>
-    r.auctionData.validators.reduce(
-      (acc, v) =>
-        acc + (totalProfitPmpe(v) * v.auctionStake.marinadeSamTargetSol) / 1000,
-      0,
-    )
-  const tvl = baseResult.auctionData.stakeAmounts.marinadeSamTvlSol
-  const apy = (r: AuctionResult) =>
-    Math.pow(1 + targetProfit(r) / tvl, epochsPerYear) - 1
-  return apy(altResult) - apy(baseResult)
-}
-
-export const selectTvlApyDiff = (
-  baseResult: AuctionResult,
-  altResult: AuctionResult,
-  epochsPerYear: number,
-): number => {
-  const apy = (r: AuctionResult) => {
-    const tvl = r.auctionData.stakeAmounts.marinadeSamTvlSol
-    return (
-      Math.pow(
-        1 + selectActiveProfit(r.auctionData.validators) / tvl,
-        epochsPerYear,
-      ) - 1
-    )
-  }
-  return apy(altResult) - apy(baseResult)
-}
 
 export const selectStakeDelta = stakeDelta
 
