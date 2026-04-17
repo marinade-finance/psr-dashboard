@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 
 import { Badge } from 'src/components/ui/badge'
 import { Input } from 'src/components/ui/input'
+import { Label } from 'src/components/ui/label'
 import { formatSolAmount } from 'src/format'
 import {
   selectAmount,
@@ -162,7 +163,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
     <div className="relative">
       <div className="metricWrap grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 px-4 pb-4">
         <Metric
-          label="Total Protected"
+          label="Events Protected"
           value={totalEvents.toLocaleString()}
           {...tooltipAttributes(
             'Total number of protected events paid out to stakers',
@@ -206,30 +207,32 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
           />
         )}
       </div>
-      <div className="px-4 mb-4 [&_fieldset]:inline-block [&_fieldset]:mr-2.5 [&_fieldset]:border-transparent [&_legend]:text-[11px] [&_legend]:uppercase [&_legend]:tracking-wider [&_legend]:font-medium [&_legend]:text-muted-foreground [&_legend]:mb-1">
-        <fieldset>
-          <legend>Validator filter</legend>
+      <div className="flex flex-wrap gap-4 px-4 mb-4">
+        <div className="flex flex-col gap-1">
+          <Label>Validator filter</Label>
           <Input
             type="text"
             value={validatorFilter}
             onChange={e => setValidatorFilter(e.target.value)}
           />
-        </fieldset>
-        <fieldset>
-          <legend>Epoch filter</legend>
-          <Input
-            className="w-[70px]"
-            type="number"
-            value={minEpochFilter}
-            onChange={e => setMinEpochFilter(Number(e.target.value))}
-          />
-          <Input
-            className="w-[70px]"
-            type="number"
-            value={maxEpochFilter}
-            onChange={e => setMaxEpochFilter(Number(e.target.value))}
-          />
-        </fieldset>
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label>Epoch filter</Label>
+          <div className="flex gap-1">
+            <Input
+              className="w-[70px]"
+              type="number"
+              value={minEpochFilter}
+              onChange={e => setMinEpochFilter(Number(e.target.value))}
+            />
+            <Input
+              className="w-[70px]"
+              type="number"
+              value={maxEpochFilter}
+              onChange={e => setMaxEpochFilter(Number(e.target.value))}
+            />
+          </div>
+        </div>
       </div>
       <div className="px-4 pb-4">
         <div className="bg-card rounded-xl border border-border shadow-card overflow-hidden">
