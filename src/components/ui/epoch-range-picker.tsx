@@ -289,7 +289,7 @@ export const EpochRangePicker: React.FC<Props> = ({
 
       {/* Popover */}
       {open && (
-        <div className="absolute top-full mt-2 z-50 bg-card border border-border rounded-2xl shadow-xl p-4 w-[540px]">
+        <div className="absolute top-full mt-2 z-50 bg-card border border-border rounded-2xl shadow-xl p-4 w-[calc(100vw-2rem)] sm:w-[540px] right-0 sm:right-auto">
           {/* Header row */}
           <div className="flex items-center justify-between mb-3">
             <span className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
@@ -318,10 +318,11 @@ export const EpochRangePicker: React.FC<Props> = ({
             </button>
           </div>
 
-          {/* Two-panel grid */}
-          <div className="flex gap-4">
+          {/* Two-panel grid — stacked on mobile, side-by-side on sm+ */}
+          <div className="flex flex-col sm:flex-row gap-4">
             {renderPanel(leftEpochs, leftLabel)}
-            <div className="w-px bg-border self-stretch" />
+            <div className="hidden sm:block w-px bg-border self-stretch" />
+            <div className="block sm:hidden h-px w-full bg-border" />
             {renderPanel(rightEpochs, rightLabel)}
           </div>
 

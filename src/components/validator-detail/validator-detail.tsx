@@ -175,10 +175,10 @@ export const ValidatorDetail = ({
         side="right"
         className="w-full max-w-4xl overflow-y-auto p-0"
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border sticky top-0 bg-background z-10">
-          <div className="flex items-center gap-3">
+        <div className="flex items-start justify-between px-4 sm:px-6 py-4 border-b border-border sticky top-0 bg-background z-10 gap-2">
+          <div className="flex flex-col gap-1.5 min-w-0">
             <button
-              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors self-start"
               onClick={onClose}
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -192,34 +192,36 @@ export const ValidatorDetail = ({
               </svg>
               Back to rankings
             </button>
-            <span className="text-lg font-bold font-mono text-primary">
-              #{rank}
-            </span>
-            {validatorName && (
-              <span className="text-sm font-medium text-foreground">
-                {validatorName}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span className="text-lg font-bold font-mono text-primary shrink-0">
+                #{rank}
               </span>
-            )}
-            <span className="text-sm font-mono text-secondary-foreground">
-              {voteAccount.slice(0, 8)}...{voteAccount.slice(-4)}
-            </span>
-            <span
-              className="px-2 py-0.5 rounded-md text-xs font-medium"
-              style={{
-                background: inSet
-                  ? 'var(--primary-light)'
-                  : 'var(--destructive-light)',
-                color: inSet ? 'var(--primary)' : 'var(--destructive)',
-              }}
-            >
-              {inSet ? 'In Set' : 'Out of Set'}
-            </span>
+              {validatorName && (
+                <span className="text-sm font-medium text-foreground truncate">
+                  {validatorName}
+                </span>
+              )}
+              <span className="text-sm font-mono text-secondary-foreground shrink-0">
+                {voteAccount.slice(0, 8)}...{voteAccount.slice(-4)}
+              </span>
+              <span
+                className="px-2 py-0.5 rounded-md text-xs font-medium shrink-0"
+                style={{
+                  background: inSet
+                    ? 'var(--primary-light)'
+                    : 'var(--destructive-light)',
+                  color: inSet ? 'var(--primary)' : 'var(--destructive)',
+                }}
+              >
+                {inSet ? 'In Set' : 'Out of Set'}
+              </span>
+            </div>
           </div>
           <Button
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground shrink-0"
           >
             &times;
           </Button>

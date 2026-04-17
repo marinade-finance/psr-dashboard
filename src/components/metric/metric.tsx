@@ -20,7 +20,7 @@ export const Metric: React.FC<Props> = ({
       {label}
       {tooltipHtml && <HelpTip html={tooltipHtml} />}
     </div>
-    <div className="metricValue text-2xl font-semibold font-mono truncate sm:whitespace-nowrap">
+    <div className="metricValue text-xl sm:text-2xl font-semibold font-mono truncate">
       {value}
     </div>
   </Card>
