@@ -206,8 +206,8 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
           />
         )}
       </div>
-      <div className="flex flex-wrap gap-4 px-4 mb-4">
-        <div className="flex flex-col gap-1">
+      <div className="flex flex-col sm:flex-row flex-wrap gap-4 px-4 mb-4">
+        <div className="flex flex-col gap-1 flex-1 sm:flex-none">
           <Label>Validator filter</Label>
           <Input
             type="text"
@@ -229,7 +229,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
         </div>
       </div>
       <div className="px-4 pb-4">
-        <div className="bg-card rounded-xl border border-border shadow-card overflow-hidden">
+        <div className="bg-card rounded-xl border border-border shadow-card overflow-x-auto">
           <Table
             className="[&_tbody]:bg-card [&_tbody_tr]:bg-card [&_tbody_tr:hover]:bg-secondary"
             data={filteredData}
