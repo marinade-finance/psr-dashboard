@@ -136,6 +136,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
 
   const expertColumns: {
     header: string
+    headerHelp?: string
     render: (entry: ValidatorWithBond) => JSX.Element
     compare: (a: ValidatorWithBond, b: ValidatorWithBond) => number
     alignment: Alignment
@@ -144,6 +145,8 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
       ? [
           {
             header: 'Max protectable [SOL]',
+            headerHelp:
+              'Maximum Marinade stake that could be protected if the bond is used optimally. Higher bond balances raise this ceiling.',
             render: (entry: ValidatorWithBond) => (
               <>{formatSolAmount(selectMaxProtectedStake(entry))}</>
             ),
@@ -272,6 +275,8 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
               },
               {
                 header: 'Marinade Stake [SOL]',
+                headerHelp:
+                  'Total SOL delegated by Marinade to this validator — native stake plus liquid staking stake combined.',
                 render: ({ validator }) => (
                   <span
                     {...tooltipAttributes(
@@ -288,6 +293,8 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
               },
               {
                 header: 'Bond Balance [SOL]',
+                headerHelp:
+                  "Effective SOL deposited in this validator's on-chain bond account, available to cover potential protected events.",
                 render: ({ bond }) => (
                   <>
                     {formatSolAmount(
@@ -306,6 +313,8 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
               },
               {
                 header: 'Protected Stake [SOL]',
+                headerHelp:
+                  "How much of this validator's Marinade stake is currently covered by the bond — stakers on this portion are protected.",
                 render: entry => (
                   <>{formatSolAmount(selectProtectedStake(entry))}</>
                 ),
@@ -315,10 +324,8 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
               },
               {
                 header: 'Coverage',
-                headerAttrsFn: () =>
-                  tooltipAttributes(
-                    'Ratio of protected stake to total Marinade stake for this validator',
-                  ),
+                headerHelp:
+                  'Ratio of protected stake to total Marinade stake for this validator. 100% means the bond fully covers all delegated stake.',
                 render: entry => {
                   const stake = selectTotalMarinadeStake(entry.validator)
                   const coveredStake = selectProtectedStake(entry)
