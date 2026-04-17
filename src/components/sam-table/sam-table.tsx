@@ -778,7 +778,7 @@ export const SamTable: React.FC<Props> = ({
               if (!item.validator.auctionStake.marinadeSamTargetSol) {
                 return <>-</>
               }
-              const h = Math.round(selectBondHealth(item.validator))
+              const h = Math.floor(selectBondHealth(item.validator))
               return <>{h > 100 ? '>100' : h}</>
             },
             compare: (a, b) =>
