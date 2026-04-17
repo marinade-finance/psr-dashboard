@@ -11,8 +11,11 @@ import {
   Table as UiTable,
 } from 'src/components/ui/table'
 import { cn } from 'src/lib/utils'
+import { Color } from 'src/services/types'
 
 import type { HTMLAttributes } from 'react'
+
+export { Color }
 
 export const enum OrderDirection {
   ASC,
@@ -24,14 +27,6 @@ export type Order = [number, OrderDirection]
 export enum Alignment {
   LEFT,
   RIGHT,
-}
-
-export enum Color {
-  RED,
-  GREEN,
-  YELLOW,
-  ORANGE,
-  GREY,
 }
 
 const TABLE_BASE = [

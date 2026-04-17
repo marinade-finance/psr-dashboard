@@ -28,7 +28,7 @@ interface ValidatorDetailProps {
   auctionResult: AuctionResult
   dsSamConfig: DsSamConfig
   epochsPerYear: number
-  nameMap?: Map<string, string>
+  nameMap?: Map<string, { name?: string }>
   rank: number
   totalValidators: number
   onClose: () => void
@@ -56,7 +56,7 @@ export const ValidatorDetail = ({
   isCalculating,
 }: ValidatorDetailProps) => {
   const voteAccount = selectVoteAccount(validator)
-  const validatorName = nameMap?.get(voteAccount)
+  const validatorName = nameMap?.get(voteAccount)?.name
   const winningApy = selectWinningAPY(auctionResult, epochsPerYear)
   const apyBreakdown = getApyBreakdown(validator, epochsPerYear)
   const bondUtilPct = calculateBondUtilization(validator)

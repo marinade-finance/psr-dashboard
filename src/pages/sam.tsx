@@ -12,23 +12,23 @@ import {
   loadSam,
   selectBondSize,
 } from 'src/services/sam'
-import { mergeOverrides, removeFromOverrides } from 'src/services/simulation'
+import {
+  buildOverrideValues,
+  mergeOverrides,
+  removeFromOverrides,
+} from 'src/services/simulation'
 import { fetchValidators } from 'src/services/validators'
 
 import type { AuctionResult } from '@marinade.finance/ds-sam-sdk'
 import type { UserLevel } from 'src/components/navigation/navigation'
 import type { SourceDataOverrides } from 'src/services/sam'
+import type { PendingEdits } from 'src/services/simulation'
 
 type Props = {
   level: UserLevel
 }
 
-export type PendingEdits = {
-  inflationCommission?: string
-  mevCommission?: string
-  blockRewardsCommission?: string
-  bidPmpe?: string
-}
+export type { PendingEdits } from 'src/services/simulation'
 
 export const SamPage: React.FC<Props> = ({ level }) => {
   const [selectedValidator, setSelectedValidator] = useState<string | null>(
@@ -162,37 +162,13 @@ export const SamPage: React.FC<Props> = ({ level }) => {
     )
     if (!current) return
 
-    const resolveDec = (
-      edit: string | undefined,
-      fallback: number | null,
-    ): number =>
-      edit !== undefined
-        ? parseFloat(edit) / 100
-        : fallback !== null
-          ? fallback
-          : NaN
-
-    const infl = resolveDec(
-      pendingEdits.inflationCommission,
-      current.inflationCommissionDec,
-    )
-    const mev = resolveDec(pendingEdits.mevCommission, current.mevCommissionDec)
-    const blk = resolveDec(
-      pendingEdits.blockRewardsCommission,
-      current.blockRewardsCommissionDec,
-    )
-    const bid =
-      pendingEdits.bidPmpe !== undefined
-        ? parseFloat(pendingEdits.bidPmpe)
-        : current.revShare.bidPmpe
-
+    const overrides = buildOverrideValues(current, pendingEdits)
     ensureOriginalSaved()
-    const next = mergeOverrides(simulationOverrides, editingValidator, {
-      inflationCommissionDec: !isNaN(infl) ? infl : null,
-      mevCommissionDec: !isNaN(mev) ? mev : null,
-      blockRewardsCommissionDec: !isNaN(blk) ? blk : null,
-      bidPmpe: !isNaN(bid) ? bid : null,
-    })
+    const next = mergeOverrides(
+      simulationOverrides,
+      editingValidator,
+      overrides,
+    )
     setSimulationOverrides(next)
     setSimulatedValidators(prev => new Set([...prev, editingValidator]))
     setIsCalculating(true)

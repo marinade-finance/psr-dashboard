@@ -4,6 +4,45 @@ import type {
   SourceDataOverrides,
 } from '@marinade.finance/ds-sam-sdk'
 
+export type PendingEdits = {
+  inflationCommission?: string
+  mevCommission?: string
+  blockRewardsCommission?: string
+  bidPmpe?: string
+}
+
+export function buildOverrideValues(
+  current: AuctionValidator,
+  edits: PendingEdits,
+): {
+  inflationCommissionDec: number | null
+  mevCommissionDec: number | null
+  blockRewardsCommissionDec: number | null
+  bidPmpe: number | null
+} {
+  const dec = (edit: string | undefined, fallback: number | null): number =>
+    edit !== undefined
+      ? parseFloat(edit) / 100
+      : fallback !== null
+        ? fallback
+        : NaN
+  const pmpe = (edit: string | undefined, fallback: number): number =>
+    edit !== undefined ? parseFloat(edit) : fallback
+  const infl = dec(edits.inflationCommission, current.inflationCommissionDec)
+  const mev = dec(edits.mevCommission, current.mevCommissionDec)
+  const blk = dec(
+    edits.blockRewardsCommission,
+    current.blockRewardsCommissionDec,
+  )
+  const bid = pmpe(edits.bidPmpe, current.revShare.bidPmpe)
+  return {
+    inflationCommissionDec: !isNaN(infl) ? infl : null,
+    mevCommissionDec: !isNaN(mev) ? mev : null,
+    blockRewardsCommissionDec: !isNaN(blk) ? blk : null,
+    bidPmpe: !isNaN(bid) ? bid : null,
+  }
+}
+
 export type DisplayValidator<T> = { validator: T; isGhost: boolean }
 
 export type PositionChange = {

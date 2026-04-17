@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 
-import { Color } from 'src/components/table/table'
+import { Color } from 'src/services/types'
 
 import {
   compoundApy,

@@ -1,4 +1,4 @@
-import { Color } from 'src/components/table/table'
+import { Color } from 'src/services/types'
 
 import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
 
