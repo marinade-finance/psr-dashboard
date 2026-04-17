@@ -40,12 +40,17 @@ function coverageColor(ratio: number, hasBond: boolean): string {
   return 'hsl(0, 50%, 30%)'
 }
 
-function coverageBarFill(ratio: number, hasBond: boolean): string {
-  if (!hasBond) return 'rgba(120,130,150,0.50)'
-  if (ratio >= 0.95) return 'hsl(168, 60%, 48%)'
-  if (ratio >= 0.7) return 'hsl(172, 52%, 42%)'
-  if (ratio >= 0.4) return 'hsl(38, 72%, 50%)'
-  return 'hsl(0, 58%, 48%)'
+type GradientPair = { from: string; to: string }
+
+function coverageBarFill(ratio: number, hasBond: boolean): GradientPair | null {
+  if (!hasBond) return null
+  if (ratio >= 0.95)
+    return { from: 'hsl(168, 55%, 58%)', to: 'hsl(168, 60%, 48%)' }
+  if (ratio >= 0.7)
+    return { from: 'hsl(172, 48%, 52%)', to: 'hsl(172, 52%, 42%)' }
+  if (ratio >= 0.4)
+    return { from: 'hsl(38, 68%, 60%)', to: 'hsl(38, 72%, 50%)' }
+  return { from: 'hsl(0, 54%, 58%)', to: 'hsl(0, 58%, 48%)' }
 }
 
 type TierRow = {
@@ -116,6 +121,7 @@ const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
                   const coveragePct = Math.min(Math.round(ratio * 100), 100)
                   const tileBg = coverageColor(ratio, hasBond)
                   const barFill = coverageBarFill(ratio, hasBond)
+                  const fillRadius = coveragePct < 100 ? '0 2px 2px 0' : '0'
 
                   return (
                     <div
@@ -173,15 +179,19 @@ const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
                       {/* Coverage bar — always at bottom via mt-auto */}
                       <div
                         className="mt-auto shrink-0 w-full"
-                        style={{ height: 7, background: 'rgba(0,0,0,0.35)' }}
+                        style={{ height: 10, background: 'rgba(0,0,0,0.40)' }}
                       >
-                        <div
-                          style={{
-                            height: '100%',
-                            width: `${coveragePct}%`,
-                            background: barFill,
-                          }}
-                        />
+                        {barFill && (
+                          <div
+                            style={{
+                              height: '100%',
+                              width: `${coveragePct}%`,
+                              background: `linear-gradient(to right, ${barFill.from}, ${barFill.to})`,
+                              borderRadius: fillRadius,
+                              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.20)',
+                            }}
+                          />
+                        )}
                       </div>
                     </div>
                   )
@@ -319,20 +329,24 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
             )}
           >
             <div
-              className="flex items-center justify-center text-xs font-medium text-white shrink-0"
+              className="flex items-center justify-center text-xs font-medium text-white shrink-0 overflow-hidden"
               style={{ width: `${coveredPct}%`, background: 'var(--primary)' }}
             >
-              {coveredPct > 15
-                ? `${formatSolAmount(totalProtectedStake)} SOL covered`
-                : ''}
+              <span className="truncate px-1">
+                {coveredPct > 15
+                  ? `${formatSolAmount(totalProtectedStake)} SOL covered`
+                  : ''}
+              </span>
             </div>
             <div
-              className="flex items-center justify-center text-xs font-medium text-muted-foreground flex-1 min-w-0"
+              className="flex items-center justify-center text-xs font-medium text-muted-foreground flex-1 min-w-0 overflow-hidden"
               style={{ background: 'var(--muted)' }}
             >
-              {100 - coveredPct > 15
-                ? `${formatSolAmount(totalMarinadeStake - totalProtectedStake)} SOL uncovered`
-                : ''}
+              <span className="truncate px-1">
+                {100 - coveredPct > 15
+                  ? `${formatSolAmount(totalMarinadeStake - totalProtectedStake)} SOL uncovered`
+                  : ''}
+              </span>
             </div>
           </div>
           {/* Stat chips */}
