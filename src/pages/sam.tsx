@@ -185,7 +185,6 @@ export const SamPage: React.FC<Props> = ({ level }) => {
             backstopTvl={data.backstopTvl}
             originalAuctionResult={originalAuctionResult}
             epochsPerYear={data.epochsPerYear}
-            dsSamConfig={data.dcSamConfig}
             level={level}
             simulationModeActive={simulationModeActive}
             editingValidator={editingValidator}

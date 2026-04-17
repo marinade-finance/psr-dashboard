@@ -53,7 +53,6 @@ import type { Order } from '../table/table'
 import type {
   AuctionResult,
   AuctionValidator,
-  DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
 import type { PendingEdits } from 'src/pages/sam'
 
@@ -80,7 +79,6 @@ type Props = {
   backstopTvl: number
   originalAuctionResult: AuctionResult | null
   epochsPerYear: number
-  dsSamConfig: DsSamConfig
   level: UserLevel
   simulationModeActive: boolean
   editingValidator: string | null
@@ -138,7 +136,6 @@ export const SamTable: React.FC<Props> = ({
   backstopTvl,
   originalAuctionResult,
   epochsPerYear,
-  dsSamConfig,
   level,
   simulationModeActive,
   editingValidator,
@@ -197,9 +194,9 @@ export const SamTable: React.FC<Props> = ({
     () =>
       validators.map(v => ({
         ...v,
-        bondState: bondHealthColor(v, dsSamConfig.minBondEpochs),
+        bondState: bondHealthColor(v),
       })),
-    [validators, dsSamConfig.minBondEpochs],
+    [validators],
   )
 
   const hasDataChanged = useMemo(() => {
@@ -259,10 +256,7 @@ export const SamTable: React.FC<Props> = ({
         case 5:
           return selectBondSize(a) - selectBondSize(b)
         case 6:
-          return (
-            selectBondHealth(a, dsSamConfig.minBondEpochs) -
-            selectBondHealth(b, dsSamConfig.minBondEpochs)
-          )
+          return selectBondHealth(a) - selectBondHealth(b)
         case 7:
           return selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
         case 8:
@@ -352,7 +346,7 @@ export const SamTable: React.FC<Props> = ({
       if (orig) {
         const originalValidator = {
           ...orig,
-          bondState: bondHealthColor(orig, dsSamConfig.minBondEpochs),
+          bondState: bondHealthColor(orig),
         }
         const originalPosition = getOriginalPosition(simulatedValidator)
         const currentSimulatedIndex = display.findIndex(
@@ -784,14 +778,11 @@ export const SamTable: React.FC<Props> = ({
               if (!item.validator.auctionStake.marinadeSamTargetSol) {
                 return <>-</>
               }
-              const h = Math.round(
-                selectBondHealth(item.validator, dsSamConfig.minBondEpochs),
-              )
+              const h = Math.floor(selectBondHealth(item.validator))
               return <>{h > 100 ? '>100' : h}</>
             },
             compare: (a, b) =>
-              selectBondHealth(a.validator, dsSamConfig.minBondEpochs) -
-              selectBondHealth(b.validator, dsSamConfig.minBondEpochs),
+              selectBondHealth(a.validator) - selectBondHealth(b.validator),
             alignment: Alignment.RIGHT,
             background: item =>
               selectBondSize(item.validator) <= 0
