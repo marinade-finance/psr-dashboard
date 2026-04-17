@@ -28,57 +28,59 @@ type Props = {
 const MIN_TILE = 28
 const MAX_TILE = 120
 
-/** Map bid pmpe (0–500+) to an HSL color string. */
-function bidHeatColor(bid: number): string {
-  if (bid < 1) return 'hsl(220,10%,38%)'
-  // 4-stop gradient: 0→50 grey-blue, 50→150 cool teal, 150→300 primary teal, 300+ warm green
+/**
+ * Map bid pmpe + coverage ratio to an HSL tile background color.
+ * When bid=0, coverage ratio nudges the hue toward teal so covered
+ * validators are visually distinct from uncovered ones.
+ */
+function tileColor(bid: number, coverage: number): string {
+  if (bid < 1) {
+    // No bid: grey-blue for 0% coverage → subtle teal hint at 100% coverage
+    const t = Math.min(coverage, 1)
+    const h = Math.round(220 + t * (185 - 220))
+    const s = Math.round(14 + t * (22 - 14))
+    const l = Math.round(20 + t * (24 - 20))
+    return `hsl(${h},${s}%,${l}%)`
+  }
   if (bid < 50) {
     const t = bid / 50
-    // grey-blue → cool teal: h 220→174, s 10→70, l 38→44
     const h = Math.round(220 + t * (174 - 220))
-    const s = Math.round(10 + t * (70 - 10))
-    const l = Math.round(38 + t * (44 - 38))
+    const s = Math.round(14 + t * (62 - 14))
+    const l = Math.round(22 + t * (30 - 22))
     return `hsl(${h},${s}%,${l}%)`
   }
   if (bid < 150) {
     const t = (bid - 50) / 100
-    // cool teal → primary teal: h 174→172, s 70→55, l 44→38
     const h = Math.round(174 + t * (172 - 174))
-    const s = Math.round(70 + t * (55 - 70))
-    const l = Math.round(44 + t * (38 - 44))
+    const s = Math.round(62 + t * (52 - 62))
+    const l = Math.round(30 + t * (28 - 30))
     return `hsl(${h},${s}%,${l}%)`
   }
   if (bid < 300) {
     const t = (bid - 150) / 150
-    // primary teal → warm green: h 172→142, s 55→72, l 38→36
     const h = Math.round(172 + t * (142 - 172))
-    const s = Math.round(55 + t * (72 - 55))
-    const l = Math.round(38 + t * (36 - 38))
+    const s = Math.round(52 + t * (65 - 52))
+    const l = Math.round(28 + t * (26 - 28))
     return `hsl(${h},${s}%,${l}%)`
   }
-  // 300+: warm green, clamp at 500
   const t = Math.min((bid - 300) / 200, 1)
   const h = Math.round(142 + t * (130 - 142))
-  const s = Math.round(72 + t * (60 - 72))
-  const l = Math.round(36 + t * (42 - 36))
+  const s = Math.round(65 + t * (55 - 65))
+  const l = Math.round(26 + t * (32 - 26))
   return `hsl(${h},${s}%,${l}%)`
 }
 
-/** Slightly lighter/more saturated version for the temperature bar. */
-function bidHeatBarColor(bid: number): string {
-  if (bid < 1) return 'hsl(220,10%,55%)'
-  if (bid < 50) {
-    const t = bid / 50
-    const h = Math.round(220 + t * (174 - 220))
-    return `hsl(${h},75%,58%)`
-  }
-  if (bid < 150) return 'hsl(174,80%,50%)'
-  if (bid < 300) {
-    const t = (bid - 150) / 150
-    const h = Math.round(174 + t * (142 - 174))
-    return `hsl(${h},75%,48%)`
-  }
-  return 'hsl(142,65%,46%)'
+/** Legend swatch color (bid only, no coverage). */
+function bidHeatColor(bid: number): string {
+  return tileColor(bid, 1)
+}
+
+/** Coverage bar accent color — teal matching page primary. */
+function coverageBarColor(bid: number): string {
+  if (bid < 1) return 'rgba(27,154,139,0.80)'
+  if (bid < 150) return 'rgba(20,184,166,0.88)'
+  if (bid < 300) return 'rgba(27,154,139,0.92)'
+  return 'rgba(22,163,74,0.92)'
 }
 
 const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
@@ -106,15 +108,22 @@ const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
           const size = Math.round(MIN_TILE + norm * (MAX_TILE - MIN_TILE))
           const name = selectName(entry.validator)
           const showText = size >= 56
-          const tileColor = bidHeatColor(bid)
-          const barColor = bidHeatBarColor(bid)
-          const coveragePct = Math.round(ratio * 100)
+          const tileBg = tileColor(bid, ratio)
+          const barColor = coverageBarColor(bid)
+          const coveragePct = Math.min(Math.round(ratio * 100), 100)
+          const barH = size >= 72 ? 4 : 3
 
           return (
             <div
               key={selectVoteAccount(entry.validator)}
               className="relative flex flex-col justify-between rounded-lg overflow-hidden shrink-0 cursor-default"
-              style={{ width: size, height: size, background: tileColor }}
+              style={{
+                width: size,
+                height: size,
+                background: tileBg,
+                boxShadow:
+                  'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.30)',
+              }}
               {...tooltipAttributes(
                 `${name}<br/>` +
                   `Stake: ${formatSolAmount(stake)} SOL<br/>` +
@@ -126,32 +135,34 @@ const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
                 <div className="flex-1 px-1.5 pt-1.5 overflow-hidden">
                   <div
                     className="text-[10px] font-semibold leading-tight truncate"
-                    style={{ color: 'rgba(255,255,255,0.92)' }}
+                    style={{ color: 'rgba(255,255,255,0.88)' }}
                   >
                     {name}
                   </div>
                   {size >= 72 && (
                     <div
                       className="text-[9px] leading-tight truncate mt-0.5"
-                      style={{ color: 'rgba(255,255,255,0.60)' }}
+                      style={{ color: 'rgba(255,255,255,0.42)' }}
                     >
                       {formatSolAmount(stake)} SOL
                     </div>
                   )}
-                  {size >= 90 && bid >= 1 && (
+                  {size >= 90 && (
                     <div
-                      className="text-[9px] leading-tight truncate"
-                      style={{ color: 'rgba(255,255,255,0.55)' }}
+                      className="text-[9px] leading-tight truncate mt-0.5"
+                      style={{ color: 'rgba(255,255,255,0.42)' }}
                     >
-                      {Math.round(bid)} pmpe
+                      {bid >= 1
+                        ? `${Math.round(bid)} pmpe`
+                        : `${coveragePct}% cov.`}
                     </div>
                   )}
                 </div>
               )}
-              {/* Temperature bar: width = coverage ratio */}
+              {/* Coverage bar — width proportional to protected/total stake */}
               <div
                 className="shrink-0 w-full"
-                style={{ height: 3, background: 'rgba(0,0,0,0.25)' }}
+                style={{ height: barH, background: 'rgba(0,0,0,0.35)' }}
               >
                 <div
                   style={{
@@ -165,6 +176,58 @@ const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
             </div>
           )
         })}
+      </div>
+      {/* Legend */}
+      <div
+        className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 px-1"
+        style={{ color: 'rgba(255,255,255,0.30)', fontSize: 10 }}
+      >
+        <div className="flex items-center gap-1.5">
+          <div
+            className="rounded-sm shrink-0"
+            style={{ width: 10, height: 10, background: bidHeatColor(0) }}
+          />
+          <span>No bid</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div
+            className="rounded-sm shrink-0"
+            style={{ width: 10, height: 10, background: bidHeatColor(100) }}
+          />
+          <span>Low</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div
+            className="rounded-sm shrink-0"
+            style={{ width: 10, height: 10, background: bidHeatColor(250) }}
+          />
+          <span>Mid</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div
+            className="rounded-sm shrink-0"
+            style={{ width: 10, height: 10, background: bidHeatColor(400) }}
+          />
+          <span>High bid</span>
+        </div>
+        <div className="flex items-center gap-1.5 ml-2">
+          <div
+            className="rounded-sm shrink-0 overflow-hidden"
+            style={{ width: 22, height: 5, background: 'rgba(0,0,0,0.35)' }}
+          >
+            <div
+              style={{
+                width: '60%',
+                height: '100%',
+                background: 'rgba(27,154,139,0.80)',
+              }}
+            />
+          </div>
+          <span>Coverage</span>
+        </div>
+        <span className="ml-auto" style={{ color: 'rgba(255,255,255,0.18)' }}>
+          Tile size ∝ √stake
+        </span>
       </div>
     </div>
   )
