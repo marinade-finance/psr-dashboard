@@ -627,7 +627,7 @@ export const SamTable: React.FC<Props> = ({
               </span>
               {expectedChange === 0 ? (
                 <span className="text-muted-foreground text-[12px] font-mono">
-                  &#x2192; 0
+                  &mdash;
                 </span>
               ) : (
                 <span
