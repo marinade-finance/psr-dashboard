@@ -3,10 +3,10 @@ import React, { useState } from 'react'
 import { Badge } from 'src/components/ui/badge'
 import { Input } from 'src/components/ui/input'
 import { Label } from 'src/components/ui/label'
+import { Select, SelectOption } from 'src/components/ui/select'
 import { formatSolAmount } from 'src/format'
 import {
   selectAmount,
-  selectEprLossBps,
   selectProtectedStakeReason,
 } from 'src/services/protected-events'
 import { ProtectedEventStatus } from 'src/services/validator-with-protected_event'
@@ -15,12 +15,7 @@ import { selectName } from 'src/services/validators'
 import { tooltipAttributes } from '../../services/utils'
 import { Metric } from '../metric/metric'
 import { UserLevel } from '../navigation/navigation'
-import {
-  Alignment,
-  OrderDirection,
-  Table,
-  TRUNCATED_CELL,
-} from '../table/table'
+import { Alignment, OrderDirection, Table } from '../table/table'
 
 import type { ProtectedEvent } from 'src/services/protected-events'
 import type { ProtectedEventWithValidator } from 'src/services/validator-with-protected_event'
@@ -100,6 +95,10 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
     (epoch, { protectedEvent }) => Math.max(protectedEvent.epoch, epoch),
     0,
   )
+
+  const allEpochs = Array.from(
+    new Set(data.map(({ protectedEvent }) => protectedEvent.epoch)),
+  ).sort((a, b) => a - b)
 
   const [validatorFilter, setValidatorFilter] = useState('')
   const [minEpochFilter, setMinEpochFilter] = useState(minEpoch)
@@ -217,20 +216,31 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
           />
         </div>
         <div className="flex flex-col gap-1">
-          <Label>Epoch filter</Label>
-          <div className="flex gap-1">
-            <Input
-              className="w-[70px]"
-              type="number"
+          <Label>Epoch range</Label>
+          <div className="flex items-center gap-2">
+            <Select
+              className="w-[100px]"
               value={minEpochFilter}
               onChange={e => setMinEpochFilter(Number(e.target.value))}
-            />
-            <Input
-              className="w-[70px]"
-              type="number"
+            >
+              {allEpochs.map(ep => (
+                <SelectOption key={ep} value={ep}>
+                  {ep}
+                </SelectOption>
+              ))}
+            </Select>
+            <span className="text-xs text-muted-foreground">to</span>
+            <Select
+              className="w-[100px]"
               value={maxEpochFilter}
               onChange={e => setMaxEpochFilter(Number(e.target.value))}
-            />
+            >
+              {allEpochs.map(ep => (
+                <SelectOption key={ep} value={ep}>
+                  {ep}
+                </SelectOption>
+              ))}
+            </Select>
           </div>
         </div>
       </div>
@@ -239,16 +249,26 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
           <Table
             className="[&_tbody]:bg-card [&_tbody_tr]:bg-card [&_tbody_tr:hover]:bg-secondary"
             data={filteredData}
+            showRowNumber
             columns={[
               {
                 header: 'Validator',
-                render: ({ protectedEvent, validator }) => (
-                  <span className={TRUNCATED_CELL}>
-                    {validator
-                      ? (selectName(validator) ?? protectedEvent.vote_account)
-                      : protectedEvent.vote_account}
-                  </span>
-                ),
+                render: ({ protectedEvent, validator }) => {
+                  const name = validator
+                    ? (selectName(validator) ?? null)
+                    : null
+                  const va = protectedEvent.vote_account
+                  return (
+                    <div>
+                      <div className="font-medium text-[13px] text-foreground">
+                        {name ?? '---'}
+                      </div>
+                      <div className="text-[11px] font-mono text-secondary-foreground mt-px">
+                        {va.slice(0, 8)}...{va.slice(-4)}
+                      </div>
+                    </div>
+                  )
+                },
                 compare: (a, b) =>
                   a.protectedEvent.vote_account.localeCompare(
                     b.protectedEvent.vote_account,
@@ -270,17 +290,6 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
                   selectProtectedStakeReason(a.protectedEvent).localeCompare(
                     selectProtectedStakeReason(b.protectedEvent),
                   ),
-              },
-              {
-                header: 'Staker Loss',
-                render: ({ protectedEvent }) => {
-                  const bps = selectEprLossBps(protectedEvent)
-                  return <>{bps ? `${Math.round(bps)} bps` : '—'}</>
-                },
-                compare: (a, b) =>
-                  selectEprLossBps(a.protectedEvent) -
-                  selectEprLossBps(b.protectedEvent),
-                alignment: Alignment.RIGHT,
               },
               {
                 header: 'Paid Out',
@@ -306,8 +315,8 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
               },
             ]}
             defaultOrder={[
-              [1, OrderDirection.DESC],
-              [4, OrderDirection.DESC],
+              [2, OrderDirection.DESC],
+              [3, OrderDirection.DESC],
             ]}
           />
         </div>
