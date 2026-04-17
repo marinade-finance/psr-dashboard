@@ -4,7 +4,6 @@ import { useQuery } from 'react-query'
 import { Banner } from 'src/components/banner/banner'
 import { Loader } from 'src/components/loader/loader'
 import { Navigation, UserLevel } from 'src/components/navigation/navigation'
-import { SamDetail } from 'src/components/sam-detail/sam-detail'
 import { SamTable } from 'src/components/sam-table/sam-table'
 import { ValidatorDetail } from 'src/components/validator-detail/validator-detail'
 import { getBannerData } from 'src/services/banner'
@@ -26,7 +25,6 @@ export type PendingEdits = {
 }
 
 export const SamPage: React.FC<Props> = ({ level }) => {
-  const [viewMode, setViewMode] = useState<'list' | 'detail'>('list')
   const [selectedValidator, setSelectedValidator] = useState<string | null>(
     null,
   )
@@ -107,19 +105,18 @@ export const SamPage: React.FC<Props> = ({ level }) => {
   )
 
   const handleBack = useCallback(() => {
-    setViewMode('list')
     setSelectedValidator(null)
   }, [])
 
   const handleEnterSimulation = useCallback(() => {
-    handleBack()
+    setSelectedValidator(null)
     if (!simulationModeActive) {
       setSimulationModeActive(true)
       if (!originalAuctionResult && data?.auctionResult) {
         setOriginalAuctionResult(data.auctionResult)
       }
     }
-  }, [handleBack, simulationModeActive, originalAuctionResult, data])
+  }, [simulationModeActive, originalAuctionResult, data])
 
   const handleCancelEditing = useCallback(() => {
     setEditingValidator(null)
@@ -237,13 +234,6 @@ export const SamPage: React.FC<Props> = ({ level }) => {
       ? data?.auctionResult
       : originalAuctionResult
 
-  const detailValidator =
-    viewMode === 'detail' && selectedValidator && displayAuctionResult
-      ? (displayAuctionResult.auctionData.validators.find(
-          v => v.voteAccount === selectedValidator,
-        ) ?? null)
-      : null
-
   const sheetValidatorData = useMemo(() => {
     if (!selectedValidator || !displayAuctionResult) return null
     const validators = displayAuctionResult.auctionData.validators
@@ -270,27 +260,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
       </div>
       {status === 'error' && <p>Error fetching data</p>}
       {status === 'loading' && <Loader />}
-      {status === 'success' &&
-        displayAuctionResult &&
-        viewMode === 'detail' &&
-        detailValidator && (
-          <SamDetail
-            validator={detailValidator}
-            meta={{
-              name: nameMap.get(selectedValidator ?? '')?.name,
-              countryIso: nameMap.get(selectedValidator ?? '')?.countryIso,
-              rank:
-                displayAuctionResult.auctionData.validators.findIndex(
-                  v => v.voteAccount === selectedValidator,
-                ) + 1,
-            }}
-            epochsPerYear={data.epochsPerYear}
-            isExpert={level === UserLevel.Expert}
-            onBack={handleBack}
-            onEdit={handleEnterSimulation}
-          />
-        )}
-      {status === 'success' && displayAuctionResult && viewMode === 'list' && (
+      {status === 'success' && displayAuctionResult && (
         <SamTable
           auctionResult={displayAuctionResult}
           tvlJoinApyDiff={data.tvlJoinApyDiff}
