@@ -34,7 +34,6 @@ import type { UserLevel } from '../navigation/navigation'
 import type {
   AuctionResult,
   AuctionValidator,
-  DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
 import type { PendingEdits } from 'src/pages/sam'
 
@@ -62,7 +61,6 @@ type Props = {
   auctionResult: AuctionResult
   originalAuctionResult: AuctionResult | null
   epochsPerYear: number
-  dsSamConfig: DsSamConfig
   level: UserLevel
   simulatedValidator: string | null
   isCalculating: boolean
