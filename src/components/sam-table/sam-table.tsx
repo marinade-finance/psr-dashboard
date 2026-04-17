@@ -678,9 +678,12 @@ export const SamTable: React.FC<Props> = ({
       className={`w-full ${isCalculating ? 'opacity-70 pointer-events-none' : ''}`}
     >
       {/* Stats Bar */}
-      <div className="flex flex-wrap items-start gap-3 mb-6">
+      <div className="flex flex-wrap items-start gap-3 mb-6 px-4">
         {stats.map(stat => (
-          <Card key={stat.label} className="px-5 py-4 flex-1 min-w-[160px]">
+          <Card
+            key={stat.label}
+            className="px-5 py-4 flex-1 min-w-[140px] sm:min-w-[160px]"
+          >
             <div className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground mb-1 flex items-center gap-1">
               {stat.label}
               {stat.help && <HelpTip text={stat.help} />}
@@ -708,7 +711,7 @@ export const SamTable: React.FC<Props> = ({
       </div>
 
       {/* Table */}
-      <div className="bg-card rounded-xl border border-border shadow-card overflow-hidden">
+      <div className="mx-4 bg-card rounded-xl border border-border shadow-card overflow-hidden overflow-x-auto">
         <ShadTable className="font-sans text-[13px]">
           <TableHeader>
             <TableRow className="border-b border-border-grid">

@@ -15,7 +15,6 @@ import { UserLevel } from './components/navigation/navigation'
 import { TooltipProvider } from './components/ui/tooltip'
 import { ProtectedEventsPage } from './pages/protected-events'
 import { SamPage } from './pages/sam'
-import { ClassicSamPage } from './pages/sam-classic'
 import { ValidatorBondsPage } from './pages/validator-bonds'
 import { loadSam } from './services/sam'
 import { fetchValidatorsWithBonds } from './services/validator-with-bond'
@@ -60,16 +59,6 @@ const router = createBrowserRouter([
   {
     path: '/expert-',
     element: <SamPage level={UserLevel.Expert} />,
-    errorElement: <ErrorPage />,
-  },
-  {
-    path: '/old',
-    element: <ClassicSamPage level={UserLevel.Basic} />,
-    errorElement: <ErrorPage />,
-  },
-  {
-    path: '/expert-old',
-    element: <ClassicSamPage level={UserLevel.Expert} />,
     errorElement: <ErrorPage />,
   },
   {

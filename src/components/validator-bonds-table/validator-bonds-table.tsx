@@ -25,70 +25,141 @@ type Props = {
   level: UserLevel
 }
 
-const MIN_TILE = 32
+const MIN_TILE = 28
 const MAX_TILE = 120
 
-function coverageClass(ratio: number, hasBond: boolean): string {
-  if (!hasBond) return 'bg-muted/50 border-border'
-  if (ratio >= 0.9) return 'bg-green-500/20 border-green-500'
-  if (ratio >= 0.5) return 'bg-yellow-500/20 border-yellow-500'
-  return 'bg-red-500/20 border-red-500'
+/** Map bid pmpe (0–500+) to an HSL color string. */
+function bidHeatColor(bid: number): string {
+  if (bid < 1) return 'hsl(220,10%,38%)'
+  // 4-stop gradient: 0→50 grey-blue, 50→150 cool teal, 150→300 primary teal, 300+ warm green
+  if (bid < 50) {
+    const t = bid / 50
+    // grey-blue → cool teal: h 220→174, s 10→70, l 38→44
+    const h = Math.round(220 + t * (174 - 220))
+    const s = Math.round(10 + t * (70 - 10))
+    const l = Math.round(38 + t * (44 - 38))
+    return `hsl(${h},${s}%,${l}%)`
+  }
+  if (bid < 150) {
+    const t = (bid - 50) / 100
+    // cool teal → primary teal: h 174→172, s 70→55, l 44→38
+    const h = Math.round(174 + t * (172 - 174))
+    const s = Math.round(70 + t * (55 - 70))
+    const l = Math.round(44 + t * (38 - 44))
+    return `hsl(${h},${s}%,${l}%)`
+  }
+  if (bid < 300) {
+    const t = (bid - 150) / 150
+    // primary teal → warm green: h 172→142, s 55→72, l 38→36
+    const h = Math.round(172 + t * (142 - 172))
+    const s = Math.round(55 + t * (72 - 55))
+    const l = Math.round(38 + t * (36 - 38))
+    return `hsl(${h},${s}%,${l}%)`
+  }
+  // 300+: warm green, clamp at 500
+  const t = Math.min((bid - 300) / 200, 1)
+  const h = Math.round(142 + t * (130 - 142))
+  const s = Math.round(72 + t * (60 - 72))
+  const l = Math.round(36 + t * (42 - 36))
+  return `hsl(${h},${s}%,${l}%)`
 }
 
-function coverageBarColor(ratio: number, hasBond: boolean): string {
-  if (!hasBond) return 'bg-muted-foreground/30'
-  if (ratio >= 0.9) return 'bg-green-500'
-  if (ratio >= 0.5) return 'bg-yellow-500'
-  return 'bg-red-500'
+/** Slightly lighter/more saturated version for the temperature bar. */
+function bidHeatBarColor(bid: number): string {
+  if (bid < 1) return 'hsl(220,10%,55%)'
+  if (bid < 50) {
+    const t = bid / 50
+    const h = Math.round(220 + t * (174 - 220))
+    return `hsl(${h},75%,58%)`
+  }
+  if (bid < 150) return 'hsl(174,80%,50%)'
+  if (bid < 300) {
+    const t = (bid - 150) / 150
+    const h = Math.round(174 + t * (142 - 174))
+    return `hsl(${h},75%,48%)`
+  }
+  return 'hsl(142,65%,46%)'
 }
 
 const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
   data,
 }) => {
-  const active = data.filter(e => selectTotalMarinadeStake(e.validator) > 0)
-  const maxStake = Math.max(
-    ...active.map(e => selectTotalMarinadeStake(e.validator)),
-  )
+  const active = data
+    .filter(e => selectTotalMarinadeStake(e.validator) > 0)
+    .sort(
+      (a, b) =>
+        selectTotalMarinadeStake(b.validator) -
+        selectTotalMarinadeStake(a.validator),
+    )
+  const maxStake =
+    active.length > 0 ? selectTotalMarinadeStake(active[0].validator) : 1
 
   return (
     <div className="px-4 pb-4">
-      <div className="flex flex-wrap gap-1 p-4 bg-card rounded-xl border border-border shadow-card">
+      <div className="flex flex-wrap gap-px p-3 bg-card rounded-xl border border-border shadow-card">
         {active.map(entry => {
           const stake = selectTotalMarinadeStake(entry.validator)
           const protectedStake = selectProtectedStake(entry)
-          const hasBond = entry.bond !== null
           const ratio = stake > 0 ? protectedStake / stake : 0
+          const bid = entry.auction?.revShare.bidPmpe ?? 0
           const norm = Math.sqrt(stake / maxStake)
           const size = Math.round(MIN_TILE + norm * (MAX_TILE - MIN_TILE))
           const name = selectName(entry.validator)
-          const showText = size >= 48
+          const showText = size >= 56
+          const tileColor = bidHeatColor(bid)
+          const barColor = bidHeatBarColor(bid)
+          const coveragePct = Math.round(ratio * 100)
 
           return (
             <div
               key={selectVoteAccount(entry.validator)}
-              className={`relative flex flex-col justify-between border rounded overflow-hidden shrink-0 ${coverageClass(ratio, hasBond)}`}
-              style={{ width: size, height: size }}
+              className="relative flex flex-col justify-between rounded-lg overflow-hidden shrink-0 cursor-default"
+              style={{ width: size, height: size, background: tileColor }}
               {...tooltipAttributes(
-                `${name}<br/>Stake: ${formatSolAmount(stake)} SOL<br/>` +
+                `${name}<br/>` +
+                  `Stake: ${formatSolAmount(stake)} SOL<br/>` +
+                  `Bid: ${bid >= 1 ? `${Math.round(bid)} pmpe` : 'none'}<br/>` +
                   `Coverage: ${formatPercentage(ratio)}`,
               )}
             >
               {showText && (
-                <div className="flex-1 px-1 pt-1 overflow-hidden">
-                  <div className="text-[10px] font-medium leading-tight truncate">
+                <div className="flex-1 px-1.5 pt-1.5 overflow-hidden">
+                  <div
+                    className="text-[10px] font-semibold leading-tight truncate"
+                    style={{ color: 'rgba(255,255,255,0.92)' }}
+                  >
                     {name}
                   </div>
-                  {size >= 64 && (
-                    <div className="text-[9px] text-muted-foreground truncate">
-                      {formatSolAmount(stake)}
+                  {size >= 72 && (
+                    <div
+                      className="text-[9px] leading-tight truncate mt-0.5"
+                      style={{ color: 'rgba(255,255,255,0.60)' }}
+                    >
+                      {formatSolAmount(stake)} SOL
+                    </div>
+                  )}
+                  {size >= 90 && bid >= 1 && (
+                    <div
+                      className="text-[9px] leading-tight truncate"
+                      style={{ color: 'rgba(255,255,255,0.55)' }}
+                    >
+                      {Math.round(bid)} pmpe
                     </div>
                   )}
                 </div>
               )}
-              <div className="h-1 w-full bg-muted/30 shrink-0">
+              {/* Temperature bar: width = coverage ratio */}
+              <div
+                className="shrink-0 w-full"
+                style={{ height: 3, background: 'rgba(0,0,0,0.25)' }}
+              >
                 <div
-                  className={`h-full ${coverageBarColor(ratio, hasBond)}`}
-                  style={{ width: `${Math.round(ratio * 100)}%` }}
+                  style={{
+                    height: '100%',
+                    width: `${coveragePct}%`,
+                    background: barColor,
+                    transition: 'width 0.3s ease',
+                  }}
                 />
               </div>
             </div>
@@ -246,7 +317,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
       <ValidatorBondsTileMap data={data} />
 
       <div className="px-4 pb-4">
-        <div className="bg-card rounded-xl border border-border shadow-card overflow-hidden">
+        <div className="bg-card rounded-xl border border-border shadow-card overflow-hidden overflow-x-auto">
           <Table
             className="[&_tbody]:bg-card [&_tbody_tr]:bg-card [&_tbody_tr:hover]:bg-secondary"
             showRowNumber

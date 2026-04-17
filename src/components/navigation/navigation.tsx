@@ -65,7 +65,7 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
   )
 
   return (
-    <div className="navigation flex items-center h-14 bg-card border-b border-border shadow-card [&_a]:no-underline">
+    <div className="navigation flex items-center h-14 bg-card border-b border-border shadow-card [&_a]:no-underline overflow-x-auto">
       <NavLink
         to="/"
         className="flex items-center gap-2.5 mx-3 hover:opacity-80 transition-opacity shrink-0"
@@ -80,12 +80,15 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
           </span>
         </div>
       </NavLink>
-      <div className="w-px h-6 bg-border mr-4 hidden sm:block" />
-      <div className="flex items-center gap-0.5">
+      <div className="w-px h-6 bg-border mr-2 hidden sm:block shrink-0" />
+      <div className="flex items-center gap-0.5 shrink-0">
         <NavLink to={`/${prefix}`}>
           {({ isActive }) => (
             <div className={cn(tab, isActive && tabActive)}>
-              Stake Auction Marketplace
+              <span className="hidden sm:inline">
+                Stake Auction Marketplace
+              </span>
+              <span className="sm:hidden">SAM</span>
             </div>
           )}
         </NavLink>
@@ -95,29 +98,26 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
         >
           {({ isActive }) => (
             <div className={cn(tab, isActive && tabActive)}>
-              Protected Events
+              <span className="hidden sm:inline">Protected Events</span>
+              <span className="sm:hidden">Events</span>
             </div>
           )}
         </NavLink>
         <NavLink to={`/${prefix}bonds`} onMouseEnter={() => prefetch(BONDS)}>
           {({ isActive }) => (
             <div className={cn(tab, isActive && tabActive)}>
-              Validator Bonds
+              <span className="hidden sm:inline">Validator Bonds</span>
+              <span className="sm:hidden">Bonds</span>
             </div>
           )}
         </NavLink>
       </div>
-      <div className="ml-auto flex items-center gap-2">
-        <NavLink to={`/${prefix}old`}>
-          {({ isActive }) => (
-            <div className={cn(tab, isActive && tabActive)}>Classic UI</div>
-          )}
-        </NavLink>
+      <div className="ml-auto flex items-center gap-2 shrink-0">
         <a
           href="/docs/"
           className={cn(
             tab,
-            'docsButton flex items-center gap-1.5 border border-transparent hover:border-border',
+            'docsButton hidden sm:flex items-center gap-1.5 border border-transparent hover:border-border',
           )}
         >
           <svg
@@ -150,7 +150,10 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
         {isExpert && (
           <a
             href="/docs/?from=expert#GUIDE-EXPERT"
-            className={cn(tab, 'border border-transparent hover:border-border')}
+            className={cn(
+              tab,
+              'hidden sm:inline border border-transparent hover:border-border',
+            )}
           >
             Expert Guide
           </a>
