@@ -38,6 +38,7 @@ interface ValidatorDetailProps {
     blockRewardsCommission: number | null,
     bidPmpe: number | null,
   ) => void
+  onClearSimulation?: () => void
   isCalculating: boolean
 }
 
@@ -51,6 +52,7 @@ export const ValidatorDetail = ({
   totalValidators,
   onClose,
   onSimulate,
+  onClearSimulation,
   isCalculating,
 }: ValidatorDetailProps) => {
   const voteAccount = selectVoteAccount(validator)
@@ -445,13 +447,26 @@ export const ValidatorDetail = ({
                     className="font-mono"
                   />
                 </div>
-                <Button
-                  className="w-full"
-                  onClick={handleRunSimulation}
-                  disabled={isCalculating}
-                >
-                  {isCalculating ? 'Simulating...' : 'Run Simulation'}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    className="flex-1"
+                    onClick={handleRunSimulation}
+                    disabled={isCalculating}
+                  >
+                    {isCalculating ? 'Simulating...' : 'Run Simulation'}
+                  </Button>
+                  {onClearSimulation && (
+                    <Button
+                      variant="outline"
+                      className="text-destructive border-destructive/40 hover:bg-destructive/5"
+                      onClick={onClearSimulation}
+                      disabled={isCalculating}
+                      title="Remove this validator from simulation"
+                    >
+                      Restore
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
 

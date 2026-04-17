@@ -21,6 +21,12 @@ import {
   selectProjectedAPY,
 } from 'src/services/sam'
 import {
+  buildOriginalPositionsMap,
+  detectChangedValidators,
+  getPositionChange,
+  insertGhostRows,
+} from 'src/services/simulation'
+import {
   getApyBreakdown,
   getBondHealth,
   getBondHealthStyle,
@@ -62,16 +68,14 @@ type Props = {
   originalAuctionResult: AuctionResult | null
   epochsPerYear: number
   level: UserLevel
-  simulatedValidator: string | null
+  simulatedValidators?: Set<string>
   isCalculating: boolean
-  // Extra props passed by sam.tsx (accepted but unused in this view)
   tvlJoinApyDiff?: number
   tvlLeaveApyDiff?: number
   backstopDiff?: number
   backstopTvl?: number
   simulationModeActive?: boolean
   editingValidator?: string | null
-  hasSimulationApplied?: boolean
   pendingEdits?: PendingEdits
   validatorMeta?: Map<string, ValidatorMeta>
   onValidatorClick: (voteAccount: string) => void
@@ -79,6 +83,8 @@ type Props = {
   onRunSimulation?: () => void
   onCancelEditing?: () => void
   onToggleSimulation?: () => void
+  onClearValidator?: (voteAccount: string) => void
+  onResetSimulation?: () => void
 }
 
 // APY Tooltip component for Max APY hover
@@ -164,14 +170,15 @@ const ApyTooltip: React.FC<{
 
 export const SamTable: React.FC<Props> = ({
   auctionResult,
-  originalAuctionResult: _originalAuctionResult,
+  originalAuctionResult,
   epochsPerYear,
-  dsSamConfig: _dsSamConfig,
   level: _level,
-  simulatedValidator,
+  simulatedValidators = new Set(),
   isCalculating,
   validatorMeta,
   onValidatorClick,
+  onClearValidator,
+  onResetSimulation,
 }) => {
   const {
     auctionData: { validators },
@@ -270,12 +277,97 @@ export const SamTable: React.FC<Props> = ({
     epochsPerYear,
   ])
 
-  // Split into winners and non-winners
-  const winningValidators = sortedValidators.filter(
-    v => v.auctionStake.marinadeSamTargetSol > 0,
+  // Simulation: original position map (same sort as current)
+  const originalPositionsMap = useMemo(() => {
+    if (!originalAuctionResult) return null
+    const compareFn = (a: AuctionValidator, b: AuctionValidator) => {
+      let cmp = 0
+      switch (sortColumn) {
+        case 'rank':
+        case 'stakeDelta':
+          cmp =
+            a.auctionStake.marinadeSamTargetSol -
+            a.marinadeActivatedStakeSol -
+            (b.auctionStake.marinadeSamTargetSol - b.marinadeActivatedStakeSol)
+          break
+        case 'validator': {
+          const nameA = validatorMeta?.get(a.voteAccount)?.name ?? a.voteAccount
+          const nameB = validatorMeta?.get(b.voteAccount)?.name ?? b.voteAccount
+          cmp = nameA.localeCompare(nameB)
+          break
+        }
+        case 'maxApy':
+          cmp = selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
+          break
+        case 'bond':
+          cmp = a.bondBalanceSol - b.bondBalanceSol
+          break
+        default:
+          cmp =
+            b.auctionStake.marinadeSamTargetSol -
+            a.auctionStake.marinadeSamTargetSol
+      }
+      return sortDirection === 'asc' ? cmp : -cmp
+    }
+    return buildOriginalPositionsMap(originalAuctionResult, compareFn)
+  }, [
+    originalAuctionResult,
+    sortColumn,
+    sortDirection,
+    validatorMeta,
+    epochsPerYear,
+  ])
+
+  const changedValidators = useMemo(
+    () =>
+      originalAuctionResult
+        ? detectChangedValidators(
+            simulatedValidators,
+            validators,
+            originalAuctionResult,
+          )
+        : new Set<string>(),
+    [simulatedValidators, validators, originalAuctionResult],
   )
-  const nonWinningValidators = sortedValidators.filter(
-    v => v.auctionStake.marinadeSamTargetSol === 0,
+
+  // Split into winners and non-winners, with ghost rows inserted
+  const allDisplayValidators = useMemo(() => {
+    const base = sortedValidators.map(v => ({
+      validator: v,
+      isGhost: false as const,
+    }))
+    if (
+      !originalAuctionResult ||
+      !originalPositionsMap ||
+      changedValidators.size === 0
+    )
+      return base
+    return insertGhostRows(
+      base,
+      changedValidators,
+      originalAuctionResult,
+      originalPositionsMap,
+      orig =>
+        ({
+          ...orig,
+          bondHealth: getBondHealth(
+            calculateBondUtilization(orig),
+            orig.bondGoodForNEpochs ?? 0,
+          ),
+        }) as ValidatorWithBondState,
+    )
+  }, [
+    sortedValidators,
+    changedValidators,
+    originalAuctionResult,
+    originalPositionsMap,
+  ])
+
+  const winningValidators = allDisplayValidators.filter(
+    d => !d.isGhost && d.validator.auctionStake.marinadeSamTargetSol > 0,
+  )
+  const nonWinningValidators = allDisplayValidators.filter(
+    d => !d.isGhost && d.validator.auctionStake.marinadeSamTargetSol === 0,
   )
 
   // Stats for the stats bar
@@ -314,12 +406,78 @@ export const SamTable: React.FC<Props> = ({
     },
   ]
 
-  const renderRow = (validator: ValidatorWithBondState, index: number) => {
+  const RANK_MONO = 'font-mono text-xs'
+
+  const RankCell = ({
+    rank,
+    isGhost,
+    isSimulated,
+    origPos,
+    posColor,
+    voteAccount,
+  }: {
+    rank: number
+    isGhost: boolean
+    isSimulated: boolean
+    origPos: number | null
+    posColor: string | undefined
+    voteAccount: string
+  }) => {
+    if (isGhost)
+      return (
+        <span className={`text-muted-foreground ${RANK_MONO}`}>
+          {origPos ?? rank}
+        </span>
+      )
+    if (isSimulated && onClearValidator)
+      return (
+        <div className="flex flex-col items-center gap-0.5">
+          <span
+            className={`font-medium ${RANK_MONO}`}
+            style={{ color: posColor ?? 'var(--muted-foreground)' }}
+          >
+            {rank}
+          </span>
+          <button
+            className="text-[10px] text-muted-foreground hover:text-destructive leading-none"
+            onClick={e => {
+              e.stopPropagation()
+              onClearValidator(voteAccount)
+            }}
+            title="Remove from simulation"
+          >
+            ✕
+          </button>
+        </div>
+      )
+    return (
+      <span className={`text-muted-foreground font-medium ${RANK_MONO}`}>
+        {rank}
+      </span>
+    )
+  }
+
+  const renderRow = (
+    validator: ValidatorWithBondState,
+    index: number,
+    isGhost = false,
+  ) => {
     const voteAccount = selectVoteAccount(validator)
     const inSet = validator.auctionStake.marinadeSamTargetSol > 0
     const rank = index + 1
-    const isHovered = hoveredRow === voteAccount
-    const isSimulated = simulatedValidator === voteAccount
+    const isHovered = !isGhost && hoveredRow === voteAccount
+    const isSimulated = simulatedValidators.has(voteAccount)
+
+    // Position change for simulated rows
+    const origPos = originalPositionsMap?.get(voteAccount) ?? null
+    const posChange =
+      isSimulated && !isGhost ? getPositionChange(origPos, rank) : null
+    const posColor =
+      posChange?.direction === 'improved'
+        ? 'var(--status-green)'
+        : posChange?.direction === 'worsened'
+          ? 'var(--destructive)'
+          : undefined
 
     // Bond health
     const bondUtilPct = calculateBondUtilization(validator)
@@ -342,27 +500,43 @@ export const SamTable: React.FC<Props> = ({
       validatorMeta?.get(voteAccount)?.name ?? `${voteAccount.slice(0, 8)}...`
 
     const rowClasses = [
-      'border-b border-border-grid bg-card transition-colors duration-[120ms] cursor-pointer',
-      !inSet && 'bg-destructive/[0.02]',
-      isHovered && (inSet ? 'bg-primary-light' : 'bg-destructive/[0.05]'),
-      !isHovered && inSet && 'hover:bg-primary-light',
-      !isHovered && !inSet && 'hover:bg-destructive/[0.05]',
-      isSimulated && 'bg-primary-light-10',
+      'border-b border-border-grid transition-colors duration-[120ms]',
+      isGhost
+        ? 'opacity-40 line-through bg-muted/30 cursor-default'
+        : 'bg-card cursor-pointer',
+      !isGhost && !inSet && 'bg-destructive/[0.02]',
+      !isGhost &&
+        isHovered &&
+        (inSet ? 'bg-primary-light' : 'bg-destructive/[0.05]'),
+      !isGhost && !isHovered && inSet && 'hover:bg-primary-light',
+      !isGhost && !isHovered && !inSet && 'hover:bg-destructive/[0.05]',
+      !isGhost &&
+        isSimulated &&
+        posColor &&
+        'ring-1 ring-inset ring-current/20',
     ]
       .filter(Boolean)
       .join(' ')
 
     return (
       <TableRow
-        key={voteAccount}
+        key={isGhost ? `${voteAccount}-ghost` : voteAccount}
         className={rowClasses}
-        onMouseEnter={() => setHoveredRow(voteAccount)}
+        style={posColor ? { borderLeftColor: posColor } : undefined}
+        onMouseEnter={() => !isGhost && setHoveredRow(voteAccount)}
         onMouseLeave={() => setHoveredRow(null)}
-        onClick={() => onValidatorClick(voteAccount)}
+        onClick={() => !isGhost && onValidatorClick(voteAccount)}
       >
-        {/* Rank */}
-        <TableCell className="px-3.5 py-3 text-center text-muted-foreground font-medium font-mono text-xs w-10">
-          {rank}
+        {/* Rank / ✕ */}
+        <TableCell className="px-3.5 py-3 text-center w-10">
+          <RankCell
+            rank={rank}
+            isGhost={isGhost}
+            isSimulated={isSimulated}
+            origPos={origPos}
+            posColor={posColor}
+            voteAccount={voteAccount}
+          />
         </TableCell>
 
         {/* Validator */}
@@ -504,9 +678,9 @@ export const SamTable: React.FC<Props> = ({
       className={`w-full ${isCalculating ? 'opacity-70 pointer-events-none' : ''}`}
     >
       {/* Stats Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      <div className="flex flex-wrap items-start gap-3 mb-6">
         {stats.map(stat => (
-          <Card key={stat.label} className="px-5 py-4">
+          <Card key={stat.label} className="px-5 py-4 flex-1 min-w-[160px]">
             <div className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground mb-1 flex items-center gap-1">
               {stat.label}
               {stat.help && <HelpTip text={stat.help} />}
@@ -523,6 +697,14 @@ export const SamTable: React.FC<Props> = ({
             </div>
           </Card>
         ))}
+        {simulatedValidators.size > 0 && onResetSimulation && (
+          <button
+            onClick={onResetSimulation}
+            className="self-stretch px-4 py-3 rounded-xl border border-destructive/40 bg-destructive/5 text-destructive text-sm font-medium hover:bg-destructive/10 transition-colors whitespace-nowrap"
+          >
+            Reset Simulation ({simulatedValidators.size})
+          </button>
+        )}
       </div>
 
       {/* Table */}
@@ -578,7 +760,13 @@ export const SamTable: React.FC<Props> = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {winningValidators.map((v, i) => renderRow(v, i))}
+            {allDisplayValidators
+              .filter(
+                d =>
+                  d.isGhost ||
+                  d.validator.auctionStake.marinadeSamTargetSol > 0,
+              )
+              .map((d, i) => renderRow(d.validator, i, d.isGhost))}
 
             {/* Winning Set Cutoff Divider */}
             {nonWinningValidators.length > 0 && (
@@ -615,7 +803,15 @@ export const SamTable: React.FC<Props> = ({
               </TableRow>
             )}
 
-            {nonWinningValidators.map((v, i) => renderRow(v, winningCount + i))}
+            {allDisplayValidators
+              .filter(
+                d =>
+                  d.isGhost ||
+                  d.validator.auctionStake.marinadeSamTargetSol === 0,
+              )
+              .map((d, i) =>
+                renderRow(d.validator, winningCount + i, d.isGhost),
+              )}
           </TableBody>
         </ShadTable>
       </div>

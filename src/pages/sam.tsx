@@ -3,14 +3,16 @@ import { useQuery } from 'react-query'
 
 import { Banner } from 'src/components/banner/banner'
 import { Loader } from 'src/components/loader/loader'
-import { Navigation, UserLevel } from 'src/components/navigation/navigation'
+import { Navigation } from 'src/components/navigation/navigation'
 import { SamTable } from 'src/components/sam-table/sam-table'
 import { ValidatorDetail } from 'src/components/validator-detail/validator-detail'
 import { getBannerData } from 'src/services/banner'
 import { loadSam, selectBondSize } from 'src/services/sam'
+import { mergeOverrides, removeFromOverrides } from 'src/services/simulation'
 import { fetchValidators } from 'src/services/validators'
 
 import type { AuctionResult } from '@marinade.finance/ds-sam-sdk'
+import type { UserLevel } from 'src/components/navigation/navigation'
 import type { SourceDataOverrides } from 'src/services/sam'
 
 type Props = {
@@ -34,8 +36,8 @@ export const SamPage: React.FC<Props> = ({ level }) => {
   const [simulationRunId, setSimulationRunId] = useState(0)
   const [simulationOverrides, setSimulationOverrides] =
     useState<SourceDataOverrides | null>(null)
-  const [simulatedValidator, setSimulatedValidator] = useState<string | null>(
-    null,
+  const [simulatedValidators, setSimulatedValidators] = useState<Set<string>>(
+    new Set(),
   )
   const [pendingEdits, setPendingEdits] = useState<PendingEdits>({})
   const [originalAuctionResult, setOriginalAuctionResult] =
@@ -73,19 +75,54 @@ export const SamPage: React.FC<Props> = ({ level }) => {
     [nameMap],
   )
 
+  const ensureOriginalSaved = useCallback(() => {
+    if (!originalAuctionResult && data?.auctionResult) {
+      setOriginalAuctionResult(data.auctionResult)
+      return data.auctionResult
+    }
+    return originalAuctionResult
+  }, [originalAuctionResult, data])
+
+  const handleResetSimulation = useCallback(() => {
+    setSimulationOverrides(null)
+    setSimulatedValidators(new Set())
+    setSimulationModeActive(false)
+    setEditingValidator(null)
+    setPendingEdits({})
+    setOriginalAuctionResult(null)
+    setIsCalculating(true)
+    setSimulationRunId(prev => prev + 1)
+  }, [])
+
+  const handleClearValidator = useCallback(
+    (voteAccount: string) => {
+      const next = removeFromOverrides(simulationOverrides, voteAccount)
+      setSimulationOverrides(next)
+      setSimulatedValidators(prev => {
+        const s = new Set(prev)
+        s.delete(voteAccount)
+        if (s.size === 0) {
+          // All cleared — full reset
+          setSimulationModeActive(false)
+          setOriginalAuctionResult(null)
+          setSimulationOverrides(null)
+        }
+        return s
+      })
+      setIsCalculating(true)
+      setSimulationRunId(prev => prev + 1)
+    },
+    [simulationOverrides],
+  )
+
   const handleToggleSimulationMode = useCallback(() => {
-    setSimulationModeActive(prev => {
-      if (prev) {
-        setSimulationOverrides(null)
-        setSimulatedValidator(null)
-        setEditingValidator(null)
-        setPendingEdits({})
-      } else if (!originalAuctionResult && data?.auctionResult) {
-        setOriginalAuctionResult(data.auctionResult)
-      }
-      return !prev
-    })
-  }, [data, originalAuctionResult])
+    if (simulationModeActive) {
+      handleResetSimulation()
+    } else {
+      ensureOriginalSaved()
+      setSimulationModeActive(true)
+    }
+  }, [simulationModeActive, handleResetSimulation, ensureOriginalSaved])
 
   const handleValidatorClick = useCallback(
     (voteAccount: string) => {
@@ -108,16 +145,6 @@ export const SamPage: React.FC<Props> = ({ level }) => {
     setSelectedValidator(null)
   }, [])
 
-  const handleEnterSimulation = useCallback(() => {
-    setSelectedValidator(null)
-    if (!simulationModeActive) {
-      setSimulationModeActive(true)
-      if (!originalAuctionResult && data?.auctionResult) {
-        setOriginalAuctionResult(data.auctionResult)
-      }
-    }
-  }, [simulationModeActive, originalAuctionResult, data])
-
   const handleCancelEditing = useCallback(() => {
     setEditingValidator(null)
     setPendingEdits({})
@@ -130,67 +157,54 @@ export const SamPage: React.FC<Props> = ({ level }) => {
   )
 
   const handleRunSimulation = useCallback(() => {
-    if (!editingValidator || !originalAuctionResult || !data) {
-      return
-    }
+    if (!editingValidator || !data) return
     const current = data.auctionResult.auctionData.validators.find(
       v => v.voteAccount === editingValidator,
     )
-    if (!current) {
-      return
-    }
+    if (!current) return
 
     const resolveDec = (
       edit: string | undefined,
-      fallbackDec: number | null,
+      fallback: number | null,
     ): number =>
       edit !== undefined
         ? parseFloat(edit) / 100
-        : fallbackDec !== null
-          ? fallbackDec
+        : fallback !== null
+          ? fallback
           : NaN
-
-    const overrides: SourceDataOverrides = {
-      inflationCommissionsDec: new Map(),
-      mevCommissionsDec: new Map(),
-      blockRewardsCommissionsDec: new Map(),
-      cpmpesDec: new Map(),
-    }
 
     const infl = resolveDec(
       pendingEdits.inflationCommission,
       current.inflationCommissionDec,
     )
-    if (!isNaN(infl)) {
-      overrides.inflationCommissionsDec.set(editingValidator, infl)
-    }
-
     const mev = resolveDec(pendingEdits.mevCommission, current.mevCommissionDec)
-    if (!isNaN(mev)) {
-      overrides.mevCommissionsDec.set(editingValidator, mev)
-    }
-
     const blk = resolveDec(
       pendingEdits.blockRewardsCommission,
       current.blockRewardsCommissionDec,
     )
-    if (!isNaN(blk)) {
-      overrides.blockRewardsCommissionsDec.set(editingValidator, blk)
-    }
-
     const bid =
       pendingEdits.bidPmpe !== undefined
         ? parseFloat(pendingEdits.bidPmpe)
         : current.revShare.bidPmpe
-    if (!isNaN(bid)) {
-      overrides.cpmpesDec.set(editingValidator, bid)
-    }
 
-    setSimulationOverrides(overrides)
-    setSimulatedValidator(editingValidator)
+    ensureOriginalSaved()
+    const next = mergeOverrides(simulationOverrides, editingValidator, {
+      inflationCommissionDec: !isNaN(infl) ? infl : null,
+      mevCommissionDec: !isNaN(mev) ? mev : null,
+      blockRewardsCommissionDec: !isNaN(blk) ? blk : null,
+      bidPmpe: !isNaN(bid) ? bid : null,
+    })
+    setSimulationOverrides(next)
+    setSimulatedValidators(prev => new Set([...prev, editingValidator]))
     setIsCalculating(true)
     setSimulationRunId(prev => prev + 1)
-  }, [editingValidator, pendingEdits, originalAuctionResult, data])
+  }, [
+    editingValidator,
+    pendingEdits,
+    simulationOverrides,
+    data,
+    ensureOriginalSaved,
+  ])
 
   const handleDetailSimulate = useCallback(
     (
@@ -200,33 +214,19 @@ export const SamPage: React.FC<Props> = ({ level }) => {
       bidPmpe: number | null,
     ) => {
       if (!selectedValidator || !data) return
-      const overrides: SourceDataOverrides = {
-        inflationCommissionsDec: new Map(),
-        mevCommissionsDec: new Map(),
-        blockRewardsCommissionsDec: new Map(),
-        cpmpesDec: new Map(),
-      }
-      if (inflationCommission !== null)
-        overrides.inflationCommissionsDec.set(
-          selectedValidator,
-          inflationCommission,
-        )
-      if (mevCommission !== null)
-        overrides.mevCommissionsDec.set(selectedValidator, mevCommission)
-      if (blockRewardsCommission !== null)
-        overrides.blockRewardsCommissionsDec.set(
-          selectedValidator,
-          blockRewardsCommission,
-        )
-      if (bidPmpe !== null) overrides.cpmpesDec.set(selectedValidator, bidPmpe)
-      if (!originalAuctionResult && data?.auctionResult)
-        setOriginalAuctionResult(data.auctionResult)
-      setSimulationOverrides(overrides)
-      setSimulatedValidator(selectedValidator)
+      ensureOriginalSaved()
+      const next = mergeOverrides(simulationOverrides, selectedValidator, {
+        inflationCommissionDec: inflationCommission,
+        mevCommissionDec: mevCommission,
+        blockRewardsCommissionDec: blockRewardsCommission,
+        bidPmpe,
+      })
+      setSimulationOverrides(next)
+      setSimulatedValidators(prev => new Set([...prev, selectedValidator]))
       setIsCalculating(true)
       setSimulationRunId(prev => prev + 1)
     },
-    [selectedValidator, data, originalAuctionResult],
+    [selectedValidator, data, simulationOverrides, ensureOriginalSaved],
   )
 
   const displayAuctionResult =
@@ -273,7 +273,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
           level={level}
           simulationModeActive={simulationModeActive}
           editingValidator={editingValidator}
-          simulatedValidator={simulatedValidator}
+          simulatedValidators={simulatedValidators}
           isCalculating={isCalculating}
           pendingEdits={pendingEdits}
           validatorMeta={nameMap}
@@ -282,6 +282,8 @@ export const SamPage: React.FC<Props> = ({ level }) => {
           onRunSimulation={handleRunSimulation}
           onCancelEditing={handleCancelEditing}
           onToggleSimulation={handleToggleSimulationMode}
+          onClearValidator={handleClearValidator}
+          onResetSimulation={handleResetSimulation}
         />
       )}
       {status === 'success' &&
@@ -298,6 +300,11 @@ export const SamPage: React.FC<Props> = ({ level }) => {
             totalValidators={sheetValidatorData.totalValidators}
             onClose={handleBack}
             onSimulate={handleDetailSimulate}
+            onClearSimulation={
+              simulatedValidators.has(selectedValidator ?? '')
+                ? () => handleClearValidator(selectedValidator)
+                : undefined
+            }
             isCalculating={isCalculating}
           />
         )}
