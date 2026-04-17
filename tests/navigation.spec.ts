@@ -9,8 +9,8 @@ const ROUTES = [
 
 const EXPERT_ROUTES = ['/expert-', '/expert-bonds', '/expert-protected-events']
 
-async function waitForNav(page: Parameters<typeof expect>[0]) {
-  await (page as import('@playwright/test').Page).waitForSelector('.navigation', { timeout: 15000 })
+async function waitForNav(page: import('@playwright/test').Page) {
+  await page.waitForSelector('nav, [class*="navigation"]', { timeout: 15000 })
 }
 
 test.describe('Navigation', () => {
@@ -23,8 +23,8 @@ test.describe('Navigation', () => {
     for (const { tab } of ROUTES) {
       await expect(page.getByRole('link', { name: tab })).toBeVisible()
     }
-    await expect(page.locator('.docsButton').first()).toBeVisible()
-    await expect(page.locator('.docsButton').first()).toContainText('Docs')
+    // Docs link — match by text, not class name
+    await expect(page.getByRole('link', { name: /Docs/i }).first()).toBeVisible()
   })
 
   for (const { path, tab } of ROUTES) {
@@ -45,21 +45,35 @@ test.describe('Navigation', () => {
       await page.goto(path)
       await waitForNav(page)
       await expect(page).toHaveURL(path)
-      await expect(page.locator('.navigation')).toBeVisible()
     })
   }
 
-  test('Classic UI link visible', async ({ page }) => {
-    await expect(page.getByRole('link', { name: 'Classic UI' })).toBeVisible()
+  test('Classic UI link visible and navigates to /old', async ({ page }) => {
+    const link = page.getByRole('link', { name: 'Classic UI' })
+    await expect(link).toBeVisible()
+    await link.click()
+    await expect(page).toHaveURL('/old')
   })
 
   test('basic mode hides Expert Guide link in nav', async ({ page }) => {
-    await expect(page.locator('.navigation').getByRole('link', { name: 'Expert Guide' })).not.toBeVisible()
+    await expect(page.getByRole('link', { name: 'Expert Guide' })).not.toBeVisible()
   })
 
-  test('/expert- shows Expert Guide link', async ({ page }) => {
+  test('/expert- shows Expert Guide link and expert Docs link', async ({ page }) => {
     await page.goto('/expert-')
     await waitForNav(page)
-    await expect(page.locator('.navigation').getByRole('link', { name: 'Expert Guide' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Expert Guide' })).toBeVisible()
+    // Expert mode Docs link points to expert docs
+    const docsLink = page.getByRole('link', { name: /Expert Guide/ }).first()
+    const href = await docsLink.getAttribute('href')
+    expect(href).toContain('from=expert')
+  })
+
+  test('/expert- Classic UI link goes to /expert-old', async ({ page }) => {
+    await page.goto('/expert-')
+    await waitForNav(page)
+    const link = page.getByRole('link', { name: 'Classic UI' })
+    await link.click()
+    await expect(page).toHaveURL('/expert-old')
   })
 })

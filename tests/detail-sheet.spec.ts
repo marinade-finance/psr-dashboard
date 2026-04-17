@@ -1,4 +1,4 @@
-// ValidatorDetail sheet tests: clicking a row with a bond opens the sheet,
+// ValidatorDetail sheet tests: clicking a bonded row opens the sheet,
 // sheet shows validator info, sheet can be dismissed via close button and
 // via Escape key. Dark mode toggle tests also live here.
 import { test, expect } from './fixtures/mock-api'
@@ -59,6 +59,13 @@ test.describe('ValidatorDetail sheet (basic SAM, no simulation)', () => {
     await page.keyboard.press('Escape')
     await expect(page.locator(SHEET_OVERLAY)).toHaveCount(0, { timeout: 5000 })
   })
+
+  test('sheet contains bond health info', async ({ page }) => {
+    const opened = await openDetailSheet(page)
+    test.skip(!opened, 'no bonded validators in dataset')
+    const text = await page.locator(SHEET_OVERLAY).first().innerText()
+    expect(text).toMatch(/Healthy|Watch|Critical/)
+  })
 })
 
 test.describe('Dark mode toggle', () => {
@@ -67,41 +74,25 @@ test.describe('Dark mode toggle', () => {
     await page.waitForSelector('[class*="navigation"]', { timeout: 15000 })
   })
 
-  test('dark mode toggle button is visible in navigation', async ({ page }) => {
+  test('toggle switches and persists theme', async ({ page }) => {
+    const html = page.locator('html')
+    const initialDark = await html.evaluate(el => el.classList.contains('dark'))
+
     const toggle = page.locator('button[aria-label*="mode"], button[aria-label*="Mode"]')
     await expect(toggle).toBeVisible()
-  })
 
-  test('clicking toggle switches dark class on <html>', async ({ page }) => {
-    const html = page.locator('html')
-    const initialDark = await html.evaluate(el => el.classList.contains('dark'))
-
-    const toggle = page.locator('button[aria-label*="mode"], button[aria-label*="Mode"]')
+    // Toggle once — should flip
     await toggle.click()
-
     const afterDark = await html.evaluate(el => el.classList.contains('dark'))
     expect(afterDark).toBe(!initialDark)
-  })
 
-  test('clicking toggle twice restores original theme', async ({ page }) => {
-    const html = page.locator('html')
-    const initialDark = await html.evaluate(el => el.classList.contains('dark'))
-
-    const toggle = page.locator('button[aria-label*="mode"], button[aria-label*="Mode"]')
-    await toggle.click()
-    await page.waitForTimeout(100)
-    await toggle.click()
-    await page.waitForTimeout(100)
-
-    const finalDark = await html.evaluate(el => el.classList.contains('dark'))
-    expect(finalDark).toBe(initialDark)
-  })
-
-  test('theme preference persisted in localStorage', async ({ page }) => {
-    const toggle = page.locator('button[aria-label*="mode"], button[aria-label*="Mode"]')
-    await toggle.click()
-
+    // localStorage should record the preference
     const stored = await page.evaluate(() => localStorage.getItem('theme'))
     expect(['dark', 'light']).toContain(stored)
+
+    // Toggle back — should restore
+    await toggle.click()
+    const restoredDark = await html.evaluate(el => el.classList.contains('dark'))
+    expect(restoredDark).toBe(initialDark)
   })
 })

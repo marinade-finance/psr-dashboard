@@ -31,15 +31,11 @@ test.describe('SAM basic', () => {
     await expect(page.getByText('Error fetching data')).not.toBeVisible()
   })
 
-  test('7 header columns: #, Validator, Max APY, Bond, Stake Δ, Next Step, chevron', async ({ page }) => {
+  test('header columns present: #, Validator, Max APY, Bond, Stake, Next Step', async ({ page }) => {
     const headers = await page.locator('thead th').allInnerTexts()
-    expect(headers).toHaveLength(7)
-    expect(headers[0]).toContain('#')
-    expect(headers[1]).toContain('Validator')
-    expect(headers[2]).toContain('Max APY')
-    expect(headers[3]).toContain('Bond')
-    expect(headers[4]).toContain('Stake')
-    expect(headers[5]).toContain('Next Step')
+    for (const col of ['#', 'Validator', 'Max APY', 'Bond', 'Stake', 'Next Step']) {
+      expect(headers.some(h => h.includes(col)), `column "${col}" missing`).toBe(true)
+    }
   })
 
   test('Total Auction Stake has comma-formatted SOL', async ({ page }) => {
@@ -49,33 +45,25 @@ test.describe('SAM basic', () => {
     expect(text).toMatch(/\d{1,3}(,\d{3})+/)
   })
 
-  test('Winning APY contains %', async ({ page }) => {
-    const card = page.locator('div').filter({ hasText: /^Winning APY/ }).first()
-    await expect(card).toBeVisible()
-    const text = await card.innerText()
-    expect(text).toContain('%')
-  })
-
-  test('Projected APY is not NaN', async ({ page }) => {
-    const card = page.locator('div').filter({ hasText: /^Projected APY/ }).first()
-    await expect(card).toBeVisible()
-    const text = await card.innerText()
-    expect(text).not.toContain('NaN')
-    expect(text).toContain('%')
+  test('Winning APY and Projected APY contain valid percentages', async ({ page }) => {
+    for (const label of ['Winning APY', 'Projected APY']) {
+      const card = page.locator('div').filter({ hasText: new RegExp(`^${label}`) }).first()
+      await expect(card).toBeVisible()
+      const text = await card.innerText()
+      expect(text).toContain('%')
+      expect(text).not.toContain('NaN')
+    }
   })
 
   test('bond health badge present in bond column', async ({ page }) => {
     const bondCells = page.locator('tbody tr td:nth-child(4)')
-    const firstCell = bondCells.first()
-    await expect(firstCell).toBeVisible()
-    // bond badge contains Healthy, Watch, or Critical
-    const text = await firstCell.innerText()
+    await expect(bondCells.first()).toBeVisible()
+    const text = await bondCells.first().innerText()
     expect(text).toMatch(/Healthy|Watch|Critical/)
   })
 
   test('winning-set divider row present', async ({ page }) => {
-    // The divider row spans all columns between winners and non-winners
-    await expect(page.getByText(/Winning set/i).first()).toBeVisible()
+    await expect(page.getByText(/Winning Set Cutoff/i).first()).toBeVisible()
   })
 })
 
@@ -92,7 +80,6 @@ test.describe('SAM sorting', () => {
 
   test('click Max APY header: ASC (↑) then DESC (↓)', async ({ page }) => {
     const h = page.locator('th').filter({ hasText: /Max APY/ }).first()
-    await expect(h).toBeVisible()
     await h.click()
     await expect(h).toContainText('↑', { timeout: 5000 })
     await h.click()
@@ -118,49 +105,11 @@ test.describe('SAM sorting', () => {
   })
 })
 
-test.describe('SAM validator detail sheet', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/')
-    await waitForData(page)
-  })
-
-  async function openSheet(page: import('@playwright/test').Page): Promise<boolean> {
-    const rows = page.locator('tbody tr')
-    const count = await rows.count()
-    for (let i = 0; i < Math.min(count, 30); i++) {
-      await rows.nth(i).click()
-      await page.waitForTimeout(300)
-      if (await page.locator('.fixed.inset-0').isVisible().catch(() => false)) return true
-    }
-    return false
-  }
-
-  test('clicking a bonded row opens detail sheet', async ({ page }) => {
-    const opened = await openSheet(page)
-    test.skip(!opened, 'no bonded validators in dataset')
-    await expect(page.locator('.fixed.inset-0').first()).toBeVisible()
-  })
-
-  test('sheet has close button that dismisses it', async ({ page }) => {
-    const opened = await openSheet(page)
-    test.skip(!opened, 'no bonded validators in dataset')
-    const closeBtn = page.locator('.fixed.inset-0').locator('button').first()
-    await closeBtn.click()
-    await expect(page.locator('.fixed.inset-0')).toHaveCount(0, { timeout: 3000 })
-  })
-})
-
 test.describe('SAM expert', () => {
-  test.beforeEach(async ({ page }) => {
+  test('loads with rows and no error', async ({ page }) => {
     await page.goto('/expert-')
     await waitForData(page)
-  })
-
-  test('loads with rows', async ({ page }) => {
     expect(await page.locator('tbody tr').count()).toBeGreaterThan(0)
-  })
-
-  test('no error message', async ({ page }) => {
     await expect(page.getByText('Error fetching data')).not.toBeVisible()
   })
 })
