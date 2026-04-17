@@ -682,18 +682,18 @@ export const SamTable: React.FC<Props> = ({
         {stats.map(stat => (
           <Card
             key={stat.label}
-            className="px-5 py-4 flex-1 min-w-[140px] sm:min-w-[160px]"
+            className="px-3 py-3 sm:px-5 sm:py-4 flex-1 min-w-[140px] sm:min-w-[160px] overflow-hidden"
           >
             <div className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground mb-1 flex items-center gap-1">
               {stat.label}
               {stat.help && <HelpTip text={stat.help} />}
             </div>
-            <div className="flex items-baseline gap-0.5">
-              <span className="text-2xl font-semibold text-foreground font-mono">
+            <div className="flex items-baseline gap-0.5 min-w-0 overflow-hidden">
+              <span className="text-xl sm:text-2xl font-semibold text-foreground font-mono truncate">
                 {stat.value}
               </span>
               {stat.unit && (
-                <span className="text-sm text-muted-foreground font-mono">
+                <span className="text-sm text-muted-foreground font-mono shrink-0">
                   {stat.unit}
                 </span>
               )}

@@ -322,28 +322,34 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
           </div>
           {/* Stacked bar */}
           <div
-            className="h-8 rounded-lg overflow-hidden flex mb-4"
+            className="h-8 rounded-lg overflow-hidden flex mb-4 w-full"
             {...tooltipAttributes(
               `Protected: ${formatSolAmount(totalProtectedStake)} SOL<br/>` +
                 `Uncovered: ${formatSolAmount(totalMarinadeStake - totalProtectedStake)} SOL`,
             )}
           >
             <div
-              className="flex items-center justify-center text-xs font-medium text-white shrink-0 overflow-hidden"
-              style={{ width: `${coveredPct}%`, background: 'var(--primary)' }}
+              className="flex items-center justify-center text-xs font-medium text-white overflow-hidden"
+              style={{
+                width: `${coveredPct}%`,
+                background: 'var(--primary)',
+                flexShrink: 0,
+                flexBasis: `${coveredPct}%`,
+                maxWidth: `${coveredPct}%`,
+              }}
             >
-              <span className="truncate px-1">
-                {coveredPct > 15
+              <span className="truncate px-1 hidden sm:block">
+                {coveredPct > 25
                   ? `${formatSolAmount(totalProtectedStake)} SOL covered`
                   : ''}
               </span>
             </div>
             <div
-              className="flex items-center justify-center text-xs font-medium text-muted-foreground flex-1 min-w-0 overflow-hidden"
+              className="flex items-center justify-center text-xs font-medium text-muted-foreground overflow-hidden flex-1 min-w-0"
               style={{ background: 'var(--muted)' }}
             >
-              <span className="truncate px-1">
-                {100 - coveredPct > 15
+              <span className="truncate px-1 hidden sm:block">
+                {100 - coveredPct > 25
                   ? `${formatSolAmount(totalMarinadeStake - totalProtectedStake)} SOL uncovered`
                   : ''}
               </span>
