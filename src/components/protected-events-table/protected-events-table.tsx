@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 
 import { Badge } from 'src/components/ui/badge'
+import { EpochRangePicker } from 'src/components/ui/epoch-range-picker'
 import { Input } from 'src/components/ui/input'
 import { Label } from 'src/components/ui/label'
-import { Select, SelectOption } from 'src/components/ui/select'
 import { formatSolAmount } from 'src/format'
 import {
   selectAmount,
@@ -217,31 +217,15 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
         </div>
         <div className="flex flex-col gap-1">
           <Label>Epoch range</Label>
-          <div className="flex items-center gap-2">
-            <Select
-              className="w-[100px]"
-              value={minEpochFilter}
-              onChange={e => setMinEpochFilter(Number(e.target.value))}
-            >
-              {allEpochs.map(ep => (
-                <SelectOption key={ep} value={ep}>
-                  {ep}
-                </SelectOption>
-              ))}
-            </Select>
-            <span className="text-xs text-muted-foreground">to</span>
-            <Select
-              className="w-[100px]"
-              value={maxEpochFilter}
-              onChange={e => setMaxEpochFilter(Number(e.target.value))}
-            >
-              {allEpochs.map(ep => (
-                <SelectOption key={ep} value={ep}>
-                  {ep}
-                </SelectOption>
-              ))}
-            </Select>
-          </div>
+          <EpochRangePicker
+            epochs={allEpochs}
+            min={minEpochFilter}
+            max={maxEpochFilter}
+            onChange={(lo, hi) => {
+              setMinEpochFilter(lo)
+              setMaxEpochFilter(hi)
+            }}
+          />
         </div>
       </div>
       <div className="px-4 pb-4">
@@ -276,6 +260,8 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
               },
               {
                 header: 'Epoch',
+                headerHelp:
+                  'Solana epoch (~2 days) in which this event occurred',
                 render: ({ protectedEvent }) => <>{protectedEvent.epoch}</>,
                 compare: (a, b) =>
                   a.protectedEvent.epoch - b.protectedEvent.epoch,
@@ -283,6 +269,8 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
               },
               {
                 header: 'Reason',
+                headerHelp:
+                  'Why the protection was triggered — commission increase, low uptime, or downtime',
                 render: ({ protectedEvent }) => (
                   <>{selectProtectedStakeReason(protectedEvent)}</>
                 ),
@@ -293,6 +281,8 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
               },
               {
                 header: 'Paid Out',
+                headerHelp:
+                  'SOL paid to compensate stakers for this event. Estimate = live data, may change before epoch settles.',
                 render: ({ protectedEvent, status }) => (
                   <>
                     {renderProtectedEventStatus(status)}{' '}
@@ -306,6 +296,8 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
               },
               {
                 header: 'Funded by',
+                headerHelp:
+                  "Validator Bond = validator's own collateral covered this. Marinade = backstop fund covered it (validator bond was insufficient).",
                 render: ({ protectedEvent }) =>
                   renderFunderBadge(protectedEvent),
                 compare: (a, b) =>

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 
+import { HelpTip } from 'src/components/help-tip/help-tip'
 import {
   TableBody,
   TableCaption,
@@ -35,17 +36,17 @@ export enum Color {
 
 const TABLE_BASE = [
   'relative border-separate [border-spacing:0]',
-  '[&_thead]:sticky [&_thead]:top-0 [&_thead]:bg-secondary',
+  '[&_thead]:sticky [&_thead]:top-0 [&_thead]:bg-muted',
   '[&_thead]:text-foreground [&_thead]:cursor-pointer',
   '[&_thead]:select-none [&_thead]:z-[1]',
-  '[&_thead]:border-b [&_thead]:border-border',
+  '[&_thead]:border-b [&_thead]:border-border-grid',
   '[&_thead_th:first-child]:rounded-tl-xl',
   '[&_thead_th:last-child]:rounded-tr-xl',
-  '[&_tbody]:bg-background-page',
-  '[&_tbody_tr]:bg-background-page',
-  '[&_th]:relative [&_th]:px-4 [&_th]:py-2 [&_th]:whitespace-nowrap [&_th]:text-sm [&_th]:font-medium [&_th]:text-muted-foreground',
-  '[&_td]:relative [&_td]:px-4 [&_td]:py-0.5 [&_td]:whitespace-nowrap [&_td]:align-top',
-  '[&_tbody_tr:hover]:bg-secondary',
+  '[&_tbody]:bg-card',
+  '[&_tbody_tr]:bg-card',
+  '[&_th]:relative [&_th]:px-3.5 [&_th]:py-[11px] [&_th]:whitespace-nowrap [&_th]:text-[11px] [&_th]:font-medium [&_th]:tracking-[0.06em] [&_th]:text-muted-foreground',
+  '[&_td]:relative [&_td]:px-3.5 [&_td]:py-3 [&_td]:whitespace-nowrap [&_td]:align-top',
+  '[&_tbody_tr:hover]:bg-primary-light',
 ].join(' ')
 
 function alignmentClassName(alignment?: Alignment): string {
@@ -102,6 +103,7 @@ function renderHeader<Item>(
             {...(column.headerAttrsFn ? column.headerAttrsFn() : {})}
           >
             {column.header}
+            {column.headerHelp && <HelpTip text={column.headerHelp} />}
             <span
               className={cn(
                 'ml-1 text-[11px] opacity-40',
@@ -174,6 +176,7 @@ function renderRow<Item>(
 
 type Column<Item> = {
   header: string
+  headerHelp?: string
   headerAttrsFn?: () => HTMLAttributes<HTMLTableCellElement>
   cellAttrsFn?: (item: Item) => HTMLAttributes<HTMLTableCellElement>
   render: (item: Item, index?: number) => JSX.Element
