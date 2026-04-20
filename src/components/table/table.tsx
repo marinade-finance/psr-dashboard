@@ -1,8 +1,21 @@
 import React, { useEffect, useMemo, useState } from 'react'
 
-import styles from './table.module.css'
+import { HelpTip } from 'src/components/help-tip/help-tip'
+import {
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  Table as UiTable,
+} from 'src/components/ui/table'
+import { cn } from 'src/lib/utils'
+import { Color } from 'src/services/types'
 
 import type { HTMLAttributes } from 'react'
+
+export { Color }
 
 export const enum OrderDirection {
   ASC,
@@ -16,49 +29,49 @@ export enum Alignment {
   RIGHT,
 }
 
-export enum Color {
-  RED,
-  GREEN,
-  YELLOW,
-  ORANGE,
-  GREY,
+const TABLE_BASE = [
+  'relative border-separate [border-spacing:0]',
+  '[&_thead]:sticky [&_thead]:top-0 [&_thead]:bg-muted',
+  '[&_thead]:text-foreground [&_thead]:cursor-pointer',
+  '[&_thead]:select-none [&_thead]:z-[1]',
+  '[&_thead]:border-b [&_thead]:border-border-grid',
+  '[&_thead_th:first-child]:rounded-tl-xl',
+  '[&_thead_th:last-child]:rounded-tr-xl',
+  '[&_tbody]:bg-card',
+  '[&_tbody_tr]:bg-card',
+  '[&_th]:relative [&_th]:px-3.5 [&_th]:py-[11px] [&_th]:whitespace-nowrap [&_th]:text-[11px] [&_th]:font-medium [&_th]:tracking-[0.06em] [&_th]:text-muted-foreground',
+  '[&_td]:relative [&_td]:px-3.5 [&_td]:py-3 [&_td]:whitespace-nowrap [&_td]:align-top',
+  '[&_tbody_tr:hover]:bg-primary-light',
+].join(' ')
+
+function alignmentClassName(alignment?: Alignment): string {
+  return alignment === Alignment.RIGHT ? 'text-right' : 'text-left'
 }
 
-const alignmentClassName = (alignment?: Alignment) => {
-  switch (alignment) {
-    case Alignment.LEFT:
-      return styles.left
-    case Alignment.RIGHT:
-      return styles.right
-    default:
-      return styles.left
-  }
-}
-
-const colorClassName = (color?: Color) => {
+function colorClassName(color?: Color): string {
   switch (color) {
     case Color.RED:
-      return styles.red
+      return 'bg-cell-red'
     case Color.GREEN:
-      return styles.green
+      return 'bg-cell-green'
     case Color.YELLOW:
-      return styles.yellow
+      return 'bg-cell-yellow'
     case Color.ORANGE:
-      return styles.orange
+      return 'bg-cell-orange'
     case Color.GREY:
-      return styles.grey
+      return 'bg-cell-grey'
     default:
-      return styles.noBg
+      return ''
   }
 }
 
-const renderHeader = <Item,>(
+function renderHeader<Item>(
   columns: Column<Item>[],
   onSort: (i: number) => void,
   userOrder: [number, OrderDirection] | null,
   defaultOrder: Order[],
   showRowNumber: boolean,
-): JSX.Element => {
+): JSX.Element {
   const [userOrderColumn, userOrderDirection] = userOrder ?? [null, null]
   const [defaultOrderColumn, defaultOrderDirection] = defaultOrder[0] ?? [
     null,
@@ -66,40 +79,58 @@ const renderHeader = <Item,>(
   ]
 
   return (
-    <tr>
-      {showRowNumber ? <td>#</td> : null}
+    <TableRow>
+      {showRowNumber ? <TableHead>#</TableHead> : null}
       {columns.map((column, i) => {
         const isUserSorted = userOrderColumn === i
         const isDefaultSorted = !userOrder && defaultOrderColumn === i
-
-        let indicatorClass = styles.sortIndicator
         let indicator = ''
-
         if (isUserSorted) {
-          indicatorClass = `${styles.sortIndicator} ${styles.sortIndicatorActive}`
           indicator = userOrderDirection === OrderDirection.ASC ? '▲' : '▼'
         } else if (isDefaultSorted) {
-          indicatorClass = `${styles.sortIndicator} ${styles.sortIndicatorDefault}`
           indicator = defaultOrderDirection === OrderDirection.ASC ? '▲' : '▼'
         }
-
         return (
-          <th
+          <TableHead
             key={i}
             className={alignmentClassName(column.alignment)}
             onClick={() => onSort(i)}
             {...(column.headerAttrsFn ? column.headerAttrsFn() : {})}
           >
             {column.header}
-            <span className={indicatorClass}>{indicator}</span>
-          </th>
+            {column.headerHelp && <HelpTip text={column.headerHelp} />}
+            <span
+              className={cn(
+                'ml-1 text-[11px] opacity-40',
+                isUserSorted && 'opacity-100! text-primary!',
+                isDefaultSorted && 'opacity-60! text-muted-foreground!',
+              )}
+            >
+              {indicator}
+            </span>
+          </TableHead>
         )
       })}
-    </tr>
+    </TableRow>
   )
 }
 
-const renderRow = <Item,>(
+function renderRows<Item>(
+  items: Item[],
+  columns: Column<Item>[],
+  showRowNumber: boolean,
+  rowAttrsFn?: (
+    item: Item,
+    index: number,
+  ) => HTMLAttributes<HTMLTableRowElement>,
+  rowNumberRender?: (item: Item, index: number) => JSX.Element,
+): JSX.Element[] {
+  return items.map((item, i) =>
+    renderRow(item, columns, i, showRowNumber, rowAttrsFn, rowNumberRender),
+  )
+}
+
+function renderRow<Item>(
   item: Item,
   columns: Column<Item>[],
   index: number,
@@ -109,29 +140,38 @@ const renderRow = <Item,>(
     index: number,
   ) => HTMLAttributes<HTMLTableRowElement>,
   rowNumberRender?: (item: Item, index: number) => JSX.Element,
-): JSX.Element => {
+): JSX.Element {
   return (
-    <tr key={index} {...(rowAttrsFn ? rowAttrsFn(item, index) : {})}>
+    <TableRow key={index} {...(rowAttrsFn ? rowAttrsFn(item, index) : {})}>
       {showRowNumber ? (
-        <td>
+        <TableCell>
           {rowNumberRender ? rowNumberRender(item, index) : <>{index + 1}</>}
-        </td>
+        </TableCell>
       ) : null}
-      {columns.map((column, i) => (
-        <td
-          {...(column.cellAttrsFn ? column.cellAttrsFn(item) : {})}
-          key={i}
-          className={`${alignmentClassName(column.alignment)} ${column.background ? colorClassName(column.background(item)) : ''}`}
-        >
-          {column.render(item, index)}
-        </td>
-      ))}
-    </tr>
+      {columns.map((column, i) => {
+        const cellAttrs = column.cellAttrsFn ? column.cellAttrsFn(item) : {}
+        const { className: cellClassName, ...restCellAttrs } = cellAttrs
+        return (
+          <TableCell
+            {...restCellAttrs}
+            key={i}
+            className={cn(
+              alignmentClassName(column.alignment),
+              column.background && colorClassName(column.background(item)),
+              cellClassName,
+            )}
+          >
+            {column.render(item, index)}
+          </TableCell>
+        )
+      })}
+    </TableRow>
   )
 }
 
 type Column<Item> = {
   header: string
+  headerHelp?: string
   headerAttrsFn?: () => HTMLAttributes<HTMLTableCellElement>
   cellAttrsFn?: (item: Item) => HTMLAttributes<HTMLTableCellElement>
   render: (item: Item, index?: number) => JSX.Element
@@ -153,7 +193,11 @@ type Props<Item> = {
   onOrderChange?: (order: Order[]) => void
   presorted?: boolean
   caption?: React.ReactNode
+  className?: string
 }
+
+export const TRUNCATED_CELL =
+  'inline-block w-[100px] pt-1 text-ellipsis overflow-hidden'
 
 export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
   data,
@@ -165,6 +209,7 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
   onOrderChange,
   presorted,
   caption,
+  className,
 }) => {
   const [userOrder, setUserOrder] = useState<Order | null>(null)
 
@@ -214,9 +259,9 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
   }
 
   return (
-    <table className={styles.table}>
-      {caption && <caption>{caption}</caption>}
-      <thead>
+    <UiTable className={cn(TABLE_BASE, className)}>
+      {caption && <TableCaption>{caption}</TableCaption>}
+      <TableHeader>
         {renderHeader(
           columns,
           onSort,
@@ -224,19 +269,16 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
           defaultOrder,
           showRowNumber ?? false,
         )}
-      </thead>
-      <tbody>
-        {sortedData.map((item, i) =>
-          renderRow(
-            item,
-            columns,
-            i,
-            showRowNumber ?? false,
-            rowAttrsFn,
-            rowNumberRender,
-          ),
+      </TableHeader>
+      <TableBody>
+        {renderRows(
+          sortedData,
+          columns,
+          showRowNumber ?? false,
+          rowAttrsFn,
+          rowNumberRender,
         )}
-      </tbody>
-    </table>
+      </TableBody>
+    </UiTable>
   )
 }

@@ -14,6 +14,7 @@ export type ValidatorEpoch = {
 export type Validator = {
   vote_account: string
   info_name: string | null
+  dc_country_iso: string | null
   marinade_stake: string
   marinade_native_stake: string
   activated_stake: string
@@ -47,5 +48,10 @@ export const fetchValidatorsWithEpochs = async (
   const res = await fetch(
     `https://validators-api.marinade.finance/validators?limit=9999&epochs=${epochs}`,
   )
-  return (await res.json()) as ValidatorsResponse
+  const data = (await res.json()) as ValidatorsResponse
+  return {
+    validators: data.validators.filter(
+      v => Number(v.marinade_stake) > 0 || Number(v.marinade_native_stake) > 0,
+    ),
+  }
 }

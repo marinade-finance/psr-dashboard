@@ -9,8 +9,8 @@ It displays DS SAM max yield auction results, validator bonds on-chain, and prot
 
 The dashboard aggregates data from multiple Marinade APIs:
 
-| API                  | Endpoint                                                                                                     | Purpose                                                                     |
-| -------------------- | ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| API                  | Endpoint                                                                                                     | Purpose                                                                    |
+| -------------------- | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
 | Validators API       | [`validators-api.marinade.finance/validators`](https://validators-api.marinade.finance/docs)                 | Validator information, commissions, stake amounts (updated once per hour)   |
 | Validator Bonds API  | [`validator-bonds-api.marinade.finance/bonds`](https://validator-bonds-api.marinade.finance/docs)            | Bond balances, configurations, commission overrides (updated once per hour) |
 | Protected Events API | [`validator-bonds-api.marinade.finance/protected-events`](https://validator-bonds-api.marinade.finance/docs) | Settlement claims and protected event history (updated once per epoch)      |

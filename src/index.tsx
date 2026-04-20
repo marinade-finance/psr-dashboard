@@ -12,9 +12,13 @@ import { Tooltip } from 'react-tooltip'
 
 import 'react-tooltip/dist/react-tooltip.css'
 import { UserLevel } from './components/navigation/navigation'
+import { TooltipProvider } from './components/ui/tooltip'
 import { ProtectedEventsPage } from './pages/protected-events'
 import { SamPage } from './pages/sam'
 import { ValidatorBondsPage } from './pages/validator-bonds'
+import { loadSam } from './services/sam'
+import { fetchValidatorsWithBonds } from './services/validator-with-bond'
+import { fetchProtectedEventsWithValidator } from './services/validator-with-protected_event'
 
 const tagManagerArgs = {
   gtmId: 'GTM-TTZLQF7',
@@ -71,10 +75,20 @@ const router = createBrowserRouter([
 
 const queryClient = new QueryClient()
 
+// Prefetch all tab data in background so navigation is instant
+void queryClient.prefetchQuery(['sam', 0], () => loadSam(null))
+void queryClient.prefetchQuery('bonds', fetchValidatorsWithBonds)
+void queryClient.prefetchQuery(
+  'protected-events',
+  fetchProtectedEventsWithValidator,
+)
+
 ReactDOM.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <TooltipProvider>
+        <RouterProvider router={router} />
+      </TooltipProvider>
       <Tooltip id="tooltip" style={{ zIndex: 2, width: 400 }} />
     </QueryClientProvider>
   </React.StrictMode>,

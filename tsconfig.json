@@ -19,6 +19,8 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "jsx": "react",
-    "lib": ["esnext", "dom", "dom.iterable"]
-  }
+    "lib": ["esnext", "dom", "dom.iterable"],
+    "types": ["vite/client"]
+  },
+  "exclude": ["vite.config.ts"]
 }

@@ -1,15 +1,17 @@
 import React, { useState } from 'react'
 
+import { Badge } from 'src/components/ui/badge'
+import { EpochRangePicker } from 'src/components/ui/epoch-range-picker'
+import { Input } from 'src/components/ui/input'
+import { Label } from 'src/components/ui/label'
 import { formatSolAmount } from 'src/format'
 import {
   selectAmount,
-  selectEprLossBps,
   selectProtectedStakeReason,
 } from 'src/services/protected-events'
 import { ProtectedEventStatus } from 'src/services/validator-with-protected_event'
 import { selectName } from 'src/services/validators'
 
-import styles from './protected-events-table.module.css'
 import { tooltipAttributes } from '../../services/utils'
 import { Metric } from '../metric/metric'
 import { UserLevel } from '../navigation/navigation'
@@ -18,64 +20,65 @@ import { Alignment, OrderDirection, Table } from '../table/table'
 import type { ProtectedEvent } from 'src/services/protected-events'
 import type { ProtectedEventWithValidator } from 'src/services/validator-with-protected_event'
 
-const NO_NAME = '---'
-
 const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
   switch (status) {
     case ProtectedEventStatus.DRYRUN:
       return (
-        <span
+        <Badge
+          variant="secondary"
           {...tooltipAttributes(
             'This settlement is not claimable as it was created during the testing period.',
           )}
-          className={`${styles.badge} ${styles.badgeDryRun}`}
+          className="badge cursor-help float-left"
         >
           Dryrun
-        </span>
+        </Badge>
       )
     case ProtectedEventStatus.ESTIMATE:
       return (
-        <span
+        <Badge
+          variant="default"
           {...tooltipAttributes(
             'This is an estimate based on live data but may change during the epoch<br />before the settlements for this epoch are created on-chain.',
           )}
-          className={`${styles.badge} ${styles.badgeEstimate}`}
+          className="badge cursor-help float-left"
         >
           Estimate
-        </span>
+        </Badge>
       )
     default:
-      return <></>
+      return null
   }
 }
 
-const renderProtectedEventFunder = (protectedEvent: ProtectedEvent) => {
-  switch (protectedEvent.meta.funder) {
-    case 'Marinade':
-      return (
-        <span
-          className={styles.funder}
-          {...tooltipAttributes(
-            "This settlement is funded by Marinade DAO because the yield loss<br />is beyond what the validator's are expected to cover.",
-          )}
-        >
-          Marinade
-        </span>
-      )
-    case 'ValidatorBond':
-      return (
-        <span
-          className={styles.funder}
-          {...tooltipAttributes(
-            'This settlement is funded by the validator because the yield loss<br />is within amount which the validator is expected to cover.',
-          )}
-        >
-          Validator
-        </span>
-      )
-    default:
-      return <></>
+const renderFunderBadge = (protectedEvent: ProtectedEvent) => {
+  if (protectedEvent.meta.funder === 'ValidatorBond') {
+    return (
+      <Badge
+        variant="outline"
+        {...tooltipAttributes(
+          "The validator's own bond covered this settlement — the validator paid.",
+        )}
+        className="cursor-help bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/30"
+      >
+        Validator Bond
+      </Badge>
+    )
   }
+  if (protectedEvent.meta.funder === 'Marinade') {
+    return (
+      <Badge
+        variant="outline"
+        {...tooltipAttributes(
+          "Marinade's backstop covered this settlement — the validator's bond was insufficient.",
+        )}
+        className="cursor-help bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30"
+      >
+        Marinade
+      </Badge>
+    )
+  }
+  return null
 }
 
 type Props = {
@@ -92,6 +95,10 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
     (epoch, { protectedEvent }) => Math.max(protectedEvent.epoch, epoch),
     0,
   )
+
+  const allEpochs = Array.from(
+    new Set(data.map(({ protectedEvent }) => protectedEvent.epoch)),
+  ).sort((a, b) => a - b)
 
   const [validatorFilter, setValidatorFilter] = useState('')
   const [minEpochFilter, setMinEpochFilter] = useState(minEpoch)
@@ -112,9 +119,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
     return matchesEpoch && matchesValidator
   })
   const filteredData = preFilteredData.filter(
-    ({ protectedEvent, validator: _validator }) => {
-      return protectedEvent.reason !== 'Bidding'
-    },
+    ({ protectedEvent }) => protectedEvent.reason !== 'Bidding',
   )
   const lastSettledEpoch = data.reduce(
     (epoch, { protectedEvent, status }) =>
@@ -126,17 +131,23 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
 
   const totalEvents = data.length
   const filteredEvents = filteredData.length
-  const totalAmount = data.reduce(
-    (sum, { protectedEvent }) => sum + selectAmount(protectedEvent),
+
+  const validatorBondTotal = data.reduce(
+    (sum, { protectedEvent }) =>
+      protectedEvent.meta.funder === 'ValidatorBond'
+        ? sum + selectAmount(protectedEvent)
+        : sum,
     0,
   )
-  const filteredAmount = filteredData.reduce(
-    (sum, { protectedEvent }) => sum + selectAmount(protectedEvent),
+  const marinadePaidTotal = data.reduce(
+    (sum, { protectedEvent }) =>
+      protectedEvent.meta.funder === 'Marinade'
+        ? sum + selectAmount(protectedEvent)
+        : sum,
     0,
   )
-  const lastSettledEpochAmount = filteredData
-    .filter(({ protectedEvent: { epoch } }) => epoch === lastSettledEpoch)
-    .reduce((sum, { protectedEvent }) => sum + selectAmount(protectedEvent), 0)
+  const totalAmount = validatorBondTotal + marinadePaidTotal
+
   const lastEpochBids = preFilteredData
     .filter(
       ({ protectedEvent }) =>
@@ -145,157 +156,158 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
     )
     .reduce((sum, { protectedEvent }) => sum + selectAmount(protectedEvent), 0)
 
-  let expertMetrics
-  if (level === UserLevel.Expert) {
-    expertMetrics = (
-      <>
-        <Metric
-          label="Last Epoch Bids"
-          value={`☉ ${formatSolAmount(lastEpochBids)}`}
-          {...tooltipAttributes(
-            "Last Settled Epoch's Bids collectable By Users",
-          )}
-        />
-      </>
-    )
-  }
-
-  const filtered = data.length !== filteredData.length
+  const filtered = preFilteredData.length !== data.length
 
   return (
-    <div className={styles.tableWrap}>
-      <div className={styles.metricWrap}>
+    <div className="relative">
+      <div className="metricWrap grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 px-4 pb-4">
         <Metric
-          label="Total events"
+          label="Events Protected"
           value={totalEvents.toLocaleString()}
-          {...tooltipAttributes('Total Count of Protected Events')}
+          {...tooltipAttributes(
+            'Total number of protected events paid out to stakers',
+          )}
         />
         <Metric
-          label="Total amount"
-          value={`☉ ${formatSolAmount(totalAmount)}`}
-          {...tooltipAttributes('Total Amount of SOL Claimable by Users')}
+          label="Validator Bond Paid"
+          value={`${formatSolAmount(validatorBondTotal)} SOL`}
+          {...tooltipAttributes(
+            "SOL paid from validators' own bonds — validator covered their stakers' loss",
+          )}
+        />
+        <Metric
+          label="Marinade Paid"
+          value={`${formatSolAmount(marinadePaidTotal)} SOL`}
+          {...tooltipAttributes(
+            "SOL paid by Marinade's backstop — validator bond was insufficient",
+          )}
+        />
+        <Metric
+          label="Total SOL to Stakers"
+          value={`${formatSolAmount(totalAmount)} SOL`}
+          {...tooltipAttributes(
+            'Total SOL paid out to stakers across all protected events',
+          )}
         />
         {filtered && (
           <Metric
             label="Filtered Events"
             value={filteredEvents.toLocaleString()}
-            {...tooltipAttributes('Count of Filtered Protected Events')}
+            {...tooltipAttributes('Count of filtered protected events')}
           />
         )}
-        {filtered && (
+        {level === UserLevel.Expert && (
           <Metric
-            label="Filtered Amount"
-            value={`☉ ${formatSolAmount(filteredAmount)}`}
-            {...tooltipAttributes('Filtered Amount of SOL Claimable By Users')}
+            label="Last Epoch Bids"
+            value={`${formatSolAmount(lastEpochBids)} SOL`}
+            {...tooltipAttributes(
+              "Last settled epoch's bids collectable by users",
+            )}
           />
         )}
-        <Metric
-          label="Last Settled Amount"
-          value={`☉ ${formatSolAmount(lastSettledEpochAmount)}`}
-          {...tooltipAttributes(
-            "Last Settled Epoch's Amount of SOL Claimable By Users",
-          )}
-        />
-        {expertMetrics}
       </div>
-      <div className={styles.filters}>
-        <fieldset>
-          <legend>Validator filter</legend>
-          <input
+      <div className="flex flex-col sm:flex-row flex-wrap gap-4 px-4 mb-4">
+        <div className="flex flex-col gap-1 flex-1 sm:flex-none">
+          <Label>Validator filter</Label>
+          <Input
             type="text"
             value={validatorFilter}
             onChange={e => setValidatorFilter(e.target.value)}
           />
-        </fieldset>
-        <fieldset>
-          <legend>Epoch filter</legend>
-          <input
-            className={styles.epochFilter}
-            type="number"
-            value={minEpochFilter}
-            onChange={e => setMinEpochFilter(Number(e.target.value))}
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label>Epoch range</Label>
+          <EpochRangePicker
+            epochs={allEpochs}
+            min={minEpochFilter}
+            max={maxEpochFilter}
+            onChange={(lo, hi) => {
+              setMinEpochFilter(lo)
+              setMaxEpochFilter(hi)
+            }}
           />
-          <input
-            className={styles.epochFilter}
-            type="number"
-            value={maxEpochFilter}
-            onChange={e => setMaxEpochFilter(Number(e.target.value))}
-          />
-        </fieldset>
+        </div>
       </div>
-      <Table
-        data={filteredData}
-        columns={[
-          {
-            header: 'Epoch',
-            render: ({ protectedEvent }) => <>{protectedEvent.epoch}</>,
-            compare: (a, b) => a.protectedEvent.epoch - b.protectedEvent.epoch,
-            alignment: Alignment.RIGHT,
-          },
-          {
-            header: 'Validator',
-            render: ({ protectedEvent }) => (
-              <span className={styles.pubkey}>
-                {protectedEvent.vote_account}
-              </span>
-            ),
-            compare: (a, b) =>
-              a.protectedEvent.vote_account.localeCompare(
-                b.protectedEvent.vote_account,
-              ),
-          },
-          {
-            header: 'Name',
-            render: ({ validator }) => (
-              <span className={styles.pubkey}>
-                {validator ? selectName(validator) : NO_NAME}
-              </span>
-            ),
-            compare: (a, b) =>
-              (a.validator
-                ? (selectName(a.validator) ?? NO_NAME)
-                : NO_NAME
-              ).localeCompare(
-                b.validator ? (selectName(b.validator) ?? NO_NAME) : NO_NAME,
-              ),
-          },
-          {
-            header: 'Settlement [☉]',
-            render: ({ protectedEvent, status }) => (
-              <>
-                {renderProtectedEventStatus(status)}{' '}
-                {formatSolAmount(selectAmount(protectedEvent))}
-              </>
-            ),
-            compare: (a, b) =>
-              selectAmount(a.protectedEvent) - selectAmount(b.protectedEvent),
-            alignment: Alignment.RIGHT,
-          },
-          {
-            header: 'Reason',
-            render: ({ protectedEvent }) => (
-              <>{selectProtectedStakeReason(protectedEvent)}</>
-            ),
-            compare: (a, b) =>
-              selectEprLossBps(a.protectedEvent) -
-              selectEprLossBps(b.protectedEvent),
-          },
-          {
-            header: 'Funder',
-            render: ({ protectedEvent }) =>
-              renderProtectedEventFunder(protectedEvent),
-            compare: (a, b) =>
-              a.protectedEvent.meta.funder.localeCompare(
-                b.protectedEvent.meta.funder,
-              ),
-          },
-        ]}
-        defaultOrder={[
-          [0, OrderDirection.DESC],
-          [3, OrderDirection.DESC],
-          [4, OrderDirection.DESC],
-        ]}
-      />
+      <div className="px-4 pb-4">
+        <div className="bg-card rounded-xl border border-border shadow-card overflow-x-auto">
+          <Table
+            className="[&_tbody]:bg-card [&_tbody_tr]:bg-card [&_tbody_tr:hover]:bg-secondary"
+            data={filteredData}
+            showRowNumber
+            columns={[
+              {
+                header: 'Validator',
+                render: ({ protectedEvent, validator }) => {
+                  const name = validator ? selectName(validator) : null
+                  const va = protectedEvent.vote_account
+                  return (
+                    <div>
+                      <div className="font-medium text-[13px] text-foreground">
+                        {name ?? '---'}
+                      </div>
+                      <div className="text-[11px] font-mono text-secondary-foreground mt-px">
+                        {va.slice(0, 8)}...{va.slice(-4)}
+                      </div>
+                    </div>
+                  )
+                },
+                compare: (a, b) =>
+                  a.protectedEvent.vote_account.localeCompare(
+                    b.protectedEvent.vote_account,
+                  ),
+              },
+              {
+                header: 'Epoch',
+                headerHelp:
+                  'Solana epoch (~2 days) in which this event occurred',
+                render: ({ protectedEvent }) => <>{protectedEvent.epoch}</>,
+                compare: (a, b) =>
+                  a.protectedEvent.epoch - b.protectedEvent.epoch,
+                alignment: Alignment.RIGHT,
+              },
+              {
+                header: 'Reason',
+                headerHelp:
+                  'Why the protection was triggered — commission increase, low uptime, or downtime',
+                render: ({ protectedEvent }) => (
+                  <>{selectProtectedStakeReason(protectedEvent)}</>
+                ),
+                compare: (a, b) =>
+                  selectProtectedStakeReason(a.protectedEvent).localeCompare(
+                    selectProtectedStakeReason(b.protectedEvent),
+                  ),
+              },
+              {
+                header: 'Paid Out',
+                headerHelp:
+                  'SOL paid to compensate stakers for this event. Estimate = live data, may change before epoch settles.',
+                render: ({ protectedEvent, status }) => (
+                  <>
+                    {renderProtectedEventStatus(status)}{' '}
+                    {formatSolAmount(selectAmount(protectedEvent))} SOL
+                  </>
+                ),
+                compare: (a, b) =>
+                  selectAmount(a.protectedEvent) -
+                  selectAmount(b.protectedEvent),
+                alignment: Alignment.RIGHT,
+              },
+              {
+                header: 'Funded by',
+                headerHelp:
+                  "Validator Bond = validator's own collateral covered this. Marinade = backstop fund covered it (validator bond was insufficient).",
+                render: ({ protectedEvent }) =>
+                  renderFunderBadge(protectedEvent),
+                compare: (a, b) =>
+                  a.protectedEvent.meta.funder.localeCompare(
+                    b.protectedEvent.meta.funder,
+                  ),
+              },
+            ]}
+            defaultOrder={[[1, OrderDirection.DESC]]}
+          />
+        </div>
+      </div>
     </div>
   )
 }

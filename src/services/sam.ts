@@ -1,20 +1,25 @@
 import {
   DsSamSDK,
-  Auction,
-  Debug,
   InputsSource,
   AuctionConstraintType,
   loadSamConfig,
   LogVerbosity,
 } from '@marinade.finance/ds-sam-sdk'
 
-import { Color } from 'src/components/table/table'
 import { formatPercentage } from 'src/format'
+import { Color } from 'src/services/types'
 
-import { fetchValidatorsWithEpochs } from './validators'
+import {
+  bondHealthColor,
+  bondRunwayEpochs,
+  bondUtilizationPct,
+  compoundApy,
+  isNonProductive,
+  stakeDelta,
+  selectMaxWantedStake,
+} from './calculations'
 
 import type {
-  AggregatedData,
   AuctionResult,
   AuctionValidator,
   AuctionConstraint,
@@ -22,45 +27,11 @@ import type {
   SourceDataOverrides,
 } from '@marinade.finance/ds-sam-sdk'
 
-const estimateEpochsPerYear = async () => {
-  const FETCHED_EPOCHS = 11
-  const { validators } = await fetchValidatorsWithEpochs(FETCHED_EPOCHS)
-  const epochStats = validators.map(({ epoch_stats }) => epoch_stats).flat()
-
-  const rangeStart = epochStats.reduce(
-    (acc, { epoch, epoch_start_at }) => {
-      if (epoch_start_at === null || epoch >= acc.epoch) return acc
-      return { epoch, timestamp: new Date(epoch_start_at).getTime() / 1e3 }
-    },
-    { epoch: Infinity, timestamp: Infinity },
-  )
-
-  const rangeEnd = epochStats.reduce(
-    (acc, { epoch, epoch_end_at }) => {
-      if (epoch_end_at === null || epoch <= acc.epoch) return acc
-      return { epoch, timestamp: new Date(epoch_end_at).getTime() / 1e3 }
-    },
-    { epoch: 0, timestamp: 0 },
-  )
-
-  const SECONDS_PER_YEAR = 365.25 * 24 * 3600
-  const DEFAULT_EPOCH_DURATION = 0.4 * 432000
-  const DEFAULT_EPOCHS_PER_YEAR = SECONDS_PER_YEAR / DEFAULT_EPOCH_DURATION
-  const rangeDuration = rangeEnd.timestamp - rangeStart.timestamp
-  const rangeEpochs = rangeEnd.epoch - rangeStart.epoch + 1
-  if (!isFinite(rangeStart.epoch) || rangeEnd.epoch === 0) {
-    return DEFAULT_EPOCHS_PER_YEAR
-  }
-
-  return SECONDS_PER_YEAR / (rangeDuration / rangeEpochs)
-}
+// Solana epoch = 432000 slots × 0.4s/slot = 172800s = 48h exactly
+const EPOCHS_PER_YEAR = (365.25 * 24 * 3600) / 172800
 
 type SamResult = {
   auctionResult: AuctionResult
-  tvlJoinApyDiff: number
-  tvlLeaveApyDiff: number
-  backstopDiff: number
-  backstopTvl: number
   epochsPerYear: number
   dcSamConfig: DsSamConfig
 }
@@ -68,8 +39,6 @@ type SamResult = {
 export const loadSam = async (
   dataOverrides?: SourceDataOverrides | null,
 ): Promise<SamResult> => {
-  const epochsPerYear = await estimateEpochsPerYear()
-  console.log('epochsPerYear', epochsPerYear)
   const config = await loadSamConfig()
   const dsSam = new DsSamSDK({
     ...config,
@@ -81,76 +50,9 @@ export const loadSam = async (
 
   const auctionResult = await dsSam.runFinalOnly(dataOverrides)
 
-  const runAlt = async (mutate: (data: AggregatedData) => void) => {
-    const aggregatedData = await dsSam.getAggregatedData(dataOverrides)
-    mutate(aggregatedData)
-    const debug = new Debug(new Set(), LogVerbosity.ERROR)
-    const constraints = dsSam.getAuctionConstraints(aggregatedData, debug)
-    const validators = dsSam.transformValidators(aggregatedData)
-    const data = { ...aggregatedData, validators }
-    return new Auction(data, constraints, dsSam.config, debug).evaluate()
-  }
-
-  // +10% / -10% TVL sensitivity
-  const joinResult = await runAlt((data: AggregatedData) => {
-    // eslint-disable-next-line no-param-reassign
-    data.stakeAmounts.marinadeSamTvlSol *= 1.1
-    // eslint-disable-next-line no-param-reassign
-    data.stakeAmounts.marinadeRemainingSamSol *= 1.1
-  })
-  const tvlJoinApyDiff = selectTvlApyDiff(
-    auctionResult,
-    joinResult,
-    epochsPerYear,
-  )
-
-  const leaveResult = await runAlt((data: AggregatedData) => {
-    // eslint-disable-next-line no-param-reassign
-    data.stakeAmounts.marinadeSamTvlSol *= 0.9
-    // eslint-disable-next-line no-param-reassign
-    data.stakeAmounts.marinadeRemainingSamSol *= 0.9
-  })
-  const tvlLeaveApyDiff = selectTvlApyDiff(
-    auctionResult,
-    leaveResult,
-    epochsPerYear,
-  )
-
-  // Backstop: block top 5 validators by target stake
-  const top5 = auctionResult.auctionData.validators
-    .slice()
-    .sort(
-      (a, b) =>
-        b.auctionStake.marinadeSamTargetSol -
-        a.auctionStake.marinadeSamTargetSol,
-    )
-    .slice(0, 5)
-    .map(validator => ({
-      voteAccount: validator.voteAccount,
-      targetStake: validator.auctionStake.marinadeSamTargetSol,
-    }))
-
-  const top5Accounts = new Set(top5.map(t => t.voteAccount))
-  const backstopResult = await runAlt(data => {
-    // eslint-disable-next-line no-param-reassign
-    data.validators = data.validators.filter(
-      v => !top5Accounts.has(v.voteAccount),
-    )
-  })
-  const backstopDiff = selectTargetApyDiff(
-    auctionResult,
-    backstopResult,
-    epochsPerYear,
-  )
-  const backstopTvl = top5.reduce((sum, t) => sum + t.targetStake, 0)
-
   return {
     auctionResult,
-    tvlJoinApyDiff,
-    tvlLeaveApyDiff,
-    backstopDiff,
-    backstopTvl,
-    epochsPerYear,
+    epochsPerYear: EPOCHS_PER_YEAR,
     dcSamConfig: dsSam.config,
   }
 }
@@ -255,9 +157,7 @@ export const selectTotalActiveStake = (auctionResult: AuctionResult) =>
     0,
   )
 
-export const selectIsNonProductive = (validator: AuctionValidator) =>
-  validator.revShare.bondObligationPmpe <
-  validator.revShare.effParticipatingBidPmpe * 0.9
+export const selectIsNonProductive = isNonProductive
 
 export const selectProductiveStake = (auctionResult: AuctionResult) =>
   auctionResult.auctionData.validators.reduce(
@@ -387,13 +287,15 @@ export const overridesBlockRewardsCommissionMessage = (
 export const selectBondSize = (validator: AuctionValidator) =>
   validator.bondBalanceSol
 
-export const selectBondHealth = (validator: AuctionValidator) =>
-  validator.bondGoodForNEpochs
+export const selectBondHealth = (
+  validator: AuctionValidator,
+  minBondEpochs: number,
+) => bondRunwayEpochs(validator, minBondEpochs)
 
 export const selectMaxAPY = (
   validator: AuctionValidator,
   epochsPerYear: number,
-) => Math.pow(1 + validator.revShare.totalPmpe / 1e3, epochsPerYear) - 1
+) => compoundApy(validator.revShare.totalPmpe, epochsPerYear)
 
 export const selectEffectiveBid = (validator: AuctionValidator) =>
   validator.revShare.auctionEffectiveBidPmpe
@@ -402,24 +304,7 @@ export const selectEffectiveCost = (validator: AuctionValidator) =>
   (validator.marinadeActivatedStakeSol / 1000) *
   validator.revShare.auctionEffectiveBidPmpe
 
-export const bondHealthColor = (
-  validator: AuctionValidator,
-): Color | undefined => {
-  if (!validator.auctionStake.marinadeSamTargetSol) {
-    return undefined
-  }
-  const health = selectBondHealth(validator)
-  if (health >= 13) {
-    return Color.GREEN
-  }
-  if (health >= 6) {
-    return Color.YELLOW
-  }
-  if (health >= 2) {
-    return Color.ORANGE
-  }
-  return Color.RED
-}
+export { bondHealthColor }
 
 export const bondTooltip = (color: Color) => {
   switch (color) {
@@ -465,36 +350,140 @@ export const selectTargetProtectedPct = (
   return 1 - selectActuallyUnprotectedStake(auctionResult) / totalTarget
 }
 
-export const selectTargetApyDiff = (
-  baseResult: AuctionResult,
-  altResult: AuctionResult,
-  epochsPerYear: number,
-): number => {
-  const targetProfit = (r: AuctionResult) =>
-    r.auctionData.validators.reduce(
-      (acc, v) =>
-        acc + (totalProfitPmpe(v) * v.auctionStake.marinadeSamTargetSol) / 1000,
-      0,
-    )
-  const tvl = baseResult.auctionData.stakeAmounts.marinadeSamTvlSol
-  const apy = (r: AuctionResult) =>
-    Math.pow(1 + targetProfit(r) / tvl, epochsPerYear) - 1
-  return apy(altResult) - apy(baseResult)
+
+export const selectStakeDelta = stakeDelta
+
+export type Recommendation = { text: string; severity: string }
+
+export function getRecommendation(
+  validator: AuctionValidator,
+  bondColor: Color,
+): Recommendation {
+  if (!validator.auctionStake.marinadeSamTargetSol) {
+    if (!validator.samEligible) {
+      return { text: 'Not eligible for SAM auction', severity: 'neutral' }
+    }
+    return {
+      text: 'Not winning any stake in the current auction',
+      severity: 'neutral',
+    }
+  }
+  if (bondColor === Color.RED) {
+    return {
+      text: 'Top up your bond immediately — bond balance is limiting your stake',
+      severity: 'critical',
+    }
+  }
+  if (bondColor === Color.YELLOW) {
+    return {
+      text: 'Top up your bond soon — balance covers only ~1 epoch of bids',
+      severity: 'warning',
+    }
+  }
+  if (selectIsNonProductive(validator)) {
+    return {
+      text: 'Validator is non-productive — bond obligation not being met',
+      severity: 'warning',
+    }
+  }
+  const delta = selectStakeDelta(validator)
+  if (delta > 0) {
+    return { text: 'Stake is increasing toward target', severity: 'positive' }
+  }
+  if (delta < 0) {
+    return { text: 'Stake is decreasing toward target', severity: 'neutral' }
+  }
+  return { text: 'Stake is at target', severity: 'positive' }
 }
 
-export const selectTvlApyDiff = (
-  baseResult: AuctionResult,
-  altResult: AuctionResult,
-  epochsPerYear: number,
-): number => {
-  const apy = (r: AuctionResult) => {
-    const tvl = r.auctionData.stakeAmounts.marinadeSamTvlSol
-    return (
-      Math.pow(
-        1 + selectActiveProfit(r.auctionData.validators) / tvl,
-        epochsPerYear,
-      ) - 1
-    )
+export { selectMaxWantedStake }
+
+export const EPOCH_REBALANCE_RATE = 0.007 // ~0.7% of TVL moves per epoch
+
+/**
+ * Expected stake change for each validator next epoch.
+ * Sorts by totalPmpe descending (highest bidder priority), greedily allocates
+ * inflows up to budget = 0.7% * TVL, distributes outflows proportionally
+ * among validators over their target.
+ */
+export function buildExpectedStakeChanges(
+  validators: AuctionValidator[],
+  tvlSol: number,
+): Map<string, number> {
+  const budget = tvlSol * EPOCH_REBALANCE_RATE
+
+  const rawDelta = (v: AuctionValidator) =>
+    v.auctionStake.marinadeSamTargetSol - v.marinadeActivatedStakeSol
+
+  const sorted = [...validators].sort(
+    (a, b) => (b.revShare.totalPmpe ?? 0) - (a.revShare.totalPmpe ?? 0),
+  )
+
+  const result = new Map<string, number>()
+  let remaining = budget
+  for (const v of sorted) {
+    const delta = rawDelta(v)
+    if (delta > 0 && remaining > 0) {
+      const alloc = Math.min(delta, remaining)
+      result.set(v.voteAccount, alloc)
+      remaining -= alloc
+    }
   }
-  return apy(altResult) - apy(baseResult)
+
+  const totalInflows = [...result.values()].reduce((s, x) => s + x, 0)
+  if (totalInflows === 0) return result
+
+  const losers = validators.filter(v => rawDelta(v) < 0)
+  const totalExcess = losers.reduce((s, v) => s + Math.abs(rawDelta(v)), 0)
+  if (totalExcess > 0) {
+    for (const v of losers) {
+      const share = Math.abs(rawDelta(v)) / totalExcess
+      result.set(v.voteAccount, -totalInflows * share)
+    }
+  }
+
+  return result
+}
+
+export const selectExpectedStakeChange = (
+  voteAccount: string,
+  stakeChanges: Map<string, number>,
+): number => stakeChanges.get(voteAccount) ?? 0
+
+export const formattedInBondBlockRewardsCommission = (
+  validator: AuctionValidator,
+): string => {
+  const dec = validator.values?.commissions?.blockRewardsCommissionInBondDec
+  return dec == null ? '-' : formatPercentage(dec, 0)
+}
+
+export const selectBondUtilization = (validator: AuctionValidator): number =>
+  bondUtilizationPct(validator) / 100
+
+export function isoToFlag(iso: string): string {
+  const upper = iso.toUpperCase()
+  const OFFSET = 0x1f1e6 - 0x41
+  return Array.from(upper)
+    .map(ch => String.fromCodePoint(ch.codePointAt(0) + OFFSET))
+    .join('')
+}
+
+export const bondColorState = (
+  validator: AuctionValidator,
+): Color | undefined => bondHealthColor(validator, 0)
+
+export const maxSamStakeTooltip = (
+  validator: AuctionValidator,
+  cfg: { maxTvlDelegation: number; minBondBalanceSol: number },
+): string => {
+  if (0.9 * cfg.maxTvlDelegation <= validator.auctionStake.marinadeSamTargetSol)
+    return 'You have the maximum stake a single validator can get from Marinade.'
+  if (
+    0.9 * validator.maxBondDelegation <=
+    validator.auctionStake.marinadeSamTargetSol
+  )
+    return 'Your bond is limiting your stake allocation. Hint: Top up your bond to receive more stake.'
+  if (validator.bondBalanceSol <= cfg.minBondBalanceSol)
+    return `Your bond is lower than the minimum amount of ${cfg.minBondBalanceSol} SOL. Hint: Top up your bond to start receiving stake from Marinade.`
+  return ''
 }

@@ -18,7 +18,7 @@ export type ProtectedEventWithValidator = {
   validator: Validator | null
 }
 
-const LAST_DRYRUN_EPOCH = 608
+const LAST_DRYRUN_EPOCH = 655
 
 export const fetchProtectedEventsWithValidator = async (): Promise<
   ProtectedEventWithValidator[]
