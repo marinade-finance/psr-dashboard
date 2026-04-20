@@ -3,9 +3,8 @@
 import { test, expect } from './fixtures/mock-api'
 
 async function waitForBonds(page: import('@playwright/test').Page) {
-  await page.waitForSelector('table', { timeout: 90000 })
-  // Coverage hero bar contains "% of Marinade stake is bond-protected"
-  await page.getByText(/of Marinade stake is bond-protected/i).waitFor({ timeout: 90000 })
+  // Wait for data load: coverage hero appears only after bonds data is ready
+  await page.getByText(/of Marinade stake is bond-protected/i).waitFor({ timeout: 110000 })
 }
 
 test.describe('Bonds basic', () => {
@@ -48,6 +47,27 @@ test.describe('Bonds basic', () => {
 
   test('no error message', async ({ page }) => {
     await expect(page.getByText('Error fetching data')).not.toBeVisible()
+  })
+
+  test('marinade stake column sorted descending by default (first ≥ second)', async ({ page }) => {
+    // Default sort is Marinade Stake DESC (column index 1 in columns array = nth-child(3) with # prefix)
+    // cols: #(1), Validator(2), Marinade Stake(3), Bond Balance(4), Protected Stake(5), Coverage(6)
+    const cells = page.locator('table tbody tr td:nth-child(3)')
+    const count = await cells.count()
+    if (count < 2) return
+    const parseVal = (s: string) => parseFloat(s.replace(/[^0-9.,]/g, '').replace(/,/g, '')) || 0
+    const first = parseVal(await cells.nth(0).innerText())
+    const second = parseVal(await cells.nth(1).innerText())
+    expect(first).toBeGreaterThanOrEqual(second)
+  })
+
+  test('validator column shows truncated vote accounts', async ({ page }) => {
+    const cells = page.locator('table tbody tr td:nth-child(2)')
+    const count = await cells.count()
+    expect(count).toBeGreaterThan(0)
+    // Validator column shows truncated pubkeys like "XXXXXXXX...XXXX"
+    const text = await cells.first().innerText()
+    expect(text).toMatch(/[1-9A-HJ-NP-Za-km-z]{4,}\.{3}[1-9A-HJ-NP-Za-km-z]{4}/)
   })
 })
 

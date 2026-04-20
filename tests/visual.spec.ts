@@ -18,7 +18,7 @@ test('all main routes render without crash', async ({ page }) => {
     { path: '/', wait: 'tbody tr' },
     { path: '/bonds', wait: 'table' },
     { path: '/protected-events', wait: 'table' },
-    { path: '/old', wait: 'tbody tr' },
+    { path: '/expert-', wait: 'tbody tr' },
   ]
   for (const { path, wait } of routes) {
     await page.goto(path)

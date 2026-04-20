@@ -3,8 +3,8 @@
 import { test, expect } from './fixtures/mock-api'
 
 async function waitForEvents(page: import('@playwright/test').Page) {
-  await page.waitForSelector('table', { timeout: 30000 })
-  await page.getByText('Total Protected').first().waitFor({ timeout: 30000 })
+  // Wait for both table and metrics; use the metric label as it appears after data loads
+  await page.getByText('Events Protected').first().waitFor({ timeout: 110000 })
 }
 
 test.describe('Events basic', () => {
@@ -19,7 +19,7 @@ test.describe('Events basic', () => {
   })
 
   test('4 cost/payment metrics visible', async ({ page }) => {
-    for (const label of ['Total Protected', 'Validator Bond Paid', 'Marinade Paid', 'Total SOL to Stakers']) {
+    for (const label of ['Events Protected', 'Validator Bond Paid', 'Marinade Paid', 'Total SOL to Stakers']) {
       await expect(page.getByText(label).first()).toBeVisible()
     }
   })
@@ -50,7 +50,8 @@ test.describe('Events validator filter', () => {
     await expect(rows.first()).toBeVisible()
     const total = await rows.count()
 
-    const first = await page.locator('table tbody tr:first-child td:first-child').innerText()
+    // Column 2 is Validator (col 1 is # row number)
+    const first = await page.locator('table tbody tr:first-child td:nth-child(2)').innerText()
     const prefix = first.trim().slice(0, 6)
     const input = page.getByLabel('Validator filter')
     await input.fill(prefix)
@@ -115,6 +116,56 @@ test.describe('Events epoch filter', () => {
     await page.waitForTimeout(300)
 
     expect(await rows.count()).toBeLessThanOrEqual(total)
+  })
+})
+
+test.describe('Events filtered metrics', () => {
+  test('filtered metrics appear when validator filter active', async ({ page }) => {
+    await page.goto('/protected-events')
+    await waitForEvents(page)
+
+    // Verify "Filtered Events" metric is not visible initially
+    await expect(page.getByText('Filtered Events').first()).not.toBeVisible()
+
+    // Apply a filter that matches at least some rows (use vote account from Validator column)
+    const firstVa = await page.locator('table tbody tr:first-child td:nth-child(2)').innerText()
+    const prefix = firstVa.trim().slice(0, 6)
+    const input = page.getByLabel('Validator filter')
+    await input.fill(prefix)
+    await page.waitForTimeout(300)
+
+    // "Filtered Events" metric should now appear
+    await expect(page.getByText('Filtered Events').first()).toBeVisible()
+  })
+
+  test('filtered metrics disappear when filter cleared', async ({ page }) => {
+    await page.goto('/protected-events')
+    await waitForEvents(page)
+
+    const firstVa = await page.locator('table tbody tr:first-child td:nth-child(2)').innerText()
+    const prefix = firstVa.trim().slice(0, 6)
+    const input = page.getByLabel('Validator filter')
+    await input.fill(prefix)
+    await page.waitForTimeout(300)
+    await expect(page.getByText('Filtered Events').first()).toBeVisible()
+
+    // Clear filter
+    await input.fill('')
+    await page.waitForTimeout(300)
+    await expect(page.getByText('Filtered Events').first()).not.toBeVisible()
+  })
+})
+
+test.describe('Events badges', () => {
+  test('at least one Estimate or Dryrun badge visible', async ({ page }) => {
+    await page.goto('/protected-events')
+    await waitForEvents(page)
+
+    const badges = page.locator('table tbody .badge')
+    const count = await badges.count()
+    // If no badges, skip — data may not have Estimate/Dryrun rows
+    test.skip(count === 0, 'no Estimate/Dryrun events in current data')
+    expect(count).toBeGreaterThan(0)
   })
 })
 

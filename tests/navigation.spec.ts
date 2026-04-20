@@ -48,13 +48,6 @@ test.describe('Navigation', () => {
     })
   }
 
-  test('Classic UI link visible and navigates to /old', async ({ page }) => {
-    const link = page.getByRole('link', { name: 'Classic UI' })
-    await expect(link).toBeVisible()
-    await link.click()
-    await expect(page).toHaveURL('/old')
-  })
-
   test('basic mode hides Expert Guide link in nav', async ({ page }) => {
     await expect(page.getByRole('link', { name: 'Expert Guide' })).not.toBeVisible()
   })
@@ -69,11 +62,23 @@ test.describe('Navigation', () => {
     expect(href).toContain('from=expert')
   })
 
-  test('/expert- Classic UI link goes to /expert-old', async ({ page }) => {
-    await page.goto('/expert-')
+  test('active tab: SAM NavLink has aria-current=page on /', async ({ page }) => {
+    // React Router NavLink adds aria-current="page" to the active link
+    const samLink = page.locator('.navigation a[href="/"]')
+    await expect(samLink).toHaveAttribute('aria-current', 'page')
+  })
+
+  test('active tab: Bonds NavLink has aria-current=page on /bonds', async ({ page }) => {
+    await page.goto('/bonds')
     await waitForNav(page)
-    const link = page.getByRole('link', { name: 'Classic UI' })
-    await link.click()
-    await expect(page).toHaveURL('/expert-old')
+    const bondsLink = page.locator('.navigation a[href="/bonds"]')
+    await expect(bondsLink).toHaveAttribute('aria-current', 'page')
+  })
+
+  test('active tab: Events NavLink has aria-current=page on /protected-events', async ({ page }) => {
+    await page.goto('/protected-events')
+    await waitForNav(page)
+    const eventsLink = page.locator('.navigation a[href="/protected-events"]')
+    await expect(eventsLink).toHaveAttribute('aria-current', 'page')
   })
 })

@@ -78,17 +78,18 @@ test.describe('SAM sorting', () => {
     await expect(h).toContainText('↓')
   })
 
-  test('click Max APY header: ASC (↑) then DESC (↓)', async ({ page }) => {
+  test('click Max APY header: first click DESC (↓), second click ASC (↑)', async ({ page }) => {
     const h = page.locator('th').filter({ hasText: /Max APY/ }).first()
     await h.click()
-    await expect(h).toContainText('↑', { timeout: 5000 })
-    await h.click()
     await expect(h).toContainText('↓', { timeout: 5000 })
+    await h.click()
+    await expect(h).toContainText('↑', { timeout: 5000 })
   })
 
   test('sort values: Max APY ASC produces ascending numbers', async ({ page }) => {
     const h = page.locator('th').filter({ hasText: /Max APY/ }).first()
-    await h.click()
+    await h.click() // first click = DESC
+    await h.click() // second click = ASC
     await expect(h).toContainText('↑')
 
     const cells = page.locator('tbody tr td:nth-child(3)')
@@ -105,12 +106,60 @@ test.describe('SAM sorting', () => {
   })
 })
 
+test.describe('SAM bond cell coloring', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/')
+    await waitForData(page)
+  })
+
+  test('bond column has Healthy/Watch/Critical labels', async ({ page }) => {
+    // Bond health badges are rendered inline in the bond cell
+    const bondCells = page.locator('tbody tr td:nth-child(4)')
+    const count = await bondCells.count()
+    const texts: string[] = []
+    for (let i = 0; i < Math.min(count, 30); i++) {
+      texts.push(await bondCells.nth(i).innerText())
+    }
+    const hasLabel = texts.some(t => /Healthy|Watch|Critical/.test(t))
+    expect(hasLabel).toBe(true)
+  })
+})
+
+test.describe('SAM sort secondary', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/')
+    await waitForData(page)
+  })
+
+  test('switching sort column: default Stake ↓ → Max APY ↓ → Max APY ↑', async ({ page }) => {
+    const maxApyH = page.locator('th').filter({ hasText: /Max APY/ }).first()
+    const stakeH = page.locator('th').filter({ hasText: /Stake/ }).first()
+
+    // Initially stake column has ↓
+    await expect(stakeH).toContainText('↓')
+
+    // First click on Max APY = new column → DESC
+    await maxApyH.click()
+    await expect(maxApyH).toContainText('↓')
+
+    // Second click on same column = toggle to ASC
+    await maxApyH.click()
+    await expect(maxApyH).toContainText('↑')
+  })
+})
+
 test.describe('SAM expert', () => {
   test('loads with rows and no error', async ({ page }) => {
     await page.goto('/expert-')
     await waitForData(page)
     expect(await page.locator('tbody tr').count()).toBeGreaterThan(0)
     await expect(page.getByText('Error fetching data')).not.toBeVisible()
+  })
+
+  test('Expert Guide link visible in nav', async ({ page }) => {
+    await page.goto('/expert-')
+    await waitForData(page)
+    await expect(page.getByRole('link', { name: 'Expert Guide' })).toBeVisible()
   })
 })
 
