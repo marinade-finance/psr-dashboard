@@ -40,7 +40,6 @@ import {
   overridesBlockRewardsCommissionMessage,
   overridesMevCommissionMessage,
   overridesCpmpeMessage as overridesBidCpmpeMessage,
-  selectBondBid,
 } from 'src/services/sam'
 
 import styles from './sam-table.module.css'
@@ -763,20 +762,9 @@ export const SamTable: React.FC<Props> = ({
               return tooltipAttributes(
                 headerHtml +
                   '<table style="width:100%;border-collapse:collapse;font-size:0.9em;">' +
-                  rule('Bid rates') +
-                  row(
-                    'Maximum',
-                    '',
-                    `${selectBondBid(item.validator)}`,
-                    `${selectBondBid(item.validator)} ☉`,
+                  rule(
+                    `Charge this epoch · eff. bid ${formatSolAmount(effBid, 4)} ☉ / 1000`,
                   ) +
-                  row(
-                    'Effective',
-                    '',
-                    formatSolAmount(effBid, 4),
-                    `${formatSolAmount(effBid, 4)} ☉`,
-                  ) +
-                  rule('Charge this epoch') +
                   row(
                     'Activated',
                     `${formatSolAmount(stake, 0)} ☉`,
