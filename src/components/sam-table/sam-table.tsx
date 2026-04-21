@@ -739,43 +739,58 @@ export const SamTable: React.FC<Props> = ({
               const activating = Math.max(0, target - stake)
               const cost = selectEffectiveCost(item.validator)
               const activatingCost = (bid * activating) / 1000
-              const row = (label: string, value: string, note?: string) =>
+              const num =
+                'font-variant-numeric:tabular-nums;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;'
+              const row = (
+                label: string,
+                qty: string,
+                rate: string,
+                value: string,
+              ) =>
                 '<tr>' +
-                `<td style="padding:3px 10px 3px 0;opacity:0.75;white-space:nowrap;vertical-align:top;">${label}</td>` +
-                '<td style="padding:3px 0;text-align:right;white-space:nowrap;vertical-align:top;">' +
-                `<b>${value}</b>` +
-                (note
-                  ? `<div style="opacity:0.6;font-size:0.85em;font-weight:400;margin-top:2px;">${note}</div>`
-                  : '') +
-                '</td></tr>'
+                `<td style="padding:2px 12px 2px 0;opacity:0.7;white-space:nowrap;">${label}</td>` +
+                `<td style="padding:2px 10px 2px 0;text-align:right;white-space:nowrap;opacity:0.6;${num}">${qty}</td>` +
+                `<td style="padding:2px 10px 2px 0;text-align:right;white-space:nowrap;opacity:0.6;${num}">${rate}</td>` +
+                `<td style="padding:2px 0;text-align:right;white-space:nowrap;${num}"><b>${value}</b></td>` +
+                '</tr>'
+              const rule = (label: string) =>
+                `<tr><td colspan="4" style="border-top:1px dashed rgba(255,255,255,0.2);padding-top:4px;font-size:0.8em;opacity:0.55;letter-spacing:0.06em;text-transform:uppercase;">${label}</td></tr>`
               const header = overridesBidCpmpeMessage(item.validator)
               const headerHtml = header
                 ? `<div style="margin-bottom:6px;">${header.replace(/<br\/?>/g, '')}</div>`
                 : ''
+              const total = cost + activatingCost
               return tooltipAttributes(
                 headerHtml +
-                  '<table style="width:100%;border-collapse:collapse;font-size:0.95em;">' +
+                  '<table style="width:100%;border-collapse:collapse;font-size:0.9em;">' +
+                  rule('Bid rates') +
                   row(
-                    'Maximum bid',
+                    'Maximum',
+                    '',
+                    `${selectBondBid(item.validator)}`,
                     `${selectBondBid(item.validator)} ☉`,
-                    'per 1000 ☉',
                   ) +
                   row(
-                    'Effective bid',
+                    'Effective',
+                    '',
+                    formatSolAmount(effBid, 4),
                     `${formatSolAmount(effBid, 4)} ☉`,
-                    'per 1000 ☉',
                   ) +
-                  '<tr><td colspan="2" style="border-top:1px solid rgba(255,255,255,0.15);padding:4px 0 0;"></td></tr>' +
+                  rule('Charge this epoch') +
                   row(
-                    'Activated charge',
+                    'Activated',
+                    `${formatSolAmount(stake, 0)} ☉`,
+                    `× ${formatSolAmount(effBid, 4)}`,
                     `${formatSolAmount(cost, 3)} ☉`,
-                    `on ${formatSolAmount(stake, 0)} ☉ activated`,
                   ) +
                   row(
-                    'Activating charge',
+                    'Activating',
+                    `~${formatSolAmount(activating, 0)} ☉`,
+                    `× ${formatSolAmount(bid, 4)}`,
                     `${formatSolAmount(activatingCost, 3)} ☉`,
-                    `on ~${formatSolAmount(activating, 0)} ☉ activating`,
                   ) +
+                  '<tr><td colspan="3" style="border-top:1px solid rgba(255,255,255,0.35);padding:4px 10px 2px 0;text-align:right;opacity:0.75;">Total</td>' +
+                  `<td style="border-top:1px solid rgba(255,255,255,0.35);padding:4px 0 2px;text-align:right;${num}"><b>${formatSolAmount(total, 3)} ☉</b></td></tr>` +
                   '</table>',
               )
             },
