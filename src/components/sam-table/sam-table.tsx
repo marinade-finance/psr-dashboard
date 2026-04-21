@@ -748,13 +748,13 @@ export const SamTable: React.FC<Props> = ({
                 value: string,
               ) =>
                 '<tr>' +
-                `<td style="padding:2px 12px 2px 0;opacity:0.7;white-space:nowrap;">${label}</td>` +
-                `<td style="padding:2px 10px 2px 0;text-align:right;white-space:nowrap;opacity:0.6;${num}">${qty}</td>` +
-                `<td style="padding:2px 10px 2px 0;text-align:right;white-space:nowrap;opacity:0.6;${num}">${rate}</td>` +
+                `<td style="padding:2px 12px 2px 0;white-space:nowrap;">${label}</td>` +
+                `<td style="padding:2px 10px 2px 0;text-align:right;white-space:nowrap;opacity:0.85;${num}">${qty}</td>` +
+                `<td style="padding:2px 10px 2px 0;text-align:right;white-space:nowrap;opacity:0.85;${num}">${rate}</td>` +
                 `<td style="padding:2px 0;text-align:right;white-space:nowrap;${num}"><b>${value}</b></td>` +
                 '</tr>'
               const rule = (label: string) =>
-                `<tr><td colspan="4" style="border-top:1px dashed rgba(255,255,255,0.2);padding-top:4px;font-size:0.8em;opacity:0.55;letter-spacing:0.06em;text-transform:uppercase;">${label}</td></tr>`
+                `<tr><td colspan="4" style="border-top:1px dashed rgba(255,255,255,0.45);padding-top:4px;font-size:0.8em;opacity:0.85;letter-spacing:0.06em;text-transform:uppercase;">${label}</td></tr>`
               const header = overridesBidCpmpeMessage(item.validator)
               const headerHtml = header
                 ? `<div style="margin-bottom:6px;">${header.replace(/<br\/?>/g, '')}</div>`
@@ -789,8 +789,8 @@ export const SamTable: React.FC<Props> = ({
                     `× ${formatSolAmount(bid, 4)}`,
                     `${formatSolAmount(activatingCost, 3)} ☉`,
                   ) +
-                  '<tr><td colspan="3" style="border-top:1px solid rgba(255,255,255,0.35);padding:4px 10px 2px 0;text-align:right;opacity:0.75;">Total</td>' +
-                  `<td style="border-top:1px solid rgba(255,255,255,0.35);padding:4px 0 2px;text-align:right;${num}"><b>${formatSolAmount(total, 3)} ☉</b></td></tr>` +
+                  '<tr><td colspan="3" style="border-top:1px solid rgba(255,255,255,0.7);padding:4px 10px 2px 0;text-align:right;">Total</td>' +
+                  `<td style="border-top:1px solid rgba(255,255,255,0.7);padding:4px 0 2px;text-align:right;${num}"><b>${formatSolAmount(total, 3)} ☉</b></td></tr>` +
                   '</table>',
               )
             },
