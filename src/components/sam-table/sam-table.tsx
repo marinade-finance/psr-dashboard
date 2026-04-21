@@ -730,7 +730,7 @@ export const SamTable: React.FC<Props> = ({
             headerAttrsFn: () =>
               tooltipAttributes(
                 'Static bid for 1000 SOL set by the validator in Bond configuration.<br/>' +
-                  'Your bid at snapshot time is what you pay for that epoch’s activating stake.',
+                  'The bid active at the slot the auction runs is what you pay for that epoch’s activating stake.',
               ),
             cellAttrsFn: item => {
               const bid = selectBid(item.validator)
