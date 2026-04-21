@@ -264,8 +264,6 @@ export const SamTable: React.FC<Props> = ({
           return selectSamActiveStake(a) - selectSamActiveStake(b)
         case 9:
           return selectSamTargetStake(a) - selectSamTargetStake(b)
-        case 10:
-          return selectEffectiveBid(a) - selectEffectiveBid(b)
         default:
           return 0
       }
@@ -850,22 +848,6 @@ export const SamTable: React.FC<Props> = ({
             compare: (a, b) =>
               selectSamTargetStake(a.validator) -
               selectSamTargetStake(b.validator),
-            alignment: Alignment.RIGHT,
-          },
-          {
-            header: 'Eff. Bid [☉]',
-            headerAttrsFn: () =>
-              tooltipAttributes(
-                'Effective bid used in the auction calculation, combining the static bid and commission settings. ' +
-                  'This value is used to rank validators in the auction and is shown as cost per 1000 SOL. ' +
-                  'It is not the actual amount the validator will pay from the bond, as that depends on the real stake delegated to the validator for the static bid, ' +
-                  'and on the rewards earned in the previous epoch for the commission configuration.',
-              ),
-            render: item => (
-              <>{formatSolAmount(selectEffectiveBid(item.validator), 4)}</>
-            ),
-            compare: (a, b) =>
-              selectEffectiveBid(a.validator) - selectEffectiveBid(b.validator),
             alignment: Alignment.RIGHT,
           },
         ]}
