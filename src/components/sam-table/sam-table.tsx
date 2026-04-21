@@ -148,7 +148,7 @@ export const SamTable: React.FC<Props> = ({
   onCancelEditing,
 }) => {
   const {
-    auctionData: { validators, epoch: auctionEpoch },
+    auctionData: { validators },
   } = auctionResult
   const samDistributedStake = Math.round(selectSamDistributedStake(validators))
   const winningAPY = selectWinningAPY(auctionResult, epochsPerYear)
@@ -482,13 +482,6 @@ export const SamTable: React.FC<Props> = ({
     >
       <div className={styles.metricWrap}>
         <div className={styles.metricRow}>
-          <Metric
-            label="Current Auction"
-            value={`Epoch ${auctionEpoch}`}
-            {...tooltipAttributes(
-              'The epoch this auction is running for. Your bid at snapshot time is what you pay for this epoch’s activating stake. Bid changes before the next snapshot will affect the next epoch, not this one.',
-            )}
-          />
           <Metric
             label="Total Auction Stake"
             value={`☉ ${formatSolAmount(samDistributedStake)}`}
