@@ -3,7 +3,7 @@ import React from 'react'
 import type { Props } from 'src/components/banner/banner'
 
 export const getBannerData = (): Props => ({
-  title: '⚠️⚠️⚠️ Bond Risk Reduction Mechanism now active',
+  title: '📢 📢 📢 Bond Risk Reduction Mechanism now active',
   body: (
     <>
       <p>
