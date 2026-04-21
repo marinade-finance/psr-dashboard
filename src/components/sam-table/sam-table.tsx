@@ -733,13 +733,14 @@ export const SamTable: React.FC<Props> = ({
                   'The bid active at the slot the auction runs is what you pay for that epoch’s activating stake.',
               ),
             cellAttrsFn: item => {
-              const bid = selectBid(item.validator)
+              const obligation = item.validator.revShare.bondObligationPmpe
               const stake = item.validator.marinadeActivatedStakeSol
-              const payment = (bid * stake) / 1000
+              const payment = (obligation * stake) / 1000
               return tooltipAttributes(
                 `${overridesBidCpmpeMessage(item.validator)}` +
                   `Maximum bid ${selectBondBid(item.validator)} for 1000 SOL.<br/>` +
-                  `Payment next epoch at current stake (${formatSolAmount(stake, 0)} ☉): ` +
+                  `Bond obligation: ${formatSolAmount(obligation, 4)} per 1000 ☉<br/>` +
+                  `Expected payment next epoch (at ${formatSolAmount(stake, 0)} ☉ stake): ` +
                   `<b>${formatSolAmount(payment, 3)} ☉</b>`,
               )
             },
