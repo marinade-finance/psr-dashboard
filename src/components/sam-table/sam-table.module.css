@@ -68,25 +68,14 @@
 .metricWrap {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 16px 10px 20px;
-  margin-bottom: 8px;
+  gap: 6px;
+  padding: 10px;
 }
 
 .metricRow {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  align-items: stretch;
-}
-
-.metricRow + .metricRow {
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.metricRow > * {
-  flex: 1 1 140px;
+  gap: 6px;
 }
 
 .inputCell {
