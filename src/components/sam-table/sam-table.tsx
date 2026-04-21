@@ -731,11 +731,17 @@ export const SamTable: React.FC<Props> = ({
               tooltipAttributes(
                 'Static bid for 1000 SOL set by the validator in Bond configuration.',
               ),
-            cellAttrsFn: item =>
-              tooltipAttributes(
+            cellAttrsFn: item => {
+              const bid = selectBid(item.validator)
+              const stake = item.validator.marinadeActivatedStakeSol
+              const payment = (bid * stake) / 1000
+              return tooltipAttributes(
                 `${overridesBidCpmpeMessage(item.validator)}` +
-                  `Maximum bid ${selectBondBid(item.validator)} for 1000 SOL.`,
-              ),
+                  `Maximum bid ${selectBondBid(item.validator)} for 1000 SOL.<br/>` +
+                  `Payment next epoch at current stake (${formatSolAmount(stake, 0)} ☉): ` +
+                  `<b>${formatSolAmount(payment, 3)} ☉</b>`,
+              )
+            },
             render: item => {
               const { validator, isGhost } = item
               const isEditing =
