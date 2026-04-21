@@ -6,6 +6,7 @@ import {
   selectBondSize,
   selectCommission,
   selectEffectiveBid,
+  selectEffectiveCost,
   selectConstraintText,
   selectMaxAPY,
   selectMevCommission,
@@ -733,15 +734,15 @@ export const SamTable: React.FC<Props> = ({
                   'The bid active at the slot the auction runs is what you pay for that epoch’s activating stake.',
               ),
             cellAttrsFn: item => {
-              const obligation = item.validator.revShare.bondObligationPmpe
+              const effBid = selectEffectiveBid(item.validator)
               const stake = item.validator.marinadeActivatedStakeSol
-              const payment = (obligation * stake) / 1000
+              const cost = selectEffectiveCost(item.validator)
               return tooltipAttributes(
                 `${overridesBidCpmpeMessage(item.validator)}` +
                   `Maximum bid ${selectBondBid(item.validator)} for 1000 SOL.<br/>` +
-                  `Bond obligation: ${formatSolAmount(obligation, 4)} per 1000 ☉<br/>` +
-                  `Expected payment next epoch (at ${formatSolAmount(stake, 0)} ☉ stake): ` +
-                  `<b>${formatSolAmount(payment, 3)} ☉</b>`,
+                  `Effective bid in auction: ${formatSolAmount(effBid, 4)} per 1000 ☉<br/>` +
+                  `Expected charge next epoch (at ${formatSolAmount(stake, 0)} ☉ activated stake): ` +
+                  `<b>${formatSolAmount(cost, 3)} ☉</b>`,
               )
             },
             render: item => {
