@@ -9,7 +9,6 @@ import {
   selectEffectiveCost,
   selectConstraintText,
   selectMaxAPY,
-  selectMevCommission,
   selectSamDistributedStake,
   selectSamTargetStake,
   selectVoteAccount,
@@ -26,19 +25,11 @@ import {
   selectIsNonProductive,
   selectTargetProtectedPct,
   selectActuallyUnprotectedStake,
-  selectBlockRewardsCommission,
   formattedMevCommission,
   formattedBlockRewardsCommission,
-  selectFormattedInBondCommission as formattedInBondCommission,
-  formattedOnChainMevCommission,
-  formattedInBondMevCommission,
-  formattedOnChainCommission,
   selectMevCommissionPmpe,
   selectCommissionPmpe,
   selectBlockRewardsCommissionPmpe,
-  overridesCommissionMessage,
-  overridesBlockRewardsCommissionMessage,
-  overridesMevCommissionMessage,
   overridesCpmpeMessage as overridesBidCpmpeMessage,
 } from 'src/services/sam'
 
@@ -226,7 +217,7 @@ export const SamTable: React.FC<Props> = ({
   const inputVal = (field: keyof PendingEdits, fallback: string) =>
     pendingEdits[field] ?? fallback
 
-  const defaultOrder: Order[] = useMemo(() => [[9, OrderDirection.DESC]], [])
+  const defaultOrder: Order[] = useMemo(() => [[6, OrderDirection.DESC]], [])
 
   const [currentOrder, setCurrentOrder] = useState<Order[]>(defaultOrder)
 
@@ -241,27 +232,16 @@ export const SamTable: React.FC<Props> = ({
         case 0:
           return selectVoteAccount(a).localeCompare(selectVoteAccount(b))
         case 1:
-          return selectCommission(a) - selectCommission(b)
-        case 2:
-          return (
-            (selectMevCommission(a) ?? 100) - (selectMevCommission(b) ?? 100)
-          )
-        case 3:
-          return (
-            (selectBlockRewardsCommission(a) ?? 100) -
-            (selectBlockRewardsCommission(b) ?? 100)
-          )
-        case 4:
           return selectBid(a) - selectBid(b)
-        case 5:
+        case 2:
           return selectBondSize(a) - selectBondSize(b)
-        case 6:
+        case 3:
           return selectBondHealth(a) - selectBondHealth(b)
-        case 7:
+        case 4:
           return selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
-        case 8:
+        case 5:
           return selectSamActiveStake(a) - selectSamActiveStake(b)
-        case 9:
+        case 6:
           return selectSamTargetStake(a) - selectSamTargetStake(b)
         default:
           return 0
@@ -623,107 +603,6 @@ export const SamTable: React.FC<Props> = ({
               ),
           },
           {
-            header: 'Infl.',
-            headerAttrsFn: () =>
-              tooltipAttributes('Validator Inflation Commission'),
-            cellAttrsFn: item =>
-              tooltipAttributes(
-                `${overridesCommissionMessage(item.validator)}` +
-                  `On chain commission: ${formattedOnChainCommission(item.validator)}<br/>` +
-                  `In-bond commission: ${formattedInBondCommission(item.validator)}<br/>` +
-                  `Effective inflation commission bid: ${selectCommissionPmpe(item.validator)}`,
-              ),
-            render: item => {
-              const { validator, isGhost } = item
-              const isEditing =
-                !isGhost && editingValidator === selectVoteAccount(validator)
-              return renderEditableCell(
-                isEditing,
-                formatPercentage(selectCommission(validator), 0),
-                'inflationCommission',
-                inputVal(
-                  'inflationCommission',
-                  (selectCommission(validator) * 100).toString(),
-                ),
-                onFieldChange,
-                onRunSimulation,
-                onCancelEditing,
-                { step: '0.1', min: '0', max: '100' },
-              )
-            },
-            compare: (a, b) =>
-              selectCommission(a.validator) - selectCommission(b.validator),
-            alignment: Alignment.RIGHT,
-          },
-          {
-            header: 'MEV',
-            cellAttrsFn: item =>
-              tooltipAttributes(
-                `${overridesMevCommissionMessage(item.validator)}` +
-                  `On chain commission: ${formattedOnChainMevCommission(item.validator)}<br/>` +
-                  `In-bond commission: ${formattedInBondMevCommission(item.validator)}<br/>` +
-                  `Effective MEV commission bid: ${selectMevCommissionPmpe(item.validator)}`,
-              ),
-            render: item => {
-              const { validator, isGhost } = item
-              const isEditing =
-                !isGhost && editingValidator === selectVoteAccount(validator)
-              const mev = selectMevCommission(validator)
-              return renderEditableCell(
-                isEditing,
-                formattedMevCommission(validator),
-                'mevCommission',
-                inputVal(
-                  'mevCommission',
-                  mev !== null ? (mev * 100).toString() : '',
-                ),
-                onFieldChange,
-                onRunSimulation,
-                onCancelEditing,
-                { step: '0.1', min: '0', max: '100', placeholder: '-' },
-              )
-            },
-            compare: (a, b) =>
-              (selectMevCommission(a.validator) ?? 100) -
-              (selectMevCommission(b.validator) ?? 100),
-            alignment: Alignment.RIGHT,
-          },
-          {
-            header: 'Block',
-            headerAttrsFn: () =>
-              tooltipAttributes(
-                'Block rewards commission can be in Bond configuration solely.',
-              ),
-            cellAttrsFn: item =>
-              tooltipAttributes(
-                `${overridesBlockRewardsCommissionMessage(item.validator)}` +
-                  `Effective block rewards commission bid: ${selectBlockRewardsCommissionPmpe(item.validator)}`,
-              ),
-            render: item => {
-              const { validator, isGhost } = item
-              const isEditing =
-                !isGhost && editingValidator === selectVoteAccount(validator)
-              const blk = selectBlockRewardsCommission(validator)
-              return renderEditableCell(
-                isEditing,
-                formattedBlockRewardsCommission(validator),
-                'blockRewardsCommission',
-                inputVal(
-                  'blockRewardsCommission',
-                  blk !== null ? (blk * 100).toString() : '',
-                ),
-                onFieldChange,
-                onRunSimulation,
-                onCancelEditing,
-                { step: '0.1', min: '0', max: '100', placeholder: '-' },
-              )
-            },
-            compare: (a, b) =>
-              (selectBlockRewardsCommission(a.validator) ?? 100) -
-              (selectBlockRewardsCommission(b.validator) ?? 100),
-            alignment: Alignment.RIGHT,
-          },
-          {
             header: 'St. Bid',
             headerAttrsFn: () =>
               tooltipAttributes(
@@ -759,9 +638,34 @@ export const SamTable: React.FC<Props> = ({
                 ? `<div style="margin-bottom:6px;">${header.replace(/<br\/?>/g, '')}</div>`
                 : ''
               const total = cost + activatingCost
+              const inflPct = formatPercentage(
+                selectCommission(item.validator),
+                0,
+              )
+              const mevPct = formattedMevCommission(item.validator)
+              const blkPct = formattedBlockRewardsCommission(item.validator)
               return tooltipAttributes(
                 headerHtml +
                   '<table style="width:100%;border-collapse:collapse;font-size:0.9em;">' +
+                  rule('Commissions') +
+                  row(
+                    'Inflation',
+                    inflPct,
+                    `${selectCommissionPmpe(item.validator)}`,
+                    `${selectCommissionPmpe(item.validator)} ☉`,
+                  ) +
+                  row(
+                    'MEV',
+                    mevPct,
+                    `${selectMevCommissionPmpe(item.validator)}`,
+                    `${selectMevCommissionPmpe(item.validator)} ☉`,
+                  ) +
+                  row(
+                    'Block',
+                    blkPct,
+                    `${selectBlockRewardsCommissionPmpe(item.validator)}`,
+                    `${selectBlockRewardsCommissionPmpe(item.validator)} ☉`,
+                  ) +
                   rule(
                     `Charge this epoch · eff. bid ${formatSolAmount(effBid, 4)} ☉ / 1000`,
                   ) +
@@ -786,15 +690,33 @@ export const SamTable: React.FC<Props> = ({
               const { validator, isGhost } = item
               const isEditing =
                 !isGhost && editingValidator === selectVoteAccount(validator)
-              return renderEditableCell(
-                isEditing,
-                formatSolAmount(selectBid(validator), 4),
-                'bidPmpe',
-                inputVal('bidPmpe', selectBid(validator).toString()),
-                onFieldChange,
-                onRunSimulation,
-                onCancelEditing,
-                { step: '0.001', min: '0' },
+              if (isEditing) {
+                return renderEditableCell(
+                  true,
+                  formatSolAmount(selectBid(validator), 4),
+                  'bidPmpe',
+                  inputVal('bidPmpe', selectBid(validator).toString()),
+                  onFieldChange,
+                  onRunSimulation,
+                  onCancelEditing,
+                  { step: '0.001', min: '0' },
+                )
+              }
+              const mev = formattedMevCommission(validator)
+              const blk = formattedBlockRewardsCommission(validator)
+              return (
+                <>
+                  <div>{formatSolAmount(selectBid(validator), 4)}</div>
+                  <div
+                    style={{
+                      fontSize: '0.75em',
+                      opacity: 0.55,
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
+                  >
+                    {`i ${formatPercentage(selectCommission(validator), 0)} · m ${mev} · b ${blk}`}
+                  </div>
+                </>
               )
             },
             compare: (a, b) => selectBid(a.validator) - selectBid(b.validator),
