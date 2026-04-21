@@ -498,3 +498,65 @@ export const selectTvlApyDiff = (
   }
   return apy(altResult) - apy(baseResult)
 }
+
+// Budget for next-epoch re-delegation: stake that cooled down from the
+// previous epoch to the current snapshot becomes free to re-stake next epoch.
+export function selectRedelegationBudget(
+  validators: AuctionValidator[],
+): number {
+  let budget = 0
+  for (const v of validators) {
+    const last = v.lastMarinadeActivatedStakeSol
+    if (last == null) continue
+    const delta = last - v.marinadeActivatedStakeSol
+    if (delta > 0) budget += delta
+  }
+  return budget
+}
+
+// Expected per-validator stake change next epoch. Uses the snapshot-derived
+// re-delegation budget (stake that just cooled down). Inflows go greedily to
+// the highest-totalPmpe validators whose target is above current; outflows
+// distribute proportionally among validators below target.
+export function buildExpectedStakeChanges(
+  validators: AuctionValidator[],
+): Map<string, number> {
+  const budget = selectRedelegationBudget(validators)
+  const rawDelta = (v: AuctionValidator) =>
+    v.auctionStake.marinadeSamTargetSol - v.marinadeActivatedStakeSol
+
+  const result = new Map<string, number>()
+  if (budget <= 0) return result
+
+  const sorted = [...validators].sort(
+    (a, b) => (b.revShare.totalPmpe ?? 0) - (a.revShare.totalPmpe ?? 0),
+  )
+  let remaining = budget
+  for (const v of sorted) {
+    const delta = rawDelta(v)
+    if (delta > 0 && remaining > 0) {
+      const alloc = Math.min(delta, remaining)
+      result.set(v.voteAccount, alloc)
+      remaining -= alloc
+    }
+  }
+
+  const totalInflows = [...result.values()].reduce((s, x) => s + x, 0)
+  if (totalInflows === 0) return result
+
+  const losers = validators.filter(v => rawDelta(v) < 0)
+  const totalExcess = losers.reduce((s, v) => s + Math.abs(rawDelta(v)), 0)
+  if (totalExcess > 0) {
+    for (const v of losers) {
+      const share = Math.abs(rawDelta(v)) / totalExcess
+      result.set(v.voteAccount, -totalInflows * share)
+    }
+  }
+
+  return result
+}
+
+export const selectExpectedStakeChange = (
+  voteAccount: string,
+  stakeChanges: Map<string, number>,
+): number => stakeChanges.get(voteAccount) ?? 0
