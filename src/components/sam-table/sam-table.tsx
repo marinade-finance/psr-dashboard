@@ -735,14 +735,20 @@ export const SamTable: React.FC<Props> = ({
               ),
             cellAttrsFn: item => {
               const effBid = selectEffectiveBid(item.validator)
+              const bid = selectBid(item.validator)
               const stake = item.validator.marinadeActivatedStakeSol
+              const target = item.validator.auctionStake.marinadeSamTargetSol
+              const activating = Math.max(0, target - stake)
               const cost = selectEffectiveCost(item.validator)
+              const activatingCost = (bid * activating) / 1000
               return tooltipAttributes(
                 `${overridesBidCpmpeMessage(item.validator)}` +
                   `Maximum bid ${selectBondBid(item.validator)} for 1000 SOL.<br/>` +
                   `Effective bid in auction: ${formatSolAmount(effBid, 4)} per 1000 ☉<br/>` +
-                  `Expected charge next epoch (at ${formatSolAmount(stake, 0)} ☉ activated stake): ` +
-                  `<b>${formatSolAmount(cost, 3)} ☉</b>`,
+                  `Charge on activated stake (${formatSolAmount(stake, 0)} ☉): ` +
+                  `<b>${formatSolAmount(cost, 3)} ☉</b><br/>` +
+                  `Charge on activating stake (~${formatSolAmount(activating, 0)} ☉): ` +
+                  `<b>${formatSolAmount(activatingCost, 3)} ☉</b>`,
               )
             },
             render: item => {
