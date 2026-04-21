@@ -739,14 +739,44 @@ export const SamTable: React.FC<Props> = ({
               const activating = Math.max(0, target - stake)
               const cost = selectEffectiveCost(item.validator)
               const activatingCost = (bid * activating) / 1000
+              const row = (label: string, value: string, note?: string) =>
+                '<tr>' +
+                `<td style="padding:3px 10px 3px 0;opacity:0.75;white-space:nowrap;vertical-align:top;">${label}</td>` +
+                '<td style="padding:3px 0;text-align:right;white-space:nowrap;vertical-align:top;">' +
+                `<b>${value}</b>` +
+                (note
+                  ? `<div style="opacity:0.6;font-size:0.85em;font-weight:400;margin-top:2px;">${note}</div>`
+                  : '') +
+                '</td></tr>'
+              const header = overridesBidCpmpeMessage(item.validator)
+              const headerHtml = header
+                ? `<div style="margin-bottom:6px;">${header.replace(/<br\/?>/g, '')}</div>`
+                : ''
               return tooltipAttributes(
-                `${overridesBidCpmpeMessage(item.validator)}` +
-                  `Maximum bid ${selectBondBid(item.validator)} for 1000 SOL.<br/>` +
-                  `Effective bid in auction: ${formatSolAmount(effBid, 4)} per 1000 ☉<br/>` +
-                  `Charge on activated stake (${formatSolAmount(stake, 0)} ☉): ` +
-                  `<b>${formatSolAmount(cost, 3)} ☉</b><br/>` +
-                  `Charge on activating stake (~${formatSolAmount(activating, 0)} ☉): ` +
-                  `<b>${formatSolAmount(activatingCost, 3)} ☉</b>`,
+                headerHtml +
+                  '<table style="width:100%;border-collapse:collapse;font-size:0.95em;">' +
+                  row(
+                    'Maximum bid',
+                    `${selectBondBid(item.validator)} ☉`,
+                    'per 1000 ☉',
+                  ) +
+                  row(
+                    'Effective bid',
+                    `${formatSolAmount(effBid, 4)} ☉`,
+                    'per 1000 ☉',
+                  ) +
+                  '<tr><td colspan="2" style="border-top:1px solid rgba(255,255,255,0.15);padding:4px 0 0;"></td></tr>' +
+                  row(
+                    'Activated charge',
+                    `${formatSolAmount(cost, 3)} ☉`,
+                    `on ${formatSolAmount(stake, 0)} ☉ activated`,
+                  ) +
+                  row(
+                    'Activating charge',
+                    `${formatSolAmount(activatingCost, 3)} ☉`,
+                    `on ~${formatSolAmount(activating, 0)} ☉ activating`,
+                  ) +
+                  '</table>',
               )
             },
             render: item => {
