@@ -498,3 +498,47 @@ export const selectTvlApyDiff = (
   }
   return apy(altResult) - apy(baseResult)
 }
+
+export type ConcentrationRow = {
+  key: string
+  samStakeSol: number
+  pctOfTotal: number
+  validatorCount: number
+}
+
+export type ConcentrationBreakdown = {
+  countries: ConcentrationRow[]
+  asos: ConcentrationRow[]
+}
+
+export const buildConcentrationBreakdown = (
+  auctionResult: AuctionResult,
+): ConcentrationBreakdown => {
+  const validators = auctionResult.auctionData.validators
+  const aggregate = (pick: (v: AuctionValidator) => string) => {
+    const by = new Map<string, { stake: number; count: number }>()
+    let total = 0
+    for (const v of validators) {
+      const stake = v.auctionStake.marinadeSamTargetSol
+      if (stake <= 0) continue
+      const k = pick(v) || '—'
+      const e = by.get(k) ?? { stake: 0, count: 0 }
+      e.stake += stake
+      e.count += 1
+      by.set(k, e)
+      total += stake
+    }
+    const rows: ConcentrationRow[] = [...by.entries()].map(([key, e]) => ({
+      key,
+      samStakeSol: e.stake,
+      validatorCount: e.count,
+      pctOfTotal: total > 0 ? e.stake / total : 0,
+    }))
+    rows.sort((a, b) => b.samStakeSol - a.samStakeSol)
+    return rows
+  }
+  return {
+    countries: aggregate(v => v.country),
+    asos: aggregate(v => v.aso),
+  }
+}

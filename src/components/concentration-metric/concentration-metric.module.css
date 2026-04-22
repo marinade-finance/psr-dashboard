@@ -1,0 +1,54 @@
+.wrap {
+  padding: 10px 20px;
+  background-color: var(--bg-dark-1);
+  cursor: help;
+  min-width: 200px;
+}
+
+.label {
+  white-space: nowrap;
+  font-size: 13px;
+  opacity: 0.75;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 64px 1fr 44px;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+}
+
+.name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.9;
+}
+
+.barTrack {
+  height: 6px;
+  background: var(--bg-dark-2, rgba(255, 255, 255, 0.08));
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.barFill {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  transition: width 160ms;
+}
+
+.pct {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  text-align: right;
+  opacity: 0.85;
+}

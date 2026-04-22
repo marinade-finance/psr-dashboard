@@ -40,11 +40,13 @@ import {
   overridesMevCommissionMessage,
   overridesCpmpeMessage as overridesBidCpmpeMessage,
   selectBondBid,
+  buildConcentrationBreakdown,
 } from 'src/services/sam'
 
 import styles from './sam-table.module.css'
 import { tooltipAttributes } from '../../services/utils'
 import { ComplexMetric } from '../complex-metric/complex-metric'
+import { ConcentrationMetric } from '../concentration-metric/concentration-metric'
 import { Metric } from '../metric/metric'
 import { UserLevel } from '../navigation/navigation'
 import { Alignment, Color, OrderDirection, Table } from '../table/table'
@@ -222,6 +224,11 @@ export const SamTable: React.FC<Props> = ({
       (s, v) => s + v.auctionStake.marinadeSamTargetSol,
       0,
     ) / samStakeValidators.length
+
+  const concentration = useMemo(
+    () => buildConcentrationBreakdown(auctionResult),
+    [auctionResult],
+  )
 
   const inputVal = (field: keyof PendingEdits, fallback: string) =>
     pendingEdits[field] ?? fallback
@@ -509,6 +516,11 @@ export const SamTable: React.FC<Props> = ({
               'Number of validators that won stake in this SAM auction',
             )}
           />
+          <ConcentrationMetric
+            label="Top Countries"
+            rows={concentration.countries}
+          />
+          <ConcentrationMetric label="Top ASOs" rows={concentration.asos} />
         </div>
         {expertMetrics}
       </div>
