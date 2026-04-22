@@ -651,20 +651,20 @@ export const SamTable: React.FC<Props> = ({
                   row(
                     'Inflation',
                     inflPct,
-                    `${selectCommissionPmpe(item.validator)}`,
-                    `${selectCommissionPmpe(item.validator)} ☉`,
+                    '',
+                    `${formatSolAmount(selectCommissionPmpe(item.validator), 4)} ☉`,
                   ) +
                   row(
                     'MEV',
                     mevPct,
-                    `${selectMevCommissionPmpe(item.validator)}`,
-                    `${selectMevCommissionPmpe(item.validator)} ☉`,
+                    '',
+                    `${formatSolAmount(selectMevCommissionPmpe(item.validator), 4)} ☉`,
                   ) +
                   row(
                     'Block',
                     blkPct,
-                    `${selectBlockRewardsCommissionPmpe(item.validator)}`,
-                    `${selectBlockRewardsCommissionPmpe(item.validator)} ☉`,
+                    '',
+                    `${formatSolAmount(selectBlockRewardsCommissionPmpe(item.validator), 4)} ☉`,
                   ) +
                   rule(
                     `Charge this epoch · eff. bid ${formatSolAmount(effBid, 4)} ☉ / 1000`,
