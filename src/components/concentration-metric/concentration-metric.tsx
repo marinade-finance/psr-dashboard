@@ -16,32 +16,43 @@ const TOP_N = 3
 const TOOLTIP_N = 15
 
 const BAR_COLORS = ['#6a8ca8', '#b0946a', '#8aa598']
+const CAP_COLOR = '#c65d5d'
 
 const DESCRIPTIONS: Record<string, string> = {
   'Top Countries':
-    'Share of auction-distributed stake, grouped by validator jurisdiction (country). Concentration caps are enforced by SAM constraints.',
+    'Share of auction-distributed stake, grouped by validator jurisdiction (country). SAM enforces a per-country cap — a row marked (capped) has at least one validator whose stake was cut by the country cap.',
   'Top ASOs':
-    'Share of auction-distributed stake, grouped by validator ASO (Autonomous System Operator). Concentration caps are enforced by SAM constraints.',
+    'Share of auction-distributed stake, grouped by validator ASO (Autonomous System Operator). SAM enforces a per-ASO cap — a row marked (capped) has at least one validator whose stake was cut by the ASO cap.',
 }
+
+const td = (content: string, align: 'left' | 'right' = 'left', opts = '') =>
+  `<td style="padding:2px 6px;text-align:${align};${opts}">${content}</td>`
 
 const buildTooltipHtml = (label: string, rows: ConcentrationRow[]): string => {
   const desc = DESCRIPTIONS[label] ?? ''
   const header = desc
-    ? `<div style="max-width:320px;font-size:11px;opacity:.8;margin-bottom:6px;line-height:1.35">${desc}</div>`
+    ? `<div style="max-width:360px;font-size:11px;opacity:.8;margin-bottom:6px;line-height:1.35">${desc}</div>`
     : ''
   const subhead = `<div style="font-weight:600;margin-bottom:4px">All (${rows.length})</div>`
+  const head =
+    '<thead><tr style="font-size:10px;opacity:.55;text-transform:uppercase;letter-spacing:.04em"><th style="padding:2px 6px;text-align:left">Name</th><th style="padding:2px 6px;text-align:right">Share</th><th style="padding:2px 6px;text-align:right">Stake</th><th style="padding:2px 6px;text-align:right">Validators</th><th style="padding:2px 6px;text-align:right">Cap</th></tr></thead>'
   const body = rows
     .slice(0, TOOLTIP_N)
     .map((r, i) => {
-      const swatch = BAR_COLORS[i] ?? 'transparent'
-      return `<div style="display:flex;gap:8px;font-size:11px;align-items:center"><span style="width:3px;align-self:stretch;background:${swatch};border-radius:2px"></span><span style="flex:1">${r.key}</span><span style="opacity:.6">${r.validatorCount} ${r.validatorCount === 1 ? 'validator' : 'validators'}</span><span style="font-family:monospace;min-width:48px;text-align:right">${formatPercentage(r.pctOfTotal)}</span><span style="font-family:monospace;min-width:64px;text-align:right;opacity:.7">☉${formatSolAmount(Math.round(r.samStakeSol))}</span></div>`
+      const swatch = BAR_COLORS[i]
+      const nameCell = `<td style="padding:2px 6px;text-align:left;display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:3px;height:12px;background:${swatch ?? 'transparent'};border-radius:2px;flex-shrink:0"></span>${r.key}</td>`
+      const capCell = r.atCap
+        ? `<td style="padding:2px 6px;text-align:right;color:${CAP_COLOR};font-weight:700;font-size:10px">(capped) ${r.cappedValidatorCount}</td>`
+        : '<td style="padding:2px 6px;text-align:right;opacity:.4">—</td>'
+      return `<tr>${nameCell}${td(formatPercentage(r.pctOfTotal), 'right', 'font-family:monospace')}${td(`☉${formatSolAmount(Math.round(r.samStakeSol))}`, 'right', 'font-family:monospace;opacity:.75')}${td(String(r.validatorCount), 'right', 'opacity:.75')}${capCell}</tr>`
     })
     .join('')
   const more =
     rows.length > TOOLTIP_N
       ? `<div style="opacity:.5;font-size:10px;margin-top:4px">+${rows.length - TOOLTIP_N} more</div>`
       : ''
-  return header + subhead + body + more
+  const table = `<table style="font-size:11px;border-collapse:collapse">${head}<tbody>${body}</tbody></table>`
+  return header + subhead + table + more
 }
 
 export const ConcentrationMetric: React.FC<Props> = ({ label, rows }) => {
@@ -60,15 +71,31 @@ export const ConcentrationMetric: React.FC<Props> = ({ label, rows }) => {
               className={styles.barFill}
               style={{
                 width: `${maxPct > 0 ? (r.pctOfTotal / maxPct) * 100 : 0}%`,
-                background: BAR_COLORS[i],
+                background: r.atCap ? CAP_COLOR : BAR_COLORS[i],
                 opacity: 0.8,
               }}
             />
             <span className={styles.rowText}>
-              <span className={styles.name} title={r.key}>
+              <span
+                className={styles.name}
+                title={r.key}
+                style={
+                  r.atCap ? { color: CAP_COLOR, fontWeight: 700 } : undefined
+                }
+              >
                 {r.key}
+                {r.atCap && (
+                  <span
+                    style={{ marginLeft: 6, fontWeight: 700, fontSize: 10 }}
+                  >
+                    (capped)
+                  </span>
+                )}
               </span>
-              <span className={styles.pct}>
+              <span
+                className={styles.pct}
+                style={r.atCap ? { color: CAP_COLOR } : undefined}
+              >
                 {formatPercentage(r.pctOfTotal)}
               </span>
             </span>

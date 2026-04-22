@@ -36,13 +36,12 @@ validators based on their bids and performance.
 - **Winning Validators** &mdash; Count of validators receiving stake in current auction
 - **Top Countries** &mdash; The three countries holding the largest share of SAM-distributed stake,
   with each row showing the country name, a bar proportional to its share, and the percentage.
-  SAM enforces concentration caps per country (e.g. no single country may exceed a set share of
-  total stake). Bars turn amber at 7% and red at 10% of SAM-distributed stake as an early signal
-  that a country is approaching the cap. Hover the card for the full list (all countries with
-  validator counts, stake, and share).
+  A row marked **(capped)** in red means at least one validator in that country had its stake
+  cut by the country concentration cap that SAM enforces. Hover the card for the full list
+  (all countries with validator counts, stake, share, and cap status).
 - **Top ASOs** &mdash; Same breakdown grouped by ASO (Autonomous System Organization &mdash; the
   hosting provider or network operator). SAM also caps stake concentration per ASO to prevent
-  operator-level risk.
+  operator-level risk; (capped) rows have at least one validator hit by the ASO cap.
 
 **Simulation Mode:** Click "Enter Simulation" to test how changing a validator's parameters would affect their auction
 position. Edit commission rates or bid amounts, then click "Simulate" to see projected results.
