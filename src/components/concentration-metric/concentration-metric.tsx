@@ -15,8 +15,7 @@ type Props = {
 const TOP_N = 3
 const TOOLTIP_N = 15
 
-// Distinct, high-contrast colors for top three rows (matches dashboard palette).
-const BAR_COLORS = ['#ef4444', '#f59e0b', '#3b82f6']
+const BAR_COLORS = ['#6a8ca8', '#b0946a', '#8aa598']
 
 const DESCRIPTIONS: Record<string, string> = {
   'Top Countries':
@@ -33,10 +32,10 @@ const buildTooltipHtml = (label: string, rows: ConcentrationRow[]): string => {
   const subhead = `<div style="font-weight:600;margin-bottom:4px">All (${rows.length})</div>`
   const body = rows
     .slice(0, TOOLTIP_N)
-    .map(
-      r =>
-        `<div style="display:flex;gap:8px;font-size:11px"><span style="flex:1">${r.key}</span><span style="opacity:.6">${r.validatorCount} ${r.validatorCount === 1 ? 'validator' : 'validators'}</span><span style="font-family:monospace;min-width:48px;text-align:right">${formatPercentage(r.pctOfTotal)}</span><span style="font-family:monospace;min-width:64px;text-align:right;opacity:.7">☉${formatSolAmount(Math.round(r.samStakeSol))}</span></div>`,
-    )
+    .map((r, i) => {
+      const swatch = BAR_COLORS[i] ?? 'transparent'
+      return `<div style="display:flex;gap:8px;font-size:11px;align-items:center"><span style="width:3px;align-self:stretch;background:${swatch};border-radius:2px"></span><span style="flex:1">${r.key}</span><span style="opacity:.6">${r.validatorCount} ${r.validatorCount === 1 ? 'validator' : 'validators'}</span><span style="font-family:monospace;min-width:48px;text-align:right">${formatPercentage(r.pctOfTotal)}</span><span style="font-family:monospace;min-width:64px;text-align:right;opacity:.7">☉${formatSolAmount(Math.round(r.samStakeSol))}</span></div>`
+    })
     .join('')
   const more =
     rows.length > TOOLTIP_N
