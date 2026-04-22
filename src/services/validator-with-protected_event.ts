@@ -119,6 +119,18 @@ export const fetchProtectedEventsWithValidator = async (): Promise<
       (stake * entry.revShare.bidTooLowPenaltyPmpe) / 1000,
       'BidTooLowPenalty',
     )
+    pushAuctionPenalty(
+      entry.voteAccount,
+      entry.epoch,
+      (stake * entry.revShare.blacklistPenaltyPmpe) / 1000,
+      'BlacklistPenalty',
+    )
+    pushAuctionPenalty(
+      entry.voteAccount,
+      entry.epoch,
+      Math.round((entry.values?.bondRiskFeeSol ?? 0) * 1e9),
+      'BondRiskFee',
+    )
   }
 
   if (auctionCoversCurrentEpoch) {
