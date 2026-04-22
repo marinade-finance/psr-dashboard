@@ -58,10 +58,22 @@ import type { PendingEdits } from 'src/pages/sam'
 
 type ValidatorWithBondState = AuctionValidator & { bondState?: Color }
 
+type PenaltyKind = 'bidLow' | 'blacklist' | 'risk'
+
+const penaltyClass: Record<PenaltyKind, string> = {
+  bidLow: styles.penalty_bidLow,
+  blacklist: styles.penalty_blacklist,
+  risk: styles.penalty_risk,
+}
+
 const renderPenaltyBadges = (v: AuctionValidator) => {
   const stakeSol = v.marinadeActivatedStakeSol
-  const badges: { icon: string; label: string; sol: number; kind: string }[] =
-    []
+  const badges: {
+    icon: string
+    label: string
+    sol: number
+    kind: PenaltyKind
+  }[] = []
   const bidTooLowSol = (stakeSol * v.revShare.bidTooLowPenaltyPmpe) / 1000
   const blacklistSol = (stakeSol * v.revShare.blacklistPenaltyPmpe) / 1000
   const bondRiskSol = v.values?.bondRiskFeeSol ?? 0
@@ -92,7 +104,7 @@ const renderPenaltyBadges = (v: AuctionValidator) => {
       {...tooltipAttributes(
         `<b>${b.label}</b><br/>${formatSolAmount(b.sol, 3)} SOL (estimate)`,
       )}
-      className={`${styles.penaltyBadge} ${styles[`penalty_${b.kind}`]}`}
+      className={`${styles.penaltyBadge} ${penaltyClass[b.kind]}`}
     >
       {b.icon}
     </span>
