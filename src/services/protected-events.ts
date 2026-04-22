@@ -81,12 +81,6 @@ export const isProtectedEvent = (
 ): e is ProtectedEventSettlement =>
   typeof e === 'object' && 'ProtectedEvent' in e
 
-const PENALTY_LABELS: Record<string, string> = {
-  BidTooLowPenalty: 'BidTooLow',
-  BlacklistPenalty: 'Blacklist',
-  BondRiskFee: 'Bond Risk Fee',
-}
-
 export type ProtectedEvent = {
   epoch: number
   amount: number
@@ -115,10 +109,9 @@ export const selectProtectedStakeReason = (protectedEvent: ProtectedEvent) => {
       return `Uptime ${formatPercentage(reason.DowntimeRevenueImpact.actual_credits / reason.DowntimeRevenueImpact.expected_credits)}`
     }
   }
-  if (typeof protectedEvent.reason === 'string') {
-    const label = PENALTY_LABELS[protectedEvent.reason]
-    if (label) return label
-  }
+  if (protectedEvent.reason === 'BidTooLowPenalty') return 'BidTooLow'
+  if (protectedEvent.reason === 'BlacklistPenalty') return 'Blacklist'
+  if (protectedEvent.reason === 'BondRiskFee') return 'Bond Risk Fee'
   console.log('unsupported event:', protectedEvent)
   return 'Unsupported'
 }
