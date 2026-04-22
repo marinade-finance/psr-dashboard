@@ -60,25 +60,41 @@ type ValidatorWithBondState = AuctionValidator & { bondState?: Color }
 
 const renderPenaltyBadges = (v: AuctionValidator) => {
   const stakeSol = v.marinadeActivatedStakeSol
-  const badges: { emoji: string; label: string; sol: number }[] = []
+  const badges: { icon: string; label: string; sol: number; kind: string }[] =
+    []
   const bidTooLowSol = (stakeSol * v.revShare.bidTooLowPenaltyPmpe) / 1000
   const blacklistSol = (stakeSol * v.revShare.blacklistPenaltyPmpe) / 1000
   const bondRiskSol = v.values?.bondRiskFeeSol ?? 0
   if (bidTooLowSol > 0)
-    badges.push({ emoji: '⬇️', label: 'BidTooLow', sol: bidTooLowSol })
+    badges.push({
+      icon: '▼',
+      label: 'BidTooLow',
+      sol: bidTooLowSol,
+      kind: 'bidLow',
+    })
   if (blacklistSol > 0)
-    badges.push({ emoji: '🚫', label: 'Blacklist', sol: blacklistSol })
+    badges.push({
+      icon: '⊘',
+      label: 'Blacklist',
+      sol: blacklistSol,
+      kind: 'blacklist',
+    })
   if (bondRiskSol > 0)
-    badges.push({ emoji: '💸', label: 'BondRiskFee', sol: bondRiskSol })
+    badges.push({
+      icon: '⚠',
+      label: 'BondRiskFee',
+      sol: bondRiskSol,
+      kind: 'risk',
+    })
   return badges.map(b => (
     <span
       key={b.label}
       {...tooltipAttributes(
         `<b>${b.label}</b><br/>${formatSolAmount(b.sol, 3)} SOL (estimate)`,
       )}
-      className={styles.penaltyBadge}
+      className={`${styles.penaltyBadge} ${styles[`penalty_${b.kind}`]}`}
     >
-      {b.emoji}
+      {b.icon}
     </span>
   ))
 }
