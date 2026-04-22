@@ -101,12 +101,6 @@ export const fetchProtectedEventsWithValidator = async (): Promise<
     })
   }
 
-  const pmpeToLamports = (
-    pmpe: number,
-    nativeStake: string,
-    liquidStake: string,
-  ) => ((Number(nativeStake) + Number(liquidStake)) * pmpe) / 1000
-
   const auctionCoversCurrentEpoch = maxStatsEpoch >= maxScoredEpoch
   for (const entry of scoring) {
     if (entry.epoch <= latestProcessedEpoch) continue
@@ -116,14 +110,13 @@ export const fetchProtectedEventsWithValidator = async (): Promise<
       ({ epoch }) => epoch === entry.epoch,
     )
     if (epochStats == null) continue
+    const stake =
+      Number(epochStats.marinade_native_stake ?? '0') +
+      Number(epochStats.marinade_stake ?? '0')
     pushAuctionPenalty(
       entry.voteAccount,
       entry.epoch,
-      pmpeToLamports(
-        entry.revShare.bidTooLowPenaltyPmpe,
-        epochStats.marinade_native_stake ?? '0',
-        epochStats.marinade_stake ?? '0',
-      ),
+      (stake * entry.revShare.bidTooLowPenaltyPmpe) / 1000,
       'BidTooLowPenalty',
     )
   }
@@ -131,18 +124,19 @@ export const fetchProtectedEventsWithValidator = async (): Promise<
   if (auctionCoversCurrentEpoch) {
     for (const entry of auctionResult.auctionData.validators) {
       const v = validatorsMap[entry.voteAccount]
-      const native = v?.marinade_native_stake ?? '0'
-      const liquid = v?.marinade_stake ?? '0'
+      const stake =
+        Number(v?.marinade_native_stake ?? '0') +
+        Number(v?.marinade_stake ?? '0')
       pushAuctionPenalty(
         entry.voteAccount,
         maxStatsEpoch,
-        pmpeToLamports(entry.revShare.bidTooLowPenaltyPmpe, native, liquid),
+        (stake * entry.revShare.bidTooLowPenaltyPmpe) / 1000,
         'BidTooLowPenalty',
       )
       pushAuctionPenalty(
         entry.voteAccount,
         maxStatsEpoch,
-        pmpeToLamports(entry.revShare.blacklistPenaltyPmpe, native, liquid),
+        (stake * entry.revShare.blacklistPenaltyPmpe) / 1000,
         'BlacklistPenalty',
       )
       pushAuctionPenalty(
