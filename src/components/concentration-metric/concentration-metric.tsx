@@ -106,9 +106,7 @@ export const ConcentrationMetric: React.FC<Props> = ({
                 >
                   {r.key}
                   {r.atCap && (
-                    <span
-                      style={{ marginLeft: 6, fontWeight: 700, fontSize: 10 }}
-                    >
+                    <span style={{ marginLeft: 6, fontWeight: 700 }}>
                       (capped)
                     </span>
                   )}
