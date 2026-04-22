@@ -42,9 +42,9 @@ const buildTooltipHtml = (
 ): string => {
   const desc = DESCRIPTIONS[label] ?? ''
   const capNote = `Cap: ${formatPercentage(capPct)} of network stake.`
-  const header = `<div style="max-width:340px;font-size:12px;opacity:.8;margin-bottom:6px;line-height:1.4">${desc} ${capNote}</div>`
-  const subhead = `<div style="font-weight:600;margin-bottom:4px;font-size:13px">All (${rows.length})</div>`
-  const head = `<thead><tr style="font-size:12px;opacity:.55;text-transform:uppercase;letter-spacing:.04em">${th('Name', 'left')}${th('Share', 'right')}${th('Stake', 'right')}${th('Cap', 'right')}</tr></thead>`
+  const header = `<div style="max-width:340px;opacity:.8;margin-bottom:6px;line-height:1.4">${desc} ${capNote}</div>`
+  const subhead = `<div style="font-weight:600;margin-bottom:4px">All (${rows.length})</div>`
+  const head = `<thead><tr style="opacity:.55;text-transform:uppercase;letter-spacing:.04em">${th('Name', 'left')}${th('Share', 'right')}${th('Stake', 'right')}${th('Cap', 'right')}</tr></thead>`
   const body = rows
     .slice(0, TOOLTIP_N)
     .map((r, i) => {
@@ -66,9 +66,9 @@ const buildTooltipHtml = (
     .join('')
   const more =
     rows.length > TOOLTIP_N
-      ? `<div style="opacity:.5;font-size:12px;margin-top:4px">+${rows.length - TOOLTIP_N} more</div>`
+      ? `<div style="opacity:.5;margin-top:4px">+${rows.length - TOOLTIP_N} more</div>`
       : ''
-  return `${header}${subhead}<table style="font-size:13px;border-collapse:collapse">${head}<tbody>${body}</tbody></table>${more}`
+  return `${header}${subhead}<table style="border-collapse:collapse">${head}<tbody>${body}</tbody></table>${more}`
 }
 
 export const ConcentrationMetric: React.FC<Props> = ({
