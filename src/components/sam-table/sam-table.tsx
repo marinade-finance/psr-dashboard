@@ -55,6 +55,7 @@ import type { Order } from '../table/table'
 import type {
   AuctionResult,
   AuctionValidator,
+  DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
 import type { PendingEdits } from 'src/pages/sam'
 
@@ -81,6 +82,7 @@ type Props = {
   tvlLeaveApyDiff: number
   backstopDiff: number
   backstopTvl: number
+  dcSamConfig: DsSamConfig
   originalAuctionResult: AuctionResult | null
   epochsPerYear: number
   level: UserLevel
@@ -138,6 +140,7 @@ export const SamTable: React.FC<Props> = ({
   tvlLeaveApyDiff,
   backstopDiff,
   backstopTvl,
+  dcSamConfig,
   originalAuctionResult,
   epochsPerYear,
   level,
@@ -213,8 +216,8 @@ export const SamTable: React.FC<Props> = ({
     ) / samStakeValidators.length
 
   const concentration = useMemo(
-    () => buildConcentrationBreakdown(auctionResult),
-    [auctionResult],
+    () => buildConcentrationBreakdown(auctionResult, dcSamConfig),
+    [auctionResult, dcSamConfig],
   )
 
   const inputVal = (field: keyof PendingEdits, fallback: string) =>
@@ -512,8 +515,13 @@ export const SamTable: React.FC<Props> = ({
           <ConcentrationMetric
             label="Top Countries"
             rows={concentration.countries}
+            capPct={concentration.countryCapPct}
           />
-          <ConcentrationMetric label="Top ASOs" rows={concentration.asos} />
+          <ConcentrationMetric
+            label="Top ASOs"
+            rows={concentration.asos}
+            capPct={concentration.asoCapPct}
+          />
         </div>
         {expertMetrics}
       </div>

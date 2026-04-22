@@ -511,10 +511,13 @@ export type ConcentrationRow = {
 export type ConcentrationBreakdown = {
   countries: ConcentrationRow[]
   asos: ConcentrationRow[]
+  countryCapPct: number
+  asoCapPct: number
 }
 
 export const buildConcentrationBreakdown = (
   auctionResult: AuctionResult,
+  config: DsSamConfig,
 ): ConcentrationBreakdown => {
   const validators = auctionResult.auctionData.validators
   const aggregate = (
@@ -556,5 +559,7 @@ export const buildConcentrationBreakdown = (
   return {
     countries: aggregate(v => v.country, AuctionConstraintType.COUNTRY),
     asos: aggregate(v => v.aso, AuctionConstraintType.ASO),
+    countryCapPct: config.maxNetworkStakeConcentrationPerCountryDec,
+    asoCapPct: config.maxNetworkStakeConcentrationPerAsoDec,
   }
 }
