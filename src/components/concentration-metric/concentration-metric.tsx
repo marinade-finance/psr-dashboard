@@ -35,7 +35,7 @@ const buildTooltipHtml = (label: string, rows: ConcentrationRow[]): string => {
     .slice(0, TOOLTIP_N)
     .map(
       r =>
-        `<div style="display:flex;gap:8px;font-size:11px"><span style="flex:1">${r.key}</span><span style="opacity:.6">${r.validatorCount} val</span><span style="font-family:monospace;min-width:48px;text-align:right">${formatPercentage(r.pctOfTotal)}</span><span style="font-family:monospace;min-width:64px;text-align:right;opacity:.7">☉${formatSolAmount(Math.round(r.samStakeSol))}</span></div>`,
+        `<div style="display:flex;gap:8px;font-size:11px"><span style="flex:1">${r.key}</span><span style="opacity:.6">${r.validatorCount} ${r.validatorCount === 1 ? 'validator' : 'validators'}</span><span style="font-family:monospace;min-width:48px;text-align:right">${formatPercentage(r.pctOfTotal)}</span><span style="font-family:monospace;min-width:64px;text-align:right;opacity:.7">☉${formatSolAmount(Math.round(r.samStakeSol))}</span></div>`,
     )
     .join('')
   const more =
