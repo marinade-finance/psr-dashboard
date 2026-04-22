@@ -4,7 +4,7 @@ import { loadSam } from './sam'
 import { fetchScoring } from './scoring'
 import { fetchValidatorsWithEpochs } from './validators'
 
-import type { ProtectedEvent } from './protected-events'
+import type { ProtectedEvent, SettlementReason } from './protected-events'
 import type { Validator } from './validators'
 
 export enum ProtectedEventStatus {
@@ -81,29 +81,31 @@ export const fetchProtectedEventsWithValidator = async (): Promise<
     maxScoredEpoch = Math.max(entry.epoch, maxScoredEpoch)
   }
 
-  const pushPenalty = (
+  const pushAuctionPenalty = (
     voteAccount: string,
     epoch: number,
-    nativeStake: string,
-    liquidStake: string,
-    bidTooLowPenaltyPmpe: number,
+    amountLamports: number,
+    reason: SettlementReason,
   ) => {
-    const penalty =
-      ((Number(nativeStake) + Number(liquidStake)) * bidTooLowPenaltyPmpe) /
-      1000
-    if (penalty <= 0) return
+    if (amountLamports <= 0) return
     protectedEventsWithValidator.push({
       status: ProtectedEventStatus.ESTIMATE,
       protectedEvent: {
         epoch,
-        amount: penalty,
+        amount: amountLamports,
         vote_account: voteAccount,
         meta: { funder: 'ValidatorBond' as const },
-        reason: 'BidTooLowPenalty' as const,
+        reason,
       },
       validator: validatorsMap[voteAccount] ?? null,
     })
   }
+
+  const pmpeToLamports = (
+    pmpe: number,
+    nativeStake: string,
+    liquidStake: string,
+  ) => ((Number(nativeStake) + Number(liquidStake)) * pmpe) / 1000
 
   const auctionCoversCurrentEpoch = maxStatsEpoch >= maxScoredEpoch
   for (const entry of scoring) {
@@ -114,24 +116,40 @@ export const fetchProtectedEventsWithValidator = async (): Promise<
       ({ epoch }) => epoch === entry.epoch,
     )
     if (epochStats == null) continue
-    pushPenalty(
+    pushAuctionPenalty(
       entry.voteAccount,
       entry.epoch,
-      epochStats.marinade_native_stake ?? '0',
-      epochStats.marinade_stake ?? '0',
-      entry.revShare.bidTooLowPenaltyPmpe,
+      pmpeToLamports(
+        entry.revShare.bidTooLowPenaltyPmpe,
+        epochStats.marinade_native_stake ?? '0',
+        epochStats.marinade_stake ?? '0',
+      ),
+      'BidTooLowPenalty',
     )
   }
 
   if (auctionCoversCurrentEpoch) {
     for (const entry of auctionResult.auctionData.validators) {
       const v = validatorsMap[entry.voteAccount]
-      pushPenalty(
+      const native = v?.marinade_native_stake ?? '0'
+      const liquid = v?.marinade_stake ?? '0'
+      pushAuctionPenalty(
         entry.voteAccount,
         maxStatsEpoch,
-        v?.marinade_native_stake ?? '0',
-        v?.marinade_stake ?? '0',
-        entry.revShare.bidTooLowPenaltyPmpe,
+        pmpeToLamports(entry.revShare.bidTooLowPenaltyPmpe, native, liquid),
+        'BidTooLowPenalty',
+      )
+      pushAuctionPenalty(
+        entry.voteAccount,
+        maxStatsEpoch,
+        pmpeToLamports(entry.revShare.blacklistPenaltyPmpe, native, liquid),
+        'BlacklistPenalty',
+      )
+      pushAuctionPenalty(
+        entry.voteAccount,
+        maxStatsEpoch,
+        Math.round((entry.values?.bondRiskFeeSol ?? 0) * 1e9),
+        'BondRiskFee',
       )
     }
   }

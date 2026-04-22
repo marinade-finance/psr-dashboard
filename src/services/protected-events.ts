@@ -75,6 +75,7 @@ export type SettlementReason =
   | 'Bidding'
   | 'BidTooLowPenalty'
   | 'BlacklistPenalty'
+  | 'BondRiskFee'
 
 export const isProtectedEvent = (
   e: SettlementReason,
@@ -84,6 +85,8 @@ export const isBidTooLowPenalty = (e: SettlementReason): boolean =>
   e === 'BidTooLowPenalty'
 export const isBlacklistPenalty = (e: SettlementReason): boolean =>
   e === 'BlacklistPenalty'
+export const isBondRiskFee = (e: SettlementReason): boolean =>
+  e === 'BondRiskFee'
 
 export type ProtectedEvent = {
   epoch: number
@@ -118,6 +121,9 @@ export const selectProtectedStakeReason = (protectedEvent: ProtectedEvent) => {
   }
   if (isBlacklistPenalty(protectedEvent.reason)) {
     return 'Blacklist'
+  }
+  if (isBondRiskFee(protectedEvent.reason)) {
+    return 'Bond Risk Fee'
   }
   console.log('unsupported event:', protectedEvent)
   return 'Unsupported'
