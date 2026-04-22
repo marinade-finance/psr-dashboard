@@ -53,16 +53,15 @@ export type ProtectedEventReason =
   | DowntimeRevenueImpactReason
   | CommissionSamIncreaseReason
 
-export const isCommissionIncreaseReason = (
+const isCommissionIncreaseReason = (
   e: ProtectedEventReason,
 ): e is CommissionIncreaseReason => 'CommissionIncrease' in e
-export const isLowCreditsReason = (
-  e: ProtectedEventReason,
-): e is LowCreditsReason => 'LowCredits' in e
-export const isDowntimeRevenueImpactReason = (
+const isLowCreditsReason = (e: ProtectedEventReason): e is LowCreditsReason =>
+  'LowCredits' in e
+const isDowntimeRevenueImpactReason = (
   e: ProtectedEventReason,
 ): e is DowntimeRevenueImpactReason => 'DowntimeRevenueImpact' in e
-export const isCommissionSamIncreaseReason = (
+const isCommissionSamIncreaseReason = (
   e: ProtectedEventReason,
 ): e is CommissionSamIncreaseReason => 'CommissionSamIncrease' in e
 
@@ -81,12 +80,12 @@ export const isProtectedEvent = (
   e: SettlementReason,
 ): e is ProtectedEventSettlement =>
   typeof e === 'object' && 'ProtectedEvent' in e
-export const isBidTooLowPenalty = (e: SettlementReason): boolean =>
-  e === 'BidTooLowPenalty'
-export const isBlacklistPenalty = (e: SettlementReason): boolean =>
-  e === 'BlacklistPenalty'
-export const isBondRiskFee = (e: SettlementReason): boolean =>
-  e === 'BondRiskFee'
+
+const PENALTY_LABELS: Record<string, string> = {
+  BidTooLowPenalty: 'BidTooLow',
+  BlacklistPenalty: 'Blacklist',
+  BondRiskFee: 'Bond Risk Fee',
+}
 
 export type ProtectedEvent = {
   epoch: number
@@ -116,14 +115,9 @@ export const selectProtectedStakeReason = (protectedEvent: ProtectedEvent) => {
       return `Uptime ${formatPercentage(reason.DowntimeRevenueImpact.actual_credits / reason.DowntimeRevenueImpact.expected_credits)}`
     }
   }
-  if (isBidTooLowPenalty(protectedEvent.reason)) {
-    return 'BidTooLow'
-  }
-  if (isBlacklistPenalty(protectedEvent.reason)) {
-    return 'Blacklist'
-  }
-  if (isBondRiskFee(protectedEvent.reason)) {
-    return 'Bond Risk Fee'
+  if (typeof protectedEvent.reason === 'string') {
+    const label = PENALTY_LABELS[protectedEvent.reason]
+    if (label) return label
   }
   console.log('unsupported event:', protectedEvent)
   return 'Unsupported'
