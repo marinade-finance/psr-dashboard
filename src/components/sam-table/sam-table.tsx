@@ -57,6 +57,32 @@ import type {
 import type { PendingEdits } from 'src/pages/sam'
 
 type ValidatorWithBondState = AuctionValidator & { bondState?: Color }
+
+const renderPenaltyBadges = (v: AuctionValidator) => {
+  const stakeSol = v.marinadeActivatedStakeSol
+  const badges: { emoji: string; label: string; sol: number }[] = []
+  const bidTooLowSol = (stakeSol * v.revShare.bidTooLowPenaltyPmpe) / 1000
+  const blacklistSol = (stakeSol * v.revShare.blacklistPenaltyPmpe) / 1000
+  const bondRiskSol = v.values?.bondRiskFeeSol ?? 0
+  if (bidTooLowSol > 0)
+    badges.push({ emoji: '⬇️', label: 'BidTooLow', sol: bidTooLowSol })
+  if (blacklistSol > 0)
+    badges.push({ emoji: '🚫', label: 'Blacklist', sol: blacklistSol })
+  if (bondRiskSol > 0)
+    badges.push({ emoji: '💸', label: 'BondRiskFee', sol: bondRiskSol })
+  return badges.map(b => (
+    <span
+      key={b.label}
+      {...tooltipAttributes(
+        `<b>${b.label}</b><br/>${formatSolAmount(b.sol, 3)} SOL (estimate)`,
+      )}
+      className={styles.penaltyBadge}
+    >
+      {b.emoji}
+    </span>
+  ))
+}
+
 type DisplayValidator = { validator: ValidatorWithBondState; isGhost: boolean }
 type EditField =
   | 'inflationCommission'
@@ -612,11 +638,14 @@ export const SamTable: React.FC<Props> = ({
               const va = selectVoteAccount(item.validator)
               const sim = !item.isGhost && simulatedValidator === va
               return (
-                <span
-                  className={`${styles.pubkey} ${sim ? styles.pubkeySimulated : ''}`}
-                >
-                  {va}
-                </span>
+                <>
+                  <span
+                    className={`${styles.pubkey} ${sim ? styles.pubkeySimulated : ''}`}
+                  >
+                    {va}
+                  </span>
+                  {renderPenaltyBadges(item.validator)}
+                </>
               )
             },
             compare: (a, b) =>

@@ -12,6 +12,7 @@ interface CssExports {
   'metricRow': string;
   'metricWrap': string;
   'orderCell': string;
+  'penaltyBadge': string;
   'positionImproved1': string;
   'positionImproved2': string;
   'positionImproved3': string;

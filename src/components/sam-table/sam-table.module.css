@@ -1,3 +1,9 @@
+.penaltyBadge {
+  margin-left: 4px;
+  cursor: help;
+  font-size: 12px;
+}
+
 .simulationBanner {
   padding: 16px 32px;
   background: linear-gradient(135deg, rgba(15, 25, 60, 1), rgba(40, 45, 80, 1));
