@@ -35,21 +35,21 @@ const buildTooltipHtml = (label: string, rows: ConcentrationRow[]): string => {
     : ''
   const subhead = `<div style="font-weight:600;margin-bottom:4px">All (${rows.length})</div>`
   const head =
-    '<thead><tr style="font-size:10px;opacity:.55;text-transform:uppercase;letter-spacing:.04em"><th style="padding:2px 6px;text-align:left">Name</th><th style="padding:2px 6px;text-align:right">Share</th><th style="padding:2px 6px;text-align:right">Stake</th><th style="padding:2px 6px;text-align:right">Validators</th><th style="padding:2px 6px;text-align:right">Cap</th></tr></thead>'
+    '<thead><tr style="font-size:12px;opacity:.55;text-transform:uppercase;letter-spacing:.04em"><th style="padding:2px 6px;text-align:left">Name</th><th style="padding:2px 6px;text-align:right">Share</th><th style="padding:2px 6px;text-align:right">Stake</th><th style="padding:2px 6px;text-align:right">Validators</th><th style="padding:2px 6px;text-align:right">Cap</th></tr></thead>'
   const body = rows
     .slice(0, TOOLTIP_N)
     .map((r, i) => {
       const swatch = BAR_COLORS[i]
       const nameCell = `<td style="padding:2px 6px;text-align:left;display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:3px;height:12px;background:${swatch ?? 'transparent'};border-radius:2px;flex-shrink:0"></span>${r.key}</td>`
       const capCell = r.atCap
-        ? `<td style="padding:2px 6px;text-align:right;color:${CAP_COLOR};font-weight:700;font-size:10px">(capped) ${r.cappedValidatorCount}</td>`
+        ? `<td style="padding:2px 6px;text-align:right;color:${CAP_COLOR};font-weight:700;font-size:12px">(capped) ${r.cappedValidatorCount}</td>`
         : '<td style="padding:2px 6px;text-align:right;opacity:.4">—</td>'
       return `<tr>${nameCell}${td(formatPercentage(r.pctOfTotal), 'right', 'font-family:monospace')}${td(`☉${formatSolAmount(Math.round(r.samStakeSol))}`, 'right', 'font-family:monospace;opacity:.75')}${td(String(r.validatorCount), 'right', 'opacity:.75')}${capCell}</tr>`
     })
     .join('')
   const more =
     rows.length > TOOLTIP_N
-      ? `<div style="opacity:.5;font-size:10px;margin-top:4px">+${rows.length - TOOLTIP_N} more</div>`
+      ? `<div style="opacity:.5;font-size:12px;margin-top:4px">+${rows.length - TOOLTIP_N} more</div>`
       : ''
   const table = `<table style="font-size:11px;border-collapse:collapse">${head}<tbody>${body}</tbody></table>`
   return header + subhead + table + more
