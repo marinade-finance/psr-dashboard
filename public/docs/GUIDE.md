@@ -39,7 +39,7 @@ validators based on their bids and performance.
   A row marked **(capped)** in red means at least one validator in that country had its stake
   cut by the country concentration cap that SAM enforces. Hover the card for the full list
   (all countries with validator counts, stake, share, and cap status).
-- **Top ASOs** &mdash; Same breakdown grouped by ASO (Autonomous System Organization &mdash; the
+- **Top ASOs** &mdash; Same breakdown grouped by ASO (Autonomous System Operator &mdash; the
   hosting provider or network operator). SAM also caps stake concentration per ASO to prevent
   operator-level risk; (capped) rows have at least one validator hit by the ASO cap.
 
