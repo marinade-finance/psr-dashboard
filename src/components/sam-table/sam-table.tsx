@@ -73,6 +73,8 @@ type InputOpts = {
   placeholder?: string
 }
 
+const DEFAULT_ORDER: Order[] = [[9, OrderDirection.DESC]]
+
 type Props = {
   auctionResult: AuctionResult
   tvlJoinApyDiff: number
@@ -201,21 +203,6 @@ export const SamTable: React.FC<Props> = ({
     [validators],
   )
 
-  const hasDataChanged = useMemo(() => {
-    if (!simulatedValidator || !originalAuctionResult) return false
-    const orig = originalAuctionResult.auctionData.validators.find(
-      v => v.voteAccount === simulatedValidator,
-    )
-    const sim = validators.find(v => v.voteAccount === simulatedValidator)
-    if (!orig || !sim) return false
-    return (
-      orig.inflationCommissionDec !== sim.inflationCommissionDec ||
-      orig.mevCommissionDec !== sim.mevCommissionDec ||
-      orig.blockRewardsCommissionDec !== sim.blockRewardsCommissionDec ||
-      orig.revShare.bidPmpe !== sim.revShare.bidPmpe
-    )
-  }, [simulatedValidator, originalAuctionResult, validators])
-
   const samStakeValidators = allValidators.filter(
     v => v.auctionStake.marinadeSamTargetSol,
   )
@@ -233,9 +220,7 @@ export const SamTable: React.FC<Props> = ({
   const inputVal = (field: keyof PendingEdits, fallback: string) =>
     pendingEdits[field] ?? fallback
 
-  const defaultOrder: Order[] = useMemo(() => [[9, OrderDirection.DESC]], [])
-
-  const [currentOrder, setCurrentOrder] = useState<Order[]>(defaultOrder)
+  const [currentOrder, setCurrentOrder] = useState<Order[]>(DEFAULT_ORDER)
 
   const handleOrderChange = useCallback((order: Order[]) => {
     setCurrentOrder(order)
@@ -346,10 +331,24 @@ export const SamTable: React.FC<Props> = ({
       isGhost: false,
     }))
 
+    const orig =
+      simulatedValidator && originalAuctionResult
+        ? originalAuctionResult.auctionData.validators.find(
+            v => v.voteAccount === simulatedValidator,
+          )
+        : undefined
+    const sim = simulatedValidator
+      ? validators.find(v => v.voteAccount === simulatedValidator)
+      : undefined
+    const hasDataChanged =
+      !!orig &&
+      !!sim &&
+      (orig.inflationCommissionDec !== sim.inflationCommissionDec ||
+        orig.mevCommissionDec !== sim.mevCommissionDec ||
+        orig.blockRewardsCommissionDec !== sim.blockRewardsCommissionDec ||
+        orig.revShare.bidPmpe !== sim.revShare.bidPmpe)
+
     if (simulatedValidator && hasDataChanged && originalAuctionResult) {
-      const orig = originalAuctionResult.auctionData.validators.find(
-        v => v.voteAccount === simulatedValidator,
-      )
       if (orig) {
         const originalValidator = {
           ...orig,
@@ -379,8 +378,8 @@ export const SamTable: React.FC<Props> = ({
   }, [
     sortedValidators,
     simulatedValidator,
-    hasDataChanged,
     originalAuctionResult,
+    validators,
     getOriginalPosition,
   ])
 
@@ -866,7 +865,7 @@ export const SamTable: React.FC<Props> = ({
             alignment: Alignment.RIGHT,
           },
         ]}
-        defaultOrder={defaultOrder}
+        defaultOrder={DEFAULT_ORDER}
         onOrderChange={handleOrderChange}
         presorted
       />
