@@ -348,29 +348,23 @@ export const SamTable: React.FC<Props> = ({
         orig.blockRewardsCommissionDec !== sim.blockRewardsCommissionDec ||
         orig.revShare.bidPmpe !== sim.revShare.bidPmpe)
 
-    if (simulatedValidator && hasDataChanged && originalAuctionResult) {
-      if (orig) {
-        const originalValidator = {
-          ...orig,
-          bondState: bondHealthColor(orig),
-        }
-        const originalPosition = getOriginalPosition(simulatedValidator)
+    if (hasDataChanged && orig && simulatedValidator) {
+      const originalPosition = getOriginalPosition(simulatedValidator)
+      if (originalPosition !== null && originalPosition > 0) {
         const currentSimulatedIndex = display.findIndex(
           d => d.validator.voteAccount === simulatedValidator,
         )
-        if (originalPosition !== null && originalPosition > 0) {
-          const adjustedOriginalPos = originalPosition - 1
-          const insertIndex = Math.min(
-            currentSimulatedIndex === adjustedOriginalPos
-              ? currentSimulatedIndex + 1
-              : adjustedOriginalPos,
-            display.length,
-          )
-          display.splice(insertIndex, 0, {
-            validator: originalValidator,
-            isGhost: true,
-          })
-        }
+        const adjustedOriginalPos = originalPosition - 1
+        const insertIndex = Math.min(
+          currentSimulatedIndex === adjustedOriginalPos
+            ? currentSimulatedIndex + 1
+            : adjustedOriginalPos,
+          display.length,
+        )
+        display.splice(insertIndex, 0, {
+          validator: { ...orig, bondState: bondHealthColor(orig) },
+          isGhost: true,
+        })
       }
     }
 

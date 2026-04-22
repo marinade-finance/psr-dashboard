@@ -262,9 +262,9 @@ export const selectIsNonProductive = (validator: AuctionValidator) =>
 export const selectProductiveStake = (auctionResult: AuctionResult) =>
   auctionResult.auctionData.validators.reduce(
     (acc, entry) =>
-      !selectIsNonProductive(entry)
-        ? acc + entry.marinadeActivatedStakeSol
-        : acc,
+      selectIsNonProductive(entry)
+        ? acc
+        : acc + entry.marinadeActivatedStakeSol,
     0,
   )
 
@@ -308,12 +308,12 @@ export const selectFormattedInBondCommission = (
 
 export const formattedOnChainCommission = (
   validator: AuctionValidator,
-): string => {
-  const dec =
+): string =>
+  formatPercentage(
     validator.values?.commissions?.inflationCommissionOnchainDec ??
-    selectCommission(validator)
-  return dec == null ? '-' : formatPercentage(dec, 0)
-}
+      selectCommission(validator),
+    0,
+  )
 
 export const overridesCommissionMessage = (
   validator: AuctionValidator,
