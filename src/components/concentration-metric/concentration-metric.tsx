@@ -15,14 +15,22 @@ type Props = {
 const TOP_N = 3
 const TOOLTIP_N = 15
 
-const barColor = (pct: number): string => {
-  if (pct >= 0.1) return 'var(--red)'
-  if (pct >= 0.07) return 'var(--orange)'
-  return 'var(--teal)'
+// Distinct, high-contrast colors for top three rows (matches dashboard palette).
+const BAR_COLORS = ['#ef4444', '#f59e0b', '#3b82f6']
+
+const DESCRIPTIONS: Record<string, string> = {
+  'Top Countries':
+    'Share of auction-distributed stake, grouped by validator jurisdiction (country). Concentration caps are enforced by SAM constraints.',
+  'Top ASOs':
+    'Share of auction-distributed stake, grouped by validator ASO (Autonomous System Operator). Concentration caps are enforced by SAM constraints.',
 }
 
-const buildTooltipHtml = (rows: ConcentrationRow[]): string => {
-  const head = `<div style="font-weight:600;margin-bottom:4px">All (${rows.length})</div>`
+const buildTooltipHtml = (label: string, rows: ConcentrationRow[]): string => {
+  const desc = DESCRIPTIONS[label] ?? ''
+  const header = desc
+    ? `<div style="max-width:320px;font-size:11px;opacity:.8;margin-bottom:6px;line-height:1.35">${desc}</div>`
+    : ''
+  const subhead = `<div style="font-weight:600;margin-bottom:4px">All (${rows.length})</div>`
   const body = rows
     .slice(0, TOOLTIP_N)
     .map(
@@ -34,31 +42,37 @@ const buildTooltipHtml = (rows: ConcentrationRow[]): string => {
     rows.length > TOOLTIP_N
       ? `<div style="opacity:.5;font-size:10px;margin-top:4px">+${rows.length - TOOLTIP_N} more</div>`
       : ''
-  return head + body + more
+  return header + subhead + body + more
 }
 
 export const ConcentrationMetric: React.FC<Props> = ({ label, rows }) => {
   const top = rows.slice(0, TOP_N)
   const maxPct = top[0]?.pctOfTotal ?? 0
   return (
-    <div className={styles.wrap} {...tooltipAttributes(buildTooltipHtml(rows))}>
+    <div
+      className={styles.wrap}
+      {...tooltipAttributes(buildTooltipHtml(label, rows))}
+    >
       <div className={styles.label}>{label}</div>
       <div className={styles.rows}>
-        {top.map(r => (
+        {top.map((r, i) => (
           <div key={r.key} className={styles.row}>
-            <span className={styles.name} title={r.key}>
-              {r.key}
+            <span
+              className={styles.barFill}
+              style={{
+                width: `${maxPct > 0 ? (r.pctOfTotal / maxPct) * 100 : 0}%`,
+                background: BAR_COLORS[i],
+                opacity: 0.8,
+              }}
+            />
+            <span className={styles.rowText}>
+              <span className={styles.name} title={r.key}>
+                {r.key}
+              </span>
+              <span className={styles.pct}>
+                {formatPercentage(r.pctOfTotal)}
+              </span>
             </span>
-            <span className={styles.barTrack}>
-              <span
-                className={styles.barFill}
-                style={{
-                  width: `${maxPct > 0 ? (r.pctOfTotal / maxPct) * 100 : 0}%`,
-                  background: barColor(r.pctOfTotal),
-                }}
-              />
-            </span>
-            <span className={styles.pct}>{formatPercentage(r.pctOfTotal)}</span>
           </div>
         ))}
       </div>

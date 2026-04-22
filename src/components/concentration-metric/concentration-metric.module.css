@@ -2,7 +2,7 @@
   padding: 10px 20px;
   background-color: var(--bg-dark-1);
   cursor: help;
-  min-width: 200px;
+  min-width: 220px;
 }
 
 .label {
@@ -14,41 +14,48 @@
 .rows {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-top: 8px;
+  gap: 3px;
+  margin-top: 6px;
 }
 
 .row {
-  display: grid;
-  grid-template-columns: 64px 1fr 44px;
+  position: relative;
+  height: 16px;
+  background: var(--bg-dark-2, rgba(255, 255, 255, 0.06));
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.barFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 3px;
+}
+
+.rowText {
+  position: absolute;
+  inset: 0;
+  display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  padding: 0 6px;
   font-size: 11px;
+  line-height: 1;
+  color: var(--text-light-2, #fff);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
 }
 
 .name {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  opacity: 0.9;
-}
-
-.barTrack {
-  height: 6px;
-  background: var(--bg-dark-2, rgba(255, 255, 255, 0.08));
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.barFill {
-  display: block;
-  height: 100%;
-  border-radius: 3px;
-  transition: width 160ms;
+  min-width: 0;
+  flex: 1;
 }
 
 .pct {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  text-align: right;
-  opacity: 0.85;
+  margin-left: 8px;
+  font-weight: 600;
 }

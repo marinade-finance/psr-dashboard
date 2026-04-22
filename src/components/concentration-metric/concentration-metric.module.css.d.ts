@@ -2,11 +2,11 @@
 // Please do not change this file!
 interface CssExports {
   'barFill': string;
-  'barTrack': string;
   'label': string;
   'name': string;
   'pct': string;
   'row': string;
+  'rowText': string;
   'rows': string;
   'wrap': string;
 }
