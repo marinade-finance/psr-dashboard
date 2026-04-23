@@ -549,7 +549,7 @@ export const SamTable: React.FC<Props> = ({
         <div className={styles.metricRow}>
           <Metric
             label="Stake To Distribute"
-            value={`☉ ${formatSolAmount(Math.round(redelegationBudget))}`}
+            value={`☉ ${formatSolAmount(redelegationBudget, 0)}`}
             {...tooltipAttributes(
               'Stake that cooled down in the previous epoch and is available to re-delegate next epoch',
             )}
@@ -564,7 +564,7 @@ export const SamTable: React.FC<Props> = ({
           {apyMetrics}
           <Metric
             label="Total Auction Stake"
-            value={`☉ ${formatSolAmount(samDistributedStake)}`}
+            value={`☉ ${formatSolAmount(samDistributedStake, 0)}`}
             {...tooltipAttributes(
               'How much stake is distributed by Marinade to validators based on SAM',
             )}
@@ -873,8 +873,8 @@ export const SamTable: React.FC<Props> = ({
               return tooltipAttributes(
                 '<table style="width:100%;border-collapse:collapse;font-size:0.9em;">' +
                   tooltipRule('Stake') +
-                  tooltipRow('Active now', '', '', fmt(active)) +
-                  tooltipRow('Target', '', '', fmt(target)) +
+                  tooltipRow('SAM Active', '', '', fmt(active)) +
+                  tooltipRow('SAM Target', '', '', fmt(target)) +
                   tooltipRule('Next epoch') +
                   tooltipRow('Expected change', '', '', deltaStr, {
                     valueColor: deltaColor,
