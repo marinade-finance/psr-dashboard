@@ -795,7 +795,7 @@ export const SamTable: React.FC<Props> = ({
             header: 'Cover. [ep]',
             headerAttrsFn: () =>
               tooltipAttributes(
-                'Epochs of bond runway above the minimum required reserve. At 0, SAM starts capping stake. Negative means the bond is short of the reserve by that many epochs of max-bid payments — top up to avoid further stake cuts.',
+                'Epochs of bond runway above the minimum required reserve. At 0, SAM starts capping stake and Marinade starts undelegating stake and charging fees to cover the costs. Negative means the bond is short of the reserve by that many epochs of max-bid payments — top up to avoid further stake cuts and fee charges.',
               ),
             cellAttrsFn: item =>
               tooltipAttributes(bondTooltip(item.validator.bondState)),
