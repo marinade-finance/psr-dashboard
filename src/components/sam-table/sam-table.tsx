@@ -516,10 +516,10 @@ export const SamTable: React.FC<Props> = ({
       <div className={styles.metricWrap}>
         <div className={styles.metricRow}>
           <Metric
-            label="Total Auction Stake"
-            value={`☉ ${formatSolAmount(samDistributedStake)}`}
+            label="Stake To Distribute"
+            value={`☉ ${formatSolAmount(Math.round(stakeToMoveSol))}`}
             {...tooltipAttributes(
-              'How much stake is distributed by Marinade to validators based on SAM',
+              'Total stake currently above target, available to re-delegate to winning validators',
             )}
           />
           <Metric
@@ -531,10 +531,10 @@ export const SamTable: React.FC<Props> = ({
           />
           {apyMetrics}
           <Metric
-            label="Re-delegate"
-            value={`☉ ${formatSolAmount(Math.round(stakeToMoveSol))}`}
+            label="Total Auction Stake"
+            value={`☉ ${formatSolAmount(samDistributedStake)}`}
             {...tooltipAttributes(
-              'Total stake currently above target, available to re-delegate to winning validators',
+              'How much stake is distributed by Marinade to validators based on SAM',
             )}
           />
           <ComplexMetric
