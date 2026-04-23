@@ -853,6 +853,36 @@ export const SamTable: React.FC<Props> = ({
               tooltipAttributes(
                 'The currently active stake delegated by SAM. Suffix shows delta vs. SAM Target (+ = needs more, − = over).',
               ),
+            cellAttrsFn: item => {
+              const active = selectSamActiveStake(item.validator)
+              const target = selectSamTargetStake(item.validator)
+              const delta = selectExpectedStakeChange(
+                selectVoteAccount(item.validator),
+                stakeChanges,
+              )
+              const row = (label: string, val: string, c?: string) =>
+                `<tr><td style="padding:2px 10px 2px 0;color:rgba(255,255,255,0.7);">${label}</td>` +
+                `<td style="padding:2px 0;text-align:right;font-variant-numeric:tabular-nums;${c ? `color:${c};` : ''}">${val}</td></tr>`
+              const fmt = (n: number) =>
+                `☉ ${formatSolAmount(Math.round(n), 0)}`
+              const deltaColor =
+                delta > 0
+                  ? 'rgb(80,220,150)'
+                  : delta < 0
+                    ? 'rgb(250,120,120)'
+                    : undefined
+              const deltaStr =
+                delta === 0
+                  ? '—'
+                  : `${delta > 0 ? '+' : '−'}${formatSolAmount(Math.abs(Math.round(delta)), 0)}`
+              return tooltipAttributes(
+                '<div style="font-size:12px;"><table style="border-collapse:collapse;">' +
+                  row('Active now', fmt(active)) +
+                  row('Target', fmt(target)) +
+                  row('Expected change', deltaStr, deltaColor) +
+                  '</table></div>',
+              )
+            },
             render: item => {
               const active = selectSamActiveStake(item.validator)
               const target = selectSamTargetStake(item.validator)
@@ -883,6 +913,7 @@ export const SamTable: React.FC<Props> = ({
                   style={{
                     display: 'inline-flex',
                     alignItems: 'baseline',
+                    gap: '0.4em',
                     fontFamily: 'var(--font-mono)',
                     fontVariantNumeric: 'tabular-nums',
                   }}
@@ -890,20 +921,33 @@ export const SamTable: React.FC<Props> = ({
                   <span
                     style={{
                       display: 'inline-block',
-                      width: '5.5em',
-                      marginRight: '0.5em',
-                      textAlign: 'right',
+                      width: '1em',
+                      textAlign: 'center',
+                      color: showDelta ? color : undefined,
+                      opacity: showDelta ? Math.min(1, opacity + 0.15) : 0,
+                      fontSize: '1.25em',
+                      fontWeight: 700,
+                      lineHeight: 1,
+                    }}
+                  >
+                    {showDelta ? arrow : '\u00A0'}
+                  </span>
+                  <span>{formatSolAmount(active, 0)}</span>
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      width: '4em',
+                      textAlign: 'left',
                       color: showDelta ? color : undefined,
                       opacity: showDelta ? opacity : 0,
-                      fontSize: '0.85em',
+                      fontSize: '0.78em',
                       fontWeight: tier >= 4 ? 600 : 400,
                     }}
                   >
                     {showDelta
-                      ? `${arrow}${formatSolAmount(Math.abs(Math.round(delta)), 0)}`
+                      ? `${delta > 0 ? '+' : '−'}${formatSolAmount(Math.abs(Math.round(delta)), 0)}`
                       : '\u00A0'}
                   </span>
-                  <span>{formatSolAmount(active, 0)}</span>
                 </span>
               )
             },
