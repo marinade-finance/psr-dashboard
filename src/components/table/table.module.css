@@ -42,23 +42,23 @@
 }
 
 .red {
-  background-color: rgba(220, 60, 50, 0.18);
+  background-color: rgba(220, 60, 50, 0.09);
 }
 
 .green {
-  background-color: rgba(40, 190, 110, 0.18);
+  background-color: rgba(40, 190, 110, 0.09);
 }
 
 .yellow {
-  background-color: rgba(210, 185, 20, 0.19);
+  background-color: rgba(210, 185, 20, 0.1);
 }
 
 .orange {
-  background-color: rgba(220, 110, 30, 0.16);
+  background-color: rgba(220, 110, 30, 0.08);
 }
 
 .grey {
-  background-color: rgba(128, 128, 128, 0.15);
+  background-color: rgba(128, 128, 128, 0.07);
 }
 
 .noBg {
