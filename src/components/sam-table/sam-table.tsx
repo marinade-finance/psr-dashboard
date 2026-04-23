@@ -738,7 +738,7 @@ export const SamTable: React.FC<Props> = ({
                     `× ${formatSolAmount(bid, 4)}`,
                     `${formatSolAmount(activatingCost, 3)} ☉`,
                   ) +
-                  '<tr><td colspan="3" style="border-top:1px solid rgba(255,255,255,0.7);padding:4px 10px 2px 0;text-align:right;">Total</td>' +
+                  '<tr><td colspan="3" style="border-top:1px solid rgba(255,255,255,0.7);padding:4px 10px 2px 0;text-align:right;">Total Charge</td>' +
                   `<td style="border-top:1px solid rgba(255,255,255,0.7);padding:4px 0 2px;text-align:right;${num}"><b>${formatSolAmount(total, 3)} ☉</b></td></tr>` +
                   '</table>',
               )
