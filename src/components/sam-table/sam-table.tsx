@@ -105,6 +105,33 @@ const renderPenaltyBadges = (v: AuctionValidator) => {
   ))
 }
 
+const NUM_STYLE =
+  'font-variant-numeric:tabular-nums;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;'
+
+const tooltipRow = (
+  label: string,
+  qty: string,
+  rate: string,
+  value: string,
+  opts?: { boldLabel?: boolean; boldValue?: boolean; valueColor?: string },
+) => {
+  const boldLabel = opts?.boldLabel ?? false
+  const boldValue = opts?.boldValue ?? true
+  const color = opts?.valueColor ? `color:${opts.valueColor};` : ''
+  const wrap = (s: string, b: boolean) => (b ? `<b>${s}</b>` : s)
+  return (
+    '<tr>' +
+    `<td style="padding:2px 12px 2px 0;white-space:nowrap;">${wrap(label, boldLabel)}</td>` +
+    `<td style="padding:2px 10px 2px 0;text-align:right;white-space:nowrap;opacity:0.85;${NUM_STYLE}">${qty}</td>` +
+    `<td style="padding:2px 10px 2px 0;text-align:right;white-space:nowrap;opacity:0.85;${NUM_STYLE}">${rate}</td>` +
+    `<td style="padding:2px 0;text-align:right;white-space:nowrap;${color}${NUM_STYLE}">${wrap(value, boldValue)}</td>` +
+    '</tr>'
+  )
+}
+
+const tooltipRule = (label: string) =>
+  `<tr><td colspan="4" style="border-top:1px dashed rgba(255,255,255,0.45);padding-top:4px;font-size:0.8em;opacity:0.85;letter-spacing:0.06em;text-transform:uppercase;">${label}</td></tr>`
+
 type DisplayValidator = { validator: ValidatorWithBondState; isGhost: boolean }
 type EditField =
   | 'inflationCommission'
@@ -687,22 +714,8 @@ export const SamTable: React.FC<Props> = ({
               const activating = Math.max(0, target - stake)
               const cost = selectEffectiveCost(item.validator)
               const activatingCost = (bid * activating) / 1000
-              const num =
-                'font-variant-numeric:tabular-nums;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;'
-              const row = (
-                label: string,
-                qty: string,
-                rate: string,
-                value: string,
-              ) =>
-                '<tr>' +
-                `<td style="padding:2px 12px 2px 0;white-space:nowrap;">${label}</td>` +
-                `<td style="padding:2px 10px 2px 0;text-align:right;white-space:nowrap;opacity:0.85;${num}">${qty}</td>` +
-                `<td style="padding:2px 10px 2px 0;text-align:right;white-space:nowrap;opacity:0.85;${num}">${rate}</td>` +
-                `<td style="padding:2px 0;text-align:right;white-space:nowrap;${num}"><b>${value}</b></td>` +
-                '</tr>'
-              const rule = (label: string) =>
-                `<tr><td colspan="4" style="border-top:1px dashed rgba(255,255,255,0.45);padding-top:4px;font-size:0.8em;opacity:0.85;letter-spacing:0.06em;text-transform:uppercase;">${label}</td></tr>`
+              const row = tooltipRow
+              const rule = tooltipRule
               const header = overridesBidCpmpeMessage(item.validator)
               const headerHtml = header
                 ? `<div style="margin-bottom:6px;">${header.replace(/<br\/?>/g, '')}</div>`
@@ -752,7 +765,7 @@ export const SamTable: React.FC<Props> = ({
                     `${formatSolAmount(activatingCost, 3)} ☉`,
                   ) +
                   '<tr><td colspan="3" style="border-top:1px solid rgba(255,255,255,0.7);padding:4px 10px 2px 0;text-align:right;">Total Charge</td>' +
-                  `<td style="border-top:1px solid rgba(255,255,255,0.7);padding:4px 0 2px;text-align:right;${num}"><b>${formatSolAmount(total, 3)} ☉</b></td></tr>` +
+                  `<td style="border-top:1px solid rgba(255,255,255,0.7);padding:4px 0 2px;text-align:right;${NUM_STYLE}"><b>${formatSolAmount(total, 3)} ☉</b></td></tr>` +
                   '</table>',
               )
             },
@@ -860,11 +873,8 @@ export const SamTable: React.FC<Props> = ({
                 selectVoteAccount(item.validator),
                 stakeChanges,
               )
-              const row = (label: string, val: string, c?: string) =>
-                `<tr><td style="padding:2px 10px 2px 0;color:rgba(255,255,255,0.7);">${label}</td>` +
-                `<td style="padding:2px 0;text-align:right;font-variant-numeric:tabular-nums;${c ? `color:${c};` : ''}">${val}</td></tr>`
               const fmt = (n: number) =>
-                `☉ ${formatSolAmount(Math.round(n), 0)}`
+                `${formatSolAmount(Math.round(n), 0)} ☉`
               const deltaColor =
                 delta > 0
                   ? 'rgb(80,220,150)'
@@ -874,13 +884,17 @@ export const SamTable: React.FC<Props> = ({
               const deltaStr =
                 delta === 0
                   ? '—'
-                  : `${delta > 0 ? '+' : '−'}${formatSolAmount(Math.abs(Math.round(delta)), 0)}`
+                  : `${delta > 0 ? '+' : '−'}${formatSolAmount(Math.abs(Math.round(delta)), 0)} ☉`
               return tooltipAttributes(
-                '<div style="font-size:12px;"><table style="border-collapse:collapse;">' +
-                  row('Active now', fmt(active)) +
-                  row('Target', fmt(target)) +
-                  row('Expected change', deltaStr, deltaColor) +
-                  '</table></div>',
+                '<table style="width:100%;border-collapse:collapse;font-size:0.9em;">' +
+                  tooltipRule('Stake') +
+                  tooltipRow('Active now', '', '', fmt(active)) +
+                  tooltipRow('Target', '', '', fmt(target)) +
+                  tooltipRule('Next epoch') +
+                  tooltipRow('Expected change', '', '', deltaStr, {
+                    valueColor: deltaColor,
+                  }) +
+                  '</table>',
               )
             },
             render: item => {
