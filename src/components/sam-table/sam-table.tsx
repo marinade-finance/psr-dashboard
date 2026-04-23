@@ -881,22 +881,17 @@ export const SamTable: React.FC<Props> = ({
             },
             render: item => {
               const active = selectSamActiveStake(item.validator)
-              const target = selectSamTargetStake(item.validator)
               const delta = selectExpectedStakeChange(item.validator)
-              const magnitude = active + target
-              const ratio = magnitude > 0 ? Math.abs(delta) / magnitude : 0
-              const kind: 'none' | 'dot' | 'arrow' =
-                delta === 0 || ratio === 0
-                  ? 'none'
-                  : ratio >= 0.01
-                    ? 'arrow'
-                    : 'dot'
+              const base = active > 0 ? active : Math.abs(delta)
+              const ratio = base > 0 ? Math.abs(delta) / base : 0
+              const arrows =
+                ratio < 0.01 ? 0 : ratio < 0.3 ? 1 : ratio < 0.8 ? 2 : 3
+              const kind: 'none' | 'dot' | 'arrows' =
+                delta === 0 ? 'none' : arrows === 0 ? 'dot' : 'arrows'
               const color = delta > 0 ? 'rgb(80,220,150)' : 'rgb(250,120,120)'
               const glyph =
-                kind === 'arrow'
-                  ? delta > 0
-                    ? '↑'
-                    : '↓'
+                kind === 'arrows'
+                  ? (delta > 0 ? '↑' : '↓').repeat(arrows)
                   : kind === 'dot'
                     ? '●'
                     : '\u00A0'
@@ -913,12 +908,13 @@ export const SamTable: React.FC<Props> = ({
                   <span
                     style={{
                       display: 'inline-block',
-                      width: '1em',
+                      minWidth: '1em',
                       textAlign: 'center',
                       color: kind !== 'none' ? color : undefined,
                       opacity: kind === 'none' ? 0 : 1,
-                      fontSize: kind === 'arrow' ? '1.8em' : '0.7em',
+                      fontSize: kind === 'arrows' ? '1.8em' : '0.7em',
                       fontWeight: 800,
+                      letterSpacing: kind === 'arrows' ? '-0.15em' : 'normal',
                       lineHeight: 1,
                     }}
                   >
