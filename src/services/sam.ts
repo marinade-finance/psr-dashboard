@@ -514,42 +514,75 @@ export function selectRedelegationBudget(
   return budget
 }
 
-// Expected per-validator stake change next epoch. Uses the snapshot-derived
-// re-delegation budget (stake that just cooled down). Inflows go greedily to
-// the highest-totalPmpe validators whose target is above current; outflows
-// distribute proportionally among validators below target.
+// Per-epoch natural undelegation outflow: ~0.7% of TVL is withdrawn from the
+// pool each epoch and must be drawn pro-rata from currently-staked validators.
+const WITHDRAWAL_FRACTION_PER_EPOCH = 0.007
+
+// Expected per-validator stake change next epoch. Combines:
+//  - Re-delegation budget (stake that just cooled down) → inflows go greedily
+//    to the highest-totalPmpe validators whose target is above current;
+//    a matching amount is drawn from validators above target, pro-rata by excess.
+//  - Natural withdrawals (~0.7% of TVL) → drawn from every validator holding
+//    SAM stake, pro-rata by their current activated SAM stake.
 export function buildExpectedStakeChanges(
   validators: AuctionValidator[],
+  tvl: number,
 ): Map<string, number> {
   const budget = selectRedelegationBudget(validators)
   const rawDelta = (v: AuctionValidator) =>
     v.auctionStake.marinadeSamTargetSol - v.marinadeActivatedStakeSol
-
   const result = new Map<string, number>()
-  if (budget <= 0) return result
 
-  const sorted = [...validators].sort(
-    (a, b) => (b.revShare.totalPmpe ?? 0) - (a.revShare.totalPmpe ?? 0),
-  )
-  let remaining = budget
-  for (const v of sorted) {
-    const delta = rawDelta(v)
-    if (delta > 0 && remaining > 0) {
-      const alloc = Math.min(delta, remaining)
-      result.set(v.voteAccount, alloc)
-      remaining -= alloc
+  if (budget > 0) {
+    const sorted = [...validators].sort(
+      (a, b) => (b.revShare.totalPmpe ?? 0) - (a.revShare.totalPmpe ?? 0),
+    )
+    let remaining = budget
+    for (const v of sorted) {
+      const delta = rawDelta(v)
+      if (delta > 0 && remaining > 0) {
+        const alloc = Math.min(delta, remaining)
+        result.set(v.voteAccount, alloc)
+        remaining -= alloc
+      }
+    }
+    const totalInflows = [...result.values()].reduce((s, x) => s + x, 0)
+    const losers = validators.filter(v => rawDelta(v) < 0)
+    const totalExcess = losers.reduce((s, v) => s + Math.abs(rawDelta(v)), 0)
+    if (totalInflows > 0 && totalExcess > 0) {
+      for (const v of losers) {
+        const share = Math.abs(rawDelta(v)) / totalExcess
+        result.set(v.voteAccount, -totalInflows * share)
+      }
     }
   }
 
-  const totalInflows = [...result.values()].reduce((s, x) => s + x, 0)
-  if (totalInflows === 0) return result
+  const withdrawal = WITHDRAWAL_FRACTION_PER_EPOCH * tvl
+  if (withdrawal > 0) {
+    const totalActive = validators.reduce(
+      (s, v) => s + v.marinadeActivatedStakeSol,
+      0,
+    )
+    if (totalActive > 0) {
+      for (const v of validators) {
+        const share = v.marinadeActivatedStakeSol / totalActive
+        const prev = result.get(v.voteAccount) ?? 0
+        result.set(v.voteAccount, prev - withdrawal * share)
+      }
+    }
+  }
 
-  const losers = validators.filter(v => rawDelta(v) < 0)
-  const totalExcess = losers.reduce((s, v) => s + Math.abs(rawDelta(v)), 0)
-  if (totalExcess > 0) {
-    for (const v of losers) {
-      const share = Math.abs(rawDelta(v)) / totalExcess
-      result.set(v.voteAccount, -totalInflows * share)
+  // Paid undelegation: bond-funded penalties (bid-too-low, blacklist, bond
+  // risk fee). Charged per validator, independent of the TVL withdrawal cap.
+  for (const v of validators) {
+    const stake = v.marinadeActivatedStakeSol
+    const penalty =
+      (stake * (v.revShare.bidTooLowPenaltyPmpe ?? 0)) / 1000 +
+      (stake * (v.revShare.blacklistPenaltyPmpe ?? 0)) / 1000 +
+      (v.values?.bondRiskFeeSol ?? 0)
+    if (penalty > 0) {
+      const prev = result.get(v.voteAccount) ?? 0
+      result.set(v.voteAccount, prev - penalty)
     }
   }
 

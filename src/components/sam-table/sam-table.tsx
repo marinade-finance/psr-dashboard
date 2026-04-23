@@ -232,7 +232,10 @@ export const SamTable: React.FC<Props> = ({
   const stakeToMoveSol = selectStakeToMove(auctionResult)
   const stakeToMove = stakeToMoveSol / samDistributedStake
   const redelegationBudget = selectRedelegationBudget(validators)
-  const stakeChanges = buildExpectedStakeChanges(validators)
+  const stakeChanges = buildExpectedStakeChanges(
+    validators,
+    auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol,
+  )
   const activeStake =
     selectTotalActiveStake(auctionResult) / samDistributedStake
   const productiveStake =
