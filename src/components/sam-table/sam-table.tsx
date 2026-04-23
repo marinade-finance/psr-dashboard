@@ -923,9 +923,9 @@ export const SamTable: React.FC<Props> = ({
                       width: '1em',
                       textAlign: 'center',
                       color: showDelta ? color : undefined,
-                      opacity: showDelta ? Math.min(1, opacity + 0.15) : 0,
-                      fontSize: '1.25em',
-                      fontWeight: 700,
+                      opacity: showDelta ? 1 : 0,
+                      fontSize: '1.8em',
+                      fontWeight: 800,
                       lineHeight: 1,
                     }}
                   >
