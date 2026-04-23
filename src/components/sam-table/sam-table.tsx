@@ -875,22 +875,28 @@ export const SamTable: React.FC<Props> = ({
               selectSamActiveStake(b.validator),
             alignment: Alignment.RIGHT,
           },
-          {
-            header: 'SAM Target [☉]',
-            headerAttrsFn: () =>
-              tooltipAttributes(
-                'The target stake to be received based off the auction.',
-              ),
-            cellAttrsFn: item =>
-              tooltipAttributes(selectConstraintText(item.validator)),
-            render: item => (
-              <>{formatSolAmount(selectSamTargetStake(item.validator), 0)}</>
-            ),
-            compare: (a, b) =>
-              selectSamTargetStake(a.validator) -
-              selectSamTargetStake(b.validator),
-            alignment: Alignment.RIGHT,
-          },
+          ...(level === UserLevel.Expert
+            ? [
+                {
+                  header: 'SAM Target [☉]',
+                  headerAttrsFn: () =>
+                    tooltipAttributes(
+                      'The target stake to be received based off the auction.',
+                    ),
+                  cellAttrsFn: (item: DisplayValidator) =>
+                    tooltipAttributes(selectConstraintText(item.validator)),
+                  render: (item: DisplayValidator) => (
+                    <>
+                      {formatSolAmount(selectSamTargetStake(item.validator), 0)}
+                    </>
+                  ),
+                  compare: (a: DisplayValidator, b: DisplayValidator) =>
+                    selectSamTargetStake(a.validator) -
+                    selectSamTargetStake(b.validator),
+                  alignment: Alignment.RIGHT,
+                },
+              ]
+            : []),
         ]}
         defaultOrder={defaultOrder}
         onOrderChange={handleOrderChange}
