@@ -514,17 +514,79 @@ export function selectRedelegationBudget(
   return budget
 }
 
+// -----------------------------------------------------------------------------
+// AUCTION RESULT AUGMENTATION
+// -----------------------------------------------------------------------------
+// Additional per-validator values computed on top of the SDK's auction result
+// and stitched back into it. Planned migration: move this whole block into
+// ds-sam-sdk so the fields ship as part of AuctionValidatorValues. Until then,
+// this module owns the math and exposes an `augmentAuctionResult` entry point.
+//
 // Per-epoch natural undelegation outflow: ~0.7% of TVL is withdrawn from the
 // pool each epoch and must be drawn pro-rata from currently-staked validators.
+// Paid undelegation (values.paidUndelegationSol) is charged additionally and
+// does NOT count against the 0.7% TVL cap.
 const WITHDRAWAL_FRACTION_PER_EPOCH = 0.007
 
-// Expected per-validator stake change next epoch. Combines:
-//  - Re-delegation budget (stake that just cooled down) → inflows go greedily
-//    to the highest-totalPmpe validators whose target is above current;
-//    a matching amount is drawn from validators above target, pro-rata by excess.
-//  - Natural withdrawals (~0.7% of TVL) → drawn from every validator holding
-//    SAM stake, pro-rata by their current activated SAM stake.
-export function buildExpectedStakeChanges(
+export type AugmentedValues = AuctionValidator['values'] & {
+  expectedStakeChangeSol: number
+  naturalWithdrawalSol: number
+}
+
+export function augmentAuctionResult(auctionResult: AuctionResult): void {
+  const { validators } = auctionResult.auctionData
+  const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
+  const changes = computeExpectedStakeChanges(validators, tvl)
+  const withdrawalByVa = computeNaturalWithdrawal(validators, tvl)
+  for (const v of validators) {
+    const values = v.values as AugmentedValues
+    values.expectedStakeChangeSol = changes.get(v.voteAccount) ?? 0
+    values.naturalWithdrawalSol = withdrawalByVa.get(v.voteAccount) ?? 0
+  }
+}
+
+function computeNaturalWithdrawal(
+  validators: AuctionValidator[],
+  tvl: number,
+): Map<string, number> {
+  const out = new Map<string, number>()
+  const withdrawal = WITHDRAWAL_FRACTION_PER_EPOCH * tvl
+  if (withdrawal <= 0) return out
+  // Prefer pulling from over-target validators (rebalancer withdraws from
+  // excess first), pro-rata by excess. Fall back to pro-rata by active stake
+  // across all validators if nobody is over-target.
+  const excess = validators.map(v => ({
+    va: v.voteAccount,
+    x: Math.max(
+      0,
+      v.marinadeActivatedStakeSol - v.auctionStake.marinadeSamTargetSol,
+    ),
+  }))
+  const totalExcess = excess.reduce((s, e) => s + e.x, 0)
+  if (totalExcess > 0) {
+    for (const { va, x } of excess) {
+      if (x > 0) out.set(va, (withdrawal * x) / totalExcess)
+    }
+    return out
+  }
+  const totalActive = validators.reduce(
+    (s, v) => s + v.marinadeActivatedStakeSol,
+    0,
+  )
+  if (totalActive <= 0) return out
+  for (const v of validators) {
+    out.set(
+      v.voteAccount,
+      (withdrawal * v.marinadeActivatedStakeSol) / totalActive,
+    )
+  }
+  return out
+}
+
+// Re-delegation flow (inflows from cooled-down stake to highest-totalPmpe
+// below-target validators, outflows pro-rata from above-target validators),
+// plus natural 0.7%-TVL withdrawals, plus paid undelegation penalties.
+function computeExpectedStakeChanges(
   validators: AuctionValidator[],
   tvl: number,
 ): Map<string, number> {
@@ -557,39 +619,23 @@ export function buildExpectedStakeChanges(
     }
   }
 
-  const withdrawal = WITHDRAWAL_FRACTION_PER_EPOCH * tvl
-  if (withdrawal > 0) {
-    const totalActive = validators.reduce(
-      (s, v) => s + v.marinadeActivatedStakeSol,
-      0,
-    )
-    if (totalActive > 0) {
-      for (const v of validators) {
-        const share = v.marinadeActivatedStakeSol / totalActive
-        const prev = result.get(v.voteAccount) ?? 0
-        result.set(v.voteAccount, prev - withdrawal * share)
-      }
-    }
+  const withdrawals = computeNaturalWithdrawal(validators, tvl)
+  for (const [va, w] of withdrawals) {
+    result.set(va, (result.get(va) ?? 0) - w)
   }
 
-  // Paid undelegation: bond-funded penalties (bid-too-low, blacklist, bond
-  // risk fee). Charged per validator, independent of the TVL withdrawal cap.
   for (const v of validators) {
-    const stake = v.marinadeActivatedStakeSol
-    const penalty =
-      (stake * (v.revShare.bidTooLowPenaltyPmpe ?? 0)) / 1000 +
-      (stake * (v.revShare.blacklistPenaltyPmpe ?? 0)) / 1000 +
-      (v.values?.bondRiskFeeSol ?? 0)
-    if (penalty > 0) {
-      const prev = result.get(v.voteAccount) ?? 0
-      result.set(v.voteAccount, prev - penalty)
+    const paid = v.values?.paidUndelegationSol ?? 0
+    if (paid > 0) {
+      result.set(v.voteAccount, (result.get(v.voteAccount) ?? 0) - paid)
     }
   }
 
   return result
 }
 
-export const selectExpectedStakeChange = (
-  voteAccount: string,
-  stakeChanges: Map<string, number>,
-): number => stakeChanges.get(voteAccount) ?? 0
+export const selectExpectedStakeChange = (v: AuctionValidator): number =>
+  (v.values as AugmentedValues).expectedStakeChangeSol ?? 0
+
+export const selectNaturalWithdrawal = (v: AuctionValidator): number =>
+  (v.values as AugmentedValues).naturalWithdrawalSol ?? 0

@@ -17,7 +17,7 @@ import {
   selectIdealAPY,
   selectStakeToMove,
   selectRedelegationBudget,
-  buildExpectedStakeChanges,
+  augmentAuctionResult,
   selectExpectedStakeChange,
   selectTotalActiveStake,
   selectSamActiveStake,
@@ -232,10 +232,7 @@ export const SamTable: React.FC<Props> = ({
   const stakeToMoveSol = selectStakeToMove(auctionResult)
   const stakeToMove = stakeToMoveSol / samDistributedStake
   const redelegationBudget = selectRedelegationBudget(validators)
-  const stakeChanges = buildExpectedStakeChanges(
-    validators,
-    auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol,
-  )
+  augmentAuctionResult(auctionResult)
   const activeStake =
     selectTotalActiveStake(auctionResult) / samDistributedStake
   const productiveStake =
@@ -857,10 +854,7 @@ export const SamTable: React.FC<Props> = ({
             cellAttrsFn: item => {
               const active = selectSamActiveStake(item.validator)
               const target = selectSamTargetStake(item.validator)
-              const delta = selectExpectedStakeChange(
-                selectVoteAccount(item.validator),
-                stakeChanges,
-              )
+              const delta = selectExpectedStakeChange(item.validator)
               const fmt = (n: number) =>
                 `${formatSolAmount(Math.round(n), 0)} ☉`
               const deltaColor =
@@ -888,10 +882,7 @@ export const SamTable: React.FC<Props> = ({
             render: item => {
               const active = selectSamActiveStake(item.validator)
               const target = selectSamTargetStake(item.validator)
-              const delta = selectExpectedStakeChange(
-                selectVoteAccount(item.validator),
-                stakeChanges,
-              )
+              const delta = selectExpectedStakeChange(item.validator)
               const magnitude = active + target
               const ratio = magnitude > 0 ? Math.abs(delta) / magnitude : 0
               const kind: 'none' | 'dot' | 'arrow' =
