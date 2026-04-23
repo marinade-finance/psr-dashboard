@@ -3,6 +3,10 @@ export type ScoringValidator = {
   voteAccount: string
   revShare: {
     bidTooLowPenaltyPmpe: number
+    blacklistPenaltyPmpe: number
+  }
+  values: {
+    bondRiskFeeSol: number
   }
 }
 
