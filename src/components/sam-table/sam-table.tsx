@@ -199,7 +199,8 @@ export const SamTable: React.FC<Props> = ({
   const winningAPY = selectWinningAPY(auctionResult, epochsPerYear)
   const projectedApy = selectProjectedAPY(auctionResult, epochsPerYear)
   const idealApy = selectIdealAPY(auctionResult, epochsPerYear)
-  const stakeToMove = selectStakeToMove(auctionResult) / samDistributedStake
+  const stakeToMoveSol = selectStakeToMove(auctionResult)
+  const stakeToMove = stakeToMoveSol / samDistributedStake
   const activeStake =
     selectTotalActiveStake(auctionResult) / samDistributedStake
   const productiveStake =
@@ -529,6 +530,13 @@ export const SamTable: React.FC<Props> = ({
             )}
           />
           {apyMetrics}
+          <Metric
+            label="Re-delegate"
+            value={`☉ ${formatSolAmount(Math.round(stakeToMoveSol))}`}
+            {...tooltipAttributes(
+              'Total stake currently above target, available to re-delegate to winning validators',
+            )}
+          />
           <ComplexMetric
             label="Winning Validators"
             value={
@@ -837,10 +845,31 @@ export const SamTable: React.FC<Props> = ({
           {
             header: 'SAM Active [☉]',
             headerAttrsFn: () =>
-              tooltipAttributes('The currently active stake delegated by SAM.'),
-            render: item => (
-              <>{formatSolAmount(selectSamActiveStake(item.validator), 0)}</>
-            ),
+              tooltipAttributes(
+                'The currently active stake delegated by SAM. Suffix shows delta vs. SAM Target (+ = needs more, − = over).',
+              ),
+            render: item => {
+              const active = selectSamActiveStake(item.validator)
+              const target = selectSamTargetStake(item.validator)
+              const delta = target - active
+              if (Math.abs(delta) < 1) {
+                return <>{formatSolAmount(active, 0)}</>
+              }
+              const color =
+                delta > 0 ? 'var(--status-green)' : 'var(--destructive)'
+              const arrow = delta > 0 ? '↑' : '↓'
+              return (
+                <>
+                  {formatSolAmount(active, 0)}
+                  <span
+                    style={{ color, fontSize: '0.85em', marginLeft: '0.4em' }}
+                  >
+                    {arrow}
+                    {formatSolAmount(Math.abs(Math.round(delta)), 0)}
+                  </span>
+                </>
+              )
+            },
             compare: (a, b) =>
               selectSamActiveStake(a.validator) -
               selectSamActiveStake(b.validator),
