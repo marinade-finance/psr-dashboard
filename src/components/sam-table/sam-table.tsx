@@ -849,7 +849,7 @@ export const SamTable: React.FC<Props> = ({
             header: 'SAM Active [☉]',
             headerAttrsFn: () =>
               tooltipAttributes(
-                'The currently active stake delegated by SAM. Suffix shows delta vs. SAM Target (+ = needs more, − = over).',
+                'The currently active stake delegated by SAM. Arrow indicates expected change next epoch — see tooltip for breakdown.',
               ),
             cellAttrsFn: item => {
               const active = selectSamActiveStake(item.validator)
@@ -892,18 +892,6 @@ export const SamTable: React.FC<Props> = ({
               const magnitude = active + target
               const ratio = magnitude > 0 ? Math.abs(delta) / magnitude : 0
               const showDelta = ratio >= 0.01
-              const tier = !showDelta
-                ? 0
-                : ratio < 0.05
-                  ? 1
-                  : ratio < 0.15
-                    ? 2
-                    : ratio < 0.3
-                      ? 3
-                      : ratio < 0.55
-                        ? 4
-                        : 5
-              const opacity = 0.4 + tier * 0.12
               const color =
                 delta > 0 ? 'var(--status-green)' : 'var(--destructive)'
               const arrow = delta > 0 ? '↑' : '↓'
@@ -932,21 +920,6 @@ export const SamTable: React.FC<Props> = ({
                     {showDelta ? arrow : '\u00A0'}
                   </span>
                   <span>{formatSolAmount(active, 0)}</span>
-                  <span
-                    style={{
-                      display: 'inline-block',
-                      width: '4em',
-                      textAlign: 'left',
-                      color: showDelta ? color : undefined,
-                      opacity: showDelta ? opacity : 0,
-                      fontSize: '0.78em',
-                      fontWeight: tier >= 4 ? 600 : 400,
-                    }}
-                  >
-                    {showDelta
-                      ? `${delta > 0 ? '+' : '−'}${formatSolAmount(Math.abs(Math.round(delta)), 0)}`
-                      : '\u00A0'}
-                  </span>
                 </span>
               )
             },
