@@ -797,7 +797,7 @@ export const SamTable: React.FC<Props> = ({
                       fontVariantNumeric: 'tabular-nums',
                     }}
                   >
-                    {`i ${formatPercentage(selectCommission(validator), 0)} · m ${mev} · b ${blk}`}
+                    {`${formatPercentage(selectCommission(validator), 0)} · ${mev} · ${blk}`}
                   </div>
                 </>
               )
