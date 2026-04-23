@@ -1,10 +1,13 @@
+.validatorCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .penalties {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  margin-left: 6px;
-  margin-top: -1px;
-  vertical-align: middle;
   cursor: help;
   line-height: 1;
 }
@@ -110,7 +113,6 @@
 .pubkey {
   display: inline-block;
   width: 100px;
-  padding-top: 4px;
   text-overflow: ellipsis;
   overflow: hidden;
 }

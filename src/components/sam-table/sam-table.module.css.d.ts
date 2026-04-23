@@ -32,6 +32,7 @@ interface CssExports {
   'simulationBanner': string;
   'simulationModeActive': string;
   'tableWrap': string;
+  'validatorCell': string;
   'validatorRowClickable': string;
   'validatorRowEditing': string;
 }

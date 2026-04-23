@@ -719,14 +719,14 @@ export const SamTable: React.FC<Props> = ({
               const va = selectVoteAccount(item.validator)
               const sim = !item.isGhost && simulatedValidator === va
               return (
-                <>
+                <span className={styles.validatorCell}>
                   <span
                     className={`${styles.pubkey} ${sim ? styles.pubkeySimulated : ''}`}
                   >
                     {va}
                   </span>
                   {renderPenaltyBadges(item.validator)}
-                </>
+                </span>
               )
             },
             compare: (a, b) =>
