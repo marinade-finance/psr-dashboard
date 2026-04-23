@@ -1,5 +1,5 @@
 .complexMetricWrap {
-  padding: 8px 14px;
+  padding: 10px 14px;
   background-color: var(--bg-dark-1);
   border-radius: 4px;
   cursor: help;
@@ -7,6 +7,7 @@
 
 .complexMetricWrap > div {
   white-space: nowrap;
+  text-align: center;
 }
 
 .complexMetricWrap > div:first-child {
@@ -16,7 +17,7 @@
 }
 
 .complexMetricWrap > div:last-child {
-  margin-top: 4px;
+  margin-top: 6px;
   font-size: 23px;
   color: var(--text-light-2);
 }

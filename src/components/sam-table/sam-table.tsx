@@ -891,15 +891,26 @@ export const SamTable: React.FC<Props> = ({
               )
               const magnitude = active + target
               const ratio = magnitude > 0 ? Math.abs(delta) / magnitude : 0
-              const showDelta = ratio >= 0.01
-              const color =
-                delta > 0 ? 'var(--status-green)' : 'var(--destructive)'
-              const arrow = delta > 0 ? '↑' : '↓'
+              const kind: 'none' | 'dot' | 'arrow' =
+                delta === 0 || ratio === 0
+                  ? 'none'
+                  : ratio >= 0.01
+                    ? 'arrow'
+                    : 'dot'
+              const color = delta > 0 ? 'rgb(80,220,150)' : 'rgb(250,120,120)'
+              const glyph =
+                kind === 'arrow'
+                  ? delta > 0
+                    ? '↑'
+                    : '↓'
+                  : kind === 'dot'
+                    ? '●'
+                    : '\u00A0'
               return (
                 <span
                   style={{
                     display: 'inline-flex',
-                    alignItems: 'baseline',
+                    alignItems: 'center',
                     gap: '0.4em',
                     fontFamily: 'var(--font-mono)',
                     fontVariantNumeric: 'tabular-nums',
@@ -910,14 +921,14 @@ export const SamTable: React.FC<Props> = ({
                       display: 'inline-block',
                       width: '1em',
                       textAlign: 'center',
-                      color: showDelta ? color : undefined,
-                      opacity: showDelta ? 1 : 0,
-                      fontSize: '1.8em',
+                      color: kind !== 'none' ? color : undefined,
+                      opacity: kind === 'none' ? 0 : 1,
+                      fontSize: kind === 'arrow' ? '1.8em' : '0.7em',
                       fontWeight: 800,
                       lineHeight: 1,
                     }}
                   >
-                    {showDelta ? arrow : '\u00A0'}
+                    {glyph}
                   </span>
                   <span>{formatSolAmount(active, 0)}</span>
                 </span>
