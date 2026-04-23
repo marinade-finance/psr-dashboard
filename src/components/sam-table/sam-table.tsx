@@ -16,6 +16,9 @@ import {
   selectProjectedAPY,
   selectIdealAPY,
   selectStakeToMove,
+  selectRedelegationBudget,
+  buildExpectedStakeChanges,
+  selectExpectedStakeChange,
   selectTotalActiveStake,
   selectSamActiveStake,
   bondHealthColor,
@@ -201,6 +204,8 @@ export const SamTable: React.FC<Props> = ({
   const idealApy = selectIdealAPY(auctionResult, epochsPerYear)
   const stakeToMoveSol = selectStakeToMove(auctionResult)
   const stakeToMove = stakeToMoveSol / samDistributedStake
+  const redelegationBudget = selectRedelegationBudget(validators)
+  const stakeChanges = buildExpectedStakeChanges(validators)
   const activeStake =
     selectTotalActiveStake(auctionResult) / samDistributedStake
   const productiveStake =
@@ -517,9 +522,9 @@ export const SamTable: React.FC<Props> = ({
         <div className={styles.metricRow}>
           <Metric
             label="Stake To Distribute"
-            value={`☉ ${formatSolAmount(Math.round(stakeToMoveSol))}`}
+            value={`☉ ${formatSolAmount(Math.round(redelegationBudget))}`}
             {...tooltipAttributes(
-              'Total stake currently above target, available to re-delegate to winning validators',
+              'Stake that cooled down in the previous epoch and is available to re-delegate next epoch',
             )}
           />
           <Metric
@@ -851,7 +856,10 @@ export const SamTable: React.FC<Props> = ({
             render: item => {
               const active = selectSamActiveStake(item.validator)
               const target = selectSamTargetStake(item.validator)
-              const delta = target - active
+              const delta = selectExpectedStakeChange(
+                selectVoteAccount(item.validator),
+                stakeChanges,
+              )
               const magnitude = active + target
               const ratio = magnitude > 0 ? Math.abs(delta) / magnitude : 0
               const showDelta = ratio >= 0.01
