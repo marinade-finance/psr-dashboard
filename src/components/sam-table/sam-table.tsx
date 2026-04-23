@@ -887,13 +887,12 @@ export const SamTable: React.FC<Props> = ({
                     fontVariantNumeric: 'tabular-nums',
                   }}
                 >
-                  <span>{formatSolAmount(active, 0)}</span>
                   <span
                     style={{
                       display: 'inline-block',
                       width: '5.5em',
-                      marginLeft: '0.5em',
-                      textAlign: 'left',
+                      marginRight: '0.5em',
+                      textAlign: 'right',
                       color: showDelta ? color : undefined,
                       opacity: showDelta ? opacity : 0,
                       fontSize: '0.85em',
@@ -904,6 +903,7 @@ export const SamTable: React.FC<Props> = ({
                       ? `${arrow}${formatSolAmount(Math.abs(Math.round(delta)), 0)}`
                       : '\u00A0'}
                   </span>
+                  <span>{formatSolAmount(active, 0)}</span>
                 </span>
               )
             },
