@@ -785,22 +785,7 @@ export const SamTable: React.FC<Props> = ({
                   { step: '0.001', min: '0' },
                 )
               }
-              const mev = formattedMevCommission(validator)
-              const blk = formattedBlockRewardsCommission(validator)
-              return (
-                <>
-                  <div>{formatSolAmount(selectBid(validator), 4)}</div>
-                  <div
-                    style={{
-                      fontSize: '0.75em',
-                      opacity: 0.55,
-                      fontVariantNumeric: 'tabular-nums',
-                    }}
-                  >
-                    {`${formatPercentage(selectCommission(validator), 0)} · ${mev} · ${blk}`}
-                  </div>
-                </>
-              )
+              return <>{formatSolAmount(selectBid(validator), 4)}</>
             },
             compare: (a, b) => selectBid(a.validator) - selectBid(b.validator),
             alignment: Alignment.RIGHT,
