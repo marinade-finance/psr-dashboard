@@ -852,9 +852,22 @@ export const SamTable: React.FC<Props> = ({
               const active = selectSamActiveStake(item.validator)
               const target = selectSamTargetStake(item.validator)
               const delta = target - active
-              if (Math.abs(delta) < 1) {
+              const magnitude = active + target
+              const ratio = magnitude > 0 ? Math.abs(delta) / magnitude : 0
+              if (ratio < 0.01) {
                 return <>{formatSolAmount(active, 0)}</>
               }
+              const tier =
+                ratio < 0.05
+                  ? 1
+                  : ratio < 0.15
+                    ? 2
+                    : ratio < 0.3
+                      ? 3
+                      : ratio < 0.55
+                        ? 4
+                        : 5
+              const opacity = 0.4 + tier * 0.12
               const color =
                 delta > 0 ? 'var(--status-green)' : 'var(--destructive)'
               const arrow = delta > 0 ? '↑' : '↓'
@@ -862,7 +875,13 @@ export const SamTable: React.FC<Props> = ({
                 <>
                   {formatSolAmount(active, 0)}
                   <span
-                    style={{ color, fontSize: '0.85em', marginLeft: '0.4em' }}
+                    style={{
+                      color,
+                      opacity,
+                      fontSize: '0.85em',
+                      marginLeft: '0.4em',
+                      fontWeight: tier >= 4 ? 600 : 400,
+                    }}
                   >
                     {arrow}
                     {formatSolAmount(Math.abs(Math.round(delta)), 0)}
