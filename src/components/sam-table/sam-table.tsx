@@ -854,11 +854,10 @@ export const SamTable: React.FC<Props> = ({
               const delta = target - active
               const magnitude = active + target
               const ratio = magnitude > 0 ? Math.abs(delta) / magnitude : 0
-              if (ratio < 0.01) {
-                return <>{formatSolAmount(active, 0)}</>
-              }
-              const tier =
-                ratio < 0.05
+              const showDelta = ratio >= 0.01
+              const tier = !showDelta
+                ? 0
+                : ratio < 0.05
                   ? 1
                   : ratio < 0.15
                     ? 2
@@ -872,21 +871,32 @@ export const SamTable: React.FC<Props> = ({
                 delta > 0 ? 'var(--status-green)' : 'var(--destructive)'
               const arrow = delta > 0 ? '↑' : '↓'
               return (
-                <>
-                  {formatSolAmount(active, 0)}
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'baseline',
+                    fontFamily: 'var(--font-mono)',
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
+                  <span>{formatSolAmount(active, 0)}</span>
                   <span
                     style={{
-                      color,
-                      opacity,
+                      display: 'inline-block',
+                      width: '5.5em',
+                      marginLeft: '0.5em',
+                      textAlign: 'left',
+                      color: showDelta ? color : undefined,
+                      opacity: showDelta ? opacity : 0,
                       fontSize: '0.85em',
-                      marginLeft: '0.4em',
                       fontWeight: tier >= 4 ? 600 : 400,
                     }}
                   >
-                    {arrow}
-                    {formatSolAmount(Math.abs(Math.round(delta)), 0)}
+                    {showDelta
+                      ? `${arrow}${formatSolAmount(Math.abs(Math.round(delta)), 0)}`
+                      : '\u00A0'}
                   </span>
-                </>
+                </span>
               )
             },
             compare: (a, b) =>
