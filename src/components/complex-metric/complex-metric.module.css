@@ -10,13 +10,13 @@
 }
 
 .complexMetricWrap > div:first-child {
-  font-size: 12px;
+  font-size: 16px;
   color: var(--text-light-1);
   opacity: 0.75;
 }
 
 .complexMetricWrap > div:last-child {
   margin-top: 4px;
-  font-size: 18px;
+  font-size: 23px;
   color: var(--text-light-2);
 }
