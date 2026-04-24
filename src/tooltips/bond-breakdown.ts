@@ -135,43 +135,22 @@ export const computeBondMetrics = (
   }
 }
 
-const statusLines = (
-  color: Color | undefined,
-  topUpToMin: number,
-): { lead: string; cta: string } => {
+const statusLine = (color: Color | undefined, topUpToMin: number): string => {
   switch (color) {
     case Color.RED:
       return topUpToMin > 0
-        ? {
-            lead: 'Undelegation imminent.',
-            cta: `Top up ${pay(topUpToMin)} now to retain stake.`,
-          }
-        : {
-            lead: 'Runway critical.',
-            cta: 'Review bond setup to retain stake.',
-          }
+        ? `Undelegation imminent. Top up ${pay(topUpToMin)} now to retain stake.`
+        : 'Runway critical. Review bond setup to retain stake.'
     case Color.ORANGE:
       return topUpToMin > 0
-        ? {
-            lead: 'Below minimum coverage.',
-            cta: `Top up ${pay(topUpToMin)} soon to avoid bond risk fee charges.`,
-          }
-        : {
-            lead: 'Below minimum coverage.',
-            cta: 'Review bond setup to avoid bond risk fee charges.',
-          }
+        ? `Below minimum coverage. Top up ${pay(topUpToMin)} soon to avoid bond risk fee charges.`
+        : 'Below minimum coverage. Review bond setup to avoid bond risk fee charges.'
     case Color.YELLOW:
-      return {
-        lead: 'Minimum coverage met.',
-        cta: 'Top up to reach ideal coverage for more stake.',
-      }
+      return 'Minimum coverage met. Top up to reach ideal coverage for more stake.'
     case Color.GREEN:
-      return {
-        lead: 'Ideal coverage reached.',
-        cta: 'Keep bond topped up to absorb bid drain.',
-      }
+      return 'Ideal coverage reached. Keep bond topped up to absorb bid drain.'
     default:
-      return { lead: '', cta: '' }
+      return ''
   }
 }
 
@@ -179,11 +158,9 @@ export const renderBondBreakdownTooltip = (
   m: BondMetrics,
   bondState: Color | undefined,
 ): string => {
-  const { lead, cta: ctaText } = statusLines(bondState, m.topUpToMin)
   const cta = ctaBlock({
     label: 'Bond Coverage Calculation Breakdown',
-    lead,
-    cta: ctaText,
+    cta: statusLine(bondState, m.topUpToMin),
     state: bondState,
   })
 
