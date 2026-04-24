@@ -33,8 +33,6 @@ export type BondMetrics = {
   marinadeSamTargetSol: number
   expectedMaxEffBidPmpe: number
   onchainDistributedPmpe: number
-  protectedStakeSol: number
-  projectedActivatedStakeSol: number
   projectedExposedStakeSol: number
   minUnprotectedReserveSol: number
   idealUnprotectedReserveSol: number
@@ -88,10 +86,6 @@ export const computeBondMetrics = (
     0,
     projectedActivatedStakeSol - unprotectedStakeSol,
   )
-  const protectedStakeSol = Math.max(
-    0,
-    marinadeActivatedStakeSol - unprotectedStakeSol,
-  )
 
   const minUnprotectedReserveSol = finite(v.minUnprotectedReserve)
   const idealUnprotectedReserveSol = finite(v.idealUnprotectedReserve)
@@ -99,8 +93,6 @@ export const computeBondMetrics = (
   const minEp = 1 + minBondEpochs
   const idealEp = 1 + idealBondEpochs
 
-  // Mirror SDK: minBondPmpe = onchainDistributedPmpe + (1 + minBondEpochs) * expectedMaxEffBidPmpe
-  // The constraints.js formulation packs onchain + 1-epoch bid + minBondEpochs*bid into one PMPE.
   const minBondPmpe = finite(v.minBondPmpe)
   const idealBondPmpe = finite(v.idealBondPmpe)
 
@@ -114,8 +106,7 @@ export const computeBondMetrics = (
     minUnprotectedReserveSol + (minBondPmpe / 1000) * projectedExposedStakeSol
   const topUpToMin = Math.max(0, floorBase - claimableBondBalanceSol)
 
-  const idealOnchainBase =
-    (onchainDistributedPmpe / 1000) * projectedExposedStakeSol
+  const idealOnchainBase = onchainBase
   const idealCoverageBid =
     ((idealEp * expectedMaxEffBidPmpe) / 1000) * projectedExposedStakeSol
   const requiredIdeal =
@@ -133,8 +124,6 @@ export const computeBondMetrics = (
     marinadeSamTargetSol,
     expectedMaxEffBidPmpe,
     onchainDistributedPmpe,
-    protectedStakeSol,
-    projectedActivatedStakeSol,
     projectedExposedStakeSol,
     minUnprotectedReserveSol,
     idealUnprotectedReserveSol,
