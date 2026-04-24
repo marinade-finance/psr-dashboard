@@ -163,8 +163,7 @@ A pre-funded vault validators create to participate in SAM. The bond:
 ### Bond Breakdown (Cover. [ep] tooltip)
 
 Hovering the **Cover. [ep]** cell shows a two-section breakdown explaining
-the bond state and what a validator should top up. The vocabulary mirrors
-the Marinade Bond Risk Reduction Mechanism documentation.
+the bond state and what a validator should top up.
 
 **Terms used in the tooltip**
 
