@@ -4,7 +4,7 @@ import styles from './metric.module.css'
 
 type Props = {
   label: string
-  value: string
+  value: React.ReactNode
   'data-tooltip-id'?: string
   'data-tooltip-html'?: string
 }

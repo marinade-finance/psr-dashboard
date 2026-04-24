@@ -40,11 +40,12 @@ import {
   overridesMevCommissionMessage,
   overridesCpmpeMessage as overridesBidCpmpeMessage,
   selectBondBid,
+  buildConcentrationBreakdown,
 } from 'src/services/sam'
 
 import styles from './sam-table.module.css'
 import { tooltipAttributes } from '../../services/utils'
-import { ComplexMetric } from '../complex-metric/complex-metric'
+import { ConcentrationMetric } from '../concentration-metric/concentration-metric'
 import { Metric } from '../metric/metric'
 import { UserLevel } from '../navigation/navigation'
 import { Alignment, Color, OrderDirection, Table } from '../table/table'
@@ -53,6 +54,7 @@ import type { Order } from '../table/table'
 import type {
   AuctionResult,
   AuctionValidator,
+  DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
 import type { PendingEdits } from 'src/pages/sam'
 
@@ -178,12 +180,15 @@ type InputOpts = {
   placeholder?: string
 }
 
+const DEFAULT_ORDER: Order[] = [[9, OrderDirection.DESC]]
+
 type Props = {
   auctionResult: AuctionResult
   tvlJoinApyDiff: number
   tvlLeaveApyDiff: number
   backstopDiff: number
   backstopTvl: number
+  dcSamConfig: DsSamConfig
   originalAuctionResult: AuctionResult | null
   epochsPerYear: number
   level: UserLevel
@@ -241,6 +246,7 @@ export const SamTable: React.FC<Props> = ({
   tvlLeaveApyDiff,
   backstopDiff,
   backstopTvl,
+  dcSamConfig,
   originalAuctionResult,
   epochsPerYear,
   level,
@@ -306,21 +312,6 @@ export const SamTable: React.FC<Props> = ({
     [validators],
   )
 
-  const hasDataChanged = useMemo(() => {
-    if (!simulatedValidator || !originalAuctionResult) return false
-    const orig = originalAuctionResult.auctionData.validators.find(
-      v => v.voteAccount === simulatedValidator,
-    )
-    const sim = validators.find(v => v.voteAccount === simulatedValidator)
-    if (!orig || !sim) return false
-    return (
-      orig.inflationCommissionDec !== sim.inflationCommissionDec ||
-      orig.mevCommissionDec !== sim.mevCommissionDec ||
-      orig.blockRewardsCommissionDec !== sim.blockRewardsCommissionDec ||
-      orig.revShare.bidPmpe !== sim.revShare.bidPmpe
-    )
-  }, [simulatedValidator, originalAuctionResult, validators])
-
   const samStakeValidators = allValidators.filter(
     v => v.auctionStake.marinadeSamTargetSol,
   )
@@ -330,12 +321,12 @@ export const SamTable: React.FC<Props> = ({
       0,
     ) / samStakeValidators.length
 
+  const concentration = buildConcentrationBreakdown(auctionResult, dcSamConfig)
+
   const inputVal = (field: keyof PendingEdits, fallback: string) =>
     pendingEdits[field] ?? fallback
 
-  const defaultOrder: Order[] = useMemo(() => [[9, OrderDirection.DESC]], [])
-
-  const [currentOrder, setCurrentOrder] = useState<Order[]>(defaultOrder)
+  const [currentOrder, setCurrentOrder] = useState<Order[]>(DEFAULT_ORDER)
 
   const handleOrderChange = useCallback((order: Order[]) => {
     setCurrentOrder(order)
@@ -446,32 +437,40 @@ export const SamTable: React.FC<Props> = ({
       isGhost: false,
     }))
 
-    if (simulatedValidator && hasDataChanged && originalAuctionResult) {
-      const orig = originalAuctionResult.auctionData.validators.find(
-        v => v.voteAccount === simulatedValidator,
-      )
-      if (orig) {
-        const originalValidator = {
-          ...orig,
-          bondState: bondHealthColor(orig),
-        }
-        const originalPosition = getOriginalPosition(simulatedValidator)
+    const orig =
+      simulatedValidator && originalAuctionResult
+        ? originalAuctionResult.auctionData.validators.find(
+            v => v.voteAccount === simulatedValidator,
+          )
+        : undefined
+    const sim = simulatedValidator
+      ? validators.find(v => v.voteAccount === simulatedValidator)
+      : undefined
+    const hasDataChanged =
+      !!orig &&
+      !!sim &&
+      (orig.inflationCommissionDec !== sim.inflationCommissionDec ||
+        orig.mevCommissionDec !== sim.mevCommissionDec ||
+        orig.blockRewardsCommissionDec !== sim.blockRewardsCommissionDec ||
+        orig.revShare.bidPmpe !== sim.revShare.bidPmpe)
+
+    if (hasDataChanged && orig && simulatedValidator) {
+      const originalPosition = getOriginalPosition(simulatedValidator)
+      if (originalPosition !== null && originalPosition > 0) {
         const currentSimulatedIndex = display.findIndex(
           d => d.validator.voteAccount === simulatedValidator,
         )
-        if (originalPosition !== null && originalPosition > 0) {
-          const adjustedOriginalPos = originalPosition - 1
-          const insertIndex = Math.min(
-            currentSimulatedIndex === adjustedOriginalPos
-              ? currentSimulatedIndex + 1
-              : adjustedOriginalPos,
-            display.length,
-          )
-          display.splice(insertIndex, 0, {
-            validator: originalValidator,
-            isGhost: true,
-          })
-        }
+        const adjustedOriginalPos = originalPosition - 1
+        const insertIndex = Math.min(
+          currentSimulatedIndex === adjustedOriginalPos
+            ? currentSimulatedIndex + 1
+            : adjustedOriginalPos,
+          display.length,
+        )
+        display.splice(insertIndex, 0, {
+          validator: { ...orig, bondState: bondHealthColor(orig) },
+          isGhost: true,
+        })
       }
     }
 
@@ -479,8 +478,8 @@ export const SamTable: React.FC<Props> = ({
   }, [
     sortedValidators,
     simulatedValidator,
-    hasDataChanged,
     originalAuctionResult,
+    validators,
     getOriginalPosition,
   ])
 
@@ -591,7 +590,7 @@ export const SamTable: React.FC<Props> = ({
         <div className={styles.metricRow}>
           <Metric
             label="Total Auction Stake"
-            value={`☉ ${formatSolAmount(samDistributedStake)}`}
+            value={`☉ ${formatSolAmount(samDistributedStake, 0)}`}
             {...tooltipAttributes(
               'How much stake is distributed by Marinade to validators based on SAM',
             )}
@@ -604,17 +603,22 @@ export const SamTable: React.FC<Props> = ({
             )}
           />
           {apyMetrics}
-          <ComplexMetric
+          <Metric
             label="Winning Validators"
-            value={
-              <div>
-                <span>{samStakeValidators.length}</span> /{' '}
-                <span>{allValidators.length}</span>
-              </div>
-            }
+            value={`${samStakeValidators.length} / ${allValidators.length}`}
             {...tooltipAttributes(
               'Number of validators that won stake in this SAM auction',
             )}
+          />
+          <ConcentrationMetric
+            label="Top Countries"
+            rows={concentration.countries}
+            capPct={concentration.countryCapPct}
+          />
+          <ConcentrationMetric
+            label="Top ASOs"
+            rows={concentration.asos}
+            capPct={concentration.asoCapPct}
           />
         </div>
         {expertMetrics}
@@ -964,7 +968,7 @@ export const SamTable: React.FC<Props> = ({
             alignment: Alignment.RIGHT,
           },
         ]}
-        defaultOrder={defaultOrder}
+        defaultOrder={DEFAULT_ORDER}
         onOrderChange={handleOrderChange}
         presorted
       />
