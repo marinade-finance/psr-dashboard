@@ -3,6 +3,7 @@ import React from 'react'
 import {
   cell,
   ctaBlock,
+  esc,
   rowCells,
   sectionHeader,
   tableHead,
@@ -46,7 +47,7 @@ const buildTooltipHtml = (
   const body = rows
     .slice(0, TOOLTIP_N)
     .map(r => {
-      const name = `${r.key} <span class="tt-muted">(${r.validatorCount})</span>`
+      const name = `${esc(r.key)} <span class="tt-muted">(${r.validatorCount})</span>`
       const capText = r.atCap ? `(capped) ${r.cappedValidatorCount}` : '—'
       return rowCells([
         cell(name, { wrap: true }),

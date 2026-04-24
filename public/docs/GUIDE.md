@@ -174,15 +174,15 @@ the bond state and what a validator should top up.
 | Bond balance                    | `bondBalanceSol`           | Full bond deposit                                                                           |
 | Claimable bond balance          | `claimableBondBalanceSol`  | Portion of the bond already available for settlement / fees                                 |
 | Activated Marinade stake        | `marinadeActivatedStakeSol`| Currently active Marinade stake on the validator                                            |
-| Paid undelegation               | `paidUndelegationSol`      | Amount of stake the SDK has **queued for forced undelegation** from this validator due to bond-risk-fee (`calcBondRiskFee`) or bid-too-low (`calcBidTooLowPenalty`) penalties. It is still part of `marinadeActivatedStakeSol` until the deactivation actually materializes on-chain, so the bond still accrues bid on it — which is why it is added to the active stake in the Minimum Coverage calculation. |
+| Paid undelegation               | `paidUndelegationSol`      | Amount of stake the SDK has **queued for forced undelegation** from this validator due to bond-risk-fee (`calcBondRiskFee`) or bid-too-low (`calcBidTooLowPenalty`) penalties. It represents stake on its way out; the SDK subtracts it from the bid base (`projectedActivated = max(0, activated − paidUndelegationSol)`), so it is excluded from the forward-looking bid obligation. Shown in the tooltip for context — informational, not additive. |
 | Protected stake                 | `protectedStakeSol`        | `activated − unprotected`; the portion the bond has to cover                                      |
 | SAM target stake                | `marinadeSamTargetSol`     | Stake the auction has assigned to this validator this epoch                                 |
 
 **Section 1 — Minimum Coverage**
 
 Shows whether the **claimable bond balance** covers the minimum obligations
-for **activated stake + paid undelegation** across `1 + minBondEpochs`
-epochs (the fee threshold, `5` by default). At or below this line the
+for **activated stake** across `1 + minBondEpochs` epochs (the fee
+threshold, per current protocol config). At or below this line the
 validator is subject to `bondRiskFeeSol` charges and forced undelegation.
 
 If the claimable balance is short, **Top-up to minimum coverage** is what
@@ -192,10 +192,10 @@ the validator must add *now* to escape the bond risk fee and undelegation.
 
 Shows how much **bond balance** is required to comfortably sustain the
 **SAM target stake** for `1 + idealBondEpochs` epochs (the runway target,
-`13` by default). Uses the raw target because this section is
+per current protocol config). Uses the raw target because this section is
 forward-looking: "is the bond large enough to keep receiving new stake?".
-The coefficient is the protocol's `idealBondCoef` &mdash; see
-[`idealBondCoef` in the BRRM docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market/bond-risk-reduction-mechanism#ideal-bond-coef).
+The coefficient is the protocol's ideal-coverage coefficient &mdash; see
+[idealBondCoef in the BRRM docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market/bond-risk-reduction-mechanism#ideal-bond-coef).
 
 **To get more stake, top up** is the shortfall between the current bond
 and `Ideal required`. Topping up beyond that is advisable so the bond
@@ -203,9 +203,10 @@ does not dip back below ideal after a few epochs of bid drain.
 
 The column value `Cover. [ep]` is derived from
 `bondGoodForNEpochs`, computed against
-`marinadeActivatedStakeSol`. It represents epochs of runway *above the
-fee threshold*. Zero or negative means the bond is below minimum coverage
-and `bondRiskFeeSol` applies.
+`marinadeActivatedStakeSol`. Note that `bondGoodForNEpochs` uses the full
+`bondBalanceSol` (not just the claimable portion) as the runway base. It
+represents epochs of runway *above the fee threshold*. Zero or negative
+means the bond is below minimum coverage and `bondRiskFeeSol` applies.
 
 ### Effective vs Maximum Bid
 
