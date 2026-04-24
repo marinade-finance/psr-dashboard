@@ -214,10 +214,7 @@ export const SamTable: React.FC<Props> = ({
       0,
     ) / samStakeValidators.length
 
-  const concentration = useMemo(
-    () => buildConcentrationBreakdown(auctionResult, dcSamConfig),
-    [auctionResult, dcSamConfig],
-  )
+  const concentration = buildConcentrationBreakdown(auctionResult, dcSamConfig)
 
   const inputVal = (field: keyof PendingEdits, fallback: string) =>
     pendingEdits[field] ?? fallback
