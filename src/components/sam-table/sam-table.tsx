@@ -66,49 +66,102 @@ const penaltyClass: Record<PenaltyKind, string> = {
   risk: styles.penalty_risk,
 }
 
+const PenaltyIcon: Record<PenaltyKind, JSX.Element> = {
+  bidLow: (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <polyline points="23 18 13.5 8.5 8.5 13.5 1 6" />
+      <polyline points="17 18 23 18 23 12" />
+    </svg>
+  ),
+  blacklist: (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+    </svg>
+  ),
+  risk: (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+      <line x1="12" y1="9" x2="12" y2="13" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
+    </svg>
+  ),
+}
+
 const renderPenaltyBadges = (v: AuctionValidator) => {
   const stakeSol = v.marinadeActivatedStakeSol
-  const badges: {
-    icon: string
-    label: string
-    sol: number
-    kind: PenaltyKind
-  }[] = []
+  const badges: { label: string; sol: number; kind: PenaltyKind }[] = []
   const bidTooLowSol = (stakeSol * v.revShare.bidTooLowPenaltyPmpe) / 1000
   const blacklistSol = (stakeSol * v.revShare.blacklistPenaltyPmpe) / 1000
   const bondRiskSol = v.values?.bondRiskFeeSol ?? 0
   if (bidTooLowSol > 0)
-    badges.push({
-      icon: '▼',
-      label: 'BidTooLow',
-      sol: bidTooLowSol,
-      kind: 'bidLow',
-    })
+    badges.push({ label: 'BidTooLow', sol: bidTooLowSol, kind: 'bidLow' })
   if (blacklistSol > 0)
-    badges.push({
-      icon: '⊘',
-      label: 'Blacklist',
-      sol: blacklistSol,
-      kind: 'blacklist',
-    })
+    badges.push({ label: 'Blacklist', sol: blacklistSol, kind: 'blacklist' })
   if (bondRiskSol > 0)
-    badges.push({
-      icon: '⚠',
-      label: 'BondRiskFee',
-      sol: bondRiskSol,
-      kind: 'risk',
-    })
-  return badges.map(b => (
+    badges.push({ label: 'BondRiskFee', sol: bondRiskSol, kind: 'risk' })
+  if (badges.length === 0) return null
+
+  const cls = (b: { kind: PenaltyKind }) =>
+    `${styles.penaltyBadge} ${penaltyClass[b.kind]}`
+  const fmt = (b: { label: string; sol: number }) =>
+    `<b>${b.label}</b>: ${formatSolAmount(b.sol, 3)} SOL (estimate)`
+
+  if (badges.length === 1) {
+    const b = badges[0]
+    return (
+      <span className={styles.penalties} data-count="1">
+        <span
+          key={b.label}
+          {...tooltipAttributes(fmt(b))}
+          className={cls(b)}
+          aria-label={b.label}
+        >
+          {PenaltyIcon[b.kind]}
+        </span>
+      </span>
+    )
+  }
+
+  const joinedTooltip = badges.map(fmt).join('<br/>')
+  return (
     <span
-      key={b.label}
-      {...tooltipAttributes(
-        `<b>${b.label}</b><br/>${formatSolAmount(b.sol, 3)} SOL (estimate)`,
-      )}
-      className={`${styles.penaltyBadge} ${penaltyClass[b.kind]}`}
+      className={styles.penalties}
+      data-count={String(badges.length)}
+      {...tooltipAttributes(joinedTooltip)}
+      aria-label={badges.map(b => b.label).join(', ')}
     >
-      {b.icon}
+      {badges.map(b => (
+        <span key={b.label} className={cls(b)} aria-hidden="true">
+          {PenaltyIcon[b.kind]}
+        </span>
+      ))}
     </span>
-  ))
+  )
 }
 
 type DisplayValidator = { validator: ValidatorWithBondState; isGhost: boolean }
@@ -666,14 +719,14 @@ export const SamTable: React.FC<Props> = ({
               const va = selectVoteAccount(item.validator)
               const sim = !item.isGhost && simulatedValidator === va
               return (
-                <>
+                <span className={styles.validatorCell}>
                   <span
                     className={`${styles.pubkey} ${sim ? styles.pubkeySimulated : ''}`}
                   >
                     {va}
                   </span>
                   {renderPenaltyBadges(item.validator)}
-                </>
+                </span>
               )
             },
             compare: (a, b) =>

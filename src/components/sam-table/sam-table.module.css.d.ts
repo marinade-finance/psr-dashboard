@@ -12,6 +12,7 @@ interface CssExports {
   'metricRow': string;
   'metricWrap': string;
   'orderCell': string;
+  'penalties': string;
   'penaltyBadge': string;
   'penalty_bidLow': string;
   'penalty_blacklist': string;
@@ -31,6 +32,7 @@ interface CssExports {
   'simulationBanner': string;
   'simulationModeActive': string;
   'tableWrap': string;
+  'validatorCell': string;
   'validatorRowClickable': string;
   'validatorRowEditing': string;
 }
