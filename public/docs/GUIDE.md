@@ -169,7 +169,7 @@ the bond state and what a validator should top up.
 
 | Label in tooltip                | SDK field                  | Meaning                                                                                     |
 | ------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------- |
-| Expected max effective bid      | `expectedMaxEffBidPmpe`    | Maximum bid the validator could be charged this epoch, in PMPE                              |
+| Expected max effective bid      | `expectedMaxEffBidPmpe`    | The expected maximum bid the validator could be charged this epoch, in PMPE                 |
 | On-chain distributed rewards    | `onchainDistributedPmpe`   | Inflation + MEV rewards distributed on-chain (not via bond), in PMPE                        |
 | Bond balance                    | `bondBalanceSol`           | Full bond deposit                                                                           |
 | Claimable bond balance          | `claimableBondBalanceSol`  | Portion of the bond already available for settlement / fees                                 |
