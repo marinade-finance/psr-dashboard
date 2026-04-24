@@ -42,8 +42,8 @@ const buildTooltipHtml = (
 ): string => {
   const desc = DESCRIPTIONS[label] ?? ''
   const capNote = `Cap: ${formatPercentage(capPct)} of network stake.`
-  const header = `<div style="max-width:340px;opacity:.8;margin-bottom:6px;line-height:1.4">${desc} ${capNote}</div>`
-  const subhead = `<div style="font-weight:600;margin-bottom:4px">All (${rows.length})</div>`
+  const header = `<div style="opacity:.8;margin-bottom:12px;line-height:1.4">${desc} ${capNote}</div>`
+  const subhead = `<div style="font-weight:600;margin-bottom:6px">All (${rows.length})</div>`
   const head = `<thead><tr style="opacity:.55;text-transform:uppercase;letter-spacing:.04em">${th('Name', 'left')}${th('Share', 'right')}${th('Stake', 'right')}${th('Cap', 'right')}</tr></thead>`
   const body = rows
     .slice(0, TOOLTIP_N)
