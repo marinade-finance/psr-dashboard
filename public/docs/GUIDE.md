@@ -164,8 +164,7 @@ A pre-funded vault validators create to participate in SAM. The bond:
 
 Hovering the **Cover. [ep]** cell shows a two-section breakdown explaining
 the bond state and what a validator should top up. The vocabulary mirrors
-the Marinade docs page for the Bond Risk Reduction Mechanism:
-[Bond Risk Reduction Mechanism](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market/bond-risk-reduction-mechanism).
+the Marinade Bond Risk Reduction Mechanism documentation.
 
 **Terms used in the tooltip**
 
@@ -177,56 +176,31 @@ the Marinade docs page for the Bond Risk Reduction Mechanism:
 | Claimable bond balance          | `claimableBondBalanceSol`  | Portion of the bond already available for settlement / fees                                 |
 | Activated Marinade stake        | `marinadeActivatedStakeSol`| Currently active Marinade stake on the validator                                            |
 | Paid undelegation               | `paidUndelegationSol`      | Amount of stake the SDK has **queued for forced undelegation** from this validator due to bond-risk-fee (`calcBondRiskFee`) or bid-too-low (`calcBidTooLowPenalty`) penalties. It is still part of `marinadeActivatedStakeSol` until the deactivation actually materializes on-chain, so the bond still accrues bid on it — which is why it is added to the active stake in the Minimum Coverage calculation. The SDK decrements it as real undelegations land. |
-| Protected stake                 | `protectedStakeSol`        | `activated − unprotected`; the portion the bond is responsible for                          |
+| Protected stake                 | `protectedStakeSol`        | `activated − unprotected`; the portion the bond covers                                      |
 | SAM target stake                | `marinadeSamTargetSol`     | Stake the auction has assigned to this validator this epoch                                 |
 
 **Section 1 — Minimum Coverage**
 
 Shows whether the **claimable bond balance** covers the minimum obligations
 for **activated stake + paid undelegation** across `1 + minBondEpochs`
-epochs (the fee threshold, `5` by default). Below this line the validator
-is subject to `bondRiskFeeSol` charges and, at the floor, forced
-undelegation. Matches the docs' `minBondCoef`:
+epochs (the fee threshold, `5` by default). At or below this line the
+validator is subject to `bondRiskFeeSol` charges and forced undelegation.
 
-```
-minBondCoef = (onchainDistributedPmpe + (1 + minBondEpochs) × expectedMaxEffBidPmpe) / 1000
-```
-
-Row components:
-
-- **On-chain distributed reserve** = `onchainDistributedPmpe/1000 ×
-  protectedStake` &mdash; inflation + MEV Marinade must cover each epoch
-  for bond-protected stake.
-- **Minimum coverage bid × activated stake** = `(1 + minBondEpochs) ×
-  expectedMaxEffBidPmpe/1000 × activated stake` &mdash; fee-threshold bid
-  reserve on currently active stake.
-- **Minimum coverage bid × paid undelegation** = same coefficient applied
-  to stake already force-undelegated but not yet settled.
-
-`Minimum required = on-chain reserve + minimum coverage bid (active) +
-minimum coverage bid (paid undelegation)`. If the claimable balance is
-short, **Top-up to minimum coverage** is what the validator must add *now*
-to escape the risk band.
+If the claimable balance is short, **Top-up to minimum coverage** is what
+the validator must add *now* to escape the bond risk fee and undelegation.
 
 **Section 2 — Ideal Coverage**
 
 Shows how much **bond balance** is required to comfortably sustain the
-auction-assigned **SAM target stake** for `1 + idealBondEpochs` epochs (the
-runway target, `13` by default). Uses the raw target because this section
-is forward-looking: "is the bond large enough to keep receiving new
-stake?". Matches the docs' `idealBondCoef`:
+**SAM target stake** for `1 + idealBondEpochs` epochs (the runway target,
+`13` by default). Uses the raw target because this section is
+forward-looking: "is the bond large enough to keep receiving new stake?".
+The coefficient is the protocol's `idealBondCoef` &mdash; see
+[`idealBondCoef` in the BRRM docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market/bond-risk-reduction-mechanism#ideal-bond-coef).
 
-```
-idealBondCoef = (onchainDistributedPmpe + (1 + idealBondEpochs) × expectedMaxEffBidPmpe) / 1000
-```
-
-- **On-chain distributed reserve** at target stake.
-- **Ideal coverage bid × SAM target stake** = `(1 + idealBondEpochs) ×
-  expectedMaxEffBidPmpe/1000 × target`.
-- `Ideal required = on-chain reserve + ideal coverage bid`.
-- **To get more stake, top up** = shortfall between the current bond and a
-  small cushion above `Ideal required`, so the bond does not dip back below
-  ideal after a few epochs of bid drain.
+**To get more stake, top up** is the shortfall between the current bond
+and `Ideal required`. Topping up beyond that is advisable so the bond
+does not dip back below ideal after a few epochs of bid drain.
 
 The column value `Cover. [ep]` is derived from
 `bondGoodForNEpochs` (from the ds-sam-sdk), computed against

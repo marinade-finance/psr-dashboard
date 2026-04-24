@@ -1,7 +1,16 @@
 import React from 'react'
 
+import {
+  cell,
+  ctaBlock,
+  rowCells,
+  sectionHeader,
+  tableHead,
+  wrapTable,
+} from 'src/components/tooltip-table/tooltip-table'
 import { formatPercentage, formatSolAmount } from 'src/format'
 import { tooltipAttributes } from 'src/services/utils'
+import { BAR_COLORS, CAP_COLOR } from 'src/styles/colors'
 
 import styles from './concentration-metric.module.css'
 
@@ -16,24 +25,12 @@ type Props = {
 const TOP_N = 3
 const TOOLTIP_N = 15
 
-const BAR_COLORS = ['#6a8ca8', '#b0946a', '#8aa598']
-const CAP_COLOR = '#c65d5d'
-
 const DESCRIPTIONS: Record<string, string> = {
   'Top Countries':
     'Share of auction-distributed stake, grouped by validator jurisdiction (country). SAM enforces a per-country concentration cap — bar fill reflects share relative to the cap (full bar = at cap). A row marked (capped) has at least one validator whose stake was cut by the cap.',
   'Top ASOs':
     'Share of auction-distributed stake, grouped by validator ASO (Autonomous System Operator). SAM enforces a per-ASO concentration cap — bar fill reflects share relative to the cap (full bar = at cap). A row marked (capped) has at least one validator whose stake was cut by the cap.',
 }
-
-const PAD = 'padding:3px 8px'
-const MONO = 'font-family:monospace'
-
-const td = (content: string, align: 'left' | 'right' = 'left', opts = '') =>
-  `<td style="${PAD};text-align:${align};${opts}">${content}</td>`
-
-const th = (content: string, align: 'left' | 'right') =>
-  `<th style="${PAD};text-align:${align}">${content}</th>`
 
 const buildTooltipHtml = (
   label: string,
@@ -42,33 +39,34 @@ const buildTooltipHtml = (
 ): string => {
   const desc = DESCRIPTIONS[label] ?? ''
   const capNote = `Cap: ${formatPercentage(capPct)} of network stake.`
-  const header = `<div style="opacity:.8;margin-bottom:12px;line-height:1.4">${desc} ${capNote}</div>`
-  const subhead = `<div style="font-weight:600;margin-bottom:6px">All (${rows.length})</div>`
-  const head = `<thead><tr style="opacity:.55;text-transform:uppercase;letter-spacing:.04em">${th('Name', 'left')}${th('Share', 'right')}${th('Stake', 'right')}${th('Cap', 'right')}</tr></thead>`
+  const cta = ctaBlock({ label, lead: `${desc} ${capNote}` })
+  const head =
+    sectionHeader(`Breakdown (${rows.length})`, 4) +
+    tableHead(['Name', 'Share', 'Stake', 'Cap'])
   const body = rows
     .slice(0, TOOLTIP_N)
-    .map((r, i) => {
-      const swatch = BAR_COLORS[i] ?? 'transparent'
-      const nameCell = td(
-        `<span style="display:inline-block;width:3px;height:12px;background:${swatch};border-radius:2px;flex-shrink:0"></span>${r.key} <span style="opacity:.5">(${r.validatorCount})</span>`,
-        'left',
-        'display:flex;align-items:center;gap:6px',
-      )
-      const capCell = r.atCap
-        ? td(
-            `(capped) ${r.cappedValidatorCount}`,
-            'right',
-            `color:${CAP_COLOR};font-weight:700`,
-          )
-        : td('—', 'right', 'opacity:.4')
-      return `<tr>${nameCell}${td(formatPercentage(r.pctOfTotal), 'right', MONO)}${td(`☉${formatSolAmount(Math.round(r.samStakeSol))}`, 'right', `${MONO};opacity:.75`)}${capCell}</tr>`
+    .map(r => {
+      const name = `${r.key} <span class="tt-muted">(${r.validatorCount})</span>`
+      const capText = r.atCap ? `(capped) ${r.cappedValidatorCount}` : '—'
+      return rowCells([
+        cell(name, { wrap: true }),
+        cell(formatPercentage(r.pctOfTotal), { align: 'right', mono: true }),
+        cell(`☉${formatSolAmount(Math.round(r.samStakeSol))}`, {
+          align: 'right',
+          mono: true,
+          muted: true,
+        }),
+        r.atCap
+          ? cell(capText, { align: 'right', bold: true, accent: 'red' })
+          : cell(capText, { align: 'right', muted: true }),
+      ])
     })
     .join('')
   const more =
     rows.length > TOOLTIP_N
-      ? `<div style="opacity:.5;margin-top:4px">+${rows.length - TOOLTIP_N} more</div>`
+      ? `<div class="tt-muted">+${rows.length - TOOLTIP_N} more</div>`
       : ''
-  return `${header}${subhead}<table style="border-collapse:collapse">${head}<tbody>${body}</tbody></table>${more}`
+  return cta + wrapTable(head + body) + more
 }
 
 export const ConcentrationMetric: React.FC<Props> = ({

@@ -1,4 +1,7 @@
-.bbd-cta-label {
+/* Shared tooltip-table primitive. All tooltips that render an HTML table
+   inside react-tooltip should use these classes — no inline styles. */
+
+.tt-cta-label {
   padding: 8px 0 4px;
   font-size: 0.78em;
   color: var(--text-light-1);
@@ -6,9 +9,8 @@
   text-transform: uppercase;
 }
 
-.bbd-cta-lead {
+.tt-cta-lead {
   padding: 0 0 2px;
-  max-width: 420px;
   white-space: normal;
   font-size: 1.05em;
   font-weight: 500;
@@ -16,10 +18,9 @@
   color: var(--text-light-2);
 }
 
-.bbd-cta {
+.tt-cta {
   margin-top: 8px;
   padding: 0 0 10px;
-  max-width: 420px;
   white-space: normal;
   font-size: 1.15em;
   font-weight: 600;
@@ -27,23 +28,23 @@
   color: var(--text-light-2);
 }
 
-.bbd-cta.bbd-state-red {
+.tt-cta.tt-state-red {
   color: rgb(248, 113, 113);
 }
 
-.bbd-cta.bbd-state-orange {
+.tt-cta.tt-state-orange {
   color: rgb(251, 146, 60);
 }
 
-.bbd-cta.bbd-state-yellow {
+.tt-cta.tt-state-yellow {
   color: rgb(250, 204, 21);
 }
 
-.bbd-cta.bbd-state-green {
+.tt-cta.tt-state-green {
   color: rgb(74, 222, 128);
 }
 
-.bbd-table {
+.tt-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9em;
@@ -52,45 +53,61 @@
   table-layout: auto;
 }
 
-.bbd-table td {
+.tt-table td,
+.tt-table th {
   padding: 2px 0;
 }
 
-.bbd-label {
-  padding-right: 12px;
+.tt-table td + td,
+.tt-table th + th {
+  padding-left: 10px;
+}
+
+.tt-left {
+  text-align: left;
+  white-space: nowrap;
+}
+
+.tt-right {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tt-wrap {
   white-space: normal;
 }
 
-.bbd-qty {
-  padding-right: 10px;
-  text-align: right;
-  white-space: nowrap;
-  color: var(--text-light-1);
-  font-variant-numeric: tabular-nums;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-
-.bbd-value {
-  text-align: right;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-
-.bbd-bold {
+.tt-bold {
   font-weight: 700;
 }
 
-.bbd-large {
+.tt-large {
   font-size: 1.15em;
 }
 
-.bbd-rule-spacer {
+.tt-muted {
+  color: var(--text-light-1);
+}
+
+.tt-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.tt-head {
+  padding-bottom: 4px;
+  font-size: 0.78em;
+  font-weight: 500;
+  color: var(--text-light-1);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tt-rule-spacer {
   height: 8px;
   padding: 0;
 }
 
-.bbd-rule {
+.tt-rule {
   border-top: 1px dashed rgba(255, 255, 255, 0.25);
   padding: 6px 0 6px;
   font-size: 0.78em;
@@ -99,30 +116,29 @@
   text-transform: uppercase;
 }
 
-.bbd-divider {
+.tt-divider {
   border-top: 1px solid rgba(255, 255, 255, 0.22);
   padding: 0;
   height: 1px;
 }
 
-.bbd-topup-red {
+.tt-accent-red {
   color: rgb(248, 113, 113);
 }
 
-.bbd-topup-orange {
+.tt-accent-orange {
   color: rgb(251, 146, 60);
 }
 
-.bbd-topup-yellow {
+.tt-accent-yellow {
   color: rgb(250, 204, 21);
 }
 
-.bbd-ok {
+.tt-accent-green {
   color: rgb(74, 222, 128);
-  white-space: normal;
 }
 
-.bbd-ok-msg {
+.tt-ok-msg {
   padding-right: 12px;
   white-space: normal;
   color: rgb(74, 222, 128);

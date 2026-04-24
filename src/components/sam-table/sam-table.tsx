@@ -44,7 +44,7 @@ import {
 
 import styles from './sam-table.module.css'
 import { tooltipAttributes } from '../../services/utils'
-import { buildBondBreakdownTooltip } from '../bond-breakdown/bond-breakdown'
+import { buildBondBreakdownTooltip } from '../../tooltips/bond-breakdown'
 import { ConcentrationMetric } from '../concentration-metric/concentration-metric'
 import { Metric } from '../metric/metric'
 import { UserLevel } from '../navigation/navigation'
