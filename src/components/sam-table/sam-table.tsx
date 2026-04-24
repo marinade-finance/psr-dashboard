@@ -890,6 +890,13 @@ export const SamTable: React.FC<Props> = ({
             compare: (a, b) =>
               selectBondSize(a.validator) - selectBondSize(b.validator),
             alignment: Alignment.RIGHT,
+            background: item => {
+              const bond = selectBondSize(item.validator)
+              if (bond <= 0) return Color.GREY
+              if (!item.validator.auctionStake.marinadeSamTargetSol)
+                return Color.GREY
+              return item.validator.bondState
+            },
           },
           {
             header: 'Cover. [ep]',
@@ -916,10 +923,13 @@ export const SamTable: React.FC<Props> = ({
             compare: (a, b) =>
               selectBondHealth(a.validator) - selectBondHealth(b.validator),
             alignment: Alignment.RIGHT,
-            background: item =>
-              selectBondSize(item.validator) <= 0
-                ? Color.GREY
-                : item.validator.bondState,
+            background: item => {
+              const bond = selectBondSize(item.validator)
+              if (bond <= 0) return Color.GREY
+              if (!item.validator.auctionStake.marinadeSamTargetSol)
+                return Color.GREY
+              return item.validator.bondState
+            },
           },
           {
             header: 'Max APY',
