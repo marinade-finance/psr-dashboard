@@ -175,7 +175,7 @@ the bond state and what a validator should top up.
 | Claimable bond balance          | `claimableBondBalanceSol`  | Portion of the bond already available for settlement / fees                                 |
 | Activated Marinade stake        | `marinadeActivatedStakeSol`| Currently active Marinade stake on the validator                                            |
 | Paid undelegation               | `paidUndelegationSol`      | Amount of stake the SDK has **queued for forced undelegation** from this validator due to bond-risk-fee (`calcBondRiskFee`) or bid-too-low (`calcBidTooLowPenalty`) penalties. It is still part of `marinadeActivatedStakeSol` until the deactivation actually materializes on-chain, so the bond still accrues bid on it — which is why it is added to the active stake in the Minimum Coverage calculation. |
-| Protected stake                 | `protectedStakeSol`        | `activated − unprotected`; the portion the bond covers                                      |
+| Protected stake                 | `protectedStakeSol`        | `activated − unprotected`; the portion the bond has to cover                                      |
 | SAM target stake                | `marinadeSamTargetSol`     | Stake the auction has assigned to this validator this epoch                                 |
 
 **Section 1 — Minimum Coverage**
