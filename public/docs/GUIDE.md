@@ -34,6 +34,14 @@ validators based on their bids and performance.
 - **Winning APY** &mdash; Estimated APY of the last validator winning the auction
 - **Projected APY** &mdash; Expected staker return based on total revenue from all winning validators
 - **Winning Validators** &mdash; Count of validators receiving stake in current auction
+- **Top Countries** &mdash; The three countries holding the largest share of SAM-distributed stake,
+  with each row showing the country name, a bar proportional to its share, and the percentage.
+  A row marked **(capped)** in red means at least one validator in that country had its stake
+  cut by the country concentration cap that SAM enforces. Hover the card for the full list
+  (all countries with validator counts, stake, share, and cap status).
+- **Top ASOs** &mdash; Same breakdown grouped by ASO (Autonomous System Operator &mdash; the
+  hosting provider or network operator). SAM also caps stake concentration per ASO to prevent
+  operator-level risk; (capped) rows have at least one validator hit by the ASO cap.
 
 **Simulation Mode:** Click "Enter Simulation" to test how changing a validator's parameters would affect their auction
 position. Edit commission rates or bid amounts, then click "Simulate" to see projected results.

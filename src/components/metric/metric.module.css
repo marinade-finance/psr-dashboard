@@ -2,6 +2,8 @@
   padding: 10px 20px;
   background-color: var(--bg-dark-1);
   cursor: help;
+  display: flex;
+  flex-direction: column;
 }
 
 .metricWrap > div {
@@ -9,6 +11,10 @@
 }
 
 .metricWrap > div:last-child {
-  margin-top: 10px;
+  flex: 1;
+  padding-top: 10px;
   font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
