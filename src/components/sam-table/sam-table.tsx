@@ -19,7 +19,6 @@ import {
   selectTotalActiveStake,
   selectSamActiveStake,
   bondHealthColor,
-  bondTooltip,
   selectBondHealth,
   selectProductiveStake,
   selectIsNonProductive,
@@ -44,6 +43,7 @@ import {
 
 import styles from './sam-table.module.css'
 import { tooltipAttributes } from '../../services/utils'
+import { buildBondBreakdownTooltip } from '../bond-breakdown/bond-breakdown'
 import { ComplexMetric } from '../complex-metric/complex-metric'
 import { Metric } from '../metric/metric'
 import { UserLevel } from '../navigation/navigation'
@@ -186,6 +186,8 @@ type Props = {
   backstopTvl: number
   originalAuctionResult: AuctionResult | null
   epochsPerYear: number
+  minBondEpochs: number
+  idealBondEpochs: number
   level: UserLevel
   simulationModeActive: boolean
   editingValidator: string | null
@@ -243,6 +245,8 @@ export const SamTable: React.FC<Props> = ({
   backstopTvl,
   originalAuctionResult,
   epochsPerYear,
+  minBondEpochs,
+  idealBondEpochs,
   level,
   simulationModeActive,
   editingValidator,
@@ -868,7 +872,14 @@ export const SamTable: React.FC<Props> = ({
             header: 'Bond [☉]',
             headerAttrsFn: () => tooltipAttributes('Bond Balance.'),
             cellAttrsFn: item =>
-              tooltipAttributes(bondTooltip(item.validator.bondState)),
+              tooltipAttributes(
+                buildBondBreakdownTooltip(
+                  item.validator,
+                  minBondEpochs,
+                  idealBondEpochs,
+                  item.validator.bondState,
+                ),
+              ),
             render: item => (
               <>{formatSolAmount(selectBondSize(item.validator), 0)}</>
             ),
@@ -883,7 +894,14 @@ export const SamTable: React.FC<Props> = ({
                 'Epochs of bond runway above the minimum required reserve. At zero, Marinade starts undelegating stake and charging fees to cover the costs. Negative means the bond is short of the reserve by that many epochs of bid payments — top up to avoid further fee charges.',
               ),
             cellAttrsFn: item =>
-              tooltipAttributes(bondTooltip(item.validator.bondState)),
+              tooltipAttributes(
+                buildBondBreakdownTooltip(
+                  item.validator,
+                  minBondEpochs,
+                  idealBondEpochs,
+                  item.validator.bondState,
+                ),
+              ),
             render: item => {
               if (!item.validator.auctionStake.marinadeSamTargetSol) {
                 return <>-</>

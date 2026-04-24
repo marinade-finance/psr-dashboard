@@ -34,3 +34,16 @@ html {
 body {
   position: relative;
 }
+
+/* Tooltip: solid dark background at 90% alpha, full-content coverage, crisp text */
+.react-tooltip {
+  --rt-opacity: 1 !important;
+  background-color: rgba(0, 0, 0, 0.9) !important;
+  color: var(--text-light-2);
+  width: max-content;
+  max-width: min(640px, calc(100vw - 24px));
+}
+
+.react-tooltip .react-tooltip-arrow {
+  background-color: rgba(0, 0, 0, 0.9) !important;
+}
