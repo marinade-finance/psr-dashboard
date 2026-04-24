@@ -487,7 +487,7 @@ export const SamTable: React.FC<Props> = ({
         <div className={styles.metricRow}>
           <Metric
             label="Total Auction Stake"
-            value={`☉ ${formatSolAmount(samDistributedStake)}`}
+            value={`☉ ${formatSolAmount(samDistributedStake, 0)}`}
             {...tooltipAttributes(
               'How much stake is distributed by Marinade to validators based on SAM',
             )}
