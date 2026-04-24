@@ -202,7 +202,7 @@ and `Ideal required`. Topping up beyond that is advisable so the bond
 does not dip back below ideal after a few epochs of bid drain.
 
 The column value `Cover. [ep]` is derived from
-`bondGoodForNEpochs` (from the ds-sam-sdk), computed against
+`bondGoodForNEpochs`, computed against
 `marinadeActivatedStakeSol`. It represents epochs of runway *above the
 fee threshold*. Zero or negative means the bond is below minimum coverage
 and `bondRiskFeeSol` applies.
