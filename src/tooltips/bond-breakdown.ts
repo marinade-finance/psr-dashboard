@@ -42,7 +42,6 @@ export type BondMetrics = {
   minCoverageBid: number
   floorBase: number
   topUpToMin: number
-  idealOnchainBase: number
   idealCoverageBid: number
   requiredIdeal: number
   topUpToIdeal: number
@@ -106,7 +105,6 @@ export const computeBondMetrics = (
     minUnprotectedReserveSol + (minBondPmpe / 1000) * projectedExposedStakeSol
   const topUpToMin = Math.max(0, floorBase - claimableBondBalanceSol)
 
-  const idealOnchainBase = onchainBase
   const idealCoverageBid =
     ((idealEp * expectedMaxEffBidPmpe) / 1000) * projectedExposedStakeSol
   const requiredIdeal =
@@ -133,7 +131,6 @@ export const computeBondMetrics = (
     minCoverageBid,
     floorBase,
     topUpToMin,
-    idealOnchainBase,
     idealCoverageBid,
     requiredIdeal,
     topUpToIdeal,
@@ -219,7 +216,7 @@ export const renderBondBreakdownTooltip = (
         row(
           'On-chain distributed reserve',
           SUFFIX_PROJ_EXPOSED,
-          pay(m.idealOnchainBase),
+          pay(m.onchainBase),
         ) +
         row(
           'Ideal coverage bid',
