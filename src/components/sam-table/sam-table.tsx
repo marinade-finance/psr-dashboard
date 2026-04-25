@@ -883,9 +883,8 @@ export const SamTable: React.FC<Props> = ({
                   pmpe4(selectBlockRewardsCommissionPmpe(v)),
                 )
               const chargeSec =
-                sectionHeader(
-                  `Charge this epoch · eff. bid ${formatSolAmount(effBid, 4)} PMPE`,
-                ) +
+                sectionHeader('Charge this epoch') +
+                ttRow('Eff. bid', '', `${formatSolAmount(effBid, 4)} PMPE`) +
                 ttRow(
                   'Activated',
                   `${formatSolAmount(stake, 0)} ☉ × ${formatSolAmount(effBid, 4)}`,
