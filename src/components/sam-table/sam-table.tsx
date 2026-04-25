@@ -27,13 +27,13 @@ import {
 } from 'src/services/sam'
 
 import styles from './sam-table.module.css'
-import { StakeChangeIndicator } from './stake-change-indicator'
 import { tooltipAttributes } from '../../services/utils'
 import { buildBondBreakdownTooltip } from '../../tooltips/bond-breakdown'
 import { buildSamActiveTooltip } from '../../tooltips/sam-active'
 import { ConcentrationMetric } from '../concentration-metric/concentration-metric'
 import { Metric } from '../metric/metric'
 import { UserLevel } from '../navigation/navigation'
+import { StakeChangeIndicator } from '../stake-change-indicator/stake-change-indicator'
 import { Alignment, Color, OrderDirection, Table } from '../table/table'
 
 import type { Order } from '../table/table'
