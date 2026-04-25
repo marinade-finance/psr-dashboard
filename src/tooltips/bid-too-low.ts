@@ -147,7 +147,6 @@ export const renderBidTooLowTooltip = (m: BidTooLowMetrics): string => {
     sectionHeader('Bid Direction') +
     row('Last epoch bid', '', pmpe(m.lastEpochBidPmpe)) +
     row('This epoch bid', '', pmpe(m.thisEpochBidPmpe)) +
-    row('Threshold (0.99999 × last)', '', pmpe(m.threshold)) +
     (m.isNegativeBiddingChange
       ? row('Status', '', 'Bid reduced', { boldValue: true, accent: 'red' })
       : okRow('Bid not reduced'))
