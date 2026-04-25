@@ -925,13 +925,8 @@ export const SamTable: React.FC<Props> = ({
                 ])
               const chargeSec =
                 sectionHeader('Charge this epoch', 4) +
-                chargeRow(
-                  'Eff. bid [PMPE]',
-                  '',
-                  formatSolAmount(effBid, 4),
-                  '',
-                ) +
-                chargeRow('Bid [PMPE]', '', formatSolAmount(bid, 4), '') +
+                chargeRow('Eff. bid PMPE', '', formatSolAmount(effBid, 4), '') +
+                chargeRow('Bid PMPE', '', formatSolAmount(bid, 4), '') +
                 chargeRow(
                   'Active charge',
                   `${formatSolAmount(stake, 0)} ☉`,
