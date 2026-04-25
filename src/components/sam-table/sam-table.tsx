@@ -43,6 +43,13 @@ import { ConcentrationMetric } from '../concentration-metric/concentration-metri
 import { Metric } from '../metric/metric'
 import { UserLevel } from '../navigation/navigation'
 import { Alignment, Color, OrderDirection, Table } from '../table/table'
+import {
+  ctaBlock,
+  divider,
+  row as ttRow,
+  sectionHeader,
+  wrapTable,
+} from '../tooltip-table/tooltip-table'
 
 import type { Order } from '../table/table'
 import type {
@@ -160,33 +167,6 @@ const renderPenaltyBadges = (v: AuctionValidator) => {
     </span>
   )
 }
-
-const NUM_STYLE =
-  'font-variant-numeric:tabular-nums;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;'
-
-const tooltipRow = (
-  label: string,
-  qty: string,
-  rate: string,
-  value: string,
-  opts?: { boldLabel?: boolean; boldValue?: boolean; valueColor?: string },
-) => {
-  const boldLabel = opts?.boldLabel ?? false
-  const boldValue = opts?.boldValue ?? true
-  const color = opts?.valueColor ? `color:${opts.valueColor};` : ''
-  const wrap = (s: string, b: boolean) => (b ? `<b>${s}</b>` : s)
-  return (
-    '<tr>' +
-    `<td style="padding:2px 12px 2px 0;white-space:nowrap;">${wrap(label, boldLabel)}</td>` +
-    `<td style="padding:2px 10px 2px 0;text-align:right;white-space:nowrap;opacity:0.85;${NUM_STYLE}">${qty}</td>` +
-    `<td style="padding:2px 10px 2px 0;text-align:right;white-space:nowrap;opacity:0.85;${NUM_STYLE}">${rate}</td>` +
-    `<td style="padding:2px 0;text-align:right;white-space:nowrap;${color}${NUM_STYLE}">${wrap(value, boldValue)}</td>` +
-    '</tr>'
-  )
-}
-
-const tooltipRule = (label: string) =>
-  `<tr><td colspan="4" style="border-top:1px dashed rgba(255,255,255,0.45);padding-top:4px;font-size:0.8em;opacity:0.85;letter-spacing:0.06em;text-transform:uppercase;">${label}</td></tr>`
 
 type DisplayValidator = { validator: ValidatorWithBondState; isGhost: boolean }
 type EditField =
@@ -767,69 +747,6 @@ export const SamTable: React.FC<Props> = ({
                 'Static bid for 1000 SOL set by the validator in Bond configuration.<br/>' +
                   'The bid active at the slot the auction runs is what you pay for that epoch’s activating stake.',
               ),
-            cellAttrsFn: item => {
-              const effBid = selectEffectiveBid(item.validator)
-              const bid = selectBid(item.validator)
-              const stake = item.validator.marinadeActivatedStakeSol
-              const target = item.validator.auctionStake.marinadeSamTargetSol
-              const activating = Math.max(0, target - stake)
-              const cost = selectEffectiveCost(item.validator)
-              const activatingCost = (bid * activating) / 1000
-              const row = tooltipRow
-              const rule = tooltipRule
-              const header = overridesBidCpmpeMessage(item.validator)
-              const headerHtml = header
-                ? `<div style="margin-bottom:6px;">${header.replace(/<br\/?>/g, '')}</div>`
-                : ''
-              const total = cost + activatingCost
-              const inflPct = formatPercentage(
-                selectCommission(item.validator),
-                0,
-              )
-              const mevPct = formattedMevCommission(item.validator)
-              const blkPct = formattedBlockRewardsCommission(item.validator)
-              return tooltipAttributes(
-                headerHtml +
-                  '<table style="width:100%;border-collapse:collapse;font-size:0.9em;">' +
-                  rule('Commissions') +
-                  row(
-                    'Inflation',
-                    inflPct,
-                    '',
-                    `${formatSolAmount(selectCommissionPmpe(item.validator), 4)} ☉`,
-                  ) +
-                  row(
-                    'MEV',
-                    mevPct,
-                    '',
-                    `${formatSolAmount(selectMevCommissionPmpe(item.validator), 4)} ☉`,
-                  ) +
-                  row(
-                    'Block',
-                    blkPct,
-                    '',
-                    `${formatSolAmount(selectBlockRewardsCommissionPmpe(item.validator), 4)} ☉`,
-                  ) +
-                  rule(
-                    `Charge this epoch · eff. bid ${formatSolAmount(effBid, 4)} ☉ / 1000`,
-                  ) +
-                  row(
-                    'Activated',
-                    `${formatSolAmount(stake, 0)} ☉`,
-                    `× ${formatSolAmount(effBid, 4)}`,
-                    `${formatSolAmount(cost, 3)} ☉`,
-                  ) +
-                  row(
-                    'Activating',
-                    `~${formatSolAmount(activating, 0)} ☉`,
-                    `× ${formatSolAmount(bid, 4)}`,
-                    `${formatSolAmount(activatingCost, 3)} ☉`,
-                  ) +
-                  '<tr><td colspan="3" style="border-top:1px solid rgba(255,255,255,0.7);padding:4px 10px 2px 0;text-align:right;">Total Charge</td>' +
-                  `<td style="border-top:1px solid rgba(255,255,255,0.7);padding:4px 0 2px;text-align:right;${NUM_STYLE}"><b>${formatSolAmount(total, 3)} ☉</b></td></tr>` +
-                  '</table>',
-              )
-            },
             render: item => {
               const { validator, isGhost } = item
               const isEditing =
@@ -922,31 +839,77 @@ export const SamTable: React.FC<Props> = ({
                 'The currently active stake delegated by SAM. Arrow indicates expected change next epoch — see tooltip for breakdown.',
               ),
             cellAttrsFn: item => {
-              const active = selectSamActiveStake(item.validator)
-              const target = selectSamTargetStake(item.validator)
-              const delta = selectExpectedStakeChange(item.validator)
-              const fmt = (n: number) =>
+              const v = item.validator
+              const active = selectSamActiveStake(v)
+              const target = selectSamTargetStake(v)
+              const delta = selectExpectedStakeChange(v)
+              const fmtSol = (n: number) =>
                 `${formatSolAmount(Math.round(n), 0)} ☉`
-              const deltaColor =
-                delta > 0
-                  ? 'rgb(80,220,150)'
-                  : delta < 0
-                    ? 'rgb(250,120,120)'
-                    : undefined
+              const deltaAccent: 'green' | 'red' | undefined =
+                delta > 0 ? 'green' : delta < 0 ? 'red' : undefined
               const deltaStr =
                 delta === 0
                   ? '—'
                   : `${delta > 0 ? '+' : '−'}${formatSolAmount(Math.abs(Math.round(delta)), 0)} ☉`
+              const stakeSec =
+                sectionHeader('Stake') +
+                ttRow('SAM Active', '', fmtSol(active)) +
+                ttRow('SAM Target', '', fmtSol(target)) +
+                ttRow('Expected change next epoch', '', deltaStr, {
+                  boldValue: true,
+                  accent: deltaAccent,
+                })
+              const effBid = selectEffectiveBid(v)
+              const bid = selectBid(v)
+              const stake = v.marinadeActivatedStakeSol
+              const activating = Math.max(
+                0,
+                v.auctionStake.marinadeSamTargetSol - stake,
+              )
+              const cost = selectEffectiveCost(v)
+              const activatingCost = (bid * activating) / 1000
+              const total = cost + activatingCost
+              const inflPct = formatPercentage(selectCommission(v), 0)
+              const mevPct = formattedMevCommission(v)
+              const blkPct = formattedBlockRewardsCommission(v)
+              const pmpe4 = (n: number) => `${formatSolAmount(n, 4)} ☉`
+              const commSec =
+                sectionHeader('Commissions') +
+                ttRow('Inflation', inflPct, pmpe4(selectCommissionPmpe(v))) +
+                ttRow('MEV', mevPct, pmpe4(selectMevCommissionPmpe(v))) +
+                ttRow(
+                  'Block',
+                  blkPct,
+                  pmpe4(selectBlockRewardsCommissionPmpe(v)),
+                )
+              const chargeSec =
+                sectionHeader(
+                  `Charge this epoch · eff. bid ${formatSolAmount(effBid, 4)} ☉ / 1000`,
+                ) +
+                ttRow(
+                  'Activated',
+                  `${formatSolAmount(stake, 0)} ☉ × ${formatSolAmount(effBid, 4)}`,
+                  `${formatSolAmount(cost, 3)} ☉`,
+                ) +
+                ttRow(
+                  'Activating',
+                  `~${formatSolAmount(activating, 0)} ☉ × ${formatSolAmount(bid, 4)}`,
+                  `${formatSolAmount(activatingCost, 3)} ☉`,
+                ) +
+                divider() +
+                ttRow('Total Charge', '', `${formatSolAmount(total, 3)} ☉`, {
+                  boldLabel: true,
+                  boldValue: true,
+                })
+              const overrideMsg = overridesBidCpmpeMessage(v)
+              const cta = ctaBlock({
+                label: 'Stake & Bid Charge',
+                lead: overrideMsg
+                  ? overrideMsg.replace(/<br\/?>/g, ' ')
+                  : undefined,
+              })
               return tooltipAttributes(
-                '<table style="width:100%;border-collapse:collapse;font-size:0.9em;">' +
-                  tooltipRule('Stake') +
-                  tooltipRow('SAM Active', '', '', fmt(active)) +
-                  tooltipRow('SAM Target', '', '', fmt(target)) +
-                  tooltipRule('Next epoch') +
-                  tooltipRow('Expected change', '', '', deltaStr, {
-                    valueColor: deltaColor,
-                  }) +
-                  '</table>',
+                cta + wrapTable(stakeSec + commSec + chargeSec),
               )
             },
             render: item => {
