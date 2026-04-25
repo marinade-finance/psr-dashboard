@@ -884,16 +884,15 @@ export const SamTable: React.FC<Props> = ({
                 )
               const chargeSec =
                 sectionHeader('Charge this epoch') +
-                ttRow('Eff. bid', '', `${formatSolAmount(effBid, 4)} PMPE`) +
                 ttRow(
                   'Activated',
-                  `${formatSolAmount(stake, 0)} ☉ × ${formatSolAmount(effBid, 4)}`,
-                  `${formatSolAmount(cost, 3)} ☉`,
+                  `${formatSolAmount(stake, 0)} ☉`,
+                  `${formatSolAmount(effBid, 4)} PMPE`,
                 ) +
                 ttRow(
                   'Activating',
-                  `~${formatSolAmount(activating, 0)} ☉ × ${formatSolAmount(bid, 4)}`,
-                  `${formatSolAmount(activatingCost, 3)} ☉`,
+                  `~${formatSolAmount(activating, 0)} ☉`,
+                  `${formatSolAmount(bid, 4)} PMPE`,
                 ) +
                 divider() +
                 ttRow('Total Charge', '', `${formatSolAmount(total, 3)} ☉`, {
