@@ -77,11 +77,6 @@ export const loadSam = async (
     cacheInputs: false,
     debugVoteAccounts: [],
     logVerbosity: LogVerbosity.ERROR,
-    // Suppress fresh bond-risk fee + paidUndelegation contribution in the rerun
-    // so values.paidUndelegationSol reflects only the on-chain pending bucket.
-    // calculations.js:91-94 — bondRiskFeeMult=0 zeroes both bondRiskFeeSol and
-    // its paidUndelegationSol contribution.
-    bondRiskFeeMult: 0,
   })
 
   const auctionResult = await dsSam.runFinalOnly(dataOverrides)

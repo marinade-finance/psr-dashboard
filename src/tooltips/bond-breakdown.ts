@@ -52,6 +52,7 @@ export const computeBondMetrics = (
   minBondEpochs: number,
   idealBondEpochs: number,
   winningTotalPmpe: number,
+  bondRiskFeeMult: number,
 ): BondMetrics => {
   const bondBalanceSol = v.bondBalanceSol ?? 0
   const claimableBondBalanceSol = v.claimableBondBalanceSol ?? 0
@@ -62,10 +63,12 @@ export const computeBondMetrics = (
   const onchainDistributedPmpe = finite(v.revShare?.onchainDistributedPmpe)
   const unprotectedStakeSol = v.unprotectedStakeSol ?? 0
 
-  // bond-risk fresh is suppressed at the SDK rerun (bondRiskFeeMult=0 in
-  // loadSam), so paidUndelegationSol already reflects only the on-chain
-  // pending bucket plus bid-too-low fresh. Strip bid-too-low fresh here until
-  // it's also suppressed at the source.
+  // Strip this cycle's freshly-charged undelegation so the projection isn't
+  // implicitly re-charging on the already-penalized base.
+  // Bond-risk fresh contribution to paidUndelegationSol is min(1, mult) * value
+  // (calculations.js:94).
+  const freshBondRiskUndel =
+    (v.bondForcedUndelegation?.value ?? 0) * Math.min(1, bondRiskFeeMult)
   const freshBidTooLowUndel =
     winningTotalPmpe > 0
       ? ((v.revShare?.bidTooLowPenaltyPmpe ?? 0) * marinadeActivatedStakeSol) /
@@ -73,7 +76,7 @@ export const computeBondMetrics = (
       : 0
   const carriedPaidUndelegationSol = Math.max(
     0,
-    paidUndelegationSol - freshBidTooLowUndel,
+    paidUndelegationSol - freshBondRiskUndel - freshBidTooLowUndel,
   )
 
   const projectedActivatedStakeSol = Math.max(
@@ -243,9 +246,16 @@ export const buildBondBreakdownTooltip = (
   minBondEpochs: number,
   idealBondEpochs: number,
   winningTotalPmpe: number,
+  bondRiskFeeMult: number,
   bondState: Color | undefined,
 ): string =>
   renderBondBreakdownTooltip(
-    computeBondMetrics(v, minBondEpochs, idealBondEpochs, winningTotalPmpe),
+    computeBondMetrics(
+      v,
+      minBondEpochs,
+      idealBondEpochs,
+      winningTotalPmpe,
+      bondRiskFeeMult,
+    ),
     bondState,
   )

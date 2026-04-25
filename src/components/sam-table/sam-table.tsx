@@ -776,6 +776,7 @@ export const SamTable: React.FC<Props> = ({
                   minBondEpochs,
                   idealBondEpochs,
                   auctionResult.winningTotalPmpe,
+                  dcSamConfig.bondRiskFeeMult,
                   item.validator.bondState,
                 ),
               ),
