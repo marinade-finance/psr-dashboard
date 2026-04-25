@@ -51,8 +51,9 @@ import type {
   DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
 import type { PendingEdits } from 'src/pages/sam'
+import type { AugmentedAuctionValidator } from 'src/services/sam'
 
-type ValidatorWithBondState = AuctionValidator & { bondState?: Color }
+type ValidatorWithBondState = AugmentedAuctionValidator & { bondState?: Color }
 
 type PenaltyKind = 'bidLow' | 'blacklist' | 'risk'
 
@@ -285,9 +286,8 @@ export const SamTable: React.FC<Props> = ({
   onRunSimulation,
   onCancelEditing,
 }) => {
-  const {
-    auctionData: { validators },
-  } = auctionResult
+  const validators = augmentAuctionResult(auctionResult)
+  if (originalAuctionResult) augmentAuctionResult(originalAuctionResult)
   const samDistributedStake = Math.round(selectSamDistributedStake(validators))
   const winningAPY = selectWinningAPY(auctionResult, epochsPerYear)
   const projectedApy = selectProjectedAPY(auctionResult, epochsPerYear)
@@ -295,7 +295,6 @@ export const SamTable: React.FC<Props> = ({
   const stakeToMoveSol = selectStakeToMove(auctionResult)
   const stakeToMove = stakeToMoveSol / samDistributedStake
   const redelegationBudget = selectRedelegationBudget(validators)
-  augmentAuctionResult(auctionResult)
   const activeStake =
     selectTotalActiveStake(auctionResult) / samDistributedStake
   const productiveStake =
@@ -454,9 +453,10 @@ export const SamTable: React.FC<Props> = ({
 
     const orig =
       simulatedValidator && originalAuctionResult
-        ? originalAuctionResult.auctionData.validators.find(
-            v => v.voteAccount === simulatedValidator,
-          )
+        ? (
+            originalAuctionResult.auctionData
+              .validators as AugmentedAuctionValidator[]
+          ).find(v => v.voteAccount === simulatedValidator)
         : undefined
     const sim = simulatedValidator
       ? validators.find(v => v.voteAccount === simulatedValidator)

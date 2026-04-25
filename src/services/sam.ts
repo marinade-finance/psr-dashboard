@@ -533,7 +533,13 @@ export type AugmentedValues = AuctionValidator['values'] & {
   naturalWithdrawalSol: number
 }
 
-export function augmentAuctionResult(auctionResult: AuctionResult): void {
+export type AugmentedAuctionValidator = Omit<AuctionValidator, 'values'> & {
+  values: AugmentedValues
+}
+
+export function augmentAuctionResult(
+  auctionResult: AuctionResult,
+): AugmentedAuctionValidator[] {
   const { validators } = auctionResult.auctionData
   const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
   const changes = computeExpectedStakeChanges(validators, tvl)
@@ -543,6 +549,7 @@ export function augmentAuctionResult(auctionResult: AuctionResult): void {
     values.expectedStakeChangeSol = changes.get(v.voteAccount) ?? 0
     values.naturalWithdrawalSol = withdrawalByVa.get(v.voteAccount) ?? 0
   }
+  return validators as AugmentedAuctionValidator[]
 }
 
 function computeNaturalWithdrawal(
@@ -634,11 +641,12 @@ function computeExpectedStakeChanges(
   return result
 }
 
-export const selectExpectedStakeChange = (v: AuctionValidator): number =>
-  (v.values as AugmentedValues).expectedStakeChangeSol ?? 0
+export const selectExpectedStakeChange = (
+  v: AugmentedAuctionValidator,
+): number => v.values.expectedStakeChangeSol ?? 0
 
-export const selectNaturalWithdrawal = (v: AuctionValidator): number =>
-  (v.values as AugmentedValues).naturalWithdrawalSol ?? 0
+export const selectNaturalWithdrawal = (v: AugmentedAuctionValidator): number =>
+  v.values.naturalWithdrawalSol ?? 0
 
 export type ConcentrationRow = {
   key: string
