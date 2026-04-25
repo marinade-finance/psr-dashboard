@@ -25,6 +25,9 @@ import {
 
 import type { AugmentedAuctionValidator } from 'src/services/sam'
 
+const fmtSol = (n: number) => `${formatSolAmount(Math.round(n), 0)} ☉`
+const pmpe4 = (n: number) => `${formatSolAmount(n, 4)} ☉`
+
 export type SamActiveMetrics = {
   active: number
   target: number
@@ -73,9 +76,6 @@ export function computeSamActiveMetrics(
     overrideMsg: overridesCpmpeMessage(v),
   }
 }
-
-const fmtSol = (n: number) => `${formatSolAmount(Math.round(n), 0)} ☉`
-const pmpe4 = (n: number) => `${formatSolAmount(n, 4)} ☉`
 
 const stakeRow = (
   label: string,
