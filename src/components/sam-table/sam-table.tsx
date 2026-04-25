@@ -977,9 +977,12 @@ export const SamTable: React.FC<Props> = ({
                 >
                   <span
                     style={{
-                      display: 'inline-block',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       minWidth: '1em',
-                      textAlign: 'center',
+                      height: '1em',
+                      overflow: 'visible',
                       color: kind !== 'none' ? color : undefined,
                       opacity: kind === 'none' ? 0 : 1,
                       fontSize: kind === 'arrows' ? '1.8em' : '0.7em',
