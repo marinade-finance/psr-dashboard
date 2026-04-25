@@ -25,9 +25,6 @@ import {
 
 import type { AugmentedAuctionValidator } from 'src/services/sam'
 
-const fmtSol = (n: number) => `${formatSolAmount(Math.round(n), 0)} ☉`
-const pmpe4 = (n: number) => `${formatSolAmount(n, 4)} ☉`
-
 export type SamActiveMetrics = {
   active: number
   target: number
@@ -129,12 +126,12 @@ export function renderSamActiveTooltip(
   const deltaStr =
     m.delta === 0
       ? '—'
-      : `${m.delta > 0 ? '+' : '−'}${formatSolAmount(Math.abs(Math.round(m.delta)), 0)} ☉`
+      : `${m.delta > 0 ? '+' : '−'}${formatSolAmount(Math.abs(m.delta), 0)} ☉`
 
   const stakeSec =
     sectionHeader('Stake', 4) +
-    stakeRow('SAM Active', fmtSol(m.active)) +
-    stakeRow('SAM Target', fmtSol(m.target)) +
+    stakeRow('SAM Active', `${formatSolAmount(m.active, 0)} ☉`) +
+    stakeRow('SAM Target', `${formatSolAmount(m.target, 0)} ☉`) +
     stakeRow('Expected change next epoch', deltaStr, {
       boldValue: true,
       accent: deltaAccent,
@@ -142,9 +139,9 @@ export function renderSamActiveTooltip(
 
   const commSec =
     sectionHeader('Commissions', 4) +
-    commRow('Inflation', m.inflPct, pmpe4(m.inflPmpe)) +
-    commRow('MEV', m.mevPct, pmpe4(m.mevPmpe)) +
-    commRow('Block', m.blkPct, pmpe4(m.blkPmpe))
+    commRow('Inflation', m.inflPct, `${formatSolAmount(m.inflPmpe, 4)} ☉`) +
+    commRow('MEV', m.mevPct, `${formatSolAmount(m.mevPmpe, 4)} ☉`) +
+    commRow('Block', m.blkPct, `${formatSolAmount(m.blkPmpe, 4)} ☉`)
 
   const chargeSec =
     sectionHeader('Charge this epoch', 4) +
