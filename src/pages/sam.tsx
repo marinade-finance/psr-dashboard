@@ -186,6 +186,8 @@ export const SamPage: React.FC<Props> = ({ level }) => {
             dcSamConfig={data.dcSamConfig}
             originalAuctionResult={originalAuctionResult}
             epochsPerYear={data.epochsPerYear}
+            minBondEpochs={data.dcSamConfig.minBondEpochs}
+            idealBondEpochs={data.dcSamConfig.idealBondEpochs}
             level={level}
             simulationModeActive={simulationModeActive}
             editingValidator={editingValidator}

@@ -1,0 +1,145 @@
+/* Shared tooltip-table primitive. All tooltips that render an HTML table
+   inside react-tooltip should use these classes — no inline styles. */
+
+.tt-cta-label {
+  padding: 8px 0 4px;
+  font-size: 0.78em;
+  color: var(--text-light-1);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tt-cta-lead {
+  padding: 0 0 2px;
+  white-space: normal;
+  font-size: 1.05em;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--text-light-2);
+}
+
+.tt-cta {
+  margin-top: 8px;
+  padding: 0 0 10px;
+  white-space: normal;
+  font-size: 1.15em;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text-light-2);
+}
+
+.tt-cta.tt-state-red {
+  color: rgb(248, 113, 113);
+}
+
+.tt-cta.tt-state-orange {
+  color: rgb(251, 146, 60);
+}
+
+.tt-cta.tt-state-yellow {
+  color: rgb(250, 204, 21);
+}
+
+.tt-cta.tt-state-green {
+  color: rgb(74, 222, 128);
+}
+
+.tt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+  color: var(--text-light-2);
+  font-variant-numeric: tabular-nums;
+  table-layout: auto;
+}
+
+.tt-table td,
+.tt-table th {
+  padding: 2px 0;
+}
+
+.tt-table td + td,
+.tt-table th + th {
+  padding-left: 10px;
+}
+
+.tt-left {
+  text-align: left;
+  white-space: nowrap;
+}
+
+.tt-right {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tt-wrap {
+  white-space: normal;
+}
+
+.tt-bold {
+  font-weight: 700;
+}
+
+.tt-large {
+  font-size: 1.15em;
+}
+
+.tt-muted {
+  color: var(--text-light-1);
+}
+
+.tt-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.tt-head {
+  padding-bottom: 4px;
+  font-size: 0.78em;
+  font-weight: 500;
+  color: var(--text-light-1);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tt-rule-spacer {
+  height: 8px;
+  padding: 0;
+}
+
+.tt-rule {
+  border-top: 1px dashed rgba(255, 255, 255, 0.25);
+  padding: 6px 0 6px;
+  font-size: 0.78em;
+  color: var(--text-light-1);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tt-divider {
+  border-top: 1px solid rgba(255, 255, 255, 0.22);
+  padding: 0;
+  height: 1px;
+}
+
+.tt-accent-red {
+  color: rgb(248, 113, 113);
+}
+
+.tt-accent-orange {
+  color: rgb(251, 146, 60);
+}
+
+.tt-accent-yellow {
+  color: rgb(250, 204, 21);
+}
+
+.tt-accent-green {
+  color: rgb(74, 222, 128);
+}
+
+.tt-ok-msg {
+  padding-right: 12px;
+  white-space: normal;
+  color: rgb(74, 222, 128);
+}
