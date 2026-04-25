@@ -62,11 +62,10 @@ export const computeBondMetrics = (
   const onchainDistributedPmpe = finite(v.revShare?.onchainDistributedPmpe)
   const unprotectedStakeSol = v.unprotectedStakeSol ?? 0
 
-  // Strip this cycle's freshly-charged undelegation so the recommendation
-  // isn't implicitly re-charging on the already-penalized base.
-  // Assumes bondRiskFeeMult >= 1 (so bondForcedUndelegation.value matches
-  // the paidUndel delta exactly; see calculations.js:94).
-  const freshBondRiskUndel = v.bondForcedUndelegation?.value ?? 0
+  // bond-risk fresh is suppressed at the SDK rerun (bondRiskFeeMult=0 in
+  // loadSam), so paidUndelegationSol already reflects only the on-chain
+  // pending bucket plus bid-too-low fresh. Strip bid-too-low fresh here until
+  // it's also suppressed at the source.
   const freshBidTooLowUndel =
     winningTotalPmpe > 0
       ? ((v.revShare?.bidTooLowPenaltyPmpe ?? 0) * marinadeActivatedStakeSol) /
@@ -74,7 +73,7 @@ export const computeBondMetrics = (
       : 0
   const carriedPaidUndelegationSol = Math.max(
     0,
-    paidUndelegationSol - freshBondRiskUndel - freshBidTooLowUndel,
+    paidUndelegationSol - freshBidTooLowUndel,
   )
 
   const projectedActivatedStakeSol = Math.max(
