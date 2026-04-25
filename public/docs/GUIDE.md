@@ -34,6 +34,14 @@ validators based on their bids and performance.
 - **Winning APY** &mdash; Estimated APY of the last validator winning the auction
 - **Projected APY** &mdash; Expected staker return based on total revenue from all winning validators
 - **Winning Validators** &mdash; Count of validators receiving stake in current auction
+- **Top Countries** &mdash; The three countries holding the largest share of SAM-distributed stake,
+  with each row showing the country name, a bar proportional to its share, and the percentage.
+  A row marked **(capped)** in red means at least one validator in that country had its stake
+  cut by the country concentration cap that SAM enforces. Hover the card for the full list
+  (all countries with validator counts, stake, share, and cap status).
+- **Top ASOs** &mdash; Same breakdown grouped by ASO (Autonomous System Operator &mdash; the
+  hosting provider or network operator). SAM also caps stake concentration per ASO to prevent
+  operator-level risk; (capped) rows have at least one validator hit by the ASO cap.
 
 **Simulation Mode:** Click "Enter Simulation" to test how changing a validator's parameters would affect their auction
 position. Edit commission rates or bid amounts, then click "Simulate" to see projected results.
@@ -147,6 +155,54 @@ A pre-funded vault validators create to participate in SAM. The bond:
 - Covers bid costs (static bids are deducted from bond)
 - Protects delegators against validator failures
 - Demonstrates validator commitment to the ecosystem
+
+### Bond Breakdown (Cover. [ep] tooltip)
+
+Hovering the **Cover. [ep]** cell shows a two-section breakdown explaining
+the bond state and what a validator should top up.
+
+**Terms used in the tooltip**
+
+| Label in tooltip                | SDK field                  | Meaning                                                                                     |
+| ------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------- |
+| Expected max effective bid      | `expectedMaxEffBidPmpe`    | The expected maximum bid the validator could be charged this epoch, in PMPE                 |
+| On-chain distributed rewards    | `onchainDistributedPmpe`   | Inflation + MEV rewards distributed on-chain (not via bond), in PMPE                        |
+| Bond balance                    | `bondBalanceSol`           | Full bond deposit                                                                           |
+| Claimable bond balance          | `claimableBondBalanceSol`  | Portion of the bond already available for settlement / fees                                 |
+| Activated Marinade stake        | `marinadeActivatedStakeSol`| Currently active Marinade stake on the validator                                            |
+| Paid undelegation               | `paidUndelegationSol`      | Amount of stake the SDK has **queued for forced undelegation** from this validator due to bond-risk-fee (`calcBondRiskFee`) or bid-too-low (`calcBidTooLowPenalty`) penalties. It represents stake on its way out; the SDK subtracts it from the bid base (`projectedActivated = max(0, activated − paidUndelegationSol)`), so it is excluded from the forward-looking bid obligation. Shown in the tooltip for context — informational, not additive. |
+| Protected stake                 | `protectedStakeSol`        | `activated − unprotected`; the portion the bond has to cover                                      |
+| SAM target stake                | `marinadeSamTargetSol`     | Stake the auction has assigned to this validator this epoch                                 |
+
+**Section 1 — Minimum Coverage**
+
+Shows whether the **claimable bond balance** covers the minimum obligations
+for **activated stake** across `1 + minBondEpochs` epochs (the fee
+threshold, per current protocol config). At or below this line the
+validator is subject to `bondRiskFeeSol` charges and forced undelegation.
+
+If the claimable balance is short, **Top-up to minimum coverage** is what
+the validator must add *now* to escape the bond risk fee and undelegation.
+
+**Section 2 — Ideal Coverage**
+
+Shows how much **bond balance** is required to comfortably sustain the
+**SAM target stake** for `1 + idealBondEpochs` epochs (the runway target,
+per current protocol config). Uses the raw target because this section is
+forward-looking: "is the bond large enough to keep receiving new stake?".
+The coefficient is the protocol's ideal-coverage coefficient &mdash; see
+[idealBondCoef in the BRRM docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market/bond-risk-reduction-mechanism#ideal-bond-coef).
+
+**To get more stake, top up** is the shortfall between the current bond
+and `Ideal required`. Topping up beyond that is advisable so the bond
+does not dip back below ideal after a few epochs of bid drain.
+
+The column value `Cover. [ep]` is derived from
+`bondGoodForNEpochs`, computed against
+`marinadeActivatedStakeSol`. Note that `bondGoodForNEpochs` uses the full
+`bondBalanceSol` (not just the claimable portion) as the runway base. It
+represents epochs of runway *above the fee threshold*. Zero or negative
+means the bond is below minimum coverage and `bondRiskFeeSol` applies.
 
 ### Effective vs Maximum Bid
 

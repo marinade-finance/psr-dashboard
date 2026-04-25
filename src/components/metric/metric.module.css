@@ -3,6 +3,8 @@
   background-color: var(--bg-dark-1);
   border-radius: 4px;
   cursor: help;
+  display: flex;
+  flex-direction: column;
 }
 
 .metricWrap > div {

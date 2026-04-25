@@ -22,7 +22,6 @@ import {
   selectTotalActiveStake,
   selectSamActiveStake,
   bondHealthColor,
-  bondTooltip,
   selectBondHealth,
   selectProductiveStake,
   selectIsNonProductive,
@@ -34,11 +33,13 @@ import {
   selectCommissionPmpe,
   selectBlockRewardsCommissionPmpe,
   overridesCpmpeMessage as overridesBidCpmpeMessage,
+  buildConcentrationBreakdown,
 } from 'src/services/sam'
 
 import styles from './sam-table.module.css'
 import { tooltipAttributes } from '../../services/utils'
-import { ComplexMetric } from '../complex-metric/complex-metric'
+import { buildBondBreakdownTooltip } from '../../tooltips/bond-breakdown'
+import { ConcentrationMetric } from '../concentration-metric/concentration-metric'
 import { Metric } from '../metric/metric'
 import { UserLevel } from '../navigation/navigation'
 import { Alignment, Color, OrderDirection, Table } from '../table/table'
@@ -47,6 +48,7 @@ import type { Order } from '../table/table'
 import type {
   AuctionResult,
   AuctionValidator,
+  DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
 import type { PendingEdits } from 'src/pages/sam'
 
@@ -60,49 +62,102 @@ const penaltyClass: Record<PenaltyKind, string> = {
   risk: styles.penalty_risk,
 }
 
+const PenaltyIcon: Record<PenaltyKind, JSX.Element> = {
+  bidLow: (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <polyline points="23 18 13.5 8.5 8.5 13.5 1 6" />
+      <polyline points="17 18 23 18 23 12" />
+    </svg>
+  ),
+  blacklist: (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+    </svg>
+  ),
+  risk: (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+      <line x1="12" y1="9" x2="12" y2="13" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
+    </svg>
+  ),
+}
+
 const renderPenaltyBadges = (v: AuctionValidator) => {
   const stakeSol = v.marinadeActivatedStakeSol
-  const badges: {
-    icon: string
-    label: string
-    sol: number
-    kind: PenaltyKind
-  }[] = []
+  const badges: { label: string; sol: number; kind: PenaltyKind }[] = []
   const bidTooLowSol = (stakeSol * v.revShare.bidTooLowPenaltyPmpe) / 1000
   const blacklistSol = (stakeSol * v.revShare.blacklistPenaltyPmpe) / 1000
   const bondRiskSol = v.values?.bondRiskFeeSol ?? 0
   if (bidTooLowSol > 0)
-    badges.push({
-      icon: '▼',
-      label: 'BidTooLow',
-      sol: bidTooLowSol,
-      kind: 'bidLow',
-    })
+    badges.push({ label: 'BidTooLow', sol: bidTooLowSol, kind: 'bidLow' })
   if (blacklistSol > 0)
-    badges.push({
-      icon: '⊘',
-      label: 'Blacklist',
-      sol: blacklistSol,
-      kind: 'blacklist',
-    })
+    badges.push({ label: 'Blacklist', sol: blacklistSol, kind: 'blacklist' })
   if (bondRiskSol > 0)
-    badges.push({
-      icon: '⚠',
-      label: 'BondRiskFee',
-      sol: bondRiskSol,
-      kind: 'risk',
-    })
-  return badges.map(b => (
+    badges.push({ label: 'BondRiskFee', sol: bondRiskSol, kind: 'risk' })
+  if (badges.length === 0) return null
+
+  const cls = (b: { kind: PenaltyKind }) =>
+    `${styles.penaltyBadge} ${penaltyClass[b.kind]}`
+  const fmt = (b: { label: string; sol: number }) =>
+    `<b>${b.label}</b>: ${formatSolAmount(b.sol, 3)} SOL (estimate)`
+
+  if (badges.length === 1) {
+    const b = badges[0]
+    return (
+      <span className={styles.penalties} data-count="1">
+        <span
+          key={b.label}
+          {...tooltipAttributes(fmt(b))}
+          className={cls(b)}
+          aria-label={b.label}
+        >
+          {PenaltyIcon[b.kind]}
+        </span>
+      </span>
+    )
+  }
+
+  const joinedTooltip = badges.map(fmt).join('<br/>')
+  return (
     <span
-      key={b.label}
-      {...tooltipAttributes(
-        `<b>${b.label}</b><br/>${formatSolAmount(b.sol, 3)} SOL (estimate)`,
-      )}
-      className={`${styles.penaltyBadge} ${penaltyClass[b.kind]}`}
+      className={styles.penalties}
+      data-count={String(badges.length)}
+      {...tooltipAttributes(joinedTooltip)}
+      aria-label={badges.map(b => b.label).join(', ')}
     >
-      {b.icon}
+      {badges.map(b => (
+        <span key={b.label} className={cls(b)} aria-hidden="true">
+          {PenaltyIcon[b.kind]}
+        </span>
+      ))}
     </span>
-  ))
+  )
 }
 
 const NUM_STYLE =
@@ -146,14 +201,19 @@ type InputOpts = {
   placeholder?: string
 }
 
+const DEFAULT_ORDER: Order[] = [[9, OrderDirection.DESC]]
+
 type Props = {
   auctionResult: AuctionResult
   tvlJoinApyDiff: number
   tvlLeaveApyDiff: number
   backstopDiff: number
   backstopTvl: number
+  dcSamConfig: DsSamConfig
   originalAuctionResult: AuctionResult | null
   epochsPerYear: number
+  minBondEpochs: number
+  idealBondEpochs: number
   level: UserLevel
   simulationModeActive: boolean
   editingValidator: string | null
@@ -209,8 +269,11 @@ export const SamTable: React.FC<Props> = ({
   tvlLeaveApyDiff,
   backstopDiff,
   backstopTvl,
+  dcSamConfig,
   originalAuctionResult,
   epochsPerYear,
+  minBondEpochs,
+  idealBondEpochs,
   level,
   simulationModeActive,
   editingValidator,
@@ -277,21 +340,6 @@ export const SamTable: React.FC<Props> = ({
     [validators],
   )
 
-  const hasDataChanged = useMemo(() => {
-    if (!simulatedValidator || !originalAuctionResult) return false
-    const orig = originalAuctionResult.auctionData.validators.find(
-      v => v.voteAccount === simulatedValidator,
-    )
-    const sim = validators.find(v => v.voteAccount === simulatedValidator)
-    if (!orig || !sim) return false
-    return (
-      orig.inflationCommissionDec !== sim.inflationCommissionDec ||
-      orig.mevCommissionDec !== sim.mevCommissionDec ||
-      orig.blockRewardsCommissionDec !== sim.blockRewardsCommissionDec ||
-      orig.revShare.bidPmpe !== sim.revShare.bidPmpe
-    )
-  }, [simulatedValidator, originalAuctionResult, validators])
-
   const samStakeValidators = allValidators.filter(
     v => v.auctionStake.marinadeSamTargetSol,
   )
@@ -301,12 +349,12 @@ export const SamTable: React.FC<Props> = ({
       0,
     ) / samStakeValidators.length
 
+  const concentration = buildConcentrationBreakdown(auctionResult, dcSamConfig)
+
   const inputVal = (field: keyof PendingEdits, fallback: string) =>
     pendingEdits[field] ?? fallback
 
-  const defaultOrder: Order[] = useMemo(() => [[6, OrderDirection.DESC]], [])
-
-  const [currentOrder, setCurrentOrder] = useState<Order[]>(defaultOrder)
+  const [currentOrder, setCurrentOrder] = useState<Order[]>(DEFAULT_ORDER)
 
   const handleOrderChange = useCallback((order: Order[]) => {
     setCurrentOrder(order)
@@ -404,32 +452,40 @@ export const SamTable: React.FC<Props> = ({
       isGhost: false,
     }))
 
-    if (simulatedValidator && hasDataChanged && originalAuctionResult) {
-      const orig = originalAuctionResult.auctionData.validators.find(
-        v => v.voteAccount === simulatedValidator,
-      )
-      if (orig) {
-        const originalValidator = {
-          ...orig,
-          bondState: bondHealthColor(orig),
-        }
-        const originalPosition = getOriginalPosition(simulatedValidator)
+    const orig =
+      simulatedValidator && originalAuctionResult
+        ? originalAuctionResult.auctionData.validators.find(
+            v => v.voteAccount === simulatedValidator,
+          )
+        : undefined
+    const sim = simulatedValidator
+      ? validators.find(v => v.voteAccount === simulatedValidator)
+      : undefined
+    const hasDataChanged =
+      !!orig &&
+      !!sim &&
+      (orig.inflationCommissionDec !== sim.inflationCommissionDec ||
+        orig.mevCommissionDec !== sim.mevCommissionDec ||
+        orig.blockRewardsCommissionDec !== sim.blockRewardsCommissionDec ||
+        orig.revShare.bidPmpe !== sim.revShare.bidPmpe)
+
+    if (hasDataChanged && orig && simulatedValidator) {
+      const originalPosition = getOriginalPosition(simulatedValidator)
+      if (originalPosition !== null && originalPosition > 0) {
         const currentSimulatedIndex = display.findIndex(
           d => d.validator.voteAccount === simulatedValidator,
         )
-        if (originalPosition !== null && originalPosition > 0) {
-          const adjustedOriginalPos = originalPosition - 1
-          const insertIndex = Math.min(
-            currentSimulatedIndex === adjustedOriginalPos
-              ? currentSimulatedIndex + 1
-              : adjustedOriginalPos,
-            display.length,
-          )
-          display.splice(insertIndex, 0, {
-            validator: originalValidator,
-            isGhost: true,
-          })
-        }
+        const adjustedOriginalPos = originalPosition - 1
+        const insertIndex = Math.min(
+          currentSimulatedIndex === adjustedOriginalPos
+            ? currentSimulatedIndex + 1
+            : adjustedOriginalPos,
+          display.length,
+        )
+        display.splice(insertIndex, 0, {
+          validator: { ...orig, bondState: bondHealthColor(orig) },
+          isGhost: true,
+        })
       }
     }
 
@@ -437,8 +493,8 @@ export const SamTable: React.FC<Props> = ({
   }, [
     sortedValidators,
     simulatedValidator,
-    hasDataChanged,
     originalAuctionResult,
+    validators,
     getOriginalPosition,
   ])
 
@@ -569,17 +625,22 @@ export const SamTable: React.FC<Props> = ({
               'How much stake is distributed by Marinade to validators based on SAM',
             )}
           />
-          <ComplexMetric
+          <Metric
             label="Winning Validators"
-            value={
-              <div>
-                <span>{samStakeValidators.length}</span> /{' '}
-                <span>{allValidators.length}</span>
-              </div>
-            }
+            value={`${samStakeValidators.length} / ${allValidators.length}`}
             {...tooltipAttributes(
               'Number of validators that won stake in this SAM auction',
             )}
+          />
+          <ConcentrationMetric
+            label="Top Countries"
+            rows={concentration.countries}
+            capPct={concentration.countryCapPct}
+          />
+          <ConcentrationMetric
+            label="Top ASOs"
+            rows={concentration.asos}
+            capPct={concentration.asoCapPct}
           />
         </div>
         {expertMetrics}
@@ -684,14 +745,14 @@ export const SamTable: React.FC<Props> = ({
               const va = selectVoteAccount(item.validator)
               const sim = !item.isGhost && simulatedValidator === va
               return (
-                <>
+                <span className={styles.validatorCell}>
                   <span
                     className={`${styles.pubkey} ${sim ? styles.pubkeySimulated : ''}`}
                   >
                     {va}
                   </span>
                   {renderPenaltyBadges(item.validator)}
-                </>
+                </span>
               )
             },
             compare: (a, b) =>
@@ -793,8 +854,6 @@ export const SamTable: React.FC<Props> = ({
           {
             header: 'Bond [☉]',
             headerAttrsFn: () => tooltipAttributes('Bond Balance.'),
-            cellAttrsFn: item =>
-              tooltipAttributes(bondTooltip(item.validator.bondState)),
             render: item => (
               <>{formatSolAmount(selectBondSize(item.validator), 0)}</>
             ),
@@ -809,7 +868,15 @@ export const SamTable: React.FC<Props> = ({
                 'Epochs of bond runway above the minimum required reserve. At zero, Marinade starts undelegating stake and charging fees to cover the costs. Negative means the bond is short of the reserve by that many epochs of bid payments — top up to avoid further fee charges.',
               ),
             cellAttrsFn: item =>
-              tooltipAttributes(bondTooltip(item.validator.bondState)),
+              tooltipAttributes(
+                buildBondBreakdownTooltip(
+                  item.validator,
+                  minBondEpochs,
+                  idealBondEpochs,
+                  auctionResult.winningTotalPmpe,
+                  item.validator.bondState,
+                ),
+              ),
             render: item => {
               if (!item.validator.auctionStake.marinadeSamTargetSol) {
                 return <>-</>
@@ -820,10 +887,13 @@ export const SamTable: React.FC<Props> = ({
             compare: (a, b) =>
               selectBondHealth(a.validator) - selectBondHealth(b.validator),
             alignment: Alignment.RIGHT,
-            background: item =>
-              selectBondSize(item.validator) <= 0
-                ? Color.GREY
-                : item.validator.bondState,
+            background: item => {
+              const bond = selectBondSize(item.validator)
+              if (bond <= 0) return Color.GREY
+              if (!item.validator.auctionStake.marinadeSamTargetSol)
+                return Color.GREY
+              return item.validator.bondState
+            },
           },
           {
             header: 'Max APY',
@@ -952,7 +1022,7 @@ export const SamTable: React.FC<Props> = ({
               ]
             : []),
         ]}
-        defaultOrder={defaultOrder}
+        defaultOrder={DEFAULT_ORDER}
         onOrderChange={handleOrderChange}
         presorted
       />

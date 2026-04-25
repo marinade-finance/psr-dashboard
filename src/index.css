@@ -34,3 +34,24 @@ html {
 body {
   position: relative;
 }
+
+/* Tooltip: solid dark background at 90% alpha, full-content coverage, crisp text */
+.react-tooltip {
+  --rt-opacity: 1 !important;
+  background-color: rgba(0, 0, 0, 0.9) !important;
+  color: var(--text-light-2);
+  width: max-content;
+  max-width: min(640px, calc(100vw - 24px));
+}
+
+/* Force the injected data-tooltip-html span to behave as a block so inner
+   CTA/header/table children all share a single stretched width and the
+   dark background is visually continuous under every row. */
+.react-tooltip .react-tooltip-content-wrapper > span {
+  display: block;
+  width: 100%;
+}
+
+.react-tooltip .react-tooltip-arrow {
+  background-color: rgba(0, 0, 0, 0.9) !important;
+}
