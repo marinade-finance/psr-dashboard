@@ -4,9 +4,6 @@ import { formatPercentage, formatSolAmount } from 'src/format'
 import {
   selectBid,
   selectBondSize,
-  selectCommission,
-  selectEffectiveBid,
-  selectEffectiveCost,
   selectConstraintText,
   selectMaxAPY,
   selectSamDistributedStake,
@@ -27,30 +24,17 @@ import {
   selectIsNonProductive,
   selectTargetProtectedPct,
   selectActuallyUnprotectedStake,
-  formattedMevCommission,
-  formattedBlockRewardsCommission,
-  selectMevCommissionPmpe,
-  selectCommissionPmpe,
-  selectBlockRewardsCommissionPmpe,
-  overridesCpmpeMessage as overridesBidCpmpeMessage,
   buildConcentrationBreakdown,
 } from 'src/services/sam'
 
 import styles from './sam-table.module.css'
 import { tooltipAttributes } from '../../services/utils'
 import { buildBondBreakdownTooltip } from '../../tooltips/bond-breakdown'
+import { buildSamActiveTooltip } from '../../tooltips/sam-active'
 import { ConcentrationMetric } from '../concentration-metric/concentration-metric'
 import { Metric } from '../metric/metric'
 import { UserLevel } from '../navigation/navigation'
 import { Alignment, Color, OrderDirection, Table } from '../table/table'
-import {
-  cell,
-  ctaBlock,
-  divider,
-  rowCells,
-  sectionHeader,
-  wrapTable,
-} from '../tooltip-table/tooltip-table'
 
 import type { Order } from '../table/table'
 import type {
@@ -839,125 +823,8 @@ export const SamTable: React.FC<Props> = ({
               tooltipAttributes(
                 'The currently active stake delegated by SAM. Arrow indicates expected change next epoch — see tooltip for breakdown.',
               ),
-            cellAttrsFn: item => {
-              const v = item.validator
-              const active = selectSamActiveStake(v)
-              const target = selectSamTargetStake(v)
-              const delta = selectExpectedStakeChange(v)
-              const fmtSol = (n: number) =>
-                `${formatSolAmount(Math.round(n), 0)} ☉`
-              const deltaAccent: 'green' | 'red' | undefined =
-                delta > 0 ? 'green' : delta < 0 ? 'red' : undefined
-              const deltaStr =
-                delta === 0
-                  ? '—'
-                  : `${delta > 0 ? '+' : '−'}${formatSolAmount(Math.abs(Math.round(delta)), 0)} ☉`
-              const stakeRow = (
-                label: string,
-                value: string,
-                opts?: { boldValue?: boolean; accent?: 'green' | 'red' },
-              ) =>
-                rowCells([
-                  cell(label, { wrap: true }),
-                  cell('', {}),
-                  cell('', {}),
-                  cell(value, {
-                    align: 'right',
-                    mono: true,
-                    bold: opts?.boldValue,
-                    accent: opts?.accent,
-                  }),
-                ])
-              const stakeSec =
-                sectionHeader('Stake', 4) +
-                stakeRow('SAM Active', fmtSol(active)) +
-                stakeRow('SAM Target', fmtSol(target)) +
-                stakeRow('Expected change next epoch', deltaStr, {
-                  boldValue: true,
-                  accent: deltaAccent,
-                })
-              const effBid = selectEffectiveBid(v)
-              const bid = selectBid(v)
-              const stake = v.marinadeActivatedStakeSol
-              const activating = Math.max(
-                0,
-                v.auctionStake.marinadeSamTargetSol - stake,
-              )
-              const cost = selectEffectiveCost(v)
-              const activatingCost = (bid * activating) / 1000
-              const total = cost + activatingCost
-              const inflPct = formatPercentage(selectCommission(v), 0)
-              const mevPct = formattedMevCommission(v)
-              const blkPct = formattedBlockRewardsCommission(v)
-              const pmpe4 = (n: number) => `${formatSolAmount(n, 4)} ☉`
-              const commRow = (label: string, pct: string, pmpe: string) =>
-                rowCells([
-                  cell(label, { wrap: true }),
-                  cell(pct, { align: 'right', muted: true, mono: true }),
-                  cell(pmpe, { align: 'right', muted: true, mono: true }),
-                  cell('', {}),
-                ])
-              const commSec =
-                sectionHeader('Commissions', 4) +
-                commRow('Inflation', inflPct, pmpe4(selectCommissionPmpe(v))) +
-                commRow('MEV', mevPct, pmpe4(selectMevCommissionPmpe(v))) +
-                commRow(
-                  'Block',
-                  blkPct,
-                  pmpe4(selectBlockRewardsCommissionPmpe(v)),
-                )
-              const chargeRow = (
-                label: string,
-                stakeStr: string,
-                rateStr: string,
-                costStr: string,
-                opts?: { boldLabel?: boolean; boldValue?: boolean },
-              ) =>
-                rowCells([
-                  cell(label, { wrap: true, bold: opts?.boldLabel }),
-                  cell(stakeStr, { align: 'right', muted: true, mono: true }),
-                  cell(rateStr, { align: 'right', muted: true, mono: true }),
-                  cell(costStr, {
-                    align: 'right',
-                    mono: true,
-                    bold: opts?.boldValue,
-                  }),
-                ])
-              const chargeSec =
-                sectionHeader('Charge this epoch', 4) +
-                chargeRow('Eff. bid PMPE', '', formatSolAmount(effBid, 4), '') +
-                chargeRow('Bid PMPE', '', formatSolAmount(bid, 4), '') +
-                chargeRow(
-                  'Active charge',
-                  `${formatSolAmount(stake, 0)} ☉`,
-                  '',
-                  `${formatSolAmount(cost, 3)} ☉`,
-                ) +
-                chargeRow(
-                  'Activating charge',
-                  `~${formatSolAmount(activating, 0)} ☉`,
-                  '',
-                  `${formatSolAmount(activatingCost, 3)} ☉`,
-                ) +
-                divider(4) +
-                chargeRow(
-                  'Total Charge',
-                  '',
-                  '',
-                  `${formatSolAmount(total, 3)} ☉`,
-                  { boldLabel: true, boldValue: true },
-                )
-              const overrideMsg = overridesBidCpmpeMessage(v)
-              const cta = ctaBlock({
-                label: 'Stake & Bid Charge',
-                lead: overrideMsg
-                  ? overrideMsg.replace(/<br\/?>/g, ' ')
-                  : undefined,
-              })
-              return tooltipAttributes(
-                cta + wrapTable(stakeSec + commSec + chargeSec),
-              )
-            },
+            cellAttrsFn: item =>
+              tooltipAttributes(buildSamActiveTooltip(item.validator)),
             render: item => {
               const active = selectSamActiveStake(item.validator)
               const delta = selectExpectedStakeChange(item.validator)
