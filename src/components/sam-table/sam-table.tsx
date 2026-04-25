@@ -884,7 +884,7 @@ export const SamTable: React.FC<Props> = ({
                 )
               const chargeSec =
                 sectionHeader(
-                  `Charge this epoch · eff. bid ${formatSolAmount(effBid, 4)} ☉ / 1000`,
+                  `Charge this epoch · eff. bid ${formatSolAmount(effBid, 4)} PMPE`,
                 ) +
                 ttRow(
                   'Activated',
