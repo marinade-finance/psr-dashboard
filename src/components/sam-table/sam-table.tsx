@@ -933,13 +933,13 @@ export const SamTable: React.FC<Props> = ({
                 ) +
                 chargeRow('Bid [PMPE]', '', formatSolAmount(bid, 4), '') +
                 chargeRow(
-                  'Active bid',
+                  'Active charge',
                   `${formatSolAmount(stake, 0)} ☉`,
                   '',
                   `${formatSolAmount(cost, 3)} ☉`,
                 ) +
                 chargeRow(
-                  'Activating bid',
+                  'Activating charge',
                   `~${formatSolAmount(activating, 0)} ☉`,
                   '',
                   `${formatSolAmount(activatingCost, 3)} ☉`,
