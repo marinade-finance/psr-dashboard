@@ -44,9 +44,10 @@ import { Metric } from '../metric/metric'
 import { UserLevel } from '../navigation/navigation'
 import { Alignment, Color, OrderDirection, Table } from '../table/table'
 import {
+  cell,
   ctaBlock,
   divider,
-  row as ttRow,
+  rowCells,
   sectionHeader,
   wrapTable,
 } from '../tooltip-table/tooltip-table'
@@ -851,11 +852,27 @@ export const SamTable: React.FC<Props> = ({
                 delta === 0
                   ? '—'
                   : `${delta > 0 ? '+' : '−'}${formatSolAmount(Math.abs(Math.round(delta)), 0)} ☉`
+              const stakeRow = (
+                label: string,
+                value: string,
+                opts?: { boldValue?: boolean; accent?: 'green' | 'red' },
+              ) =>
+                rowCells([
+                  cell(label, { wrap: true }),
+                  cell('', {}),
+                  cell('', {}),
+                  cell(value, {
+                    align: 'right',
+                    mono: true,
+                    bold: opts?.boldValue,
+                    accent: opts?.accent,
+                  }),
+                ])
               const stakeSec =
-                sectionHeader('Stake') +
-                ttRow('SAM Active', '', fmtSol(active)) +
-                ttRow('SAM Target', '', fmtSol(target)) +
-                ttRow('Expected change next epoch', '', deltaStr, {
+                sectionHeader('Stake', 4) +
+                stakeRow('SAM Active', fmtSol(active)) +
+                stakeRow('SAM Target', fmtSol(target)) +
+                stakeRow('Expected change next epoch', deltaStr, {
                   boldValue: true,
                   accent: deltaAccent,
                 })
@@ -873,34 +890,68 @@ export const SamTable: React.FC<Props> = ({
               const mevPct = formattedMevCommission(v)
               const blkPct = formattedBlockRewardsCommission(v)
               const pmpe4 = (n: number) => `${formatSolAmount(n, 4)} ☉`
+              const commRow = (label: string, pct: string, pmpe: string) =>
+                rowCells([
+                  cell(label, { wrap: true }),
+                  cell(pct, { align: 'right', muted: true, mono: true }),
+                  cell(pmpe, { align: 'right', muted: true, mono: true }),
+                  cell('', {}),
+                ])
               const commSec =
-                sectionHeader('Commissions') +
-                ttRow('Inflation', inflPct, pmpe4(selectCommissionPmpe(v))) +
-                ttRow('MEV', mevPct, pmpe4(selectMevCommissionPmpe(v))) +
-                ttRow(
+                sectionHeader('Commissions', 4) +
+                commRow('Inflation', inflPct, pmpe4(selectCommissionPmpe(v))) +
+                commRow('MEV', mevPct, pmpe4(selectMevCommissionPmpe(v))) +
+                commRow(
                   'Block',
                   blkPct,
                   pmpe4(selectBlockRewardsCommissionPmpe(v)),
                 )
+              const chargeRow = (
+                label: string,
+                stakeStr: string,
+                rateStr: string,
+                costStr: string,
+                opts?: { boldLabel?: boolean; boldValue?: boolean },
+              ) =>
+                rowCells([
+                  cell(label, { wrap: true, bold: opts?.boldLabel }),
+                  cell(stakeStr, { align: 'right', muted: true, mono: true }),
+                  cell(rateStr, { align: 'right', muted: true, mono: true }),
+                  cell(costStr, {
+                    align: 'right',
+                    mono: true,
+                    bold: opts?.boldValue,
+                  }),
+                ])
               const chargeSec =
-                sectionHeader('Charge this epoch') +
-                ttRow('Eff. bid', '', `${formatSolAmount(effBid, 4)} PMPE`) +
-                ttRow('Bid', '', `${formatSolAmount(bid, 4)} PMPE`) +
-                ttRow(
+                sectionHeader('Charge this epoch', 4) +
+                chargeRow(
+                  'Eff. bid',
+                  '',
+                  `${formatSolAmount(effBid, 4)} PMPE`,
+                  '',
+                ) +
+                chargeRow('Bid', '', `${formatSolAmount(bid, 4)} PMPE`, '') +
+                chargeRow(
                   'Activated',
                   `${formatSolAmount(stake, 0)} ☉`,
+                  '',
                   `${formatSolAmount(cost, 3)} ☉`,
                 ) +
-                ttRow(
+                chargeRow(
                   'Activating',
                   `~${formatSolAmount(activating, 0)} ☉`,
+                  '',
                   `${formatSolAmount(activatingCost, 3)} ☉`,
                 ) +
-                divider() +
-                ttRow('Total Charge', '', `${formatSolAmount(total, 3)} ☉`, {
-                  boldLabel: true,
-                  boldValue: true,
-                })
+                divider(4) +
+                chargeRow(
+                  'Total Charge',
+                  '',
+                  '',
+                  `${formatSolAmount(total, 3)} ☉`,
+                  { boldLabel: true, boldValue: true },
+                )
               const overrideMsg = overridesBidCpmpeMessage(v)
               const cta = ctaBlock({
                 label: 'Stake & Bid Charge',
