@@ -65,10 +65,11 @@ export const computeBidTooLowMetrics = (
   const isNegativeBiddingChange = thisEpochBidPmpe < threshold
 
   const effParticipatingBidPmpe = finite(v.revShare?.effParticipatingBidPmpe)
+  // Mirrors SDK calculations.js:121-123 — uses ?? not ||, so 0 stays 0.
   const worstHistoricalPmpe = auctions
     .slice(0, historyEpochs)
     .reduce(
-      (acc, a) => Math.min(acc, finite(a.effParticipatingBidPmpe) || Infinity),
+      (acc, a) => Math.min(acc, a.effParticipatingBidPmpe ?? Infinity),
       Infinity,
     )
   const limit = Math.min(effParticipatingBidPmpe, worstHistoricalPmpe)
@@ -155,39 +156,49 @@ export const renderBidTooLowTooltip = (m: BidTooLowMetrics): string => {
     sectionHeader('Participation Limit') +
     row('Current eff. participating bid', '', pmpe(m.effParticipatingBidPmpe)) +
     row(
-      `Worst over last ${m.historyEpochs} epochs`,
+      `Lowest historical bid (last ${m.historyEpochs} epochs)`,
       '',
       pmpe(m.worstHistoricalPmpe),
     ) +
     row('Limit (min of the two)', '', pmpe(m.limit)) +
-    row('Permitted deviation', '', pct(m.permittedDeviation)) +
     divider() +
-    row('Adjusted limit', '', pmpe(m.adjustedLimit), { boldValue: true })
+    row(
+      `Adjusted limit (permitted ${pct(m.permittedDeviation)})`,
+      '',
+      pmpe(m.adjustedLimit),
+      { boldValue: true },
+    )
 
   const cushion =
     sectionHeader('Cushion Check') +
     row('Bond obligation', '', pmpe(m.bondObligationPmpe)) +
     row('Adjusted limit', '', pmpe(m.adjustedLimit)) +
-    row('Shortfall', '', pmpe(m.shortfall)) +
-    row('Shortfall ratio', '', pct(m.shortfallRatio)) +
+    row(`Shortfall (max ${pct(1 / SCALE_COEF)})`, '', pmpe(m.shortfall)) +
     divider() +
     row('Penalty coef', '', m.penaltyCoef.toFixed(4), { boldValue: true })
 
+  const baseSection =
+    sectionHeader('Penalty Base') +
+    row('Winning total PMPE', '', pmpe(m.winningTotalPmpe)) +
+    row('Eff. participating bid PMPE', '', pmpe(m.effParticipatingBidPmpe)) +
+    divider() +
+    row('Base (sum)', '', pmpe(m.base), { boldValue: true })
+
   const result =
     sectionHeader('Penalty Result') +
-    row('Base (winning + eff. participating)', '', pmpe(m.base)) +
-    row('Penalty PMPE', '', pmpe(m.penaltyPmpe), { boldValue: true }) +
-    row('Activated Marinade stake', '', stake(m.marinadeActivatedStakeSol)) +
-    row('Winning total PMPE', '', pmpe(m.winningTotalPmpe)) +
+    row('Activated Marinade stake', stake(m.marinadeActivatedStakeSol), '') +
     divider() +
+    row('Penalty PMPE', '', pmpe(m.penaltyPmpe), { boldValue: true }) +
     (hasPenalty
       ? row('Forced undelegation', '', stake(m.forcedUndelegationSol), {
           boldValue: true,
           accent: 'red',
         })
-      : okRow('No forced undelegation this epoch.'))
+      : okRow('No penalty this epoch.'))
 
-  return cta + wrapTable(direction + limitSection + cushion + result)
+  return (
+    cta + wrapTable(direction + limitSection + cushion + baseSection + result)
+  )
 }
 
 export const buildBidTooLowTooltip = (

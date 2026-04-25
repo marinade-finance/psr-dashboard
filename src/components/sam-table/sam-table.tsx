@@ -879,14 +879,13 @@ export const SamTable: React.FC<Props> = ({
               )
               const cost = selectEffectiveCost(v)
               const activatingCost = (bid * activating) / 1000
-              const total = cost + activatingCost
               const inflPct = formatPercentage(selectCommission(v), 0)
               const mevPct = formattedMevCommission(v)
               const blkPct = formattedBlockRewardsCommission(v)
               const pmpe4 = (n: number) => `${formatSolAmount(n, 4)} ☉`
 
               const commSec =
-                sectionHeader('Commissions') +
+                sectionHeader('Validator Take') +
                 ttRow('Inflation', inflPct, pmpe4(selectCommissionPmpe(v))) +
                 ttRow('MEV', mevPct, pmpe4(selectMevCommissionPmpe(v))) +
                 ttRow(
@@ -895,32 +894,38 @@ export const SamTable: React.FC<Props> = ({
                   pmpe4(selectBlockRewardsCommissionPmpe(v)),
                 )
 
+              const totalCharge = cost + activatingCost
               const chargeSec =
-                sectionHeader(
-                  `Charge this epoch · eff. bid ${formatSolAmount(effBid, 4)} ☉ / 1000`,
-                ) +
+                sectionHeader('Estimated Charge this epoch') +
+                ttRow('Effective bid PMPE', '', formatSolAmount(effBid, 4)) +
+                ttRow('Static bid PMPE', '', formatSolAmount(bid, 4)) +
                 ttRow(
-                  'Activated',
-                  `${formatSolAmount(stake, 0)} ☉ × ${formatSolAmount(effBid, 4)}`,
+                  'Activated stake × eff. bid',
+                  `${formatSolAmount(stake, 0)} ☉`,
                   `${formatSolAmount(cost, 3)} ☉`,
                 ) +
                 ttRow(
-                  'Activating',
-                  `~${formatSolAmount(activating, 0)} ☉ × ${formatSolAmount(bid, 4)}`,
-                  `${formatSolAmount(activatingCost, 3)} ☉`,
+                  'Expected activating × static bid',
+                  `~${formatSolAmount(activating, 0)} ☉`,
+                  `~${formatSolAmount(activatingCost, 3)} ☉`,
                 ) +
                 divider() +
-                ttRow('Total Charge', '', `${formatSolAmount(total, 3)} ☉`, {
-                  boldLabel: true,
-                  boldValue: true,
-                })
+                ttRow(
+                  'Total estimated charge',
+                  '',
+                  `~${formatSolAmount(totalCharge, 3)} ☉`,
+                  { boldValue: true },
+                )
 
               const overrideMsg = overridesBidCpmpeMessage(v)
+              const leadParts = [
+                'Stake numbers and bid charge are simulated estimates: activating stake may not fully arrive, and the effective bid is set by the auction outcome.',
+              ]
+              if (overrideMsg)
+                leadParts.unshift(overrideMsg.replace(/<br\/?>/g, ' '))
               const cta = ctaBlock({
-                label: 'Stake & Bid Charge',
-                lead: overrideMsg
-                  ? overrideMsg.replace(/<br\/?>/g, ' ')
-                  : undefined,
+                label: 'Stake & Bid Charge (estimated)',
+                lead: leadParts.join(' '),
               })
 
               return tooltipAttributes(
