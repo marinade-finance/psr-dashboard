@@ -499,19 +499,17 @@ export const selectTvlApyDiff = (
   return apy(altResult) - apy(baseResult)
 }
 
-// Budget for next-epoch re-delegation: stake that cooled down from the
-// previous epoch to the current snapshot becomes free to re-stake next epoch.
-export function selectRedelegationBudget(
-  validators: AuctionValidator[],
-): number {
-  let budget = 0
-  for (const v of validators) {
-    const last = v.lastMarinadeActivatedStakeSol
-    if (last == null) continue
-    const delta = last - v.marinadeActivatedStakeSol
-    if (delta > 0) budget += delta
-  }
-  return budget
+// Budget for next-epoch re-delegation: TVL − Σ active is the pool stake
+// already liquid in the reserve, free to (re)delegate without waiting for
+// any cooldown. Natural withdrawals exit the pool to redeemers, not budget.
+export function selectRedelegationBudget(auctionResult: AuctionResult): number {
+  const validators = auctionResult.auctionData.validators
+  const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
+  const activeTotal = validators.reduce(
+    (s, v) => s + v.marinadeActivatedStakeSol,
+    0,
+  )
+  return Math.max(0, tvl - activeTotal)
 }
 
 // -----------------------------------------------------------------------------
@@ -597,7 +595,11 @@ function computeExpectedStakeChanges(
   validators: AuctionValidator[],
   tvl: number,
 ): Map<string, number> {
-  const budget = selectRedelegationBudget(validators)
+  const activeTotal = validators.reduce(
+    (s, v) => s + v.marinadeActivatedStakeSol,
+    0,
+  )
+  const budget = Math.max(0, tvl - activeTotal)
   const rawDelta = (v: AuctionValidator) =>
     v.auctionStake.marinadeSamTargetSol - v.marinadeActivatedStakeSol
   const result = new Map<string, number>()

@@ -259,7 +259,7 @@ export const SamTable: React.FC<Props> = ({
   const idealApy = selectIdealAPY(auctionResult, epochsPerYear)
   const stakeToMoveSol = selectStakeToMove(auctionResult)
   const stakeToMove = stakeToMoveSol / samDistributedStake
-  const redelegationBudget = selectRedelegationBudget(validators)
+  const redelegationBudget = selectRedelegationBudget(auctionResult)
   const activeStake =
     selectTotalActiveStake(auctionResult) / samDistributedStake
   const productiveStake =
