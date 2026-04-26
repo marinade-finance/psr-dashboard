@@ -101,15 +101,15 @@ const commRow = (label: string, pct: string, pmpe: string) =>
 
 const chargeRow = (
   label: string,
-  stakeStr: string,
   rateStr: string,
+  stakeStr: string,
   costStr: string,
   opts?: { boldLabel?: boolean; boldValue?: boolean },
 ) =>
   rowCells([
     cell(label, { wrap: true, bold: opts?.boldLabel }),
-    cell(stakeStr, { align: 'right', muted: true, mono: true }),
     cell(rateStr, { align: 'right', muted: true, mono: true }),
+    cell(stakeStr, { align: 'right', muted: true, mono: true }),
     cell(costStr, {
       align: 'right',
       mono: true,
@@ -145,18 +145,18 @@ export function renderSamActiveTooltip(
 
   const chargeSec =
     sectionHeader('Charge this epoch', 4) +
-    chargeRow('Eff. bid PMPE', '', formatSolAmount(m.effBid, 4), '') +
-    chargeRow('Bid PMPE', '', formatSolAmount(m.bid, 4), '') +
+    chargeRow('Eff. bid PMPE', formatSolAmount(m.effBid, 4), '', '') +
+    chargeRow('Bid PMPE', formatSolAmount(m.bid, 4), '', '') +
     chargeRow(
       'Active charge',
-      `${formatSolAmount(m.stake, 0)} ☉`,
       '',
+      `${formatSolAmount(m.stake, 0)} ☉`,
       `${formatSolAmount(m.cost, 3)} ☉`,
     ) +
     chargeRow(
       'Activating charge',
-      `~${formatSolAmount(m.activating, 0)} ☉`,
       '',
+      `~${formatSolAmount(m.activating, 0)} ☉`,
       `${formatSolAmount(m.activatingCost, 3)} ☉`,
     ) +
     divider(4) +
