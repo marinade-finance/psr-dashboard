@@ -50,14 +50,15 @@ export function computeSamActiveMetrics(
   v: AugmentedAuctionValidator,
 ): SamActiveMetrics {
   const stake = v.marinadeActivatedStakeSol
-  const activating = Math.max(0, v.auctionStake.marinadeSamTargetSol - stake)
+  const delta = selectExpectedStakeChange(v)
+  const activating = Math.max(0, delta)
   const bid = selectBid(v)
   const cost = selectEffectiveCost(v)
   const activatingCost = (bid * activating) / 1000
   return {
     active: selectSamActiveStake(v),
     target: selectSamTargetStake(v),
-    delta: selectExpectedStakeChange(v),
+    delta,
     effBid: selectEffectiveBid(v),
     bid,
     stake,
