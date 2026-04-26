@@ -4,6 +4,7 @@ import {
   divider,
   rowCells,
   sectionHeader,
+  tableHead,
   wrapTable,
 } from 'src/components/tooltip-table/tooltip-table'
 import { formatPercentage, formatSolAmount } from 'src/format'
@@ -145,22 +146,23 @@ export function renderSamActiveTooltip(
 
   const chargeSec =
     sectionHeader('Charge this epoch', 4) +
-    chargeRow('Eff. bid PMPE', formatSolAmount(m.effBid, 4), '', '') +
-    chargeRow('Bid PMPE', formatSolAmount(m.bid, 4), '', '') +
+    tableHead(['', 'PMPE', 'Stake (☉)', 'Cost (☉)']) +
+    chargeRow('Eff. bid', formatSolAmount(m.effBid, 4), '', '') +
+    chargeRow('Bid', formatSolAmount(m.bid, 4), '', '') +
     chargeRow(
       'Active charge',
       '',
-      `${formatSolAmount(m.stake, 0)} ☉`,
-      `${formatSolAmount(m.cost, 3)} ☉`,
+      formatSolAmount(m.stake, 0),
+      formatSolAmount(m.cost, 3),
     ) +
     chargeRow(
       'Activating charge',
       '',
-      `~${formatSolAmount(m.activating, 0)} ☉`,
-      `${formatSolAmount(m.activatingCost, 3)} ☉`,
+      `~${formatSolAmount(m.activating, 0)}`,
+      formatSolAmount(m.activatingCost, 3),
     ) +
     divider(4) +
-    chargeRow('Total Charge', '', '', `${formatSolAmount(m.total, 3)} ☉`, {
+    chargeRow('Total Charge', '', '', formatSolAmount(m.total, 3), {
       boldLabel: true,
       boldValue: true,
     })
