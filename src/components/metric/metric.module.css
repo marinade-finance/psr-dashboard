@@ -19,7 +19,11 @@
 }
 
 .metricWrap > div:last-child {
-  margin-top: 6px;
+  flex: 1;
+  padding-top: 10px;
   font-size: 23px;
   color: var(--text-light-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
