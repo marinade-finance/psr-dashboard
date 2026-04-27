@@ -610,15 +610,6 @@ function computeExpectedStakeChanges(
         remaining -= alloc
       }
     }
-    const totalInflows = [...result.values()].reduce((s, x) => s + x, 0)
-    const losers = validators.filter(v => rawDelta(v) < 0)
-    const totalExcess = losers.reduce((s, v) => s + Math.abs(rawDelta(v)), 0)
-    if (totalInflows > 0 && totalExcess > 0) {
-      for (const v of losers) {
-        const share = Math.abs(rawDelta(v)) / totalExcess
-        result.set(v.voteAccount, -totalInflows * share)
-      }
-    }
   }
 
   const withdrawals = computeNaturalWithdrawal(validators, tvl)
