@@ -119,10 +119,7 @@ const chargeRow = (
     }),
   ])
 
-export function renderSamActiveTooltip(
-  m: SamActiveMetrics,
-  overrideMsg?: string,
-): string {
+export function renderSamActiveTooltip(m: SamActiveMetrics): string {
   const deltaAccent: 'green' | 'red' | undefined =
     m.delta > 0 ? 'green' : m.delta < 0 ? 'red' : undefined
   const deltaStr =
@@ -168,7 +165,7 @@ export function renderSamActiveTooltip(
       boldValue: true,
     })
 
-  const msg = overrideMsg ?? m.overrideMsg
+  const msg = m.overrideMsg
   const cta = ctaBlock({
     label: 'Stake & Bid Charge',
     lead: msg ? msg.replace(/<br\/?>/g, ' ') : undefined,

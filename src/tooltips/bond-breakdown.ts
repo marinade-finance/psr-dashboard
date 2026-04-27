@@ -29,7 +29,6 @@ export type BondMetrics = {
   bondBalanceSol: number
   claimableBondBalanceSol: number
   marinadeActivatedStakeSol: number
-  paidUndelegationSol: number
   marinadeSamTargetSol: number
   expectedMaxEffBidPmpe: number
   onchainDistributedPmpe: number
@@ -120,7 +119,6 @@ export const computeBondMetrics = (
     bondBalanceSol,
     claimableBondBalanceSol,
     marinadeActivatedStakeSol,
-    paidUndelegationSol,
     marinadeSamTargetSol,
     expectedMaxEffBidPmpe,
     onchainDistributedPmpe,
