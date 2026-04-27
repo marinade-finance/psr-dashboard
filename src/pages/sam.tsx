@@ -19,9 +19,6 @@ type Props = {
 }
 
 export type PendingEdits = {
-  inflationCommission?: string
-  mevCommission?: string
-  blockRewardsCommission?: string
   bidPmpe?: string
 }
 
@@ -104,42 +101,11 @@ export const SamPage: React.FC<Props> = ({ level }) => {
       return
     }
 
-    const resolveDec = (
-      edit: string | undefined,
-      fallbackDec: number | null,
-    ): number =>
-      edit !== undefined
-        ? parseFloat(edit) / 100
-        : fallbackDec !== null
-          ? fallbackDec
-          : NaN
-
     const overrides: SourceDataOverrides = {
       inflationCommissionsDec: new Map(),
       mevCommissionsDec: new Map(),
       blockRewardsCommissionsDec: new Map(),
       cpmpesDec: new Map(),
-    }
-
-    const infl = resolveDec(
-      pendingEdits.inflationCommission,
-      current.inflationCommissionDec,
-    )
-    if (!isNaN(infl)) {
-      overrides.inflationCommissionsDec.set(editingValidator, infl)
-    }
-
-    const mev = resolveDec(pendingEdits.mevCommission, current.mevCommissionDec)
-    if (!isNaN(mev)) {
-      overrides.mevCommissionsDec.set(editingValidator, mev)
-    }
-
-    const blk = resolveDec(
-      pendingEdits.blockRewardsCommission,
-      current.blockRewardsCommissionDec,
-    )
-    if (!isNaN(blk)) {
-      overrides.blockRewardsCommissionsDec.set(editingValidator, blk)
     }
 
     const bid =
