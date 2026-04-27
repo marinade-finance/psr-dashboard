@@ -168,7 +168,8 @@
 .metricRow {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  align-items: stretch;
+  gap: 8px;
 }
 
 .inputCell {

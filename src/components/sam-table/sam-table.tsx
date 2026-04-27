@@ -523,45 +523,16 @@ export const SamTable: React.FC<Props> = ({
           />
           <Metric
             label="APY"
-            value={
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: 4,
-                }}
-              >
-                <div>{`Winning ☉ ${formatPercentage(winningAPY)}`}</div>
-                {apySecondary && (
-                  <div style={{ fontSize: 14, opacity: 0.75 }}>
-                    {apySecondary}
-                  </div>
-                )}
-              </div>
-            }
+            value={`Winning ☉ ${formatPercentage(winningAPY)}`}
+            secondary={apySecondary}
             {...tooltipAttributes(
               'Winning APY (last validator in the auction) and projected/ideal APY of currently active stake; assumes no Marinade fees',
             )}
           />
           <Metric
             label="Auction Stake"
-            value={
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: 4,
-                }}
-              >
-                <div>{`☉ ${formatSolAmount(samDistributedStake, 0)}`}</div>
-                <div style={{ fontSize: 14, opacity: 0.75 }}>
-                  {samStakeValidators.length} / {allValidators.length}{' '}
-                  validators
-                </div>
-              </div>
-            }
+            value={`☉ ${formatSolAmount(samDistributedStake, 0)}`}
+            secondary={`${samStakeValidators.length} / ${allValidators.length} validators`}
             {...tooltipAttributes(
               'How much stake is distributed by Marinade to validators based on SAM, and how many validators won stake.',
             )}
