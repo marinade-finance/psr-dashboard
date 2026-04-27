@@ -154,11 +154,7 @@ const renderPenaltyBadges = (v: AuctionValidator) => {
 }
 
 type DisplayValidator = { validator: ValidatorWithBondState; isGhost: boolean }
-type EditField =
-  | 'inflationCommission'
-  | 'mevCommission'
-  | 'blockRewardsCommission'
-  | 'bidPmpe'
+type EditField = 'bidPmpe'
 
 type InputOpts = {
   step: string
@@ -167,7 +163,7 @@ type InputOpts = {
   placeholder?: string
 }
 
-const DEFAULT_ORDER: Order[] = [[9, OrderDirection.DESC]]
+const DEFAULT_ORDER: Order[] = [[5, OrderDirection.DESC]]
 
 type Props = {
   auctionResult: AuctionResult
@@ -427,12 +423,7 @@ export const SamTable: React.FC<Props> = ({
       ? validators.find(v => v.voteAccount === simulatedValidator)
       : undefined
     const hasDataChanged =
-      !!orig &&
-      !!sim &&
-      (orig.inflationCommissionDec !== sim.inflationCommissionDec ||
-        orig.mevCommissionDec !== sim.mevCommissionDec ||
-        orig.blockRewardsCommissionDec !== sim.blockRewardsCommissionDec ||
-        orig.revShare.bidPmpe !== sim.revShare.bidPmpe)
+      !!orig && !!sim && orig.revShare.bidPmpe !== sim.revShare.bidPmpe
 
     if (hasDataChanged && orig && simulatedValidator) {
       const originalPosition = getOriginalPosition(simulatedValidator)
