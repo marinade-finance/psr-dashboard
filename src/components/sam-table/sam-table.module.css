@@ -149,33 +149,17 @@
   right: 0;
   top: 50%;
   transform: translateY(-50%);
-  padding: 1px 6px;
   font-size: 11px;
   line-height: 1;
-  border-radius: 3px;
-  background-color: rgba(32, 205, 131, 0.85);
-  color: #04140b;
-  font-weight: 600;
+  color: var(--text-light-3, #666);
   pointer-events: none;
   z-index: 5;
-  animation: copiedFade 1.2s ease-out forwards;
+  animation: copiedFade 1s ease-out forwards;
 }
 
 @keyframes copiedFade {
-  0% {
-    opacity: 0;
-    transform: translateY(-1px);
-  }
-  10% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  80% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 .popoverAnchor {
