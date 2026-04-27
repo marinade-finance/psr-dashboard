@@ -154,12 +154,6 @@
   color: var(--text-light-3, #666);
   pointer-events: none;
   z-index: 5;
-  animation: copiedFade 1s ease-out forwards;
-}
-
-@keyframes copiedFade {
-  from { opacity: 1; }
-  to { opacity: 0; }
 }
 
 .popoverAnchor {
