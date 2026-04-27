@@ -4,7 +4,6 @@ interface CssExports {
   'calculating': string;
   'cancelBtn': string;
   'copiedBadge': string;
-  'copiedFade': string;
   'copyable': string;
   'editingButtons': string;
   'ghostRow': string;

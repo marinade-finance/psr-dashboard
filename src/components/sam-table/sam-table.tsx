@@ -429,11 +429,14 @@ export const SamTable: React.FC<Props> = ({
   const fmtDiff = (d: number) => `${d >= 0 ? '+' : ''}${formatPercentage(d, 2)}`
 
   let expertMetrics
+  let apySecondaryLabel: string | undefined
   let apySecondary: string | undefined
   if (level === UserLevel.Expert) {
-    apySecondary = `ideal ${formatPercentage(idealApy)}`
+    apySecondaryLabel = 'Ideal'
+    apySecondary = formatPercentage(idealApy)
   } else if (activeStake > 0.9) {
-    apySecondary = `projected ${formatPercentage(projectedApy)}`
+    apySecondaryLabel = 'Projected'
+    apySecondary = formatPercentage(projectedApy)
   }
   if (level === UserLevel.Expert) {
     expertMetrics = (
@@ -532,6 +535,7 @@ export const SamTable: React.FC<Props> = ({
           <Metric
             label="APY"
             value={formatPercentage(winningAPY)}
+            secondaryLabel={apySecondaryLabel}
             secondary={apySecondary}
             {...tooltipAttributes(
               'Winning APY: APY of the last validator winning the auction.<br/>' +
@@ -548,7 +552,8 @@ export const SamTable: React.FC<Props> = ({
                 {formatSolAmount(samDistributedStake, 0)}
               </>
             }
-            secondary={`${samStakeValidators.length} / ${allValidators.length} validators`}
+            secondaryLabel="Validators"
+            secondary={`${samStakeValidators.length} / ${allValidators.length}`}
             {...tooltipAttributes(
               'Total stake distributed by Marinade via SAM.<br/>Validators winning stake / total participating.',
             )}

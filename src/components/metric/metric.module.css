@@ -8,8 +8,19 @@
   min-width: 160px;
 }
 
-.metricWrap > div {
+.stacks {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 14px;
   white-space: nowrap;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
 }
 
@@ -17,32 +28,34 @@
   font-size: 16px;
   color: var(--text-light-1);
   opacity: 0.75;
-}
-
-.value {
-  flex: 1;
-  position: relative;
-  padding-top: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  line-height: 1.2;
 }
 
 .primary {
   font-size: 23px;
   color: var(--text-light-2);
   line-height: 1.2;
+  padding-top: 6px;
+}
+
+.secondaryStack {
+  opacity: 0.7;
+}
+
+.secondaryLabel {
+  font-size: 11px;
+  color: var(--text-light-1);
+  opacity: 0.75;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .secondary {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 4px;
   font-size: 16px;
   color: var(--text-light-2);
-  opacity: 0.6;
   line-height: 1.2;
+  padding-top: 6px;
 }
 
 .unit {

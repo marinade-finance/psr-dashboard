@@ -5,8 +5,11 @@ interface CssExports {
   'metricWrap': string;
   'primary': string;
   'secondary': string;
+  'secondaryLabel': string;
+  'secondaryStack': string;
+  'stack': string;
+  'stacks': string;
   'unit': string;
-  'value': string;
 }
 export const cssExports: CssExports;
 export default cssExports;
