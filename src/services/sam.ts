@@ -571,58 +571,6 @@ export function selectRedelegationBudget(auctionResult: AuctionResult): number {
   return Math.max(0, tvl - activeTotal)
 }
 
-export type EpochValue = { epoch: number; value: number }
-
-// Per-epoch winning total PMPE (clearing rate) is identical across all
-// validator history entries — pick the first non-empty `auctions[]` and map
-// it to APY using `epochsPerYear`.
-export function selectWinningApyHistory(
-  auctionResult: AuctionResult,
-  epochsPerYear: number,
-): EpochValue[] {
-  const validators = auctionResult.auctionData.validators
-  const sample = validators.find(v => (v.auctions?.length ?? 0) > 0)
-  if (!sample) return []
-  return [...sample.auctions]
-    .sort((a, b) => a.epoch - b.epoch)
-    .map(a => ({
-      epoch: a.epoch,
-      value: Math.pow(1 + a.winningTotalPmpe / 1000, epochsPerYear) - 1,
-    }))
-}
-
-// Reallocation volume per epoch ≈ Σ |Δactive_va| / 2 between consecutive
-// epochs of marinadeActivatedStakeSol in each validator's `auctions[]`.
-// Validators absent in either epoch are treated as zero on that side.
-export function selectReallocationVolumeHistory(
-  auctionResult: AuctionResult,
-): EpochValue[] {
-  const byEpoch = new Map<number, Map<string, number>>()
-  for (const v of auctionResult.auctionData.validators) {
-    for (const a of v.auctions ?? []) {
-      let m = byEpoch.get(a.epoch)
-      if (!m) {
-        m = new Map()
-        byEpoch.set(a.epoch, m)
-      }
-      m.set(v.voteAccount, a.marinadeActivatedStakeSol ?? 0)
-    }
-  }
-  const epochs = [...byEpoch.keys()].sort((a, b) => a - b)
-  const out: EpochValue[] = []
-  for (let i = 1; i < epochs.length; i++) {
-    const prev = byEpoch.get(epochs[i - 1])
-    const curr = byEpoch.get(epochs[i])
-    const all = new Set([...prev.keys(), ...curr.keys()])
-    let absDelta = 0
-    for (const va of all) {
-      absDelta += Math.abs((curr.get(va) ?? 0) - (prev.get(va) ?? 0))
-    }
-    out.push({ epoch: epochs[i], value: absDelta / 2 })
-  }
-  return out
-}
-
 // -----------------------------------------------------------------------------
 // AUCTION RESULT AUGMENTATION
 // -----------------------------------------------------------------------------

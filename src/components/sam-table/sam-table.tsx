@@ -24,14 +24,11 @@ import {
   selectTargetProtectedPct,
   selectActuallyUnprotectedStake,
   buildConcentrationBreakdown,
-  selectWinningApyHistory,
-  selectReallocationVolumeHistory,
 } from 'src/services/sam'
 
 import styles from './sam-table.module.css'
 import { tooltipAttributes } from '../../services/utils'
 import { SimForm } from '../sim-form/sim-form'
-import { Sparkline, sparklineHtml } from '../sparkline/sparkline'
 import { buildBondBreakdownTooltip } from '../../tooltips/bond-breakdown'
 import { buildSamActiveTooltip } from '../../tooltips/sam-active'
 import { ConcentrationMetric } from '../concentration-metric/concentration-metric'
@@ -237,10 +234,6 @@ export const SamTable: React.FC<Props> = ({
   const stakeToMoveSol = selectStakeToMove(auctionResult)
   const stakeToMove = stakeToMoveSol / samDistributedStake
   const redelegationBudget = selectRedelegationBudget(auctionResult)
-  const apyHistory = selectWinningApyHistory(auctionResult, epochsPerYear)
-  // Reallocation volume is the closest historical proxy to "stake to
-  // distribute" until the SDK exposes per-epoch TVL history.
-  const stakeToDistributeHistory = selectReallocationVolumeHistory(auctionResult)
   const activeStake =
     selectTotalActiveStake(auctionResult) / samDistributedStake
   const productiveStake =
@@ -523,25 +516,9 @@ export const SamTable: React.FC<Props> = ({
         <div className={styles.metricRow}>
           <Metric
             label="Stake To Distribute"
-            value={
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: 4,
-                }}
-              >
-                <div>{`☉ ${formatSolAmount(redelegationBudget, 0)}`}</div>
-                <Sparkline data={stakeToDistributeHistory} />
-              </div>
-            }
+            value={`☉ ${formatSolAmount(redelegationBudget, 0)}`}
             {...tooltipAttributes(
-              sparklineHtml(
-                stakeToDistributeHistory,
-                v => '☉ ' + formatSolAmount(Math.round(v), 0),
-                'Stake To Distribute · estimated from per-validator activation deltas (TVL−Σactive history not yet in SDK)',
-              ),
+              'TVL minus currently active Marinade stake — the already-liquid reserve available to re-delegate next epoch',
             )}
           />
           <Metric
@@ -561,15 +538,10 @@ export const SamTable: React.FC<Props> = ({
                     {apySecondary}
                   </div>
                 )}
-                <Sparkline data={apyHistory} />
               </div>
             }
             {...tooltipAttributes(
-              sparklineHtml(
-                apyHistory,
-                v => formatPercentage(v),
-                `Winning APY · last ${apyHistory.length} epochs`,
-              ),
+              'Winning APY (last validator in the auction) and projected/ideal APY of currently active stake; assumes no Marinade fees',
             )}
           />
           <Metric
