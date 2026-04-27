@@ -117,6 +117,42 @@
   overflow: hidden;
 }
 
+.nameCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 160px;
+}
+
+.nameText {
+  display: inline-block;
+  max-width: 140px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.copyBtn {
+  background: none;
+  border: none;
+  padding: 0 2px;
+  margin: 0;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.5;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.copyBtn:hover {
+  opacity: 1;
+}
+
+.popoverAnchor {
+  position: relative;
+  display: inline-block;
+}
+
 .pubkeySimulated {
   font-weight: bold;
   font-style: italic;

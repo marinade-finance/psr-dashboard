@@ -22,9 +22,18 @@ import type {
   SourceDataOverrides,
 } from '@marinade.finance/ds-sam-sdk'
 
-const estimateEpochsPerYear = async () => {
+type EpochsBundle = {
+  epochsPerYear: number
+  nameByVote: Map<string, string>
+}
+
+const fetchEpochsBundle = async (): Promise<EpochsBundle> => {
   const FETCHED_EPOCHS = 11
   const { validators } = await fetchValidatorsWithEpochs(FETCHED_EPOCHS)
+  const nameByVote = new Map<string, string>()
+  for (const v of validators) {
+    if (v.info_name) nameByVote.set(v.vote_account, v.info_name)
+  }
   const epochStats = validators.map(({ epoch_stats }) => epoch_stats).flat()
 
   const rangeStart = epochStats.reduce(
@@ -48,11 +57,12 @@ const estimateEpochsPerYear = async () => {
   const DEFAULT_EPOCHS_PER_YEAR = SECONDS_PER_YEAR / DEFAULT_EPOCH_DURATION
   const rangeDuration = rangeEnd.timestamp - rangeStart.timestamp
   const rangeEpochs = rangeEnd.epoch - rangeStart.epoch + 1
-  if (!isFinite(rangeStart.epoch) || rangeEnd.epoch === 0) {
-    return DEFAULT_EPOCHS_PER_YEAR
-  }
+  const epochsPerYear =
+    !isFinite(rangeStart.epoch) || rangeEnd.epoch === 0
+      ? DEFAULT_EPOCHS_PER_YEAR
+      : SECONDS_PER_YEAR / (rangeDuration / rangeEpochs)
 
-  return SECONDS_PER_YEAR / (rangeDuration / rangeEpochs)
+  return { epochsPerYear, nameByVote }
 }
 
 type SamResult = {
@@ -63,12 +73,19 @@ type SamResult = {
   backstopTvl: number
   epochsPerYear: number
   dcSamConfig: DsSamConfig
+  nameByVote: Map<string, string>
+}
+
+// DASHBOARD_BOND_OVERRIDE — remove this type when SDK ships a native
+// bondBalanceSol override field on SourceDataOverrides.
+export type DashboardOverrides = SourceDataOverrides & {
+  bondTopUpSol?: Map<string, number>
 }
 
 export const loadSam = async (
-  dataOverrides?: SourceDataOverrides | null,
+  dataOverrides?: DashboardOverrides | null,
 ): Promise<SamResult> => {
-  const epochsPerYear = await estimateEpochsPerYear()
+  const { epochsPerYear, nameByVote } = await fetchEpochsBundle()
   console.log('epochsPerYear', epochsPerYear)
   const config = await loadSamConfig()
   const dsSam = new DsSamSDK({
@@ -79,10 +96,23 @@ export const loadSam = async (
     logVerbosity: LogVerbosity.ERROR,
   })
 
-  const auctionResult = await dsSam.runFinalOnly(dataOverrides)
+  const bondTopUps = dataOverrides?.bondTopUpSol
+  const sdkOverrides: SourceDataOverrides | null | undefined = dataOverrides
+    ? {
+        inflationCommissionsDec: dataOverrides.inflationCommissionsDec,
+        mevCommissionsDec: dataOverrides.mevCommissionsDec,
+        blockRewardsCommissionsDec: dataOverrides.blockRewardsCommissionsDec,
+        cpmpesDec: dataOverrides.cpmpesDec,
+      }
+    : dataOverrides
+
+  const auctionResult =
+    bondTopUps && bondTopUps.size > 0
+      ? await runWithBondTopUp(dsSam, sdkOverrides, bondTopUps)
+      : await dsSam.runFinalOnly(sdkOverrides)
 
   const runAlt = async (mutate: (data: AggregatedData) => void) => {
-    const aggregatedData = await dsSam.getAggregatedData(dataOverrides)
+    const aggregatedData = await dsSam.getAggregatedData(sdkOverrides)
     mutate(aggregatedData)
     const debug = new Debug(new Set(), LogVerbosity.ERROR)
     const constraints = dsSam.getAuctionConstraints(aggregatedData, debug)
@@ -152,7 +182,36 @@ export const loadSam = async (
     backstopTvl,
     epochsPerYear,
     dcSamConfig: dsSam.config,
+    nameByVote,
   }
+}
+
+// DASHBOARD_BOND_OVERRIDE — remove this block when SDK ships a native
+// bondBalanceSol override field on SourceDataOverrides.
+async function runWithBondTopUp(
+  dsSam: DsSamSDK,
+  sdkOverrides: SourceDataOverrides | null | undefined,
+  bondTopUps: Map<string, number>,
+): Promise<AuctionResult> {
+  const aggregatedData = await dsSam.getAggregatedData(sdkOverrides)
+  for (const v of aggregatedData.validators) {
+    const delta = bondTopUps.get(v.voteAccount)
+    if (delta === undefined) continue
+    if (v.bondBalanceSol != null) {
+      v.bondBalanceSol = Math.max(0, v.bondBalanceSol + delta)
+    }
+    if (v.claimableBondBalanceSol != null) {
+      v.claimableBondBalanceSol = Math.max(
+        0,
+        v.claimableBondBalanceSol + delta,
+      )
+    }
+  }
+  const debug = new Debug(new Set(), LogVerbosity.ERROR)
+  const constraints = dsSam.getAuctionConstraints(aggregatedData, debug)
+  const validators = dsSam.transformValidators(aggregatedData)
+  const data = { ...aggregatedData, validators }
+  return new Auction(data, constraints, dsSam.config, debug).evaluate()
 }
 
 export type { SourceDataOverrides }

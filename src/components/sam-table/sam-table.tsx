@@ -30,6 +30,7 @@ import {
 
 import styles from './sam-table.module.css'
 import { tooltipAttributes } from '../../services/utils'
+import { SimForm } from '../sim-form/sim-form'
 import { Sparkline, sparklineHtml } from '../sparkline/sparkline'
 import { buildBondBreakdownTooltip } from '../../tooltips/bond-breakdown'
 import { buildSamActiveTooltip } from '../../tooltips/sam-active'
@@ -157,19 +158,32 @@ const renderPenaltyBadges = (v: AuctionValidator) => {
 }
 
 type DisplayValidator = { validator: ValidatorWithBondState; isGhost: boolean }
-type EditField = 'bidPmpe'
+type EditField = keyof PendingEdits
 
-type InputOpts = {
-  step: string
-  min: string
-  max?: string
-  placeholder?: string
+// SAM Active was col 5 with: 0 Validator | 1 St.Bid | 2 Bond | 3 Cover | 4 MaxAPY | 5 SAM Active
+// With Name inserted at col 1, indexes shift: 0 Validator | 1 Name | 2 St.Bid | 3 Bond | 4 Cover | 5 MaxAPY | 6 SAM Active
+const DEFAULT_ORDER: Order[] = [[6, OrderDirection.DESC]]
+
+function CopyButton({ value }: { value: string }) {
+  return (
+    <button
+      type="button"
+      className={styles.copyBtn}
+      title="Copy"
+      onClick={e => {
+        e.stopPropagation()
+        navigator.clipboard.writeText(value)
+      }}
+      onMouseDown={e => e.stopPropagation()}
+    >
+      {'\u2398'}
+    </button>
+  )
 }
-
-const DEFAULT_ORDER: Order[] = [[5, OrderDirection.DESC]]
 
 type Props = {
   auctionResult: AuctionResult
+  nameByVote: Map<string, string>
   tvlJoinApyDiff: number
   tvlLeaveApyDiff: number
   backstopDiff: number
@@ -191,45 +205,9 @@ type Props = {
   onCancelEditing: () => void
 }
 
-function renderEditableCell(
-  isEditing: boolean,
-  displayValue: string,
-  field: EditField,
-  inputValue: string,
-  onFieldChange: (field: EditField, value: string) => void,
-  onRunSimulation: () => void,
-  onCancelEditing: () => void,
-  opts: InputOpts,
-): JSX.Element {
-  if (!isEditing) {
-    return <>{displayValue}</>
-  }
-  return (
-    <div className={styles.inputCell}>
-      <span className={styles.inputPlaceholder}>{displayValue}</span>
-      <input
-        type="number"
-        className={styles.inlineInput}
-        value={inputValue}
-        step={opts.step}
-        min={opts.min}
-        max={opts.max}
-        placeholder={opts.placeholder}
-        onChange={e => onFieldChange(field, e.target.value)}
-        onKeyDown={e => {
-          if (e.key === 'Enter') {
-            onRunSimulation()
-          } else if (e.key === 'Escape') {
-            onCancelEditing()
-          }
-        }}
-      />
-    </div>
-  )
-}
-
 export const SamTable: React.FC<Props> = ({
   auctionResult,
+  nameByVote,
   tvlJoinApyDiff,
   tvlLeaveApyDiff,
   backstopDiff,
@@ -282,21 +260,6 @@ export const SamTable: React.FC<Props> = ({
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [editingValidator, onCancelEditing])
 
-  useEffect(() => {
-    if (!editingValidator) {
-      return undefined
-    }
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        tableWrapRef.current &&
-        !tableWrapRef.current.contains(e.target as Node)
-      ) {
-        onCancelEditing()
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [editingValidator, onCancelEditing])
 
   const allValidators: ValidatorWithBondState[] = useMemo(
     () =>
@@ -318,14 +281,16 @@ export const SamTable: React.FC<Props> = ({
 
   const concentration = buildConcentrationBreakdown(auctionResult, dcSamConfig)
 
-  const inputVal = (field: keyof PendingEdits, fallback: string) =>
-    pendingEdits[field] ?? fallback
-
   const [currentOrder, setCurrentOrder] = useState<Order[]>(DEFAULT_ORDER)
 
   const handleOrderChange = useCallback((order: Order[]) => {
     setCurrentOrder(order)
   }, [])
+
+  const nameOf = useCallback(
+    (va: string) => nameByVote.get(va) ?? '',
+    [nameByVote],
+  )
 
   // Must match Table columns order
   const compareByColumn = useCallback(
@@ -334,22 +299,26 @@ export const SamTable: React.FC<Props> = ({
         case 0:
           return selectVoteAccount(a).localeCompare(selectVoteAccount(b))
         case 1:
-          return selectBid(a) - selectBid(b)
+          return nameOf(selectVoteAccount(a)).localeCompare(
+            nameOf(selectVoteAccount(b)),
+          )
         case 2:
-          return selectBondSize(a) - selectBondSize(b)
+          return selectBid(a) - selectBid(b)
         case 3:
-          return selectBondHealth(a) - selectBondHealth(b)
+          return selectBondSize(a) - selectBondSize(b)
         case 4:
-          return selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
+          return selectBondHealth(a) - selectBondHealth(b)
         case 5:
-          return selectSamActiveStake(a) - selectSamActiveStake(b)
+          return selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
         case 6:
+          return selectSamActiveStake(a) - selectSamActiveStake(b)
+        case 7:
           return selectSamTargetStake(a) - selectSamTargetStake(b)
         default:
           return 0
       }
     },
-    [epochsPerYear],
+    [epochsPerYear, nameOf],
   )
 
   const originalPositionsMap = useMemo(() => {
@@ -698,35 +667,9 @@ export const SamTable: React.FC<Props> = ({
           const realIdx = displayValidators
             .slice(0, index + 1)
             .filter(d => !d.isGhost).length
-          const isEditing = editingValidator === va
           return (
             <div className={styles.orderCell}>
               <span>{realIdx}</span>
-              {isEditing && (
-                <div className={styles.editingButtons}>
-                  <button
-                    className={`${styles.runSimulationBtn} ${isCalculating ? styles.runSimulationBtnCalculating : ''}`}
-                    onClick={e => {
-                      e.stopPropagation()
-                      onRunSimulation()
-                    }}
-                    disabled={isCalculating}
-                  >
-                    {isCalculating ? 'Simulating' : 'Simulate'}
-                  </button>
-                  <button
-                    className={styles.cancelBtn}
-                    onClick={e => {
-                      e.stopPropagation()
-                      onCancelEditing()
-                    }}
-                    disabled={isCalculating}
-                    title="Cancel editing (Esc)"
-                  >
-                    ✕
-                  </button>
-                </div>
-              )}
             </div>
           )
         }}
@@ -737,6 +680,27 @@ export const SamTable: React.FC<Props> = ({
             render: item => {
               const va = selectVoteAccount(item.validator)
               const sim = !item.isGhost && simulatedValidator === va
+              const isEditing = !item.isGhost && editingValidator === va
+              const v = item.validator
+              const defaults: Record<EditField, string> = {
+                bidPmpe: selectBid(v).toString(),
+                inflationCommissionPct: (
+                  (v.values?.commissions?.inflationCommissionDec ??
+                    v.inflationCommissionDec ??
+                    0) * 100
+                ).toString(),
+                mevCommissionPct: (
+                  (v.values?.commissions?.mevCommissionDec ??
+                    v.mevCommissionDec ??
+                    0) * 100
+                ).toString(),
+                blockRewardsCommissionPct: (
+                  (v.values?.commissions?.blockRewardsCommissionDec ??
+                    v.blockRewardsCommissionDec ??
+                    0) * 100
+                ).toString(),
+                bondTopUpSol: '0',
+              }
               return (
                 <span className={styles.validatorCell}>
                   <span
@@ -744,7 +708,20 @@ export const SamTable: React.FC<Props> = ({
                   >
                     {va}
                   </span>
+                  <CopyButton value={va} />
                   {renderPenaltyBadges(item.validator)}
+                  {isEditing && (
+                    <span className={styles.popoverAnchor}>
+                      <SimForm
+                        defaults={defaults}
+                        pendingEdits={pendingEdits}
+                        isCalculating={isCalculating}
+                        onFieldChange={onFieldChange}
+                        onRunSimulation={onRunSimulation}
+                        onCancelEditing={onCancelEditing}
+                      />
+                    </span>
+                  )}
                 </span>
               )
             },
@@ -754,30 +731,36 @@ export const SamTable: React.FC<Props> = ({
               ),
           },
           {
+            header: 'Name',
+            headerAttrsFn: () =>
+              tooltipAttributes('Validator name (from on-chain identity)'),
+            render: item => {
+              const va = selectVoteAccount(item.validator)
+              const name = nameByVote.get(va) ?? ''
+              return (
+                <span className={styles.nameCell}>
+                  <span className={styles.nameText} title={name}>
+                    {name || '—'}
+                  </span>
+                  {name && <CopyButton value={name} />}
+                </span>
+              )
+            },
+            compare: (a, b) =>
+              nameOf(selectVoteAccount(a.validator)).localeCompare(
+                nameOf(selectVoteAccount(b.validator)),
+              ),
+          },
+          {
             header: 'St. Bid',
             headerAttrsFn: () =>
               tooltipAttributes(
                 'Static bid for 1000 SOL set by the validator in Bond configuration.<br/>' +
                   'The bid active at the slot the auction runs is what you pay for that epoch’s activating stake.',
               ),
-            render: item => {
-              const { validator, isGhost } = item
-              const isEditing =
-                !isGhost && editingValidator === selectVoteAccount(validator)
-              if (isEditing) {
-                return renderEditableCell(
-                  true,
-                  formatSolAmount(selectBid(validator), 4),
-                  'bidPmpe',
-                  inputVal('bidPmpe', selectBid(validator).toString()),
-                  onFieldChange,
-                  onRunSimulation,
-                  onCancelEditing,
-                  { step: '0.001', min: '0' },
-                )
-              }
-              return <>{formatSolAmount(selectBid(validator), 4)}</>
-            },
+            render: item => (
+              <>{formatSolAmount(selectBid(item.validator), 4)}</>
+            ),
             compare: (a, b) => selectBid(a.validator) - selectBid(b.validator),
             alignment: Alignment.RIGHT,
           },
