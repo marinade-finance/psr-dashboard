@@ -1,0 +1,21 @@
+.svg {
+  display: block;
+  overflow: visible;
+}
+
+.line {
+  fill: none;
+  stroke: #20cd83;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.dot {
+  fill: #20cd83;
+}
+
+.dotHalo {
+  fill: #20cd83;
+  opacity: 0.25;
+}
