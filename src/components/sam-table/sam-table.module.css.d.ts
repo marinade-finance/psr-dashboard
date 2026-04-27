@@ -3,7 +3,9 @@
 interface CssExports {
   'calculating': string;
   'cancelBtn': string;
-  'copyBtn': string;
+  'copiedBadge': string;
+  'copiedFade': string;
+  'copyable': string;
   'editingButtons': string;
   'ghostRow': string;
   'header-glow': string;

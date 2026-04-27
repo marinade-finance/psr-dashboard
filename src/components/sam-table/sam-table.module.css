@@ -132,20 +132,42 @@
   white-space: nowrap;
 }
 
-.copyBtn {
-  background: none;
-  border: none;
-  padding: 0 2px;
-  margin: 0;
+.copyable {
   cursor: pointer;
-  color: inherit;
-  opacity: 0.5;
-  font-size: 12px;
-  line-height: 1;
 }
 
-.copyBtn:hover {
-  opacity: 1;
+.copyable:hover {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+}
+
+.copiedBadge {
+  margin-left: 6px;
+  padding: 1px 6px;
+  font-size: 11px;
+  line-height: 1;
+  border-radius: 3px;
+  background-color: rgba(32, 205, 131, 0.18);
+  color: #20cd83;
+  animation: copiedFade 1.2s ease-out forwards;
+}
+
+@keyframes copiedFade {
+  0% {
+    opacity: 0;
+    transform: translateY(-1px);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 .popoverAnchor {

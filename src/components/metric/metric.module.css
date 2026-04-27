@@ -39,8 +39,15 @@
   left: 0;
   right: 0;
   bottom: 4px;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--text-light-2);
-  opacity: 0.7;
+  opacity: 0.6;
   line-height: 1.2;
+}
+
+.unit {
+  font-size: 0.7em;
+  opacity: 0.55;
+  margin-right: 0.2em;
+  vertical-align: 0.05em;
 }

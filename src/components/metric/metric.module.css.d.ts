@@ -5,6 +5,7 @@ interface CssExports {
   'metricWrap': string;
   'primary': string;
   'secondary': string;
+  'unit': string;
   'value': string;
 }
 export const cssExports: CssExports;

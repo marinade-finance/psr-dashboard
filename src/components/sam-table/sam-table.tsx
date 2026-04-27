@@ -26,6 +26,7 @@ import {
   buildConcentrationBreakdown,
 } from 'src/services/sam'
 
+import metricStyles from '../metric/metric.module.css'
 import styles from './sam-table.module.css'
 import { tooltipAttributes } from '../../services/utils'
 import { SimForm } from '../sim-form/sim-form'
@@ -161,21 +162,22 @@ type EditField = keyof PendingEdits
 // With Name inserted at col 1, indexes shift: 0 Validator | 1 Name | 2 St.Bid | 3 Bond | 4 Cover | 5 MaxAPY | 6 SAM Active
 const DEFAULT_ORDER: Order[] = [[6, OrderDirection.DESC]]
 
-function CopyButton({ value }: { value: string }) {
-  return (
-    <button
-      type="button"
-      className={styles.copyBtn}
-      title="Copy"
-      onClick={e => {
-        e.stopPropagation()
-        navigator.clipboard.writeText(value)
-      }}
-      onMouseDown={e => e.stopPropagation()}
-    >
-      {'\u2398'}
-    </button>
+function useCopyFeedback() {
+  const [copiedKey, setCopiedKey] = useState<string | null>(null)
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(
+    () => () => {
+      if (timer.current) clearTimeout(timer.current)
+    },
+    [],
   )
+  const copy = useCallback((key: string, value: string) => {
+    void navigator.clipboard?.writeText(value)
+    setCopiedKey(key)
+    if (timer.current) clearTimeout(timer.current)
+    timer.current = setTimeout(() => setCopiedKey(null), 1200)
+  }, [])
+  return { copiedKey, copy }
 }
 
 type Props = {
@@ -242,6 +244,7 @@ export const SamTable: React.FC<Props> = ({
   const unprotectedStake = selectActuallyUnprotectedStake(auctionResult)
 
   const tableWrapRef = useRef<HTMLDivElement>(null)
+  const { copiedKey, copy } = useCopyFeedback()
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -428,9 +431,9 @@ export const SamTable: React.FC<Props> = ({
   let expertMetrics
   let apySecondary: string | undefined
   if (level === UserLevel.Expert) {
-    apySecondary = `Ideal ☉ ${formatPercentage(idealApy)}`
+    apySecondary = `ideal ${formatPercentage(idealApy)}`
   } else if (activeStake > 0.9) {
-    apySecondary = `Projected ☉ ${formatPercentage(projectedApy)}`
+    apySecondary = `projected ${formatPercentage(projectedApy)}`
   }
   if (level === UserLevel.Expert) {
     expertMetrics = (
@@ -516,25 +519,38 @@ export const SamTable: React.FC<Props> = ({
         <div className={styles.metricRow}>
           <Metric
             label="Stake To Distribute"
-            value={`☉ ${formatSolAmount(redelegationBudget, 0)}`}
+            value={
+              <>
+                <span className={metricStyles.unit}>☉</span>
+                {formatSolAmount(redelegationBudget, 0)}
+              </>
+            }
             {...tooltipAttributes(
               'TVL minus currently active Marinade stake — the already-liquid reserve available to re-delegate next epoch',
             )}
           />
           <Metric
             label="APY"
-            value={`Winning ☉ ${formatPercentage(winningAPY)}`}
+            value={formatPercentage(winningAPY)}
             secondary={apySecondary}
             {...tooltipAttributes(
-              'Winning APY (last validator in the auction) and projected/ideal APY of currently active stake; assumes no Marinade fees',
+              'Winning APY: APY of the last validator winning the auction.<br/>' +
+                (level === UserLevel.Expert
+                  ? 'Ideal APY: APY of currently active stake assuming all distributed stake is active and no Marinade fees.'
+                  : 'Projected APY: APY of currently active stake (assumes no Marinade fees).'),
             )}
           />
           <Metric
             label="Auction Stake"
-            value={`☉ ${formatSolAmount(samDistributedStake, 0)}`}
+            value={
+              <>
+                <span className={metricStyles.unit}>☉</span>
+                {formatSolAmount(samDistributedStake, 0)}
+              </>
+            }
             secondary={`${samStakeValidators.length} / ${allValidators.length} validators`}
             {...tooltipAttributes(
-              'How much stake is distributed by Marinade to validators based on SAM, and how many validators won stake.',
+              'Total stake distributed by Marinade via SAM.<br/>Validators winning stake / total participating.',
             )}
           />
           <ConcentrationMetric
@@ -647,11 +663,19 @@ export const SamTable: React.FC<Props> = ({
               return (
                 <span className={styles.validatorCell}>
                   <span
-                    className={`${styles.pubkey} ${sim ? styles.pubkeySimulated : ''}`}
+                    className={`${styles.pubkey} ${styles.copyable} ${sim ? styles.pubkeySimulated : ''}`}
+                    title="Click to copy"
+                    onClick={e => {
+                      e.stopPropagation()
+                      copy(`${va}::vote`, va)
+                    }}
+                    onMouseDown={e => e.stopPropagation()}
                   >
                     {va}
                   </span>
-                  <CopyButton value={va} />
+                  {copiedKey === `${va}::vote` && (
+                    <span className={styles.copiedBadge}>copied</span>
+                  )}
                   {renderPenaltyBadges(item.validator)}
                   {isEditing && (
                     <span className={styles.popoverAnchor}>
@@ -682,10 +706,24 @@ export const SamTable: React.FC<Props> = ({
               const name = nameByVote.get(va) ?? ''
               return (
                 <span className={styles.nameCell}>
-                  <span className={styles.nameText} title={name}>
+                  <span
+                    className={`${styles.nameText} ${name ? styles.copyable : ''}`}
+                    title={name ? 'Click to copy' : ''}
+                    onClick={
+                      name
+                        ? e => {
+                            e.stopPropagation()
+                            copy(`${va}::name`, name)
+                          }
+                        : undefined
+                    }
+                    onMouseDown={name ? e => e.stopPropagation() : undefined}
+                  >
                     {name || '—'}
                   </span>
-                  {name && <CopyButton value={name} />}
+                  {copiedKey === `${va}::name` && (
+                    <span className={styles.copiedBadge}>copied</span>
+                  )}
                 </span>
               )
             },
