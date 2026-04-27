@@ -24,10 +24,13 @@ import {
   selectTargetProtectedPct,
   selectActuallyUnprotectedStake,
   buildConcentrationBreakdown,
+  selectWinningApyHistory,
+  selectReallocationVolumeHistory,
 } from 'src/services/sam'
 
 import styles from './sam-table.module.css'
 import { tooltipAttributes } from '../../services/utils'
+import { Sparkline, sparklineHtml } from '../sparkline/sparkline'
 import { buildBondBreakdownTooltip } from '../../tooltips/bond-breakdown'
 import { buildSamActiveTooltip } from '../../tooltips/sam-active'
 import { ConcentrationMetric } from '../concentration-metric/concentration-metric'
@@ -256,6 +259,10 @@ export const SamTable: React.FC<Props> = ({
   const stakeToMoveSol = selectStakeToMove(auctionResult)
   const stakeToMove = stakeToMoveSol / samDistributedStake
   const redelegationBudget = selectRedelegationBudget(auctionResult)
+  const apyHistory = selectWinningApyHistory(auctionResult, epochsPerYear)
+  // Reallocation volume is the closest historical proxy to "stake to
+  // distribute" until the SDK exposes per-epoch TVL history.
+  const stakeToDistributeHistory = selectReallocationVolumeHistory(auctionResult)
   const activeStake =
     selectTotalActiveStake(auctionResult) / samDistributedStake
   const productiveStake =
@@ -457,7 +464,12 @@ export const SamTable: React.FC<Props> = ({
   const fmtDiff = (d: number) => `${d >= 0 ? '+' : ''}${formatPercentage(d, 2)}`
 
   let expertMetrics
-  let apyMetrics
+  let apySecondary: string | undefined
+  if (level === UserLevel.Expert) {
+    apySecondary = `Ideal ☉ ${formatPercentage(idealApy)}`
+  } else if (activeStake > 0.9) {
+    apySecondary = `Projected ☉ ${formatPercentage(projectedApy)}`
+  }
   if (level === UserLevel.Expert) {
     expertMetrics = (
       <>
@@ -531,25 +543,6 @@ export const SamTable: React.FC<Props> = ({
         </div>
       </>
     )
-    apyMetrics = (
-      <Metric
-        label="Ideal APY"
-        value={`☉ ${formatPercentage(idealApy)}`}
-        {...tooltipAttributes(
-          'Estimated APY of currently active stake; assumes no Marinade fees; assumes all distributed stake is active',
-        )}
-      />
-    )
-  } else if (activeStake > 0.9) {
-    apyMetrics = (
-      <Metric
-        label="Projected APY"
-        value={`☉ ${formatPercentage(projectedApy)}`}
-        {...tooltipAttributes(
-          'Estimated APY of currently active stake; assumes no Marinade fees',
-        )}
-      />
-    )
   }
 
   return (
@@ -561,31 +554,75 @@ export const SamTable: React.FC<Props> = ({
         <div className={styles.metricRow}>
           <Metric
             label="Stake To Distribute"
-            value={`☉ ${formatSolAmount(redelegationBudget, 0)}`}
+            value={
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+              >
+                <div>{`☉ ${formatSolAmount(redelegationBudget, 0)}`}</div>
+                <Sparkline data={stakeToDistributeHistory} />
+              </div>
+            }
             {...tooltipAttributes(
-              'Stake that cooled down in the previous epoch and is available to re-delegate next epoch',
+              sparklineHtml(
+                stakeToDistributeHistory,
+                v => '☉ ' + formatSolAmount(Math.round(v), 0),
+                'Stake To Distribute · estimated from per-validator activation deltas (TVL−Σactive history not yet in SDK)',
+              ),
             )}
           />
           <Metric
-            label="Winning APY"
-            value={`☉ ${formatPercentage(winningAPY)}`}
+            label="APY"
+            value={
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+              >
+                <div>{`Winning ☉ ${formatPercentage(winningAPY)}`}</div>
+                {apySecondary && (
+                  <div style={{ fontSize: 14, opacity: 0.75 }}>
+                    {apySecondary}
+                  </div>
+                )}
+                <Sparkline data={apyHistory} />
+              </div>
+            }
             {...tooltipAttributes(
-              'Estimated APY of the last validator winning the auction based on ideal count of epochs in the year; assumes no Marinade fees',
+              sparklineHtml(
+                apyHistory,
+                v => formatPercentage(v),
+                `Winning APY · last ${apyHistory.length} epochs`,
+              ),
             )}
           />
-          {apyMetrics}
           <Metric
-            label="Total Auction Stake"
-            value={`☉ ${formatSolAmount(samDistributedStake, 0)}`}
+            label="Auction Stake"
+            value={
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+              >
+                <div>{`☉ ${formatSolAmount(samDistributedStake, 0)}`}</div>
+                <div style={{ fontSize: 14, opacity: 0.75 }}>
+                  {samStakeValidators.length} / {allValidators.length}{' '}
+                  validators
+                </div>
+              </div>
+            }
             {...tooltipAttributes(
-              'How much stake is distributed by Marinade to validators based on SAM',
-            )}
-          />
-          <Metric
-            label="Winning Validators"
-            value={`${samStakeValidators.length} / ${allValidators.length}`}
-            {...tooltipAttributes(
-              'Number of validators that won stake in this SAM auction',
+              'How much stake is distributed by Marinade to validators based on SAM, and how many validators won stake.',
             )}
           />
           <ConcentrationMetric
