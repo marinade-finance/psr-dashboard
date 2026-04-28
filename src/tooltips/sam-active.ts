@@ -54,7 +54,7 @@ export function computeSamActiveMetrics(
   const activating = Math.max(0, delta)
   const bid = selectBid(v)
   const cost = selectEffectiveCost(v)
-  const activatingCost = (bid * activating) / 1000
+  const activatingCost = (v.revShare.activatingStakePmpe * activating) / 1000
   return {
     active: selectSamActiveStake(v),
     target: selectSamTargetStake(v),
