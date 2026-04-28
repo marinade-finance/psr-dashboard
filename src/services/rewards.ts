@@ -1,3 +1,5 @@
+import { VALIDATORS_API_URL } from 'src/services/apiUrls'
+
 export type EpochRewards = [number, number]
 
 export type RewardsResponse = {
@@ -6,6 +8,6 @@ export type RewardsResponse = {
 }
 
 export const fetchRewards = async (): Promise<RewardsResponse> => {
-  const res = await fetch('https://validators-api.marinade.finance/rewards')
+  const res = await fetch(`${VALIDATORS_API_URL}/rewards`)
   return (await res.json()) as RewardsResponse
 }

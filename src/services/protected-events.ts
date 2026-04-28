@@ -1,4 +1,5 @@
 import { formatPercentage } from 'src/format'
+import { VALIDATOR_BONDS_API_URL } from 'src/services/apiUrls'
 
 export type SettlementFunder = 'ValidatorBond' | 'Marinade'
 
@@ -138,8 +139,6 @@ export const selectAmount = (protectedEvent: ProtectedEvent) =>
 
 export const fetchProtectedEvents =
   async (): Promise<ProtectedEventsResponse> => {
-    const res = await fetch(
-      'https://validator-bonds-api.marinade.finance/protected-events',
-    )
+    const res = await fetch(`${VALIDATOR_BONDS_API_URL}/protected-events`)
     return (await res.json()) as ProtectedEventsResponse
   }

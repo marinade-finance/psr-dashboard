@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { formatPercentage, formatSolAmount } from 'src/format'
+import { notificationTooltip } from 'src/services/notifications'
 import {
   selectBid,
   selectBondSize,
@@ -46,6 +47,7 @@ import styles from './sam-table.module.css'
 import { tooltipAttributes } from '../../services/utils'
 import { buildBondBreakdownTooltip } from '../../tooltips/bond-breakdown'
 import { ConcentrationMetric } from '../concentration-metric/concentration-metric'
+import { BellIcon } from '../icons/bell-icon'
 import { Metric } from '../metric/metric'
 import { UserLevel } from '../navigation/navigation'
 import { Alignment, Color, OrderDirection, Table } from '../table/table'
@@ -57,18 +59,20 @@ import type {
   DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
 import type { PendingEdits } from 'src/pages/sam'
+import type { NotificationSummary } from 'src/services/notifications'
 
 type ValidatorWithBondState = AuctionValidator & { bondState?: Color }
 
-type PenaltyKind = 'bidLow' | 'blacklist' | 'risk'
+type BadgeKind = 'bidLow' | 'blacklist' | 'risk' | 'notif'
 
-const penaltyClass: Record<PenaltyKind, string> = {
+const badgeClass: Record<BadgeKind, string> = {
   bidLow: styles.penalty_bidLow,
   blacklist: styles.penalty_blacklist,
   risk: styles.penalty_risk,
+  notif: styles.notif,
 }
 
-const PenaltyIcon: Record<PenaltyKind, JSX.Element> = {
+const BadgeIcon: Record<BadgeKind, JSX.Element> = {
   bidLow: (
     <svg
       viewBox="0 0 24 24"
@@ -112,55 +116,75 @@ const PenaltyIcon: Record<PenaltyKind, JSX.Element> = {
       <line x1="12" y1="17" x2="12.01" y2="17" />
     </svg>
   ),
+  notif: BellIcon,
 }
 
-const renderPenaltyBadges = (v: AuctionValidator) => {
+type Badge = { label: string; tooltip: string; kind: BadgeKind }
+
+const penaltyBadges = (v: AuctionValidator): Badge[] => {
   const stakeSol = v.marinadeActivatedStakeSol
-  const badges: { label: string; sol: number; kind: PenaltyKind }[] = []
+  const out: Badge[] = []
+  const fmt = (label: string, sol: number) =>
+    `<b>${label}</b>: ${formatSolAmount(sol, 3)} SOL (estimate)`
   const bidTooLowSol = (stakeSol * v.revShare.bidTooLowPenaltyPmpe) / 1000
   const blacklistSol = (stakeSol * v.revShare.blacklistPenaltyPmpe) / 1000
   const bondRiskSol = v.values?.bondRiskFeeSol ?? 0
   if (bidTooLowSol > 0)
-    badges.push({ label: 'BidTooLow', sol: bidTooLowSol, kind: 'bidLow' })
+    out.push({
+      label: 'BidTooLow',
+      tooltip: fmt('BidTooLow', bidTooLowSol),
+      kind: 'bidLow',
+    })
   if (blacklistSol > 0)
-    badges.push({ label: 'Blacklist', sol: blacklistSol, kind: 'blacklist' })
+    out.push({
+      label: 'Blacklist',
+      tooltip: fmt('Blacklist', blacklistSol),
+      kind: 'blacklist',
+    })
   if (bondRiskSol > 0)
-    badges.push({ label: 'BondRiskFee', sol: bondRiskSol, kind: 'risk' })
+    out.push({
+      label: 'BondRiskFee',
+      tooltip: fmt('BondRiskFee', bondRiskSol),
+      kind: 'risk',
+    })
+  return out
+}
+
+const notificationBadge = (
+  summary: NotificationSummary | undefined,
+): Badge | null => {
+  if (!summary) return null
+  const plural = summary.count === 1 ? 'notification' : 'notifications'
+  return {
+    label: `${summary.count} ${plural}`,
+    tooltip: notificationTooltip(summary),
+    kind: 'notif',
+  }
+}
+
+const renderBadges = (
+  v: AuctionValidator,
+  notifSummary: NotificationSummary | undefined,
+) => {
+  const badges = penaltyBadges(v)
+  const notif = notificationBadge(notifSummary)
+  if (notif) badges.push(notif)
   if (badges.length === 0) return null
 
-  const cls = (b: { kind: PenaltyKind }) =>
-    `${styles.penaltyBadge} ${penaltyClass[b.kind]}`
-  const fmt = (b: { label: string; sol: number }) =>
-    `<b>${b.label}</b>: ${formatSolAmount(b.sol, 3)} SOL (estimate)`
+  const cls = (b: Badge) => `${styles.badge} ${badgeClass[b.kind]}`
 
-  if (badges.length === 1) {
-    const b = badges[0]
-    return (
-      <span className={styles.penalties} data-count="1">
-        <span
+  return (
+    <span className={styles.badges} data-count={String(badges.length)}>
+      {badges.map(b => (
+        <button
+          type="button"
           key={b.label}
-          {...tooltipAttributes(fmt(b))}
+          {...tooltipAttributes(b.tooltip)}
           className={cls(b)}
           aria-label={b.label}
         >
-          {PenaltyIcon[b.kind]}
-        </span>
-      </span>
-    )
-  }
-
-  const joinedTooltip = badges.map(fmt).join('<br/>')
-  return (
-    <span
-      className={styles.penalties}
-      data-count={String(badges.length)}
-      {...tooltipAttributes(joinedTooltip)}
-      aria-label={badges.map(b => b.label).join(', ')}
-    >
-      {badges.map(b => (
-        <span key={b.label} className={cls(b)} aria-hidden="true">
-          {PenaltyIcon[b.kind]}
-        </span>
+          {BadgeIcon[b.kind]}
+        </button>
       ))}
     </span>
   )
@@ -203,6 +227,7 @@ type Props = {
   onFieldChange: (field: EditField, value: string) => void
   onRunSimulation: () => void
   onCancelEditing: () => void
+  notificationsMap?: Record<string, NotificationSummary>
 }
 
 function renderEditableCell(
@@ -263,6 +288,7 @@ export const SamTable: React.FC<Props> = ({
   onFieldChange,
   onRunSimulation,
   onCancelEditing,
+  notificationsMap,
 }) => {
   const {
     auctionData: { validators },
@@ -726,6 +752,7 @@ export const SamTable: React.FC<Props> = ({
             render: item => {
               const va = selectVoteAccount(item.validator)
               const sim = !item.isGhost && simulatedValidator === va
+              const summary = notificationsMap?.[va]
               return (
                 <span className={styles.validatorCell}>
                   <span
@@ -733,7 +760,7 @@ export const SamTable: React.FC<Props> = ({
                   >
                     {va}
                   </span>
-                  {renderPenaltyBadges(item.validator)}
+                  {renderBadges(item.validator, summary)}
                 </span>
               )
             },

@@ -1,3 +1,5 @@
+import { SCORING_API_URL } from './apiUrls'
+
 export type ScoringValidator = {
   epoch: number
   voteAccount: string
@@ -11,8 +13,6 @@ export type ScoringValidator = {
 }
 
 export const fetchScoring = async (): Promise<ScoringValidator[]> => {
-  const res = await fetch(
-    'https://scoring.marinade.finance/api/v1/scores/sam?lastEpochs=3',
-  )
+  const res = await fetch(`${SCORING_API_URL}/api/v1/scores/sam?lastEpochs=3`)
   return (await res.json()) as ScoringValidator[]
 }

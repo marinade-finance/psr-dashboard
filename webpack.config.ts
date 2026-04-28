@@ -58,6 +58,18 @@ const webpackConfig = (env: {
       'process.env.PRODUCTION': env.production || !env.development,
       'process.env.NAME': JSON.stringify(require('./package.json').name),
       'process.env.VERSION': JSON.stringify(require('./package.json').version),
+      'process.env.VALIDATORS_API_URL': JSON.stringify(
+        process.env.VALIDATORS_API_URL ?? '',
+      ),
+      'process.env.VALIDATOR_BONDS_API_URL': JSON.stringify(
+        process.env.VALIDATOR_BONDS_API_URL ?? '',
+      ),
+      'process.env.SCORING_API_URL': JSON.stringify(
+        process.env.SCORING_API_URL ?? '',
+      ),
+      'process.env.NOTIFICATIONS_API_URL': JSON.stringify(
+        process.env.NOTIFICATIONS_API_URL ?? '',
+      ),
     }),
     new ForkTsCheckerWebpackPlugin({
       typescript: { configFile: './tsconfig.json' },

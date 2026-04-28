@@ -5,7 +5,10 @@ import { Banner } from 'src/components/banner/banner'
 import { Loader } from 'src/components/loader/loader'
 import { Navigation } from 'src/components/navigation/navigation'
 import { SamTable } from 'src/components/sam-table/sam-table'
-import { getBannerData } from 'src/services/banner'
+import {
+  fetchAllNotifications,
+  fetchBroadcastNotifications,
+} from 'src/services/notifications'
 import { loadSam } from 'src/services/sam'
 
 import styles from './sam.module.css'
@@ -49,6 +52,24 @@ export const SamPage: React.FC<Props> = ({ level }) => {
         setEditingValidator(null)
         setPendingEdits({})
       },
+    },
+  )
+
+  const { data: notificationsMap } = useQuery(
+    ['notifications-all', 'sam_auction'],
+    () => fetchAllNotifications('sam_auction'),
+    {
+      refetchInterval: 5 * 60 * 1000, // refresh every 5 min
+      keepPreviousData: true,
+    },
+  )
+
+  const { data: broadcastNotifications } = useQuery(
+    'notifications-broadcast',
+    fetchBroadcastNotifications,
+    {
+      refetchInterval: 5 * 60 * 1000,
+      keepPreviousData: true,
     },
   )
 
@@ -173,7 +194,13 @@ export const SamPage: React.FC<Props> = ({ level }) => {
             {simulationModeActive ? 'Exit Simulation' : 'Enter Simulation'}
           </button>
         </Navigation>
-        <Banner {...getBannerData()} />
+        {broadcastNotifications?.map(n => (
+          <Banner
+            key={n.id}
+            title={n.title ?? 'Announcement'}
+            body={n.message}
+          />
+        ))}
         {status === 'error' && <p>Error fetching data</p>}
         {status === 'loading' && <Loader />}
         {status === 'success' && displayAuctionResult && (
@@ -198,6 +225,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
             onFieldChange={handleFieldChange}
             onRunSimulation={handleRunSimulation}
             onCancelEditing={handleCancelEditing}
+            notificationsMap={notificationsMap}
           />
         )}
       </div>
