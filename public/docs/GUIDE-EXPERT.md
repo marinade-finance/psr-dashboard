@@ -1,6 +1,6 @@
 # Expert View Guide
 
-See the [Dashboard Guide](#GUIDE) for general documentation. Additional metrics visible in expert mode.
+See the **Guide** tab above for general documentation. Additional metrics visible in expert mode.
 
 ---
 

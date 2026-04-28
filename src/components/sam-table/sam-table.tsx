@@ -167,7 +167,7 @@ type InputOpts = {
   placeholder?: string
 }
 
-const DEFAULT_ORDER: Order[] = [[9, OrderDirection.DESC]]
+const DEFAULT_ORDER: Order[] = [[5, OrderDirection.DESC]]
 
 type Props = {
   auctionResult: AuctionResult

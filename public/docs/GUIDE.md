@@ -30,10 +30,13 @@ validators based on their bids and performance.
 
 **Key Metrics:**
 
-- **Total Auction Stake** &mdash; Total SOL distributed by Marinade via SAM
+- **Stake To Distribute** &mdash; Stake cooled down in the previous epoch and available to re-delegate next epoch
 - **Winning APY** &mdash; Estimated APY of the last validator winning the auction
-- **Projected APY** &mdash; Expected staker return based on total revenue from all winning validators
-- **Winning Validators** &mdash; Count of validators receiving stake in current auction
+- **Projected APY / Ideal APY** &mdash; Second APY tile shown next to Winning APY. Expert level shows
+  **Ideal APY** (assumes all distributed stake is active and no Marinade fees); other levels show
+  **Projected APY** only when active stake exceeds 90% of target, and no second APY tile otherwise
+- **Total Auction Stake** &mdash; Total SOL distributed by Marinade via SAM
+- **Winning Validators** &mdash; Validators receiving stake in current auction, shown as `won / total` (e.g. `46 / 759`)
 - **Top Countries** &mdash; The three countries holding the largest share of SAM-distributed stake,
   with each row showing the country name, a bar proportional to its share, and the percentage.
   A row marked **(capped)** in red means at least one validator in that country had its stake
@@ -113,12 +116,11 @@ Both methods can be combined. The effective bid combines all components to deter
 | Column          | Description                                                                                                                                                                                                                                                                         |
 | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Validator**   | Vote account public key                                                                                                                                                                                                                                                             |
-| **St. Bid**     | Static bid per 1000 SOL set in bond configuration. Hover for full commission and charge breakdown (Inflation / MEV / Block, plus activated + activating cost)                                                                                                                       |
-| **Bond**        | Current bond balance in SOL                                                                                                                                                                                                                                                         |
+| **St. Bid**     | Static bid per 1000 SOL set in bond configuration. Hover for the full breakdown: Stake, Commissions, and Charge this epoch (St. Bid, Eff. Bid, Activating charge, Active charge, Total Charge) |
+| **Bond [☉]**    | Current bond balance in SOL                                                                                                                                                                                                                                                         |
 | **Cover. [ep]** | Epochs of bond runway above the minimum required reserve. At zero, Marinade starts undelegating stake and charging fees to cover the costs; negative means the bond is short of the reserve by that many epochs of bid payments. Color: green = 13+, yellow = 6–12, orange = 2–5, red ≤ 1 |
 | **Max APY**     | Maximum APY offered based on validator's bid and commission settings                                                                                                                                                                                                                |
-| **SAM Active**  | Currently active stake delegated by SAM. A large colored arrow (↑ green / ↓ red) flags an expected stake change next epoch; hover for SAM Active now, SAM Target, and the expected delta                                                                                           |
-| **Eff. Bid**    | Effective bid combining static bid and commission settings                                                                                                                                                                                                                          |
+| **SAM Active [☉]** | Currently active stake delegated by SAM. A large colored arrow (↑ green / ↓ red) flags an expected stake change next epoch; hover for SAM Active now, SAM Target, and the expected delta                                                                                        |
 
 ### Participation Requirements
 
@@ -146,7 +148,11 @@ and maintain stability.
 Revenue measurement per 1000 SOL per epoch.
 
 - Example: 0.1 PMPE = 0.1 SOL earned per 1000 SOL per epoch
-- APY conversion: `APY = (1 + PMPE/1000)^182 - 1` where 182 = epochs per year
+- APY conversion: `APY = (1 + PMPE/1000)^epochsPerYear - 1`. `epochsPerYear` is
+  measured dynamically from recent on-chain epoch timestamps via
+  `estimateEpochsPerYear` (typically ~182; the static fallback
+  `seconds_per_year / (0.4s × 432000 slots)` ≈ 182.6 applies only when on-chain
+  data is unavailable)
 
 ### Bond
 
@@ -171,7 +177,7 @@ the bond state and what a validator should top up.
 | Claimable bond balance          | `claimableBondBalanceSol`  | Portion of the bond already available for settlement / fees                                 |
 | Activated Marinade stake        | `marinadeActivatedStakeSol`| Currently active Marinade stake on the validator                                            |
 | Paid undelegation               | `paidUndelegationSol`      | Amount of stake the SDK has **queued for forced undelegation** from this validator due to bond-risk-fee (`calcBondRiskFee`) or bid-too-low (`calcBidTooLowPenalty`) penalties. It represents stake on its way out; the SDK subtracts it from the bid base (`projectedActivated = max(0, activated − paidUndelegationSol)`), so it is excluded from the forward-looking bid obligation. Shown in the tooltip for context — informational, not additive. |
-| Protected stake                 | `protectedStakeSol`        | `activated − unprotected`; the portion the bond has to cover                                      |
+| Projected exposed stake         | `projectedExposedStakeSol` | `max(0, projectedActivated − unprotectedStakeSol)` where `projectedActivated = max(0, activated − carriedPaidUndelegation)`; computed locally, the portion the bond has to cover |
 | SAM target stake                | `marinadeSamTargetSol`     | Stake the auction has assigned to this validator this epoch                                 |
 
 **Section 1 — Minimum Coverage**
@@ -210,11 +216,15 @@ means the bond is below minimum coverage and `bondRiskFeeSol` applies.
 - **Effective Bid**: The actual payment, capped at the winning threshold
 
 In a last-price auction, validators may pay less than their maximum bid since all winners pay the clearing price.
+Charges on activating stake follow the protocol's bond-risk-reduction mechanism — see the
+[BRRM docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market/bond-risk-reduction-mechanism)
+for the formula.
 
 ---
 
 ## Technical Notes
 
 - API data is reloaded periodically by Marinade (typically once per hour for most endpoints)
-- Solana epochs last approximately 2.5 days (~182 epochs per year)
+- Solana epochs last approximately 2 days (~48 hours, ~182 epochs per year);
+  the dashboard measures the actual rate dynamically per `estimateEpochsPerYear`
 - Data refreshes on page load; use browser refresh for latest data
