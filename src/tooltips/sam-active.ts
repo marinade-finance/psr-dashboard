@@ -151,16 +151,16 @@ export function renderSamActiveTooltip(
     chargeRow('St. Bid', formatSolAmount(m.bid, 4), '', '') +
     chargeRow('Eff. Bid', formatSolAmount(m.effBid, 4), '', '') +
     chargeRow(
-      'Active charge',
-      '',
-      formatSolAmount(m.stake, 0),
-      formatSolAmount(m.cost, 3),
-    ) +
-    chargeRow(
       'Activating charge',
       '',
       `~${formatSolAmount(m.activating, 0)}`,
       formatSolAmount(m.activatingCost, 3),
+    ) +
+    chargeRow(
+      'Active charge',
+      '',
+      formatSolAmount(m.stake, 0),
+      formatSolAmount(m.cost, 3),
     ) +
     divider(4) +
     chargeRow('Total Charge', '', '', formatSolAmount(m.total, 3), {
