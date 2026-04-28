@@ -34,9 +34,11 @@
   width: 18px;
   height: 18px;
   padding: 3px;
+  border: 0;
   border-radius: 4px;
   line-height: 1;
   user-select: none;
+  cursor: inherit;
   transition: filter 120ms ease;
 }
 

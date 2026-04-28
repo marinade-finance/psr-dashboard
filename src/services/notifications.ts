@@ -38,8 +38,8 @@ const TOOLTIP_MAX_NOTIFICATIONS = 10
 
 export async function fetchAllNotifications(
   notificationType?: string,
-): Promise<Map<string, NotificationSummary>> {
-  const result = new Map<string, NotificationSummary>()
+): Promise<Record<string, NotificationSummary>> {
+  const result: Record<string, NotificationSummary> = {}
 
   try {
     for (let page = 0; page < MAX_PAGES; page++) {
@@ -55,7 +55,7 @@ export async function fetchAllNotifications(
       const notifications = (await res.json()) as ValidatorNotification[]
 
       for (const n of notifications) {
-        const existing = result.get(n.user_id)
+        const existing = result[n.user_id]
         if (existing) {
           existing.count++
           if (existing.notifications.length < TOOLTIP_MAX_NOTIFICATIONS) {
@@ -68,11 +68,11 @@ export async function fetchAllNotifications(
             existing.maxPriority = n.priority
           }
         } else {
-          result.set(n.user_id, {
+          result[n.user_id] = {
             count: 1,
             maxPriority: n.priority,
             notifications: [n],
-          })
+          }
         }
       }
 

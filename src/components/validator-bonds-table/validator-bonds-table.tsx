@@ -26,31 +26,17 @@ import {
 
 import styles from './validator-bonds-table.module.css'
 import { tooltipAttributes } from '../../services/utils'
+import { BellIcon } from '../icons/bell-icon'
 import { Metric } from '../metric/metric'
 import { Alignment, OrderDirection, Table } from '../table/table'
 
 import type { NotificationSummary } from 'src/services/notifications'
 import type { ValidatorWithBond } from 'src/services/validator-with-bond'
 
-const BellIcon = (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-    <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-  </svg>
-)
-
 type Props = {
   data: ValidatorWithBond[]
   level: UserLevel
-  notificationsMap?: Map<string, NotificationSummary>
+  notificationsMap?: Record<string, NotificationSummary>
 }
 
 export const ValidatorBondsTable: React.FC<Props> = ({
@@ -165,7 +151,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
             headerAttrsFn: () => tooltipAttributes('Validator Vote Account'),
             render: ({ validator }) => {
               const va = selectVoteAccount(validator)
-              const summary = notificationsMap?.get(va)
+              const summary = notificationsMap?.[va]
               const plural =
                 summary && summary.count === 1
                   ? 'notification'
@@ -175,13 +161,14 @@ export const ValidatorBondsTable: React.FC<Props> = ({
                   <span className={styles.pubkey}>{va}</span>
                   {summary && (
                     <span className={styles.badges}>
-                      <span
+                      <button
+                        type="button"
                         className={`${styles.badge} ${styles.notif}`}
                         {...tooltipAttributes(notificationTooltip(summary))}
                         aria-label={`${summary.count} ${plural}`}
                       >
                         {BellIcon}
-                      </span>
+                      </button>
                     </span>
                   )}
                 </span>
