@@ -148,8 +148,8 @@ export function renderSamActiveTooltip(
   const chargeSec =
     sectionHeader('Charge this epoch', 4) +
     tableHead(['', 'PMPE', 'Stake (☉)', 'Cost (☉)']) +
-    chargeRow('Eff. bid', formatSolAmount(m.effBid, 4), '', '') +
-    chargeRow('Bid', formatSolAmount(m.bid, 4), '', '') +
+    chargeRow('St. Bid', formatSolAmount(m.bid, 4), '', '') +
+    chargeRow('Eff. Bid', formatSolAmount(m.effBid, 4), '', '') +
     chargeRow(
       'Active charge',
       '',
