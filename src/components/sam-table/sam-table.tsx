@@ -167,10 +167,11 @@ type InputOpts = {
   placeholder?: string
 }
 
-const DEFAULT_ORDER: Order[] = [[9, OrderDirection.DESC]]
+const DEFAULT_ORDER: Order[] = [[6, OrderDirection.DESC]]
 
 type Props = {
   auctionResult: AuctionResult
+  nameByVote: Map<string, string>
   tvlJoinApyDiff: number
   tvlLeaveApyDiff: number
   backstopDiff: number
@@ -231,6 +232,7 @@ function renderEditableCell(
 
 export const SamTable: React.FC<Props> = ({
   auctionResult,
+  nameByVote,
   tvlJoinApyDiff,
   tvlLeaveApyDiff,
   backstopDiff,
@@ -723,6 +725,28 @@ export const SamTable: React.FC<Props> = ({
             compare: (a, b) =>
               selectVoteAccount(a.validator).localeCompare(
                 selectVoteAccount(b.validator),
+              ),
+          },
+          {
+            header: 'Name',
+            headerAttrsFn: () =>
+              tooltipAttributes('Validator name (from on-chain identity)'),
+            render: item => {
+              const name =
+                nameByVote.get(selectVoteAccount(item.validator)) ?? ''
+              return (
+                <span className={styles.nameCell}>
+                  <span className={styles.nameText} title={name}>
+                    {name || '—'}
+                  </span>
+                </span>
+              )
+            },
+            compare: (a, b) =>
+              (
+                nameByVote.get(selectVoteAccount(a.validator)) ?? ''
+              ).localeCompare(
+                nameByVote.get(selectVoteAccount(b.validator)) ?? '',
               ),
           },
           {

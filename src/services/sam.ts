@@ -22,9 +22,18 @@ import type {
   SourceDataOverrides,
 } from '@marinade.finance/ds-sam-sdk'
 
-const estimateEpochsPerYear = async () => {
+type EpochsBundle = {
+  epochsPerYear: number
+  nameByVote: Map<string, string>
+}
+
+const fetchEpochsBundle = async (): Promise<EpochsBundle> => {
   const FETCHED_EPOCHS = 11
   const { validators } = await fetchValidatorsWithEpochs(FETCHED_EPOCHS)
+  const nameByVote = new Map<string, string>()
+  for (const v of validators) {
+    if (v.info_name) nameByVote.set(v.vote_account, v.info_name)
+  }
   const epochStats = validators.map(({ epoch_stats }) => epoch_stats).flat()
 
   const rangeStart = epochStats.reduce(
@@ -48,11 +57,12 @@ const estimateEpochsPerYear = async () => {
   const DEFAULT_EPOCHS_PER_YEAR = SECONDS_PER_YEAR / DEFAULT_EPOCH_DURATION
   const rangeDuration = rangeEnd.timestamp - rangeStart.timestamp
   const rangeEpochs = rangeEnd.epoch - rangeStart.epoch + 1
-  if (!isFinite(rangeStart.epoch) || rangeEnd.epoch === 0) {
-    return DEFAULT_EPOCHS_PER_YEAR
-  }
+  const epochsPerYear =
+    !isFinite(rangeStart.epoch) || rangeEnd.epoch === 0
+      ? DEFAULT_EPOCHS_PER_YEAR
+      : SECONDS_PER_YEAR / (rangeDuration / rangeEpochs)
 
-  return SECONDS_PER_YEAR / (rangeDuration / rangeEpochs)
+  return { epochsPerYear, nameByVote }
 }
 
 type SamResult = {
@@ -63,12 +73,13 @@ type SamResult = {
   backstopTvl: number
   epochsPerYear: number
   dcSamConfig: DsSamConfig
+  nameByVote: Map<string, string>
 }
 
 export const loadSam = async (
   dataOverrides?: SourceDataOverrides | null,
 ): Promise<SamResult> => {
-  const epochsPerYear = await estimateEpochsPerYear()
+  const { epochsPerYear, nameByVote } = await fetchEpochsBundle()
   console.log('epochsPerYear', epochsPerYear)
   const config = await loadSamConfig()
   const dsSam = new DsSamSDK({
@@ -152,6 +163,7 @@ export const loadSam = async (
     backstopTvl,
     epochsPerYear,
     dcSamConfig: dsSam.config,
+    nameByVote,
   }
 }
 
