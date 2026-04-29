@@ -1,3 +1,4 @@
+import { Color } from 'src/components/table/table'
 import {
   ctaBlock,
   divider,
@@ -7,8 +8,6 @@ import {
   wrapTable,
 } from 'src/components/tooltip-table/tooltip-table'
 import { formatSolAmount } from 'src/format'
-
-import { Color } from '../components/table/table'
 
 import type {
   AuctionValidator,
@@ -52,7 +51,7 @@ export const computeBidTooLowMetrics = (
   winningTotalPmpe: number,
 ): BidTooLowMetrics => {
   const historyEpochs = dcSamConfig.bidTooLowPenaltyHistoryEpochs
-  // SDK auction.js:201 passes this field as permittedBidDeviation ∈ [0,1].
+  // SDK auction.js:202 passes this field as permittedBidDeviation ∈ [0,1].
   const permittedDeviation = dcSamConfig.bidTooLowPenaltyPermittedDeviationPmpe
 
   const auctions = v.auctions ?? []
@@ -100,8 +99,8 @@ export const computeBidTooLowMetrics = (
     worstHistoricalPmpe: Number.isFinite(worstHistoricalPmpe)
       ? worstHistoricalPmpe
       : 0,
-    limit: Number.isFinite(limit) ? limit : 0,
-    adjustedLimit: Number.isFinite(adjustedLimit) ? adjustedLimit : 0,
+    limit,
+    adjustedLimit,
     bondObligationPmpe,
     shortfall,
     shortfallRatio,
@@ -116,8 +115,6 @@ export const computeBidTooLowMetrics = (
 
 export const renderBidTooLowTooltip = (m: BidTooLowMetrics): string => {
   const hasPenalty = m.penaltyPmpe > 0
-  const requiredRaise = Math.max(0, m.adjustedLimit - m.bondObligationPmpe)
-
   const ctaLabel = 'Bid-Too-Low Penalty Breakdown'
   let cta: string
   if (!m.isNegativeBiddingChange) {
@@ -137,7 +134,7 @@ export const renderBidTooLowTooltip = (m: BidTooLowMetrics): string => {
       label: ctaLabel,
       cta:
         `Bid-too-low penalty applies. Forced undelegation: ${stake(m.forcedUndelegationSol)}. ` +
-        `Raise effective bid by ≥ ${pmpe(requiredRaise)} PMPE to clear it.`,
+        `Raise effective bid by ≥ ${pmpe(m.shortfall)} PMPE to clear it.`,
       state: Color.RED,
     })
   }
