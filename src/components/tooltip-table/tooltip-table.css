@@ -1,27 +1,6 @@
 /* Shared tooltip-table primitive. All tooltips that render an HTML table
    inside react-tooltip should use these classes — no inline styles. */
 
-.tt-header {
-  padding: 8px 0 10px;
-  margin-bottom: 8px;
-  border-bottom: 1px dashed rgba(255, 255, 255, 0.25);
-}
-
-.tt-header-name {
-  font-size: 0.95em;
-  font-weight: 600;
-  line-height: 1.25;
-  color: var(--text-light-2);
-}
-
-.tt-header-vote {
-  margin-top: 1px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.78em;
-  color: var(--text-light-1);
-  word-break: break-all;
-}
-
 .tt-cta-label {
   padding: 8px 0 4px;
   font-size: 0.78em;

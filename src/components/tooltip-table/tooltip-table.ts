@@ -133,10 +133,15 @@ export const tooltipHeader = (p: {
 }): string => {
   const name = p.name?.trim() || '—'
   return (
-    '<div class="tt-header">' +
-    `<div class="tt-header-name">${esc(name)}</div>` +
-    `<div class="tt-header-vote">${esc(p.voteAccount)}</div>` +
-    '</div>'
+    rowCells([cell(esc(name), { bold: true, wrap: true, colspan: 99 })]) +
+    rowCells([
+      cell(esc(p.voteAccount), {
+        mono: true,
+        muted: true,
+        wrap: true,
+        colspan: 99,
+      }),
+    ])
   )
 }
 

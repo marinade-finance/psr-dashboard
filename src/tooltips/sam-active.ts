@@ -176,7 +176,7 @@ export function renderSamActiveTooltip(
     lead: msg ? msg.replace(/<br\/?>/g, ' ') : undefined,
   })
 
-  return tooltipHeader(header) + cta + wrapTable(stakeSec + commSec + chargeSec)
+  return cta + wrapTable(tooltipHeader(header) + stakeSec + commSec + chargeSec)
 }
 
 export function buildSamActiveTooltip(

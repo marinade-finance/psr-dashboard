@@ -218,7 +218,7 @@ export const renderBondBreakdownTooltip = (
           'You have enough bond for ideal coverage; topping up further is advisable to absorb bid drain.',
         ))
 
-  return tooltipHeader(header) + cta + wrapTable(rates + base + tgt)
+  return cta + wrapTable(tooltipHeader(header) + rates + base + tgt)
 }
 
 export const buildBondBreakdownTooltip = (

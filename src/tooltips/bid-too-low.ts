@@ -191,9 +191,15 @@ export const renderBidTooLowTooltip = (
     (hasPenalty ? '' : okRow('No penalty this epoch.'))
 
   return (
-    tooltipHeader(header) +
     cta +
-    wrapTable(direction + limitSection + cushion + baseSection + result)
+    wrapTable(
+      tooltipHeader(header) +
+        direction +
+        limitSection +
+        cushion +
+        baseSection +
+        result,
+    )
   )
 }
 
