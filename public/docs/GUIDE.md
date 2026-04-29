@@ -207,12 +207,8 @@ obligations across `1 + minBondEpochs` epochs (the fee threshold, per
 current protocol config). At or below this line the validator is
 subject to `bondRiskFeeSol` charges and forced undelegation.
 
-Columns: label / ☉ stake / ☉ pay. Rows, in order: claimable bond
-balance (bold), activated Marinade stake, projected exposed stake,
-minimum unprotected reserve, on-chain distributed reserve, minimum
-coverage bid, then **Minimum required** (bold). When short, the final
-row is **Top-up to minimum coverage**; otherwise an OK row confirms
-the minimum is met.
+When short, the final row is **Top-up to minimum coverage**;
+otherwise an OK row confirms the minimum is met.
 
 **Section 3 — Ideal Coverage (1 + idealBondEpochs epochs)**
 
@@ -224,10 +220,6 @@ The calculation uses `projectedExposedStakeSol`. The coefficient
 applied to `expectedMaxEffBidPmpe` over `1 + idealBondEpochs` epochs
 is the protocol's ideal-coverage coefficient &mdash; see
 [idealBondCoef in the BRRM docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market/bond-risk-reduction-mechanism#ideal-bond-coef).
-
-Rows, in order: bond balance (bold), projected exposed stake, ideal
-unprotected reserve, on-chain distributed reserve, ideal coverage
-bid, then **Ideal required** (bold).
 
 **To get more stake, top up** is the shortfall between the current
 bond and `Ideal required`. Topping up beyond that is advisable so the
