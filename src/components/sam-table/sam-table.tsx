@@ -28,6 +28,7 @@ import {
 
 import styles from './sam-table.module.css'
 import { tooltipAttributes } from '../../services/utils'
+import { buildBidTooLowTooltip } from '../../tooltips/bid-too-low'
 import { buildBondBreakdownTooltip } from '../../tooltips/bond-breakdown'
 import { buildSamActiveTooltip } from '../../tooltips/sam-active'
 import { ConcentrationMetric } from '../concentration-metric/concentration-metric'
@@ -760,6 +761,15 @@ export const SamTable: React.FC<Props> = ({
                 'Static bid for 1000 SOL set by the validator in Bond configuration.<br/>' +
                   'The bid active at the slot the auction runs is what you pay for that epoch’s activating stake.',
               ),
+            cellAttrsFn: item =>
+              tooltipAttributes(
+                buildBidTooLowTooltip(
+                  item.validator,
+                  dcSamConfig,
+                  auctionResult.winningTotalPmpe,
+                  nameByVote.get(selectVoteAccount(item.validator)),
+                ),
+              ),
             render: item => {
               const { validator, isGhost } = item
               const isEditing =
@@ -806,6 +816,7 @@ export const SamTable: React.FC<Props> = ({
                   auctionResult.winningTotalPmpe,
                   dcSamConfig.bondRiskFeeMult,
                   item.validator.bondState,
+                  nameByVote.get(selectVoteAccount(item.validator)),
                 ),
               ),
             render: item => {
@@ -853,7 +864,12 @@ export const SamTable: React.FC<Props> = ({
                 'The currently active stake delegated by SAM. Arrow indicates expected change next epoch — see tooltip for breakdown.',
               ),
             cellAttrsFn: item =>
-              tooltipAttributes(buildSamActiveTooltip(item.validator)),
+              tooltipAttributes(
+                buildSamActiveTooltip(
+                  item.validator,
+                  nameByVote.get(selectVoteAccount(item.validator)),
+                ),
+              ),
             render: item => <StakeChangeIndicator validator={item.validator} />,
             compare: (a, b) =>
               selectSamActiveStake(a.validator) -
