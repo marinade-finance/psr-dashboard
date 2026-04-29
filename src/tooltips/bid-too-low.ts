@@ -16,6 +16,7 @@ import type {
 } from '@marinade.finance/ds-sam-sdk'
 
 // Mirrors SDK ds-sam-sdk/dist/src/calculations.js:117-118 (calcBidTooLowPenalty).
+// TODO ... export these from the SDK and use these verbatim.
 const TOL_COEF = 0.99999
 const SCALE_COEF = 1.5
 
@@ -124,7 +125,7 @@ export const renderBidTooLowTooltip = (
   } else if (m.shortfall === 0) {
     cta = ctaBlock({
       label: ctaLabel,
-      cta: 'No bid-too-low penalty: cushion intact.',
+      cta: 'No bid-too-low penalty: bid kept high enough.',
       state: Color.GREEN,
     })
   } else {
@@ -157,7 +158,6 @@ export const renderBidTooLowTooltip = (
     row('Safe bid floor', '', pmpe(m.limit), { boldValue: true }) +
     (hasPenalty
       ? row('', '', `Raise bid to ≥ ${pmpe(m.limit)} PMPE to avoid penalty.`, {
-          boldValue: true,
           accent: 'red',
         })
       : okRow(
