@@ -640,29 +640,20 @@ function computeNaturalWithdrawal(
   return out
 }
 
-// Paid undelegation is a one-time outflow whose freed capacity returns to
-// the redelegation budget the same epoch (TVL − Σactive grows by exactly
-// Σpaid). Effective post-undelegation active = active − paid; below-target
-// winners (vs that effective active) absorb the augmented budget greedily by
-// totalPmpe. Natural withdrawal (~0.7% TVL) is the only true outflow.
+// Budget = already-liquid reserve (TVL − Σactive); below-target winners get
+// inflows greedily by totalPmpe. Outflows: natural withdrawal (~0.7% TVL)
+// + paid undelegation, the latter clamped to max(0, active − target) since
+// only the over-target portion can actually leave (the rest is held by the
+// auction target).
 function computeExpectedStakeChanges(
   auctionResult: AuctionResult,
 ): Map<string, number> {
   const validators = auctionResult.auctionData.validators
   const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
-  const paidOf = (v: AuctionValidator) => v.values?.paidUndelegationSol ?? 0
-  const totalPaid = validators.reduce((s, v) => s + paidOf(v), 0)
-  const budget = selectRedelegationBudget(auctionResult) + totalPaid
-  const effectiveActive = (v: AuctionValidator) =>
-    v.marinadeActivatedStakeSol - paidOf(v)
+  const budget = selectRedelegationBudget(auctionResult)
   const rawDelta = (v: AuctionValidator) =>
-    v.auctionStake.marinadeSamTargetSol - effectiveActive(v)
+    v.auctionStake.marinadeSamTargetSol - v.marinadeActivatedStakeSol
   const result = new Map<string, number>()
-
-  for (const v of validators) {
-    const paid = paidOf(v)
-    if (paid > 0) result.set(v.voteAccount, -paid)
-  }
 
   if (budget > 0) {
     const sorted = [...validators].sort(
@@ -673,7 +664,7 @@ function computeExpectedStakeChanges(
       const delta = rawDelta(v)
       if (delta > 0 && remaining > 0) {
         const alloc = Math.min(delta, remaining)
-        result.set(v.voteAccount, (result.get(v.voteAccount) ?? 0) + alloc)
+        result.set(v.voteAccount, alloc)
         remaining -= alloc
       }
     }
@@ -682,6 +673,22 @@ function computeExpectedStakeChanges(
   const withdrawals = computeNaturalWithdrawal(validators, tvl)
   for (const [va, w] of withdrawals) {
     result.set(va, (result.get(va) ?? 0) - w)
+  }
+
+  for (const v of validators) {
+    const paid = v.values?.paidUndelegationSol ?? 0
+    if (paid <= 0) continue
+    const overTarget = Math.max(
+      0,
+      v.marinadeActivatedStakeSol - v.auctionStake.marinadeSamTargetSol,
+    )
+    const effectivePaid = Math.min(paid, overTarget)
+    if (effectivePaid > 0) {
+      result.set(
+        v.voteAccount,
+        (result.get(v.voteAccount) ?? 0) - effectivePaid,
+      )
+    }
   }
 
   return result
