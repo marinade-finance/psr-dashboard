@@ -22,9 +22,18 @@ import type {
   SourceDataOverrides,
 } from '@marinade.finance/ds-sam-sdk'
 
-const estimateEpochsPerYear = async () => {
+type EpochsBundle = {
+  epochsPerYear: number
+  nameByVote: Map<string, string>
+}
+
+const fetchEpochsBundle = async (): Promise<EpochsBundle> => {
   const FETCHED_EPOCHS = 11
   const { validators } = await fetchValidatorsWithEpochs(FETCHED_EPOCHS)
+  const nameByVote = new Map<string, string>()
+  for (const v of validators) {
+    if (v.info_name) nameByVote.set(v.vote_account, v.info_name)
+  }
   const epochStats = validators.map(({ epoch_stats }) => epoch_stats).flat()
 
   const rangeStart = epochStats.reduce(
@@ -48,11 +57,12 @@ const estimateEpochsPerYear = async () => {
   const DEFAULT_EPOCHS_PER_YEAR = SECONDS_PER_YEAR / DEFAULT_EPOCH_DURATION
   const rangeDuration = rangeEnd.timestamp - rangeStart.timestamp
   const rangeEpochs = rangeEnd.epoch - rangeStart.epoch + 1
-  if (!isFinite(rangeStart.epoch) || rangeEnd.epoch === 0) {
-    return DEFAULT_EPOCHS_PER_YEAR
-  }
+  const epochsPerYear =
+    !isFinite(rangeStart.epoch) || rangeEnd.epoch === 0
+      ? DEFAULT_EPOCHS_PER_YEAR
+      : SECONDS_PER_YEAR / (rangeDuration / rangeEpochs)
 
-  return SECONDS_PER_YEAR / (rangeDuration / rangeEpochs)
+  return { epochsPerYear, nameByVote }
 }
 
 type SamResult = {
@@ -63,12 +73,13 @@ type SamResult = {
   backstopTvl: number
   epochsPerYear: number
   dcSamConfig: DsSamConfig
+  nameByVote: Map<string, string>
 }
 
 export const loadSam = async (
   dataOverrides?: SourceDataOverrides | null,
 ): Promise<SamResult> => {
-  const epochsPerYear = await estimateEpochsPerYear()
+  const { epochsPerYear, nameByVote } = await fetchEpochsBundle()
   console.log('epochsPerYear', epochsPerYear)
   const config = await loadSamConfig()
   const dsSam = new DsSamSDK({
@@ -152,6 +163,7 @@ export const loadSam = async (
     backstopTvl,
     epochsPerYear,
     dcSamConfig: dsSam.config,
+    nameByVote,
   }
 }
 
@@ -286,9 +298,6 @@ function overridesMessage(
 export const selectBid = (validator: AuctionValidator) =>
   validator.revShare.bidPmpe
 
-export const selectBondBid = (validator: AuctionValidator) =>
-  validator.values?.commissions?.bidCpmpeInBondDec ?? validator.bidCpmpe
-
 export const overridesCpmpeMessage = (validator: AuctionValidator): string =>
   overridesMessage(
     'CPMPE',
@@ -298,30 +307,6 @@ export const overridesCpmpeMessage = (validator: AuctionValidator): string =>
 
 export const selectCommission = (validator: AuctionValidator): number =>
   validator.inflationCommissionDec
-
-export const selectFormattedInBondCommission = (
-  validator: AuctionValidator,
-): string => {
-  const dec = validator.values?.commissions?.inflationCommissionInBondDec
-  return dec == null ? '-' : formatPercentage(dec, 0)
-}
-
-export const formattedOnChainCommission = (
-  validator: AuctionValidator,
-): string =>
-  formatPercentage(
-    validator.values?.commissions?.inflationCommissionOnchainDec ??
-      selectCommission(validator),
-    0,
-  )
-
-export const overridesCommissionMessage = (
-  validator: AuctionValidator,
-): string =>
-  overridesMessage(
-    'inflation commission',
-    validator.values?.commissions?.inflationCommissionOverrideDec,
-  )
 
 export const selectCommissionPmpe = (validator: AuctionValidator) =>
   validator.revShare.inflationPmpe
@@ -335,32 +320,8 @@ export const formattedMevCommission = (validator: AuctionValidator): string => {
   return dec == null ? '-' : formatPercentage(dec, 0)
 }
 
-export const formattedInBondMevCommission = (
-  validator: AuctionValidator,
-): string => {
-  const dec = validator.values?.commissions?.mevCommissionInBondDec
-  return dec == null ? '-' : formatPercentage(dec, 0)
-}
-
-export const formattedOnChainMevCommission = (
-  validator: AuctionValidator,
-): string => {
-  const dec =
-    validator.values?.commissions?.mevCommissionOnchainDec ??
-    selectMevCommission(validator)
-  return dec == null ? '-' : formatPercentage(dec, 0)
-}
-
 export const selectMevCommissionPmpe = (validator: AuctionValidator) =>
   validator.revShare.mevPmpe
-
-export const overridesMevCommissionMessage = (
-  validator: AuctionValidator,
-): string =>
-  overridesMessage(
-    'MEV commission',
-    validator.values?.commissions?.mevCommissionOverrideDec,
-  )
 
 export const selectBlockRewardsCommission = (
   validator: AuctionValidator,
@@ -375,14 +336,6 @@ export const formattedBlockRewardsCommission = (
 
 export const selectBlockRewardsCommissionPmpe = (validator: AuctionValidator) =>
   validator.revShare.blockPmpe
-
-export const overridesBlockRewardsCommissionMessage = (
-  validator: AuctionValidator,
-): string =>
-  overridesMessage(
-    'block rewards commission',
-    validator.values?.commissions?.blockRewardsCommissionOverrideDec,
-  )
 
 export const selectBondSize = (validator: AuctionValidator) =>
   validator.bondBalanceSol
@@ -528,7 +481,6 @@ const WITHDRAWAL_FRACTION_PER_EPOCH = 0.007
 
 export type AugmentedValues = AuctionValidator['values'] & {
   expectedStakeChangeSol: number
-  naturalWithdrawalSol: number
 }
 
 export type AugmentedAuctionValidator = Omit<AuctionValidator, 'values'> & {
@@ -539,15 +491,14 @@ export function augmentAuctionResult(
   auctionResult: AuctionResult,
 ): AugmentedAuctionValidator[] {
   const { validators } = auctionResult.auctionData
-  const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
-  const changes = computeExpectedStakeChanges(validators, tvl)
-  const withdrawalByVa = computeNaturalWithdrawal(validators, tvl)
-  for (const v of validators) {
-    const values = v.values as AugmentedValues
-    values.expectedStakeChangeSol = changes.get(v.voteAccount) ?? 0
-    values.naturalWithdrawalSol = withdrawalByVa.get(v.voteAccount) ?? 0
-  }
-  return validators as AugmentedAuctionValidator[]
+  const changes = computeExpectedStakeChanges(auctionResult)
+  return validators.map(v => ({
+    ...v,
+    values: {
+      ...v.values,
+      expectedStakeChangeSol: changes.get(v.voteAccount) ?? 0,
+    } as AugmentedValues,
+  }))
 }
 
 function computeNaturalWithdrawal(
@@ -568,11 +519,17 @@ function computeNaturalWithdrawal(
     ),
   }))
   const totalExcess = excess.reduce((s, e) => s + e.x, 0)
+  let remaining = withdrawal
   if (totalExcess > 0) {
     for (const { va, x } of excess) {
-      if (x > 0) out.set(va, (withdrawal * x) / totalExcess)
+      if (x <= 0) continue
+      const share = Math.min(x, (withdrawal * x) / totalExcess)
+      if (share > 0) {
+        out.set(va, share)
+        remaining -= share
+      }
     }
-    return out
+    if (remaining <= 1e-9) return out
   }
   const totalActive = validators.reduce(
     (s, v) => s + v.marinadeActivatedStakeSol,
@@ -580,26 +537,25 @@ function computeNaturalWithdrawal(
   )
   if (totalActive <= 0) return out
   for (const v of validators) {
-    out.set(
-      v.voteAccount,
-      (withdrawal * v.marinadeActivatedStakeSol) / totalActive,
-    )
+    const add = (remaining * v.marinadeActivatedStakeSol) / totalActive
+    if (add > 0) {
+      out.set(v.voteAccount, (out.get(v.voteAccount) ?? 0) + add)
+    }
   }
   return out
 }
 
-// Re-delegation flow (inflows from cooled-down stake to highest-totalPmpe
-// below-target validators, outflows pro-rata from above-target validators),
-// plus natural 0.7%-TVL withdrawals, plus paid undelegation penalties.
+// Budget = already-liquid reserve (TVL − Σactive); below-target winners get
+// inflows greedily by totalPmpe. Outflows: natural withdrawal (~0.7% TVL)
+// + paid undelegation, the latter clamped to max(0, active − target) since
+// only the over-target portion can actually leave (the rest is held by the
+// auction target).
 function computeExpectedStakeChanges(
-  validators: AuctionValidator[],
-  tvl: number,
+  auctionResult: AuctionResult,
 ): Map<string, number> {
-  const activeTotal = validators.reduce(
-    (s, v) => s + v.marinadeActivatedStakeSol,
-    0,
-  )
-  const budget = Math.max(0, tvl - activeTotal)
+  const validators = auctionResult.auctionData.validators
+  const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
+  const budget = selectRedelegationBudget(auctionResult)
   const rawDelta = (v: AuctionValidator) =>
     v.auctionStake.marinadeSamTargetSol - v.marinadeActivatedStakeSol
   const result = new Map<string, number>()
@@ -617,15 +573,6 @@ function computeExpectedStakeChanges(
         remaining -= alloc
       }
     }
-    const totalInflows = [...result.values()].reduce((s, x) => s + x, 0)
-    const losers = validators.filter(v => rawDelta(v) < 0)
-    const totalExcess = losers.reduce((s, v) => s + Math.abs(rawDelta(v)), 0)
-    if (totalInflows > 0 && totalExcess > 0) {
-      for (const v of losers) {
-        const share = Math.abs(rawDelta(v)) / totalExcess
-        result.set(v.voteAccount, -totalInflows * share)
-      }
-    }
   }
 
   const withdrawals = computeNaturalWithdrawal(validators, tvl)
@@ -635,8 +582,17 @@ function computeExpectedStakeChanges(
 
   for (const v of validators) {
     const paid = v.values?.paidUndelegationSol ?? 0
-    if (paid > 0) {
-      result.set(v.voteAccount, (result.get(v.voteAccount) ?? 0) - paid)
+    if (paid <= 0) continue
+    const overTarget = Math.max(
+      0,
+      v.marinadeActivatedStakeSol - v.auctionStake.marinadeSamTargetSol,
+    )
+    const effectivePaid = Math.min(paid, overTarget)
+    if (effectivePaid > 0) {
+      result.set(
+        v.voteAccount,
+        (result.get(v.voteAccount) ?? 0) - effectivePaid,
+      )
     }
   }
 
@@ -646,9 +602,6 @@ function computeExpectedStakeChanges(
 export const selectExpectedStakeChange = (
   v: AugmentedAuctionValidator,
 ): number => v.values.expectedStakeChangeSol ?? 0
-
-export const selectNaturalWithdrawal = (v: AugmentedAuctionValidator): number =>
-  v.values.naturalWithdrawalSol ?? 0
 
 export type ConcentrationRow = {
   key: string

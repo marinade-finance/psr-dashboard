@@ -167,10 +167,11 @@ type InputOpts = {
   placeholder?: string
 }
 
-const DEFAULT_ORDER: Order[] = [[9, OrderDirection.DESC]]
+const DEFAULT_ORDER: Order[] = [[6, OrderDirection.DESC]]
 
 type Props = {
   auctionResult: AuctionResult
+  nameByVote: Map<string, string>
   tvlJoinApyDiff: number
   tvlLeaveApyDiff: number
   backstopDiff: number
@@ -231,6 +232,7 @@ function renderEditableCell(
 
 export const SamTable: React.FC<Props> = ({
   auctionResult,
+  nameByVote,
   tvlJoinApyDiff,
   tvlLeaveApyDiff,
   backstopDiff,
@@ -251,8 +253,17 @@ export const SamTable: React.FC<Props> = ({
   onRunSimulation,
   onCancelEditing,
 }) => {
-  const validators = augmentAuctionResult(auctionResult)
-  if (originalAuctionResult) augmentAuctionResult(originalAuctionResult)
+  const validators = useMemo(
+    () => augmentAuctionResult(auctionResult),
+    [auctionResult],
+  )
+  const originalValidators = useMemo(
+    () =>
+      originalAuctionResult
+        ? augmentAuctionResult(originalAuctionResult)
+        : null,
+    [originalAuctionResult],
+  )
   const samDistributedStake = Math.round(selectSamDistributedStake(validators))
   const winningAPY = selectWinningAPY(auctionResult, epochsPerYear)
   const projectedApy = selectProjectedAPY(auctionResult, epochsPerYear)
@@ -350,11 +361,9 @@ export const SamTable: React.FC<Props> = ({
   )
 
   const originalPositionsMap = useMemo(() => {
-    if (!originalAuctionResult) {
+    if (!originalValidators) {
       return null
     }
-
-    const originalValidators = originalAuctionResult.auctionData.validators
 
     const sorted = [...originalValidators].sort((a, b) => {
       for (const [columnIndex, orderDirection] of currentOrder) {
@@ -369,7 +378,7 @@ export const SamTable: React.FC<Props> = ({
     const map = new Map<string, number>()
     sorted.forEach((v, i) => map.set(v.voteAccount, i + 1))
     return map
-  }, [originalAuctionResult, currentOrder, compareByColumn])
+  }, [originalValidators, currentOrder, compareByColumn])
 
   const getOriginalPosition = (voteAccount: string): number | null =>
     originalPositionsMap?.get(voteAccount) ?? null
@@ -417,11 +426,8 @@ export const SamTable: React.FC<Props> = ({
     }))
 
     const orig =
-      simulatedValidator && originalAuctionResult
-        ? (
-            originalAuctionResult.auctionData
-              .validators as AugmentedAuctionValidator[]
-          ).find(v => v.voteAccount === simulatedValidator)
+      simulatedValidator && originalValidators
+        ? originalValidators.find(v => v.voteAccount === simulatedValidator)
         : undefined
     const sim = simulatedValidator
       ? validators.find(v => v.voteAccount === simulatedValidator)
@@ -458,7 +464,7 @@ export const SamTable: React.FC<Props> = ({
   }, [
     sortedValidators,
     simulatedValidator,
-    originalAuctionResult,
+    originalValidators,
     validators,
     getOriginalPosition,
   ])
@@ -723,6 +729,28 @@ export const SamTable: React.FC<Props> = ({
             compare: (a, b) =>
               selectVoteAccount(a.validator).localeCompare(
                 selectVoteAccount(b.validator),
+              ),
+          },
+          {
+            header: 'Name',
+            headerAttrsFn: () =>
+              tooltipAttributes('Validator name (from on-chain identity)'),
+            render: item => {
+              const name =
+                nameByVote.get(selectVoteAccount(item.validator)) ?? ''
+              return (
+                <span className={styles.nameCell}>
+                  <span className={styles.nameText} title={name}>
+                    {name || '—'}
+                  </span>
+                </span>
+              )
+            },
+            compare: (a, b) =>
+              (
+                nameByVote.get(selectVoteAccount(a.validator)) ?? ''
+              ).localeCompare(
+                nameByVote.get(selectVoteAccount(b.validator)) ?? '',
               ),
           },
           {
