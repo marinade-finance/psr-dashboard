@@ -180,9 +180,7 @@ A pre-funded vault validators create to participate in SAM. The bond:
 
 Hovering the **Cover. [ep]** cell shows a three-section breakdown
 explaining the bond state and what a validator should top up. A header
-CTA summarises the bond status; if the status message has multiple
-sentences, the earlier ones render small and muted while the final
-sentence is the prominent call-to-action.
+CTA summarises the bond status.
 
 **Terms used in the tooltip**
 
