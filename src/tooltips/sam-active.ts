@@ -121,7 +121,7 @@ const chargeRow = (
 
 export function renderSamActiveTooltip(
   m: SamActiveMetrics,
-  overrideMsg?: string,
+  isSimulated = false,
 ): string {
   const deltaAccent: 'green' | 'red' | undefined =
     m.delta > 0 ? 'green' : m.delta < 0 ? 'red' : undefined
@@ -168,15 +168,18 @@ export function renderSamActiveTooltip(
       boldValue: true,
     })
 
-  const msg = overrideMsg ?? m.overrideMsg
+  const msg = m.overrideMsg
   const cta = ctaBlock({
-    label: 'Stake & Bid Charge',
+    label: `${isSimulated ? 'Simulated · ' : ''}Stake & Bid Charge`,
     lead: msg ? msg.replace(/<br\/?>/g, ' ') : undefined,
   })
 
   return cta + wrapTable(stakeSec + commSec + chargeSec)
 }
 
-export function buildSamActiveTooltip(v: AugmentedAuctionValidator): string {
-  return renderSamActiveTooltip(computeSamActiveMetrics(v))
+export function buildSamActiveTooltip(
+  v: AugmentedAuctionValidator,
+  isSimulated = false,
+): string {
+  return renderSamActiveTooltip(computeSamActiveMetrics(v), isSimulated)
 }
