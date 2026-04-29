@@ -160,7 +160,6 @@ export const renderBidTooLowTooltip = (m: BidTooLowMetrics): string => {
     row('Safe bid floor', '', pmpe(m.limit), { boldValue: true }) +
     (hasPenalty
       ? row('', '', `Raise bid to ≥ ${pmpe(m.limit)} PMPE to avoid penalty.`, {
-          boldValue: true,
           accent: 'red',
         })
       : okRow(
