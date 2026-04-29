@@ -196,32 +196,25 @@ export const renderBondBreakdownTooltip = (
       : okRow('You have enough bond to cover the minimum.'))
 
   const tgt =
-    m.marinadeSamTargetSol <= 0
-      ? sectionHeader(`Ideal Coverage (${m.idealEp} epochs)`) +
-        okRow('Not in current auction — ideal coverage not applicable.')
-      : sectionHeader(`Ideal Coverage (${m.idealEp} epochs)`) +
-        tableHead(['', '', '☉']) +
-        row('Bond balance', '', pay(m.bondBalanceSol), { boldValue: true }) +
-        row(LABEL_PROJ_EXPOSED, stake(m.projectedExposedStakeSol), '') +
-        row(
-          'Ideal unprotected reserve',
-          '',
-          pay(m.idealUnprotectedReserveSol),
-        ) +
-        row('On-chain distributed reserve', '', pay(m.onchainBase)) +
-        row('Ideal coverage bid', '', pay(m.idealCoverageBid)) +
-        divider() +
-        row('Ideal required', '', pay(m.requiredIdeal), { boldValue: true }) +
-        (m.topUpToIdeal > 0
-          ? row('To get more stake, top up', '', pay(m.topUpToIdeal), {
-              boldLabel: true,
-              boldValue: true,
-              large: true,
-              accent: 'yellow',
-            })
-          : okRow(
-              'You have enough bond for ideal coverage; topping up further is advisable to absorb bid drain.',
-            ))
+    sectionHeader(`Ideal Coverage (${m.idealEp} epochs)`) +
+    tableHead(['', '', '☉']) +
+    row('Bond balance', '', pay(m.bondBalanceSol), { boldValue: true }) +
+    row(LABEL_PROJ_EXPOSED, stake(m.projectedExposedStakeSol), '') +
+    row('Ideal unprotected reserve', '', pay(m.idealUnprotectedReserveSol)) +
+    row('On-chain distributed reserve', '', pay(m.onchainBase)) +
+    row('Ideal coverage bid', '', pay(m.idealCoverageBid)) +
+    divider() +
+    row('Ideal required', '', pay(m.requiredIdeal), { boldValue: true }) +
+    (m.topUpToIdeal > 0
+      ? row('To get more stake, top up', '', pay(m.topUpToIdeal), {
+          boldLabel: true,
+          boldValue: true,
+          large: true,
+          accent: 'yellow',
+        })
+      : okRow(
+          'You have enough bond for ideal coverage; topping up further is advisable to absorb bid drain.',
+        ))
 
   return cta + wrapTable(rates + base + tgt)
 }

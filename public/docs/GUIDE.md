@@ -221,10 +221,7 @@ the minimum is met.
 
 Shows how much **bond balance** is required to comfortably sustain the
 projected exposed stake for `1 + idealBondEpochs` epochs (the runway
-target, per current protocol config). When the validator is not in the
-current auction (`marinadeSamTargetSol <= 0`), this section collapses
-to a single OK row: "Not in current auction — ideal coverage not
-applicable."
+target, per current protocol config).
 
 The calculation uses `projectedExposedStakeSol`. The coefficient
 applied to `expectedMaxEffBidPmpe` over `1 + idealBondEpochs` epochs
