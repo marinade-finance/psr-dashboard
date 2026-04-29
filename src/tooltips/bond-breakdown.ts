@@ -181,16 +181,8 @@ export const renderBondBreakdownTooltip = (
     row('Activated Marinade stake', stake(m.marinadeActivatedStakeSol), '') +
     row(LABEL_PROJ_EXPOSED, stake(m.projectedExposedStakeSol), '') +
     row('Minimum unprotected reserve', '', pay(m.minUnprotectedReserveSol)) +
-    row(
-      'On-chain distributed reserve',
-      stake(m.projectedExposedStakeSol),
-      pay(m.onchainBase),
-    ) +
-    row(
-      'Minimum coverage bid',
-      stake(m.projectedExposedStakeSol),
-      pay(m.minCoverageBid),
-    ) +
+    row('On-chain distributed reserve', '', pay(m.onchainBase)) +
+    row('Minimum coverage bid', '', pay(m.minCoverageBid)) +
     divider() +
     row('Minimum required', '', pay(m.floorBase), { boldValue: true }) +
     (m.topUpToMin > 0
@@ -226,16 +218,8 @@ export const renderBondBreakdownTooltip = (
           '',
           pay(m.idealUnprotectedReserveSol),
         ) +
-        row(
-          'On-chain distributed reserve',
-          stake(m.projectedExposedStakeSol),
-          pay(m.onchainBase),
-        ) +
-        row(
-          'Ideal coverage bid',
-          stake(m.projectedExposedStakeSol),
-          pay(m.idealCoverageBid),
-        ) +
+        row('On-chain distributed reserve', '', pay(m.onchainBase)) +
+        row('Ideal coverage bid', '', pay(m.idealCoverageBid)) +
         divider() +
         row('Ideal required', '', pay(m.requiredIdeal), { boldValue: true }) +
         (m.topUpToIdeal > 0
