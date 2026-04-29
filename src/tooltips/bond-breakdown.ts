@@ -5,6 +5,7 @@ import {
   okRow,
   row,
   sectionHeader,
+  tableHead,
   wrapTable,
 } from 'src/components/tooltip-table/tooltip-table'
 import { formatSolAmount } from 'src/format'
@@ -13,8 +14,8 @@ import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
 
 const LABEL_EXP_MAX_BID = 'Expected max effective bid PMPE'
 const LABEL_ONCHAIN_PMPE = 'On-chain distributed rewards PMPE'
-const LABEL_PROJ_EXPOSED = 'Projected exposed stake'
-const SUFFIX_PROJ_EXPOSED = '× projected exposed stake'
+const LABEL_PROJ_EXPOSED = 'Exposed stake'
+const SUFFIX_PROJ_EXPOSED = '× exposed stake'
 
 const pay = (n: number) => `${formatSolAmount(Math.round(n), 2)} ☉`
 const stake = (n: number) => `${formatSolAmount(n, 0)} ☉`
@@ -168,18 +169,22 @@ export const renderBondBreakdownTooltip = (
 
   const rates =
     sectionHeader('Rates') +
-    row(LABEL_EXP_MAX_BID, '', pmpe(m.expectedMaxEffBidPmpe)) +
-    row(LABEL_ONCHAIN_PMPE, '', pmpe(m.onchainDistributedPmpe))
+    tableHead(['', 'PMPE', '']) +
+    row(LABEL_EXP_MAX_BID, pmpe(m.expectedMaxEffBidPmpe), '') +
+    row(LABEL_ONCHAIN_PMPE, pmpe(m.onchainDistributedPmpe), '')
 
   const base =
     sectionHeader(`Minimum Coverage (${m.minEp} epochs)`) +
+    tableHead(['', '', '☉']) +
     row('Claimable bond balance', '', pay(m.claimableBondBalanceSol), {
       boldValue: true,
     }) +
-    row('Activated Marinade stake', stake(m.marinadeActivatedStakeSol), '') +
-    row(LABEL_PROJ_EXPOSED, stake(m.projectedExposedStakeSol), '') +
-    row(LABEL_EXP_MAX_BID, '', pmpe(m.expectedMaxEffBidPmpe)) +
-    row(LABEL_ONCHAIN_PMPE, '', pmpe(m.onchainDistributedPmpe)) +
+    row('Activated Marinade stake', '', stake(m.marinadeActivatedStakeSol), {
+      mutedValue: true,
+    }) +
+    row(LABEL_PROJ_EXPOSED, '', stake(m.projectedExposedStakeSol), {
+      mutedValue: true,
+    }) +
     row('Minimum unprotected reserve', '', pay(m.minUnprotectedReserveSol)) +
     row(
       'On-chain distributed reserve',
@@ -203,11 +208,14 @@ export const renderBondBreakdownTooltip = (
       ? sectionHeader(`Ideal Coverage (${m.idealEp} epochs)`) +
         okRow('Not in current auction — ideal coverage not applicable.')
       : sectionHeader(`Ideal Coverage (${m.idealEp} epochs)`) +
+        tableHead(['', '', '☉']) +
         row('Bond balance', '', pay(m.bondBalanceSol), { boldValue: true }) +
-        row('SAM target stake', stake(m.marinadeSamTargetSol), '') +
-        row(LABEL_PROJ_EXPOSED, stake(m.projectedExposedStakeSol), '') +
-        row(LABEL_EXP_MAX_BID, '', pmpe(m.expectedMaxEffBidPmpe)) +
-        row(LABEL_ONCHAIN_PMPE, '', pmpe(m.onchainDistributedPmpe)) +
+        row('SAM target stake', '', stake(m.marinadeSamTargetSol), {
+          mutedValue: true,
+        }) +
+        row(LABEL_PROJ_EXPOSED, '', stake(m.projectedExposedStakeSol), {
+          mutedValue: true,
+        }) +
         row(
           'Ideal unprotected reserve',
           '',
