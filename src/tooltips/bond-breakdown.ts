@@ -15,7 +15,6 @@ import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
 const LABEL_EXP_MAX_BID = 'Expected max effective bid PMPE'
 const LABEL_ONCHAIN_PMPE = 'On-chain distributed rewards PMPE'
 const LABEL_PROJ_EXPOSED = 'Projected exposed stake'
-const SUFFIX_PROJ_EXPOSED = '× projected exposed stake'
 
 const pay = (n: number) => `${formatSolAmount(Math.round(n), 2)} ☉`
 const stake = (n: number) => `${formatSolAmount(n, 0)} ☉`
@@ -184,10 +183,14 @@ export const renderBondBreakdownTooltip = (
     row('Minimum unprotected reserve', '', pay(m.minUnprotectedReserveSol)) +
     row(
       'On-chain distributed reserve',
-      SUFFIX_PROJ_EXPOSED,
+      stake(m.projectedExposedStakeSol),
       pay(m.onchainBase),
     ) +
-    row('Minimum coverage bid', SUFFIX_PROJ_EXPOSED, pay(m.minCoverageBid)) +
+    row(
+      'Minimum coverage bid',
+      stake(m.projectedExposedStakeSol),
+      pay(m.minCoverageBid),
+    ) +
     divider() +
     row('Minimum required', '', pay(m.floorBase), { boldValue: true }) +
     (m.topUpToMin > 0
@@ -206,6 +209,17 @@ export const renderBondBreakdownTooltip = (
       : sectionHeader(`Ideal Coverage (${m.idealEp} epochs)`) +
         tableHead(['', '', '☉']) +
         row('Bond balance', '', pay(m.bondBalanceSol), { boldValue: true }) +
+        row(
+          'Activated Marinade stake',
+          stake(m.marinadeActivatedStakeSol),
+          '',
+        ) +
+        row('SAM target stake', stake(m.marinadeSamTargetSol), '') +
+        row(
+          'Max (activated, target)',
+          stake(Math.max(m.marinadeActivatedStakeSol, m.marinadeSamTargetSol)),
+          '',
+        ) +
         row(LABEL_PROJ_EXPOSED, stake(m.projectedExposedStakeSol), '') +
         row(
           'Ideal unprotected reserve',
@@ -214,12 +228,12 @@ export const renderBondBreakdownTooltip = (
         ) +
         row(
           'On-chain distributed reserve',
-          SUFFIX_PROJ_EXPOSED,
+          stake(m.projectedExposedStakeSol),
           pay(m.onchainBase),
         ) +
         row(
           'Ideal coverage bid',
-          SUFFIX_PROJ_EXPOSED,
+          stake(m.projectedExposedStakeSol),
           pay(m.idealCoverageBid),
         ) +
         divider() +
