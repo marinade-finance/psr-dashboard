@@ -32,8 +32,7 @@ validators based on their bids and performance.
 
 - **Stake To Distribute** &mdash; Stake cooled down in the previous epoch and available to re-delegate next epoch
 - **Winning APY** &mdash; Estimated APY of the last validator winning the auction
-- **Projected APY** &mdash; Second APY tile shown next to Winning APY when active stake exceeds 90% of target;
-  hidden otherwise
+- **Projected APY** &mdash; Estimated APY of currently active stake (assumes no Marinade fees)
 - **Total Auction Stake** &mdash; Total SOL distributed by Marinade via SAM
 - **Winning Validators** &mdash; Validators receiving stake in current auction, shown as `won / total` (e.g. `46 / 759`)
 - **Top Countries** &mdash; The three countries holding the largest share of SAM-distributed stake,
