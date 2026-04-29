@@ -8,8 +8,8 @@ export const getBannerData = (): Props => ({
     <>
       <p>
         A new SAM fee on activating stake unlocks re-delegation: stake moves
-        faster to high-bidding validators, raising staker APY. Charged on top of
-        the active-stake bid, sized by the overbid (
+        faster to high-bidding validators. Charged on top of the active-stake
+        bid, sized by the overbid (
         <code>bidPmpe − auctionEffectiveBidPmpe</code>) per unit of new stake.
       </p>
       <p>
