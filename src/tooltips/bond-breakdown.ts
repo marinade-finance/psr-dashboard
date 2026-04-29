@@ -14,8 +14,8 @@ import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
 
 const LABEL_EXP_MAX_BID = 'Expected max effective bid PMPE'
 const LABEL_ONCHAIN_PMPE = 'On-chain distributed rewards PMPE'
-const LABEL_PROJ_EXPOSED = 'Expected exposed stake'
-const SUFFIX_PROJ_EXPOSED = '× exp. exposed stake'
+const LABEL_PROJ_EXPOSED = 'Projected exposed stake'
+const SUFFIX_PROJ_EXPOSED = '× projected exposed stake'
 
 const pay = (n: number) => `${formatSolAmount(Math.round(n), 2)} ☉`
 const stake = (n: number) => `${formatSolAmount(n, 0)} ☉`
