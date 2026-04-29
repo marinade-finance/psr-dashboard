@@ -41,6 +41,8 @@ const FIELDS: FieldSpec[] = [
 ]
 
 type Props = {
+  voteAccount: string
+  name: string
   defaults: Record<EditField, string>
   pendingEdits: PendingEdits
   isCalculating: boolean
@@ -50,6 +52,8 @@ type Props = {
 }
 
 export const SimForm: React.FC<Props> = ({
+  voteAccount,
+  name,
   defaults,
   pendingEdits,
   isCalculating,
@@ -78,6 +82,10 @@ export const SimForm: React.FC<Props> = ({
       onClick={e => e.stopPropagation()}
     >
       <div className={styles.title}>Simulate validator</div>
+      <div className={styles.identity}>
+        <div className={styles.name}>{name || '—'}</div>
+        <div className={styles.vote}>{voteAccount}</div>
+      </div>
       {FIELDS.map(spec => (
         <div key={spec.field} className={styles.row}>
           <label htmlFor={`sim-${spec.field}`}>{spec.label}</label>

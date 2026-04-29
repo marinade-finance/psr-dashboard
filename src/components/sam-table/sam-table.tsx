@@ -570,20 +570,19 @@ export const SamTable: React.FC<Props> = ({
           const classes: string[] = []
           let onClick: (() => void) | undefined
 
-          if (isSimulated && !isEditing) {
+          if (isSimulated) {
             const realIdx = displayValidators
               .slice(0, index + 1)
               .filter(d => !d.isGhost).length
             classes.push(
-              styles.validatorRowClickable,
               getPositionChangeClass(va, realIdx) || styles.positionUnchanged,
             )
-            onClick = () => onValidatorClick(va)
-          } else if (simulationModeActive && !isEditing) {
+          }
+          if (isEditing) {
+            classes.push(styles.validatorRowEditing)
+          } else if (simulationModeActive || isSimulated) {
             classes.push(styles.validatorRowClickable)
             onClick = () => onValidatorClick(va)
-          } else if (isEditing) {
-            classes.push(styles.validatorRowEditing)
           }
 
           if (selectIsNonProductive(validator)) {
@@ -651,6 +650,8 @@ export const SamTable: React.FC<Props> = ({
                   {isEditing && (
                     <span className={styles.popoverAnchor}>
                       <SimForm
+                        voteAccount={va}
+                        name={nameByVote.get(va) ?? ''}
                         defaults={defaults}
                         pendingEdits={pendingEdits}
                         isCalculating={isCalculating}

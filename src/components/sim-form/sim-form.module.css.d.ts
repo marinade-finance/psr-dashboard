@@ -3,10 +3,13 @@
 interface CssExports {
   'buttons': string;
   'cancelBtn': string;
+  'identity': string;
+  'name': string;
   'popover': string;
   'row': string;
   'simulateBtn': string;
   'title': string;
+  'vote': string;
 }
 export const cssExports: CssExports;
 export default cssExports;

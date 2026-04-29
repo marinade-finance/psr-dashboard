@@ -24,6 +24,33 @@
   margin-bottom: 4px;
 }
 
+.identity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-dark, #444);
+}
+
+.name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light-1, #fff);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vote {
+  font-size: 10px;
+  font-family: monospace;
+  color: var(--text-light-3, #94a3b8);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .row {
   display: flex;
   align-items: center;
