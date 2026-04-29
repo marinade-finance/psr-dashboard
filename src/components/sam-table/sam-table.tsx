@@ -729,6 +729,8 @@ export const SamTable: React.FC<Props> = ({
                   auctionResult.winningTotalPmpe,
                   dcSamConfig.bondRiskFeeMult,
                   item.validator.bondState,
+                  !item.isGhost &&
+                    simulatedValidator === selectVoteAccount(item.validator),
                 ),
               ),
             render: item => {
@@ -776,7 +778,13 @@ export const SamTable: React.FC<Props> = ({
                 'The currently active stake delegated by SAM. Arrow indicates expected change next epoch — see tooltip for breakdown.',
               ),
             cellAttrsFn: item =>
-              tooltipAttributes(buildSamActiveTooltip(item.validator)),
+              tooltipAttributes(
+                buildSamActiveTooltip(
+                  item.validator,
+                  !item.isGhost &&
+                    simulatedValidator === selectVoteAccount(item.validator),
+                ),
+              ),
             render: item => <StakeChangeIndicator validator={item.validator} />,
             compare: (a, b) =>
               selectSamActiveStake(a.validator) -

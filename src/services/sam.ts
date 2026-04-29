@@ -640,18 +640,29 @@ function computeNaturalWithdrawal(
   return out
 }
 
-// Budget = already-liquid reserve (TVL − Σactive); below-target winners get
-// inflows greedily by totalPmpe; natural withdrawal and paid undelegation are
-// subtracted per-validator.
+// Paid undelegation is a one-time outflow whose freed capacity returns to
+// the redelegation budget the same epoch (TVL − Σactive grows by exactly
+// Σpaid). Effective post-undelegation active = active − paid; below-target
+// winners (vs that effective active) absorb the augmented budget greedily by
+// totalPmpe. Natural withdrawal (~0.7% TVL) is the only true outflow.
 function computeExpectedStakeChanges(
   auctionResult: AuctionResult,
 ): Map<string, number> {
   const validators = auctionResult.auctionData.validators
   const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
-  const budget = selectRedelegationBudget(auctionResult)
+  const paidOf = (v: AuctionValidator) => v.values?.paidUndelegationSol ?? 0
+  const totalPaid = validators.reduce((s, v) => s + paidOf(v), 0)
+  const budget = selectRedelegationBudget(auctionResult) + totalPaid
+  const effectiveActive = (v: AuctionValidator) =>
+    v.marinadeActivatedStakeSol - paidOf(v)
   const rawDelta = (v: AuctionValidator) =>
-    v.auctionStake.marinadeSamTargetSol - v.marinadeActivatedStakeSol
+    v.auctionStake.marinadeSamTargetSol - effectiveActive(v)
   const result = new Map<string, number>()
+
+  for (const v of validators) {
+    const paid = paidOf(v)
+    if (paid > 0) result.set(v.voteAccount, -paid)
+  }
 
   if (budget > 0) {
     const sorted = [...validators].sort(
@@ -662,7 +673,7 @@ function computeExpectedStakeChanges(
       const delta = rawDelta(v)
       if (delta > 0 && remaining > 0) {
         const alloc = Math.min(delta, remaining)
-        result.set(v.voteAccount, alloc)
+        result.set(v.voteAccount, (result.get(v.voteAccount) ?? 0) + alloc)
         remaining -= alloc
       }
     }
@@ -671,13 +682,6 @@ function computeExpectedStakeChanges(
   const withdrawals = computeNaturalWithdrawal(validators, tvl)
   for (const [va, w] of withdrawals) {
     result.set(va, (result.get(va) ?? 0) - w)
-  }
-
-  for (const v of validators) {
-    const paid = v.values?.paidUndelegationSol ?? 0
-    if (paid > 0) {
-      result.set(v.voteAccount, (result.get(v.voteAccount) ?? 0) - paid)
-    }
   }
 
   return result

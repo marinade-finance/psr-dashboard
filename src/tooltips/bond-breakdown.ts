@@ -159,9 +159,10 @@ const statusLine = (color: Color | undefined, topUpToMin: number): string => {
 export const renderBondBreakdownTooltip = (
   m: BondMetrics,
   bondState: Color | undefined,
+  isSimulated = false,
 ): string => {
   const cta = ctaBlock({
-    label: 'Bond Coverage Calculation Breakdown',
+    label: `${isSimulated ? 'Simulated · ' : ''}Bond Coverage Calculation Breakdown`,
     cta: statusLine(bondState, m.topUpToMin),
     state: bondState,
   })
@@ -243,6 +244,7 @@ export const buildBondBreakdownTooltip = (
   winningTotalPmpe: number,
   bondRiskFeeMult: number,
   bondState: Color | undefined,
+  isSimulated = false,
 ): string =>
   renderBondBreakdownTooltip(
     computeBondMetrics(
@@ -253,4 +255,5 @@ export const buildBondBreakdownTooltip = (
       bondRiskFeeMult,
     ),
     bondState,
+    isSimulated,
   )
