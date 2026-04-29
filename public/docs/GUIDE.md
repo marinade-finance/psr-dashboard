@@ -207,15 +207,12 @@ obligations across `1 + minBondEpochs` epochs (the fee threshold, per
 current protocol config). At or below this line the validator is
 subject to `bondRiskFeeSol` charges and forced undelegation.
 
-The section uses small column headers (label / ☉ stake / ☉ pay). Rows
-that scale with stake show **Projected exposed stake** in the middle
-column (i.e. the multiplier value in ☉) instead of literal "× projected
-exposed stake" suffix text. Rows, in order: claimable bond balance
-(bold), activated Marinade stake, projected exposed stake, minimum
-unprotected reserve, on-chain distributed reserve, minimum coverage
-bid, then **Minimum required** (bold). When short, the final row is
-**Top-up to minimum coverage**; otherwise an OK row confirms the
-minimum is met.
+Columns: label / ☉ stake / ☉ pay. Rows, in order: claimable bond
+balance (bold), activated Marinade stake, projected exposed stake,
+minimum unprotected reserve, on-chain distributed reserve, minimum
+coverage bid, then **Minimum required** (bold). When short, the final
+row is **Top-up to minimum coverage**; otherwise an OK row confirms
+the minimum is met.
 
 **Section 3 — Ideal Coverage (1 + idealBondEpochs epochs)**
 
@@ -226,21 +223,14 @@ current auction (`marinadeSamTargetSol <= 0`), this section collapses
 to a single OK row: "Not in current auction — ideal coverage not
 applicable."
 
-The actual ideal-coverage calculation uses
-`projectedExposedStakeSol` (the same multiplier as the minimum
-section); **Activated Marinade stake**, **SAM target stake**, and
-**Max (activated, target)** rows are shown as informational basis
-context, not as multipliers in the calc. The coefficient applied to
-`expectedMaxEffBidPmpe` over `1 + idealBondEpochs` epochs is the
-protocol's ideal-coverage coefficient &mdash; see [idealBondCoef in
-the BRRM docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market/bond-risk-reduction-mechanism#ideal-bond-coef).
+The calculation uses `projectedExposedStakeSol`. The coefficient
+applied to `expectedMaxEffBidPmpe` over `1 + idealBondEpochs` epochs
+is the protocol's ideal-coverage coefficient &mdash; see
+[idealBondCoef in the BRRM docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market/bond-risk-reduction-mechanism#ideal-bond-coef).
 
-Rows, in order: bond balance (bold), activated Marinade stake, SAM
-target stake, Max (activated, target), projected exposed stake, ideal
-unprotected reserve, on-chain distributed reserve, ideal coverage bid,
-then **Ideal required** (bold). As in Section 2, rows that scale with
-stake show the projected exposed stake value in the middle column
-rather than a textual suffix.
+Rows, in order: bond balance (bold), projected exposed stake, ideal
+unprotected reserve, on-chain distributed reserve, ideal coverage
+bid, then **Ideal required** (bold).
 
 **To get more stake, top up** is the shortfall between the current
 bond and `Ideal required`. Topping up beyond that is advisable so the
