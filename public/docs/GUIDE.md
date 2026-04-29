@@ -108,6 +108,23 @@ Validators can use two complementary bidding methods:
 
 Both methods can be combined. The effective bid combines all components to determine auction ranking.
 
+### What Gets Charged Each Epoch
+
+A validator pays bids on two stake buckets, both visible in the **SAM Active** tooltip
+under "Charge this epoch":
+
+- **Active charge** &mdash; bid paid on currently activated Marinade stake
+  (`marinadeActivatedStakeSol`), at the effective bid rate (Eff. Bid PMPE).
+- **Activating charge** &mdash; bid paid on stake that is being activated *into* the
+  validator this epoch (the positive expected delta toward SAM Target), at
+  `revShare.activatingStakePmpe`. This rate follows the protocol's bond-risk-reduction
+  mechanism (BRRM) so that a validator can't dodge bid costs on freshly delegated
+  stake. See the
+  [BRRM docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market/bond-risk-reduction-mechanism)
+  for the formula.
+
+The **Total Charge** row sums both. Both are deducted from the validator's bond.
+
 ### Table Columns
 
 | Column          | Description                                                                                                                                                                                                                                                                         |
