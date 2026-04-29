@@ -7,9 +7,9 @@ export const getBannerData = (): Props => ({
   body: (
     <>
       <p>
-        SAM now charges a fee on activating stake, unlocking re-delegation so
-        stake moves faster to high-bidding validators. The charge scales with
-        the gap between your bid and the auction's effective bid — review your
+        SAM now charges a fee on activating stake, helping to unlock
+        re-delegation so stake moves faster to high-bidding validators. The
+        charge scales with the gap between St. Bid and Eff. Bid — review your
         bids before the fee takes full effect.
       </p>
       <p>
