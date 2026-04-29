@@ -202,17 +202,6 @@ export const renderBondBreakdownTooltip = (
       : sectionHeader(`Ideal Coverage (${m.idealEp} epochs)`) +
         tableHead(['', '', '☉']) +
         row('Bond balance', '', pay(m.bondBalanceSol), { boldValue: true }) +
-        row(
-          'Activated Marinade stake',
-          stake(m.marinadeActivatedStakeSol),
-          '',
-        ) +
-        row('SAM target stake', stake(m.marinadeSamTargetSol), '') +
-        row(
-          'Max (activated, target)',
-          stake(Math.max(m.marinadeActivatedStakeSol, m.marinadeSamTargetSol)),
-          '',
-        ) +
         row(LABEL_PROJ_EXPOSED, stake(m.projectedExposedStakeSol), '') +
         row(
           'Ideal unprotected reserve',
