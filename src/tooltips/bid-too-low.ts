@@ -127,7 +127,7 @@ export const renderBidTooLowTooltip = (m: BidTooLowMetrics): string => {
   } else if (m.shortfall === 0) {
     cta = ctaBlock({
       label: ctaLabel,
-      cta: 'No bid-too-low penalty: cushion intact.',
+      cta: 'No bid-too-low penalty: bid kept high enough.',
       state: Color.GREEN,
     })
   } else {
