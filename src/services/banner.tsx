@@ -9,8 +9,7 @@ export const getBannerData = (): Props => ({
       <p>
         SAM now charges a fee on activating stake, unlocking re-delegation so
         stake moves faster to high-bidding validators. Charged on top of the
-        active-stake bid, sized by the overbid (
-        <code>bidPmpe − auctionEffectiveBidPmpe</code>) per unit of new stake.
+        active-stake bid, sized by the overbid per unit of new stake.
       </p>
       <p>
         Phased rollout: 10% at epoch 963, 20% at 964, 100% from 965.&nbsp;
