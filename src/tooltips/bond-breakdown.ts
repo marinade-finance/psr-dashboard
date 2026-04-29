@@ -6,6 +6,7 @@ import {
   row,
   sectionHeader,
   tableHead,
+  tooltipHeader,
   wrapTable,
 } from 'src/components/tooltip-table/tooltip-table'
 import { formatSolAmount } from 'src/format'
@@ -159,6 +160,7 @@ const statusLine = (color: Color | undefined, topUpToMin: number): string => {
 export const renderBondBreakdownTooltip = (
   m: BondMetrics,
   bondState: Color | undefined,
+  header: { name?: string; voteAccount: string },
   isSimulated = false,
 ): string => {
   const cta = ctaBlock({
@@ -216,7 +218,7 @@ export const renderBondBreakdownTooltip = (
           'You have enough bond for ideal coverage; topping up further is advisable to absorb bid drain.',
         ))
 
-  return cta + wrapTable(rates + base + tgt)
+  return tooltipHeader(header) + cta + wrapTable(rates + base + tgt)
 }
 
 export const buildBondBreakdownTooltip = (
@@ -226,6 +228,7 @@ export const buildBondBreakdownTooltip = (
   winningTotalPmpe: number,
   bondRiskFeeMult: number,
   bondState: Color | undefined,
+  name?: string,
   isSimulated = false,
 ): string =>
   renderBondBreakdownTooltip(
@@ -237,5 +240,6 @@ export const buildBondBreakdownTooltip = (
       bondRiskFeeMult,
     ),
     bondState,
+    { name, voteAccount: v.voteAccount },
     isSimulated,
   )

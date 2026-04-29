@@ -5,6 +5,7 @@ import {
   rowCells,
   sectionHeader,
   tableHead,
+  tooltipHeader,
   wrapTable,
 } from 'src/components/tooltip-table/tooltip-table'
 import { formatPercentage, formatSolAmount } from 'src/format'
@@ -121,6 +122,7 @@ const chargeRow = (
 
 export function renderSamActiveTooltip(
   m: SamActiveMetrics,
+  header: { name?: string; voteAccount: string },
   isSimulated = false,
 ): string {
   const deltaAccent: 'green' | 'red' | undefined =
@@ -174,12 +176,17 @@ export function renderSamActiveTooltip(
     lead: msg ? msg.replace(/<br\/?>/g, ' ') : undefined,
   })
 
-  return cta + wrapTable(stakeSec + commSec + chargeSec)
+  return tooltipHeader(header) + cta + wrapTable(stakeSec + commSec + chargeSec)
 }
 
 export function buildSamActiveTooltip(
   v: AugmentedAuctionValidator,
+  name?: string,
   isSimulated = false,
 ): string {
-  return renderSamActiveTooltip(computeSamActiveMetrics(v), isSimulated)
+  return renderSamActiveTooltip(
+    computeSamActiveMetrics(v),
+    { name, voteAccount: v.voteAccount },
+    isSimulated,
+  )
 }
