@@ -157,8 +157,6 @@ const renderPenaltyBadges = (v: AuctionValidator) => {
 type DisplayValidator = { validator: ValidatorWithBondState; isGhost: boolean }
 type EditField = keyof PendingEdits
 
-// SAM Active was col 5 with: 0 Validator | 1 St.Bid | 2 Bond | 3 Cover | 4 MaxAPY | 5 SAM Active
-// With Name inserted at col 1, indexes shift: 0 Validator | 1 Name | 2 St.Bid | 3 Bond | 4 Cover | 5 MaxAPY | 6 SAM Active
 const DEFAULT_ORDER: Order[] = [[6, OrderDirection.DESC]]
 
 type Props = {
