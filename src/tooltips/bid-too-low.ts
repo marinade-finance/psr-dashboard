@@ -5,6 +5,7 @@ import {
   okRow,
   row,
   sectionHeader,
+  tooltipHeader,
   wrapTable,
 } from 'src/components/tooltip-table/tooltip-table'
 import { formatSolAmount } from 'src/format'
@@ -113,7 +114,10 @@ export const computeBidTooLowMetrics = (
   }
 }
 
-export const renderBidTooLowTooltip = (m: BidTooLowMetrics): string => {
+export const renderBidTooLowTooltip = (
+  m: BidTooLowMetrics,
+  header: { name?: string; voteAccount: string },
+): string => {
   const hasPenalty = m.penaltyPmpe > 0
   const ctaLabel = 'Bid-Too-Low Penalty Breakdown'
   let cta: string
@@ -195,7 +199,9 @@ export const renderBidTooLowTooltip = (m: BidTooLowMetrics): string => {
       : okRow('No penalty this epoch.'))
 
   return (
-    cta + wrapTable(direction + limitSection + cushion + baseSection + result)
+    tooltipHeader(header) +
+    cta +
+    wrapTable(direction + limitSection + cushion + baseSection + result)
   )
 }
 
@@ -203,7 +209,9 @@ export const buildBidTooLowTooltip = (
   v: AuctionValidator,
   dcSamConfig: DsSamConfig,
   winningTotalPmpe: number,
+  name?: string,
 ): string =>
   renderBidTooLowTooltip(
     computeBidTooLowMetrics(v, dcSamConfig, winningTotalPmpe),
+    { name, voteAccount: v.voteAccount },
   )

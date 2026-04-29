@@ -127,6 +127,19 @@ export const ctaBlock = (p: {
   return `<div class="tt-cta-label">${p.label}</div>${lead}${ctaLead}${ctaMain}`
 }
 
+export const tooltipHeader = (p: {
+  name?: string
+  voteAccount: string
+}): string => {
+  const name = p.name?.trim() || '—'
+  return (
+    '<div class="tt-header">' +
+    `<div class="tt-header-name">${esc(name)}</div>` +
+    `<div class="tt-header-vote">${esc(p.voteAccount)}</div>` +
+    '</div>'
+  )
+}
+
 export const wrapTable = (body: string): string =>
   `<table class="tt-table">${body}</table>`
 

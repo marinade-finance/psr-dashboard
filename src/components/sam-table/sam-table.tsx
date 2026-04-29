@@ -767,6 +767,7 @@ export const SamTable: React.FC<Props> = ({
                   item.validator,
                   dcSamConfig,
                   auctionResult.winningTotalPmpe,
+                  nameByVote.get(selectVoteAccount(item.validator)),
                 ),
               ),
             render: item => {
