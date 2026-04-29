@@ -238,7 +238,7 @@ means the bond is below minimum coverage and `bondRiskFeeSol` applies.
 - **Effective Bid**: The actual payment, capped at the winning threshold
 
 In a last-price auction, validators may pay less than their maximum bid since all winners pay the clearing price.
-Activating stake is charged separately at the overbid rate (St. Bid − Eff. Bid) — see the
+Activating stake is charged separately at rate equal to St. Bid − Eff. Bid — see the
 [Activating Stake Fee docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market/activating-stake-fee).
 
 ---
