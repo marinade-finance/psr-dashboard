@@ -1,6 +1,7 @@
 import { Color } from 'src/components/table/table'
 import {
   ctaBlock,
+  divider,
   okRow,
   row,
   sectionHeader,
@@ -13,7 +14,8 @@ import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
 
 const LABEL_EXP_MAX_BID = 'Expected max effective bid PMPE'
 const LABEL_ONCHAIN_PMPE = 'On-chain distributed rewards PMPE'
-const LABEL_PROJ_EXPOSED = 'Projected exposed stake'
+const LABEL_PROJ_EXPOSED = 'Expected exposed stake'
+const SUFFIX_PROJ_EXPOSED = '× exp. exposed stake'
 
 const pay = (n: number) => `${formatSolAmount(Math.round(n), 2)} ☉`
 const stake = (n: number) => `${formatSolAmount(n, 0)} ☉`
@@ -177,6 +179,16 @@ export const renderBondBreakdownTooltip = (
     row('Claimable bond balance', '', pay(m.claimableBondBalanceSol), {
       boldValue: true,
     }) +
+    row('Activated Marinade stake', stake(m.marinadeActivatedStakeSol), '') +
+    row(LABEL_PROJ_EXPOSED, stake(m.projectedExposedStakeSol), '') +
+    row('Minimum unprotected reserve', '', pay(m.minUnprotectedReserveSol)) +
+    row(
+      'On-chain distributed reserve',
+      SUFFIX_PROJ_EXPOSED,
+      pay(m.onchainBase),
+    ) +
+    row('Minimum coverage bid', SUFFIX_PROJ_EXPOSED, pay(m.minCoverageBid)) +
+    divider() +
     row('Minimum required', '', pay(m.floorBase), { boldValue: true }) +
     (m.topUpToMin > 0
       ? row('Top-up to minimum coverage', '', pay(m.topUpToMin), {
@@ -187,10 +199,6 @@ export const renderBondBreakdownTooltip = (
         })
       : okRow('You have enough bond to cover the minimum.'))
 
-  const maxStakeSol = Math.max(
-    m.marinadeActivatedStakeSol,
-    m.marinadeSamTargetSol,
-  )
   const tgt =
     m.marinadeSamTargetSol <= 0
       ? sectionHeader(`Ideal Coverage (${m.idealEp} epochs)`) +
@@ -199,9 +207,22 @@ export const renderBondBreakdownTooltip = (
         tableHead(['', '', '☉']) +
         row('Bond balance', '', pay(m.bondBalanceSol), { boldValue: true }) +
         row(LABEL_PROJ_EXPOSED, stake(m.projectedExposedStakeSol), '') +
-        row('Activated stake', stake(m.marinadeActivatedStakeSol), '') +
-        row('SAM target stake', stake(m.marinadeSamTargetSol), '') +
-        row('Max (activated, target)', stake(maxStakeSol), '') +
+        row(
+          'Ideal unprotected reserve',
+          '',
+          pay(m.idealUnprotectedReserveSol),
+        ) +
+        row(
+          'On-chain distributed reserve',
+          SUFFIX_PROJ_EXPOSED,
+          pay(m.onchainBase),
+        ) +
+        row(
+          'Ideal coverage bid',
+          SUFFIX_PROJ_EXPOSED,
+          pay(m.idealCoverageBid),
+        ) +
+        divider() +
         row('Ideal required', '', pay(m.requiredIdeal), { boldValue: true }) +
         (m.topUpToIdeal > 0
           ? row('To get more stake, top up', '', pay(m.topUpToIdeal), {
