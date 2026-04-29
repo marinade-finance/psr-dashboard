@@ -257,9 +257,13 @@ export const SamTable: React.FC<Props> = ({
     () => augmentAuctionResult(auctionResult),
     [auctionResult],
   )
-  useMemo(() => {
-    if (originalAuctionResult) augmentAuctionResult(originalAuctionResult)
-  }, [originalAuctionResult])
+  const originalValidators = useMemo(
+    () =>
+      originalAuctionResult
+        ? augmentAuctionResult(originalAuctionResult)
+        : null,
+    [originalAuctionResult],
+  )
   const samDistributedStake = Math.round(selectSamDistributedStake(validators))
   const winningAPY = selectWinningAPY(auctionResult, epochsPerYear)
   const projectedApy = selectProjectedAPY(auctionResult, epochsPerYear)
@@ -357,11 +361,9 @@ export const SamTable: React.FC<Props> = ({
   )
 
   const originalPositionsMap = useMemo(() => {
-    if (!originalAuctionResult) {
+    if (!originalValidators) {
       return null
     }
-
-    const originalValidators = originalAuctionResult.auctionData.validators
 
     const sorted = [...originalValidators].sort((a, b) => {
       for (const [columnIndex, orderDirection] of currentOrder) {
@@ -376,7 +378,7 @@ export const SamTable: React.FC<Props> = ({
     const map = new Map<string, number>()
     sorted.forEach((v, i) => map.set(v.voteAccount, i + 1))
     return map
-  }, [originalAuctionResult, currentOrder, compareByColumn])
+  }, [originalValidators, currentOrder, compareByColumn])
 
   const getOriginalPosition = (voteAccount: string): number | null =>
     originalPositionsMap?.get(voteAccount) ?? null
@@ -424,11 +426,8 @@ export const SamTable: React.FC<Props> = ({
     }))
 
     const orig =
-      simulatedValidator && originalAuctionResult
-        ? (
-            originalAuctionResult.auctionData
-              .validators as AugmentedAuctionValidator[]
-          ).find(v => v.voteAccount === simulatedValidator)
+      simulatedValidator && originalValidators
+        ? originalValidators.find(v => v.voteAccount === simulatedValidator)
         : undefined
     const sim = simulatedValidator
       ? validators.find(v => v.voteAccount === simulatedValidator)
@@ -465,7 +464,7 @@ export const SamTable: React.FC<Props> = ({
   }, [
     sortedValidators,
     simulatedValidator,
-    originalAuctionResult,
+    originalValidators,
     validators,
     getOriginalPosition,
   ])

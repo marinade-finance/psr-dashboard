@@ -492,11 +492,13 @@ export function augmentAuctionResult(
 ): AugmentedAuctionValidator[] {
   const { validators } = auctionResult.auctionData
   const changes = computeExpectedStakeChanges(auctionResult)
-  for (const v of validators) {
-    const values = v.values as AugmentedValues
-    values.expectedStakeChangeSol = changes.get(v.voteAccount) ?? 0
-  }
-  return validators as AugmentedAuctionValidator[]
+  return validators.map(v => ({
+    ...v,
+    values: {
+      ...v.values,
+      expectedStakeChangeSol: changes.get(v.voteAccount) ?? 0,
+    } as AugmentedValues,
+  }))
 }
 
 function computeNaturalWithdrawal(
