@@ -253,8 +253,13 @@ export const SamTable: React.FC<Props> = ({
   onRunSimulation,
   onCancelEditing,
 }) => {
-  const validators = augmentAuctionResult(auctionResult)
-  if (originalAuctionResult) augmentAuctionResult(originalAuctionResult)
+  const validators = useMemo(
+    () => augmentAuctionResult(auctionResult),
+    [auctionResult],
+  )
+  useMemo(() => {
+    if (originalAuctionResult) augmentAuctionResult(originalAuctionResult)
+  }, [originalAuctionResult])
   const samDistributedStake = Math.round(selectSamDistributedStake(validators))
   const winningAPY = selectWinningAPY(auctionResult, epochsPerYear)
   const projectedApy = selectProjectedAPY(auctionResult, epochsPerYear)
