@@ -118,11 +118,10 @@ under "Charge this epoch":
   (`marinadeActivatedStakeSol`), at the effective bid rate (Eff. Bid PMPE).
 - **Activating charge** &mdash; bid paid on stake that is being activated *into* the
   validator this epoch (the positive expected delta toward SAM Target), at
-  `revShare.activatingStakePmpe`. This rate follows the protocol's bond-risk-reduction
-  mechanism (BRRM) so that a validator can't dodge bid costs on freshly delegated
-  stake. See the
-  [BRRM docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market/bond-risk-reduction-mechanism)
-  for the formula.
+  `revShare.activatingStakePmpe = max(0, bidPmpe − auctionEffectiveBidPmpe)`. The
+  charge scales with the gap between St. Bid and Eff. Bid so a validator can't dodge
+  bid costs on freshly delegated stake. See the
+  [Activating Stake Fee docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market/activating-stake-fee).
 
 The **Total Charge** row sums both. Both are deducted from the validator's bond.
 
@@ -262,9 +261,8 @@ means the bond is below minimum coverage and `bondRiskFeeSol` applies.
 - **Effective Bid**: The actual payment, capped at the winning threshold
 
 In a last-price auction, validators may pay less than their maximum bid since all winners pay the clearing price.
-Charges on activating stake follow the protocol's bond-risk-reduction mechanism — see the
-[BRRM docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market/bond-risk-reduction-mechanism)
-for the formula.
+Activating stake is charged separately at the overbid rate (St. Bid − Eff. Bid) — see the
+[Activating Stake Fee docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market/activating-stake-fee).
 
 ---
 
