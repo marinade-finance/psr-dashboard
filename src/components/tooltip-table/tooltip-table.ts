@@ -49,7 +49,6 @@ export const row = (
   opts?: {
     boldLabel?: boolean
     boldValue?: boolean
-    mutedValue?: boolean
     large?: boolean
     accent?: CellOpts['accent']
   },
@@ -64,7 +63,6 @@ export const row = (
     cell(value, {
       align: 'right',
       mono: true,
-      muted: opts?.mutedValue,
       bold: opts?.boldValue,
       large: opts?.large,
       accent: opts?.accent,

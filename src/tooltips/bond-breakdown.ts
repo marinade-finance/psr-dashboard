@@ -179,12 +179,8 @@ export const renderBondBreakdownTooltip = (
     row('Claimable bond balance', '', pay(m.claimableBondBalanceSol), {
       boldValue: true,
     }) +
-    row('Activated Marinade stake', '', stake(m.marinadeActivatedStakeSol), {
-      mutedValue: true,
-    }) +
-    row(LABEL_PROJ_EXPOSED, '', stake(m.projectedExposedStakeSol), {
-      mutedValue: true,
-    }) +
+    row('Activated Marinade stake', stake(m.marinadeActivatedStakeSol), '') +
+    row(LABEL_PROJ_EXPOSED, stake(m.projectedExposedStakeSol), '') +
     row('Minimum unprotected reserve', '', pay(m.minUnprotectedReserveSol)) +
     row(
       'On-chain distributed reserve',
@@ -210,12 +206,8 @@ export const renderBondBreakdownTooltip = (
       : sectionHeader(`Ideal Coverage (${m.idealEp} epochs)`) +
         tableHead(['', '', '☉']) +
         row('Bond balance', '', pay(m.bondBalanceSol), { boldValue: true }) +
-        row('SAM target stake', '', stake(m.marinadeSamTargetSol), {
-          mutedValue: true,
-        }) +
-        row(LABEL_PROJ_EXPOSED, '', stake(m.projectedExposedStakeSol), {
-          mutedValue: true,
-        }) +
+        row('SAM target stake', stake(m.marinadeSamTargetSol), '') +
+        row(LABEL_PROJ_EXPOSED, stake(m.projectedExposedStakeSol), '') +
         row(
           'Ideal unprotected reserve',
           '',
