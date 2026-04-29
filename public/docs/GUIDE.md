@@ -130,11 +130,12 @@ The **Total Charge** row sums both. Both are deducted from the validator's bond.
 | Column          | Description                                                                                                                                                                                                                                                                         |
 | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Validator**   | Vote account public key                                                                                                                                                                                                                                                             |
-| **St. Bid**     | Static bid per 1000 SOL set in bond configuration. Hover the SAM Active cell for the full breakdown: Stake, Commissions, and Charge this epoch (St. Bid, Eff. Bid, Activating charge, Active charge, Total Charge) |
+| **St. Bid**     | Static bid per 1000 SOL set in bond configuration. Hover for the bid-too-low penalty breakdown (bid direction, participation limit, cushion check, penalty result).                                                                                                                  |
 | **Bond [☉]**    | Current bond balance in SOL                                                                                                                                                                                                                                                         |
 | **Cover. [ep]** | Epochs of bond runway above the minimum required reserve. At zero, Marinade starts undelegating stake and charging fees to cover the costs; negative means the bond is short of the reserve by that many epochs of bid payments. Color: green = 13+, yellow = 6–12, orange = 2–5, red ≤ 1 |
 | **Max APY**     | Maximum APY offered based on validator's bid and commission settings                                                                                                                                                                                                                |
-| **SAM Active [☉]** | Currently active stake delegated by SAM. A large colored arrow (↑ green / ↓ red) flags an expected stake change next epoch; hover for SAM Active now, SAM Target, and the expected delta |
+| **SAM Active [☉]** | Currently active stake delegated by SAM. A large colored arrow (↑ green / ↓ red) flags the expected stake change next epoch. Hover for the full Stake & Bid Charge breakdown (see [SAM Active breakdown](#sam-active-breakdown-tooltip) below).                                  |
+| **Eff. Bid**    | Effective bid combining static bid and commission settings                                                                                                                                                                                                                          |
 
 ### Participation Requirements
 
@@ -240,6 +241,73 @@ means the bond is below minimum coverage and `bondRiskFeeSol` applies.
 In a last-price auction, validators may pay less than their maximum bid since all winners pay the clearing price.
 Activating stake is charged separately at rate equal to St. Bid − Eff. Bid — see the
 [Activating Stake Fee docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market/activating-stake-fee).
+
+### SAM Active breakdown (tooltip)
+
+Hovering the **SAM Active** cell shows a three-section breakdown of the
+validator's stake position, what they earn from it, and what they will be
+charged for it. The header reads *Stake & Bid Charge (estimated)* &mdash;
+several numbers in this tooltip are forward-looking estimates, not booked
+amounts. Read carefully:
+
+**Section 1 &mdash; Stake**
+
+- **SAM Active** &mdash; current active SAM stake on this validator
+  (`marinadeActivatedStakeSol`).
+- **SAM Target** &mdash; stake the auction has assigned for next epoch
+  (`auctionStake.marinadeSamTargetSol`).
+- **Expected change next epoch** &mdash; signed delta from
+  `selectExpectedStakeChange`. This is a **simulated estimate** combining
+  re-delegation inflows from cooled-down stake (allocated to highest
+  `totalPmpe` below-target validators), pro-rata outflows from above-target
+  validators, the natural ~0.7%-of-TVL withdrawal each epoch, and any paid
+  undelegation already booked. Real movement may differ if stake
+  activation/deactivation queues are saturated or if validator parameters
+  change before settlement.
+
+**Section 2 &mdash; Validator Take · Rate · PMPE earned**
+
+For each reward stream, the validator's **set commission rate** and the
+**PMPE the validator earns** at that rate per 1000 SOL of activated stake
+per epoch. These are *income to the validator*, not staker yield. The four
+streams that build `revShare.totalPmpe` are Inflation, MEV, Block, and Bid;
+this section shows the first three (the bid is the *Charge* below).
+
+| Row       | Rate                              | PMPE earned                                 |
+| --------- | --------------------------------- | ------------------------------------------- |
+| Inflation | `inflationCommissionDec`          | `revShare.inflationPmpe`                    |
+| MEV       | `mevCommissionDec`                | `revShare.mevPmpe`                          |
+| Block     | `blockRewardsCommissionDec`       | `revShare.blockPmpe`                        |
+
+The PMPE values come from `calcValidatorRevShare` in the SDK
+(`pmpe = grossRewards × commissionDec`), so they reflect the validator's
+*cut* of each reward stream.
+
+**Section 3 &mdash; Estimated Charge this epoch**
+
+What Marinade will **draw from the bond** for this validator's stake. The
+section is laid out as: two **rate rows** (the bid PMPE values used in the
+multiplication), followed by two **product rows** (stake × rate &rarr;
+charge), and a **Total** row.
+
+- **Effective bid PMPE** &mdash; the auction's clearing rate
+  (`revShare.auctionEffectiveBidPmpe`). What activated stake is charged at.
+- **Static bid PMPE** &mdash; the validator's posted bid (`revShare.bidPmpe`).
+  What activating stake is *expected* to settle at.
+- **Activated stake × eff. bid** &mdash; current activated SOL multiplied
+  by effective bid PMPE. This is the booked charge against the bond for
+  already-active stake &mdash; the **most concrete** of the rows; both
+  inputs are settled.
+- **Expected activating × static bid** &mdash; *estimated* additional SOL
+  that will activate this epoch (`max(0, target − activated)`) multiplied by
+  static bid. Both the SOL amount and the charge are prefixed `~`: activating
+  stake is a forecast (it can be lower if routing is constrained or the
+  validator changes parameters mid-epoch), and the rate is also a forecast
+  (new stake settles at whatever bid is active when the auction runs, almost
+  always the static bid &mdash; but not guaranteed).
+- **Total estimated charge** &mdash; sum of the two product rows. In epochs
+  where activating is large relative to activated, this number can move
+  materially between page load and auction clearing.
 
 ---
 

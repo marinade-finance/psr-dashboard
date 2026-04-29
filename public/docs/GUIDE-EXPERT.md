@@ -13,6 +13,15 @@ the cell for the binding constraint (bid cap, bond cap, stake cap, or concentrat
 
 ---
 
+## Expert Table Columns
+
+### SAM Target [☉]
+
+Target stake a validator should receive based on the latest auction result. Expert-only column on the SAM table — hover
+the cell for the binding constraint (bid cap, bond cap, stake cap, or concentration limit) that determined the target.
+
+---
+
 ## Expert Metrics
 
 ### Ideal APY
