@@ -2,8 +2,9 @@
    inside react-tooltip should use these classes — no inline styles. */
 
 .tt-header {
-  padding: 8px 0 0;
-  margin-bottom: 14px;
+  padding: 8px 0 10px;
+  margin-bottom: 8px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.25);
 }
 
 .tt-header-name {
