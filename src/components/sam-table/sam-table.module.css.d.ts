@@ -3,6 +3,7 @@
 interface CssExports {
   'calculating': string;
   'cancelBtn': string;
+  'copyBtn': string;
   'editingButtons': string;
   'ghostRow': string;
   'header-glow': string;
@@ -11,12 +12,15 @@ interface CssExports {
   'inputPlaceholder': string;
   'metricRow': string;
   'metricWrap': string;
+  'nameCell': string;
+  'nameText': string;
   'orderCell': string;
   'penalties': string;
   'penaltyBadge': string;
   'penalty_bidLow': string;
   'penalty_blacklist': string;
   'penalty_risk': string;
+  'popoverAnchor': string;
   'positionImproved1': string;
   'positionImproved2': string;
   'positionImproved3': string;

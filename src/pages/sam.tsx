@@ -12,7 +12,7 @@ import styles from './sam.module.css'
 
 import type { AuctionResult } from '@marinade.finance/ds-sam-sdk'
 import type { UserLevel } from 'src/components/navigation/navigation'
-import type { SourceDataOverrides } from 'src/services/sam'
+import type { DashboardOverrides } from 'src/services/sam'
 
 type Props = {
   level: UserLevel
@@ -20,6 +20,10 @@ type Props = {
 
 export type PendingEdits = {
   bidPmpe?: string
+  inflationCommissionPct?: string
+  mevCommissionPct?: string
+  blockRewardsCommissionPct?: string
+  bondTopUpSol?: string
 }
 
 export const SamPage: React.FC<Props> = ({ level }) => {
@@ -28,7 +32,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
   const [isCalculating, setIsCalculating] = useState(false)
   const [simulationRunId, setSimulationRunId] = useState(0)
   const [simulationOverrides, setSimulationOverrides] =
-    useState<SourceDataOverrides | null>(null)
+    useState<DashboardOverrides | null>(null)
   const [simulatedValidator, setSimulatedValidator] = useState<string | null>(
     null,
   )
@@ -101,11 +105,12 @@ export const SamPage: React.FC<Props> = ({ level }) => {
       return
     }
 
-    const overrides: SourceDataOverrides = {
+    const overrides: DashboardOverrides = {
       inflationCommissionsDec: new Map(),
       mevCommissionsDec: new Map(),
       blockRewardsCommissionsDec: new Map(),
       cpmpesDec: new Map(),
+      bondTopUpSol: new Map(),
     }
 
     const bid =
@@ -114,6 +119,31 @@ export const SamPage: React.FC<Props> = ({ level }) => {
         : current.revShare.bidPmpe
     if (!isNaN(bid)) {
       overrides.cpmpesDec.set(editingValidator, bid)
+    }
+
+    if (pendingEdits.inflationCommissionPct !== undefined) {
+      const pct = parseFloat(pendingEdits.inflationCommissionPct)
+      if (!isNaN(pct)) {
+        overrides.inflationCommissionsDec.set(editingValidator, pct / 100)
+      }
+    }
+    if (pendingEdits.mevCommissionPct !== undefined) {
+      const pct = parseFloat(pendingEdits.mevCommissionPct)
+      if (!isNaN(pct)) {
+        overrides.mevCommissionsDec.set(editingValidator, pct / 100)
+      }
+    }
+    if (pendingEdits.blockRewardsCommissionPct !== undefined) {
+      const pct = parseFloat(pendingEdits.blockRewardsCommissionPct)
+      if (!isNaN(pct)) {
+        overrides.blockRewardsCommissionsDec.set(editingValidator, pct / 100)
+      }
+    }
+    if (pendingEdits.bondTopUpSol !== undefined) {
+      const delta = parseFloat(pendingEdits.bondTopUpSol)
+      if (!isNaN(delta) && delta !== 0) {
+        overrides.bondTopUpSol.set(editingValidator, delta)
+      }
     }
 
     setSimulationOverrides(overrides)
@@ -145,6 +175,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
         {status === 'success' && displayAuctionResult && (
           <SamTable
             auctionResult={displayAuctionResult}
+            nameByVote={data.nameByVote}
             tvlJoinApyDiff={data.tvlJoinApyDiff}
             tvlLeaveApyDiff={data.tvlLeaveApyDiff}
             backstopDiff={data.backstopDiff}
