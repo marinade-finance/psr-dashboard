@@ -3,7 +3,6 @@
 interface CssExports {
   'calculating': string;
   'cancelBtn': string;
-  'copyBtn': string;
   'editingButtons': string;
   'ghostRow': string;
   'header-glow': string;

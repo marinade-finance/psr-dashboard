@@ -161,23 +161,6 @@ type EditField = keyof PendingEdits
 // With Name inserted at col 1, indexes shift: 0 Validator | 1 Name | 2 St.Bid | 3 Bond | 4 Cover | 5 MaxAPY | 6 SAM Active
 const DEFAULT_ORDER: Order[] = [[6, OrderDirection.DESC]]
 
-function CopyButton({ value }: { value: string }) {
-  return (
-    <button
-      type="button"
-      className={styles.copyBtn}
-      title="Copy"
-      onClick={e => {
-        e.stopPropagation()
-        void navigator.clipboard.writeText(value)
-      }}
-      onMouseDown={e => e.stopPropagation()}
-    >
-      {'\u2398'}
-    </button>
-  )
-}
-
 type Props = {
   auctionResult: AuctionResult
   nameByVote: Map<string, string>
@@ -670,7 +653,6 @@ export const SamTable: React.FC<Props> = ({
                   >
                     {va}
                   </span>
-                  <CopyButton value={va} />
                   {renderPenaltyBadges(item.validator)}
                   {isEditing && (
                     <span className={styles.popoverAnchor}>
@@ -704,7 +686,6 @@ export const SamTable: React.FC<Props> = ({
                   <span className={styles.nameText} title={name}>
                     {name || '—'}
                   </span>
-                  {name && <CopyButton value={name} />}
                 </span>
               )
             },
