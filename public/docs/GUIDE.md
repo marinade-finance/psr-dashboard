@@ -190,9 +190,12 @@ CTA summarises the bond status.
 | On-chain distributed rewards PMPE | `onchainDistributedPmpe` | Inflation + MEV rewards distributed on-chain (not via bond), in PMPE                        |
 | Bond balance                    | `bondBalanceSol`           | Full bond deposit                                                                           |
 | Claimable bond balance          | `claimableBondBalanceSol`  | Portion of the bond already available for settlement / fees                                 |
-| Activated Marinade stake        | `marinadeActivatedStakeSol`| Currently active Marinade stake on the validator                                            |
+| Activated Marinade stake        | `marinadeActivatedStakeSol`| `activated`                                                                                 |
 | SAM target stake                | `marinadeSamTargetSol`     | Stake the auction has assigned to this validator this epoch                                 |
-| Projected exposed stake         | `projectedExposedStakeSol` | `max(0, projectedActivated − unprotectedStakeSol)` where `projectedActivated = max(0, activated − carriedPaidUndelegation)`; computed locally, the portion the bond has to cover |
+| Paid undelegation (carried)     | `carriedPaidUndelegation`  | `max(0, paidUndelegationSol − freshBondRiskUndel − freshBidTooLowUndel)` — stake queued for forced undelegation from prior epochs, used to discount the bid base |
+| Projected activated stake       | —                          | `max(0, activated − carriedPaidUndelegation)`                                               |
+| Unprotected stake               | `unprotectedStakeSol`      | Portion of activated stake covered by external protection (not bond)                        |
+| Projected exposed stake         | `projectedExposedStakeSol` | `max(0, projectedActivated − unprotectedStakeSol)` — the portion the bond has to cover; the only stake figure that drives the math |
 
 **Section 1 — Rates**
 
