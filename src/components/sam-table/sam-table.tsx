@@ -262,14 +262,10 @@ export const SamTable: React.FC<Props> = ({
     setCurrentOrder(order)
   }, [])
 
-  const nameOf = useCallback(
-    (va: string) => nameByVote.get(va) ?? '',
-    [nameByVote],
-  )
-
   // Must match Table columns order
   const compareByColumn = useCallback(
     (a: AuctionValidator, b: AuctionValidator, columnIndex: number): number => {
+      const nameOf = (va: string) => nameByVote.get(va) ?? ''
       switch (columnIndex) {
         case 0:
           return selectVoteAccount(a).localeCompare(selectVoteAccount(b))
@@ -293,7 +289,7 @@ export const SamTable: React.FC<Props> = ({
           return 0
       }
     },
-    [epochsPerYear, nameOf],
+    [epochsPerYear, nameByVote],
   )
 
   const originalPositionsMap = useMemo(() => {
@@ -690,8 +686,10 @@ export const SamTable: React.FC<Props> = ({
               )
             },
             compare: (a, b) =>
-              nameOf(selectVoteAccount(a.validator)).localeCompare(
-                nameOf(selectVoteAccount(b.validator)),
+              (
+                nameByVote.get(selectVoteAccount(a.validator)) ?? ''
+              ).localeCompare(
+                nameByVote.get(selectVoteAccount(b.validator)) ?? '',
               ),
           },
           {
