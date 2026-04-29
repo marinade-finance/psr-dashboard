@@ -30,6 +30,7 @@ import styles from './sam-table.module.css'
 import { tooltipAttributes } from '../../services/utils'
 import { buildBondBreakdownTooltip } from '../../tooltips/bond-breakdown'
 import { buildSamActiveTooltip } from '../../tooltips/sam-active'
+import { buildSimulationOverridesTable } from '../../tooltips/simulation'
 import { ConcentrationMetric } from '../concentration-metric/concentration-metric'
 import { Metric } from '../metric/metric'
 import { UserLevel } from '../navigation/navigation'
@@ -44,7 +45,10 @@ import type {
   DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
 import type { PendingEdits } from 'src/pages/sam'
-import type { AugmentedAuctionValidator } from 'src/services/sam'
+import type {
+  AugmentedAuctionValidator,
+  DashboardOverrides,
+} from 'src/services/sam'
 
 type ValidatorWithBondState = AugmentedAuctionValidator & { bondState?: Color }
 
@@ -173,6 +177,7 @@ type Props = {
   idealBondEpochs: number
   level: UserLevel
   simulationModeActive: boolean
+  simulationOverrides: DashboardOverrides | null
   editingValidator: string | null
   simulatedValidator: string | null
   isCalculating: boolean
@@ -197,6 +202,7 @@ export const SamTable: React.FC<Props> = ({
   idealBondEpochs,
   level,
   simulationModeActive,
+  simulationOverrides,
   editingValidator,
   simulatedValidator,
   isCalculating,
@@ -400,6 +406,27 @@ export const SamTable: React.FC<Props> = ({
   ])
 
   const fmtDiff = (d: number) => `${d >= 0 ? '+' : ''}${formatPercentage(d, 2)}`
+
+  const buildSimulatedHint = (va: string): string => {
+    if (simulatedValidator !== va) return ''
+    const orig = originalAuctionResult?.auctionData.validators.find(
+      v => v.voteAccount === va,
+    )
+    return buildSimulationOverridesTable(va, orig, simulationOverrides)
+  }
+
+  const simHintFor = (item: DisplayValidator): string =>
+    item.isGhost ? '' : buildSimulatedHint(selectVoteAccount(item.validator))
+
+  const withHint = (item: DisplayValidator, body: string): string => {
+    const h = simHintFor(item)
+    return h ? h + body : body
+  }
+
+  const hintCell = (item: DisplayValidator) => {
+    const h = simHintFor(item)
+    return h ? tooltipAttributes(h) : ({} as Record<string, never>)
+  }
 
   let expertMetrics
   let apyMetrics
@@ -615,6 +642,7 @@ export const SamTable: React.FC<Props> = ({
           {
             header: 'Validator',
             headerAttrsFn: () => tooltipAttributes('Validator Vote Account'),
+            cellAttrsFn: hintCell,
             render: item => {
               const va = selectVoteAccount(item.validator)
               const sim = !item.isGhost && simulatedValidator === va
@@ -673,6 +701,7 @@ export const SamTable: React.FC<Props> = ({
             header: 'Name',
             headerAttrsFn: () =>
               tooltipAttributes('Validator name (from on-chain identity)'),
+            cellAttrsFn: hintCell,
             render: item => {
               const va = selectVoteAccount(item.validator)
               const name = nameByVote.get(va) ?? ''
@@ -698,6 +727,7 @@ export const SamTable: React.FC<Props> = ({
                 'Static bid for 1000 SOL set by the validator in Bond configuration.<br/>' +
                   'The bid active at the slot the auction runs is what you pay for that epoch’s activating stake.',
               ),
+            cellAttrsFn: hintCell,
             render: item => (
               <>{formatSolAmount(selectBid(item.validator), 4)}</>
             ),
@@ -707,6 +737,7 @@ export const SamTable: React.FC<Props> = ({
           {
             header: 'Bond [☉]',
             headerAttrsFn: () => tooltipAttributes('Bond Balance.'),
+            cellAttrsFn: hintCell,
             render: item => (
               <>{formatSolAmount(selectBondSize(item.validator), 0)}</>
             ),
@@ -722,15 +753,16 @@ export const SamTable: React.FC<Props> = ({
               ),
             cellAttrsFn: item =>
               tooltipAttributes(
-                buildBondBreakdownTooltip(
-                  item.validator,
-                  minBondEpochs,
-                  idealBondEpochs,
-                  auctionResult.winningTotalPmpe,
-                  dcSamConfig.bondRiskFeeMult,
-                  item.validator.bondState,
-                  !item.isGhost &&
-                    simulatedValidator === selectVoteAccount(item.validator),
+                withHint(
+                  item,
+                  buildBondBreakdownTooltip(
+                    item.validator,
+                    minBondEpochs,
+                    idealBondEpochs,
+                    auctionResult.winningTotalPmpe,
+                    dcSamConfig.bondRiskFeeMult,
+                    item.validator.bondState,
+                  ),
                 ),
               ),
             render: item => {
@@ -757,6 +789,7 @@ export const SamTable: React.FC<Props> = ({
               tooltipAttributes(
                 "APY calculated using this validator's bid and commission configuration.",
               ),
+            cellAttrsFn: hintCell,
             render: item => (
               <>
                 {formatPercentage(
@@ -779,11 +812,7 @@ export const SamTable: React.FC<Props> = ({
               ),
             cellAttrsFn: item =>
               tooltipAttributes(
-                buildSamActiveTooltip(
-                  item.validator,
-                  !item.isGhost &&
-                    simulatedValidator === selectVoteAccount(item.validator),
-                ),
+                withHint(item, buildSamActiveTooltip(item.validator)),
               ),
             render: item => <StakeChangeIndicator validator={item.validator} />,
             compare: (a, b) =>
@@ -800,7 +829,9 @@ export const SamTable: React.FC<Props> = ({
                       'The target stake to be received based off the auction.',
                     ),
                   cellAttrsFn: (item: DisplayValidator) =>
-                    tooltipAttributes(selectConstraintText(item.validator)),
+                    tooltipAttributes(
+                      withHint(item, selectConstraintText(item.validator)),
+                    ),
                   render: (item: DisplayValidator) => (
                     <>
                       {formatSolAmount(selectSamTargetStake(item.validator), 0)}

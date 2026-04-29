@@ -78,9 +78,32 @@ export const SamPage: React.FC<Props> = ({ level }) => {
         return
       }
       setEditingValidator(voteAccount)
-      setPendingEdits({})
+      const ov = voteAccount === simulatedValidator ? simulationOverrides : null
+      if (ov) {
+        const next: PendingEdits = {}
+        const bid = ov.cpmpesDec?.get(voteAccount)
+        if (bid !== undefined) next.bidPmpe = bid.toString()
+        const infl = ov.inflationCommissionsDec?.get(voteAccount)
+        if (infl !== undefined)
+          next.inflationCommissionPct = (infl * 100).toString()
+        const mev = ov.mevCommissionsDec?.get(voteAccount)
+        if (mev !== undefined) next.mevCommissionPct = (mev * 100).toString()
+        const blk = ov.blockRewardsCommissionsDec?.get(voteAccount)
+        if (blk !== undefined)
+          next.blockRewardsCommissionPct = (blk * 100).toString()
+        const bond = ov.bondTopUpSol?.get(voteAccount)
+        if (bond !== undefined) next.bondTopUpSol = bond.toString()
+        setPendingEdits(next)
+      } else {
+        setPendingEdits({})
+      }
     },
-    [simulationModeActive, editingValidator],
+    [
+      simulationModeActive,
+      editingValidator,
+      simulatedValidator,
+      simulationOverrides,
+    ],
   )
 
   const handleCancelEditing = useCallback(() => {
@@ -98,10 +121,10 @@ export const SamPage: React.FC<Props> = ({ level }) => {
     if (!editingValidator || !originalAuctionResult || !data) {
       return
     }
-    const current = data.auctionResult.auctionData.validators.find(
+    const orig = originalAuctionResult.auctionData.validators.find(
       v => v.voteAccount === editingValidator,
     )
-    if (!current) {
+    if (!orig) {
       return
     }
 
@@ -112,30 +135,29 @@ export const SamPage: React.FC<Props> = ({ level }) => {
       cpmpesDec: new Map(),
       bondTopUpSol: new Map(),
     }
+    const eq = (a: number, b: number) => Math.abs(a - b) < 1e-9
 
-    const bid =
-      pendingEdits.bidPmpe !== undefined
-        ? parseFloat(pendingEdits.bidPmpe)
-        : current.revShare.bidPmpe
-    if (!isNaN(bid)) {
-      overrides.cpmpesDec.set(editingValidator, bid)
+    if (pendingEdits.bidPmpe !== undefined) {
+      const bid = parseFloat(pendingEdits.bidPmpe)
+      if (!isNaN(bid) && !eq(bid, orig.revShare.bidPmpe)) {
+        overrides.cpmpesDec.set(editingValidator, bid)
+      }
     }
-
     if (pendingEdits.inflationCommissionPct !== undefined) {
       const pct = parseFloat(pendingEdits.inflationCommissionPct)
-      if (!isNaN(pct)) {
+      if (!isNaN(pct) && !eq(pct / 100, orig.inflationCommissionDec ?? 0)) {
         overrides.inflationCommissionsDec.set(editingValidator, pct / 100)
       }
     }
     if (pendingEdits.mevCommissionPct !== undefined) {
       const pct = parseFloat(pendingEdits.mevCommissionPct)
-      if (!isNaN(pct)) {
+      if (!isNaN(pct) && !eq(pct / 100, orig.mevCommissionDec ?? 0)) {
         overrides.mevCommissionsDec.set(editingValidator, pct / 100)
       }
     }
     if (pendingEdits.blockRewardsCommissionPct !== undefined) {
       const pct = parseFloat(pendingEdits.blockRewardsCommissionPct)
-      if (!isNaN(pct)) {
+      if (!isNaN(pct) && !eq(pct / 100, orig.blockRewardsCommissionDec ?? 1)) {
         overrides.blockRewardsCommissionsDec.set(editingValidator, pct / 100)
       }
     }
@@ -187,6 +209,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
             idealBondEpochs={data.dcSamConfig.idealBondEpochs}
             level={level}
             simulationModeActive={simulationModeActive}
+            simulationOverrides={simulationOverrides}
             editingValidator={editingValidator}
             simulatedValidator={simulatedValidator}
             isCalculating={isCalculating}
