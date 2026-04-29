@@ -15,6 +15,7 @@ import type {
 } from '@marinade.finance/ds-sam-sdk'
 
 // Mirrors SDK ds-sam-sdk/dist/src/calculations.js:117-118 (calcBidTooLowPenalty).
+// TODO ... export these from the SDK and use these verbatim.
 const TOL_COEF = 0.99999
 const SCALE_COEF = 1.5
 
