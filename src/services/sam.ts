@@ -298,9 +298,6 @@ function overridesMessage(
 export const selectBid = (validator: AuctionValidator) =>
   validator.revShare.bidPmpe
 
-export const selectBondBid = (validator: AuctionValidator) =>
-  validator.values?.commissions?.bidCpmpeInBondDec ?? validator.bidCpmpe
-
 export const overridesCpmpeMessage = (validator: AuctionValidator): string =>
   overridesMessage(
     'CPMPE',
@@ -310,30 +307,6 @@ export const overridesCpmpeMessage = (validator: AuctionValidator): string =>
 
 export const selectCommission = (validator: AuctionValidator): number =>
   validator.inflationCommissionDec
-
-export const selectFormattedInBondCommission = (
-  validator: AuctionValidator,
-): string => {
-  const dec = validator.values?.commissions?.inflationCommissionInBondDec
-  return dec == null ? '-' : formatPercentage(dec, 0)
-}
-
-export const formattedOnChainCommission = (
-  validator: AuctionValidator,
-): string =>
-  formatPercentage(
-    validator.values?.commissions?.inflationCommissionOnchainDec ??
-      selectCommission(validator),
-    0,
-  )
-
-export const overridesCommissionMessage = (
-  validator: AuctionValidator,
-): string =>
-  overridesMessage(
-    'inflation commission',
-    validator.values?.commissions?.inflationCommissionOverrideDec,
-  )
 
 export const selectCommissionPmpe = (validator: AuctionValidator) =>
   validator.revShare.inflationPmpe
@@ -347,32 +320,8 @@ export const formattedMevCommission = (validator: AuctionValidator): string => {
   return dec == null ? '-' : formatPercentage(dec, 0)
 }
 
-export const formattedInBondMevCommission = (
-  validator: AuctionValidator,
-): string => {
-  const dec = validator.values?.commissions?.mevCommissionInBondDec
-  return dec == null ? '-' : formatPercentage(dec, 0)
-}
-
-export const formattedOnChainMevCommission = (
-  validator: AuctionValidator,
-): string => {
-  const dec =
-    validator.values?.commissions?.mevCommissionOnchainDec ??
-    selectMevCommission(validator)
-  return dec == null ? '-' : formatPercentage(dec, 0)
-}
-
 export const selectMevCommissionPmpe = (validator: AuctionValidator) =>
   validator.revShare.mevPmpe
-
-export const overridesMevCommissionMessage = (
-  validator: AuctionValidator,
-): string =>
-  overridesMessage(
-    'MEV commission',
-    validator.values?.commissions?.mevCommissionOverrideDec,
-  )
 
 export const selectBlockRewardsCommission = (
   validator: AuctionValidator,
@@ -387,14 +336,6 @@ export const formattedBlockRewardsCommission = (
 
 export const selectBlockRewardsCommissionPmpe = (validator: AuctionValidator) =>
   validator.revShare.blockPmpe
-
-export const overridesBlockRewardsCommissionMessage = (
-  validator: AuctionValidator,
-): string =>
-  overridesMessage(
-    'block rewards commission',
-    validator.values?.commissions?.blockRewardsCommissionOverrideDec,
-  )
 
 export const selectBondSize = (validator: AuctionValidator) =>
   validator.bondBalanceSol
@@ -576,11 +517,17 @@ function computeNaturalWithdrawal(
     ),
   }))
   const totalExcess = excess.reduce((s, e) => s + e.x, 0)
+  let remaining = withdrawal
   if (totalExcess > 0) {
     for (const { va, x } of excess) {
-      if (x > 0) out.set(va, (withdrawal * x) / totalExcess)
+      if (x <= 0) continue
+      const share = Math.min(x, (withdrawal * x) / totalExcess)
+      if (share > 0) {
+        out.set(va, share)
+        remaining -= share
+      }
     }
-    return out
+    if (remaining <= 1e-9) return out
   }
   const totalActive = validators.reduce(
     (s, v) => s + v.marinadeActivatedStakeSol,
@@ -588,10 +535,10 @@ function computeNaturalWithdrawal(
   )
   if (totalActive <= 0) return out
   for (const v of validators) {
-    out.set(
-      v.voteAccount,
-      (withdrawal * v.marinadeActivatedStakeSol) / totalActive,
-    )
+    const add = (remaining * v.marinadeActivatedStakeSol) / totalActive
+    if (add > 0) {
+      out.set(v.voteAccount, (out.get(v.voteAccount) ?? 0) + add)
+    }
   }
   return out
 }
