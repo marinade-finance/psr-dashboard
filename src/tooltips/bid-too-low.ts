@@ -43,7 +43,6 @@ export type BidTooLowMetrics = {
   penaltyPmpe: number
   marinadeActivatedStakeSol: number
   winningTotalPmpe: number
-  forcedUndelegationSol: number
 }
 
 export const computeBidTooLowMetrics = (
@@ -84,10 +83,6 @@ export const computeBidTooLowMetrics = (
   const penaltyPmpe = penaltyCoef * base
 
   const marinadeActivatedStakeSol = v.marinadeActivatedStakeSol
-  const forcedUndelegationSol =
-    penaltyPmpe > 0 && winningTotalPmpe > 0
-      ? (penaltyPmpe * marinadeActivatedStakeSol) / winningTotalPmpe
-      : 0
 
   return {
     historyEpochs,
@@ -110,7 +105,6 @@ export const computeBidTooLowMetrics = (
     penaltyPmpe,
     marinadeActivatedStakeSol,
     winningTotalPmpe,
-    forcedUndelegationSol,
   }
 }
 
@@ -137,7 +131,7 @@ export const renderBidTooLowTooltip = (
     cta = ctaBlock({
       label: ctaLabel,
       cta:
-        `Bid-too-low penalty applies. Forced undelegation: ${stake(m.forcedUndelegationSol)}. ` +
+        'Bid-too-low penalty applies. ' +
         `Raise effective bid by ≥ ${pmpe(m.shortfall)} PMPE to clear it.`,
       state: Color.RED,
     })
@@ -190,13 +184,11 @@ export const renderBidTooLowTooltip = (
     sectionHeader('Penalty Result') +
     row('Activated Marinade stake', stake(m.marinadeActivatedStakeSol), '') +
     divider() +
-    row('Penalty PMPE', '', pmpe(m.penaltyPmpe), { boldValue: true }) +
-    (hasPenalty
-      ? row('Forced undelegation', '', stake(m.forcedUndelegationSol), {
-          boldValue: true,
-          accent: 'red',
-        })
-      : okRow('No penalty this epoch.'))
+    row('Penalty PMPE', '', pmpe(m.penaltyPmpe), {
+      boldValue: true,
+      accent: hasPenalty ? 'red' : undefined,
+    }) +
+    (hasPenalty ? '' : okRow('No penalty this epoch.'))
 
   return (
     tooltipHeader(header) +
