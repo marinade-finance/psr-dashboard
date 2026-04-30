@@ -132,7 +132,7 @@ The **Total Charge** row sums both. Both are deducted from the validator's bond.
 | **Validator**   | Vote account public key                                                                                                                                                                                                                                                             |
 | **St. Bid**     | Static bid per 1000 SOL set in bond configuration. Hover for the bid too low penalty breakdown (bid direction, participation limit, cushion check, penalty base, penalty result).                                                                                                                  |
 | **Bond [☉]**    | Current bond balance in SOL                                                                                                                                                                                                                                                         |
-| **Cover. [ep]** | Epochs of bond runway above the minimum required reserve. At zero, Marinade starts undelegating stake and charging fees to cover the costs; negative means the bond is short of the reserve by that many epochs of bid payments. Color: green = 13+, yellow = 6–12, orange = 2–5, red ≤ 1 |
+| **Cover. [ep]** | Epochs of bond runway above the minimum required reserve (`bondGoodForNEpochs`). At zero, Marinade starts undelegating stake and charging fees to cover the costs; negative means the bond is short of the reserve by that many epochs of bid payments. Color reflects penalty risk independent of the displayed number: red = penalty imminent (bond below minimum required), yellow = covers current stake but below ideal, green = covers ideal. |
 | **Max APY**     | Maximum APY offered based on validator's bid and commission settings                                                                                                                                                                                                                |
 | **SAM Active [☉]** | Currently active stake delegated by SAM. A large colored arrow (↑ green / ↓ red) flags the expected stake change next epoch. Hover for the full Stake & Bid Charge breakdown (see [SAM Active breakdown](#sam-active-breakdown-tooltip) below).                                  |
 | **Eff. Bid**    | Effective bid combining static bid and commission settings                                                                                                                                                                                                                          |
@@ -232,6 +232,14 @@ The column value `Cover. [ep]` is derived from
 `bondBalanceSol` (not just the claimable portion) as the runway base. It
 represents epochs of runway *above the fee threshold*. Zero or negative
 means the bond is below minimum coverage and `bondRiskFeeSol` applies.
+
+The cell **color**, however, is computed locally from the same metrics
+that drive this tooltip's CTA, not from `bondGoodForNEpochs`: red when
+the claimable bond falls short of the minimum (`topUpToMin > 0`), yellow
+when it covers current stake but not the ideal target
+(`topUpToIdeal > 0`), green when ideal coverage is met. The displayed
+number can therefore be a low single digit while the cell stays green
+(ideal still met under the bond-balance basis) or vice versa.
 
 ### Effective vs Maximum Bid
 
