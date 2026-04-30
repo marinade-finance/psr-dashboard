@@ -155,11 +155,7 @@ const renderPenaltyBadges = (v: AuctionValidator) => {
 }
 
 type DisplayValidator = { validator: ValidatorWithBondState; isGhost: boolean }
-type EditField =
-  | 'inflationCommission'
-  | 'mevCommission'
-  | 'blockRewardsCommission'
-  | 'bidPmpe'
+type EditField = keyof PendingEdits
 
 type InputOpts = {
   step: string
@@ -343,22 +339,26 @@ export const SamTable: React.FC<Props> = ({
         case 0:
           return selectVoteAccount(a).localeCompare(selectVoteAccount(b))
         case 1:
-          return selectBid(a) - selectBid(b)
+          return (nameByVote.get(selectVoteAccount(a)) ?? '').localeCompare(
+            nameByVote.get(selectVoteAccount(b)) ?? '',
+          )
         case 2:
-          return selectBondSize(a) - selectBondSize(b)
+          return selectBid(a) - selectBid(b)
         case 3:
-          return selectBondHealth(a) - selectBondHealth(b)
+          return selectBondSize(a) - selectBondSize(b)
         case 4:
-          return selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
+          return selectBondHealth(a) - selectBondHealth(b)
         case 5:
-          return selectSamActiveStake(a) - selectSamActiveStake(b)
+          return selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
         case 6:
+          return selectSamActiveStake(a) - selectSamActiveStake(b)
+        case 7:
           return selectSamTargetStake(a) - selectSamTargetStake(b)
         default:
           return 0
       }
     },
-    [epochsPerYear],
+    [epochsPerYear, nameByVote],
   )
 
   const originalPositionsMap = useMemo(() => {
@@ -817,6 +817,7 @@ export const SamTable: React.FC<Props> = ({
                   dcSamConfig.bondRiskFeeMult,
                   item.validator.bondState,
                   nameByVote.get(selectVoteAccount(item.validator)),
+                  simulatedValidator === selectVoteAccount(item.validator),
                 ),
               ),
             render: item => {
@@ -868,6 +869,7 @@ export const SamTable: React.FC<Props> = ({
                 buildSamActiveTooltip(
                   item.validator,
                   nameByVote.get(selectVoteAccount(item.validator)),
+                  simulatedValidator === selectVoteAccount(item.validator),
                 ),
               ),
             render: item => <StakeChangeIndicator validator={item.validator} />,
