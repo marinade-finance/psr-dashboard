@@ -131,26 +131,16 @@ export const computeBondMetrics = (
   }
 }
 
-const statusLine = (
-  color: Color | undefined,
-  topUpToMin: number,
-  topUpToIdeal: number,
-): string => {
+const statusLine = (color: Color | undefined): string => {
   switch (color) {
     case Color.RED:
-      return topUpToMin > 0
-        ? `Bond is short for current active stake. Top up ${pay(topUpToMin)} to avoid penalty.`
-        : 'Bond is short for current active stake. Top up to avoid penalty.'
+      return 'Penalty imminent. Top up to avoid it.'
     case Color.ORANGE:
-      return topUpToMin > 0
-        ? `Bond is short for current active stake. Top up ${pay(topUpToMin)} to avoid undelegation + fees.`
-        : 'Bond is short for current active stake. Top up to avoid undelegation + fees.'
+      return 'Penalty risk. Top up to prevent it.'
     case Color.YELLOW:
-      return topUpToIdeal > 0
-        ? `Bond covers current stake. Top up ${pay(topUpToIdeal)} for more stake.`
-        : 'Bond covers current stake. Top up for more stake.'
+      return 'Bond covers current stake. Top up for more stake.'
     case Color.GREEN:
-      return 'Bond has enough coverage to receive more stake.'
+      return 'Bond has enough coverage. Keep it topped up.'
     default:
       return ''
   }
@@ -164,7 +154,7 @@ export const renderBondBreakdownTooltip = (
 ): string => {
   const cta = ctaBlock({
     label: `${isSimulated ? 'Simulated · ' : ''}Bond Coverage Calculation Breakdown`,
-    cta: statusLine(bondState, m.topUpToMin, m.topUpToIdeal),
+    cta: statusLine(bondState),
     state: bondState,
   })
 
