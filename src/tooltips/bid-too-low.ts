@@ -119,21 +119,19 @@ export const renderBidTooLowTooltip = (
   if (!m.isNegativeBiddingChange) {
     cta = ctaBlock({
       label: ctaLabel,
-      cta: 'No bid too low penalty: bid not reduced this epoch.',
+      cta: 'Bid not reduced. No penalty.',
       state: Color.GREEN,
     })
   } else if (m.shortfall === 0) {
     cta = ctaBlock({
       label: ctaLabel,
-      cta: 'No bid too low penalty: bid kept high enough.',
+      cta: 'Bid kept high enough. No penalty.',
       state: Color.GREEN,
     })
   } else {
     cta = ctaBlock({
       label: ctaLabel,
-      cta:
-        'Bid too low penalty applies. ' +
-        `Raise effective bid by ≥ ${pmpe(m.shortfall)} PMPE to clear it.`,
+      cta: `Penalty imminent. Raise effective bid by ≥ ${pmpe(m.shortfall)} PMPE.`,
       state: Color.RED,
     })
   }
