@@ -7,7 +7,7 @@ import { Navigation } from 'src/components/navigation/navigation'
 import { SamTable } from 'src/components/sam-table/sam-table'
 import {
   fetchAllNotifications,
-  fetchSamAuctionBroadcastNotifications,
+  fetchLatestSamAuctionBroadcastNotification,
 } from 'src/services/notifications'
 import { loadSam } from 'src/services/sam'
 
@@ -64,9 +64,9 @@ export const SamPage: React.FC<Props> = ({ level }) => {
     },
   )
 
-  const { data: broadcastNotifications } = useQuery(
+  const { data: latestBroadcastNotification } = useQuery(
     'notifications-broadcast',
-    fetchSamAuctionBroadcastNotifications,
+    fetchLatestSamAuctionBroadcastNotification,
     {
       refetchInterval: 5 * 60 * 1000,
       keepPreviousData: true,
@@ -194,13 +194,13 @@ export const SamPage: React.FC<Props> = ({ level }) => {
             {simulationModeActive ? 'Exit Simulation' : 'Enter Simulation'}
           </button>
         </Navigation>
-        {broadcastNotifications?.map(n => (
+        {latestBroadcastNotification && (
           <Banner
-            key={n.id}
-            title={n.title ?? 'Announcement'}
-            body={n.message}
+            key={latestBroadcastNotification.id}
+            title={latestBroadcastNotification.title ?? 'Announcement'}
+            body={latestBroadcastNotification.message}
           />
-        ))}
+        )}
         {status === 'error' && <p>Error fetching data</p>}
         {status === 'loading' && <Loader />}
         {status === 'success' && displayAuctionResult && (

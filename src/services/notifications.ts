@@ -70,18 +70,20 @@ export async function fetchAllNotifications(
   return result
 }
 
-export async function fetchSamAuctionBroadcastNotifications(): Promise<
-  ValidatorNotification[]
-> {
+export async function fetchLatestSamAuctionBroadcastNotification(): Promise<ValidatorNotification | null> {
   try {
     const url = new URL('/v1/notifications/broadcast', NOTIFICATIONS_API_URL)
     url.searchParams.set('notification_type', 'sam_auction')
     url.searchParams.set('limit', '10')
     const res = await fetch(url.toString())
-    if (!res.ok) return []
-    return (await res.json()) as ValidatorNotification[]
+    if (!res.ok) return null
+    const notifications = (await res.json()) as ValidatorNotification[]
+    if (notifications.length === 0) return null
+    return notifications.reduce((latest, n) =>
+      Date.parse(n.created_at) > Date.parse(latest.created_at) ? n : latest,
+    )
   } catch {
-    return []
+    return null
   }
 }
 

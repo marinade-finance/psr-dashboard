@@ -7,7 +7,7 @@ import { Navigation } from 'src/components/navigation/navigation'
 import { ValidatorBondsTable } from 'src/components/validator-bonds-table/validator-bonds-table'
 import {
   fetchAllNotifications,
-  fetchSamAuctionBroadcastNotifications,
+  fetchLatestSamAuctionBroadcastNotification,
 } from 'src/services/notifications'
 import { fetchValidatorsWithBonds } from 'src/services/validator-with-bond'
 import { selectTotalMarinadeStake } from 'src/services/validators'
@@ -18,9 +18,9 @@ import type { UserLevelProps } from 'src/components/navigation/navigation'
 
 export const ValidatorBondsPage: React.FC<UserLevelProps> = ({ level }) => {
   const { data, status } = useQuery('bonds', fetchValidatorsWithBonds)
-  const { data: broadcastNotifications } = useQuery(
+  const { data: latestBroadcastNotification } = useQuery(
     'notifications-broadcast',
-    fetchSamAuctionBroadcastNotifications,
+    fetchLatestSamAuctionBroadcastNotification,
     {
       refetchInterval: 5 * 60 * 1000,
       keepPreviousData: true,
@@ -38,9 +38,13 @@ export const ValidatorBondsPage: React.FC<UserLevelProps> = ({ level }) => {
   return (
     <div className={styles.page}>
       <Navigation level={level} />
-      {broadcastNotifications?.map(n => (
-        <Banner key={n.id} title={n.title ?? 'Announcement'} body={n.message} />
-      ))}
+      {latestBroadcastNotification && (
+        <Banner
+          key={latestBroadcastNotification.id}
+          title={latestBroadcastNotification.title ?? 'Announcement'}
+          body={latestBroadcastNotification.message}
+        />
+      )}
       {status === 'error' && <p>Error fetching data</p>}
       {status === 'loading' && <Loader />}
       {status === 'success' && (
