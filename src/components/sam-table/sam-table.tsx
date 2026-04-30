@@ -17,7 +17,6 @@ import {
   augmentAuctionResult,
   selectTotalActiveStake,
   selectSamActiveStake,
-  bondHealthColor,
   selectBondHealth,
   selectProductiveStake,
   selectIsNonProductive,
@@ -29,7 +28,10 @@ import {
 import styles from './sam-table.module.css'
 import { tooltipAttributes } from '../../services/utils'
 import { buildBidTooLowTooltip } from '../../tooltips/bid-too-low'
-import { buildBondBreakdownTooltip } from '../../tooltips/bond-breakdown'
+import {
+  buildBondBreakdownTooltip,
+  penaltyRiskColor,
+} from '../../tooltips/bond-breakdown'
 import { buildSamActiveTooltip } from '../../tooltips/sam-active'
 import { ConcentrationMetric } from '../concentration-metric/concentration-metric'
 import { Metric } from '../metric/metric'
@@ -307,9 +309,21 @@ export const SamTable: React.FC<Props> = ({
     () =>
       validators.map(v => ({
         ...v,
-        bondState: bondHealthColor(v),
+        bondState: penaltyRiskColor(
+          v,
+          minBondEpochs,
+          idealBondEpochs,
+          auctionResult.winningTotalPmpe,
+          dcSamConfig.bondRiskFeeMult,
+        ),
       })),
-    [validators],
+    [
+      validators,
+      minBondEpochs,
+      idealBondEpochs,
+      auctionResult.winningTotalPmpe,
+      dcSamConfig.bondRiskFeeMult,
+    ],
   )
 
   const samStakeValidators = allValidators.filter(
@@ -453,7 +467,16 @@ export const SamTable: React.FC<Props> = ({
           display.length,
         )
         display.splice(insertIndex, 0, {
-          validator: { ...orig, bondState: bondHealthColor(orig) },
+          validator: {
+            ...orig,
+            bondState: penaltyRiskColor(
+              orig,
+              minBondEpochs,
+              idealBondEpochs,
+              auctionResult.winningTotalPmpe,
+              dcSamConfig.bondRiskFeeMult,
+            ),
+          },
           isGhost: true,
         })
       }

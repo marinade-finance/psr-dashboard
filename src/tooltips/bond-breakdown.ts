@@ -162,19 +162,10 @@ export const renderBondBreakdownTooltip = (
   header: { name?: string; voteAccount: string },
   isSimulated = false,
 ): string => {
-  // CTA reflects actual penalty risk, not bond runway color.
-  // Cover. column may be red while CTA is yellow/green if bond covers
-  // projected exposed stake (no penalty) but runway is short on target.
-  const ctaState =
-    m.topUpToMin > 0
-      ? bondState
-      : m.topUpToIdeal > 0
-        ? Color.YELLOW
-        : Color.GREEN
   const cta = ctaBlock({
     label: `${isSimulated ? 'Simulated · ' : ''}Bond Coverage Calculation Breakdown`,
-    cta: statusLine(ctaState, m.topUpToMin, m.topUpToIdeal),
-    state: ctaState,
+    cta: statusLine(bondState, m.topUpToMin, m.topUpToIdeal),
+    state: bondState,
   })
 
   const rates =
@@ -223,6 +214,28 @@ export const renderBondBreakdownTooltip = (
       : okRow('Bond has enough coverage to receive more stake.'))
 
   return cta + wrapTable(tooltipHeader(header) + rates + base + tgt)
+}
+
+export const penaltyRiskColor = (
+  v: AuctionValidator,
+  minBondEpochs: number,
+  idealBondEpochs: number,
+  winningTotalPmpe: number,
+  bondRiskFeeMult: number,
+): Color | undefined => {
+  if (!v.auctionStake.marinadeSamTargetSol && !v.marinadeActivatedStakeSol) {
+    return undefined
+  }
+  const m = computeBondMetrics(
+    v,
+    minBondEpochs,
+    idealBondEpochs,
+    winningTotalPmpe,
+    bondRiskFeeMult,
+  )
+  if (m.topUpToMin > 0) return Color.RED
+  if (m.topUpToIdeal > 0) return Color.YELLOW
+  return Color.GREEN
 }
 
 export const buildBondBreakdownTooltip = (
