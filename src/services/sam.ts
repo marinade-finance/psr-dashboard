@@ -22,18 +22,10 @@ import type {
   SourceDataOverrides,
 } from '@marinade.finance/ds-sam-sdk'
 
-type EpochsBundle = {
-  epochsPerYear: number
-  nameByVote: Map<string, string>
-}
+const FETCHED_EPOCHS = 11
 
-const fetchEpochsBundle = async (): Promise<EpochsBundle> => {
-  const FETCHED_EPOCHS = 11
+const estimateEpochsPerYear = async (): Promise<number> => {
   const { validators } = await fetchValidatorsWithEpochs(FETCHED_EPOCHS)
-  const nameByVote = new Map<string, string>()
-  for (const v of validators) {
-    if (v.info_name) nameByVote.set(v.vote_account, v.info_name)
-  }
   const epochStats = validators.map(({ epoch_stats }) => epoch_stats).flat()
 
   const rangeStart = epochStats.reduce(
@@ -57,12 +49,18 @@ const fetchEpochsBundle = async (): Promise<EpochsBundle> => {
   const DEFAULT_EPOCHS_PER_YEAR = SECONDS_PER_YEAR / DEFAULT_EPOCH_DURATION
   const rangeDuration = rangeEnd.timestamp - rangeStart.timestamp
   const rangeEpochs = rangeEnd.epoch - rangeStart.epoch + 1
-  const epochsPerYear =
-    !isFinite(rangeStart.epoch) || rangeEnd.epoch === 0
-      ? DEFAULT_EPOCHS_PER_YEAR
-      : SECONDS_PER_YEAR / (rangeDuration / rangeEpochs)
+  return !isFinite(rangeStart.epoch) || rangeEnd.epoch === 0
+    ? DEFAULT_EPOCHS_PER_YEAR
+    : SECONDS_PER_YEAR / (rangeDuration / rangeEpochs)
+}
 
-  return { epochsPerYear, nameByVote }
+export const fetchValidatorNames = async (): Promise<Map<string, string>> => {
+  const { validators } = await fetchValidatorsWithEpochs(FETCHED_EPOCHS)
+  const nameByVote = new Map<string, string>()
+  for (const v of validators) {
+    if (v.info_name) nameByVote.set(v.vote_account, v.info_name)
+  }
+  return nameByVote
 }
 
 type SamResult = {
@@ -73,14 +71,12 @@ type SamResult = {
   backstopTvl: number
   epochsPerYear: number
   dcSamConfig: DsSamConfig
-  nameByVote: Map<string, string>
 }
 
 export const loadSam = async (
   dataOverrides?: SourceDataOverrides | null,
 ): Promise<SamResult> => {
-  const { epochsPerYear, nameByVote } = await fetchEpochsBundle()
-  console.log('epochsPerYear', epochsPerYear)
+  const epochsPerYear = await estimateEpochsPerYear()
   const config = await loadSamConfig()
   const dsSam = new DsSamSDK({
     ...config,
@@ -163,7 +159,6 @@ export const loadSam = async (
     backstopTvl,
     epochsPerYear,
     dcSamConfig: dsSam.config,
-    nameByVote,
   }
 }
 

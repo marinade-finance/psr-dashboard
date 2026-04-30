@@ -6,7 +6,7 @@ import { Loader } from 'src/components/loader/loader'
 import { Navigation } from 'src/components/navigation/navigation'
 import { SamTable } from 'src/components/sam-table/sam-table'
 import { getBannerData } from 'src/services/banner'
-import { loadSam } from 'src/services/sam'
+import { fetchValidatorNames, loadSam } from 'src/services/sam'
 
 import styles from './sam.module.css'
 
@@ -50,6 +50,12 @@ export const SamPage: React.FC<Props> = ({ level }) => {
         setPendingEdits({})
       },
     },
+  )
+
+  const { data: validatorNames } = useQuery(
+    ['validator-names'],
+    fetchValidatorNames,
+    { staleTime: Infinity },
   )
 
   const handleToggleSimulationMode = useCallback(() => {
@@ -179,7 +185,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
         {status === 'success' && displayAuctionResult && (
           <SamTable
             auctionResult={displayAuctionResult}
-            nameByVote={data.nameByVote}
+            nameByVote={validatorNames ?? new Map()}
             tvlJoinApyDiff={data.tvlJoinApyDiff}
             tvlLeaveApyDiff={data.tvlLeaveApyDiff}
             backstopDiff={data.backstopDiff}
