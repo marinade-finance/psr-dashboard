@@ -30,14 +30,11 @@ export type BondMetrics = {
   bondBalanceSol: number
   claimableBondBalanceSol: number
   marinadeActivatedStakeSol: number
-  marinadeSamTargetSol: number
   expectedMaxEffBidPmpe: number
   onchainDistributedPmpe: number
   projectedExposedStakeSol: number
   minUnprotectedReserveSol: number
   idealUnprotectedReserveSol: number
-  minBondPmpe: number
-  idealBondPmpe: number
   onchainBase: number
   minCoverageBid: number
   floorBase: number
@@ -58,7 +55,6 @@ export const computeBondMetrics = (
   const claimableBondBalanceSol = v.claimableBondBalanceSol ?? 0
   const marinadeActivatedStakeSol = v.marinadeActivatedStakeSol
   const paidUndelegationSol = v.values?.paidUndelegationSol ?? 0
-  const marinadeSamTargetSol = v.auctionStake.marinadeSamTargetSol ?? 0
   const expectedMaxEffBidPmpe = finite(v.revShare?.expectedMaxEffBidPmpe)
   const onchainDistributedPmpe = finite(v.revShare?.onchainDistributedPmpe)
   const unprotectedStakeSol = v.unprotectedStakeSol ?? 0
@@ -120,14 +116,11 @@ export const computeBondMetrics = (
     bondBalanceSol,
     claimableBondBalanceSol,
     marinadeActivatedStakeSol,
-    marinadeSamTargetSol,
     expectedMaxEffBidPmpe,
     onchainDistributedPmpe,
     projectedExposedStakeSol,
     minUnprotectedReserveSol,
     idealUnprotectedReserveSol,
-    minBondPmpe,
-    idealBondPmpe,
     onchainBase,
     minCoverageBid,
     floorBase,
