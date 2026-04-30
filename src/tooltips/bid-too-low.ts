@@ -114,25 +114,25 @@ export const renderBidTooLowTooltip = (
   header: { name?: string; voteAccount: string },
 ): string => {
   const hasPenalty = m.penaltyPmpe > 0
-  const ctaLabel = 'Bid-Too-Low Penalty Breakdown'
+  const ctaLabel = 'Bid Too Low Penalty Breakdown'
   let cta: string
   if (!m.isNegativeBiddingChange) {
     cta = ctaBlock({
       label: ctaLabel,
-      cta: 'No bid-too-low penalty: bid not reduced this epoch.',
+      cta: 'No bid too low penalty: bid not reduced this epoch.',
       state: Color.GREEN,
     })
   } else if (m.shortfall === 0) {
     cta = ctaBlock({
       label: ctaLabel,
-      cta: 'No bid-too-low penalty: bid kept high enough.',
+      cta: 'No bid too low penalty: bid kept high enough.',
       state: Color.GREEN,
     })
   } else {
     cta = ctaBlock({
       label: ctaLabel,
       cta:
-        'Bid-too-low penalty applies. ' +
+        'Bid too low penalty applies. ' +
         `Raise effective bid by ≥ ${pmpe(m.shortfall)} PMPE to clear it.`,
       state: Color.RED,
     })
@@ -155,14 +155,11 @@ export const renderBidTooLowTooltip = (
       pmpe(m.worstHistoricalPmpe),
     ) +
     divider() +
-    row('Safe bid floor', '', pmpe(m.limit), { boldValue: true }) +
     (hasPenalty
       ? row('', '', `Raise bid to ≥ ${pmpe(m.limit)} PMPE to avoid penalty.`, {
           accent: 'red',
         })
-      : okRow(
-          `You may reduce bid down to ${pmpe(m.limit)} PMPE without penalty.`,
-        ))
+      : okRow(`Safe to reduce bid to ${pmpe(m.limit)} PMPE.`))
 
   const cushion =
     sectionHeader('Cushion Check') +

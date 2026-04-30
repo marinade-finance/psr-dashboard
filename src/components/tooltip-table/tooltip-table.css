@@ -141,5 +141,5 @@
 .tt-ok-msg {
   padding-right: 12px;
   white-space: normal;
-  color: rgb(74, 222, 128);
+  color: var(--text-light-2);
 }

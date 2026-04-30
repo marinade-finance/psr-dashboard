@@ -144,7 +144,7 @@ const statusLine = (color: Color | undefined, topUpToMin: number): string => {
     case Color.YELLOW:
       return 'Minimum coverage met. Top up to reach ideal coverage for more stake.'
     case Color.GREEN:
-      return 'Ideal coverage reached. Keep bond topped up to absorb bid drain.'
+      return 'Bond has enough coverage to receive more stake.'
     default:
       return ''
   }
@@ -170,7 +170,6 @@ export const renderBondBreakdownTooltip = (
 
   const base =
     sectionHeader(`Minimum Coverage (${m.minEp} epochs)`) +
-    tableHead(['', '', '☉']) +
     row('Claimable bond balance', '', pay(m.claimableBondBalanceSol), {
       boldValue: true,
     }) +
@@ -192,7 +191,6 @@ export const renderBondBreakdownTooltip = (
 
   const tgt =
     sectionHeader(`Ideal Coverage (${m.idealEp} epochs)`) +
-    tableHead(['', '', '☉']) +
     row('Bond balance', '', pay(m.bondBalanceSol), { boldValue: true }) +
     row(LABEL_PROJ_EXPOSED, stake(m.projectedExposedStakeSol), '') +
     row('Ideal unprotected reserve', '', pay(m.idealUnprotectedReserveSol)) +

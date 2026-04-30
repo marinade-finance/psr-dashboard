@@ -141,7 +141,8 @@ export const tooltipHeader = (p: {
         wrap: true,
         colspan: 99,
       }),
-    ])
+    ]) +
+    '<tr><td colspan="99" class="tt-rule-spacer"></td></tr>'
   )
 }
 
