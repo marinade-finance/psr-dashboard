@@ -142,7 +142,7 @@ const statusLine = (color: Color | undefined, topUpToMin: number): string => {
         ? `Below minimum coverage. Top up ${pay(topUpToMin)} soon to avoid bond risk fee charges.`
         : 'Below minimum coverage. Review bond setup to avoid bond risk fee charges.'
     case Color.YELLOW:
-      return 'Minimum coverage met. Top up to reach ideal coverage for more stake.'
+      return 'Minimum coverage met. Top up for more stake.'
     case Color.GREEN:
       return 'Bond has enough coverage to receive more stake.'
     default:
@@ -177,7 +177,7 @@ export const renderBondBreakdownTooltip = (
     row(LABEL_PROJ_EXPOSED, stake(m.projectedExposedStakeSol), '') +
     row('Minimum unprotected reserve', '', pay(m.minUnprotectedReserveSol)) +
     row('On-chain distributed reserve', '', pay(m.onchainBase)) +
-    row('Minimum coverage bid', '', pay(m.minCoverageBid)) +
+    row('Minimum bid coverage', '', pay(m.minCoverageBid)) +
     divider() +
     row('Minimum required', '', pay(m.floorBase), { boldValue: true }) +
     (m.topUpToMin > 0
@@ -195,7 +195,7 @@ export const renderBondBreakdownTooltip = (
     row(LABEL_PROJ_EXPOSED, stake(m.projectedExposedStakeSol), '') +
     row('Ideal unprotected reserve', '', pay(m.idealUnprotectedReserveSol)) +
     row('On-chain distributed reserve', '', pay(m.onchainBase)) +
-    row('Ideal coverage bid', '', pay(m.idealCoverageBid)) +
+    row('Ideal bid coverage', '', pay(m.idealCoverageBid)) +
     divider() +
     row('Ideal required', '', pay(m.requiredIdeal), { boldValue: true }) +
     (m.topUpToIdeal > 0
@@ -205,9 +205,7 @@ export const renderBondBreakdownTooltip = (
           large: true,
           accent: 'yellow',
         })
-      : okRow(
-          'You have enough bond for ideal coverage; topping up further is advisable to absorb bid drain.',
-        ))
+      : okRow('Bond has enough coverage to receive more stake.'))
 
   return cta + wrapTable(tooltipHeader(header) + rates + base + tgt)
 }
