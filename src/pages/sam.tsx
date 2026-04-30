@@ -7,7 +7,7 @@ import { Navigation } from 'src/components/navigation/navigation'
 import { SamTable } from 'src/components/sam-table/sam-table'
 import {
   fetchAllNotifications,
-  fetchBroadcastNotifications,
+  fetchSamAuctionBroadcastNotifications,
 } from 'src/services/notifications'
 import { loadSam } from 'src/services/sam'
 
@@ -66,7 +66,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
 
   const { data: broadcastNotifications } = useQuery(
     'notifications-broadcast',
-    fetchBroadcastNotifications,
+    fetchSamAuctionBroadcastNotifications,
     {
       refetchInterval: 5 * 60 * 1000,
       keepPreviousData: true,

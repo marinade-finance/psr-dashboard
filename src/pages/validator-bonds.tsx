@@ -7,7 +7,7 @@ import { Navigation } from 'src/components/navigation/navigation'
 import { ValidatorBondsTable } from 'src/components/validator-bonds-table/validator-bonds-table'
 import {
   fetchAllNotifications,
-  fetchBroadcastNotifications,
+  fetchSamAuctionBroadcastNotifications,
 } from 'src/services/notifications'
 import { fetchValidatorsWithBonds } from 'src/services/validator-with-bond'
 import { selectTotalMarinadeStake } from 'src/services/validators'
@@ -20,7 +20,7 @@ export const ValidatorBondsPage: React.FC<UserLevelProps> = ({ level }) => {
   const { data, status } = useQuery('bonds', fetchValidatorsWithBonds)
   const { data: broadcastNotifications } = useQuery(
     'notifications-broadcast',
-    fetchBroadcastNotifications,
+    fetchSamAuctionBroadcastNotifications,
     {
       refetchInterval: 5 * 60 * 1000,
       keepPreviousData: true,

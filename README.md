@@ -62,7 +62,7 @@ curl -X POST https://marinade-notifications.marinade.finance/bonds-event-v1 \
       "bond_type": "bidding",
       "epoch": 800,
       "data": {
-        "message": "Your announcement text here.\nSecond line renders as a separate paragraph.",
+        "message": "Your announcement text here.\n\nSecond paragraph here.",
         "title": "Banner Title",
         "details": {}
       },
@@ -72,7 +72,7 @@ curl -X POST https://marinade-notifications.marinade.finance/bonds-event-v1 \
 ```
 
 - `data.title` — banner heading (falls back to "Announcement" when null)
-- `data.message` — banner body; newlines (`\n`) render as separate paragraphs
+- `data.message` — banner body; supports markdown. Single newlines (`\n`) render as line breaks; blank lines (`\n\n`) start a new paragraph.
 - `vote_account` — required by schema but ignored for announcements (they broadcast to all)
 
 ### Expiry

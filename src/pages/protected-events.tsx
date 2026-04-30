@@ -5,7 +5,7 @@ import { Banner } from 'src/components/banner/banner'
 import { Loader } from 'src/components/loader/loader'
 import { Navigation } from 'src/components/navigation/navigation'
 import { ProtectedEventsTable } from 'src/components/protected-events-table/protected-events-table'
-import { fetchBroadcastNotifications } from 'src/services/notifications'
+import { fetchSamAuctionBroadcastNotifications } from 'src/services/notifications'
 import { fetchProtectedEventsWithValidator } from 'src/services/validator-with-protected_event'
 
 import styles from './protected-events.module.css'
@@ -19,7 +19,7 @@ export const ProtectedEventsPage: React.FC<UserLevelProps> = ({ level }) => {
   )
   const { data: broadcastNotifications } = useQuery(
     'notifications-broadcast',
-    fetchBroadcastNotifications,
+    fetchSamAuctionBroadcastNotifications,
     {
       refetchInterval: 5 * 60 * 1000,
       keepPreviousData: true,

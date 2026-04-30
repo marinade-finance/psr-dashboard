@@ -33,6 +33,8 @@ const MARKDOWN_COMPONENTS = {
   ),
 }
 
+const urlTransform = (url: string): string => (/^https?:/i.test(url) ? url : '')
+
 export const Banner: React.FC<Props> = ({ title, body, ...tooltipsProps }) => {
   if (!title) {
     return null
@@ -48,6 +50,7 @@ export const Banner: React.FC<Props> = ({ title, body, ...tooltipsProps }) => {
             remarkPlugins={[remarkGfm, remarkBreaks]}
             allowedElements={ALLOWED_ELEMENTS}
             components={MARKDOWN_COMPONENTS}
+            urlTransform={urlTransform}
           >
             {body}
           </ReactMarkdown>

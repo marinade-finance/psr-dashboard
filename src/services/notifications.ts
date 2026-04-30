@@ -70,7 +70,7 @@ export async function fetchAllNotifications(
   return result
 }
 
-export async function fetchBroadcastNotifications(): Promise<
+export async function fetchSamAuctionBroadcastNotifications(): Promise<
   ValidatorNotification[]
 > {
   try {
