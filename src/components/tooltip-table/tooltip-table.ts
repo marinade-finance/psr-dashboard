@@ -94,8 +94,6 @@ export const stateClass = (c?: Color): string => {
   switch (c) {
     case Color.RED:
       return 'tt-state-red'
-    case Color.ORANGE:
-      return 'tt-state-orange'
     case Color.YELLOW:
       return 'tt-state-yellow'
     case Color.GREEN:

@@ -8,7 +8,6 @@ import {
   LogVerbosity,
 } from '@marinade.finance/ds-sam-sdk'
 
-import { Color } from 'src/components/table/table'
 import { formatPercentage } from 'src/format'
 
 import { fetchValidatorsWithEpochs } from './validators'
@@ -349,40 +348,6 @@ export const selectEffectiveBid = (validator: AuctionValidator) =>
 export const selectEffectiveCost = (validator: AuctionValidator) =>
   (validator.marinadeActivatedStakeSol / 1000) *
   validator.revShare.auctionEffectiveBidPmpe
-
-export const bondHealthColor = (
-  validator: AuctionValidator,
-): Color | undefined => {
-  if (!validator.auctionStake.marinadeSamTargetSol) {
-    return undefined
-  }
-  const health = selectBondHealth(validator)
-  if (health >= 13) {
-    return Color.GREEN
-  }
-  if (health >= 6) {
-    return Color.YELLOW
-  }
-  if (health >= 2) {
-    return Color.ORANGE
-  }
-  return Color.RED
-}
-
-export const bondTooltip = (color: Color) => {
-  switch (color) {
-    case Color.RED:
-      return 'Bond coverage critically low — undelegation imminent. Top up immediately.'
-    case Color.ORANGE:
-      return 'Bond coverage low — top up soon to avoid bond risk fee charges.'
-    case Color.YELLOW:
-      return 'Bond coverage moderate — top up to increase stake capacity.'
-    case Color.GREEN:
-      return 'Bond coverage healthy — bond is not limiting your stake.'
-    default:
-      return ''
-  }
-}
 
 export const selectActuallyUnprotectedStake = (
   auctionResult: AuctionResult,

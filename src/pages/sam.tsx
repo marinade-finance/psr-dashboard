@@ -10,6 +10,8 @@ import { fetchValidatorNames, loadSam } from 'src/services/sam'
 
 import styles from './sam.module.css'
 
+const EMPTY_NAMES = new Map<string, string>()
+
 import type { AuctionResult } from '@marinade.finance/ds-sam-sdk'
 import type { UserLevel } from 'src/components/navigation/navigation'
 import type { SourceDataOverrides } from 'src/services/sam'
@@ -185,7 +187,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
         {status === 'success' && displayAuctionResult && (
           <SamTable
             auctionResult={displayAuctionResult}
-            nameByVote={validatorNames ?? new Map()}
+            nameByVote={validatorNames ?? EMPTY_NAMES}
             tvlJoinApyDiff={data.tvlJoinApyDiff}
             tvlLeaveApyDiff={data.tvlLeaveApyDiff}
             backstopDiff={data.backstopDiff}

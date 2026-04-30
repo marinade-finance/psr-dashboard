@@ -32,10 +32,6 @@
   color: rgb(248, 113, 113);
 }
 
-.tt-cta.tt-state-orange {
-  color: rgb(251, 146, 60);
-}
-
 .tt-cta.tt-state-yellow {
   color: rgb(250, 204, 21);
 }
@@ -124,10 +120,6 @@
 
 .tt-accent-red {
   color: rgb(248, 113, 113);
-}
-
-.tt-accent-orange {
-  color: rgb(251, 146, 60);
 }
 
 .tt-accent-yellow {

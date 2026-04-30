@@ -8,7 +8,7 @@ import {
   tooltipHeader,
   wrapTable,
 } from 'src/components/tooltip-table/tooltip-table'
-import { formatSolAmount } from 'src/format'
+import { finite, pmpe, stake } from 'src/tooltips/format'
 
 import type {
   AuctionValidator,
@@ -20,17 +20,10 @@ import type {
 const TOL_COEF = 0.99999
 const SCALE_COEF = 1.5
 
-const pmpe = (x: number) => x.toFixed(5)
-const stake = (n: number) => `${formatSolAmount(n, 0)} ☉`
-const finite = (x: number | null | undefined): number =>
-  typeof x === 'number' && Number.isFinite(x) ? x : 0
-
 export type BidTooLowMetrics = {
   historyEpochs: number
-  permittedDeviation: number
   lastEpochBidPmpe: number
   thisEpochBidPmpe: number
-  threshold: number
   isNegativeBiddingChange: boolean
   effParticipatingBidPmpe: number
   worstHistoricalPmpe: number
@@ -38,7 +31,6 @@ export type BidTooLowMetrics = {
   adjustedLimit: number
   bondObligationPmpe: number
   shortfall: number
-  shortfallRatio: number
   penaltyCoef: number
   base: number
   penaltyPmpe: number
@@ -87,10 +79,8 @@ export const computeBidTooLowMetrics = (
 
   return {
     historyEpochs,
-    permittedDeviation,
     lastEpochBidPmpe,
     thisEpochBidPmpe,
-    threshold,
     isNegativeBiddingChange,
     effParticipatingBidPmpe,
     worstHistoricalPmpe: Number.isFinite(worstHistoricalPmpe)
@@ -100,7 +90,6 @@ export const computeBidTooLowMetrics = (
     adjustedLimit,
     bondObligationPmpe,
     shortfall,
-    shortfallRatio,
     penaltyCoef,
     base,
     penaltyPmpe,

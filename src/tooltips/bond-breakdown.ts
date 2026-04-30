@@ -9,20 +9,13 @@ import {
   tooltipHeader,
   wrapTable,
 } from 'src/components/tooltip-table/tooltip-table'
-import { formatSolAmount } from 'src/format'
+import { finite, pay, pmpe, stake } from 'src/tooltips/format'
 
 import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
 
 const LABEL_EXP_MAX_BID = 'Expected max effective bid PMPE'
 const LABEL_ONCHAIN_PMPE = 'On-chain distributed rewards PMPE'
 const LABEL_PROJ_EXPOSED = 'Projected exposed stake'
-
-const pay = (n: number) => `${formatSolAmount(Math.round(n), 2)} ☉`
-const stake = (n: number) => `${formatSolAmount(n, 0)} ☉`
-const pmpe = (x: number) => x.toFixed(5)
-
-const finite = (x: number | null | undefined): number =>
-  typeof x === 'number' && Number.isFinite(x) ? x : 0
 
 export type BondMetrics = {
   minEp: number
@@ -141,10 +134,6 @@ const statusLine = (
       return topUpToMin > 0
         ? `Penalty imminent. Top up ${pay(topUpToMin)} to avoid it.`
         : 'Penalty imminent. Top up to avoid it.'
-    case Color.ORANGE:
-      return topUpToMin > 0
-        ? `Penalty risk. Top up ${pay(topUpToMin)} to prevent it.`
-        : 'Penalty risk. Top up to prevent it.'
     case Color.YELLOW:
       return topUpToIdeal > 0
         ? `Bond covers current stake. Top up ${pay(topUpToIdeal)} for more stake.`
