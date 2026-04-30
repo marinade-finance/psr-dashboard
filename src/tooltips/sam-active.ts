@@ -152,12 +152,14 @@ export function renderSamActiveTooltip(
     tableHead(['', 'PMPE', 'Stake (☉)', 'Cost (☉)']) +
     chargeRow('St. Bid', formatSolAmount(m.bid, 4), '', '') +
     chargeRow('Eff. Bid', formatSolAmount(m.effBid, 4), '', '') +
-    chargeRow(
-      'Activating charge',
-      '',
-      `~${formatSolAmount(m.activating, 0)}`,
-      formatSolAmount(m.activatingCost, 3),
-    ) +
+    (m.activating > 0
+      ? chargeRow(
+          'Activating charge',
+          '',
+          `~${formatSolAmount(m.activating, 0)}`,
+          formatSolAmount(m.activatingCost, 3),
+        )
+      : '') +
     chargeRow(
       'Active charge',
       '',
