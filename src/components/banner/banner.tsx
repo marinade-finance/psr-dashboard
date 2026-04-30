@@ -26,11 +26,14 @@ const ALLOWED_ELEMENTS = [
 ]
 
 const MARKDOWN_COMPONENTS = {
-  a: ({ href, children }: { href?: string; children?: React.ReactNode }) => (
-    <a href={href} target="_blank" rel="noopener noreferrer">
-      {children}
-    </a>
-  ),
+  a: ({ href, children }: { href?: string; children?: React.ReactNode }) =>
+    href ? (
+      <a href={href} target="_blank" rel="noopener noreferrer">
+        {children}
+      </a>
+    ) : (
+      <>{children}</>
+    ),
 }
 
 const urlTransform = (url: string): string => (/^https?:/i.test(url) ? url : '')
