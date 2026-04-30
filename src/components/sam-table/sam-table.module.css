@@ -117,6 +117,21 @@
   overflow: hidden;
 }
 
+.nameCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 160px;
+}
+
+.nameText {
+  display: inline-block;
+  max-width: 140px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
 .pubkeySimulated {
   font-weight: bold;
   font-style: italic;

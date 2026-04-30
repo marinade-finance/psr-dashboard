@@ -11,6 +11,8 @@ interface CssExports {
   'inputPlaceholder': string;
   'metricRow': string;
   'metricWrap': string;
+  'nameCell': string;
+  'nameText': string;
   'orderCell': string;
   'penalties': string;
   'penaltyBadge': string;

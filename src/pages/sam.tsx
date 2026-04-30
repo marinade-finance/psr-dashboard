@@ -179,6 +179,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
         {status === 'success' && displayAuctionResult && (
           <SamTable
             auctionResult={displayAuctionResult}
+            nameByVote={data.nameByVote}
             tvlJoinApyDiff={data.tvlJoinApyDiff}
             tvlLeaveApyDiff={data.tvlLeaveApyDiff}
             backstopDiff={data.backstopDiff}

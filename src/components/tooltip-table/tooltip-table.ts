@@ -113,8 +113,18 @@ export const ctaBlock = (p: {
 }): string => {
   const st = stateClass(p.state)
   const lead = p.lead ? `<div class="tt-cta-lead">${p.lead}</div>` : ''
-  const cta = p.cta ? `<div class="tt-cta ${st}">${p.cta}</div>` : ''
-  return `<div class="tt-cta-label">${p.label}</div>${lead}${cta}`
+  let ctaLead = ''
+  let ctaMain = ''
+  if (p.cta) {
+    const parts = p.cta.split(/(?<=\.)\s+(?=[A-Z])/)
+    if (parts.length > 1) {
+      ctaLead = `<div class="tt-cta-lead">${parts.slice(0, -1).join(' ')}</div>`
+      ctaMain = `<div class="tt-cta ${st}">${parts[parts.length - 1]}</div>`
+    } else {
+      ctaMain = `<div class="tt-cta ${st}">${p.cta}</div>`
+    }
+  }
+  return `<div class="tt-cta-label">${p.label}</div>${lead}${ctaLead}${ctaMain}`
 }
 
 export const wrapTable = (body: string): string =>
