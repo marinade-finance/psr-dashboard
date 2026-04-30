@@ -16,10 +16,3 @@
   badge somewhere on the row that aggregates the actionable line from
   all three tooltips (bid-too-low, bond-breakdown, SAM Active) into one
   short status. We don't know the right shape yet.
-
-- **Disentangle CTA copy by purpose** (red/orange = avoid penalty on
-  current *active* stake; yellow = top up for more *target* stake;
-  green = ideal). Today "Runway critical. Review bond setup to retain
-  stake." conflates penalty avoidance with stake retention — validators
-  see SAM Active showing a stable (already-reduced) target and assume
-  the bond tooltip is wrong. Penalty math itself is correct and stays.
