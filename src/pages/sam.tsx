@@ -275,6 +275,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
             stakeChanges={stakeChanges}
             rank={sheetValidatorData.rank}
             totalValidators={sheetValidatorData.totalValidators}
+            isSimulated={simulatedValidators.has(selectedValidator ?? '')}
             onClose={handleBack}
             onSimulate={handleDetailSimulate}
             onClearSimulation={

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 
 import { BidPenaltyBreakdown } from 'src/components/breakdowns/bid-penalty'
 import { BondCoverageBreakdown } from 'src/components/breakdowns/bond-coverage'
@@ -13,13 +13,16 @@ import {
   computeBidPenaltyMetrics,
 } from 'src/services/breakdowns'
 import { HELP_TEXT } from 'src/services/help-text'
-import { selectVoteAccount, selectWinningAPY } from 'src/services/sam'
+import {
+  selectExpectedStakeChange,
+  selectVoteAccount,
+  selectWinningAPY,
+} from 'src/services/sam'
 import {
   getApyBreakdown,
   getValidatorTip,
   getTipStyle,
   calculateBondUtilization,
-  formatStakeDelta,
 } from 'src/services/tip-engine'
 
 import type {
@@ -37,6 +40,7 @@ interface ValidatorDetailProps {
   stakeChanges: Map<string, number>
   rank: number
   totalValidators: number
+  isSimulated?: boolean
   onClose: () => void
   onSimulate: (
     inflationCommission: number | null,
@@ -59,6 +63,7 @@ export const ValidatorDetail = ({
   stakeChanges,
   rank,
   totalValidators,
+  isSimulated = false,
   onClose,
   onSimulate,
   onClearSimulation,
@@ -78,7 +83,10 @@ export const ValidatorDetail = ({
   )
   const tip = getValidatorTip(validator, winningApy, epochsPerYear)
   const tipStyle = getTipStyle(tip.urgency)
-  const delta = formatStakeDelta(validator)
+  const expectedStakeDelta = selectExpectedStakeChange(
+    voteAccount,
+    stakeChanges,
+  )
   const bidPenalty = useMemo(
     () => computeBidPenaltyMetrics(validator, dsSamConfig, winningTotalPmpe),
     [validator, dsSamConfig, winningTotalPmpe],
@@ -104,19 +112,43 @@ export const ValidatorDetail = ({
       ? (validator.blockRewardsCommissionDec * 100).toString()
       : '',
   )
+  const [simEnabled, setSimEnabled] = useState(isSimulated)
 
-  const handleRunSimulation = () => {
-    const bidValue = parseFloat(editBid)
-    const inflationValue = parseFloat(editInflation) / 100
-    const mevValue = editMev ? parseFloat(editMev) / 100 : null
-    const blockValue = editBlock ? parseFloat(editBlock) / 100 : null
+  // Auto-sync the toggle when the parent simulation state changes (e.g. user
+  // clears all simulations elsewhere).
+  useEffect(() => {
+    if (isSimulated) setSimEnabled(true)
+  }, [isSimulated])
 
-    onSimulate(
-      !isNaN(inflationValue) ? inflationValue : null,
-      mevValue,
-      blockValue,
-      !isNaN(bidValue) ? bidValue : null,
-    )
+  // Debounced auto-recalc whenever inputs change while simulation is enabled.
+  // 400ms covers fast number-input arrow clicking without thrashing the SDK.
+  const firstRun = useRef(true)
+  useEffect(() => {
+    if (!simEnabled) return undefined
+    if (firstRun.current) {
+      firstRun.current = false
+      // Don't auto-fire on the very first enable — only on subsequent edits.
+      return undefined
+    }
+    const t = setTimeout(() => {
+      const bidValue = parseFloat(editBid)
+      const inflationValue = parseFloat(editInflation) / 100
+      const mevValue = editMev ? parseFloat(editMev) / 100 : null
+      const blockValue = editBlock ? parseFloat(editBlock) / 100 : null
+      onSimulate(
+        !isNaN(inflationValue) ? inflationValue : null,
+        mevValue,
+        blockValue,
+        !isNaN(bidValue) ? bidValue : null,
+      )
+    }, 400)
+    return () => clearTimeout(t)
+  }, [simEnabled, editBid, editInflation, editMev, editBlock, onSimulate])
+
+  const handleSimToggle = (enabled: boolean) => {
+    setSimEnabled(enabled)
+    firstRun.current = true
+    if (!enabled && onClearSimulation) onClearSimulation()
   }
 
   const rankFactors = useMemo(() => {
@@ -133,8 +165,8 @@ export const ValidatorDetail = ({
       value: formatPercentage(currentMaxApy, 2),
       note:
         apyMargin >= 0
-          ? `+${formatPercentage(apyMargin, 2)} above cutoff`
-          : `${formatPercentage(apyMargin, 2)} below cutoff`,
+          ? `+${formatPercentage(apyMargin, 2)} above winning APY`
+          : `${formatPercentage(apyMargin, 2)} below winning APY`,
       impact: apyMargin >= 0 ? 'positive' : 'negative',
     })
 
@@ -152,18 +184,23 @@ export const ValidatorDetail = ({
 
     const samActive = validator.marinadeActivatedStakeSol
     const samTarget = validator.auctionStake.marinadeSamTargetSol
-    const stakeGrowth = samTarget - samActive
+    const expectedDelta = selectExpectedStakeChange(voteAccount, stakeChanges)
+    const deltaText =
+      expectedDelta > 0
+        ? `+${formatSolAmount(expectedDelta, 0)} SOL next epoch`
+        : expectedDelta < 0
+          ? `${formatSolAmount(expectedDelta, 0)} SOL next epoch`
+          : 'No change next epoch'
     factors.push({
-      name: 'Stake target',
-      value: `${formatSolAmount(samTarget, 0)} SOL`,
-      note:
-        stakeGrowth > 0
-          ? `Gaining ${formatSolAmount(stakeGrowth, 0)} SOL next epoch`
-          : stakeGrowth < 0
-            ? `Losing ${formatSolAmount(Math.abs(stakeGrowth), 0)} SOL`
-            : 'At target allocation',
+      name: 'Stake',
+      value: `${formatSolAmount(samActive, 0)} SOL`,
+      note: `${deltaText} · target ${formatSolAmount(samTarget, 0)} SOL`,
       impact:
-        stakeGrowth > 0 ? 'positive' : stakeGrowth < 0 ? 'negative' : 'neutral',
+        expectedDelta > 0
+          ? 'positive'
+          : expectedDelta < 0
+            ? 'negative'
+            : 'neutral',
     })
 
     const blockProd =
@@ -178,7 +215,15 @@ export const ValidatorDetail = ({
     })
 
     return factors
-  }, [validator, currentMaxApy, winningApy, bondUtilPct, bondRunway])
+  }, [
+    validator,
+    voteAccount,
+    stakeChanges,
+    currentMaxApy,
+    winningApy,
+    bondUtilPct,
+    bondRunway,
+  ])
 
   const positionPct = inSet
     ? ((totalValidators - rank + 1) / totalValidators) * 100
@@ -193,9 +238,19 @@ export const ValidatorDetail = ({
     >
       <SheetContent
         side="right"
-        className="w-full max-w-4xl overflow-y-auto p-0"
+        className={`w-full max-w-4xl overflow-y-auto p-0 ${
+          isSimulated
+            ? 'border-t-4 border-t-[var(--status-yellow,#b58900)]'
+            : ''
+        }`}
       >
-        <div className="flex items-start justify-between px-4 sm:px-6 py-4 border-b border-border sticky top-0 bg-background z-10 gap-2">
+        <div
+          className={`flex items-start justify-between px-4 sm:px-6 py-4 border-b border-border sticky top-0 z-10 gap-2 ${
+            isSimulated
+              ? 'bg-[var(--status-yellow-light,rgba(181,137,0,0.06))]'
+              : 'bg-background'
+          }`}
+        >
           <div className="flex flex-col gap-1.5 min-w-0">
             <button
               className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors self-start"
@@ -235,16 +290,53 @@ export const ValidatorDetail = ({
               >
                 {inSet ? 'In Set' : 'Out of Set'}
               </span>
+              {isSimulated && (
+                <span
+                  className="px-2 py-0.5 rounded-md text-xs font-semibold shrink-0 uppercase tracking-wide"
+                  style={{
+                    background:
+                      'var(--status-yellow-light, rgba(181,137,0,0.18))',
+                    color: 'var(--status-yellow, #b58900)',
+                  }}
+                  title="This validator's metrics reflect simulated commission/bid overrides"
+                >
+                  Simulated
+                </span>
+              )}
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="text-muted-foreground hover:text-foreground shrink-0"
-          >
-            &times;
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <label
+              className="flex items-center gap-2 text-xs font-medium cursor-pointer select-none"
+              title="When enabled, edits to commission/bid below auto-recalculate the auction"
+            >
+              <span className="text-muted-foreground">Simulate</span>
+              <span
+                role="switch"
+                aria-checked={simEnabled}
+                onClick={() => handleSimToggle(!simEnabled)}
+                className={`relative inline-block w-9 h-5 rounded-full transition-colors ${
+                  simEnabled
+                    ? 'bg-[var(--status-yellow,#b58900)]'
+                    : 'bg-secondary'
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                    simEnabled ? 'translate-x-4' : 'translate-x-0.5'
+                  }`}
+                />
+              </span>
+            </label>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              &times;
+            </Button>
+          </div>
         </div>
 
         <div className="border-b border-border bg-background sticky top-[73px] z-[5]">
@@ -281,6 +373,7 @@ export const ValidatorDetail = ({
               dsSamConfig={dsSamConfig}
               winningTotalPmpe={winningTotalPmpe}
               bondState={bondHealth}
+              isSimulated={isSimulated}
             />
           </div>
         )}
@@ -290,6 +383,7 @@ export const ValidatorDetail = ({
             <SamRevenueBreakdown
               validator={validator}
               stakeChanges={stakeChanges}
+              isSimulated={isSimulated}
             />
           </div>
         )}
@@ -300,6 +394,7 @@ export const ValidatorDetail = ({
               validator={validator}
               dsSamConfig={dsSamConfig}
               winningTotalPmpe={winningTotalPmpe}
+              isSimulated={isSimulated}
             />
           </div>
         )}
@@ -380,73 +475,45 @@ export const ValidatorDetail = ({
 
             <div className="bg-card rounded-xl border border-border p-5">
               <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
-                APY Composition
+                Max APY Composition
                 <HelpTip text={HELP_TEXT.maxApy} />
               </h3>
-              <div className="flex h-4 rounded-full overflow-hidden mt-3">
-                <div
-                  className="transition-all"
-                  style={{
-                    width: `${(apyBreakdown.inflation / apyBreakdown.total) * 100}%`,
-                    background: 'var(--chart-1)',
-                  }}
-                  title={`Inflation: ${formatPercentage(apyBreakdown.inflation, 2)}`}
-                />
-                <div
-                  className="transition-all"
-                  style={{
-                    width: `${(apyBreakdown.mev / apyBreakdown.total) * 100}%`,
-                    background: 'var(--chart-2)',
-                  }}
-                  title={`MEV: ${formatPercentage(apyBreakdown.mev, 2)}`}
-                />
-                <div
-                  className="transition-all"
-                  style={{
-                    width: `${(apyBreakdown.blockRewards / apyBreakdown.total) * 100}%`,
-                    background: 'var(--chart-3)',
-                  }}
-                  title={`Block Rewards: ${formatPercentage(apyBreakdown.blockRewards, 2)}`}
-                />
-                <div
-                  className="transition-all"
-                  style={{
-                    width: `${(apyBreakdown.stakeBid / apyBreakdown.total) * 100}%`,
-                    background: 'var(--chart-4)',
-                  }}
-                  title={`Stake Bid: ${formatPercentage(apyBreakdown.stakeBid, 2)}`}
-                />
-              </div>
-              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
-                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <span
-                    className="w-2 h-2 rounded-full shrink-0"
-                    style={{ background: 'var(--chart-1)' }}
-                  />
-                  Inflation {formatPercentage(apyBreakdown.inflation, 2)}
-                </span>
-                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <span
-                    className="w-2 h-2 rounded-full shrink-0"
-                    style={{ background: 'var(--chart-2)' }}
-                  />
-                  MEV {formatPercentage(apyBreakdown.mev, 2)}
-                </span>
-                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <span
-                    className="w-2 h-2 rounded-full shrink-0"
-                    style={{ background: 'var(--chart-3)' }}
-                  />
-                  Blocks {formatPercentage(apyBreakdown.blockRewards, 2)}
-                </span>
-                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <span
-                    className="w-2 h-2 rounded-full shrink-0"
-                    style={{ background: 'var(--chart-4)' }}
-                  />
-                  Bid {formatPercentage(apyBreakdown.stakeBid, 2)}
-                </span>
-              </div>
+              <p className="text-xs text-muted-foreground mt-1 mb-3">
+                Where this validator's max APY comes from. Sum is what they
+                bring to the auction.
+              </p>
+              <table className="w-full">
+                <tbody>
+                  {(
+                    [
+                      ['Inflation', apyBreakdown.inflation],
+                      ['MEV', apyBreakdown.mev],
+                      ['Block rewards', apyBreakdown.blockRewards],
+                      ['Stake bid', apyBreakdown.stakeBid],
+                    ] as const
+                  ).map(([label, val]) => (
+                    <tr
+                      key={label}
+                      className="border-b border-border-grid/50 last:border-0"
+                    >
+                      <td className="py-1.5 pr-2 text-[12px] text-muted-foreground">
+                        {label}
+                      </td>
+                      <td className="py-1.5 pl-2 text-right font-mono text-[12px]">
+                        {formatPercentage(val, 2)}
+                      </td>
+                    </tr>
+                  ))}
+                  <tr>
+                    <td className="pt-2 pr-2 text-[13px] font-semibold">
+                      Total
+                    </td>
+                    <td className="pt-2 pl-2 text-right font-mono text-[13px] font-semibold text-primary">
+                      {formatPercentage(apyBreakdown.total, 2)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
             <div className="bg-card rounded-xl border border-border p-5">
@@ -470,7 +537,17 @@ export const ValidatorDetail = ({
                 What-If Simulation
                 <HelpTip text={HELP_TEXT.simulation} />
               </h3>
-              <div className="space-y-3 mt-3">
+              {!simEnabled && (
+                <p className="text-xs text-muted-foreground mt-1 mb-3">
+                  Toggle{' '}
+                  <span className="font-medium text-foreground">Simulate</span>{' '}
+                  in the header to edit values. Changes auto-recalculate.
+                </p>
+              )}
+              <fieldset
+                disabled={!simEnabled}
+                className={`space-y-3 mt-3 transition-opacity ${simEnabled ? '' : 'opacity-50'}`}
+              >
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-muted-foreground">
                     Stake Bid (PMPE)
@@ -528,27 +605,35 @@ export const ValidatorDetail = ({
                     className="font-mono"
                   />
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    className="flex-1"
-                    onClick={handleRunSimulation}
-                    disabled={isCalculating}
-                  >
-                    {isCalculating ? 'Simulating...' : 'Run Simulation'}
-                  </Button>
+              </fieldset>
+              {simEnabled && (
+                <div className="flex items-center justify-between gap-2 mt-3 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1.5">
+                    {isCalculating ? (
+                      <>
+                        <span className="inline-block w-2 h-2 rounded-full bg-[var(--status-yellow,#b58900)] animate-pulse" />
+                        Recalculating…
+                      </>
+                    ) : (
+                      <>
+                        <span className="inline-block w-2 h-2 rounded-full bg-[var(--status-green,#2aa198)]" />
+                        Auto-recalc on change
+                      </>
+                    )}
+                  </span>
                   {onClearSimulation && (
                     <Button
-                      variant="outline"
-                      className="text-destructive border-destructive/40 hover:bg-destructive/5"
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:bg-destructive/5 h-7 px-2"
                       onClick={onClearSimulation}
                       disabled={isCalculating}
-                      title="Remove this validator from simulation"
                     >
-                      Restore
+                      Reset to actual
                     </Button>
                   )}
                 </div>
-              </div>
+              )}
             </div>
 
             <div className="bg-card rounded-xl border border-border p-5">
@@ -612,13 +697,22 @@ export const ValidatorDetail = ({
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">
-                    Stake Delta
+                    Expected Δ next epoch
                   </span>
                   <span
                     className="text-sm font-semibold font-mono"
-                    style={{ color: delta.color }}
+                    style={{
+                      color:
+                        expectedStakeDelta > 0
+                          ? 'var(--status-green, #2aa198)'
+                          : expectedStakeDelta < 0
+                            ? 'var(--destructive)'
+                            : 'var(--muted-foreground)',
+                    }}
                   >
-                    {delta.arrow} {delta.text}
+                    {expectedStakeDelta === 0
+                      ? '—'
+                      : `${expectedStakeDelta > 0 ? '+' : ''}${formatSolAmount(expectedStakeDelta, 0)} SOL`}
                   </span>
                 </div>
               </div>

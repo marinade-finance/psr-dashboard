@@ -15,6 +15,7 @@ type Props = {
   dsSamConfig: DsSamConfig
   winningTotalPmpe: number
   bondState: BondHealthState
+  isSimulated?: boolean
 }
 
 const statusLine = (
@@ -106,6 +107,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
   dsSamConfig,
   winningTotalPmpe,
   bondState,
+  isSimulated,
 }) => {
   const m = computeBondCoverageMetrics(
     validator,
@@ -125,6 +127,11 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
   return (
     <div className="bg-card rounded-xl border border-border p-5">
       <h3 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
+        {isSimulated && (
+          <span className="text-[var(--status-yellow,#b58900)]">
+            Simulated ·
+          </span>
+        )}
         Bond Coverage Calculation
         <HelpTip text="Mirrors the SDK fee-trigger threshold: claimable bond ≥ minUnprotectedReserve + projectedExposed × minBondPmpe / 1000. The two sections show coverage at minimum (penalty floor) and ideal (capacity for more stake) horizons." />
       </h3>

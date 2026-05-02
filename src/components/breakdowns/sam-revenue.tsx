@@ -9,6 +9,7 @@ import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
 type Props = {
   validator: AuctionValidator
   stakeChanges: Map<string, number>
+  isSimulated?: boolean
 }
 
 const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
@@ -59,6 +60,7 @@ const Row: React.FC<{
 export const SamRevenueBreakdown: React.FC<Props> = ({
   validator,
   stakeChanges,
+  isSimulated,
 }) => {
   const m = computeSamRevenueMetrics(validator, stakeChanges)
   const deltaAccent = m.delta > 0 ? 'green' : m.delta < 0 ? 'red' : undefined
@@ -68,6 +70,11 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
   return (
     <div className="bg-card rounded-xl border border-border p-5">
       <h3 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
+        {isSimulated && (
+          <span className="text-[var(--status-yellow,#b58900)]">
+            Simulated ·
+          </span>
+        )}
         SAM Revenue Breakdown
         <HelpTip text="Per-component breakdown of effective bid (PMPE) and the SOL cost per epoch on active and activating stake." />
       </h3>
