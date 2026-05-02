@@ -1,16 +1,21 @@
 import React, { useMemo, useState } from 'react'
 
+import { BidPenaltyBreakdown } from 'src/components/breakdowns/bid-penalty'
+import { BondCoverageBreakdown } from 'src/components/breakdowns/bond-coverage'
+import { SamRevenueBreakdown } from 'src/components/breakdowns/sam-revenue'
 import { HelpTip } from 'src/components/help-tip/help-tip'
 import { Button } from 'src/components/ui/button'
 import { Input } from 'src/components/ui/input'
 import { Sheet, SheetContent } from 'src/components/ui/sheet'
 import { formatPercentage, formatSolAmount } from 'src/format'
+import {
+  bondHealthFromAuction,
+  computeBidPenaltyMetrics,
+} from 'src/services/breakdowns'
 import { HELP_TEXT } from 'src/services/help-text'
 import { selectVoteAccount, selectWinningAPY } from 'src/services/sam'
 import {
   getApyBreakdown,
-  getBondHealth,
-  getBondHealthStyle,
   getValidatorTip,
   getTipStyle,
   calculateBondUtilization,
@@ -29,6 +34,7 @@ interface ValidatorDetailProps {
   dsSamConfig: DsSamConfig
   epochsPerYear: number
   nameMap?: Map<string, { name?: string }>
+  stakeChanges: Map<string, number>
   rank: number
   totalValidators: number
   onClose: () => void
@@ -42,11 +48,15 @@ interface ValidatorDetailProps {
   isCalculating: boolean
 }
 
+type Tab = 'overview' | 'bond' | 'revenue' | 'penalty'
+
 export const ValidatorDetail = ({
   validator,
   auctionResult,
+  dsSamConfig,
   epochsPerYear,
   nameMap,
+  stakeChanges,
   rank,
   totalValidators,
   onClose,
@@ -57,14 +67,25 @@ export const ValidatorDetail = ({
   const voteAccount = selectVoteAccount(validator)
   const validatorName = nameMap?.get(voteAccount)?.name
   const winningApy = selectWinningAPY(auctionResult, epochsPerYear)
+  const winningTotalPmpe = auctionResult.winningTotalPmpe
   const apyBreakdown = getApyBreakdown(validator, epochsPerYear)
   const bondUtilPct = calculateBondUtilization(validator)
   const bondRunway = validator.bondGoodForNEpochs ?? 0
-  const bondHealth = getBondHealth(bondUtilPct, bondRunway)
-  const healthStyle = getBondHealthStyle(bondHealth)
+  const bondHealth = bondHealthFromAuction(
+    validator,
+    dsSamConfig,
+    winningTotalPmpe,
+  )
   const tip = getValidatorTip(validator, winningApy, epochsPerYear)
   const tipStyle = getTipStyle(tip.urgency)
   const delta = formatStakeDelta(validator)
+  const bidPenalty = useMemo(
+    () => computeBidPenaltyMetrics(validator, dsSamConfig, winningTotalPmpe),
+    [validator, dsSamConfig, winningTotalPmpe],
+  )
+  const showPenaltyTab =
+    bidPenalty.isNegativeBiddingChange || bidPenalty.penaltyPmpe > 0
+  const [tab, setTab] = useState<Tab>('overview')
 
   const inSet = validator.auctionStake.marinadeSamTargetSol > 0
   const currentMaxApy = apyBreakdown.total
@@ -226,7 +247,66 @@ export const ValidatorDetail = ({
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
+        <div className="border-b border-border bg-background sticky top-[73px] z-[5]">
+          <div className="flex gap-1 px-4 sm:px-6 overflow-x-auto">
+            {(
+              [
+                ['overview', 'Overview'],
+                ['bond', 'Bond Coverage'],
+                ['revenue', 'Revenue Breakdown'],
+                ...(showPenaltyTab
+                  ? [['penalty', 'Bid Penalty'] as [Tab, string]]
+                  : []),
+              ] satisfies [Tab, string][]
+            ).map(([id, label]) => (
+              <button
+                key={id}
+                onClick={() => setTab(id)}
+                className={`px-3 py-2.5 text-[13px] font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  tab === id
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {tab === 'bond' && (
+          <div className="p-4 sm:p-6">
+            <BondCoverageBreakdown
+              validator={validator}
+              dsSamConfig={dsSamConfig}
+              winningTotalPmpe={winningTotalPmpe}
+              bondState={bondHealth}
+            />
+          </div>
+        )}
+
+        {tab === 'revenue' && (
+          <div className="p-4 sm:p-6">
+            <SamRevenueBreakdown
+              validator={validator}
+              stakeChanges={stakeChanges}
+            />
+          </div>
+        )}
+
+        {tab === 'penalty' && showPenaltyTab && (
+          <div className="p-4 sm:p-6">
+            <BidPenaltyBreakdown
+              validator={validator}
+              dsSamConfig={dsSamConfig}
+              winningTotalPmpe={winningTotalPmpe}
+            />
+          </div>
+        )}
+
+        <div
+          className={`grid grid-cols-1 lg:grid-cols-2 gap-6 p-6 ${tab === 'overview' ? '' : 'hidden'}`}
+        >
           <div className="space-y-6">
             <div className="bg-card rounded-xl border border-border p-5">
               <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
@@ -473,42 +553,36 @@ export const ValidatorDetail = ({
 
             <div className="bg-card rounded-xl border border-border p-5">
               <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
-                Bond Health
+                Bond Snapshot
                 <HelpTip text={HELP_TEXT.bondHealth} />
               </h3>
-              <div className="mt-3">
+              <div className="mt-3 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span
-                    className="px-2 py-0.5 rounded-md text-xs font-medium"
-                    style={{
-                      color: healthStyle.color,
-                      background: healthStyle.bg,
-                    }}
-                  >
-                    {healthStyle.label}
-                  </span>
-                  <span className="text-sm font-mono">
+                  <span className="text-xs text-muted-foreground">Balance</span>
+                  <span className="text-sm font-semibold font-mono">
                     {formatSolAmount(validator.bondBalanceSol, 0)} SOL
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-3 mt-3">
-                  <div>
-                    <span className="text-xs text-muted-foreground">
-                      Utilization
-                    </span>
-                    <div className="text-sm font-semibold font-mono">
-                      {bondUtilPct.toFixed(1)}%
-                    </div>
-                  </div>
-                  <div>
-                    <span className="text-xs text-muted-foreground">
-                      Runway
-                    </span>
-                    <div className="text-sm font-semibold font-mono">
-                      ~{Math.round(bondRunway)} epochs
-                    </div>
-                  </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    Utilization
+                  </span>
+                  <span className="text-sm font-semibold font-mono">
+                    {bondUtilPct.toFixed(1)}%
+                  </span>
                 </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Runway</span>
+                  <span className="text-sm font-semibold font-mono">
+                    ~{Math.round(bondRunway)} epochs
+                  </span>
+                </div>
+                <button
+                  className="text-xs text-primary hover:underline"
+                  onClick={() => setTab('bond')}
+                >
+                  See full bond coverage breakdown →
+                </button>
               </div>
             </div>
 

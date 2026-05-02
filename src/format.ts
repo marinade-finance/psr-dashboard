@@ -43,5 +43,12 @@ export const formatBps = (
   return formatPercentage(amount / BPS_IN_100_PERCENT, fractionDigits, maxValue)
 }
 
+export const finite = (x: number | null | undefined): number =>
+  typeof x === 'number' && Number.isFinite(x) ? x : 0
+
+export const pmpe = (x: number) => x.toFixed(5)
+export const stake = (n: number) => `${formatSolAmount(n, 0)} ☉`
+export const pay = (n: number) => `${formatSolAmount(Math.round(n), 2)} ☉`
+
 export const lamportsToSol = (lamports: string) =>
   lamports.padStart(10, '0').replace(/(.{9})$/, '.$1')

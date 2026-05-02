@@ -350,7 +350,6 @@ export const selectTargetProtectedPct = (
   return 1 - selectActuallyUnprotectedStake(auctionResult) / totalTarget
 }
 
-
 export const selectStakeDelta = stakeDelta
 
 export type Recommendation = { text: string; severity: string }

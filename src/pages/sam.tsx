@@ -272,6 +272,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
             dsSamConfig={data.dcSamConfig}
             epochsPerYear={data.epochsPerYear}
             nameMap={nameMap}
+            stakeChanges={stakeChanges}
             rank={sheetValidatorData.rank}
             totalValidators={sheetValidatorData.totalValidators}
             onClose={handleBack}

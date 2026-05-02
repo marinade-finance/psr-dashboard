@@ -11,6 +11,7 @@ import {
   TableCell,
 } from 'src/components/ui/table'
 import { formatPercentage, formatSolAmount } from 'src/format'
+import { bondHealthFromAuction } from 'src/services/breakdowns'
 import { HELP_TEXT } from 'src/services/help-text'
 import {
   selectBondSize,
@@ -29,7 +30,6 @@ import {
 } from 'src/services/simulation'
 import {
   getApyBreakdown,
-  getBondHealth,
   getBondHealthStyle,
   getValidatorTip,
   getTipStyle,
@@ -41,6 +41,7 @@ import type { UserLevel } from '../navigation/navigation'
 import type {
   AuctionResult,
   AuctionValidator,
+  DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
 import type { PendingEdits } from 'src/services/simulation'
 
@@ -105,6 +106,7 @@ type Props = {
   auctionResult: AuctionResult
   originalAuctionResult: AuctionResult | null
   epochsPerYear: number
+  dsSamConfig: DsSamConfig
   level: UserLevel
   simulatedValidators?: Set<string>
   isCalculating: boolean
@@ -207,6 +209,7 @@ export const SamTable: React.FC<Props> = ({
   auctionResult,
   originalAuctionResult,
   epochsPerYear,
+  dsSamConfig,
   level: _level,
   simulatedValidators = new Set(),
   isCalculating,
@@ -216,6 +219,7 @@ export const SamTable: React.FC<Props> = ({
   onClearValidator,
   onResetSimulation,
 }) => {
+  const winningTotalPmpe = auctionResult.winningTotalPmpe
   const {
     auctionData: { validators },
   } = auctionResult
@@ -257,15 +261,11 @@ export const SamTable: React.FC<Props> = ({
     () =>
       validators
         .filter(validator => selectBondSize(validator) > 0)
-        .map(v => {
-          const bondUtilPct = calculateBondUtilization(v)
-          const bondRunway = v.bondGoodForNEpochs ?? 0
-          return {
-            ...v,
-            bondHealth: getBondHealth(bondUtilPct, bondRunway),
-          }
-        }),
-    [validators],
+        .map(v => ({
+          ...v,
+          bondHealth: bondHealthFromAuction(v, dsSamConfig, winningTotalPmpe),
+        })),
+    [validators, dsSamConfig, winningTotalPmpe],
   )
 
   // Sort validators based on current sort column and direction
@@ -330,9 +330,10 @@ export const SamTable: React.FC<Props> = ({
       orig =>
         ({
           ...orig,
-          bondHealth: getBondHealth(
-            calculateBondUtilization(orig),
-            orig.bondGoodForNEpochs ?? 0,
+          bondHealth: bondHealthFromAuction(
+            orig,
+            dsSamConfig,
+            winningTotalPmpe,
           ),
         }) as ValidatorWithBondState,
     )
