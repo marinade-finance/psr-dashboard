@@ -116,7 +116,7 @@ under "Charge this epoch":
 
 - **Active charge** &mdash; bid paid on currently activated Marinade stake
   (`marinadeActivatedStakeSol`), at the effective bid rate (Eff. Bid PMPE).
-- **Activating charge** &mdash; bid paid on stake that is being activated *into* the
+- **Activating charge** &mdash; bid paid on stake that is being activated _into_ the
   validator this epoch (the positive expected delta toward SAM Target), at
   `revShare.activatingStakePmpe = max(0, bidPmpe − auctionEffectiveBidPmpe)`. The
   charge scales with the gap between St. Bid and Eff. Bid so a validator can't dodge
@@ -127,14 +127,14 @@ The **Total Charge** row sums both. Both are deducted from the validator's bond.
 
 ### Table Columns
 
-| Column          | Description                                                                                                                                                                                                                                                                         |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Validator**   | Vote account public key                                                                                                                                                                                                                                                             |
-| **St. Bid**     | Static bid per 1000 SOL set in bond configuration. Hover the SAM Active cell for the full breakdown: Stake, Commissions, and Charge this epoch (St. Bid, Eff. Bid, Activating charge, Active charge, Total Charge) |
-| **Bond [☉]**    | Current bond balance in SOL                                                                                                                                                                                                                                                         |
-| **Cover. [ep]** | Epochs of bond runway above the minimum required reserve. At zero, Marinade starts undelegating stake and charging fees to cover the costs; negative means the bond is short of the reserve by that many epochs of bid payments. Color: green = 13+, yellow = 6–12, orange = 2–5, red ≤ 1 |
-| **Max APY**     | Maximum APY offered based on validator's bid and commission settings                                                                                                                                                                                                                |
-| **SAM Active [☉]** | Currently active stake delegated by SAM. A large colored arrow (↑ green / ↓ red) flags an expected stake change next epoch; hover for SAM Active now, SAM Target, and the expected delta |
+| Column             | Description                                                                                                                                                                                                                                                                               |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Validator**      | Vote account public key                                                                                                                                                                                                                                                                   |
+| **St. Bid**        | Static bid per 1000 SOL set in bond configuration. Hover the SAM Active cell for the full breakdown: Stake, Commissions, and Charge this epoch (St. Bid, Eff. Bid, Activating charge, Active charge, Total Charge)                                                                        |
+| **Bond [☉]**       | Current bond balance in SOL                                                                                                                                                                                                                                                               |
+| **Cover. [ep]**    | Epochs of bond runway above the minimum required reserve. At zero, Marinade starts undelegating stake and charging fees to cover the costs; negative means the bond is short of the reserve by that many epochs of bid payments. Color: green = 13+, yellow = 6–12, orange = 2–5, red ≤ 1 |
+| **Max APY**        | Maximum APY offered based on validator's bid and commission settings                                                                                                                                                                                                                      |
+| **SAM Active [☉]** | Currently active stake delegated by SAM. A large colored arrow (↑ green / ↓ red) flags an expected stake change next epoch; hover for SAM Active now, SAM Target, and the expected delta                                                                                                  |
 
 ### Participation Requirements
 
@@ -184,15 +184,15 @@ CTA summarises the bond status.
 
 **Terms used in the tooltip**
 
-| Label in tooltip                | SDK field                  | Meaning                                                                                     |
-| ------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------- |
-| Expected max effective bid PMPE | `expectedMaxEffBidPmpe`    | The expected maximum bid the validator could be charged this epoch, in PMPE                 |
-| On-chain distributed rewards PMPE | `onchainDistributedPmpe` | Inflation + MEV rewards distributed on-chain (not via bond), in PMPE                        |
-| Bond balance                    | `bondBalanceSol`           | Full bond deposit                                                                           |
-| Claimable bond balance          | `claimableBondBalanceSol`  | Portion of the bond already available for settlement / fees                                 |
-| Activated Marinade stake        | `marinadeActivatedStakeSol`| Currently active Marinade stake on the validator                                            |
-| SAM target stake                | `marinadeSamTargetSol`     | Stake the auction has assigned to this validator this epoch                                 |
-| Projected exposed stake         | `projectedExposedStakeSol` | `max(0, projectedActivated − unprotectedStakeSol)` where `projectedActivated = max(0, activated − carriedPaidUndelegation)`; computed locally, the portion the bond has to cover |
+| Label in tooltip                  | SDK field                   | Meaning                                                                                                                                                                          |
+| --------------------------------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Expected max effective bid PMPE   | `expectedMaxEffBidPmpe`     | The expected maximum bid the validator could be charged this epoch, in PMPE                                                                                                      |
+| On-chain distributed rewards PMPE | `onchainDistributedPmpe`    | Inflation + MEV rewards distributed on-chain (not via bond), in PMPE                                                                                                             |
+| Bond balance                      | `bondBalanceSol`            | Full bond deposit                                                                                                                                                                |
+| Claimable bond balance            | `claimableBondBalanceSol`   | Portion of the bond already available for settlement / fees                                                                                                                      |
+| Activated Marinade stake          | `marinadeActivatedStakeSol` | Currently active Marinade stake on the validator                                                                                                                                 |
+| SAM target stake                  | `marinadeSamTargetSol`      | Stake the auction has assigned to this validator this epoch                                                                                                                      |
+| Projected exposed stake           | `projectedExposedStakeSol`  | `max(0, projectedActivated − unprotectedStakeSol)` where `projectedActivated = max(0, activated − carriedPaidUndelegation)`; computed locally, the portion the bond has to cover |
 
 **Section 1 — Rates**
 
@@ -229,7 +229,7 @@ The column value `Cover. [ep]` is derived from
 `bondGoodForNEpochs`, computed against
 `marinadeActivatedStakeSol`. Note that `bondGoodForNEpochs` uses the full
 `bondBalanceSol` (not just the claimable portion) as the runway base. It
-represents epochs of runway *above the fee threshold*. Zero or negative
+represents epochs of runway _above the fee threshold_. Zero or negative
 means the bond is below minimum coverage and `bondRiskFeeSol` applies.
 
 ### Effective vs Maximum Bid

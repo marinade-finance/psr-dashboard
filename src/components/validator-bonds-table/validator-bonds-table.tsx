@@ -9,6 +9,7 @@ import {
   lamportsToSol,
 } from 'src/format'
 import { selectEffectiveAmount } from 'src/services/bonds'
+import { notificationTooltip } from 'src/services/notifications'
 import { selectEffectiveBid, selectEffectiveCost } from 'src/services/sam'
 import {
   selectProtectedStake,
@@ -25,17 +26,24 @@ import {
 
 import styles from './validator-bonds-table.module.css'
 import { tooltipAttributes } from '../../services/utils'
+import { BellIcon } from '../icons/bell-icon'
 import { Metric } from '../metric/metric'
 import { Alignment, OrderDirection, Table } from '../table/table'
 
+import type { NotificationSummary } from 'src/services/notifications'
 import type { ValidatorWithBond } from 'src/services/validator-with-bond'
 
 type Props = {
   data: ValidatorWithBond[]
   level: UserLevel
+  notificationsMap?: Record<string, NotificationSummary>
 }
 
-export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
+export const ValidatorBondsTable: React.FC<Props> = ({
+  data,
+  level,
+  notificationsMap,
+}) => {
   const totalMarinadeStake = data.reduce(
     (sum, { validator }) => sum + selectTotalMarinadeStake(validator),
     0,
@@ -141,11 +149,31 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
           {
             header: 'Validator',
             headerAttrsFn: () => tooltipAttributes('Validator Vote Account'),
-            render: ({ validator }) => (
-              <span className={styles.pubkey}>
-                {selectVoteAccount(validator)}
-              </span>
-            ),
+            render: ({ validator }) => {
+              const va = selectVoteAccount(validator)
+              const summary = notificationsMap?.[va]
+              const plural =
+                summary && summary.count === 1
+                  ? 'notification'
+                  : 'notifications'
+              return (
+                <span className={styles.validatorCell}>
+                  <span className={styles.pubkey}>{va}</span>
+                  {summary && (
+                    <span className={styles.badges}>
+                      <button
+                        type="button"
+                        className={`${styles.badge} ${styles.notif}`}
+                        {...tooltipAttributes(notificationTooltip(summary))}
+                        aria-label={`${summary.count} ${plural}`}
+                      >
+                        {BellIcon}
+                      </button>
+                    </span>
+                  )}
+                </span>
+              )
+            },
             compare: (a, b) =>
               selectVoteAccount(a.validator).localeCompare(
                 selectVoteAccount(b.validator),

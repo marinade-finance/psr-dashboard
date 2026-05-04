@@ -5,7 +5,7 @@ import { Banner } from 'src/components/banner/banner'
 import { Loader } from 'src/components/loader/loader'
 import { Navigation } from 'src/components/navigation/navigation'
 import { ProtectedEventsTable } from 'src/components/protected-events-table/protected-events-table'
-import { getBannerData } from 'src/services/banner'
+import { fetchLatestSamAuctionBroadcastNotification } from 'src/services/notifications'
 import { fetchProtectedEventsWithValidator } from 'src/services/validator-with-protected_event'
 
 import styles from './protected-events.module.css'
@@ -17,11 +17,25 @@ export const ProtectedEventsPage: React.FC<UserLevelProps> = ({ level }) => {
     'protected-events',
     fetchProtectedEventsWithValidator,
   )
+  const { data: latestBroadcastNotification } = useQuery(
+    'notifications-broadcast',
+    fetchLatestSamAuctionBroadcastNotification,
+    {
+      refetchInterval: 5 * 60 * 1000,
+      keepPreviousData: true,
+    },
+  )
 
   return (
     <div className={styles.page}>
       <Navigation level={level} />
-      <Banner {...getBannerData()} />
+      {latestBroadcastNotification && (
+        <Banner
+          key={latestBroadcastNotification.id}
+          title={latestBroadcastNotification.title ?? 'Announcement'}
+          body={latestBroadcastNotification.message}
+        />
+      )}
       {status === 'error' && <p>Error fetching data</p>}
       {status === 'loading' && <Loader />}
       {status === 'success' && (

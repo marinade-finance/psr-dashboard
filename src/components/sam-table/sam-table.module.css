@@ -4,7 +4,7 @@
   gap: 6px;
 }
 
-.penalties {
+.badges {
   display: inline-flex;
   align-items: center;
   gap: 2px;
@@ -12,31 +12,34 @@
   line-height: 1;
 }
 
-.penaltyBadge {
+.badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 18px;
   height: 18px;
   padding: 3px;
+  border: 0;
   border-radius: 4px;
   line-height: 1;
   user-select: none;
+  cursor: inherit;
   transition: filter 120ms ease;
 }
 
-.penalties:hover .penaltyBadge {
+.badges:hover .badge {
   filter: brightness(1.15);
 }
 
-.penalties[data-count="2"] .penaltyBadge,
-.penalties[data-count="3"] .penaltyBadge {
+.badges[data-count='2'] .badge,
+.badges[data-count='3'] .badge,
+.badges[data-count='4'] .badge {
   width: 14px;
   height: 14px;
   padding: 2px;
 }
 
-.penaltyBadge svg {
+.badge svg {
   width: 100%;
   height: 100%;
 }
@@ -54,6 +57,11 @@
 .penalty_risk {
   background-color: rgba(234, 179, 8, 0.18);
   color: #facc15;
+}
+
+.notif {
+  background-color: rgba(96, 165, 250, 0.18);
+  color: #60a5fa;
 }
 
 .simulationBanner {
