@@ -159,7 +159,6 @@ The **Total Charge** row sums both. Both are deducted from the validator's bond.
 | **Cover. [ep]**    | Epochs of bond runway above the minimum required reserve (`bondGoodForNEpochs`). At zero, Marinade starts undelegating stake and charging fees to cover the costs; negative means the bond is short of the reserve by that many epochs of bid payments. Color reflects penalty risk independent of the displayed number: red = penalty imminent (bond below minimum required), yellow = covers current stake but below ideal, green = covers ideal. |
 | **Max APY**        | Maximum APY offered based on validator's bid and commission settings                                                                                                                                                                                                                |
 | **SAM Active [☉]** | Currently active stake delegated by SAM. A large colored arrow (↑ green / ↓ red) flags the expected stake change next epoch. Hover for the full Stake & Bid Charge breakdown (see [SAM Active breakdown](#sam-active-breakdown-tooltip) below).                                  |
-| **SAM Target [☉]** | *(Expert mode)* Stake the auction has assigned to this validator this epoch (`marinadeSamTargetSol`)                                                                                                                                                                                |
 
 ### Participation Requirements
 
