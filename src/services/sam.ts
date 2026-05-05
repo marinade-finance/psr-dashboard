@@ -62,6 +62,14 @@ export type { SourceDataOverrides }
 
 const FETCHED_EPOCHS = 11
 
+// AugmentedAuctionValidator: AuctionValidator with expectedStakeChangeSol attached.
+// Used by the SAM-active tooltip to display expected next-epoch stake change.
+export type AugmentedAuctionValidator = Omit<AuctionValidator, 'values'> & {
+  values: NonNullable<AuctionValidator['values']> & {
+    expectedStakeChangeSol: number
+  }
+}
+
 export const fetchValidatorNames = async (): Promise<Map<string, string>> => {
   const { validators } = await fetchValidatorsWithEpochs(FETCHED_EPOCHS)
   const nameByVote = new Map<string, string>()
