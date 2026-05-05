@@ -3,6 +3,7 @@ import React from 'react'
 import { UserLevel } from 'src/components/navigation/navigation'
 import { formatPercentage, formatSolAmount, lamportsToSol } from 'src/format'
 import { selectEffectiveAmount } from 'src/services/bonds'
+import { notificationTooltip } from 'src/services/notifications'
 import {
   selectProtectedStake,
   selectMaxProtectedStake,
@@ -16,13 +17,16 @@ import {
 } from 'src/services/validators'
 
 import { tooltipAttributes } from '../../services/utils'
+import { BellIcon } from '../icons/bell-icon'
 import { Alignment, OrderDirection, Table } from '../table/table'
 
+import type { NotificationSummary } from 'src/services/notifications'
 import type { ValidatorWithBond } from 'src/services/validator-with-bond'
 
 type Props = {
   data: ValidatorWithBond[]
   level: UserLevel
+  notificationsMap?: Record<string, NotificationSummary>
 }
 
 const MIN_TILE = 28
@@ -256,7 +260,11 @@ function rowCoverageBarColor(ratio: number, hasBond: boolean): string {
   return 'bg-red-500'
 }
 
-export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
+export const ValidatorBondsTable: React.FC<Props> = ({
+  data,
+  level,
+  notificationsMap,
+}) => {
   const totalMarinadeStake = data.reduce(
     (sum, { validator }) => sum + selectTotalMarinadeStake(validator),
     0,
@@ -417,14 +425,27 @@ export const ValidatorBondsTable: React.FC<Props> = ({ data, level }) => {
                 render: ({ validator }) => {
                   const name = selectName(validator)
                   const va = selectVoteAccount(validator)
+                  const summary = notificationsMap?.[va]
                   return (
-                    <div>
-                      <div className="font-medium text-[13px] text-foreground">
-                        {name || '---'}
+                    <div className="flex items-center gap-1.5">
+                      <div>
+                        <div className="font-medium text-[13px] text-foreground">
+                          {name || '---'}
+                        </div>
+                        <div className="text-[11px] font-mono text-secondary-foreground mt-px">
+                          {va.slice(0, 8)}...{va.slice(-4)}
+                        </div>
                       </div>
-                      <div className="text-[11px] font-mono text-secondary-foreground mt-px">
-                        {va.slice(0, 8)}...{va.slice(-4)}
-                      </div>
+                      {summary && (
+                        <button
+                          type="button"
+                          className="shrink-0 text-warning opacity-80 hover:opacity-100 w-4 h-4"
+                          {...tooltipAttributes(notificationTooltip(summary))}
+                          aria-label={`${summary.count} notification${summary.count === 1 ? '' : 's'}`}
+                        >
+                          {BellIcon}
+                        </button>
+                      )}
                     </div>
                   )
                 },
