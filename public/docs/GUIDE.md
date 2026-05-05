@@ -68,11 +68,36 @@ Events display without a badge once settled. Special badges indicate:
 - **ESTIMATE** &mdash; Event is projected and pending settlement
 - **DRYRUN** &mdash; Test event, no actual settlement occurs
 
+**Table Columns:**
+
+| Column             | Description                          |
+| ------------------ | ------------------------------------ |
+| **Epoch**          | Epoch of the event                   |
+| **Validator**      | Vote account public key              |
+| **Name**           | Validator display name               |
+| **Settlement [☉]** | Settlement amount in SOL             |
+| **Reason**         | Reason for the protected event       |
+| **Funder**         | Who funded the settlement            |
+
 ### Validator Bonds
 
 Displays all [validator bonds](https://github.com/marinade-finance/validator-bonds/tree/main/packages/validator-bonds-cli#core-concepts)
 and their protection coverage. Shows effective bond amounts, protected stake limits, and maximum protection capacity
 for each validator.
+
+**Table Columns:**
+
+| Column                   | Description                                                          |
+| ------------------------ | -------------------------------------------------------------------- |
+| **Validator**            | Vote account public key                                              |
+| **Name**                 | Validator display name                                               |
+| **Bond balance [☉]**     | Total bond deposit in SOL                                            |
+| **Max Stake Wanted [☉]** | Maximum stake the validator wants from Marinade                      |
+| **Bond Comm.**           | Commission override configured via bond                              |
+| **Marinade stake [☉]**   | Currently delegated Marinade stake                                   |
+| **Eff. Cost [☉]**        | Effective cost                                                       |
+| **Max protected stake [☉]** | *(Expert mode)* Maximum stake covered by the bond                |
+| **Protected stake [%]**  | *(Expert mode)* Currently protected stake as a percentage            |
 
 ---
 
@@ -127,15 +152,16 @@ The **Total Charge** row sums both. Both are deducted from the validator's bond.
 
 ### Table Columns
 
-| Column          | Description                                                                                                                                                                                                                                                                         |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Validator**   | Vote account public key                                                                                                                                                                                                                                                             |
-| **St. Bid**     | Static bid per 1000 SOL set in bond configuration. Hover for the bid too low penalty breakdown (bid direction, participation limit, cushion check, penalty base, penalty result).                                                                                                                  |
-| **Bond [☉]**    | Current bond balance in SOL                                                                                                                                                                                                                                                         |
-| **Cover. [ep]** | Epochs of bond runway above the minimum required reserve (`bondGoodForNEpochs`). At zero, Marinade starts undelegating stake and charging fees to cover the costs; negative means the bond is short of the reserve by that many epochs of bid payments. Color reflects penalty risk independent of the displayed number: red = penalty imminent (bond below minimum required), yellow = covers current stake but below ideal, green = covers ideal. |
-| **Max APY**     | Maximum APY offered based on validator's bid and commission settings                                                                                                                                                                                                                |
+| Column             | Description                                                                                                                                                                                                                                                                         |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Validator**      | Vote account public key                                                                                                                                                                                                                                                             |
+| **Name**           | Validator display name                                                                                                                                                                                                                                                              |
+| **St. Bid**        | Static bid per 1000 SOL set in bond configuration. Hover for the bid too low penalty breakdown (bid direction, participation limit, cushion check, penalty base, penalty result).                                                                                                   |
+| **Bond [☉]**       | Current bond balance in SOL                                                                                                                                                                                                                                                         |
+| **Cover. [ep]**    | Epochs of bond runway above the minimum required reserve (`bondGoodForNEpochs`). At zero, Marinade starts undelegating stake and charging fees to cover the costs; negative means the bond is short of the reserve by that many epochs of bid payments. Color reflects penalty risk independent of the displayed number: red = penalty imminent (bond below minimum required), yellow = covers current stake but below ideal, green = covers ideal. |
+| **Max APY**        | Maximum APY offered based on validator's bid and commission settings                                                                                                                                                                                                                |
 | **SAM Active [☉]** | Currently active stake delegated by SAM. A large colored arrow (↑ green / ↓ red) flags the expected stake change next epoch. Hover for the full Stake & Bid Charge breakdown (see [SAM Active breakdown](#sam-active-breakdown-tooltip) below).                                  |
-| **Eff. Bid**    | Effective bid combining static bid and commission settings                                                                                                                                                                                                                          |
+| **SAM Target [☉]** | *(Expert mode)* Stake the auction has assigned to this validator this epoch (`marinadeSamTargetSol`)                                                                                                                                                                                |
 
 ### Participation Requirements
 
