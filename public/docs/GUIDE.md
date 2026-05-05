@@ -96,8 +96,6 @@ for each validator.
 | **Bond Comm.**           | Commission override configured via bond                              |
 | **Marinade stake [☉]**   | Currently delegated Marinade stake                                   |
 | **Eff. Cost [☉]**        | Effective cost                                                       |
-| **Max protected stake [☉]** | *(Expert mode)* Maximum stake covered by the bond                |
-| **Protected stake [%]**  | *(Expert mode)* Currently protected stake as a percentage            |
 
 ---
 
