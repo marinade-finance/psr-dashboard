@@ -386,8 +386,15 @@ export const SamTable: React.FC<Props> = ({
           return selectBid(a) - selectBid(b)
         case 3:
           return selectBondSize(a) - selectBondSize(b)
-        case 4:
-          return selectBondHealth(a) - selectBondHealth(b)
+        case 4: {
+          const aVal = a.auctionStake.marinadeSamTargetSol
+            ? (selectBondHealth(a) ?? -Infinity)
+            : -Infinity
+          const bVal = b.auctionStake.marinadeSamTargetSol
+            ? (selectBondHealth(b) ?? -Infinity)
+            : -Infinity
+          return aVal - bVal
+        }
         case 5:
           return selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
         case 6:
