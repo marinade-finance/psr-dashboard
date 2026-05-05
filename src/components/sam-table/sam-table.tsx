@@ -143,53 +143,61 @@ const ApyTooltip: React.FC<{
       <div className="text-[11px] text-muted-foreground mb-2 font-medium">
         APY Composition
       </div>
-      <div className="flex items-center text-xs mb-1 gap-[5px]">
+      <div className="flex items-start text-xs mb-1 gap-[5px]">
         <span
-          className="w-2 h-2 rounded-sm shrink-0"
+          className="w-2 h-2 rounded-sm shrink-0 mt-[3px]"
           style={{ background: 'var(--chart-1)' }}
         />
-        <span className="text-secondary-foreground">Inflation</span>
-        <span className="text-muted-foreground text-[10px] flex-1">
-          ({inflComm.toFixed(0)}% comm.)
+        <span className="flex-1">
+          <span className="text-secondary-foreground">Inflation</span>
+          <span className="block text-muted-foreground text-[10px]">
+            {inflComm.toFixed(0)}% commission
+          </span>
         </span>
         <span className="text-foreground font-mono font-medium">
           {formatPercentage(breakdown.inflation, 2)}
         </span>
       </div>
-      <div className="flex items-center text-xs mb-1 gap-[5px]">
+      <div className="flex items-start text-xs mb-1 gap-[5px]">
         <span
-          className="w-2 h-2 rounded-sm shrink-0"
+          className="w-2 h-2 rounded-sm shrink-0 mt-[3px]"
           style={{ background: 'var(--chart-2)' }}
         />
-        <span className="text-secondary-foreground">MEV Tips</span>
-        <span className="text-muted-foreground text-[10px] flex-1">
-          ({mevComm.toFixed(0)}% comm.)
+        <span className="flex-1">
+          <span className="text-secondary-foreground">MEV Tips</span>
+          <span className="block text-muted-foreground text-[10px]">
+            {mevComm.toFixed(0)}% commission
+          </span>
         </span>
         <span className="text-foreground font-mono font-medium">
           {formatPercentage(breakdown.mev, 2)}
         </span>
       </div>
-      <div className="flex items-center text-xs mb-1 gap-[5px]">
+      <div className="flex items-start text-xs mb-1 gap-[5px]">
         <span
-          className="w-2 h-2 rounded-sm shrink-0"
+          className="w-2 h-2 rounded-sm shrink-0 mt-[3px]"
           style={{ background: 'var(--chart-3)' }}
         />
-        <span className="text-secondary-foreground">Block Rewards</span>
-        <span className="text-muted-foreground text-[10px] flex-1">
-          ({blockComm.toFixed(0)}% shared)
+        <span className="flex-1">
+          <span className="text-secondary-foreground">Block Rewards</span>
+          <span className="block text-muted-foreground text-[10px]">
+            {blockComm.toFixed(0)}% shared
+          </span>
         </span>
         <span className="text-foreground font-mono font-medium">
           {formatPercentage(breakdown.blockRewards, 2)}
         </span>
       </div>
-      <div className="flex items-center text-xs mb-1 gap-[5px]">
+      <div className="flex items-start text-xs mb-1 gap-[5px]">
         <span
-          className="w-2 h-2 rounded-sm shrink-0"
+          className="w-2 h-2 rounded-sm shrink-0 mt-[3px]"
           style={{ background: 'var(--chart-4)' }}
         />
-        <span className="text-secondary-foreground">Stake Bid</span>
-        <span className="text-muted-foreground text-[10px] flex-1">
-          (your bid)
+        <span className="flex-1">
+          <span className="text-secondary-foreground">Stake Bid</span>
+          <span className="block text-muted-foreground text-[10px]">
+            your bid
+          </span>
         </span>
         <span className="text-foreground font-mono font-medium">
           {formatPercentage(breakdown.stakeBid, 2)}
