@@ -5,7 +5,10 @@ import { Banner } from 'src/components/banner/banner'
 import { Loader } from 'src/components/loader/loader'
 import { Navigation } from 'src/components/navigation/navigation'
 import { SamTable } from 'src/components/sam-table/sam-table'
-import { getBannerData } from 'src/services/banner'
+import {
+  fetchAllNotifications,
+  fetchLatestSamAuctionBroadcastNotification,
+} from 'src/services/notifications'
 import { fetchValidatorNames, loadSam } from 'src/services/sam'
 
 import styles from './sam.module.css'
@@ -58,6 +61,24 @@ export const SamPage: React.FC<Props> = ({ level }) => {
     ['validator-names'],
     fetchValidatorNames,
     { staleTime: Infinity },
+  )
+
+  const { data: notificationsMap } = useQuery(
+    ['notifications-all', 'sam_auction'],
+    () => fetchAllNotifications('sam_auction'),
+    {
+      refetchInterval: 5 * 60 * 1000, // refresh every 5 min
+      keepPreviousData: true,
+    },
+  )
+
+  const { data: latestBroadcastNotification } = useQuery(
+    'notifications-broadcast',
+    fetchLatestSamAuctionBroadcastNotification,
+    {
+      refetchInterval: 5 * 60 * 1000,
+      keepPreviousData: true,
+    },
   )
 
   const handleToggleSimulationMode = useCallback(() => {
@@ -181,7 +202,13 @@ export const SamPage: React.FC<Props> = ({ level }) => {
             {simulationModeActive ? 'Exit Simulation' : 'Enter Simulation'}
           </button>
         </Navigation>
-        <Banner {...getBannerData()} />
+        {latestBroadcastNotification && (
+          <Banner
+            key={latestBroadcastNotification.id}
+            title={latestBroadcastNotification.title ?? 'Announcement'}
+            body={latestBroadcastNotification.message}
+          />
+        )}
         {status === 'error' && <p>Error fetching data</p>}
         {status === 'loading' && <Loader />}
         {status === 'success' && displayAuctionResult && (
@@ -207,6 +234,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
             onFieldChange={handleFieldChange}
             onRunSimulation={handleRunSimulation}
             onCancelEditing={handleCancelEditing}
+            notificationsMap={notificationsMap}
           />
         )}
       </div>

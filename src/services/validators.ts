@@ -1,4 +1,5 @@
 import { lamportsToSol } from 'src/format'
+import { VALIDATORS_API_URL } from 'src/services/apiUrls'
 
 export type ValidatorEpoch = {
   credits: number
@@ -50,7 +51,7 @@ export const fetchValidatorsWithEpochs = (
   if (cached !== undefined) return cached
   const promise = (async () => {
     const res = await fetch(
-      `https://validators-api.marinade.finance/validators?limit=9999&epochs=${epochs}`,
+      `${VALIDATORS_API_URL}/validators?limit=9999&epochs=${epochs}`,
     )
     return (await res.json()) as ValidatorsResponse
   })()
