@@ -89,7 +89,7 @@ ReactDOM.render(
       <TooltipProvider>
         <RouterProvider router={router} />
       </TooltipProvider>
-      <Tooltip id="tooltip" style={{ zIndex: 2, width: 400 }} />
+      <Tooltip id="tooltip" style={{ zIndex: 2 }} />
     </QueryClientProvider>
   </React.StrictMode>,
   document.getElementById('root'),

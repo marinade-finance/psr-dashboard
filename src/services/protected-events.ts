@@ -1,4 +1,5 @@
 import { formatPercentage } from 'src/format'
+import { VALIDATOR_BONDS_API_URL } from 'src/services/apiUrls'
 
 export type SettlementFunder = 'ValidatorBond' | 'Marinade'
 
@@ -53,16 +54,15 @@ export type ProtectedEventReason =
   | DowntimeRevenueImpactReason
   | CommissionSamIncreaseReason
 
-export const isCommissionIncreaseReason = (
+const isCommissionIncreaseReason = (
   e: ProtectedEventReason,
 ): e is CommissionIncreaseReason => 'CommissionIncrease' in e
-export const isLowCreditsReason = (
-  e: ProtectedEventReason,
-): e is LowCreditsReason => 'LowCredits' in e
-export const isDowntimeRevenueImpactReason = (
+const isLowCreditsReason = (e: ProtectedEventReason): e is LowCreditsReason =>
+  'LowCredits' in e
+const isDowntimeRevenueImpactReason = (
   e: ProtectedEventReason,
 ): e is DowntimeRevenueImpactReason => 'DowntimeRevenueImpact' in e
-export const isCommissionSamIncreaseReason = (
+const isCommissionSamIncreaseReason = (
   e: ProtectedEventReason,
 ): e is CommissionSamIncreaseReason => 'CommissionSamIncrease' in e
 
@@ -75,15 +75,12 @@ export type SettlementReason =
   | 'Bidding'
   | 'BidTooLowPenalty'
   | 'BlacklistPenalty'
+  | 'BondRiskFee'
 
 export const isProtectedEvent = (
   e: SettlementReason,
 ): e is ProtectedEventSettlement =>
   typeof e === 'object' && 'ProtectedEvent' in e
-export const isBidTooLowPenalty = (e: SettlementReason): boolean =>
-  e === 'BidTooLowPenalty'
-export const isBlacklistPenalty = (e: SettlementReason): boolean =>
-  e === 'BlacklistPenalty'
 
 export type ProtectedEvent = {
   epoch: number
@@ -113,12 +110,9 @@ export const selectProtectedStakeReason = (protectedEvent: ProtectedEvent) => {
       return `Uptime ${formatPercentage(reason.DowntimeRevenueImpact.actual_credits / reason.DowntimeRevenueImpact.expected_credits)}`
     }
   }
-  if (isBidTooLowPenalty(protectedEvent.reason)) {
-    return 'BidTooLow'
-  }
-  if (isBlacklistPenalty(protectedEvent.reason)) {
-    return 'Blacklist'
-  }
+  if (protectedEvent.reason === 'BidTooLowPenalty') return 'BidTooLow'
+  if (protectedEvent.reason === 'BlacklistPenalty') return 'Blacklist'
+  if (protectedEvent.reason === 'BondRiskFee') return 'BondRiskFee'
   console.log('unsupported event:', protectedEvent)
   return 'Unsupported'
 }
@@ -145,8 +139,6 @@ export const selectAmount = (protectedEvent: ProtectedEvent) =>
 
 export const fetchProtectedEvents =
   async (): Promise<ProtectedEventsResponse> => {
-    const res = await fetch(
-      'https://validator-bonds-api.marinade.finance/protected-events',
-    )
+    const res = await fetch(`${VALIDATOR_BONDS_API_URL}/protected-events`)
     return (await res.json()) as ProtectedEventsResponse
   }

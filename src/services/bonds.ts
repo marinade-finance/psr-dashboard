@@ -1,4 +1,5 @@
 import { lamportsToSol } from 'src/format'
+import { VALIDATOR_BONDS_API_URL } from 'src/services/apiUrls'
 
 export type BondRecord = {
   pubkey: string
@@ -25,6 +26,6 @@ export type BondsResponse = {
 }
 
 export const fetchBonds = async (): Promise<BondsResponse> => {
-  const res = await fetch('https://validator-bonds-api.marinade.finance/bonds')
+  const res = await fetch(`${VALIDATOR_BONDS_API_URL}/bonds`)
   return (await res.json()) as BondsResponse
 }

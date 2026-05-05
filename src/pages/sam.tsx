@@ -6,9 +6,13 @@ import { Loader } from 'src/components/loader/loader'
 import { Navigation } from 'src/components/navigation/navigation'
 import { SamTable } from 'src/components/sam-table/sam-table'
 import { ValidatorDetail } from 'src/components/validator-detail/validator-detail'
-import { getBannerData } from 'src/services/banner'
+import {
+  fetchAllNotifications,
+  fetchLatestSamAuctionBroadcastNotification,
+} from 'src/services/notifications'
 import {
   buildExpectedStakeChanges,
+  fetchValidatorNames,
   loadSam,
   selectBondSize,
 } from 'src/services/sam'
@@ -17,7 +21,6 @@ import {
   mergeOverrides,
   removeFromOverrides,
 } from 'src/services/simulation'
-import { fetchValidators } from 'src/services/validators'
 
 import type { AuctionResult } from '@marinade.finance/ds-sam-sdk'
 import type { UserLevel } from 'src/components/navigation/navigation'
@@ -58,19 +61,38 @@ export const SamPage: React.FC<Props> = ({ level }) => {
     },
   )
 
-  const { data: validatorsData } = useQuery('validators', fetchValidators)
+  const { data: validatorNames } = useQuery(
+    ['validator-names'],
+    fetchValidatorNames,
+    { staleTime: Infinity },
+  )
+
+  useQuery(
+    ['notifications-all', 'sam_auction'],
+    () => fetchAllNotifications('sam_auction'),
+    {
+      refetchInterval: 5 * 60 * 1000,
+      keepPreviousData: true,
+    },
+  )
+
+  const { data: latestBroadcastNotification } = useQuery(
+    'notifications-broadcast',
+    fetchLatestSamAuctionBroadcastNotification,
+    {
+      refetchInterval: 5 * 60 * 1000,
+      keepPreviousData: true,
+    },
+  )
 
   const nameMap = useMemo(() => {
-    const map = new Map<string, { name: string; countryIso: string | null }>()
-    if (!validatorsData) return map
-    for (const v of validatorsData.validators) {
-      map.set(v.vote_account, {
-        name: v.info_name ?? '---',
-        countryIso: v.dc_country_iso,
-      })
+    const map = new Map<string, { name?: string; countryIso?: string | null }>()
+    if (!validatorNames) return map
+    for (const [vote, name] of validatorNames) {
+      map.set(vote, { name })
     }
     return map
-  }, [validatorsData])
+  }, [validatorNames])
 
   const ensureOriginalSaved = useCallback(() => {
     if (!originalAuctionResult && data?.auctionResult) {
@@ -234,9 +256,15 @@ export const SamPage: React.FC<Props> = ({ level }) => {
   return (
     <div className="bg-background-page">
       <Navigation level={level} />
-      <div className="px-4 py-4">
-        <Banner {...getBannerData()} />
-      </div>
+      {latestBroadcastNotification && (
+        <div className="px-4 py-4">
+          <Banner
+            key={latestBroadcastNotification.id}
+            title={latestBroadcastNotification.title ?? 'Announcement'}
+            body={latestBroadcastNotification.message}
+          />
+        </div>
+      )}
       {status === 'error' && <p>Error fetching data</p>}
       {status === 'loading' && <Loader />}
       {status === 'success' && displayAuctionResult && (

@@ -18,6 +18,7 @@ import {
   stakeDelta,
   selectMaxWantedStake,
 } from './calculations'
+import { fetchValidatorsWithEpochs } from './validators'
 
 import type {
   AuctionResult,
@@ -58,6 +59,17 @@ export const loadSam = async (
 }
 
 export type { SourceDataOverrides }
+
+const FETCHED_EPOCHS = 11
+
+export const fetchValidatorNames = async (): Promise<Map<string, string>> => {
+  const { validators } = await fetchValidatorsWithEpochs(FETCHED_EPOCHS)
+  const nameByVote = new Map<string, string>()
+  for (const v of validators) {
+    if (v.info_name) nameByVote.set(v.vote_account, v.info_name)
+  }
+  return nameByVote
+}
 
 export const lastCapConstraintDescription = (
   constraint: AuctionConstraint,
