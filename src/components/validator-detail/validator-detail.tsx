@@ -272,12 +272,12 @@ export const ValidatorDetail = ({
                 #{rank}
               </span>
               {validatorName && (
-                <span className="text-sm font-medium text-foreground truncate">
+                <span className="text-[15px] font-medium text-foreground truncate">
                   {validatorName}
                 </span>
               )}
-              <span className="text-sm font-mono text-secondary-foreground shrink-0">
-                {voteAccount.slice(0, 8)}...{voteAccount.slice(-4)}
+              <span className="text-[11px] font-mono text-secondary-foreground break-all">
+                {voteAccount}
               </span>
               <span
                 className="px-2 py-0.5 rounded-md text-xs font-medium shrink-0"

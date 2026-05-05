@@ -545,7 +545,7 @@ export const SamTable: React.FC<Props> = ({
         </TableCell>
 
         {/* Validator */}
-        <TableCell className="px-3.5 py-3 min-w-[180px]">
+        <TableCell className="px-3.5 py-3 min-w-[180px] sm:min-w-[320px]">
           <div className="flex items-center gap-1.5">
             <span className="text-foreground font-medium text-[13px]">
               {validatorName}
@@ -554,8 +554,11 @@ export const SamTable: React.FC<Props> = ({
               <span className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0 animate-pulse" />
             )}
           </div>
-          <div className="text-secondary-foreground text-[11px] mt-px font-mono">
-            {voteAccount.slice(0, 8)}...{voteAccount.slice(-4)}
+          <div className="text-secondary-foreground text-[11px] mt-px font-mono hidden sm:block">
+            {voteAccount}
+          </div>
+          <div className="text-secondary-foreground text-[11px] mt-px font-mono sm:hidden">
+            {voteAccount.slice(0, 8)}…{voteAccount.slice(-4)}
           </div>
         </TableCell>
 
