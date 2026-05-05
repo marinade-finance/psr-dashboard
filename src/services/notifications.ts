@@ -1,0 +1,126 @@
+import { NOTIFICATIONS_API_URL } from './apiUrls'
+
+export type NotificationPriority = 'critical' | 'warning' | 'info'
+
+export interface ValidatorNotification {
+  id: string
+  notification_type: string
+  inner_type: string
+  user_id: string
+  scope?: 'broadcast' | 'individual'
+  priority: NotificationPriority
+  title: string | null
+  message: string
+  data: Record<string, unknown>
+  notification_id: string | null
+  relevance_until: string
+  created_at: string
+}
+
+export interface NotificationSummary {
+  count: number
+  notifications: ValidatorNotification[]
+}
+
+const PAGE_SIZE = 200
+// Safety cap. Assumes fewer than PAGE_SIZE * MAX_PAGES active individual
+// notifications at any time; prevents runaway loops if the API misbehaves.
+const MAX_PAGES = 25
+const TOOLTIP_MAX_NOTIFICATIONS = 10
+
+export async function fetchAllNotifications(
+  notificationType?: string,
+): Promise<Record<string, NotificationSummary>> {
+  const result: Record<string, NotificationSummary> = {}
+
+  try {
+    for (let page = 0; page < MAX_PAGES; page++) {
+      const url = new URL('/v1/notifications/all', NOTIFICATIONS_API_URL)
+      if (notificationType) {
+        url.searchParams.set('notification_type', notificationType)
+      }
+      url.searchParams.set('scope', 'individual')
+      url.searchParams.set('limit', String(PAGE_SIZE))
+      url.searchParams.set('offset', String(page * PAGE_SIZE))
+      // eslint-disable-next-line no-await-in-loop
+      const res = await fetch(url.toString())
+      if (!res.ok) break
+      // eslint-disable-next-line no-await-in-loop
+      const notifications = (await res.json()) as ValidatorNotification[]
+
+      for (const n of notifications) {
+        const existing = result[n.user_id]
+        if (existing) {
+          existing.count++
+          if (existing.notifications.length < TOOLTIP_MAX_NOTIFICATIONS) {
+            existing.notifications.push(n)
+          }
+        } else {
+          result[n.user_id] = {
+            count: 1,
+            notifications: [n],
+          }
+        }
+      }
+
+      if (notifications.length < PAGE_SIZE) break
+    }
+  } catch {
+    // silently fail — notifications are non-critical
+  }
+
+  return result
+}
+
+export async function fetchLatestSamAuctionBroadcastNotification(): Promise<ValidatorNotification | null> {
+  try {
+    const url = new URL('/v1/notifications/broadcast', NOTIFICATIONS_API_URL)
+    url.searchParams.set('notification_type', 'sam_auction')
+    url.searchParams.set('limit', '10')
+    const res = await fetch(url.toString())
+    if (!res.ok) return null
+    const notifications = (await res.json()) as ValidatorNotification[]
+    if (notifications.length === 0) return null
+    return notifications.reduce((latest, n) =>
+      Date.parse(n.created_at) > Date.parse(latest.created_at) ? n : latest,
+    )
+  } catch {
+    return null
+  }
+}
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+export function notificationTooltip(summary: NotificationSummary): string {
+  // Split each notification body at the footer separator so we can render the
+  // "Emitted: …" metadata line smaller/italic and visually subordinate to the
+  // main notification text. Format-neutral `\n` characters become `<br/>` only
+  // here — the formatter's output stays plain text.
+  const shown = summary.notifications.slice(0, TOOLTIP_MAX_NOTIFICATIONS)
+  const remaining = summary.count - shown.length
+  const rendered = shown
+    .map(n => {
+      const prefix =
+        n.priority === 'critical'
+          ? '[CRITICAL]'
+          : n.priority === 'warning'
+            ? '[WARNING]'
+            : '[INFO]'
+      const [bodyPart, ...footerParts] = n.message.split('\n\nEmitted:')
+      const body = escapeHtml(bodyPart).replace(/\n/g, '<br/>')
+      const footer = footerParts.length
+        ? `<br/><small><em>Emitted:${escapeHtml(footerParts.join('\n\nEmitted:'))}</em></small>`
+        : ''
+      return `<p><strong>${prefix}</strong> ${body}${footer}</p>`
+    })
+    .join('<hr/>')
+  return remaining > 0
+    ? `${rendered}<hr/><p><small><em>+ ${remaining} more</em></small></p>`
+    : rendered
+}
