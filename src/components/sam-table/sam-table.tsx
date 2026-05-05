@@ -140,7 +140,7 @@ const ApyTooltip: React.FC<{
 
   return (
     <div className="absolute top-[-4px] left-[calc(100%-16px)] z-[100] bg-card border border-border rounded-lg px-4 py-3 min-w-[230px] shadow-lg">
-      <div className="text-[11px] text-muted-foreground mb-2 font-medium">
+      <div className="text-xs text-muted-foreground mb-2 font-medium">
         APY Composition
       </div>
       <div className="flex items-start text-xs mb-1 gap-[5px]">
@@ -547,17 +547,17 @@ export const SamTable: React.FC<Props> = ({
         {/* Validator */}
         <TableCell className="px-3.5 py-3 min-w-[180px] sm:min-w-[320px]">
           <div className="flex items-center gap-1.5">
-            <span className="text-foreground font-medium text-[13px]">
+            <span className="text-foreground font-medium text-sm">
               {validatorName}
             </span>
             {hasAlert && (
               <span className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0 animate-pulse" />
             )}
           </div>
-          <div className="text-secondary-foreground text-[11px] mt-px font-mono hidden sm:block">
+          <div className="text-secondary-foreground text-xs mt-px font-mono hidden sm:block">
             {voteAccount}
           </div>
-          <div className="text-secondary-foreground text-[11px] mt-px font-mono sm:hidden">
+          <div className="text-secondary-foreground text-xs mt-px font-mono sm:hidden">
             {voteAccount.slice(0, 8)}…{voteAccount.slice(-4)}
           </div>
         </TableCell>
@@ -572,7 +572,7 @@ export const SamTable: React.FC<Props> = ({
           onMouseLeave={() => setHoveredApyRow(null)}
         >
           <span
-            className={`inline-block px-2.5 py-[3px] rounded-md font-semibold text-[13px] font-mono ${
+            className={`inline-block px-2.5 py-[3px] rounded-md font-semibold text-sm font-mono ${
               inSet
                 ? 'bg-primary-light text-primary'
                 : 'bg-destructive-light text-destructive'
@@ -589,7 +589,7 @@ export const SamTable: React.FC<Props> = ({
         <TableCell className="px-3.5 py-3">
           <div className="flex items-center gap-1.5 mb-1">
             <span
-              className="inline-flex items-center gap-1 px-2 py-[3px] rounded-md text-[11px] font-medium"
+              className="inline-flex items-center gap-1 px-2 py-[3px] rounded-md text-xs font-medium"
               style={{ background: bondStyle.bg, color: bondStyle.color }}
             >
               <span
@@ -598,7 +598,7 @@ export const SamTable: React.FC<Props> = ({
               />
               {bondStyle.label}
             </span>
-            <span className="text-muted-foreground text-[11px] font-mono">
+            <span className="text-muted-foreground text-xs font-mono">
               {formatSolAmount(selectBondSize(validator), 0)} SOL
             </span>
           </div>
@@ -630,16 +630,16 @@ export const SamTable: React.FC<Props> = ({
         <TableCell className="px-3.5 py-3">
           {expectedChange !== null ? (
             <div className="flex flex-col gap-0.5">
-              <span className="text-muted-foreground text-[11px] font-mono">
+              <span className="text-muted-foreground text-xs font-mono">
                 {formatSolAmount(validator.marinadeActivatedStakeSol, 0)} SOL
               </span>
               {expectedChange === 0 ? (
-                <span className="text-muted-foreground text-[12px] font-mono">
+                <span className="text-muted-foreground text-xs font-mono">
                   &mdash;
                 </span>
               ) : (
                 <span
-                  className="font-semibold text-[13px] font-mono"
+                  className="font-semibold text-sm font-mono"
                   style={{
                     color:
                       expectedChange > 0
@@ -654,7 +654,7 @@ export const SamTable: React.FC<Props> = ({
             </div>
           ) : (
             <span
-              className="font-semibold text-[13px] font-mono"
+              className="font-semibold text-sm font-mono"
               style={{ color: delta.color }}
             >
               {delta.arrow} {delta.text}
@@ -718,7 +718,7 @@ export const SamTable: React.FC<Props> = ({
             key={stat.label}
             className="px-3 py-3 sm:px-5 sm:py-4 flex-1 min-w-[140px] sm:min-w-[160px] overflow-hidden"
           >
-            <div className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground mb-1 flex items-center gap-1">
+            <div className="text-xs uppercase tracking-wider font-medium text-muted-foreground mb-1 flex items-center gap-1">
               {stat.label}
               {stat.help && <HelpTip text={stat.help} />}
             </div>
@@ -746,24 +746,24 @@ export const SamTable: React.FC<Props> = ({
 
       {/* Table */}
       <div className="mx-4 bg-card rounded-xl border border-border shadow-card overflow-hidden overflow-x-auto">
-        <ShadTable className="font-sans text-[13px]">
+        <ShadTable className="font-sans text-sm">
           <TableHeader>
             <TableRow className="border-b border-border-grid">
               <TableHead
-                className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted w-10 text-center cursor-pointer hover:text-primary"
+                className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-10 text-center cursor-pointer hover:text-primary"
                 onClick={() => handleSort('rank')}
               >
                 #<SortIndicator column="rank" />
               </TableHead>
               <TableHead
-                className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted min-w-[150px] cursor-pointer hover:text-primary"
+                className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted min-w-[150px] cursor-pointer hover:text-primary"
                 onClick={() => handleSort('validator')}
               >
                 Validator
                 <SortIndicator column="validator" />
               </TableHead>
               <TableHead
-                className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted w-[100px] cursor-pointer hover:text-primary"
+                className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-[100px] cursor-pointer hover:text-primary"
                 onClick={() => handleSort('maxApy')}
               >
                 Max APY
@@ -771,7 +771,7 @@ export const SamTable: React.FC<Props> = ({
                 <HelpTip text={HELP_TEXT.maxApy} />
               </TableHead>
               <TableHead
-                className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted w-40 cursor-pointer hover:text-primary"
+                className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-40 cursor-pointer hover:text-primary"
                 onClick={() => handleSort('bond')}
               >
                 Bond
@@ -779,7 +779,7 @@ export const SamTable: React.FC<Props> = ({
                 <HelpTip text={HELP_TEXT.bondHealth} />
               </TableHead>
               <TableHead
-                className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted w-[140px] cursor-pointer hover:text-primary"
+                className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-[140px] cursor-pointer hover:text-primary"
                 onClick={() => handleSort('stakeDelta')}
               >
                 Stake / Next {'\u0394'}
@@ -787,13 +787,13 @@ export const SamTable: React.FC<Props> = ({
                 <HelpTip text="Current active stake and expected change next epoch based on auction results and rebalancing budget (~0.7% TVL/epoch)" />
               </TableHead>
               <TableHead
-                className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted min-w-[200px] cursor-pointer hover:text-primary"
+                className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted min-w-[200px] cursor-pointer hover:text-primary"
                 onClick={() => handleSort('nextStep')}
               >
                 Next Step
                 <SortIndicator column="nextStep" />
               </TableHead>
-              <TableHead className="px-3.5 py-[11px] text-left text-[11px] font-medium tracking-[0.06em] bg-muted w-10"></TableHead>
+              <TableHead className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-10"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -832,7 +832,7 @@ export const SamTable: React.FC<Props> = ({
                       Winning APY: {formatPercentage(winningAPY, 2)}
                     </span>
                     <div className="flex-1 h-px bg-primary opacity-20" />
-                    <span className="text-[11px] text-muted-foreground">
+                    <span className="text-xs text-muted-foreground">
                       {winningCount} of {totalValidators} validators
                     </span>
                   </div>

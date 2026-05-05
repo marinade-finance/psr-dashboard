@@ -496,19 +496,17 @@ export const ValidatorDetail = ({
                       key={label}
                       className="border-b border-border-grid/50 last:border-0"
                     >
-                      <td className="py-1.5 pr-2 text-[12px] text-muted-foreground">
+                      <td className="py-1.5 pr-2 text-[13px] text-muted-foreground">
                         {label}
                       </td>
-                      <td className="py-1.5 pl-2 text-right font-mono text-[12px]">
+                      <td className="py-1.5 pl-2 text-right font-mono text-sm">
                         {formatPercentage(val, 2)}
                       </td>
                     </tr>
                   ))}
                   <tr>
-                    <td className="pt-2 pr-2 text-[13px] font-semibold">
-                      Total
-                    </td>
-                    <td className="pt-2 pl-2 text-right font-mono text-[13px] font-semibold text-primary">
+                    <td className="pt-2 pr-2 text-sm font-semibold">Total</td>
+                    <td className="pt-2 pl-2 text-right font-mono text-sm font-semibold text-primary">
                       {formatPercentage(apyBreakdown.total, 2)}
                     </td>
                   </tr>

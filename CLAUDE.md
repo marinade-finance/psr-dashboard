@@ -76,8 +76,21 @@ maps passed to `dsSam.runFinalOnly(overrides)`.
 
 ## Styling
 
-Tailwind utility classes throughout. Shared style constants (e.g.
-`TABLE_BASE`, `CLICKABLE_ROW`, `GHOST_ROW`, `TRUNCATED_CELL`) are
-defined as string constants or helper functions in component files.
-No CSS Modules remain — `src/index.css` holds global styles, CSS
-variables, and keyframe animations only.
+Use **Tailwind + Shadcn/ui** unified design language throughout. All new
+components must use Shadcn primitives (`Card`, `Button`, `Badge`, etc.) and
+Tailwind utility classes — no custom CSS unless unavoidable. Colour tokens
+from `src/index.css` (`--primary`, `--muted-foreground`, `--border`, etc.)
+must be used via Tailwind semantic classes (`text-muted-foreground`,
+`bg-card`, `border-border`) — never raw hex values inline.
+
+**Typography scale** — minimum readable font is `text-[10px]` (truly
+secondary info you don't need to read at a glance). Everything else:
+- Secondary / meta labels: `text-xs` (12px) or `text-[13px]`
+- Primary row / body text: `text-sm` (14px)
+- Headings / emphasis: `text-base` (16px) and up
+Avoid `text-[11px]` for anything interactive or primary.
+
+Shared style constants (e.g. `TABLE_BASE`, `CLICKABLE_ROW`, `GHOST_ROW`,
+`TRUNCATED_CELL`) are defined as string constants or helper functions in
+component files. No CSS Modules remain — `src/index.css` holds global
+styles, CSS variables, and keyframe animations only.
