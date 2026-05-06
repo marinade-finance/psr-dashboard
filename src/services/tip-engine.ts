@@ -161,7 +161,7 @@ export const getValidatorTip = (
 
   if (bidPmpe < 10 && delta > 50000) {
     return {
-      text: `Low bid limits rank. Raising could gain ~${(delta / 1000).toFixed(0)}K SOL more stake.`,
+      text: `Bid under 10 PMPE. Raising it could bring in ~${(delta / 1000).toFixed(0)}K SOL more stake.`,
       urgency: 'info',
       constraint: 'bid',
     }

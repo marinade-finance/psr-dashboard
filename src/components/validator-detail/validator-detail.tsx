@@ -7,8 +7,11 @@ import { HelpTip } from 'src/components/help-tip/help-tip'
 import { Button } from 'src/components/ui/button'
 import { Input } from 'src/components/ui/input'
 import { Sheet, SheetContent } from 'src/components/ui/sheet'
-import { formatPercentage, formatSolAmount } from 'src/format'
-import { bondHealthFromAuction } from 'src/services/breakdowns'
+import { formatPercentage, formatSolAmount, pay } from 'src/format'
+import {
+  bondHealthFromAuction,
+  computeBondCoverageMetrics,
+} from 'src/services/breakdowns'
 import { HELP_TEXT } from 'src/services/help-text'
 import {
   selectExpectedStakeChange,
@@ -84,6 +87,25 @@ export const ValidatorDetail = ({
   const [tab, setTab] = useState<Tab>('overview')
 
   const inSet = validator.auctionStake.marinadeSamTargetSol > 0
+  const inSetCount = useMemo(
+    () =>
+      auctionResult.auctionData.validators.filter(
+        v => v.auctionStake.marinadeSamTargetSol > 0,
+      ).length,
+    [auctionResult],
+  )
+  const cutoffDistance = inSet ? inSetCount - rank : rank - inSetCount
+  const bondCoverage = useMemo(
+    () =>
+      computeBondCoverageMetrics(
+        validator,
+        dsSamConfig.minBondEpochs,
+        dsSamConfig.idealBondEpochs,
+        winningTotalPmpe,
+        dsSamConfig.bondRiskFeeMult,
+      ),
+    [validator, dsSamConfig, winningTotalPmpe],
+  )
   const currentMaxApy = apyBreakdown.total
 
   const [editBid, setEditBid] = useState(validator.revShare.bidPmpe.toString())
@@ -253,8 +275,19 @@ export const ValidatorDetail = ({
               Back to rankings
             </button>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <span className="text-base font-bold font-mono text-primary shrink-0">
-                #{rank}
+              <span className="shrink-0 flex flex-col leading-tight">
+                <span className="text-base font-bold font-mono text-primary">
+                  #{rank}
+                </span>
+                <span
+                  className={`text-[10px] font-mono ${inSet ? 'text-muted-foreground' : 'text-destructive'}`}
+                >
+                  {inSet
+                    ? cutoffDistance === 0
+                      ? 'last in set'
+                      : `${cutoffDistance} above cutoff`
+                    : `${cutoffDistance} below cutoff`}
+                </span>
               </span>
               {validatorName && (
                 <span className="text-sm font-semibold text-foreground">
@@ -683,16 +716,34 @@ export const ValidatorDetail = ({
               <div className="mt-3 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">Balance</span>
-                  <span className="text-sm font-semibold font-mono">
+                  <span className="text-sm font-semibold font-mono whitespace-nowrap">
                     {formatSolAmount(validator.bondBalanceSol, 0)} SOL
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">
-                    Utilization
+                    Coverage
                   </span>
-                  <span className="text-sm font-semibold font-mono">
-                    {bondUtilPct.toFixed(1)}%
+                  <span
+                    className="text-sm font-semibold font-mono"
+                    style={{
+                      color:
+                        bondHealth === 'critical'
+                          ? CSS_DESTRUCTIVE
+                          : bondHealth === 'watch'
+                            ? 'var(--warning)'
+                            : CSS_PRIMARY,
+                    }}
+                  >
+                    {bondHealth === 'critical'
+                      ? bondCoverage.topUpToMin > 0
+                        ? `−${pay(bondCoverage.topUpToMin)} needed`
+                        : 'Critical'
+                      : bondHealth === 'watch'
+                        ? bondCoverage.topUpToIdeal > 0
+                          ? `+${pay(bondCoverage.topUpToIdeal)} for more stake`
+                          : 'Watch'
+                        : 'Fully covered'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
