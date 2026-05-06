@@ -64,7 +64,7 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
           </span>
         )}
         Bid Too Low Penalty
-        <HelpTip text="Triggered when this epoch's bid drops below 99.999% of last epoch's bid. Penalty scales with shortfall against the worst historical effParticipatingBid (clipped to bond obligation)." />
+        <HelpTip text="Triggered when this epoch's bid drops below 99.999% of last epoch's bid. Penalty scales with shortfall against the worst historical effective participating bid (clipped to bond obligation)." />
       </h3>
 
       <div
@@ -88,7 +88,7 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
           <Row label="This epoch bid PMPE" value={pmpe(m.thisEpochBidPmpe)} />
           <Row label="History window" value={`${m.historyEpochs} epochs`} />
           <Row
-            label="Worst historical effParticipating PMPE"
+            label="Worst historical effective participating bid PMPE"
             value={pmpe(m.worstHistoricalPmpe)}
           />
 
@@ -113,7 +113,10 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
             label="Penalty coefficient"
             value={formatPercentage(m.penaltyCoef, 2)}
           />
-          <Row label="Base (winning + effPartBid PMPE)" value={pmpe(m.base)} />
+          <Row
+            label="Base (winning PMPE + effective participating bid PMPE)"
+            value={pmpe(m.base)}
+          />
           <Row
             label="Penalty PMPE"
             value={pmpe(m.penaltyPmpe)}
