@@ -114,7 +114,7 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
       </div>
       <div className="ml-auto flex items-center gap-2 shrink-0">
         <a
-          href="/docs/"
+          href={isExpert ? '/docs/?from=Expert' : '/docs/'}
           className={cn(
             tab,
             'docsButton hidden sm:flex items-center gap-1.5 border border-transparent hover:border-border',
@@ -149,7 +149,7 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
         </a>
         {isExpert && (
           <a
-            href="/docs/?from=expert#GUIDE-EXPERT"
+            href="/docs/?from=Expert#GUIDE-EXPERT"
             className={cn(
               tab,
               'hidden sm:inline border border-transparent hover:border-border',
