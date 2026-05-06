@@ -1,6 +1,5 @@
 import {
   getBondHealth,
-  bondRunwayDays,
   bondUtilizationPct,
   compoundApy,
   apyBreakdown,
@@ -124,10 +123,9 @@ export const getValidatorTip = (
         constraint: 'bond',
       }
     }
-    const days = Math.round(bondRunwayDays(bondGoodForEpochs))
     const epochsRounded = Math.round(bondGoodForEpochs)
     return {
-      text: `Bond depletes in ${epochsRounded} epoch${epochsRounded === 1 ? '' : 's'} (${days}d). Top up to avoid forced unstaking.`,
+      text: `Bond depletes in ${epochsRounded} epoch${epochsRounded === 1 ? '' : 's'}. Top up to avoid forced unstaking.`,
       urgency: 'critical',
       constraint: 'bond',
     }
