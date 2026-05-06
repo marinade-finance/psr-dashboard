@@ -42,19 +42,11 @@ export type ValidatorsResponse = {
 export const fetchValidators = async (): Promise<ValidatorsResponse> =>
   fetchValidatorsWithEpochs(0)
 
-const cache = new Map<number, Promise<ValidatorsResponse>>()
-
-export const fetchValidatorsWithEpochs = (
+export const fetchValidatorsWithEpochs = async (
   epochs: number,
 ): Promise<ValidatorsResponse> => {
-  const cached = cache.get(epochs)
-  if (cached !== undefined) return cached
-  const promise = (async () => {
-    const res = await fetch(
-      `${VALIDATORS_API_URL}/validators?limit=9999&epochs=${epochs}`,
-    )
-    return (await res.json()) as ValidatorsResponse
-  })()
-  cache.set(epochs, promise)
-  return promise
+  const res = await fetch(
+    `${VALIDATORS_API_URL}/validators?limit=9999&epochs=${epochs}`,
+  )
+  return (await res.json()) as ValidatorsResponse
 }
