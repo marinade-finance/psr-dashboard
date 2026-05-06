@@ -493,10 +493,6 @@ export const ValidatorDetail = ({
                   )
                 })()}
               </div>
-              <p className="text-xs text-muted-foreground mb-4">
-                Vertical line = winning APY threshold (
-                {formatPercentage(winningApy, 2)})
-              </p>
               {(() => {
                 const scale = Math.max(apyBreakdown.total, winningApy) * 1.2
                 const winPct = (winningApy / scale) * 100
@@ -517,17 +513,13 @@ export const ValidatorDetail = ({
                         <span className="text-[13px] text-muted-foreground w-24 shrink-0">
                           {label}
                         </span>
-                        <div className="flex-1 relative h-4 bg-secondary rounded overflow-visible">
+                        <div className="flex-1 relative h-3 bg-secondary rounded">
                           <div
                             className="h-full rounded"
                             style={{
                               width: `${Math.max(0, (val / scale) * 100)}%`,
                               background: color,
                             }}
-                          />
-                          <div
-                            className="absolute top-0 h-full w-px bg-foreground/40"
-                            style={{ left: `${winPct}%` }}
                           />
                         </div>
                         <span className="text-xs font-mono text-foreground w-12 text-right shrink-0">
@@ -550,10 +542,20 @@ export const ValidatorDetail = ({
                                 : CSS_DESTRUCTIVE,
                           }}
                         />
+                        {/* winning APY threshold marker — only meaningful on the total */}
                         <div
-                          className="absolute top-0 h-full w-px bg-foreground/40"
+                          className="absolute top-[-3px] h-[calc(100%+6px)] w-0.5 rounded-full bg-foreground/50"
                           style={{ left: `${winPct}%` }}
                         />
+                        <span
+                          className="absolute top-[-18px] text-[10px] font-mono text-muted-foreground"
+                          style={{
+                            left: `${winPct}%`,
+                            transform: 'translateX(-50%)',
+                          }}
+                        >
+                          {formatPercentage(winningApy, 2)}
+                        </span>
                       </div>
                       <span
                         className="text-xs font-mono font-semibold w-12 text-right shrink-0"
