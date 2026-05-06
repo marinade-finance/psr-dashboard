@@ -183,7 +183,7 @@ export const ValidatorDetail = ({
     })
 
     const runwayNote =
-      bondRunway <= 0 ? 'Depleted' : `~${Math.round(bondRunway)} epochs runway`
+      bondRunway <= 0 ? 'Depleted' : `${Math.round(bondRunway)} epochs runway`
     factors.push({
       name: 'Bond capacity',
       value: `${formatSolAmount(validator.bondBalanceSol, 0)} SOL`,
@@ -648,7 +648,7 @@ export const ValidatorDetail = ({
                   <span className="text-sm font-semibold font-mono">
                     {bondRunway <= 0
                       ? 'Depleted'
-                      : `~${Math.round(bondRunway)} epochs`}
+                      : `${Math.round(bondRunway)} epochs`}
                   </span>
                 </div>
                 <button

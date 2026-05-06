@@ -171,6 +171,8 @@ const RankCell: React.FC<{
   isSimulated: boolean
   origPos: number | null
   posColor: string | undefined
+  tipColor: string
+  tipIcon: string
   voteAccount: string
   onClearValidator?: (voteAccount: string) => void
 }> = ({
@@ -179,6 +181,8 @@ const RankCell: React.FC<{
   isSimulated,
   origPos,
   posColor,
+  tipColor,
+  tipIcon,
   voteAccount,
   onClearValidator,
 }) => {
@@ -210,7 +214,11 @@ const RankCell: React.FC<{
       </div>
     )
   return (
-    <span className={`text-muted-foreground font-medium ${RANK_MONO}`}>
+    <span
+      className={`font-medium ${RANK_MONO} flex items-center gap-0.5`}
+      style={{ color: tipColor }}
+    >
+      <span className="text-[10px] leading-none">{tipIcon}</span>
       {rank}
     </span>
   )
@@ -566,6 +574,8 @@ export const SamTable: React.FC<Props> = ({
             isSimulated={isSimulated}
             origPos={origPos}
             posColor={posColor}
+            tipColor={tipStyle.color}
+            tipIcon={tipStyle.icon}
             voteAccount={voteAccount}
             onClearValidator={onClearValidator}
           />
