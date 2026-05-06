@@ -399,6 +399,8 @@ export const SamTable: React.FC<Props> = ({
           return selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
         case 6:
           return selectSamActiveStake(a) - selectSamActiveStake(b)
+        case 7:
+          return selectSamTargetStake(a) - selectSamTargetStake(b)
         default:
           return 0
       }
