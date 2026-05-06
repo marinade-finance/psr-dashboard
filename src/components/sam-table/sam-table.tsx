@@ -872,7 +872,8 @@ export const SamTable: React.FC<Props> = ({
                   dcSamConfig.bondRiskFeeMult,
                   item.validator.bondState,
                   nameByVote.get(selectVoteAccount(item.validator)),
-                  simulatedValidator === selectVoteAccount(item.validator),
+                  !item.isGhost &&
+                    simulatedValidator === selectVoteAccount(item.validator),
                 ),
               ),
             render: item => {
@@ -924,7 +925,8 @@ export const SamTable: React.FC<Props> = ({
                 buildSamActiveTooltip(
                   item.validator,
                   nameByVote.get(selectVoteAccount(item.validator)),
-                  simulatedValidator === selectVoteAccount(item.validator),
+                  !item.isGhost &&
+                    simulatedValidator === selectVoteAccount(item.validator),
                 ),
               ),
             render: item => <StakeChangeIndicator validator={item.validator} />,

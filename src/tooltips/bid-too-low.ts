@@ -22,6 +22,7 @@ const SCALE_COEF = 1.5
 
 export type BidTooLowMetrics = {
   historyEpochs: number
+  isNewValidator: boolean
   lastEpochBidPmpe: number
   thisEpochBidPmpe: number
   isNegativeBiddingChange: boolean
@@ -49,6 +50,7 @@ export const computeBidTooLowMetrics = (
 
   const auctions = v.auctions ?? []
   const pastAuction = auctions[0]
+  const isNewValidator = pastAuction === undefined
   const lastEpochBidPmpe = finite(pastAuction?.bidPmpe)
   const thisEpochBidPmpe = finite(v.revShare?.bidPmpe)
   const threshold = TOL_COEF * lastEpochBidPmpe
@@ -79,6 +81,7 @@ export const computeBidTooLowMetrics = (
 
   return {
     historyEpochs,
+    isNewValidator,
     lastEpochBidPmpe,
     thisEpochBidPmpe,
     isNegativeBiddingChange,
@@ -127,7 +130,11 @@ export const renderBidTooLowTooltip = (
 
   const direction =
     sectionHeader('Bid Direction') +
-    row('Last epoch bid', '', pmpe(m.lastEpochBidPmpe)) +
+    row(
+      'Last epoch bid',
+      '',
+      m.isNewValidator ? 'New validator' : pmpe(m.lastEpochBidPmpe),
+    ) +
     row('This epoch bid', '', pmpe(m.thisEpochBidPmpe)) +
     (m.isNegativeBiddingChange
       ? row('Status', '', 'Bid reduced', { boldValue: true, accent: 'red' })
@@ -139,7 +146,7 @@ export const renderBidTooLowTooltip = (
     row(
       `Lowest historical bid (last ${m.historyEpochs} epochs)`,
       '',
-      pmpe(m.worstHistoricalPmpe),
+      m.isNewValidator ? 'No history' : pmpe(m.worstHistoricalPmpe),
     ) +
     divider() +
     (hasPenalty

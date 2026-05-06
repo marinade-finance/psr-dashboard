@@ -13,11 +13,11 @@ import { fetchValidatorNames, loadSam } from 'src/services/sam'
 
 import styles from './sam.module.css'
 
-const EMPTY_NAMES = new Map<string, string>()
-
 import type { AuctionResult } from '@marinade.finance/ds-sam-sdk'
 import type { UserLevel } from 'src/components/navigation/navigation'
 import type { SourceDataOverrides } from 'src/services/sam'
+
+const EMPTY_NAMES = new Map<string, string>()
 
 type Props = {
   level: UserLevel
@@ -60,7 +60,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
   const { data: validatorNames } = useQuery(
     ['validator-names'],
     fetchValidatorNames,
-    { staleTime: Infinity },
+    { staleTime: 5 * 60 * 1000 },
   )
 
   const { data: notificationsMap } = useQuery(
