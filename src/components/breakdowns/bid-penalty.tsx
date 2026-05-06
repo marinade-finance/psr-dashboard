@@ -72,7 +72,6 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
   isSimulated,
 }) => {
   const m = computeBidPenaltyMetrics(validator, dsSamConfig, winningTotalPmpe)
-  const penaltySol = (m.penaltyPmpe / 1000) * m.marinadeActivatedStakeSol
 
   return (
     <div className="bg-card rounded-xl border border-border p-5">
@@ -147,11 +146,11 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
             bold
             accent={m.penaltyPmpe > 0 ? 'red' : undefined}
           />
-          {penaltySol > 0 ? (
+          {m.penaltySol > 0 ? (
             <Row
               label="Penalty this epoch"
               secondary={stake(m.marinadeActivatedStakeSol)}
-              value={pay(penaltySol)}
+              value={pay(m.penaltySol)}
               bold
               large
               accent="red"

@@ -1,14 +1,10 @@
 import { describe, it, expect } from 'vitest'
 
-import { Color } from 'src/services/types'
-
 import {
   compoundApy,
   bondRunwayEpochs,
   bondRunwayDays,
   bondUtilizationPct,
-  getBondHealth,
-  bondHealthColor,
   stakeDelta,
   apyBreakdown,
   isNonProductive,
@@ -136,89 +132,6 @@ describe('bondUtilizationPct', () => {
       marinadeActivatedStakeSol: 250000,
     })
     expect(bondUtilizationPct(v)).toBe(50)
-  })
-})
-
-describe('getBondHealth', () => {
-  // critical: epochsRunway <= 5
-  it('critical: runway exactly 5', () =>
-    expect(getBondHealth(0, 5)).toBe('critical'))
-  it('critical: runway 0', () => expect(getBondHealth(0, 0)).toBe('critical'))
-  // critical: utilPct >= 85
-  it('critical: utilPct exactly 85', () =>
-    expect(getBondHealth(85, 20)).toBe('critical'))
-  it('critical: utilPct 100', () =>
-    expect(getBondHealth(100, 20)).toBe('critical'))
-
-  // watch: runway 6–10 (and util < 85)
-  it('watch: runway exactly 10', () =>
-    expect(getBondHealth(0, 10)).toBe('watch'))
-  it('watch: runway 6', () => expect(getBondHealth(0, 6)).toBe('watch'))
-  // watch: utilPct 65–84
-  it('watch: utilPct exactly 65', () =>
-    expect(getBondHealth(65, 20)).toBe('watch'))
-  it('watch: utilPct 84', () => expect(getBondHealth(84, 20)).toBe('watch'))
-
-  // healthy: runway > 10, util < 65
-  it('healthy: 64% util, 11 epochs', () =>
-    expect(getBondHealth(64, 11)).toBe('healthy'))
-  it('healthy: 0% util, 100 epochs', () =>
-    expect(getBondHealth(0, 100)).toBe('healthy'))
-})
-
-describe('bondHealthColor', () => {
-  it('no target (0) → undefined', () => {
-    const v = makeValidator({ auctionStake: { marinadeSamTargetSol: 0 } })
-    expect(bondHealthColor(v, 5)).toBeUndefined()
-  })
-
-  it('runway >= 13 → GREEN', () => {
-    // bondGoodForNEpochs:20, minBond:5 → runway 15
-    const v = makeValidator({ bondGoodForNEpochs: 20 })
-    expect(bondHealthColor(v, 5)).toBe(Color.GREEN)
-  })
-
-  it('runway exactly 13 → GREEN', () => {
-    const v = makeValidator({ bondGoodForNEpochs: 18 })
-    expect(bondHealthColor(v, 5)).toBe(Color.GREEN)
-  })
-
-  it('runway 6–12 → YELLOW', () => {
-    // bondGoodForNEpochs:15, minBond:5 → runway 10
-    const v = makeValidator({ bondGoodForNEpochs: 15 })
-    expect(bondHealthColor(v, 5)).toBe(Color.YELLOW)
-  })
-
-  it('runway exactly 6 → YELLOW', () => {
-    const v = makeValidator({ bondGoodForNEpochs: 11 })
-    expect(bondHealthColor(v, 5)).toBe(Color.YELLOW)
-  })
-
-  it('runway 2–5 → ORANGE', () => {
-    // bondGoodForNEpochs:7, minBond:4 → runway 3
-    const v = makeValidator({ bondGoodForNEpochs: 7 })
-    expect(bondHealthColor(v, 4)).toBe(Color.ORANGE)
-  })
-
-  it('runway exactly 2 → ORANGE', () => {
-    const v = makeValidator({ bondGoodForNEpochs: 6 })
-    expect(bondHealthColor(v, 4)).toBe(Color.ORANGE)
-  })
-
-  it('runway < 2 → RED', () => {
-    // bondGoodForNEpochs:5, minBond:4 → runway 1
-    const v = makeValidator({ bondGoodForNEpochs: 5 })
-    expect(bondHealthColor(v, 4)).toBe(Color.RED)
-  })
-
-  it('runway exactly 0 → RED', () => {
-    const v = makeValidator({ bondGoodForNEpochs: 4 })
-    expect(bondHealthColor(v, 4)).toBe(Color.RED)
-  })
-
-  it('negative runway → RED', () => {
-    const v = makeValidator({ bondGoodForNEpochs: 2 })
-    expect(bondHealthColor(v, 4)).toBe(Color.RED)
   })
 })
 

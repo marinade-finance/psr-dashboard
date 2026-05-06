@@ -10,7 +10,10 @@ import {
   calculateMaxApy,
 } from '../tip-engine'
 
-import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
+import type {
+  AuctionValidator,
+  DsSamConfig,
+} from '@marinade.finance/ds-sam-sdk'
 
 function makeValidator(
   overrides: Record<string, unknown> = {},
@@ -19,9 +22,14 @@ function makeValidator(
     voteAccount: 'test',
     bondGoodForNEpochs: 20,
     bondBalanceSol: 100,
+    claimableBondBalanceSol: 100,
     marinadeActivatedStakeSol: 10000,
     maxStakeWanted: 50000,
     auctionStake: { marinadeSamTargetSol: 15000 },
+    minBondPmpe: 1,
+    idealBondPmpe: 6,
+    minUnprotectedReserve: 0,
+    idealUnprotectedReserve: 0,
     revShare: {
       inflationPmpe: 5,
       mevPmpe: 2,
@@ -37,6 +45,12 @@ function makeValidator(
 }
 
 const EPOCHS_PER_YEAR = 182
+
+const DS_SAM_CONFIG = {
+  minBondEpochs: 0,
+  idealBondEpochs: 10,
+  bondRiskFeeMult: 1,
+} as unknown as DsSamConfig
 
 // --- calculateBondUtilization ---
 
@@ -219,7 +233,7 @@ describe('formatStakeDelta', () => {
 describe('getValidatorTip', () => {
   it('not in set → critical/rank', () => {
     const v = makeValidator({ auctionStake: { marinadeSamTargetSol: 0 } })
-    const tip = getValidatorTip(v, 0.15, EPOCHS_PER_YEAR)
+    const tip = getValidatorTip(v, 0.15, EPOCHS_PER_YEAR, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('rank')
     expect(tip.text).toContain('Outside winning set')
@@ -228,33 +242,35 @@ describe('getValidatorTip', () => {
   it('critical health + epochs <= 5 → critical/bond with epoch count and days (48h)', () => {
     const v = makeValidator({
       bondGoodForNEpochs: 4,
-      bondBalanceSol: 1,
-      marinadeActivatedStakeSol: 999999,
+      bondBalanceSol: 0.001,
+      claimableBondBalanceSol: 0,
+      marinadeActivatedStakeSol: 100000,
     })
-    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR)
+    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
     expect(tip.text).toContain('Bond depletes')
-    // 4 epochs × 48h / 24h = 8 days (NOT 52h math)
+    // 4 epochs × 48h / 24h = 8 days
     expect(tip.text).toContain('8d')
   })
 
-  it('critical health (high util, epochs > 5) → critical/bond util message', () => {
+  it('critical health (epochs > 5) → critical/bond minimum coverage message', () => {
     const v = makeValidator({
       bondGoodForNEpochs: 8,
-      bondBalanceSol: 1,
-      marinadeActivatedStakeSol: 999999,
+      bondBalanceSol: 0.001,
+      claimableBondBalanceSol: 0,
+      marinadeActivatedStakeSol: 100000,
     })
-    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR)
+    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
-    expect(tip.text).toContain('utilization')
+    expect(tip.text).toContain('minimum coverage')
   })
 
   it('watch + bidPmpe < 15 → warning/bid', () => {
     const v = makeValidator({
-      bondGoodForNEpochs: 8,
-      bondBalanceSol: 100,
+      bondBalanceSol: 50,
+      claimableBondBalanceSol: 50,
       marinadeActivatedStakeSol: 10000,
       revShare: {
         inflationPmpe: 5,
@@ -267,7 +283,7 @@ describe('getValidatorTip', () => {
         effParticipatingBidPmpe: 10,
       },
     })
-    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR)
+    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('warning')
     expect(tip.constraint).toBe('bid')
     expect(tip.text).toContain('below median')
@@ -275,11 +291,11 @@ describe('getValidatorTip', () => {
 
   it('watch + bidPmpe >= 15 → warning/bond runway', () => {
     const v = makeValidator({
-      bondGoodForNEpochs: 8,
-      bondBalanceSol: 100,
+      bondBalanceSol: 50,
+      claimableBondBalanceSol: 50,
       marinadeActivatedStakeSol: 10000,
     })
-    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR)
+    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('warning')
     expect(tip.constraint).toBe('bond')
     expect(tip.text).toContain('runway')
@@ -287,6 +303,8 @@ describe('getValidatorTip', () => {
 
   it('healthy + low bid (< 10 pmpe) + large delta (> 50k) → info/bid', () => {
     const v = makeValidator({
+      bondBalanceSol: 300,
+      claimableBondBalanceSol: 300,
       auctionStake: { marinadeSamTargetSol: 100000 },
       marinadeActivatedStakeSol: 40000,
       revShare: {
@@ -300,17 +318,19 @@ describe('getValidatorTip', () => {
         effParticipatingBidPmpe: 5,
       },
     })
-    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR)
+    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('info')
     expect(tip.constraint).toBe('bid')
   })
 
   it('healthy + delta > 100k → positive/none large gain', () => {
     const v = makeValidator({
+      bondBalanceSol: 400,
+      claimableBondBalanceSol: 400,
       auctionStake: { marinadeSamTargetSol: 200000 },
       marinadeActivatedStakeSol: 50000,
     })
-    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR)
+    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('positive')
     expect(tip.constraint).toBe('none')
     expect(tip.text).toContain('Gaining')
@@ -322,7 +342,7 @@ describe('getValidatorTip', () => {
       auctionStake: { marinadeSamTargetSol: 15000 },
       marinadeActivatedStakeSol: 10000,
     })
-    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR)
+    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('positive')
     expect(tip.text).toContain('Strong runway')
   })
@@ -333,7 +353,7 @@ describe('getValidatorTip', () => {
       auctionStake: { marinadeSamTargetSol: 15000 },
       marinadeActivatedStakeSol: 10000,
     })
-    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR)
+    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('positive')
     expect(tip.text).toContain('Monitor bond')
   })
@@ -343,7 +363,7 @@ describe('getValidatorTip', () => {
       auctionStake: { marinadeSamTargetSol: 10000 },
       marinadeActivatedStakeSol: 10000,
     })
-    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR)
+    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('neutral')
     expect(tip.constraint).toBe('none')
     expect(tip.text).toContain('At target')
@@ -354,7 +374,7 @@ describe('getValidatorTip', () => {
       auctionStake: { marinadeSamTargetSol: 5000 },
       marinadeActivatedStakeSol: 10000,
     })
-    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR)
+    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bid')
     expect(tip.text).toContain('Losing')
@@ -375,7 +395,7 @@ describe('getValidatorTip', () => {
         effParticipatingBidPmpe: 0,
       },
     })
-    const tip = getValidatorTip(v, 0.15, EPOCHS_PER_YEAR)
+    const tip = getValidatorTip(v, 0.15, EPOCHS_PER_YEAR, DS_SAM_CONFIG, 100)
     expect(tip.text).toContain('0.15')
   })
 })

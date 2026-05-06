@@ -237,6 +237,7 @@ export type BidPenaltyMetrics = {
   penaltyCoef: number
   base: number
   penaltyPmpe: number
+  penaltySol: number
   marinadeActivatedStakeSol: number
   winningTotalPmpe: number
 }
@@ -277,6 +278,7 @@ export function computeBidPenaltyMetrics(
 
   const base = winningTotalPmpe + effParticipatingBidPmpe
   const penaltyPmpe = penaltyCoef * base
+  const penaltySol = (penaltyPmpe / 1000) * v.marinadeActivatedStakeSol
 
   return {
     historyEpochs,
@@ -294,6 +296,7 @@ export function computeBidPenaltyMetrics(
     penaltyCoef,
     base,
     penaltyPmpe,
+    penaltySol,
     marinadeActivatedStakeSol: v.marinadeActivatedStakeSol,
     winningTotalPmpe,
   }

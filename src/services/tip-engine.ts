@@ -1,11 +1,15 @@
+import { bondHealthFromAuction } from './breakdowns'
 import {
-  getBondHealth,
+  bondRunwayDays,
   bondUtilizationPct,
   compoundApy,
   apyBreakdown,
 } from './calculations'
 
-import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
+import type {
+  AuctionValidator,
+  DsSamConfig,
+} from '@marinade.finance/ds-sam-sdk'
 
 export type TipUrgency =
   | 'critical'
@@ -95,14 +99,15 @@ export const getValidatorTip = (
   validator: AuctionValidator,
   winningApy: number,
   epochsPerYear: number,
+  dsSamConfig: DsSamConfig,
+  winningTotalPmpe: number,
 ): ValidatorTip => {
   const inSet = validator.auctionStake.marinadeSamTargetSol > 0
   const samActive = validator.marinadeActivatedStakeSol
   const samTarget = validator.auctionStake.marinadeSamTargetSol
   const delta = samTarget - samActive
   const bondGoodForEpochs = validator.bondGoodForNEpochs ?? 0
-  const bondUtilPct = calculateBondUtilization(validator)
-  const health = getBondHealth(bondUtilPct, bondGoodForEpochs)
+  const health = bondHealthFromAuction(validator, dsSamConfig, winningTotalPmpe)
   const maxApy = calculateMaxApy(validator, epochsPerYear)
   const bidPmpe = validator.revShare.bidPmpe
 
@@ -115,7 +120,7 @@ export const getValidatorTip = (
     }
   }
 
-  if (health === 'critical' && bondGoodForEpochs <= 5) {
+  if (health === 'critical') {
     if (bondGoodForEpochs <= 0) {
       return {
         text: 'Bond already depleted. Top up immediately to avoid forced unstaking.',
@@ -123,17 +128,17 @@ export const getValidatorTip = (
         constraint: 'bond',
       }
     }
-    const epochsRounded = Math.round(bondGoodForEpochs)
-    return {
-      text: `Bond depletes in ${epochsRounded} epoch${epochsRounded === 1 ? '' : 's'}. Top up to avoid forced unstaking.`,
-      urgency: 'critical',
-      constraint: 'bond',
+    if (bondGoodForEpochs <= 5) {
+      const days = Math.round(bondRunwayDays(bondGoodForEpochs))
+      const epochsRounded = Math.round(bondGoodForEpochs)
+      return {
+        text: `Bond depletes in ${epochsRounded} epoch${epochsRounded === 1 ? '' : 's'} (${days}d). Top up to avoid forced unstaking.`,
+        urgency: 'critical',
+        constraint: 'bond',
+      }
     }
-  }
-
-  if (health === 'critical') {
     return {
-      text: 'Bond utilization >85%. Top up bond or reduce WANT to lower exposure.',
+      text: 'Bond below minimum coverage. Top up to avoid forced unstaking.',
       urgency: 'critical',
       constraint: 'bond',
     }

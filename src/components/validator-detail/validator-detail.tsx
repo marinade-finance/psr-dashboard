@@ -83,7 +83,13 @@ export const ValidatorDetail = ({
     dsSamConfig,
     winningTotalPmpe,
   )
-  const tip = getValidatorTip(validator, winningApy, epochsPerYear)
+  const tip = getValidatorTip(
+    validator,
+    winningApy,
+    epochsPerYear,
+    dsSamConfig,
+    winningTotalPmpe,
+  )
   const tipStyle = getTipStyle(tip.urgency)
   const expectedStakeDelta = selectExpectedStakeChange(validator)
   const [tab, setTab] = useState<Tab>('overview')

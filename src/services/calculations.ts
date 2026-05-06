@@ -1,5 +1,3 @@
-import { Color } from 'src/services/types'
-
 import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
 
 export interface ApyBreakdown {
@@ -30,29 +28,6 @@ export function bondUtilizationPct(validator: AuctionValidator): number {
   const samActive = validator.marinadeActivatedStakeSol
   if (bondBalance <= 0) return 100
   return Math.min((samActive / (bondBalance * 5000)) * 100, 100)
-}
-
-export function getBondHealth(
-  bondUtilPct: number,
-  epochsRunway: number,
-): 'healthy' | 'watch' | 'critical' {
-  if (epochsRunway <= 5 || bondUtilPct >= 85) return 'critical'
-  if (epochsRunway <= 10 || bondUtilPct >= 65) return 'watch'
-  return 'healthy'
-}
-
-export function bondHealthColor(
-  validator: AuctionValidator,
-  minBondEpochs: number,
-): Color | undefined {
-  if (!validator.auctionStake.marinadeSamTargetSol) {
-    return undefined
-  }
-  const health = bondRunwayEpochs(validator, minBondEpochs)
-  if (health >= 13) return Color.GREEN
-  if (health >= 6) return Color.YELLOW
-  if (health >= 2) return Color.ORANGE
-  return Color.RED
 }
 
 export function stakeDelta(validator: AuctionValidator): number {
