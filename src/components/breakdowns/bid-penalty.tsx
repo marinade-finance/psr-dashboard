@@ -20,7 +20,7 @@ const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
   <tr>
     <td
       colSpan={2}
-      className="pt-4 pb-1 text-[11px] uppercase tracking-wider text-muted-foreground border-b border-dashed border-border"
+      className="pt-4 pb-1 text-xs uppercase tracking-wider text-muted-foreground border-b border-dashed border-border"
     >
       {title}
     </td>
@@ -34,11 +34,11 @@ const Row: React.FC<{
   accent?: 'red'
 }> = ({ label, value, bold, accent }) => (
   <tr className="border-b border-border-grid/50 last:border-0">
-    <td className={`py-1.5 pr-2 text-[12px] ${bold ? 'font-semibold' : ''}`}>
+    <td className={`py-1.5 pr-2 text-xs ${bold ? 'font-semibold' : ''}`}>
       {label}
     </td>
     <td
-      className={`py-1.5 pl-2 text-right font-mono text-[12px] ${
+      className={`py-1.5 pl-2 text-right font-mono text-xs ${
         bold ? 'font-semibold' : ''
       } ${accent === 'red' ? 'text-destructive' : ''}`}
     >

@@ -251,12 +251,12 @@ export const ValidatorDetail = ({
               : 'bg-background'
           }`}
         >
-          <div className="flex flex-col gap-1.5 min-w-0">
+          <div className="flex flex-col gap-1 min-w-0">
             <button
-              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors self-start"
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors self-start"
               onClick={onClose}
             >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
                 <path
                   d="M8.75 10.5L5.25 7L8.75 3.5"
                   stroke="currentColor"
@@ -267,18 +267,15 @@ export const ValidatorDetail = ({
               </svg>
               Back to rankings
             </button>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <span className="text-lg font-bold font-mono text-primary shrink-0">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="text-base font-bold font-mono text-primary shrink-0">
                 #{rank}
               </span>
               {validatorName && (
-                <span className="text-[15px] font-medium text-foreground truncate">
+                <span className="text-sm font-semibold text-foreground">
                   {validatorName}
                 </span>
               )}
-              <span className="text-[11px] font-mono text-secondary-foreground break-all">
-                {voteAccount}
-              </span>
               <span
                 className="px-2 py-0.5 rounded-md text-xs font-medium shrink-0"
                 style={{
@@ -304,6 +301,9 @@ export const ValidatorDetail = ({
                 </span>
               )}
             </div>
+            <span className="text-xs font-mono text-muted-foreground break-all leading-tight">
+              {voteAccount}
+            </span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <label
@@ -339,7 +339,7 @@ export const ValidatorDetail = ({
           </div>
         </div>
 
-        <div className="border-b border-border bg-background sticky top-[73px] z-[5]">
+        <div className="border-b border-border bg-background sticky top-[96px] z-[5]">
           <div className="flex gap-1 px-4 sm:px-6 overflow-x-auto">
             {(
               [

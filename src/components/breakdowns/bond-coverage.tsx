@@ -57,15 +57,15 @@ const Row: React.FC<{
 }> = ({ label, qty, value, bold, large, accent }) => (
   <tr className="border-b border-border-grid/50 last:border-0">
     <td
-      className={`py-1.5 pr-2 text-[12px] ${bold ? 'font-semibold' : ''} ${large ? 'text-[13px]' : ''}`}
+      className={`py-1.5 pr-2 text-xs ${bold ? 'font-semibold' : ''} ${large ? 'text-[13px]' : ''}`}
     >
       {label}
     </td>
-    <td className="py-1.5 px-2 text-right font-mono text-[11px] text-muted-foreground">
+    <td className="py-1.5 px-2 text-right font-mono text-xs text-muted-foreground">
       {qty ?? ''}
     </td>
     <td
-      className={`py-1.5 pl-2 text-right font-mono ${large ? 'text-[14px]' : 'text-[12px]'} ${
+      className={`py-1.5 pl-2 text-right font-mono ${large ? 'text-sm' : 'text-xs'} ${
         bold ? 'font-semibold' : ''
       } ${
         accent === 'red'
@@ -82,10 +82,10 @@ const Row: React.FC<{
 
 const OkRow: React.FC<{ message: string }> = ({ message }) => (
   <tr>
-    <td colSpan={2} className="py-1.5 pr-2 text-[12px] text-muted-foreground">
+    <td colSpan={2} className="py-1.5 pr-2 text-xs text-muted-foreground">
       {message}
     </td>
-    <td className="py-1.5 pl-2 text-right font-mono text-[12px] text-[var(--status-green,#2aa198)]">
+    <td className="py-1.5 pl-2 text-right font-mono text-xs text-[var(--status-green,#2aa198)]">
       ●
     </td>
   </tr>
@@ -95,7 +95,7 @@ const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
   <tr>
     <td
       colSpan={3}
-      className="pt-4 pb-1 text-[11px] uppercase tracking-wider text-muted-foreground border-b border-dashed border-border"
+      className="pt-4 pb-1 text-xs uppercase tracking-wider text-muted-foreground border-b border-dashed border-border"
     >
       {title}
     </td>
