@@ -14,6 +14,7 @@ import {
   CSS_DESTRUCTIVE,
   CSS_PRIMARY_LIGHT,
   CSS_DESTRUCTIVE_LIGHT,
+  CSS_STATUS_GREEN,
 } from 'src/lib/utils'
 import {
   bondHealthFromAuction,
@@ -34,6 +35,7 @@ import {
 } from 'src/services/tip-engine'
 
 import type { AuctionResult, DsSamConfig } from '@marinade.finance/ds-sam-sdk'
+import type { BondCoverageMetrics } from 'src/services/breakdowns'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
 
 interface ValidatorDetailProps {
@@ -56,6 +58,46 @@ interface ValidatorDetailProps {
 }
 
 type Tab = 'overview' | 'bond' | 'revenue' | 'penalty'
+
+type BondHealth = 'healthy' | 'watch' | 'critical'
+
+function bondCoverageLabel(
+  health: BondHealth,
+  coverage: BondCoverageMetrics,
+): string {
+  if (health === 'critical')
+    return coverage.topUpToMin > 0
+      ? `Top up ${pay(coverage.topUpToMin)}`
+      : 'Critical'
+  if (health === 'watch')
+    return coverage.topUpToIdeal > 0
+      ? `Top up ${pay(coverage.topUpToIdeal)}`
+      : 'Watch'
+  return 'Fully covered'
+}
+
+function bondCoverageColor(health: BondHealth): string {
+  if (health === 'critical') return CSS_DESTRUCTIVE
+  if (health === 'watch') return 'var(--warning)'
+  return CSS_PRIMARY
+}
+
+const MetricRow = ({
+  label,
+  value,
+  valueStyle,
+}: {
+  label: string
+  value: React.ReactNode
+  valueStyle?: React.CSSProperties
+}) => (
+  <div className="flex items-center justify-between">
+    <span className="text-xs text-muted-foreground">{label}</span>
+    <span className="text-sm font-semibold font-mono" style={valueStyle}>
+      {value}
+    </span>
+  </div>
+)
 
 export const ValidatorDetail = ({
   validator,
@@ -397,52 +439,38 @@ export const ValidatorDetail = ({
         <div
           className={`grid grid-cols-1 lg:grid-cols-2 gap-6 p-6 ${tab === 'overview' ? '' : 'hidden'}`}
         >
-          {/* Left: operational status */}
           <div className="space-y-6">
             <div className="bg-card rounded-xl border border-border p-5">
               <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
                 Stake
               </h3>
               <div className="space-y-3 mt-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Active</span>
-                  <span className="text-sm font-semibold font-mono">
-                    {formatSolAmount(validator.marinadeActivatedStakeSol, 0)}{' '}
-                    SOL
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Target</span>
-                  <span className="text-sm font-semibold font-mono">
-                    {formatSolAmount(
-                      validator.auctionStake.marinadeSamTargetSol,
-                      0,
-                    )}{' '}
-                    SOL
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    Next epoch
-                  </span>
-                  <span
-                    className="text-sm font-semibold font-mono"
-                    style={{
-                      color:
-                        expectedStakeDelta > 0
-                          ? 'var(--status-green, #2aa198)'
-                          : expectedStakeDelta < 0
-                            ? CSS_DESTRUCTIVE
-                            : 'var(--muted-foreground)',
-                    }}
-                  >
-                    {expectedStakeDelta > 0
+                <MetricRow
+                  label="Active"
+                  value={`${formatSolAmount(validator.marinadeActivatedStakeSol, 0)} SOL`}
+                />
+                <MetricRow
+                  label="Target"
+                  value={`${formatSolAmount(validator.auctionStake.marinadeSamTargetSol, 0)} SOL`}
+                />
+                <MetricRow
+                  label="Next epoch"
+                  value={
+                    expectedStakeDelta > 0
                       ? `+${formatSolAmount(expectedStakeDelta, 0)} SOL`
                       : expectedStakeDelta < 0
                         ? `${formatSolAmount(expectedStakeDelta, 0)} SOL`
-                        : '0 SOL'}
-                  </span>
-                </div>
+                        : '0 SOL'
+                  }
+                  valueStyle={{
+                    color:
+                      expectedStakeDelta > 0
+                        ? CSS_STATUS_GREEN
+                        : expectedStakeDelta < 0
+                          ? CSS_DESTRUCTIVE
+                          : 'var(--muted-foreground)',
+                  }}
+                />
               </div>
             </div>
 
@@ -452,46 +480,23 @@ export const ValidatorDetail = ({
                 <HelpTip text={HELP_TEXT.bondHealth} />
               </h3>
               <div className="mt-3 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Balance</span>
-                  <span className="text-sm font-semibold font-mono whitespace-nowrap">
-                    {formatSolAmount(validator.bondBalanceSol, 0)} SOL
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    Coverage
-                  </span>
-                  <span
-                    className="text-sm font-semibold font-mono"
-                    style={{
-                      color:
-                        bondHealth === 'critical'
-                          ? CSS_DESTRUCTIVE
-                          : bondHealth === 'watch'
-                            ? 'var(--warning)'
-                            : CSS_PRIMARY,
-                    }}
-                  >
-                    {bondHealth === 'critical'
-                      ? bondCoverage.topUpToMin > 0
-                        ? `Top up ${pay(bondCoverage.topUpToMin)}`
-                        : 'Critical'
-                      : bondHealth === 'watch'
-                        ? bondCoverage.topUpToIdeal > 0
-                          ? `Top up ${pay(bondCoverage.topUpToIdeal)}`
-                          : 'Watch'
-                        : 'Fully covered'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Runway</span>
-                  <span className="text-sm font-semibold font-mono">
-                    {bondRunway <= 0
+                <MetricRow
+                  label="Balance"
+                  value={`${formatSolAmount(validator.bondBalanceSol, 0)} SOL`}
+                />
+                <MetricRow
+                  label="Coverage"
+                  value={bondCoverageLabel(bondHealth, bondCoverage)}
+                  valueStyle={{ color: bondCoverageColor(bondHealth) }}
+                />
+                <MetricRow
+                  label="Runway"
+                  value={
+                    bondRunway <= 0
                       ? 'Depleted'
-                      : `${Math.round(bondRunway)} epochs`}
-                  </span>
-                </div>
+                      : `${Math.round(bondRunway)} epochs`
+                  }
+                />
                 <button
                   className="text-xs text-primary hover:underline"
                   onClick={() => setTab('bond')}
@@ -507,38 +512,27 @@ export const ValidatorDetail = ({
                 <HelpTip text="SOL paid to Marinade this epoch: bid cost on active stake, cost on activating stake, and any bid-too-low penalty." />
               </h3>
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    Bid (active stake)
-                  </span>
-                  <span className="text-sm font-semibold font-mono">
-                    {formatSolAmount(paymentMetrics.cost, 2)} SOL
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    Activating stake
-                  </span>
-                  <span className="text-sm font-semibold font-mono">
-                    {formatSolAmount(paymentMetrics.activatingCost, 2)} SOL
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Penalty</span>
-                  <span
-                    className="text-sm font-semibold font-mono"
-                    style={{
-                      color:
-                        penaltyMetrics.penaltySol > 0
-                          ? CSS_DESTRUCTIVE
-                          : undefined,
-                    }}
-                  >
-                    {penaltyMetrics.penaltySol > 0
+                <MetricRow
+                  label="Bid (active stake)"
+                  value={`${formatSolAmount(paymentMetrics.cost, 2)} SOL`}
+                />
+                <MetricRow
+                  label="Activating stake"
+                  value={`${formatSolAmount(paymentMetrics.activatingCost, 2)} SOL`}
+                />
+                <MetricRow
+                  label="Penalty"
+                  value={
+                    penaltyMetrics.penaltySol > 0
                       ? `${formatSolAmount(penaltyMetrics.penaltySol, 2)} SOL`
-                      : '—'}
-                  </span>
-                </div>
+                      : '—'
+                  }
+                  valueStyle={
+                    penaltyMetrics.penaltySol > 0
+                      ? { color: CSS_DESTRUCTIVE }
+                      : undefined
+                  }
+                />
                 <button
                   className="text-xs text-primary hover:underline"
                   onClick={() => setTab('revenue')}
@@ -549,7 +543,6 @@ export const ValidatorDetail = ({
             </div>
           </div>
 
-          {/* Right: APY composition + simulation (sim only shown when active) */}
           <div className="space-y-6">
             <ApyCompositionCard
               apyBreakdown={apyBreakdown}

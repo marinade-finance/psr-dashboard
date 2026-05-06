@@ -102,13 +102,6 @@ export const getValidatorTip = (
   const delta = validator.values.expectedStakeChangeSol ?? 0
   const bondGoodForEpochs = validator.bondGoodForNEpochs ?? 0
   const health = bondHealthFromAuction(validator, dsSamConfig, winningTotalPmpe)
-  const bondCoverage = computeBondCoverageMetrics(
-    validator,
-    dsSamConfig.minBondEpochs,
-    dsSamConfig.idealBondEpochs,
-    winningTotalPmpe,
-    dsSamConfig.bondRiskFeeMult,
-  )
 
   if (!inSet) {
     return {
@@ -119,9 +112,17 @@ export const getValidatorTip = (
   }
 
   if (health === 'critical') {
-    const topUp = bondCoverage.topUpToMin
+    const bondCoverage = computeBondCoverageMetrics(
+      validator,
+      dsSamConfig.minBondEpochs,
+      dsSamConfig.idealBondEpochs,
+      winningTotalPmpe,
+      dsSamConfig.bondRiskFeeMult,
+    )
     const topUpStr =
-      topUp > 0 ? ` Top up ${formatSolAmount(topUp, 0)} SOL.` : ''
+      bondCoverage.topUpToMin > 0
+        ? ` Top up ${formatSolAmount(bondCoverage.topUpToMin, 0)} SOL.`
+        : ''
     if (bondGoodForEpochs <= 0) {
       return {
         text: `Bond depleted — top up now.${topUpStr}`,
@@ -145,9 +146,17 @@ export const getValidatorTip = (
   }
 
   if (health === 'watch') {
-    const topUp = bondCoverage.topUpToIdeal
+    const bondCoverage = computeBondCoverageMetrics(
+      validator,
+      dsSamConfig.minBondEpochs,
+      dsSamConfig.idealBondEpochs,
+      winningTotalPmpe,
+      dsSamConfig.bondRiskFeeMult,
+    )
     const topUpStr =
-      topUp > 0 ? ` Top up ${formatSolAmount(topUp, 0)} SOL.` : ''
+      bondCoverage.topUpToIdeal > 0
+        ? ` Top up ${formatSolAmount(bondCoverage.topUpToIdeal, 0)} SOL.`
+        : ''
     return {
       text: `Bond runway ${Math.round(bondGoodForEpochs)} epochs — top up soon.${topUpStr}`,
       urgency: 'warning',
