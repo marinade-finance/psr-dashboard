@@ -1,10 +1,5 @@
 import { bondHealthFromAuction } from './breakdowns'
-import {
-  bondRunwayDays,
-  bondUtilizationPct,
-  compoundApy,
-  apyBreakdown,
-} from './calculations'
+import { bondUtilizationPct, compoundApy, apyBreakdown } from './calculations'
 
 import type {
   AuctionValidator,
@@ -114,7 +109,7 @@ export const getValidatorTip = (
   if (!inSet) {
     const gap = (winningApy - maxApy).toFixed(2)
     return {
-      text: `Outside winning set. Raise bid by ~${gap}% or lower commission to qualify.`,
+      text: `Not in winning set — raise bid by ~${gap}% or lower commission.`,
       urgency: 'critical',
       constraint: 'rank',
     }
@@ -123,22 +118,21 @@ export const getValidatorTip = (
   if (health === 'critical') {
     if (bondGoodForEpochs <= 0) {
       return {
-        text: 'Bond already depleted. Top up immediately to avoid forced unstaking.',
+        text: 'Bond depleted — top up now.',
         urgency: 'critical',
         constraint: 'bond',
       }
     }
     if (bondGoodForEpochs <= 5) {
-      const days = Math.round(bondRunwayDays(bondGoodForEpochs))
       const epochsRounded = Math.round(bondGoodForEpochs)
       return {
-        text: `Bond depletes in ${epochsRounded} epoch${epochsRounded === 1 ? '' : 's'} (${days}d). Top up to avoid forced unstaking.`,
+        text: `Bond depletes in ${epochsRounded} epoch${epochsRounded === 1 ? '' : 's'} — top up.`,
         urgency: 'critical',
         constraint: 'bond',
       }
     }
     return {
-      text: 'Bond below minimum coverage. Top up to avoid forced unstaking.',
+      text: 'Bond below minimum coverage — top up.',
       urgency: 'critical',
       constraint: 'bond',
     }
@@ -146,7 +140,7 @@ export const getValidatorTip = (
 
   if (health === 'watch' && bidPmpe < 15) {
     return {
-      text: `Bid at ${(bidPmpe / 10).toFixed(2)}% is below median. Raise to 0.15-0.25% to gain rank.`,
+      text: `Bid ${(bidPmpe / 10).toFixed(2)}% is below median — raise to 0.15–0.25%.`,
       urgency: 'warning',
       constraint: 'bid',
     }
@@ -154,7 +148,7 @@ export const getValidatorTip = (
 
   if (health === 'watch') {
     return {
-      text: `Bond runway ${Math.round(bondGoodForEpochs)} epochs. Consider topping up before next cycle.`,
+      text: `Bond runway ${Math.round(bondGoodForEpochs)} epochs — consider topping up.`,
       urgency: 'warning',
       constraint: 'bond',
     }
@@ -162,7 +156,7 @@ export const getValidatorTip = (
 
   if (bidPmpe < 10 && delta > 50000) {
     return {
-      text: `Bid under 10 PMPE. Raising it could bring in ~${(delta / 1000).toFixed(0)}K SOL more stake.`,
+      text: `Bid under 10 PMPE — raising could add ~${(delta / 1000).toFixed(0)}K SOL stake.`,
       urgency: 'info',
       constraint: 'bid',
     }
@@ -170,7 +164,7 @@ export const getValidatorTip = (
 
   if (delta > 100000) {
     return {
-      text: `Gaining +${(delta / 1000).toFixed(0)}K SOL stake next epoch. Bond and bid well-positioned.`,
+      text: `+${(delta / 1000).toFixed(0)}K SOL incoming next epoch.`,
       urgency: 'positive',
       constraint: 'none',
     }
@@ -180,7 +174,7 @@ export const getValidatorTip = (
     const runwayNote =
       bondGoodForEpochs > 20 ? 'Strong runway.' : 'Monitor bond.'
     return {
-      text: `On track: +${delta.toLocaleString()} SOL incoming. ${runwayNote}`,
+      text: `+${delta.toLocaleString()} SOL incoming. ${runwayNote}`,
       urgency: 'positive',
       constraint: 'none',
     }
@@ -188,14 +182,14 @@ export const getValidatorTip = (
 
   if (delta === 0) {
     return {
-      text: 'At target allocation. Raise bid to grow, or reduce WANT to free bond capacity.',
+      text: 'At target — raise bid to grow or reduce WANT to free bond.',
       urgency: 'neutral',
       constraint: 'none',
     }
   }
 
   return {
-    text: `Losing ${Math.abs(delta).toLocaleString()} SOL stake. Raise bid or check if commission changed.`,
+    text: `Losing ${Math.abs(delta).toLocaleString()} SOL — raise bid or check commission.`,
     urgency: 'critical',
     constraint: 'bid',
   }
