@@ -271,8 +271,12 @@ export const ValidatorDetail = ({
             </button>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
               <span className="shrink-0 flex flex-col leading-tight">
-                <span className="text-base font-bold font-mono text-primary">
-                  #{rank}
+                <span
+                  className="text-base font-bold font-mono flex items-center gap-1"
+                  style={{ color: tipStyle.color }}
+                >
+                  <span className="text-sm leading-none">{tipStyle.icon}</span>#
+                  {rank}
                 </span>
                 <span
                   className={`text-[10px] font-mono ${inSet ? 'text-muted-foreground' : 'text-destructive'}`}
@@ -374,7 +378,6 @@ export const ValidatorDetail = ({
               style={{ background: tipStyle.bg }}
               onClick={tipTarget ? () => setTab(tipTarget) : undefined}
             >
-              <span className="text-lg shrink-0">{tipStyle.icon}</span>
               <span
                 className="text-sm font-medium flex-1"
                 style={{ color: tipStyle.color }}
@@ -383,8 +386,12 @@ export const ValidatorDetail = ({
               </span>
               {tipTarget && (
                 <span
-                  className="text-xs font-medium shrink-0 opacity-70"
-                  style={{ color: tipStyle.color }}
+                  className="text-xs font-medium shrink-0 px-2 py-0.5 rounded border whitespace-nowrap"
+                  style={{
+                    color: tipStyle.color,
+                    borderColor: tipStyle.color,
+                    background: 'rgba(255,255,255,0.55)',
+                  }}
                 >
                   {tip.constraint === 'bond' ? 'Bond tab →' : 'Simulate →'}
                 </span>
