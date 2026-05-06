@@ -120,8 +120,9 @@ export const getValidatorTip = (
 
   if (health === 'critical' && bondGoodForEpochs <= 5) {
     const days = Math.round(bondRunwayDays(bondGoodForEpochs))
+    const epochsRounded = Math.round(bondGoodForEpochs)
     return {
-      text: `Bond depletes in ~${bondGoodForEpochs} epochs (${days}d). Top up to avoid forced unstaking.`,
+      text: `Bond depletes in ~${epochsRounded} epoch${epochsRounded === 1 ? '' : 's'} (${days}d). Top up to avoid forced unstaking.`,
       urgency: 'critical',
       constraint: 'bond',
     }
@@ -145,7 +146,7 @@ export const getValidatorTip = (
 
   if (health === 'watch') {
     return {
-      text: `Bond runway ~${bondGoodForEpochs} epochs. Consider topping up before next cycle.`,
+      text: `Bond runway ~${Math.round(bondGoodForEpochs)} epochs. Consider topping up before next cycle.`,
       urgency: 'warning',
       constraint: 'bond',
     }
