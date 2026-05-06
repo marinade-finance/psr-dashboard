@@ -18,7 +18,6 @@ import {
   augmentAuctionResult,
   selectTotalActiveStake,
   selectSamActiveStake,
-  bondHealthColor,
   selectBondHealth,
   selectProductiveStake,
   selectIsNonProductive,
@@ -29,7 +28,11 @@ import {
 
 import styles from './sam-table.module.css'
 import { tooltipAttributes } from '../../services/utils'
-import { buildBondBreakdownTooltip } from '../../tooltips/bond-breakdown'
+import { buildBidTooLowTooltip } from '../../tooltips/bid-too-low'
+import {
+  buildBondBreakdownTooltip,
+  penaltyRiskColor,
+} from '../../tooltips/bond-breakdown'
 import { buildSamActiveTooltip } from '../../tooltips/sam-active'
 import { ConcentrationMetric } from '../concentration-metric/concentration-metric'
 import { BellIcon } from '../icons/bell-icon'
@@ -178,11 +181,7 @@ const renderBadges = (
 }
 
 type DisplayValidator = { validator: ValidatorWithBondState; isGhost: boolean }
-type EditField =
-  | 'inflationCommission'
-  | 'mevCommission'
-  | 'blockRewardsCommission'
-  | 'bidPmpe'
+type EditField = keyof PendingEdits
 
 type InputOpts = {
   step: string
@@ -336,9 +335,21 @@ export const SamTable: React.FC<Props> = ({
     () =>
       validators.map(v => ({
         ...v,
-        bondState: bondHealthColor(v),
+        bondState: penaltyRiskColor(
+          v,
+          minBondEpochs,
+          idealBondEpochs,
+          auctionResult.winningTotalPmpe,
+          dcSamConfig.bondRiskFeeMult,
+        ),
       })),
-    [validators],
+    [
+      validators,
+      minBondEpochs,
+      idealBondEpochs,
+      auctionResult.winningTotalPmpe,
+      dcSamConfig.bondRiskFeeMult,
+    ],
   )
 
   const samStakeValidators = allValidators.filter(
@@ -368,22 +379,33 @@ export const SamTable: React.FC<Props> = ({
         case 0:
           return selectVoteAccount(a).localeCompare(selectVoteAccount(b))
         case 1:
-          return selectBid(a) - selectBid(b)
+          return (nameByVote.get(selectVoteAccount(a)) ?? '').localeCompare(
+            nameByVote.get(selectVoteAccount(b)) ?? '',
+          )
         case 2:
-          return selectBondSize(a) - selectBondSize(b)
+          return selectBid(a) - selectBid(b)
         case 3:
-          return selectBondHealth(a) - selectBondHealth(b)
-        case 4:
-          return selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
+          return selectBondSize(a) - selectBondSize(b)
+        case 4: {
+          const aVal = a.auctionStake.marinadeSamTargetSol
+            ? (selectBondHealth(a) ?? -Infinity)
+            : -Infinity
+          const bVal = b.auctionStake.marinadeSamTargetSol
+            ? (selectBondHealth(b) ?? -Infinity)
+            : -Infinity
+          return aVal - bVal
+        }
         case 5:
-          return selectSamActiveStake(a) - selectSamActiveStake(b)
+          return selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
         case 6:
+          return selectSamActiveStake(a) - selectSamActiveStake(b)
+        case 7:
           return selectSamTargetStake(a) - selectSamTargetStake(b)
         default:
           return 0
       }
     },
-    [epochsPerYear],
+    [epochsPerYear, nameByVote],
   )
 
   const originalPositionsMap = useMemo(() => {
@@ -480,7 +502,16 @@ export const SamTable: React.FC<Props> = ({
           display.length,
         )
         display.splice(insertIndex, 0, {
-          validator: { ...orig, bondState: bondHealthColor(orig) },
+          validator: {
+            ...orig,
+            bondState: penaltyRiskColor(
+              orig,
+              minBondEpochs,
+              idealBondEpochs,
+              auctionResult.winningTotalPmpe,
+              dcSamConfig.bondRiskFeeMult,
+            ),
+          },
           isGhost: true,
         })
       }
@@ -787,6 +818,15 @@ export const SamTable: React.FC<Props> = ({
                 'Static bid for 1000 SOL set by the validator in Bond configuration.<br/>' +
                   'The bid active at the slot the auction runs is what you pay for that epoch’s activating stake.',
               ),
+            cellAttrsFn: item =>
+              tooltipAttributes(
+                buildBidTooLowTooltip(
+                  item.validator,
+                  dcSamConfig,
+                  auctionResult.winningTotalPmpe,
+                  nameByVote.get(selectVoteAccount(item.validator)),
+                ),
+              ),
             render: item => {
               const { validator, isGhost } = item
               const isEditing =
@@ -833,6 +873,9 @@ export const SamTable: React.FC<Props> = ({
                   auctionResult.winningTotalPmpe,
                   dcSamConfig.bondRiskFeeMult,
                   item.validator.bondState,
+                  nameByVote.get(selectVoteAccount(item.validator)),
+                  !item.isGhost &&
+                    simulatedValidator === selectVoteAccount(item.validator),
                 ),
               ),
             render: item => {
@@ -880,7 +923,14 @@ export const SamTable: React.FC<Props> = ({
                 'The currently active stake delegated by SAM. Arrow indicates expected change next epoch — see tooltip for breakdown.',
               ),
             cellAttrsFn: item =>
-              tooltipAttributes(buildSamActiveTooltip(item.validator)),
+              tooltipAttributes(
+                buildSamActiveTooltip(
+                  item.validator,
+                  nameByVote.get(selectVoteAccount(item.validator)),
+                  !item.isGhost &&
+                    simulatedValidator === selectVoteAccount(item.validator),
+                ),
+              ),
             render: item => <StakeChangeIndicator validator={item.validator} />,
             compare: (a, b) =>
               selectSamActiveStake(a.validator) -

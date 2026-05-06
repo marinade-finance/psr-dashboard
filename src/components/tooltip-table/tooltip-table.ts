@@ -94,8 +94,6 @@ export const stateClass = (c?: Color): string => {
   switch (c) {
     case Color.RED:
       return 'tt-state-red'
-    case Color.ORANGE:
-      return 'tt-state-orange'
     case Color.YELLOW:
       return 'tt-state-yellow'
     case Color.GREEN:
@@ -125,6 +123,25 @@ export const ctaBlock = (p: {
     }
   }
   return `<div class="tt-cta-label">${p.label}</div>${lead}${ctaLead}${ctaMain}`
+}
+
+export const tooltipHeader = (p: {
+  name?: string
+  voteAccount: string
+}): string => {
+  const name = p.name?.trim() || '—'
+  return (
+    rowCells([cell(esc(name), { bold: true, wrap: true, colspan: 99 })]) +
+    rowCells([
+      cell(esc(p.voteAccount), {
+        mono: true,
+        muted: true,
+        wrap: true,
+        colspan: 99,
+      }),
+    ]) +
+    '<tr><td colspan="99" class="tt-rule-spacer"></td></tr>'
+  )
 }
 
 export const wrapTable = (body: string): string =>

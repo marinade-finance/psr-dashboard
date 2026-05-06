@@ -6,9 +6,10 @@ import {
   row,
   sectionHeader,
   tableHead,
+  tooltipHeader,
   wrapTable,
 } from 'src/components/tooltip-table/tooltip-table'
-import { formatSolAmount } from 'src/format'
+import { finite, pay, pmpe, stake } from 'src/tooltips/format'
 
 import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
 
@@ -16,27 +17,17 @@ const LABEL_EXP_MAX_BID = 'Expected max effective bid PMPE'
 const LABEL_ONCHAIN_PMPE = 'On-chain distributed rewards PMPE'
 const LABEL_PROJ_EXPOSED = 'Projected exposed stake'
 
-const pay = (n: number) => `${formatSolAmount(Math.round(n), 2)} ☉`
-const stake = (n: number) => `${formatSolAmount(n, 0)} ☉`
-const pmpe = (x: number) => x.toFixed(5)
-
-const finite = (x: number | null | undefined): number =>
-  typeof x === 'number' && Number.isFinite(x) ? x : 0
-
 export type BondMetrics = {
   minEp: number
   idealEp: number
   bondBalanceSol: number
   claimableBondBalanceSol: number
   marinadeActivatedStakeSol: number
-  marinadeSamTargetSol: number
   expectedMaxEffBidPmpe: number
   onchainDistributedPmpe: number
   projectedExposedStakeSol: number
   minUnprotectedReserveSol: number
   idealUnprotectedReserveSol: number
-  minBondPmpe: number
-  idealBondPmpe: number
   onchainBase: number
   minCoverageBid: number
   floorBase: number
@@ -57,7 +48,6 @@ export const computeBondMetrics = (
   const claimableBondBalanceSol = v.claimableBondBalanceSol ?? 0
   const marinadeActivatedStakeSol = v.marinadeActivatedStakeSol
   const paidUndelegationSol = v.values?.paidUndelegationSol ?? 0
-  const marinadeSamTargetSol = v.auctionStake.marinadeSamTargetSol ?? 0
   const expectedMaxEffBidPmpe = finite(v.revShare?.expectedMaxEffBidPmpe)
   const onchainDistributedPmpe = finite(v.revShare?.onchainDistributedPmpe)
   const unprotectedStakeSol = v.unprotectedStakeSol ?? 0
@@ -119,14 +109,11 @@ export const computeBondMetrics = (
     bondBalanceSol,
     claimableBondBalanceSol,
     marinadeActivatedStakeSol,
-    marinadeSamTargetSol,
     expectedMaxEffBidPmpe,
     onchainDistributedPmpe,
     projectedExposedStakeSol,
     minUnprotectedReserveSol,
     idealUnprotectedReserveSol,
-    minBondPmpe,
-    idealBondPmpe,
     onchainBase,
     minCoverageBid,
     floorBase,
@@ -137,20 +124,22 @@ export const computeBondMetrics = (
   }
 }
 
-const statusLine = (color: Color | undefined, topUpToMin: number): string => {
+const statusLine = (
+  color: Color | undefined,
+  topUpToMin: number,
+  topUpToIdeal: number,
+): string => {
   switch (color) {
     case Color.RED:
       return topUpToMin > 0
-        ? `Undelegation imminent. Top up ${pay(topUpToMin)} now to retain stake.`
-        : 'Runway critical. Review bond setup to retain stake.'
-    case Color.ORANGE:
-      return topUpToMin > 0
-        ? `Below minimum coverage. Top up ${pay(topUpToMin)} soon to avoid bond risk fee charges.`
-        : 'Below minimum coverage. Review bond setup to avoid bond risk fee charges.'
+        ? `Penalty imminent. Top up ${pay(topUpToMin)} to avoid it.`
+        : 'Penalty imminent. Top up to avoid it.'
     case Color.YELLOW:
-      return 'Minimum coverage met. Top up to reach ideal coverage for more stake.'
+      return topUpToIdeal > 0
+        ? `Bond covers current stake. Top up ${pay(topUpToIdeal)} for more stake.`
+        : 'Bond covers current stake. Top up for more stake.'
     case Color.GREEN:
-      return 'Ideal coverage reached. Keep bond topped up to absorb bid drain.'
+      return 'Bond has enough coverage. Keep it topped up.'
     default:
       return ''
   }
@@ -159,11 +148,12 @@ const statusLine = (color: Color | undefined, topUpToMin: number): string => {
 export const renderBondBreakdownTooltip = (
   m: BondMetrics,
   bondState: Color | undefined,
+  header: { name?: string; voteAccount: string },
   isSimulated = false,
 ): string => {
   const cta = ctaBlock({
     label: `${isSimulated ? 'Simulated · ' : ''}Bond Coverage Calculation Breakdown`,
-    cta: statusLine(bondState, m.topUpToMin),
+    cta: statusLine(bondState, m.topUpToMin, m.topUpToIdeal),
     state: bondState,
   })
 
@@ -175,7 +165,6 @@ export const renderBondBreakdownTooltip = (
 
   const base =
     sectionHeader(`Minimum Coverage (${m.minEp} epochs)`) +
-    tableHead(['', '', '☉']) +
     row('Claimable bond balance', '', pay(m.claimableBondBalanceSol), {
       boldValue: true,
     }) +
@@ -183,7 +172,7 @@ export const renderBondBreakdownTooltip = (
     row(LABEL_PROJ_EXPOSED, stake(m.projectedExposedStakeSol), '') +
     row('Minimum unprotected reserve', '', pay(m.minUnprotectedReserveSol)) +
     row('On-chain distributed reserve', '', pay(m.onchainBase)) +
-    row('Minimum coverage bid', '', pay(m.minCoverageBid)) +
+    row('Minimum bid coverage', '', pay(m.minCoverageBid)) +
     divider() +
     row('Minimum required', '', pay(m.floorBase), { boldValue: true }) +
     (m.topUpToMin > 0
@@ -197,12 +186,11 @@ export const renderBondBreakdownTooltip = (
 
   const tgt =
     sectionHeader(`Ideal Coverage (${m.idealEp} epochs)`) +
-    tableHead(['', '', '☉']) +
     row('Bond balance', '', pay(m.bondBalanceSol), { boldValue: true }) +
     row(LABEL_PROJ_EXPOSED, stake(m.projectedExposedStakeSol), '') +
     row('Ideal unprotected reserve', '', pay(m.idealUnprotectedReserveSol)) +
     row('On-chain distributed reserve', '', pay(m.onchainBase)) +
-    row('Ideal coverage bid', '', pay(m.idealCoverageBid)) +
+    row('Ideal bid coverage', '', pay(m.idealCoverageBid)) +
     divider() +
     row('Ideal required', '', pay(m.requiredIdeal), { boldValue: true }) +
     (m.topUpToIdeal > 0
@@ -212,11 +200,31 @@ export const renderBondBreakdownTooltip = (
           large: true,
           accent: 'yellow',
         })
-      : okRow(
-          'You have enough bond for ideal coverage; topping up further is advisable to absorb bid drain.',
-        ))
+      : okRow('Bond has enough coverage to receive more stake.'))
 
-  return cta + wrapTable(rates + base + tgt)
+  return cta + wrapTable(tooltipHeader(header) + rates + base + tgt)
+}
+
+export const penaltyRiskColor = (
+  v: AuctionValidator,
+  minBondEpochs: number,
+  idealBondEpochs: number,
+  winningTotalPmpe: number,
+  bondRiskFeeMult: number,
+): Color | undefined => {
+  if (!v.auctionStake.marinadeSamTargetSol && !v.marinadeActivatedStakeSol) {
+    return undefined
+  }
+  const m = computeBondMetrics(
+    v,
+    minBondEpochs,
+    idealBondEpochs,
+    winningTotalPmpe,
+    bondRiskFeeMult,
+  )
+  if (m.topUpToMin > 0) return Color.RED
+  if (m.topUpToIdeal > 0) return Color.YELLOW
+  return Color.GREEN
 }
 
 export const buildBondBreakdownTooltip = (
@@ -226,6 +234,7 @@ export const buildBondBreakdownTooltip = (
   winningTotalPmpe: number,
   bondRiskFeeMult: number,
   bondState: Color | undefined,
+  name?: string,
   isSimulated = false,
 ): string =>
   renderBondBreakdownTooltip(
@@ -237,5 +246,6 @@ export const buildBondBreakdownTooltip = (
       bondRiskFeeMult,
     ),
     bondState,
+    { name, voteAccount: v.voteAccount },
     isSimulated,
   )

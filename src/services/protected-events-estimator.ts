@@ -250,7 +250,7 @@ const calculateLowCreditsEstimates = (
     for (const epochStat of validator.epoch_stats) {
       const targetCredits = targetCreditsByEpoch.get(epochStat.epoch)
       const eprCalculator = eprCalculators.get(epochStat.epoch)
-      if (eprCalculator) {
+      if (eprCalculator && targetCredits !== undefined) {
         for (const config of lowCreditsSettlementConfigs) {
           const event = buildLowCreditsProtectedEvent(
             config,
