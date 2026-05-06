@@ -112,7 +112,7 @@ export const getValidatorTip = (
   if (!inSet) {
     const gap = (winningApy - maxApy).toFixed(2)
     return {
-      text: `Outside winning set. Increase bid by ~${gap}% or lower commission to qualify.`,
+      text: `Outside winning set. Raise bid by ~${gap}% or lower commission to qualify.`,
       urgency: 'critical',
       constraint: 'rank',
     }

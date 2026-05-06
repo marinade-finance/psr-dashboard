@@ -320,18 +320,37 @@ export const ValidatorDetail = ({
           </div>
         </div>
 
-        <div
-          className="px-4 sm:px-6 py-3 flex items-center gap-3"
-          style={{ background: tipStyle.bg }}
-        >
-          <span className="text-lg shrink-0">{tipStyle.icon}</span>
-          <span
-            className="text-sm font-medium"
-            style={{ color: tipStyle.color }}
-          >
-            {tip.text}
-          </span>
-        </div>
+        {(() => {
+          const tipTarget: Tab | null =
+            tip.constraint === 'bond'
+              ? 'bond'
+              : tip.constraint === 'bid'
+                ? 'overview'
+                : null
+          return (
+            <div
+              className={`px-4 sm:px-6 py-3 flex items-center gap-3 ${tipTarget ? 'cursor-pointer select-none' : ''}`}
+              style={{ background: tipStyle.bg }}
+              onClick={tipTarget ? () => setTab(tipTarget) : undefined}
+            >
+              <span className="text-lg shrink-0">{tipStyle.icon}</span>
+              <span
+                className="text-sm font-medium flex-1"
+                style={{ color: tipStyle.color }}
+              >
+                {tip.text}
+              </span>
+              {tipTarget && (
+                <span
+                  className="text-xs font-medium shrink-0 opacity-70"
+                  style={{ color: tipStyle.color }}
+                >
+                  {tip.constraint === 'bond' ? 'Bond tab →' : 'Simulate →'}
+                </span>
+              )}
+            </div>
+          )
+        })()}
 
         <div className="border-b border-border bg-background sticky top-[96px] z-[5]">
           <div className="flex gap-1 px-4 sm:px-6 overflow-x-auto">

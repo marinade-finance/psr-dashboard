@@ -31,7 +31,6 @@ import {
 } from 'src/services/simulation'
 import {
   getApyBreakdown,
-  getBondHealthStyle,
   getValidatorTip,
   getTipStyle,
   calculateBondUtilization,
@@ -55,6 +54,33 @@ export type ValidatorMeta = {
 // Validator with computed bond state
 type ValidatorWithBondState = AugmentedAuctionValidator & {
   bondHealth: 'healthy' | 'watch' | 'critical'
+}
+
+const BOND_CHIP: Record<
+  'healthy' | 'watch' | 'critical',
+  { chip: string; dot: string; bar: string; shortText: string; label: string }
+> = {
+  healthy: {
+    chip: 'bg-[var(--primary-light-10)] text-primary',
+    dot: 'bg-primary',
+    bar: 'bg-primary',
+    shortText: 'text-primary',
+    label: 'Healthy',
+  },
+  watch: {
+    chip: 'bg-[var(--warning-light)] text-[var(--warning)]',
+    dot: 'bg-[var(--warning)]',
+    bar: 'bg-[var(--warning)]',
+    shortText: 'text-[var(--warning)]',
+    label: 'Watch',
+  },
+  critical: {
+    chip: 'bg-destructive-light text-destructive',
+    dot: 'bg-destructive',
+    bar: 'bg-destructive',
+    shortText: 'text-destructive',
+    label: 'Critical',
+  },
 }
 
 type SortColumn =
@@ -486,7 +512,7 @@ export const SamTable: React.FC<Props> = ({
     const bondUtilPct = calculateBondUtilization(validator)
     const bondRunway = validator.bondGoodForNEpochs ?? 0
     const bondHealth = validator.bondHealth
-    const bondStyle = getBondHealthStyle(bondHealth)
+    const bondChip = BOND_CHIP[bondHealth]
     const hasAlert = bondRunway <= 5 || bondUtilPct >= 85
 
     const expectedChange = selectExpectedStakeChange(validator)
@@ -586,14 +612,12 @@ export const SamTable: React.FC<Props> = ({
         <TableCell className="px-3.5 py-3">
           <div className="flex items-center gap-1.5 mb-1">
             <span
-              className="inline-flex items-center gap-1 px-2 py-[3px] rounded-md text-xs font-medium"
-              style={{ background: bondStyle.bg, color: bondStyle.color }}
+              className={`inline-flex items-center gap-1 px-2 py-[3px] rounded-md text-xs font-medium ${bondChip.chip}`}
             >
               <span
-                className="w-[7px] h-[7px] rounded-full"
-                style={{ background: bondStyle.color }}
+                className={`w-[7px] h-[7px] rounded-full ${bondChip.dot}`}
               />
-              {bondStyle.label}
+              {bondChip.label}
             </span>
             <span className="text-muted-foreground text-xs font-mono">
               {formatSolAmount(selectBondSize(validator), 0)} SOL
@@ -602,21 +626,12 @@ export const SamTable: React.FC<Props> = ({
           <div className="flex items-center gap-1.5">
             <div className="h-[3px] bg-secondary rounded-sm w-14 shrink-0">
               <div
-                className="h-full rounded-sm"
-                style={{
-                  width: `${Math.max(100 - bondUtilPct, 0)}%`,
-                  background: bondStyle.color,
-                }}
+                className={`h-full rounded-sm ${bondChip.bar}`}
+                style={{ width: `${Math.max(100 - bondUtilPct, 0)}%` }}
               />
             </div>
             <span
-              className="text-[10px] font-mono whitespace-nowrap"
-              style={{
-                color:
-                  bondRunway <= 10
-                    ? bondStyle.color
-                    : 'var(--muted-foreground)',
-              }}
+              className={`text-[10px] font-mono whitespace-nowrap ${bondRunway <= 10 ? bondChip.shortText : 'text-muted-foreground'}`}
             >
               ~{Math.round(bondRunway)}ep
             </span>
