@@ -47,6 +47,11 @@ interface ValidatorDetailProps {
 
 type Tab = 'overview' | 'bond' | 'revenue' | 'penalty'
 
+const CSS_PRIMARY: string = 'var(--primary)'
+const CSS_DESTRUCTIVE: string = 'var(--destructive)'
+const CSS_PRIMARY_LIGHT: string = 'var(--primary-light)'
+const CSS_DESTRUCTIVE_LIGHT: string = 'var(--destructive-light)'
+
 export const ValidatorDetail = ({
   validator,
   auctionResult,
@@ -261,10 +266,8 @@ export const ValidatorDetail = ({
               <span
                 className="px-2 py-0.5 rounded-md text-xs font-medium shrink-0"
                 style={{
-                  background: inSet
-                    ? 'var(--primary-light)'
-                    : 'var(--destructive-light)',
-                  color: inSet ? 'var(--primary)' : 'var(--destructive)',
+                  background: inSet ? CSS_PRIMARY_LIGHT : CSS_DESTRUCTIVE_LIGHT,
+                  color: inSet ? CSS_PRIMARY : CSS_DESTRUCTIVE,
                 }}
               >
                 {inSet ? 'In Set' : 'Out of Set'}
@@ -466,44 +469,107 @@ export const ValidatorDetail = ({
             </div>
 
             <div className="bg-card rounded-xl border border-border p-5">
-              <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
-                Max APY Composition
-                <HelpTip text={HELP_TEXT.maxApy} />
-              </h3>
-              <p className="text-xs text-muted-foreground mt-1 mb-3">
-                Where this validator's max APY comes from. Sum is what they
-                bring to the auction.
-              </p>
-              <table className="w-full">
-                <tbody>
-                  {(
-                    [
-                      ['Inflation', apyBreakdown.inflation],
-                      ['MEV', apyBreakdown.mev],
-                      ['Block rewards', apyBreakdown.blockRewards],
-                      ['Stake bid', apyBreakdown.stakeBid],
-                    ] as const
-                  ).map(([label, val]) => (
-                    <tr
-                      key={label}
-                      className="border-b border-border-grid/50 last:border-0"
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+                  Max APY Composition
+                  <HelpTip text={HELP_TEXT.maxApy} />
+                </h3>
+                {(() => {
+                  const delta = apyBreakdown.total - winningApy
+                  const above = delta >= 0
+                  return (
+                    <span
+                      className="text-xs font-mono font-semibold px-2 py-0.5 rounded-md"
+                      style={{
+                        background: above
+                          ? CSS_PRIMARY_LIGHT
+                          : CSS_DESTRUCTIVE_LIGHT,
+                        color: above ? CSS_PRIMARY : CSS_DESTRUCTIVE,
+                      }}
                     >
-                      <td className="py-1.5 pr-2 text-[13px] text-muted-foreground">
-                        {label}
-                      </td>
-                      <td className="py-1.5 pl-2 text-right font-mono text-sm">
-                        {formatPercentage(val, 2)}
-                      </td>
-                    </tr>
-                  ))}
-                  <tr>
-                    <td className="pt-2 pr-2 text-sm font-semibold">Total</td>
-                    <td className="pt-2 pl-2 text-right font-mono text-sm font-semibold text-primary">
-                      {formatPercentage(apyBreakdown.total, 2)}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                      {above ? '+' : ''}
+                      {formatPercentage(delta, 2)} vs winning
+                    </span>
+                  )
+                })()}
+              </div>
+              <p className="text-xs text-muted-foreground mb-4">
+                Vertical line = winning APY threshold (
+                {formatPercentage(winningApy, 2)})
+              </p>
+              {(() => {
+                const scale = Math.max(apyBreakdown.total, winningApy) * 1.2
+                const winPct = (winningApy / scale) * 100
+                const rows: [string, number, string][] = [
+                  ['Inflation', apyBreakdown.inflation, 'var(--chart-1)'],
+                  ['MEV', apyBreakdown.mev, 'var(--chart-2)'],
+                  [
+                    'Block rewards',
+                    apyBreakdown.blockRewards,
+                    'var(--chart-3)',
+                  ],
+                  ['Stake bid', apyBreakdown.stakeBid, 'var(--chart-4)'],
+                ]
+                return (
+                  <div className="space-y-2">
+                    {rows.map(([label, val, color]) => (
+                      <div key={label} className="flex items-center gap-2">
+                        <span className="text-[13px] text-muted-foreground w-24 shrink-0">
+                          {label}
+                        </span>
+                        <div className="flex-1 relative h-4 bg-secondary rounded overflow-visible">
+                          <div
+                            className="h-full rounded"
+                            style={{
+                              width: `${Math.max(0, (val / scale) * 100)}%`,
+                              background: color,
+                            }}
+                          />
+                          <div
+                            className="absolute top-0 h-full w-px bg-foreground/40"
+                            style={{ left: `${winPct}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-mono text-foreground w-12 text-right shrink-0">
+                          {formatPercentage(val, 2)}
+                        </span>
+                      </div>
+                    ))}
+                    <div className="flex items-center gap-2 pt-1 border-t border-border-grid">
+                      <span className="text-[13px] font-semibold w-24 shrink-0">
+                        Total
+                      </span>
+                      <div className="flex-1 relative h-4 bg-secondary rounded overflow-visible">
+                        <div
+                          className="h-full rounded"
+                          style={{
+                            width: `${(apyBreakdown.total / scale) * 100}%`,
+                            background:
+                              apyBreakdown.total >= winningApy
+                                ? CSS_PRIMARY
+                                : CSS_DESTRUCTIVE,
+                          }}
+                        />
+                        <div
+                          className="absolute top-0 h-full w-px bg-foreground/40"
+                          style={{ left: `${winPct}%` }}
+                        />
+                      </div>
+                      <span
+                        className="text-xs font-mono font-semibold w-12 text-right shrink-0"
+                        style={{
+                          color:
+                            apyBreakdown.total >= winningApy
+                              ? CSS_PRIMARY
+                              : CSS_DESTRUCTIVE,
+                        }}
+                      >
+                        {formatPercentage(apyBreakdown.total, 2)}
+                      </span>
+                    </div>
+                  </div>
+                )
+              })()}
             </div>
           </div>
 
@@ -682,7 +748,7 @@ export const ValidatorDetail = ({
                         expectedStakeDelta > 0
                           ? 'var(--status-green, #2aa198)'
                           : expectedStakeDelta < 0
-                            ? 'var(--destructive)'
+                            ? CSS_DESTRUCTIVE
                             : 'var(--muted-foreground)',
                     }}
                   >
