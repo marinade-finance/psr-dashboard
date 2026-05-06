@@ -165,8 +165,15 @@ const SortIndicator: React.FC<{
   )
 }
 
+function formatCutoffRank(n: number): string {
+  if (n > 0) return `+${n}`
+  if (n < 0) return `${n}`
+  return '0'
+}
+
 const RankCell: React.FC<{
   rank: number
+  cutoffRank: number
   isGhost: boolean
   isSimulated: boolean
   origPos: number | null
@@ -177,6 +184,7 @@ const RankCell: React.FC<{
   onClearValidator?: (voteAccount: string) => void
 }> = ({
   rank,
+  cutoffRank,
   isGhost,
   isSimulated,
   origPos,
@@ -199,7 +207,7 @@ const RankCell: React.FC<{
           className={`font-medium ${RANK_MONO}`}
           style={{ color: posColor ?? 'var(--muted-foreground)' }}
         >
-          {rank}
+          {formatCutoffRank(cutoffRank)}
         </span>
         <button
           className="text-[10px] text-muted-foreground hover:text-destructive leading-none"
@@ -219,7 +227,7 @@ const RankCell: React.FC<{
       style={{ color: tipColor }}
     >
       <span className="text-[10px] leading-none">{tipIcon}</span>
-      {rank}
+      {formatCutoffRank(cutoffRank)}
     </span>
   )
 }
@@ -445,6 +453,7 @@ export const SamTable: React.FC<Props> = ({
   const nonWinningValidatorsCount = allDisplayValidators.filter(
     d => !d.isGhost && d.validator.auctionStake.marinadeSamTargetSol === 0,
   ).length
+  const inSetCount = winningValidators.length
 
   const totalRedelegation = useMemo(
     () =>
@@ -505,6 +514,7 @@ export const SamTable: React.FC<Props> = ({
     const voteAccount = selectVoteAccount(validator)
     const inSet = validator.auctionStake.marinadeSamTargetSol > 0
     const rank = index + 1
+    const cutoffRank = inSet ? inSetCount - rank : -(rank - inSetCount)
     const isHovered = !isGhost && hoveredRow === voteAccount
     const isSimulated = simulatedValidators.has(voteAccount)
 
@@ -576,6 +586,7 @@ export const SamTable: React.FC<Props> = ({
         <TableCell className="px-3.5 py-3 text-center w-10">
           <RankCell
             rank={rank}
+            cutoffRank={cutoffRank}
             isGhost={isGhost}
             isSimulated={isSimulated}
             origPos={origPos}

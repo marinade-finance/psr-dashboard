@@ -102,7 +102,7 @@ export const ValidatorDetail = ({
       ).length,
     [auctionResult],
   )
-  const cutoffDistance = inSet ? inSetCount - rank : rank - inSetCount
+  const cutoffRank = inSet ? inSetCount - rank : -(rank - inSetCount)
   const bondCoverage = useMemo(
     () =>
       computeBondCoverageMetrics(
@@ -281,17 +281,14 @@ export const ValidatorDetail = ({
                   className="text-base font-bold font-mono flex items-center gap-1"
                   style={{ color: tipStyle.color }}
                 >
-                  <span className="text-sm leading-none">{tipStyle.icon}</span>#
-                  {rank}
+                  <span className="text-sm leading-none">{tipStyle.icon}</span>
+                  {cutoffRank >= 0 ? '+' : ''}
+                  {cutoffRank}
                 </span>
                 <span
                   className={`text-[10px] font-mono ${inSet ? 'text-muted-foreground' : 'text-destructive'}`}
                 >
-                  {inSet
-                    ? cutoffDistance === 0
-                      ? 'last in set'
-                      : `${cutoffDistance} above cutoff`
-                    : `${cutoffDistance} below cutoff`}
+                  #{rank} of {totalValidators}
                 </span>
               </span>
               {validatorName && (

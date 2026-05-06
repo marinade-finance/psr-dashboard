@@ -37,17 +37,19 @@ Each route has Basic and Expert variants (Expert shows extra metrics/columns):
 
 ### Key Files
 
-- `src/services/sam.ts` — auction data loading, metric selectors (`selectActiveProfit`
-  shared helper), sensitivity analysis (`runAlt` pattern: mutate aggregated data, re-run auction);
-  internal helper functions are not exported
+- `src/services/sam.ts` — auction data loading, metric selectors, sensitivity
+  analysis (`runAlt` pattern: mutate aggregated data, re-run auction)
+- `src/services/breakdowns.ts` — `computeBondCoverageMetrics` (bond coverage
+  model), `bondHealthFromAuction` (returns `'healthy'|'watch'|'critical'`),
+  `penaltyRiskColor`, `computeSamRevenueMetrics`, `computeBidPenaltyMetrics`
+- `src/services/tip-engine.ts` — `getValidatorTip` (urgency + text + constraint),
+  `getTipStyle` (color/bg/icon per urgency), `getBondHealthStyle`
 - `src/components/sam-table/sam-table.tsx` — main auction table with
-  simulation mode (ghost rows, position change grading, inline editing);
-  metrics rendered in a single `flex flex-wrap` row; horizontally scrollable
-- `src/components/table/table.tsx` — generic sortable table component with
-  Color enum (RED/GREEN/YELLOW/ORANGE/GREY) for cell backgrounds;
-  `renderHeader`/`renderRow`/`renderRows` are plain functions;
-  all `td` have `align-top`; `ValidatorWithBondState` has `bondState?: Color`
-  (optional — rows without a bond target show no color)
+  simulation mode (ghost rows, position change grading); rank cell shows
+  cutoff-relative rank (+N/-N), severity icon colored by tip urgency;
+  bond runway displayed as `(Nep)` with parentheses; horizontally scrollable
+- `src/components/table/table.tsx` — generic sortable table; Color enum
+  (RED/GREEN/YELLOW/ORANGE/GREY) for cell backgrounds
 - `src/components/metric/metric.tsx` — metric card; tooltip shown as a
   `HelpTip` inline icon next to label
 - `src/components/help-tip/help-tip.tsx` — shared inline `?` tooltip icon
