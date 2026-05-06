@@ -10,14 +10,12 @@ import {
   calculateMaxApy,
 } from '../tip-engine'
 
-import type {
-  AuctionValidator,
-  DsSamConfig,
-} from '@marinade.finance/ds-sam-sdk'
+import type { AugmentedAuctionValidator } from '../sam'
+import type { DsSamConfig } from '@marinade.finance/ds-sam-sdk'
 
 function makeValidator(
   overrides: Record<string, unknown> = {},
-): AuctionValidator {
+): AugmentedAuctionValidator {
   return {
     voteAccount: 'test',
     bondGoodForNEpochs: 20,
@@ -30,6 +28,7 @@ function makeValidator(
     idealBondPmpe: 6,
     minUnprotectedReserve: 0,
     idealUnprotectedReserve: 0,
+    values: { expectedStakeChangeSol: 5000 },
     revShare: {
       inflationPmpe: 5,
       mevPmpe: 2,
@@ -41,7 +40,7 @@ function makeValidator(
       effParticipatingBidPmpe: 20,
     },
     ...overrides,
-  } as unknown as AuctionValidator
+  } as unknown as AugmentedAuctionValidator
 }
 
 const EPOCHS_PER_YEAR = 182
@@ -282,8 +281,7 @@ describe('getValidatorTip', () => {
     const v = makeValidator({
       bondBalanceSol: 400,
       claimableBondBalanceSol: 400,
-      auctionStake: { marinadeSamTargetSol: 200000 },
-      marinadeActivatedStakeSol: 50000,
+      values: { expectedStakeChangeSol: 150000 },
     })
     const tip = getValidatorTip(v, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('positive')
@@ -292,10 +290,7 @@ describe('getValidatorTip', () => {
   })
 
   it('delta === 0 → neutral/none at-target message', () => {
-    const v = makeValidator({
-      auctionStake: { marinadeSamTargetSol: 10000 },
-      marinadeActivatedStakeSol: 10000,
-    })
+    const v = makeValidator({ values: { expectedStakeChangeSol: 0 } })
     const tip = getValidatorTip(v, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('neutral')
     expect(tip.constraint).toBe('none')
@@ -303,10 +298,7 @@ describe('getValidatorTip', () => {
   })
 
   it('delta < 0 → warning, losing stake message', () => {
-    const v = makeValidator({
-      auctionStake: { marinadeSamTargetSol: 5000 },
-      marinadeActivatedStakeSol: 10000,
-    })
+    const v = makeValidator({ values: { expectedStakeChangeSol: -5000 } })
     const tip = getValidatorTip(v, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('warning')
     expect(tip.constraint).toBe('none')

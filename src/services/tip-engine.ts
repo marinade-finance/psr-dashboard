@@ -1,6 +1,7 @@
 import { bondHealthFromAuction } from './breakdowns'
 import { bondUtilizationPct, compoundApy, apyBreakdown } from './calculations'
 
+import type { AugmentedAuctionValidator } from './sam'
 import type {
   AuctionValidator,
   DsSamConfig,
@@ -91,14 +92,12 @@ export const getTipStyle = (urgency: TipUrgency): TipStyle => {
 }
 
 export const getValidatorTip = (
-  validator: AuctionValidator,
+  validator: AugmentedAuctionValidator,
   dsSamConfig: DsSamConfig,
   winningTotalPmpe: number,
 ): ValidatorTip => {
   const inSet = validator.auctionStake.marinadeSamTargetSol > 0
-  const samActive = validator.marinadeActivatedStakeSol
-  const samTarget = validator.auctionStake.marinadeSamTargetSol
-  const delta = samTarget - samActive
+  const delta = validator.values.expectedStakeChangeSol ?? 0
   const bondGoodForEpochs = validator.bondGoodForNEpochs ?? 0
   const health = bondHealthFromAuction(validator, dsSamConfig, winningTotalPmpe)
 
