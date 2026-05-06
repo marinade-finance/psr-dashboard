@@ -38,13 +38,14 @@ Each route has Basic and Expert variants (Expert shows extra metrics/columns):
 ### Key Files
 
 - `src/services/sam.ts` — auction data loading, metric selectors (`selectActiveProfit`
-  shared helper), sensitivity analysis (`runAlt` pattern: mutate aggregated data, re-run auction)
+  shared helper), sensitivity analysis (`runAlt` pattern: mutate aggregated data, re-run auction);
+  internal helper functions are not exported
 - `src/components/sam-table/sam-table.tsx` — main auction table with
   simulation mode (ghost rows, position change grading, inline editing);
   metrics rendered in a single `flex flex-wrap` row; horizontally scrollable
 - `src/components/table/table.tsx` — generic sortable table component with
-  Color enum (RED/GREEN/YELLOW/ORANGE/GREY) for cell backgrounds; exports
-  `TRUNCATED_CELL`; `renderHeader`/`renderRow`/`renderRows` are plain functions;
+  Color enum (RED/GREEN/YELLOW/ORANGE/GREY) for cell backgrounds;
+  `renderHeader`/`renderRow`/`renderRows` are plain functions;
   all `td` have `align-top`; `ValidatorWithBondState` has `bondState?: Color`
   (optional — rows without a bond target show no color)
 - `src/components/metric/metric.tsx` — metric card; tooltip shown as a
@@ -90,7 +91,9 @@ secondary info you don't need to read at a glance). Everything else:
 - Headings / emphasis: `text-base` (16px) and up
 Avoid `text-[11px]` for anything interactive or primary.
 
-Shared style constants (e.g. `TABLE_BASE`, `CLICKABLE_ROW`, `GHOST_ROW`,
-`TRUNCATED_CELL`) are defined as string constants or helper functions in
-component files. No CSS Modules remain — `src/index.css` holds global
-styles, CSS variables, and keyframe animations only.
+Shared style constants (e.g. `TABLE_BASE`, `CLICKABLE_ROW`, `GHOST_ROW`)
+are defined as string constants or helper functions in component files.
+CSS var token constants (`CSS_PRIMARY`, `CSS_DESTRUCTIVE`, `CSS_PRIMARY_LIGHT`,
+`CSS_DESTRUCTIVE_LIGHT`) are exported from `src/lib/utils.ts`.
+No CSS Modules remain — `src/index.css` holds global styles, CSS variables,
+and keyframe animations only.

@@ -1,7 +1,6 @@
 import {
   DsSamSDK,
   InputsSource,
-  AuctionConstraintType,
   loadSamConfig,
   LogVerbosity,
 } from '@marinade.finance/ds-sam-sdk'
@@ -9,22 +8,18 @@ import {
 import { formatPercentage } from 'src/format'
 
 import {
-  bondHealthColor,
   bondRunwayEpochs,
   bondUtilizationPct,
   compoundApy,
-  selectMaxWantedStake,
 } from './calculations'
 import { fetchValidatorsWithEpochs } from './validators'
 
 import type {
   AuctionResult,
   AuctionValidator,
-  AuctionConstraint,
   DsSamConfig,
   SourceDataOverrides,
 } from '@marinade.finance/ds-sam-sdk'
-import type { Color } from 'src/services/types'
 
 // Solana epoch = 432000 slots × 0.4s/slot = 172800s = 48h exactly
 const EPOCHS_PER_YEAR = (365.25 * 24 * 3600) / 172800
@@ -77,39 +72,12 @@ export const fetchValidatorNames = async (): Promise<Map<string, string>> => {
   return nameByVote
 }
 
-export const lastCapConstraintDescription = (
-  constraint: AuctionConstraint,
-): string => {
-  switch (constraint.constraintType) {
-    case AuctionConstraintType.COUNTRY:
-      return `COUNTRY (${constraint.constraintName}) stake concentration`
-    case AuctionConstraintType.ASO:
-      return `ASO (${constraint.constraintName}) stake concentration`
-    case AuctionConstraintType.VALIDATOR:
-      return 'VALIDATOR stake concentration'
-    case AuctionConstraintType.BOND:
-      return 'BOND setup (bond balance is too low)'
-    case AuctionConstraintType.WANT:
-      return 'WANT (max stake wanted)'
-    case 'MNDE' as AuctionConstraintType:
-      return 'MNDE (bid too low or too little mnde votes)'
-    default:
-      return '[unknown]'
-  }
-}
-
 export const selectVoteAccount = (validator: AuctionValidator) =>
   validator.voteAccount
 export const selectSamTargetStake = (validator: AuctionValidator) =>
   validator.auctionStake.marinadeSamTargetSol
 export const selectSamActiveStake = (validator: AuctionValidator) =>
   validator.marinadeActivatedStakeSol
-export const selectConstraintText = ({
-  lastCapConstraint,
-}: AuctionValidator) =>
-  lastCapConstraint
-    ? `Stake capped by ${lastCapConstraintDescription(lastCapConstraint)} constraint`
-    : 'Stake amount not capped by constraints'
 
 export const selectSamDistributedStake = (validators: AuctionValidator[]) =>
   validators.reduce(
@@ -142,24 +110,6 @@ export const selectProjectedAPY = (
   return Math.pow(1 + profit / tvl, epochsPerYear) - 1
 }
 
-export const selectStakeToMove = (auctionResult: AuctionResult) =>
-  auctionResult.auctionData.validators.reduce(
-    (acc, entry) =>
-      acc +
-      Math.max(
-        0,
-        entry.marinadeActivatedStakeSol -
-          entry.auctionStake.marinadeSamTargetSol,
-      ),
-    0,
-  )
-
-export const selectTotalActiveStake = (auctionResult: AuctionResult) =>
-  auctionResult.auctionData.validators.reduce(
-    (acc, entry) => acc + entry.marinadeActivatedStakeSol,
-    0,
-  )
-
 function overridesMessage(
   label: string,
   overrideValue: number | null | undefined,
@@ -178,9 +128,6 @@ function overridesMessage(
 export const selectBid = (validator: AuctionValidator) =>
   validator.revShare.bidPmpe
 
-export const selectBondBid = (validator: AuctionValidator) =>
-  validator.values?.commissions?.bidCpmpeInBondDec ?? validator.bidCpmpe
-
 export const overridesCpmpeMessage = (validator: AuctionValidator): string =>
   overridesMessage(
     'CPMPE',
@@ -191,30 +138,6 @@ export const overridesCpmpeMessage = (validator: AuctionValidator): string =>
 export const selectCommission = (validator: AuctionValidator): number =>
   validator.inflationCommissionDec
 
-export const selectFormattedInBondCommission = (
-  validator: AuctionValidator,
-): string => {
-  const dec = validator.values?.commissions?.inflationCommissionInBondDec
-  return dec == null ? '-' : formatPercentage(dec, 0)
-}
-
-export const formattedOnChainCommission = (
-  validator: AuctionValidator,
-): string => {
-  const dec =
-    validator.values?.commissions?.inflationCommissionOnchainDec ??
-    selectCommission(validator)
-  return dec == null ? '-' : formatPercentage(dec, 0)
-}
-
-export const overridesCommissionMessage = (
-  validator: AuctionValidator,
-): string =>
-  overridesMessage(
-    'inflation commission',
-    validator.values?.commissions?.inflationCommissionOverrideDec,
-  )
-
 export const selectCommissionPmpe = (validator: AuctionValidator) =>
   validator.revShare.inflationPmpe
 
@@ -224,22 +147,6 @@ export const selectMevCommission = (
 
 export const formattedMevCommission = (validator: AuctionValidator): string => {
   const dec = selectMevCommission(validator)
-  return dec == null ? '-' : formatPercentage(dec, 0)
-}
-
-export const formattedInBondMevCommission = (
-  validator: AuctionValidator,
-): string => {
-  const dec = validator.values?.commissions?.mevCommissionInBondDec
-  return dec == null ? '-' : formatPercentage(dec, 0)
-}
-
-export const formattedOnChainMevCommission = (
-  validator: AuctionValidator,
-): string => {
-  const dec =
-    validator.values?.commissions?.mevCommissionOnchainDec ??
-    selectMevCommission(validator)
   return dec == null ? '-' : formatPercentage(dec, 0)
 }
 
@@ -268,14 +175,6 @@ export const formattedBlockRewardsCommission = (
 export const selectBlockRewardsCommissionPmpe = (validator: AuctionValidator) =>
   validator.revShare.blockPmpe
 
-export const overridesBlockRewardsCommissionMessage = (
-  validator: AuctionValidator,
-): string =>
-  overridesMessage(
-    'block rewards commission',
-    validator.values?.commissions?.blockRewardsCommissionOverrideDec,
-  )
-
 export const selectBondSize = (validator: AuctionValidator) =>
   validator.bondBalanceSol
 
@@ -296,42 +195,9 @@ export const selectEffectiveCost = (validator: AuctionValidator) =>
   (validator.marinadeActivatedStakeSol / 1000) *
   validator.revShare.auctionEffectiveBidPmpe
 
-export { bondHealthColor }
-
-export const selectActuallyUnprotectedStake = (
-  auctionResult: AuctionResult,
-): number =>
-  auctionResult.auctionData.validators.reduce((sum, validator) => {
-    const target = validator.auctionStake.marinadeSamTargetSol
-    if (target == null) {
-      return sum
-    }
-    return (
-      sum +
-      Math.max(
-        0,
-        target - (validator.bondSamStakeCapSol - validator.unprotectedStakeSol),
-      )
-    )
-  }, 0)
-
-export const selectTargetProtectedPct = (
-  auctionResult: AuctionResult,
-): number => {
-  const totalTarget = selectSamDistributedStake(
-    auctionResult.auctionData.validators,
-  )
-  if (totalTarget === 0) {
-    return 1
-  }
-  return 1 - selectActuallyUnprotectedStake(auctionResult) / totalTarget
-}
-
-export { selectMaxWantedStake }
-
 // Budget = TVL − Σactive: the already-liquid pool reserve that can be
 // redelegated in the next epoch without waiting for any unstake cooldown.
-export function selectRedelegationBudget(auctionResult: AuctionResult): number {
+function selectRedelegationBudget(auctionResult: AuctionResult): number {
   const validators = auctionResult.auctionData.validators
   const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
   const active = validators.reduce((s, v) => s + v.marinadeActivatedStakeSol, 0)
@@ -449,32 +315,5 @@ export const selectExpectedStakeChange = (
   v: AugmentedAuctionValidator,
 ): number => v.values.expectedStakeChangeSol ?? 0
 
-export const formattedInBondBlockRewardsCommission = (
-  validator: AuctionValidator,
-): string => {
-  const dec = validator.values?.commissions?.blockRewardsCommissionInBondDec
-  return dec == null ? '-' : formatPercentage(dec, 0)
-}
-
 export const selectBondUtilization = (validator: AuctionValidator): number =>
   bondUtilizationPct(validator) / 100
-
-export const bondColorState = (
-  validator: AuctionValidator,
-): Color | undefined => bondHealthColor(validator, 0)
-
-export const maxSamStakeTooltip = (
-  validator: AuctionValidator,
-  cfg: { maxTvlDelegation: number; minBondBalanceSol: number },
-): string => {
-  if (0.9 * cfg.maxTvlDelegation <= validator.auctionStake.marinadeSamTargetSol)
-    return 'You have the maximum stake a single validator can get from Marinade.'
-  if (
-    0.9 * validator.maxBondDelegation <=
-    validator.auctionStake.marinadeSamTargetSol
-  )
-    return 'Your bond is limiting your stake allocation. Hint: Top up your bond to receive more stake.'
-  if (validator.bondBalanceSol <= cfg.minBondBalanceSol)
-    return `Your bond is lower than the minimum amount of ${cfg.minBondBalanceSol} SOL. Hint: Top up your bond to start receiving stake from Marinade.`
-  return ''
-}

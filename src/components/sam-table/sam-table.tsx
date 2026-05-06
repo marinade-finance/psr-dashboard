@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useMemo, useState } from 'react'
 
 import { HelpTip } from 'src/components/help-tip/help-tip'
 import { Card } from 'src/components/ui/card'
@@ -150,6 +150,72 @@ type Props = {
   onResetSimulation?: () => void
 }
 
+const RANK_MONO = 'font-mono text-xs'
+
+const SortIndicator: React.FC<{
+  column: SortColumn
+  sortColumn: SortColumn
+  sortDirection: SortDirection
+}> = ({ column, sortColumn, sortDirection }) => {
+  if (sortColumn !== column) return null
+  return (
+    <span className="ml-1 text-primary">
+      {sortDirection === 'asc' ? '↑' : '↓'}
+    </span>
+  )
+}
+
+const RankCell: React.FC<{
+  rank: number
+  isGhost: boolean
+  isSimulated: boolean
+  origPos: number | null
+  posColor: string | undefined
+  voteAccount: string
+  onClearValidator?: (voteAccount: string) => void
+}> = ({
+  rank,
+  isGhost,
+  isSimulated,
+  origPos,
+  posColor,
+  voteAccount,
+  onClearValidator,
+}) => {
+  if (isGhost)
+    return (
+      <span className={`text-muted-foreground ${RANK_MONO}`}>
+        {origPos ?? rank}
+      </span>
+    )
+  if (isSimulated && onClearValidator)
+    return (
+      <div className="flex flex-col items-center gap-0.5">
+        <span
+          className={`font-medium ${RANK_MONO}`}
+          style={{ color: posColor ?? 'var(--muted-foreground)' }}
+        >
+          {rank}
+        </span>
+        <button
+          className="text-[10px] text-muted-foreground hover:text-destructive leading-none"
+          onClick={e => {
+            e.stopPropagation()
+            onClearValidator(voteAccount)
+          }}
+          title="Remove from simulation"
+        >
+          ✕
+        </button>
+      </div>
+    )
+  return (
+    <span className={`text-muted-foreground font-medium ${RANK_MONO}`}>
+      {rank}
+    </span>
+  )
+}
+
 // APY Tooltip component for Max APY hover
 const ApyTooltip: React.FC<{
   validator: AuctionValidator
@@ -260,9 +326,6 @@ export const SamTable: React.FC<Props> = ({
   const winningAPY = selectWinningAPY(auctionResult, epochsPerYear)
   const projectedApy = selectProjectedAPY(auctionResult, epochsPerYear)
 
-  // Ref for click-outside detection
-  const tableWrapRef = useRef<HTMLDivElement>(null)
-
   // Hovered row for APY tooltip
   const [hoveredApyRow, setHoveredApyRow] = useState<string | null>(null)
   const [hoveredRow, setHoveredRow] = useState<string | null>(null)
@@ -278,15 +341,6 @@ export const SamTable: React.FC<Props> = ({
       setSortColumn(column)
       setSortDirection('desc')
     }
-  }
-
-  const SortIndicator: React.FC<{ column: SortColumn }> = ({ column }) => {
-    if (sortColumn !== column) return null
-    return (
-      <span className="ml-1 text-primary">
-        {sortDirection === 'asc' ? '↑' : '↓'}
-      </span>
-    )
   }
 
   // Current validators with bond health and expected stake change computed
@@ -380,9 +434,9 @@ export const SamTable: React.FC<Props> = ({
   const winningValidators = allDisplayValidators.filter(
     d => !d.isGhost && d.validator.auctionStake.marinadeSamTargetSol > 0,
   )
-  const nonWinningValidators = allDisplayValidators.filter(
+  const nonWinningValidatorsCount = allDisplayValidators.filter(
     d => !d.isGhost && d.validator.auctionStake.marinadeSamTargetSol === 0,
-  )
+  ).length
 
   const totalRedelegation = useMemo(
     () =>
@@ -434,57 +488,6 @@ export const SamTable: React.FC<Props> = ({
       help: 'Total SAM stake expected to move next epoch (~0.7% of TVL rebalancing budget)',
     },
   ]
-
-  const RANK_MONO = 'font-mono text-xs'
-
-  const RankCell = ({
-    rank,
-    isGhost,
-    isSimulated,
-    origPos,
-    posColor,
-    voteAccount,
-  }: {
-    rank: number
-    isGhost: boolean
-    isSimulated: boolean
-    origPos: number | null
-    posColor: string | undefined
-    voteAccount: string
-  }) => {
-    if (isGhost)
-      return (
-        <span className={`text-muted-foreground ${RANK_MONO}`}>
-          {origPos ?? rank}
-        </span>
-      )
-    if (isSimulated && onClearValidator)
-      return (
-        <div className="flex flex-col items-center gap-0.5">
-          <span
-            className={`font-medium ${RANK_MONO}`}
-            style={{ color: posColor ?? 'var(--muted-foreground)' }}
-          >
-            {rank}
-          </span>
-          <button
-            className="text-[10px] text-muted-foreground hover:text-destructive leading-none"
-            onClick={e => {
-              e.stopPropagation()
-              onClearValidator(voteAccount)
-            }}
-            title="Remove from simulation"
-          >
-            ✕
-          </button>
-        </div>
-      )
-    return (
-      <span className={`text-muted-foreground font-medium ${RANK_MONO}`}>
-        {rank}
-      </span>
-    )
-  }
 
   const renderRow = (
     validator: ValidatorWithBondState,
@@ -564,6 +567,7 @@ export const SamTable: React.FC<Props> = ({
             origPos={origPos}
             posColor={posColor}
             voteAccount={voteAccount}
+            onClearValidator={onClearValidator}
           />
         </TableCell>
 
@@ -710,7 +714,6 @@ export const SamTable: React.FC<Props> = ({
 
   return (
     <div
-      ref={tableWrapRef}
       className={`w-full ${isCalculating ? 'opacity-70 pointer-events-none' : ''}`}
     >
       {/* Stats Bar */}
@@ -755,21 +758,34 @@ export const SamTable: React.FC<Props> = ({
                 className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-10 text-center cursor-pointer hover:text-primary"
                 onClick={() => handleSort('rank')}
               >
-                #<SortIndicator column="rank" />
+                #
+                <SortIndicator
+                  column="rank"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                />
               </TableHead>
               <TableHead
                 className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted min-w-[150px] cursor-pointer hover:text-primary"
                 onClick={() => handleSort('validator')}
               >
                 Validator
-                <SortIndicator column="validator" />
+                <SortIndicator
+                  column="validator"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                />
               </TableHead>
               <TableHead
                 className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-[100px] cursor-pointer hover:text-primary"
                 onClick={() => handleSort('maxApy')}
               >
                 Max APY
-                <SortIndicator column="maxApy" />
+                <SortIndicator
+                  column="maxApy"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                />
                 <HelpTip text={HELP_TEXT.maxApy} />
               </TableHead>
               <TableHead
@@ -777,7 +793,11 @@ export const SamTable: React.FC<Props> = ({
                 onClick={() => handleSort('bond')}
               >
                 Bond
-                <SortIndicator column="bond" />
+                <SortIndicator
+                  column="bond"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                />
                 <HelpTip text={HELP_TEXT.bondHealth} />
               </TableHead>
               <TableHead
@@ -785,7 +805,11 @@ export const SamTable: React.FC<Props> = ({
                 onClick={() => handleSort('stakeDelta')}
               >
                 Stake / Next {'\u0394'}
-                <SortIndicator column="stakeDelta" />
+                <SortIndicator
+                  column="stakeDelta"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                />
                 <HelpTip text="Current active stake and expected change next epoch based on auction results and rebalancing budget (~0.7% TVL/epoch)" />
               </TableHead>
               <TableHead
@@ -793,7 +817,11 @@ export const SamTable: React.FC<Props> = ({
                 onClick={() => handleSort('nextStep')}
               >
                 Next Step
-                <SortIndicator column="nextStep" />
+                <SortIndicator
+                  column="nextStep"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                />
               </TableHead>
               <TableHead className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-10"></TableHead>
             </TableRow>
@@ -808,7 +836,7 @@ export const SamTable: React.FC<Props> = ({
               .map((d, i) => renderRow(d.validator, i, d.isGhost))}
 
             {/* Winning Set Cutoff Divider */}
-            {nonWinningValidators.length > 0 && (
+            {nonWinningValidatorsCount > 0 && (
               <TableRow>
                 <TableCell colSpan={7} className="p-0">
                   <div className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-primary-light-10 via-primary-light to-primary-light-10 border-y-2 border-primary">

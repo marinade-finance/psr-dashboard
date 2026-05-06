@@ -202,9 +202,6 @@ type Props<Item> = {
   className?: string
 }
 
-export const TRUNCATED_CELL =
-  'inline-block w-[100px] pt-1 text-ellipsis overflow-hidden'
-
 export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
   data,
   columns,

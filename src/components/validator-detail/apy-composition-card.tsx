@@ -2,14 +2,15 @@ import React from 'react'
 
 import { HelpTip } from 'src/components/help-tip/help-tip'
 import { formatPercentage } from 'src/format'
+import {
+  CSS_PRIMARY,
+  CSS_DESTRUCTIVE,
+  CSS_PRIMARY_LIGHT,
+  CSS_DESTRUCTIVE_LIGHT,
+} from 'src/lib/utils'
 import { HELP_TEXT } from 'src/services/help-text'
 
 import type { ApyBreakdownDisplay } from 'src/services/tip-engine'
-
-const CSS_PRIMARY: string = 'var(--primary)'
-const CSS_DESTRUCTIVE: string = 'var(--destructive)'
-const CSS_PRIMARY_LIGHT: string = 'var(--primary-light)'
-const CSS_DESTRUCTIVE_LIGHT: string = 'var(--destructive-light)'
 
 interface ApyCompositionCardProps {
   rank: number

@@ -10,6 +10,12 @@ import { Sheet, SheetContent } from 'src/components/ui/sheet'
 import { ApyCompositionCard } from 'src/components/validator-detail/apy-composition-card'
 import { formatPercentage, formatSolAmount, pay } from 'src/format'
 import {
+  CSS_PRIMARY,
+  CSS_DESTRUCTIVE,
+  CSS_PRIMARY_LIGHT,
+  CSS_DESTRUCTIVE_LIGHT,
+} from 'src/lib/utils'
+import {
   bondHealthFromAuction,
   computeBondCoverageMetrics,
 } from 'src/services/breakdowns'
@@ -50,11 +56,6 @@ interface ValidatorDetailProps {
 }
 
 type Tab = 'overview' | 'bond' | 'revenue' | 'penalty'
-
-const CSS_PRIMARY: string = 'var(--primary)'
-const CSS_DESTRUCTIVE: string = 'var(--destructive)'
-const CSS_PRIMARY_LIGHT: string = 'var(--primary-light)'
-const CSS_DESTRUCTIVE_LIGHT: string = 'var(--destructive-light)'
 
 export const ValidatorDetail = ({
   validator,
@@ -228,14 +229,7 @@ export const ValidatorDetail = ({
     })
 
     return factors
-  }, [
-    validator,
-    voteAccount,
-    currentMaxApy,
-    winningApy,
-    bondUtilPct,
-    bondRunway,
-  ])
+  }, [validator, currentMaxApy, winningApy, bondUtilPct, bondRunway])
 
   return (
     <Sheet

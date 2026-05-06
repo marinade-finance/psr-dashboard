@@ -28,8 +28,6 @@ export interface TipStyle {
   icon: string
 }
 
-export { getBondHealth }
-
 const VAR_DESTRUCTIVE = 'var(--destructive)'
 const VAR_WARNING = 'var(--warning)'
 const VAR_MUTED_FG = 'var(--muted-foreground)'

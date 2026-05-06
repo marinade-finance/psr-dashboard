@@ -21,6 +21,10 @@ import type { UserLevel } from 'src/components/navigation/navigation'
 import type { SourceDataOverrides } from 'src/services/sam'
 import type { PendingEdits } from 'src/services/simulation'
 
+const NAME_MAP = new Map<string, { name?: string; countryIso?: string | null }>(
+  [...TEST_VALIDATOR_NAMES.entries()].map(([vote, name]) => [vote, { name }]),
+)
+
 type Props = {
   level: UserLevel
 }
@@ -31,7 +35,7 @@ export const TestSamPage: React.FC<Props> = ({ level }) => {
   )
   const [simulationModeActive, setSimulationModeActive] = useState(false)
   const [editingValidator, setEditingValidator] = useState<string | null>(null)
-  const [isCalculating] = useState(false)
+  const isCalculating = false
   const [simulationOverrides, setSimulationOverrides] =
     useState<SourceDataOverrides | null>(null)
   const [simulatedValidators, setSimulatedValidators] = useState<Set<string>>(
@@ -44,13 +48,7 @@ export const TestSamPage: React.FC<Props> = ({ level }) => {
   // Static fixture data — no API calls
   const auctionResult = TEST_AUCTION_RESULT
 
-  const nameMap = useMemo(() => {
-    const map = new Map<string, { name?: string; countryIso?: string | null }>()
-    for (const [vote, name] of TEST_VALIDATOR_NAMES) {
-      map.set(vote, { name })
-    }
-    return map
-  }, [])
+  const nameMap = NAME_MAP
 
   const ensureOriginalSaved = useCallback(() => {
     if (!originalAuctionResult) {
