@@ -9,7 +9,7 @@ import {
   tooltipHeader,
   wrapTable,
 } from 'src/components/tooltip-table/tooltip-table'
-import { finite, pay, pmpe, stake } from 'src/tooltips/format'
+import { finite, pay, pmpe, stake } from 'src/format'
 
 import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
 

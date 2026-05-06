@@ -8,7 +8,7 @@ import {
   tooltipHeader,
   wrapTable,
 } from 'src/components/tooltip-table/tooltip-table'
-import { finite, pmpe, stake } from 'src/tooltips/format'
+import { finite, pmpe, stake } from 'src/format'
 
 import type {
   AuctionValidator,

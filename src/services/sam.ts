@@ -7,15 +7,12 @@ import {
 } from '@marinade.finance/ds-sam-sdk'
 
 import { formatPercentage } from 'src/format'
-import { Color } from 'src/services/types'
 
 import {
   bondHealthColor,
   bondRunwayEpochs,
   bondUtilizationPct,
   compoundApy,
-  isNonProductive,
-  stakeDelta,
   selectMaxWantedStake,
 } from './calculations'
 import { fetchValidatorsWithEpochs } from './validators'
@@ -27,6 +24,7 @@ import type {
   DsSamConfig,
   SourceDataOverrides,
 } from '@marinade.finance/ds-sam-sdk'
+import type { Color } from 'src/services/types'
 
 // Solana epoch = 432000 slots × 0.4s/slot = 172800s = 48h exactly
 const EPOCHS_PER_YEAR = (365.25 * 24 * 3600) / 172800
@@ -144,21 +142,6 @@ export const selectProjectedAPY = (
   return Math.pow(1 + profit / tvl, epochsPerYear) - 1
 }
 
-export const selectIdealAPY = (
-  auctionResult: AuctionResult,
-  epochsPerYear: number,
-) => {
-  const vs = auctionResult.auctionData.validators
-  const profit = selectActiveProfit(vs)
-  const activeStake = vs.reduce(
-    (acc, v) => acc + v.marinadeActivatedStakeSol,
-    0,
-  )
-  return activeStake > 0
-    ? Math.pow(1 + profit / activeStake, epochsPerYear) - 1
-    : 0
-}
-
 export const selectStakeToMove = (auctionResult: AuctionResult) =>
   auctionResult.auctionData.validators.reduce(
     (acc, entry) =>
@@ -174,17 +157,6 @@ export const selectStakeToMove = (auctionResult: AuctionResult) =>
 export const selectTotalActiveStake = (auctionResult: AuctionResult) =>
   auctionResult.auctionData.validators.reduce(
     (acc, entry) => acc + entry.marinadeActivatedStakeSol,
-    0,
-  )
-
-export const selectIsNonProductive = isNonProductive
-
-export const selectProductiveStake = (auctionResult: AuctionResult) =>
-  auctionResult.auctionData.validators.reduce(
-    (acc, entry) =>
-      !selectIsNonProductive(entry)
-        ? acc + entry.marinadeActivatedStakeSol
-        : acc,
     0,
   )
 
@@ -326,21 +298,6 @@ export const selectEffectiveCost = (validator: AuctionValidator) =>
 
 export { bondHealthColor }
 
-export const bondTooltip = (color: Color) => {
-  switch (color) {
-    case Color.RED:
-      return 'Bond coverage critically low — undelegation imminent. Top up immediately.'
-    case Color.ORANGE:
-      return 'Bond coverage low — top up soon to avoid bond risk fee charges.'
-    case Color.YELLOW:
-      return 'Bond coverage moderate — top up to increase stake capacity.'
-    case Color.GREEN:
-      return 'Bond coverage healthy — bond is not limiting your stake.'
-    default:
-      return ''
-  }
-}
-
 export const selectActuallyUnprotectedStake = (
   auctionResult: AuctionResult,
 ): number =>
@@ -368,51 +325,6 @@ export const selectTargetProtectedPct = (
     return 1
   }
   return 1 - selectActuallyUnprotectedStake(auctionResult) / totalTarget
-}
-
-export const selectStakeDelta = stakeDelta
-
-export type Recommendation = { text: string; severity: string }
-
-export function getRecommendation(
-  validator: AuctionValidator,
-  bondColor: Color,
-): Recommendation {
-  if (!validator.auctionStake.marinadeSamTargetSol) {
-    if (!validator.samEligible) {
-      return { text: 'Not eligible for SAM auction', severity: 'neutral' }
-    }
-    return {
-      text: 'Not winning any stake in the current auction',
-      severity: 'neutral',
-    }
-  }
-  if (bondColor === Color.RED) {
-    return {
-      text: 'Top up your bond immediately — bond balance is limiting your stake',
-      severity: 'critical',
-    }
-  }
-  if (bondColor === Color.YELLOW) {
-    return {
-      text: 'Top up your bond soon — balance covers only ~1 epoch of bids',
-      severity: 'warning',
-    }
-  }
-  if (selectIsNonProductive(validator)) {
-    return {
-      text: 'Validator is non-productive — bond obligation not being met',
-      severity: 'warning',
-    }
-  }
-  const delta = selectStakeDelta(validator)
-  if (delta > 0) {
-    return { text: 'Stake is increasing toward target', severity: 'positive' }
-  }
-  if (delta < 0) {
-    return { text: 'Stake is decreasing toward target', severity: 'neutral' }
-  }
-  return { text: 'Stake is at target', severity: 'positive' }
 }
 
 export { selectMaxWantedStake }
@@ -478,14 +390,6 @@ export const formattedInBondBlockRewardsCommission = (
 
 export const selectBondUtilization = (validator: AuctionValidator): number =>
   bondUtilizationPct(validator) / 100
-
-export function isoToFlag(iso: string): string {
-  const upper = iso.toUpperCase()
-  const OFFSET = 0x1f1e6 - 0x41
-  return Array.from(upper)
-    .map(ch => String.fromCodePoint(ch.codePointAt(0) + OFFSET))
-    .join('')
-}
 
 export const bondColorState = (
   validator: AuctionValidator,

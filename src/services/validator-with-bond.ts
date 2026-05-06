@@ -1,6 +1,9 @@
 import { fetchBonds, selectEffectiveAmount } from './bonds'
 import { loadSam } from './sam'
-import { fetchValidators, selectTotalMarinadeStake } from './validators'
+import {
+  fetchValidatorsWithEpochs,
+  selectTotalMarinadeStake,
+} from './validators'
 
 import type { BondRecord } from './bonds'
 import type { Validator } from './validators'
@@ -33,14 +36,11 @@ export const selectProtectedStake = (entry: ValidatorWithBond) =>
     ),
   )
 
-export const selectMaxStakeWanted = (bond: BondRecord) =>
-  bond.max_stake_wanted / 1e9
-
 export const fetchValidatorsWithBonds = async (): Promise<
   ValidatorWithBond[]
 > => {
   const [{ validators }, { bonds }, { auctionResult }] = await Promise.all([
-    fetchValidators(),
+    fetchValidatorsWithEpochs(0),
     fetchBonds(),
     loadSam(),
   ])

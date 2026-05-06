@@ -40,9 +40,6 @@ export type ValidatorsResponse = {
   validators: Validator[]
 }
 
-export const fetchValidators = async (): Promise<ValidatorsResponse> =>
-  fetchValidatorsWithEpochs(0)
-
 const cache = new Map<number, Promise<ValidatorsResponse>>()
 
 export const fetchValidatorsWithEpochs = (

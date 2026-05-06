@@ -117,23 +117,6 @@ export const selectProtectedStakeReason = (protectedEvent: ProtectedEvent) => {
   return 'Unsupported'
 }
 
-export const selectEprLossBps = (protectedEvent: ProtectedEvent) => {
-  if (isProtectedEvent(protectedEvent.reason)) {
-    const reason = protectedEvent.reason.ProtectedEvent
-    if (isCommissionIncreaseReason(reason)) {
-      return (
-        10000 -
-        (10000 * (100 - reason.CommissionIncrease.current_commission)) /
-          (100 - reason.CommissionIncrease.previous_commission)
-      )
-    }
-    if (isLowCreditsReason(reason)) {
-      return reason.LowCredits.epr_loss_bps
-    }
-  }
-  return 0
-}
-
 export const selectAmount = (protectedEvent: ProtectedEvent) =>
   Number(protectedEvent.amount / 1e9)
 
