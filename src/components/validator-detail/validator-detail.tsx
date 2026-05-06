@@ -344,6 +344,17 @@ export const ValidatorDetail = ({
                 />
               </span>
             </label>
+            {isSimulated && onClearSimulation && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:bg-destructive/5 h-7 px-2 text-xs"
+                onClick={onClearSimulation}
+                disabled={isCalculating}
+              >
+                Reset
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
@@ -679,7 +690,7 @@ export const ValidatorDetail = ({
                 </div>
               </fieldset>
               {simEnabled && (
-                <div className="flex items-center justify-between gap-2 mt-3 text-xs text-muted-foreground">
+                <div className="mt-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1.5">
                     {isCalculating ? (
                       <>
@@ -693,17 +704,6 @@ export const ValidatorDetail = ({
                       </>
                     )}
                   </span>
-                  {onClearSimulation && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive hover:bg-destructive/5 h-7 px-2"
-                      onClick={onClearSimulation}
-                      disabled={isCalculating}
-                    >
-                      Reset to actual
-                    </Button>
-                  )}
                 </div>
               )}
             </div>
