@@ -15,6 +15,7 @@ import { UserLevel } from './components/navigation/navigation'
 import { TooltipProvider } from './components/ui/tooltip'
 import { ProtectedEventsPage } from './pages/protected-events'
 import { SamPage } from './pages/sam'
+import { TestSamPage } from './pages/test-sam'
 import { ValidatorBondsPage } from './pages/validator-bonds'
 import { loadSam } from './services/sam'
 import { fetchValidatorsWithBonds } from './services/validator-with-bond'
@@ -69,6 +70,16 @@ const router = createBrowserRouter([
   {
     path: '/expert-protected-events',
     element: <ProtectedEventsPage level={UserLevel.Expert} />,
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: '/test-',
+    element: <TestSamPage level={UserLevel.Basic} />,
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: '/test-expert-',
+    element: <TestSamPage level={UserLevel.Expert} />,
     errorElement: <ErrorPage />,
   },
 ])
