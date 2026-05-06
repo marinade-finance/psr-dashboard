@@ -13,15 +13,11 @@ import { HELP_TEXT } from 'src/services/help-text'
 import type { ApyBreakdownDisplay } from 'src/services/tip-engine'
 
 interface ApyCompositionCardProps {
-  rank: number
-  totalValidators: number
   apyBreakdown: ApyBreakdownDisplay
   winningApy: number
 }
 
 export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
-  rank,
-  totalValidators,
   apyBreakdown,
   winningApy,
 }) => {
@@ -43,8 +39,7 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
             <HelpTip text={HELP_TEXT.maxApy} />
           </h3>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Rank #{rank} of {totalValidators} · winning threshold{' '}
-            {formatPercentage(winningApy, 2)}
+            Winning threshold {formatPercentage(winningApy, 2)}
           </p>
         </div>
         {(() => {

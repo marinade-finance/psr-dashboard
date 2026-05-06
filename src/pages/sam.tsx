@@ -291,7 +291,6 @@ export const SamPage: React.FC<Props> = ({ level }) => {
             epochsPerYear={data.epochsPerYear}
             nameMap={nameMap}
             rank={sheetValidatorData.rank}
-            totalValidators={sheetValidatorData.totalValidators}
             isSimulated={simulatedValidators.has(selectedValidator ?? '')}
             onClose={handleBack}
             onSimulate={handleDetailSimulate}

@@ -8,7 +8,7 @@ import { Button } from 'src/components/ui/button'
 import { Input } from 'src/components/ui/input'
 import { Sheet, SheetContent } from 'src/components/ui/sheet'
 import { ApyCompositionCard } from 'src/components/validator-detail/apy-composition-card'
-import { formatPercentage, formatSolAmount, pay } from 'src/format'
+import { formatSolAmount, pay } from 'src/format'
 import {
   CSS_PRIMARY,
   CSS_DESTRUCTIVE,
@@ -31,7 +31,6 @@ import {
   getApyBreakdown,
   getValidatorTip,
   getTipStyle,
-  calculateBondUtilization,
 } from 'src/services/tip-engine'
 
 import type { AuctionResult, DsSamConfig } from '@marinade.finance/ds-sam-sdk'
@@ -44,7 +43,6 @@ interface ValidatorDetailProps {
   epochsPerYear: number
   nameMap?: Map<string, { name?: string }>
   rank: number
-  totalValidators: number
   isSimulated?: boolean
   onClose: () => void
   onSimulate: (
@@ -66,7 +64,6 @@ export const ValidatorDetail = ({
   epochsPerYear,
   nameMap,
   rank,
-  totalValidators,
   isSimulated = false,
   onClose,
   onSimulate,
@@ -78,7 +75,6 @@ export const ValidatorDetail = ({
   const winningApy = selectWinningAPY(auctionResult, epochsPerYear)
   const winningTotalPmpe = auctionResult.winningTotalPmpe
   const apyBreakdown = getApyBreakdown(validator, epochsPerYear)
-  const bondUtilPct = calculateBondUtilization(validator)
   const bondRunway = validator.bondGoodForNEpochs ?? 0
   const bondHealth = bondHealthFromAuction(
     validator,
@@ -110,7 +106,6 @@ export const ValidatorDetail = ({
       ),
     [validator, dsSamConfig, winningTotalPmpe],
   )
-  const currentMaxApy = apyBreakdown.total
   const paymentMetrics = useMemo(
     () => computeSamRevenueMetrics(validator),
     [validator],
@@ -173,74 +168,6 @@ export const ValidatorDetail = ({
     if (!enabled && onClearSimulation) onClearSimulation()
   }
 
-  const rankFactors = useMemo(() => {
-    const factors: {
-      name: string
-      value: string
-      note: string
-      impact: 'positive' | 'negative' | 'neutral'
-    }[] = []
-
-    const apyMargin = currentMaxApy - winningApy
-    factors.push({
-      name: 'Max APY',
-      value: formatPercentage(currentMaxApy, 2),
-      note:
-        apyMargin >= 0
-          ? `+${formatPercentage(apyMargin, 2)} above winning APY`
-          : `${formatPercentage(apyMargin, 2)} below winning APY`,
-      impact: apyMargin >= 0 ? 'positive' : 'negative',
-    })
-
-    const runwayNote =
-      bondRunway <= 0 ? 'Depleted' : `${Math.round(bondRunway)} epochs runway`
-    factors.push({
-      name: 'Bond capacity',
-      value: `${formatSolAmount(validator.bondBalanceSol, 0)} SOL`,
-      note: `${bondUtilPct.toFixed(0)}% utilized, ${runwayNote}`,
-      impact:
-        bondUtilPct < 65
-          ? 'positive'
-          : bondUtilPct < 85
-            ? 'neutral'
-            : 'negative',
-    })
-
-    const samActive = validator.marinadeActivatedStakeSol
-    const samTarget = validator.auctionStake.marinadeSamTargetSol
-    const expectedDelta = selectExpectedStakeChange(validator)
-    const deltaText =
-      expectedDelta > 0
-        ? `+${formatSolAmount(expectedDelta, 0)} SOL next epoch`
-        : expectedDelta < 0
-          ? `${formatSolAmount(expectedDelta, 0)} SOL next epoch`
-          : 'No change next epoch'
-    factors.push({
-      name: 'Stake',
-      value: `${formatSolAmount(samActive, 0)} SOL`,
-      note: `${deltaText} · target ${formatSolAmount(samTarget, 0)} SOL`,
-      impact:
-        expectedDelta > 0
-          ? 'positive'
-          : expectedDelta < 0
-            ? 'negative'
-            : 'neutral',
-    })
-
-    const blockProd =
-      validator.blockRewardsCommissionDec !== null
-        ? (1 - validator.blockRewardsCommissionDec) * 100
-        : 100
-    factors.push({
-      name: 'Block production',
-      value: `${blockProd.toFixed(0)}%`,
-      note: blockProd >= 100 ? 'Full uptime' : 'Missed slots reduce APY',
-      impact: blockProd >= 100 ? 'positive' : 'negative',
-    })
-
-    return factors
-  }, [validator, currentMaxApy, winningApy, bondUtilPct, bondRunway])
-
   return (
     <Sheet
       open={true}
@@ -293,10 +220,9 @@ export const ValidatorDetail = ({
                 >
                   {inSet
                     ? cutoffRank === 0
-                      ? 'last in set'
+                      ? 'at cutoff'
                       : `${cutoffRank} above cutoff`
-                    : `${Math.abs(cutoffRank)} below cutoff`}{' '}
-                  · of {totalValidators}
+                    : `${Math.abs(cutoffRank)} below cutoff`}
                 </span>
               </span>
               {validatorName && (
@@ -471,154 +397,58 @@ export const ValidatorDetail = ({
         <div
           className={`grid grid-cols-1 lg:grid-cols-2 gap-6 p-6 ${tab === 'overview' ? '' : 'hidden'}`}
         >
+          {/* Left: operational status */}
           <div className="space-y-6">
             <div className="bg-card rounded-xl border border-border p-5">
               <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
-                Why Rank #{rank}?
-                <HelpTip text="Factors that determine your auction ranking. Improve negative factors to climb higher." />
+                Stake
               </h3>
-              <div className="space-y-2 mt-3">
-                {rankFactors.map(factor => (
-                  <div
-                    key={factor.name}
-                    className={`flex items-center justify-between p-3 rounded-lg border ${
-                      factor.impact === 'positive'
-                        ? 'border-primary/20 bg-[var(--primary-light)]'
-                        : factor.impact === 'negative'
-                          ? 'border-destructive/20 bg-[var(--destructive-light)]'
-                          : 'border-border bg-secondary'
-                    }`}
+              <div className="space-y-3 mt-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Active</span>
+                  <span className="text-sm font-semibold font-mono">
+                    {formatSolAmount(validator.marinadeActivatedStakeSol, 0)}{' '}
+                    SOL
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Target</span>
+                  <span className="text-sm font-semibold font-mono">
+                    {formatSolAmount(
+                      validator.auctionStake.marinadeSamTargetSol,
+                      0,
+                    )}{' '}
+                    SOL
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    Next epoch
+                  </span>
+                  <span
+                    className="text-sm font-semibold font-mono"
+                    style={{
+                      color:
+                        expectedStakeDelta > 0
+                          ? 'var(--status-green, #2aa198)'
+                          : expectedStakeDelta < 0
+                            ? CSS_DESTRUCTIVE
+                            : 'var(--muted-foreground)',
+                    }}
                   >
-                    <div className="flex items-center gap-2">
-                      <span className="w-5 h-5 flex items-center justify-center text-xs font-bold rounded-full">
-                        {factor.impact === 'positive'
-                          ? '\u2713'
-                          : factor.impact === 'negative'
-                            ? '\u2717'
-                            : '\u2014'}
-                      </span>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium text-foreground">
-                          {factor.name}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {factor.note}
-                        </span>
-                      </div>
-                    </div>
-                    <span className="text-sm font-mono font-semibold whitespace-nowrap shrink-0 ml-2">
-                      {factor.value}
-                    </span>
-                  </div>
-                ))}
+                    {expectedStakeDelta > 0
+                      ? `+${formatSolAmount(expectedStakeDelta, 0)} SOL`
+                      : expectedStakeDelta < 0
+                        ? `${formatSolAmount(expectedStakeDelta, 0)} SOL`
+                        : '0 SOL'}
+                  </span>
+                </div>
               </div>
             </div>
 
-            <ApyCompositionCard
-              rank={rank}
-              totalValidators={totalValidators}
-              apyBreakdown={apyBreakdown}
-              winningApy={winningApy}
-            />
-          </div>
-
-          <div className="space-y-6">
             <div className="bg-card rounded-xl border border-border p-5">
               <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
-                What-If Simulation
-                <HelpTip text={HELP_TEXT.simulation} />
-              </h3>
-              {!simEnabled && (
-                <p className="text-xs text-muted-foreground mt-1 mb-3">
-                  Toggle{' '}
-                  <span className="font-medium text-foreground">Simulate</span>{' '}
-                  in the header to edit values. Changes auto-recalculate.
-                </p>
-              )}
-              <fieldset
-                disabled={!simEnabled}
-                className={`space-y-3 mt-3 transition-opacity ${simEnabled ? '' : 'opacity-50'}`}
-              >
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">
-                    Stake Bid (PMPE)
-                  </label>
-                  <Input
-                    type="number"
-                    value={editBid}
-                    onChange={e => setEditBid(e.target.value)}
-                    step="0.001"
-                    min="0"
-                    className="font-mono"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">
-                    Inflation Commission %
-                  </label>
-                  <Input
-                    type="number"
-                    value={editInflation}
-                    onChange={e => setEditInflation(e.target.value)}
-                    step="0.1"
-                    min="0"
-                    max="100"
-                    className="font-mono"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">
-                    MEV Commission %
-                  </label>
-                  <Input
-                    type="number"
-                    value={editMev}
-                    onChange={e => setEditMev(e.target.value)}
-                    step="0.1"
-                    min="0"
-                    max="100"
-                    placeholder="N/A"
-                    className="font-mono"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">
-                    Block Rewards Commission %
-                  </label>
-                  <Input
-                    type="number"
-                    value={editBlock}
-                    onChange={e => setEditBlock(e.target.value)}
-                    step="0.1"
-                    min="0"
-                    max="100"
-                    placeholder="N/A"
-                    className="font-mono"
-                  />
-                </div>
-              </fieldset>
-              {simEnabled && (
-                <div className="mt-3 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1.5">
-                    {isCalculating ? (
-                      <>
-                        <span className="inline-block w-2 h-2 rounded-full bg-[var(--status-yellow,#b58900)] animate-pulse" />
-                        Recalculating…
-                      </>
-                    ) : (
-                      <>
-                        <span className="inline-block w-2 h-2 rounded-full bg-[var(--status-green,#2aa198)]" />
-                        Auto-recalc on change
-                      </>
-                    )}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <div className="bg-card rounded-xl border border-border p-5">
-              <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
-                Bond Snapshot
+                Bond
                 <HelpTip text={HELP_TEXT.bondHealth} />
               </h3>
               <div className="mt-3 space-y-3">
@@ -645,11 +475,11 @@ export const ValidatorDetail = ({
                   >
                     {bondHealth === 'critical'
                       ? bondCoverage.topUpToMin > 0
-                        ? `−${pay(bondCoverage.topUpToMin)} needed`
+                        ? `Top up ${pay(bondCoverage.topUpToMin)}`
                         : 'Critical'
                       : bondHealth === 'watch'
                         ? bondCoverage.topUpToIdeal > 0
-                          ? `+${pay(bondCoverage.topUpToIdeal)} for more stake`
+                          ? `Top up ${pay(bondCoverage.topUpToIdeal)}`
                           : 'Watch'
                         : 'Fully covered'}
                   </span>
@@ -717,55 +547,97 @@ export const ValidatorDetail = ({
                 </button>
               </div>
             </div>
+          </div>
 
-            <div className="bg-card rounded-xl border border-border p-5">
-              <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
-                Stake Overview
-              </h3>
-              <div className="space-y-3 mt-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    Active Stake
-                  </span>
-                  <span className="text-sm font-semibold font-mono">
-                    {formatSolAmount(validator.marinadeActivatedStakeSol, 0)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    Target Stake
-                  </span>
-                  <span className="text-sm font-semibold font-mono">
-                    {formatSolAmount(
-                      validator.auctionStake.marinadeSamTargetSol,
-                      0,
+          {/* Right: APY composition + simulation (sim only shown when active) */}
+          <div className="space-y-6">
+            <ApyCompositionCard
+              apyBreakdown={apyBreakdown}
+              winningApy={winningApy}
+            />
+
+            {simEnabled && (
+              <div className="bg-card rounded-xl border border-border p-5">
+                <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+                  What-If Simulation
+                  <HelpTip text={HELP_TEXT.simulation} />
+                </h3>
+                <fieldset className="space-y-3 mt-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">
+                      Stake Bid (PMPE)
+                    </label>
+                    <Input
+                      type="number"
+                      value={editBid}
+                      onChange={e => setEditBid(e.target.value)}
+                      step="0.001"
+                      min="0"
+                      className="font-mono"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">
+                      Inflation Commission %
+                    </label>
+                    <Input
+                      type="number"
+                      value={editInflation}
+                      onChange={e => setEditInflation(e.target.value)}
+                      step="0.1"
+                      min="0"
+                      max="100"
+                      className="font-mono"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">
+                      MEV Commission %
+                    </label>
+                    <Input
+                      type="number"
+                      value={editMev}
+                      onChange={e => setEditMev(e.target.value)}
+                      step="0.1"
+                      min="0"
+                      max="100"
+                      placeholder="N/A"
+                      className="font-mono"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">
+                      Block Rewards Commission %
+                    </label>
+                    <Input
+                      type="number"
+                      value={editBlock}
+                      onChange={e => setEditBlock(e.target.value)}
+                      step="0.1"
+                      min="0"
+                      max="100"
+                      placeholder="N/A"
+                      className="font-mono"
+                    />
+                  </div>
+                </fieldset>
+                <div className="mt-3 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1.5">
+                    {isCalculating ? (
+                      <>
+                        <span className="inline-block w-2 h-2 rounded-full bg-[var(--status-yellow,#b58900)] animate-pulse" />
+                        Recalculating…
+                      </>
+                    ) : (
+                      <>
+                        <span className="inline-block w-2 h-2 rounded-full bg-[var(--status-green,#2aa198)]" />
+                        Auto-recalc on change
+                      </>
                     )}
                   </span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    Expected Δ next epoch
-                  </span>
-                  <span
-                    className="text-sm font-semibold font-mono"
-                    style={{
-                      color:
-                        expectedStakeDelta > 0
-                          ? 'var(--status-green, #2aa198)'
-                          : expectedStakeDelta < 0
-                            ? CSS_DESTRUCTIVE
-                            : 'var(--muted-foreground)',
-                    }}
-                  >
-                    {expectedStakeDelta > 0
-                      ? `+${formatSolAmount(expectedStakeDelta, 0)} SOL`
-                      : expectedStakeDelta < 0
-                        ? `${formatSolAmount(expectedStakeDelta, 0)} SOL`
-                        : '0 SOL'}
-                  </span>
-                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </SheetContent>
