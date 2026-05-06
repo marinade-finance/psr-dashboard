@@ -119,6 +119,13 @@ export const getValidatorTip = (
   }
 
   if (health === 'critical' && bondGoodForEpochs <= 5) {
+    if (bondGoodForEpochs <= 0) {
+      return {
+        text: 'Bond already depleted. Top up immediately to avoid forced unstaking.',
+        urgency: 'critical',
+        constraint: 'bond',
+      }
+    }
     const days = Math.round(bondRunwayDays(bondGoodForEpochs))
     const epochsRounded = Math.round(bondGoodForEpochs)
     return {

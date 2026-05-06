@@ -158,10 +158,12 @@ export const ValidatorDetail = ({
       impact: apyMargin >= 0 ? 'positive' : 'negative',
     })
 
+    const runwayNote =
+      bondRunway <= 0 ? 'Depleted' : `~${Math.round(bondRunway)} epochs runway`
     factors.push({
       name: 'Bond capacity',
       value: `${formatSolAmount(validator.bondBalanceSol, 0)} SOL`,
-      note: `${bondUtilPct.toFixed(0)}% utilized, ~${Math.round(bondRunway)} epochs runway`,
+      note: `${bondUtilPct.toFixed(0)}% utilized, ${runwayNote}`,
       impact:
         bondUtilPct < 65
           ? 'positive'
@@ -447,7 +449,7 @@ export const ValidatorDetail = ({
                         </span>
                       </div>
                     </div>
-                    <span className="text-sm font-mono font-semibold">
+                    <span className="text-sm font-mono font-semibold whitespace-nowrap shrink-0 ml-2">
                       {factor.value}
                     </span>
                   </div>
@@ -696,7 +698,9 @@ export const ValidatorDetail = ({
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">Runway</span>
                   <span className="text-sm font-semibold font-mono">
-                    ~{Math.round(bondRunway)} epochs
+                    {bondRunway <= 0
+                      ? 'Depleted'
+                      : `~${Math.round(bondRunway)} epochs`}
                   </span>
                 </div>
                 <button
