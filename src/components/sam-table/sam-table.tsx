@@ -637,7 +637,7 @@ export const SamTable: React.FC<Props> = ({
             <span
               className={`text-[10px] font-mono whitespace-nowrap ${bondRunway <= 10 ? bondChip.shortText : 'text-muted-foreground'}`}
             >
-              ~{Math.round(bondRunway)}ep
+              {Math.round(bondRunway)}ep
             </span>
           </div>
         </TableCell>
