@@ -165,15 +165,8 @@ const SortIndicator: React.FC<{
   )
 }
 
-function formatCutoffRank(n: number): string {
-  if (n > 0) return `+${n}`
-  if (n < 0) return `${n}`
-  return '0'
-}
-
 const RankCell: React.FC<{
   rank: number
-  cutoffRank: number
   isGhost: boolean
   isSimulated: boolean
   origPos: number | null
@@ -184,7 +177,6 @@ const RankCell: React.FC<{
   onClearValidator?: (voteAccount: string) => void
 }> = ({
   rank,
-  cutoffRank,
   isGhost,
   isSimulated,
   origPos,
@@ -207,7 +199,7 @@ const RankCell: React.FC<{
           className={`font-medium ${RANK_MONO}`}
           style={{ color: posColor ?? 'var(--muted-foreground)' }}
         >
-          {formatCutoffRank(cutoffRank)}
+          #{rank}
         </span>
         <button
           className="text-[10px] text-muted-foreground hover:text-destructive leading-none"
@@ -223,15 +215,10 @@ const RankCell: React.FC<{
     )
   return (
     <span
-      className={`font-medium ${RANK_MONO} flex flex-col items-center leading-tight`}
+      className={`font-medium ${RANK_MONO} flex items-center gap-0.5`}
       style={{ color: tipColor }}
     >
-      <span className="flex items-center gap-0.5">
-        <span className="text-[10px] leading-none">{tipIcon}</span>#{rank}
-      </span>
-      <span className="text-[9px] opacity-70">
-        ({formatCutoffRank(cutoffRank)})
-      </span>
+      <span className="text-[10px] leading-none">{tipIcon}</span>#{rank}
     </span>
   )
 }
@@ -457,8 +444,6 @@ export const SamTable: React.FC<Props> = ({
   const nonWinningValidatorsCount = allDisplayValidators.filter(
     d => !d.isGhost && d.validator.auctionStake.marinadeSamTargetSol === 0,
   ).length
-  const inSetCount = winningValidators.length
-
   const totalRedelegation = useMemo(
     () =>
       validatorsWithBond.reduce((s, v) => {
@@ -518,7 +503,6 @@ export const SamTable: React.FC<Props> = ({
     const voteAccount = selectVoteAccount(validator)
     const inSet = validator.auctionStake.marinadeSamTargetSol > 0
     const rank = index + 1
-    const cutoffRank = inSet ? inSetCount - rank : -(rank - inSetCount)
     const isHovered = !isGhost && hoveredRow === voteAccount
     const isSimulated = simulatedValidators.has(voteAccount)
 
@@ -590,7 +574,6 @@ export const SamTable: React.FC<Props> = ({
         <TableCell className="px-3.5 py-3 text-center w-10">
           <RankCell
             rank={rank}
-            cutoffRank={cutoffRank}
             isGhost={isGhost}
             isSimulated={isSimulated}
             origPos={origPos}
