@@ -14,6 +14,7 @@ import { formatPercentage, formatSolAmount } from 'src/format'
 import { bondHealthFromAuction } from 'src/services/breakdowns'
 import { HELP_TEXT } from 'src/services/help-text'
 import {
+  augmentAuctionResult,
   selectBondSize,
   selectExpectedStakeChange,
   selectMaxAPY,
@@ -34,7 +35,6 @@ import {
   getValidatorTip,
   getTipStyle,
   calculateBondUtilization,
-  formatStakeDelta,
 } from 'src/services/tip-engine'
 
 import type { UserLevel } from '../navigation/navigation'
@@ -43,6 +43,7 @@ import type {
   AuctionValidator,
   DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
+import type { AugmentedAuctionValidator } from 'src/services/sam'
 import type { PendingEdits } from 'src/services/simulation'
 
 export type ValidatorMeta = {
@@ -52,7 +53,7 @@ export type ValidatorMeta = {
 }
 
 // Validator with computed bond state
-type ValidatorWithBondState = AuctionValidator & {
+type ValidatorWithBondState = AugmentedAuctionValidator & {
   bondHealth: 'healthy' | 'watch' | 'critical'
 }
 
@@ -114,7 +115,6 @@ type Props = {
   editingValidator?: string | null
   pendingEdits?: PendingEdits
   validatorMeta?: Map<string, ValidatorMeta>
-  stakeChanges?: Map<string, number>
   onValidatorClick: (voteAccount: string) => void
   onFieldChange?: (field: string, value: string) => void
   onRunSimulation?: () => void
@@ -222,7 +222,6 @@ export const SamTable: React.FC<Props> = ({
   simulatedValidators = new Set(),
   isCalculating,
   validatorMeta,
-  stakeChanges,
   onValidatorClick,
   onClearValidator,
   onResetSimulation,
@@ -264,16 +263,16 @@ export const SamTable: React.FC<Props> = ({
     )
   }
 
-  // Current validators with bond health computed
+  // Current validators with bond health and expected stake change computed
   const validatorsWithBond: ValidatorWithBondState[] = useMemo(
     () =>
-      validators
-        .filter(validator => selectBondSize(validator) > 0)
+      augmentAuctionResult(auctionResult)
+        .filter(v => selectBondSize(v) > 0)
         .map(v => ({
           ...v,
           bondHealth: bondHealthFromAuction(v, dsSamConfig, winningTotalPmpe),
         })),
-    [validators, dsSamConfig, winningTotalPmpe],
+    [auctionResult, dsSamConfig, winningTotalPmpe],
   )
 
   // Sort validators based on current sort column and direction
@@ -359,12 +358,14 @@ export const SamTable: React.FC<Props> = ({
     d => !d.isGhost && d.validator.auctionStake.marinadeSamTargetSol === 0,
   )
 
-  const totalRedelegation = useMemo(() => {
-    if (!stakeChanges) return 0
-    return [...stakeChanges.values()]
-      .filter(x => x > 0)
-      .reduce((s, x) => s + x, 0)
-  }, [stakeChanges])
+  const totalRedelegation = useMemo(
+    () =>
+      validatorsWithBond.reduce((s, v) => {
+        const change = selectExpectedStakeChange(v)
+        return change > 0 ? s + change : s
+      }, 0),
+    [validatorsWithBond],
+  )
 
   // Stats for the stats bar
   const totalValidators = sortedValidators.length
@@ -488,11 +489,7 @@ export const SamTable: React.FC<Props> = ({
     const bondStyle = getBondHealthStyle(bondHealth)
     const hasAlert = bondRunway <= 5 || bondUtilPct >= 85
 
-    // Stake delta (fallback) and expected change
-    const delta = formatStakeDelta(validator)
-    const expectedChange = stakeChanges
-      ? selectExpectedStakeChange(voteAccount, stakeChanges)
-      : null
+    const expectedChange = selectExpectedStakeChange(validator)
 
     // Tip
     const tip = getValidatorTip(validator, winningAPY, epochsPerYear)
@@ -628,39 +625,29 @@ export const SamTable: React.FC<Props> = ({
 
         {/* Stake / Next Δ */}
         <TableCell className="px-3.5 py-3">
-          {expectedChange !== null ? (
-            <div className="flex flex-col gap-0.5">
-              <span className="text-muted-foreground text-xs font-mono">
-                {formatSolAmount(validator.marinadeActivatedStakeSol, 0)} SOL
-              </span>
-              {expectedChange === 0 ? (
-                <span className="text-muted-foreground text-xs font-mono">
-                  &mdash;
-                </span>
-              ) : (
-                <span
-                  className="font-semibold text-sm font-mono"
-                  style={{
-                    color:
-                      expectedChange > 0
-                        ? 'var(--status-green)'
-                        : 'var(--destructive)',
-                  }}
-                >
-                  {expectedChange > 0 ? '+' : ''}
-                  {formatSolAmount(Math.round(expectedChange), 0)} SOL
-                </span>
-              )}
-            </div>
-          ) : (
-            <span
-              className="font-semibold text-sm font-mono"
-              style={{ color: delta.color }}
-            >
-              {delta.arrow} {delta.text}
-              {delta.text !== '\u2014' && ' SOL'}
+          <div className="flex flex-col gap-0.5">
+            <span className="text-muted-foreground text-xs font-mono">
+              {formatSolAmount(validator.marinadeActivatedStakeSol, 0)} SOL
             </span>
-          )}
+            {expectedChange === 0 ? (
+              <span className="text-muted-foreground text-xs font-mono">
+                &mdash;
+              </span>
+            ) : (
+              <span
+                className="font-semibold text-sm font-mono"
+                style={{
+                  color:
+                    expectedChange > 0
+                      ? 'var(--status-green)'
+                      : 'var(--destructive)',
+                }}
+              >
+                {expectedChange > 0 ? '+' : ''}
+                {formatSolAmount(Math.round(expectedChange), 0)} SOL
+              </span>
+            )}
+          </div>
         </TableCell>
 
         {/* Next Step */}

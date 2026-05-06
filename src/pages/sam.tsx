@@ -11,7 +11,7 @@ import {
   fetchLatestSamAuctionBroadcastNotification,
 } from 'src/services/notifications'
 import {
-  buildExpectedStakeChanges,
+  augmentAuctionResult,
   fetchValidatorNames,
   loadSam,
   selectBondSize,
@@ -229,15 +229,10 @@ export const SamPage: React.FC<Props> = ({ level }) => {
       ? data?.auctionResult
       : originalAuctionResult
 
-  const stakeChanges = useMemo(() => {
-    if (!displayAuctionResult) return undefined
-    const { validators, stakeAmounts } = displayAuctionResult.auctionData
-    return buildExpectedStakeChanges(validators, stakeAmounts.marinadeSamTvlSol)
-  }, [displayAuctionResult])
-
   const sheetValidatorData = useMemo(() => {
     if (!selectedValidator || !displayAuctionResult) return null
-    const validators = displayAuctionResult.auctionData.validators
+    const augmented = augmentAuctionResult(displayAuctionResult)
+    const validators = augmented
       .filter(v => selectBondSize(v) > 0)
       .sort(
         (a, b) =>
@@ -280,7 +275,6 @@ export const SamPage: React.FC<Props> = ({ level }) => {
           isCalculating={isCalculating}
           pendingEdits={pendingEdits}
           validatorMeta={nameMap}
-          stakeChanges={stakeChanges}
           onValidatorClick={handleValidatorClick}
           onFieldChange={handleFieldChange}
           onRunSimulation={handleRunSimulation}
@@ -300,7 +294,6 @@ export const SamPage: React.FC<Props> = ({ level }) => {
             dsSamConfig={data.dcSamConfig}
             epochsPerYear={data.epochsPerYear}
             nameMap={nameMap}
-            stakeChanges={stakeChanges}
             rank={sheetValidatorData.rank}
             totalValidators={sheetValidatorData.totalValidators}
             isSimulated={simulatedValidators.has(selectedValidator ?? '')}

@@ -329,57 +329,125 @@ export const selectTargetProtectedPct = (
 
 export { selectMaxWantedStake }
 
-export const EPOCH_REBALANCE_RATE = 0.007 // ~0.7% of TVL moves per epoch
+// Budget = TVL − Σactive: the already-liquid pool reserve that can be
+// redelegated in the next epoch without waiting for any unstake cooldown.
+export function selectRedelegationBudget(auctionResult: AuctionResult): number {
+  const validators = auctionResult.auctionData.validators
+  const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
+  const active = validators.reduce((s, v) => s + v.marinadeActivatedStakeSol, 0)
+  return Math.max(0, tvl - active)
+}
 
-/**
- * Expected stake change for each validator next epoch.
- * Sorts by totalPmpe descending (highest bidder priority), greedily allocates
- * inflows up to budget = 0.7% * TVL, distributes outflows proportionally
- * among validators over their target.
- */
-export function buildExpectedStakeChanges(
+// ~0.7% of TVL is withdrawn from the pool each epoch by redeemers.
+const WITHDRAWAL_FRACTION_PER_EPOCH = 0.007
+
+// Natural withdrawals are drawn pro-rata from over-target validators first;
+// falls back to pro-rata by active stake if nobody is over target.
+function computeNaturalWithdrawal(
   validators: AuctionValidator[],
-  tvlSol: number,
+  tvl: number,
 ): Map<string, number> {
-  const budget = tvlSol * EPOCH_REBALANCE_RATE
+  const out = new Map<string, number>()
+  const withdrawal = WITHDRAWAL_FRACTION_PER_EPOCH * tvl
+  if (withdrawal <= 0) return out
+  const excess = validators.map(v => ({
+    va: v.voteAccount,
+    x: Math.max(
+      0,
+      v.marinadeActivatedStakeSol - v.auctionStake.marinadeSamTargetSol,
+    ),
+  }))
+  const totalExcess = excess.reduce((s, e) => s + e.x, 0)
+  let remaining = withdrawal
+  if (totalExcess > 0) {
+    for (const { va, x } of excess) {
+      if (x <= 0) continue
+      const share = Math.min(x, (withdrawal * x) / totalExcess)
+      if (share > 0) {
+        out.set(va, share)
+        remaining -= share
+      }
+    }
+    if (remaining <= 1e-9) return out
+  }
+  const totalActive = validators.reduce(
+    (s, v) => s + v.marinadeActivatedStakeSol,
+    0,
+  )
+  if (totalActive <= 0) return out
+  for (const v of validators) {
+    const add = (remaining * v.marinadeActivatedStakeSol) / totalActive
+    if (add > 0) out.set(v.voteAccount, (out.get(v.voteAccount) ?? 0) + add)
+  }
+  return out
+}
 
+function computeExpectedStakeChanges(
+  auctionResult: AuctionResult,
+): Map<string, number> {
+  const validators = auctionResult.auctionData.validators
+  const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
+  const budget = selectRedelegationBudget(auctionResult)
   const rawDelta = (v: AuctionValidator) =>
     v.auctionStake.marinadeSamTargetSol - v.marinadeActivatedStakeSol
-
-  const sorted = [...validators].sort(
-    (a, b) => (b.revShare.totalPmpe ?? 0) - (a.revShare.totalPmpe ?? 0),
-  )
-
   const result = new Map<string, number>()
-  let remaining = budget
-  for (const v of sorted) {
-    const delta = rawDelta(v)
-    if (delta > 0 && remaining > 0) {
-      const alloc = Math.min(delta, remaining)
-      result.set(v.voteAccount, alloc)
-      remaining -= alloc
+
+  if (budget > 0) {
+    const sorted = [...validators].sort(
+      (a, b) => (b.revShare.totalPmpe ?? 0) - (a.revShare.totalPmpe ?? 0),
+    )
+    let remaining = budget
+    for (const v of sorted) {
+      const delta = rawDelta(v)
+      if (delta > 0 && remaining > 0) {
+        const alloc = Math.min(delta, remaining)
+        result.set(v.voteAccount, alloc)
+        remaining -= alloc
+      }
     }
   }
 
-  const totalInflows = [...result.values()].reduce((s, x) => s + x, 0)
-  if (totalInflows === 0) return result
+  const withdrawals = computeNaturalWithdrawal(validators, tvl)
+  for (const [va, w] of withdrawals) {
+    result.set(va, (result.get(va) ?? 0) - w)
+  }
 
-  const losers = validators.filter(v => rawDelta(v) < 0)
-  const totalExcess = losers.reduce((s, v) => s + Math.abs(rawDelta(v)), 0)
-  if (totalExcess > 0) {
-    for (const v of losers) {
-      const share = Math.abs(rawDelta(v)) / totalExcess
-      result.set(v.voteAccount, -totalInflows * share)
+  for (const v of validators) {
+    const paid = v.values?.paidUndelegationSol ?? 0
+    if (paid <= 0) continue
+    // Paid undelegation can only remove stake above the auction target
+    const overTarget = Math.max(
+      0,
+      v.marinadeActivatedStakeSol - v.auctionStake.marinadeSamTargetSol,
+    )
+    const effectivePaid = Math.min(paid, overTarget)
+    if (effectivePaid > 0) {
+      result.set(
+        v.voteAccount,
+        (result.get(v.voteAccount) ?? 0) - effectivePaid,
+      )
     }
   }
 
   return result
 }
 
+export function augmentAuctionResult(
+  auctionResult: AuctionResult,
+): AugmentedAuctionValidator[] {
+  const changes = computeExpectedStakeChanges(auctionResult)
+  return auctionResult.auctionData.validators.map(v => ({
+    ...v,
+    values: {
+      ...v.values,
+      expectedStakeChangeSol: changes.get(v.voteAccount) ?? 0,
+    } as AugmentedAuctionValidator['values'],
+  }))
+}
+
 export const selectExpectedStakeChange = (
-  voteAccount: string,
-  stakeChanges: Map<string, number>,
-): number => stakeChanges.get(voteAccount) ?? 0
+  v: AugmentedAuctionValidator,
+): number => v.values.expectedStakeChangeSol ?? 0
 
 export const formattedInBondBlockRewardsCommission = (
   validator: AuctionValidator,

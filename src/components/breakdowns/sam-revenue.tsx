@@ -4,11 +4,10 @@ import { HelpTip } from 'src/components/help-tip/help-tip'
 import { pay, pmpe, stake } from 'src/format'
 import { computeSamRevenueMetrics } from 'src/services/breakdowns'
 
-import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
+import type { AugmentedAuctionValidator } from 'src/services/sam'
 
 type Props = {
-  validator: AuctionValidator
-  stakeChanges: Map<string, number>
+  validator: AugmentedAuctionValidator
   isSimulated?: boolean
 }
 
@@ -59,10 +58,9 @@ const Row: React.FC<{
 
 export const SamRevenueBreakdown: React.FC<Props> = ({
   validator,
-  stakeChanges,
   isSimulated,
 }) => {
-  const m = computeSamRevenueMetrics(validator, stakeChanges)
+  const m = computeSamRevenueMetrics(validator)
   const deltaAccent = m.delta > 0 ? 'green' : m.delta < 0 ? 'red' : undefined
   const deltaText =
     m.delta === 0 ? '—' : `${m.delta > 0 ? '+' : ''}${stake(m.delta)}`

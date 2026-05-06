@@ -25,19 +25,15 @@ import {
   calculateBondUtilization,
 } from 'src/services/tip-engine'
 
-import type {
-  AuctionResult,
-  AuctionValidator,
-  DsSamConfig,
-} from '@marinade.finance/ds-sam-sdk'
+import type { AuctionResult, DsSamConfig } from '@marinade.finance/ds-sam-sdk'
+import type { AugmentedAuctionValidator } from 'src/services/sam'
 
 interface ValidatorDetailProps {
-  validator: AuctionValidator
+  validator: AugmentedAuctionValidator
   auctionResult: AuctionResult
   dsSamConfig: DsSamConfig
   epochsPerYear: number
   nameMap?: Map<string, { name?: string }>
-  stakeChanges: Map<string, number>
   rank: number
   totalValidators: number
   isSimulated?: boolean
@@ -60,7 +56,6 @@ export const ValidatorDetail = ({
   dsSamConfig,
   epochsPerYear,
   nameMap,
-  stakeChanges,
   rank,
   totalValidators,
   isSimulated = false,
@@ -83,10 +78,7 @@ export const ValidatorDetail = ({
   )
   const tip = getValidatorTip(validator, winningApy, epochsPerYear)
   const tipStyle = getTipStyle(tip.urgency)
-  const expectedStakeDelta = selectExpectedStakeChange(
-    voteAccount,
-    stakeChanges,
-  )
+  const expectedStakeDelta = selectExpectedStakeChange(validator)
   const bidPenalty = useMemo(
     () => computeBidPenaltyMetrics(validator, dsSamConfig, winningTotalPmpe),
     [validator, dsSamConfig, winningTotalPmpe],
@@ -184,7 +176,7 @@ export const ValidatorDetail = ({
 
     const samActive = validator.marinadeActivatedStakeSol
     const samTarget = validator.auctionStake.marinadeSamTargetSol
-    const expectedDelta = selectExpectedStakeChange(voteAccount, stakeChanges)
+    const expectedDelta = selectExpectedStakeChange(validator)
     const deltaText =
       expectedDelta > 0
         ? `+${formatSolAmount(expectedDelta, 0)} SOL next epoch`
@@ -218,7 +210,6 @@ export const ValidatorDetail = ({
   }, [
     validator,
     voteAccount,
-    stakeChanges,
     currentMaxApy,
     winningApy,
     bondUtilPct,
@@ -382,7 +373,6 @@ export const ValidatorDetail = ({
           <div className="p-4 sm:p-6">
             <SamRevenueBreakdown
               validator={validator}
-              stakeChanges={stakeChanges}
               isSimulated={isSimulated}
             />
           </div>

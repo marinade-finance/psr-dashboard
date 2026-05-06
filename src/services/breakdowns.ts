@@ -20,6 +20,7 @@ import type {
   AuctionValidator,
   DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
+import type { AugmentedAuctionValidator } from 'src/services/sam'
 
 // SDK calculations.js:117-118 (calcBidTooLowPenalty) — ideally exported from SDK.
 const TOL_COEF = 0.99999
@@ -46,11 +47,10 @@ export type SamRevenueMetrics = {
 }
 
 export function computeSamRevenueMetrics(
-  v: AuctionValidator,
-  stakeChanges: Map<string, number>,
+  v: AugmentedAuctionValidator,
 ): SamRevenueMetrics {
   const stake = v.marinadeActivatedStakeSol
-  const delta = selectExpectedStakeChange(v.voteAccount, stakeChanges)
+  const delta = selectExpectedStakeChange(v)
   const activating = Math.max(0, delta)
   const bid = selectBid(v)
   const cost = selectEffectiveCost(v)
