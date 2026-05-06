@@ -8,10 +8,7 @@ import { Button } from 'src/components/ui/button'
 import { Input } from 'src/components/ui/input'
 import { Sheet, SheetContent } from 'src/components/ui/sheet'
 import { formatPercentage, formatSolAmount } from 'src/format'
-import {
-  bondHealthFromAuction,
-  computeBidPenaltyMetrics,
-} from 'src/services/breakdowns'
+import { bondHealthFromAuction } from 'src/services/breakdowns'
 import { HELP_TEXT } from 'src/services/help-text'
 import {
   selectExpectedStakeChange,
@@ -79,12 +76,6 @@ export const ValidatorDetail = ({
   const tip = getValidatorTip(validator, winningApy, epochsPerYear)
   const tipStyle = getTipStyle(tip.urgency)
   const expectedStakeDelta = selectExpectedStakeChange(validator)
-  const bidPenalty = useMemo(
-    () => computeBidPenaltyMetrics(validator, dsSamConfig, winningTotalPmpe),
-    [validator, dsSamConfig, winningTotalPmpe],
-  )
-  const showPenaltyTab =
-    bidPenalty.isNegativeBiddingChange || bidPenalty.penaltyPmpe > 0
   const [tab, setTab] = useState<Tab>('overview')
 
   const inSet = validator.auctionStake.marinadeSamTargetSol > 0
@@ -348,11 +339,9 @@ export const ValidatorDetail = ({
             {(
               [
                 ['overview', 'Overview'],
-                ['bond', 'Bond Coverage'],
-                ['revenue', 'Revenue Breakdown'],
-                ...(showPenaltyTab
-                  ? [['penalty', 'Bid Penalty'] as [Tab, string]]
-                  : []),
+                ['revenue', 'Payments'],
+                ['bond', 'Bond'],
+                ['penalty', 'Bid Penalty'],
               ] satisfies [Tab, string][]
             ).map(([id, label]) => (
               <button
@@ -391,7 +380,7 @@ export const ValidatorDetail = ({
           </div>
         )}
 
-        {tab === 'penalty' && showPenaltyTab && (
+        {tab === 'penalty' && (
           <div className="p-4 sm:p-6">
             <BidPenaltyBreakdown
               validator={validator}
