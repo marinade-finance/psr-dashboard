@@ -143,7 +143,7 @@ export const getValidatorTip = (
 
   if (delta > 0) {
     return {
-      text: `Approx. ${delta.toLocaleString()} SOL arriving next epoch.`,
+      text: `Approx. ${Math.round(delta).toLocaleString()} SOL arriving next epoch.`,
       urgency: 'positive',
       constraint: 'none',
     }
@@ -158,7 +158,7 @@ export const getValidatorTip = (
   }
 
   return {
-    text: `Losing ${Math.abs(delta).toLocaleString()} SOL next epoch.`,
+    text: `Losing ${Math.round(Math.abs(delta)).toLocaleString()} SOL next epoch.`,
     urgency: 'warning',
     constraint: 'none',
   }
