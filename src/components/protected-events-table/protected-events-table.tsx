@@ -94,8 +94,12 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
   )
 
   const [validatorFilter, setValidatorFilter] = useState('')
-  const [minEpochFilter, setMinEpochFilter] = useState(minEpoch)
-  const [maxEpochFilter, setMaxEpochFilter] = useState(maxEpoch)
+  const [minEpochFilter, setMinEpochFilter] = useState<number | undefined>(
+    undefined,
+  )
+  const [maxEpochFilter, setMaxEpochFilter] = useState<number | undefined>(
+    undefined,
+  )
 
   const preFilteredData = data.filter(({ protectedEvent, validator }) => {
     const lowerCaseValidatorFilter = validatorFilter.toLocaleLowerCase()
@@ -107,8 +111,8 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
         ?.toLocaleLowerCase()
         .includes(lowerCaseValidatorFilter)
     const matchesEpoch =
-      minEpochFilter <= protectedEvent.epoch &&
-      protectedEvent.epoch <= maxEpochFilter
+      (minEpochFilter ?? minEpoch) <= protectedEvent.epoch &&
+      protectedEvent.epoch <= (maxEpochFilter ?? maxEpoch)
     return matchesEpoch && matchesValidator
   })
   const filteredData = preFilteredData.filter(
@@ -212,13 +216,13 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
           <input
             className={styles.epochFilter}
             type="number"
-            value={minEpochFilter}
+            value={minEpochFilter ?? minEpoch}
             onChange={e => setMinEpochFilter(Number(e.target.value))}
           />
           <input
             className={styles.epochFilter}
             type="number"
-            value={maxEpochFilter}
+            value={maxEpochFilter ?? maxEpoch}
             onChange={e => setMaxEpochFilter(Number(e.target.value))}
           />
         </fieldset>
