@@ -1,4 +1,6 @@
-import { bondHealthFromAuction } from './breakdowns'
+import { formatSolAmount } from 'src/format'
+
+import { bondHealthFromAuction, computeBondCoverageMetrics } from './breakdowns'
 import { bondUtilizationPct, compoundApy, apyBreakdown } from './calculations'
 
 import type { AugmentedAuctionValidator } from './sam'
@@ -100,6 +102,13 @@ export const getValidatorTip = (
   const delta = validator.values.expectedStakeChangeSol ?? 0
   const bondGoodForEpochs = validator.bondGoodForNEpochs ?? 0
   const health = bondHealthFromAuction(validator, dsSamConfig, winningTotalPmpe)
+  const bondCoverage = computeBondCoverageMetrics(
+    validator,
+    dsSamConfig.minBondEpochs,
+    dsSamConfig.idealBondEpochs,
+    winningTotalPmpe,
+    dsSamConfig.bondRiskFeeMult,
+  )
 
   if (!inSet) {
     return {
@@ -110,9 +119,12 @@ export const getValidatorTip = (
   }
 
   if (health === 'critical') {
+    const topUp = bondCoverage.topUpToMin
+    const topUpStr =
+      topUp > 0 ? ` Top up ${formatSolAmount(topUp, 0)} SOL.` : ''
     if (bondGoodForEpochs <= 0) {
       return {
-        text: 'Bond depleted — top up now.',
+        text: `Bond depleted — top up now.${topUpStr}`,
         urgency: 'critical',
         constraint: 'bond',
       }
@@ -120,21 +132,24 @@ export const getValidatorTip = (
     if (bondGoodForEpochs <= 5) {
       const epochs = Math.round(bondGoodForEpochs)
       return {
-        text: `Bond depletes in ${epochs} epoch${epochs === 1 ? '' : 's'} — top up.`,
+        text: `Bond depletes in ${epochs} epoch${epochs === 1 ? '' : 's'} — top up.${topUpStr}`,
         urgency: 'critical',
         constraint: 'bond',
       }
     }
     return {
-      text: 'Bond below minimum — bid penalty active.',
+      text: `Bond below minimum — bid penalty active.${topUpStr}`,
       urgency: 'critical',
       constraint: 'bond',
     }
   }
 
   if (health === 'watch') {
+    const topUp = bondCoverage.topUpToIdeal
+    const topUpStr =
+      topUp > 0 ? ` Top up ${formatSolAmount(topUp, 0)} SOL.` : ''
     return {
-      text: `Bond runway ${Math.round(bondGoodForEpochs)} epochs — top up soon.`,
+      text: `Bond runway ${Math.round(bondGoodForEpochs)} epochs — top up soon.${topUpStr}`,
       urgency: 'warning',
       constraint: 'bond',
     }
@@ -142,7 +157,7 @@ export const getValidatorTip = (
 
   if (delta > 0) {
     return {
-      text: `Approx. ${Math.round(delta).toLocaleString()} SOL arriving next epoch.`,
+      text: `${Math.round(delta).toLocaleString()} SOL arriving next epoch.`,
       urgency: 'positive',
       constraint: 'none',
     }

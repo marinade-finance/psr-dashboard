@@ -18,6 +18,8 @@ import {
 import {
   bondHealthFromAuction,
   computeBondCoverageMetrics,
+  computeSamRevenueMetrics,
+  computeBidPenaltyMetrics,
 } from 'src/services/breakdowns'
 import { HELP_TEXT } from 'src/services/help-text'
 import {
@@ -109,6 +111,14 @@ export const ValidatorDetail = ({
     [validator, dsSamConfig, winningTotalPmpe],
   )
   const currentMaxApy = apyBreakdown.total
+  const paymentMetrics = useMemo(
+    () => computeSamRevenueMetrics(validator),
+    [validator],
+  )
+  const penaltyMetrics = useMemo(
+    () => computeBidPenaltyMetrics(validator, dsSamConfig, winningTotalPmpe),
+    [validator, dsSamConfig, winningTotalPmpe],
+  )
 
   const [editBid, setEditBid] = useState(validator.revShare.bidPmpe.toString())
   const [editInflation, setEditInflation] = useState(
@@ -662,6 +672,53 @@ export const ValidatorDetail = ({
             </div>
 
             <div className="bg-card rounded-xl border border-border p-5">
+              <h3 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
+                Payment This Epoch
+                <HelpTip text="SOL paid to Marinade this epoch: bid cost on active stake, cost on activating stake, and any bid-too-low penalty." />
+              </h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    Bid (active stake)
+                  </span>
+                  <span className="text-sm font-semibold font-mono">
+                    {formatSolAmount(paymentMetrics.cost, 2)} SOL
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    Activating stake
+                  </span>
+                  <span className="text-sm font-semibold font-mono">
+                    {formatSolAmount(paymentMetrics.activatingCost, 2)} SOL
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Penalty</span>
+                  <span
+                    className="text-sm font-semibold font-mono"
+                    style={{
+                      color:
+                        penaltyMetrics.penaltySol > 0
+                          ? CSS_DESTRUCTIVE
+                          : undefined,
+                    }}
+                  >
+                    {penaltyMetrics.penaltySol > 0
+                      ? `${formatSolAmount(penaltyMetrics.penaltySol, 2)} SOL`
+                      : '—'}
+                  </span>
+                </div>
+                <button
+                  className="text-xs text-primary hover:underline"
+                  onClick={() => setTab('revenue')}
+                >
+                  See full payments breakdown →
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-card rounded-xl border border-border p-5">
               <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
                 Stake Overview
               </h3>
@@ -700,9 +757,11 @@ export const ValidatorDetail = ({
                             : 'var(--muted-foreground)',
                     }}
                   >
-                    {expectedStakeDelta === 0
-                      ? '—'
-                      : `${expectedStakeDelta > 0 ? '+' : ''}${formatSolAmount(expectedStakeDelta, 0)} SOL`}
+                    {expectedStakeDelta > 0
+                      ? `+${formatSolAmount(expectedStakeDelta, 0)} SOL`
+                      : expectedStakeDelta < 0
+                        ? `${formatSolAmount(expectedStakeDelta, 0)} SOL`
+                        : '0 SOL'}
                   </span>
                 </div>
               </div>
