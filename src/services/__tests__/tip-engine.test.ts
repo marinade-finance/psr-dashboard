@@ -231,131 +231,64 @@ describe('formatStakeDelta', () => {
 // --- getValidatorTip — all priority branches ---
 
 describe('getValidatorTip', () => {
-  it('not in set → critical/rank', () => {
+  it('not in set → warning/rank', () => {
     const v = makeValidator({ auctionStake: { marinadeSamTargetSol: 0 } })
-    const tip = getValidatorTip(v, 0.15, EPOCHS_PER_YEAR, DS_SAM_CONFIG, 100)
-    expect(tip.urgency).toBe('critical')
+    const tip = getValidatorTip(v, DS_SAM_CONFIG, 100)
+    expect(tip.urgency).toBe('warning')
     expect(tip.constraint).toBe('rank')
-    expect(tip.text).toContain('Outside winning set')
+    expect(tip.text).toContain('Out of auction')
   })
 
-  it('critical health + epochs <= 5 → critical/bond with epoch count and days (48h)', () => {
+  it('critical health + epochs <= 5 → critical/bond with epoch count', () => {
     const v = makeValidator({
       bondGoodForNEpochs: 4,
       bondBalanceSol: 0.001,
       claimableBondBalanceSol: 0,
       marinadeActivatedStakeSol: 100000,
     })
-    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR, DS_SAM_CONFIG, 100)
+    const tip = getValidatorTip(v, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
     expect(tip.text).toContain('Bond depletes')
-    // 4 epochs × 48h / 24h = 8 days
-    expect(tip.text).toContain('8d')
+    expect(tip.text).toContain('4 epochs')
   })
 
-  it('critical health (epochs > 5) → critical/bond minimum coverage message', () => {
+  it('critical health (epochs > 5) → critical/bond penalty message', () => {
     const v = makeValidator({
       bondGoodForNEpochs: 8,
       bondBalanceSol: 0.001,
       claimableBondBalanceSol: 0,
       marinadeActivatedStakeSol: 100000,
     })
-    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR, DS_SAM_CONFIG, 100)
+    const tip = getValidatorTip(v, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
-    expect(tip.text).toContain('minimum coverage')
+    expect(tip.text).toContain('penalty')
   })
 
-  it('watch + bidPmpe < 15 → warning/bid', () => {
-    const v = makeValidator({
-      bondBalanceSol: 50,
-      claimableBondBalanceSol: 50,
-      marinadeActivatedStakeSol: 10000,
-      revShare: {
-        inflationPmpe: 5,
-        mevPmpe: 2,
-        blockPmpe: 1,
-        bidPmpe: 10,
-        totalPmpe: 18,
-        bondObligationPmpe: 10,
-        auctionEffectiveBidPmpe: 10,
-        effParticipatingBidPmpe: 10,
-      },
-    })
-    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR, DS_SAM_CONFIG, 100)
-    expect(tip.urgency).toBe('warning')
-    expect(tip.constraint).toBe('bid')
-    expect(tip.text).toContain('below median')
-  })
-
-  it('watch + bidPmpe >= 15 → warning/bond runway', () => {
+  it('watch → warning/bond runway', () => {
     const v = makeValidator({
       bondBalanceSol: 50,
       claimableBondBalanceSol: 50,
       marinadeActivatedStakeSol: 10000,
     })
-    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR, DS_SAM_CONFIG, 100)
+    const tip = getValidatorTip(v, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('warning')
     expect(tip.constraint).toBe('bond')
     expect(tip.text).toContain('runway')
   })
 
-  it('healthy + low bid (< 10 pmpe) + large delta (> 50k) → info/bid', () => {
-    const v = makeValidator({
-      bondBalanceSol: 300,
-      claimableBondBalanceSol: 300,
-      auctionStake: { marinadeSamTargetSol: 100000 },
-      marinadeActivatedStakeSol: 40000,
-      revShare: {
-        inflationPmpe: 5,
-        mevPmpe: 2,
-        blockPmpe: 1,
-        bidPmpe: 5,
-        totalPmpe: 13,
-        bondObligationPmpe: 10,
-        auctionEffectiveBidPmpe: 5,
-        effParticipatingBidPmpe: 5,
-      },
-    })
-    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR, DS_SAM_CONFIG, 100)
-    expect(tip.urgency).toBe('info')
-    expect(tip.constraint).toBe('bid')
-  })
-
-  it('healthy + delta > 100k → positive/none large gain', () => {
+  it('healthy + gaining stake → positive with SOL count', () => {
     const v = makeValidator({
       bondBalanceSol: 400,
       claimableBondBalanceSol: 400,
       auctionStake: { marinadeSamTargetSol: 200000 },
       marinadeActivatedStakeSol: 50000,
     })
-    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR, DS_SAM_CONFIG, 100)
+    const tip = getValidatorTip(v, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('positive')
     expect(tip.constraint).toBe('none')
-    expect(tip.text).toContain('Gaining')
-  })
-
-  it('healthy + small gain (0 < delta <= 100k) with strong runway (> 20 epochs) → positive, "Strong runway"', () => {
-    const v = makeValidator({
-      bondGoodForNEpochs: 25,
-      auctionStake: { marinadeSamTargetSol: 15000 },
-      marinadeActivatedStakeSol: 10000,
-    })
-    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR, DS_SAM_CONFIG, 100)
-    expect(tip.urgency).toBe('positive')
-    expect(tip.text).toContain('Strong runway')
-  })
-
-  it('healthy + small gain with weak runway (<= 20 epochs) → positive, "Monitor bond"', () => {
-    const v = makeValidator({
-      bondGoodForNEpochs: 15,
-      auctionStake: { marinadeSamTargetSol: 15000 },
-      marinadeActivatedStakeSol: 10000,
-    })
-    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR, DS_SAM_CONFIG, 100)
-    expect(tip.urgency).toBe('positive')
-    expect(tip.text).toContain('Monitor bond')
+    expect(tip.text).toContain('arriving next epoch')
   })
 
   it('delta === 0 → neutral/none at-target message', () => {
@@ -363,39 +296,20 @@ describe('getValidatorTip', () => {
       auctionStake: { marinadeSamTargetSol: 10000 },
       marinadeActivatedStakeSol: 10000,
     })
-    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR, DS_SAM_CONFIG, 100)
+    const tip = getValidatorTip(v, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('neutral')
     expect(tip.constraint).toBe('none')
     expect(tip.text).toContain('At target')
   })
 
-  it('delta < 0 → critical/bid losing stake message', () => {
+  it('delta < 0 → warning, losing stake message', () => {
     const v = makeValidator({
       auctionStake: { marinadeSamTargetSol: 5000 },
       marinadeActivatedStakeSol: 10000,
     })
-    const tip = getValidatorTip(v, 0.1, EPOCHS_PER_YEAR, DS_SAM_CONFIG, 100)
-    expect(tip.urgency).toBe('critical')
-    expect(tip.constraint).toBe('bid')
+    const tip = getValidatorTip(v, DS_SAM_CONFIG, 100)
+    expect(tip.urgency).toBe('warning')
+    expect(tip.constraint).toBe('none')
     expect(tip.text).toContain('Losing')
-  })
-
-  it('gap text in not-in-set uses winningApy - maxApy', () => {
-    // totalPmpe = 0 → maxApy ≈ 0, winningApy = 0.15 → gap ≈ "0.15"
-    const v = makeValidator({
-      auctionStake: { marinadeSamTargetSol: 0 },
-      revShare: {
-        inflationPmpe: 0,
-        mevPmpe: 0,
-        blockPmpe: 0,
-        bidPmpe: 0,
-        totalPmpe: 0,
-        bondObligationPmpe: 0,
-        auctionEffectiveBidPmpe: 0,
-        effParticipatingBidPmpe: 0,
-      },
-    })
-    const tip = getValidatorTip(v, 0.15, EPOCHS_PER_YEAR, DS_SAM_CONFIG, 100)
-    expect(tip.text).toContain('0.15')
   })
 })

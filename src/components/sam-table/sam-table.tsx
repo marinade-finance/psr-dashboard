@@ -527,13 +527,7 @@ export const SamTable: React.FC<Props> = ({
     const expectedChange = selectExpectedStakeChange(validator)
 
     // Tip
-    const tip = getValidatorTip(
-      validator,
-      winningAPY,
-      epochsPerYear,
-      dsSamConfig,
-      winningTotalPmpe,
-    )
+    const tip = getValidatorTip(validator, dsSamConfig, winningTotalPmpe)
     const tipStyle = getTipStyle(tip.urgency)
 
     // Max APY

@@ -92,8 +92,6 @@ export const getTipStyle = (urgency: TipUrgency): TipStyle => {
 
 export const getValidatorTip = (
   validator: AuctionValidator,
-  winningApy: number,
-  epochsPerYear: number,
   dsSamConfig: DsSamConfig,
   winningTotalPmpe: number,
 ): ValidatorTip => {
@@ -103,14 +101,11 @@ export const getValidatorTip = (
   const delta = samTarget - samActive
   const bondGoodForEpochs = validator.bondGoodForNEpochs ?? 0
   const health = bondHealthFromAuction(validator, dsSamConfig, winningTotalPmpe)
-  const maxApy = calculateMaxApy(validator, epochsPerYear)
-  const bidPmpe = validator.revShare.bidPmpe
 
   if (!inSet) {
-    const gap = (winningApy - maxApy).toFixed(2)
     return {
-      text: `Not in winning set — raise bid by ~${gap}% or lower commission.`,
-      urgency: 'critical',
+      text: 'Out of auction — raise bid or cut commission.',
+      urgency: 'warning',
       constraint: 'rank',
     }
   }
@@ -124,57 +119,31 @@ export const getValidatorTip = (
       }
     }
     if (bondGoodForEpochs <= 5) {
-      const epochsRounded = Math.round(bondGoodForEpochs)
+      const epochs = Math.round(bondGoodForEpochs)
       return {
-        text: `Bond depletes in ${epochsRounded} epoch${epochsRounded === 1 ? '' : 's'} — top up.`,
+        text: `Bond depletes in ${epochs} epoch${epochs === 1 ? '' : 's'} — top up.`,
         urgency: 'critical',
         constraint: 'bond',
       }
     }
     return {
-      text: 'Bond below minimum coverage — top up.',
+      text: 'Bond below minimum — bid penalty active.',
       urgency: 'critical',
       constraint: 'bond',
     }
   }
 
-  if (health === 'watch' && bidPmpe < 15) {
-    return {
-      text: `Bid ${(bidPmpe / 10).toFixed(2)}% is below median — raise to 0.15–0.25%.`,
-      urgency: 'warning',
-      constraint: 'bid',
-    }
-  }
-
   if (health === 'watch') {
     return {
-      text: `Bond runway ${Math.round(bondGoodForEpochs)} epochs — consider topping up.`,
+      text: `Bond runway ${Math.round(bondGoodForEpochs)} epochs — top up soon.`,
       urgency: 'warning',
       constraint: 'bond',
     }
   }
 
-  if (bidPmpe < 10 && delta > 50000) {
-    return {
-      text: `Bid under 10 PMPE — raising could add ~${(delta / 1000).toFixed(0)}K SOL stake.`,
-      urgency: 'info',
-      constraint: 'bid',
-    }
-  }
-
-  if (delta > 100000) {
-    return {
-      text: `+${(delta / 1000).toFixed(0)}K SOL incoming next epoch.`,
-      urgency: 'positive',
-      constraint: 'none',
-    }
-  }
-
   if (delta > 0) {
-    const runwayNote =
-      bondGoodForEpochs > 20 ? 'Strong runway.' : 'Monitor bond.'
     return {
-      text: `+${delta.toLocaleString()} SOL incoming. ${runwayNote}`,
+      text: `Approx. ${delta.toLocaleString()} SOL arriving next epoch.`,
       urgency: 'positive',
       constraint: 'none',
     }
@@ -182,16 +151,16 @@ export const getValidatorTip = (
 
   if (delta === 0) {
     return {
-      text: 'At target — raise bid to grow or reduce WANT to free bond.',
+      text: 'At target stake.',
       urgency: 'neutral',
       constraint: 'none',
     }
   }
 
   return {
-    text: `Losing ${Math.abs(delta).toLocaleString()} SOL — raise bid or check commission.`,
-    urgency: 'critical',
-    constraint: 'bid',
+    text: `Losing ${Math.abs(delta).toLocaleString()} SOL next epoch.`,
+    urgency: 'warning',
+    constraint: 'none',
   }
 }
 
