@@ -111,7 +111,7 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
           <SectionHeader title="Bid" />
           <Row label="Stake bid PMPE" pmpe={pmpe(m.bid)} value="" />
           <Row
-            label="Effective (auction) bid PMPE"
+            label="Auction effective bid PMPE"
             pmpe={pmpe(m.effBid)}
             value=""
             bold

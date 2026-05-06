@@ -1,7 +1,7 @@
 import React from 'react'
 
 import { HelpTip } from 'src/components/help-tip/help-tip'
-import { formatPercentage, pmpe, stake } from 'src/format'
+import { formatPercentage, pay, pmpe, stake } from 'src/format'
 import { computeBidPenaltyMetrics } from 'src/services/breakdowns'
 
 import type {
@@ -19,7 +19,7 @@ type Props = {
 const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
   <tr>
     <td
-      colSpan={2}
+      colSpan={3}
       className="pt-4 pb-1 text-xs uppercase tracking-wider text-muted-foreground border-b border-dashed border-border"
     >
       {title}
@@ -29,20 +29,38 @@ const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
 
 const Row: React.FC<{
   label: string
+  secondary?: string
   value: string
   bold?: boolean
+  large?: boolean
   accent?: 'red'
-}> = ({ label, value, bold, accent }) => (
+}> = ({ label, secondary, value, bold, large, accent }) => (
   <tr className="border-b border-border-grid/50 last:border-0">
-    <td className={`py-1.5 pr-2 text-xs ${bold ? 'font-semibold' : ''}`}>
+    <td
+      className={`py-1.5 pr-2 text-xs ${bold ? 'font-semibold' : ''} ${large ? 'text-[13px]' : ''}`}
+    >
       {label}
     </td>
+    <td className="py-1.5 px-2 text-right font-mono text-xs text-muted-foreground">
+      {secondary ?? ''}
+    </td>
     <td
-      className={`py-1.5 pl-2 text-right font-mono text-xs ${
+      className={`py-1.5 pl-2 text-right font-mono ${large ? 'text-sm' : 'text-xs'} ${
         bold ? 'font-semibold' : ''
       } ${accent === 'red' ? 'text-destructive' : ''}`}
     >
       {value}
+    </td>
+  </tr>
+)
+
+const OkRow: React.FC<{ message: string }> = ({ message }) => (
+  <tr>
+    <td colSpan={2} className="py-1.5 pr-2 text-xs text-muted-foreground">
+      {message}
+    </td>
+    <td className="py-1.5 pl-2 text-right font-mono text-xs text-[var(--status-green,#2aa198)]">
+      ●
     </td>
   </tr>
 )
@@ -54,6 +72,7 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
   isSimulated,
 }) => {
   const m = computeBidPenaltyMetrics(validator, dsSamConfig, winningTotalPmpe)
+  const penaltySol = (m.penaltyPmpe / 1000) * m.marinadeActivatedStakeSol
 
   return (
     <div className="bg-card rounded-xl border border-border p-5">
@@ -86,7 +105,11 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
           <SectionHeader title="Bid history" />
           <Row label="Last epoch bid PMPE" value={pmpe(m.lastEpochBidPmpe)} />
           <Row label="This epoch bid PMPE" value={pmpe(m.thisEpochBidPmpe)} />
-          <Row label="History window" value={`${m.historyEpochs} epochs`} />
+          <Row
+            label="History window"
+            secondary={`${m.historyEpochs} epochs`}
+            value=""
+          />
           <Row
             label="Worst historical effective participating bid PMPE"
             value={pmpe(m.worstHistoricalPmpe)}
@@ -111,7 +134,8 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
           <SectionHeader title="Penalty" />
           <Row
             label="Penalty coefficient"
-            value={formatPercentage(m.penaltyCoef, 2)}
+            secondary={formatPercentage(m.penaltyCoef, 2)}
+            value=""
           />
           <Row
             label="Base (winning PMPE + effective participating bid PMPE)"
@@ -123,10 +147,18 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
             bold
             accent={m.penaltyPmpe > 0 ? 'red' : undefined}
           />
-          <Row
-            label="Active stake (for context)"
-            value={stake(m.marinadeActivatedStakeSol)}
-          />
+          {penaltySol > 0 ? (
+            <Row
+              label="Penalty this epoch"
+              secondary={stake(m.marinadeActivatedStakeSol)}
+              value={pay(penaltySol)}
+              bold
+              large
+              accent="red"
+            />
+          ) : (
+            <OkRow message="No penalty deducted this epoch." />
+          )}
         </tbody>
       </table>
     </div>

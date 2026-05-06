@@ -212,10 +212,6 @@ export const ValidatorDetail = ({
     bondRunway,
   ])
 
-  const positionPct = inSet
-    ? ((totalValidators - rank + 1) / totalValidators) * 100
-    : 0
-
   return (
     <Sheet
       open={true}
@@ -441,39 +437,17 @@ export const ValidatorDetail = ({
             </div>
 
             <div className="bg-card rounded-xl border border-border p-5">
-              <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
-                Position vs Winning APY
-                <HelpTip text={HELP_TEXT.winningApy} />
-              </h3>
-              <div className="mt-3">
-                <div className="h-3 rounded-full bg-secondary relative overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all"
-                    style={{ width: `${Math.min(positionPct, 100)}%` }}
-                  />
-                  <div
-                    className="absolute top-0 h-full w-0.5 bg-primary/60"
-                    style={{
-                      left: `${(winningApy / (winningApy * 1.5)) * 100}%`,
-                    }}
-                  />
-                </div>
-                <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>0%</span>
-                  <span className="text-primary font-medium">
-                    Winning: {formatPercentage(winningApy, 2)}
-                  </span>
-                  <span>You: {formatPercentage(currentMaxApy, 2)}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-card rounded-xl border border-border p-5">
               <div className="flex items-center justify-between mb-1">
-                <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
-                  Max APY Composition
-                  <HelpTip text={HELP_TEXT.maxApy} />
-                </h3>
+                <div>
+                  <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+                    Max APY Composition
+                    <HelpTip text={HELP_TEXT.maxApy} />
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Rank #{rank} of {totalValidators} · winning threshold{' '}
+                    {formatPercentage(winningApy, 2)}
+                  </p>
+                </div>
                 {(() => {
                   const delta = apyBreakdown.total - winningApy
                   const above = delta >= 0
