@@ -330,6 +330,19 @@ export const ValidatorDetail = ({
           </div>
         </div>
 
+        <div
+          className="px-4 sm:px-6 py-3 flex items-center gap-3"
+          style={{ background: tipStyle.bg }}
+        >
+          <span className="text-lg shrink-0">{tipStyle.icon}</span>
+          <span
+            className="text-sm font-medium"
+            style={{ color: tipStyle.color }}
+          >
+            {tip.text}
+          </span>
+        </div>
+
         <div className="border-b border-border bg-background sticky top-[96px] z-[5]">
           <div className="flex gap-1 px-4 sm:px-6 overflow-x-auto">
             {(
@@ -502,20 +515,6 @@ export const ValidatorDetail = ({
                   </tr>
                 </tbody>
               </table>
-            </div>
-
-            <div className="bg-card rounded-xl border border-border p-5">
-              <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
-                Next Step
-                <HelpTip text="Actionable recommendation based on your current position and constraints." />
-              </h3>
-              <div
-                className="p-3 rounded-lg flex items-center gap-2 text-sm mt-3"
-                style={{ background: tipStyle.bg, color: tipStyle.color }}
-              >
-                <span>{tipStyle.icon}</span>
-                <span>{tip.text}</span>
-              </div>
             </div>
           </div>
 
