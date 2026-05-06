@@ -281,14 +281,20 @@ export const ValidatorDetail = ({
                   className="text-base font-bold font-mono flex items-center gap-1"
                   style={{ color: tipStyle.color }}
                 >
-                  <span className="text-sm leading-none">{tipStyle.icon}</span>
-                  {cutoffRank >= 0 ? '+' : ''}
-                  {cutoffRank}
+                  <span className="text-sm leading-none">{tipStyle.icon}</span>#
+                  {rank}
+                  <span className="text-xs font-normal opacity-70">
+                    ({cutoffRank >= 0 ? '+' : ''}
+                    {cutoffRank})
+                  </span>
                 </span>
                 <span
                   className={`text-[10px] font-mono ${inSet ? 'text-muted-foreground' : 'text-destructive'}`}
                 >
-                  #{rank} of {totalValidators}
+                  {inSet
+                    ? `${cutoffRank === 0 ? 'at cutoff' : `${cutoffRank} above cutoff`}`
+                    : `${Math.abs(cutoffRank)} below cutoff`}{' '}
+                  · of {totalValidators}
                 </span>
               </span>
               {validatorName && (

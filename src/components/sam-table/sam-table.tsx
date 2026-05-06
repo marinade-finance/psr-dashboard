@@ -223,11 +223,15 @@ const RankCell: React.FC<{
     )
   return (
     <span
-      className={`font-medium ${RANK_MONO} flex items-center gap-0.5`}
+      className={`font-medium ${RANK_MONO} flex flex-col items-center leading-tight`}
       style={{ color: tipColor }}
     >
-      <span className="text-[10px] leading-none">{tipIcon}</span>
-      {formatCutoffRank(cutoffRank)}
+      <span className="flex items-center gap-0.5">
+        <span className="text-[10px] leading-none">{tipIcon}</span>#{rank}
+      </span>
+      <span className="text-[9px] opacity-70">
+        ({formatCutoffRank(cutoffRank)})
+      </span>
     </span>
   )
 }
