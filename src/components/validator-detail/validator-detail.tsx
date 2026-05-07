@@ -25,6 +25,7 @@ import {
   CSS_STATUS_YELLOW,
   CSS_WARNING,
   CSS_MUTED_FG,
+  docsPath,
 } from 'src/lib/utils'
 import {
   bondHealthFromAuction,
@@ -52,6 +53,7 @@ import {
 } from 'src/services/tip-engine'
 
 import type { AuctionResult, DsSamConfig } from '@marinade.finance/ds-sam-sdk'
+import type { UserLevel } from 'src/components/navigation/navigation'
 import type { BondCoverageMetrics } from 'src/services/breakdowns'
 import type { NotificationSummary } from 'src/services/notifications'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
@@ -74,6 +76,7 @@ interface ValidatorDetailProps {
   ) => void
   onClearSimulation?: () => void
   isCalculating: boolean
+  level?: UserLevel
 }
 
 type Tab =
@@ -134,6 +137,33 @@ const MetricRow = ({
   </div>
 )
 
+const PenaltyRow = ({
+  label,
+  value,
+  onSeeBreakdown,
+}: {
+  label: string
+  value: string
+  onSeeBreakdown: () => void
+}) => (
+  <div className="flex items-center justify-between gap-2">
+    <span className="text-xs text-muted-foreground flex-1">{label}</span>
+    <span
+      className="text-sm font-semibold font-mono"
+      style={{ color: CSS_DESTRUCTIVE }}
+    >
+      {value}
+    </span>
+    <button
+      className="text-xs text-destructive hover:underline shrink-0"
+      onClick={onSeeBreakdown}
+      title="See calculation"
+    >
+      →
+    </button>
+  </div>
+)
+
 export const ValidatorDetail = ({
   validator,
   auctionResult,
@@ -147,6 +177,7 @@ export const ValidatorDetail = ({
   onSimulate,
   onClearSimulation,
   isCalculating,
+  level,
 }: ValidatorDetailProps) => {
   const voteAccount = selectVoteAccount(validator)
   const validatorName = nameMap?.get(voteAccount)?.name
@@ -559,6 +590,7 @@ export const ValidatorDetail = ({
                 setSimEnabled(true)
                 setTab('overview')
               }}
+              level={level}
             />
           </div>
         )}
@@ -581,7 +613,10 @@ export const ValidatorDetail = ({
               bondRiskFeeSol > 0
             return (
               <div className="p-4 sm:p-6 space-y-6">
-                <CalcCard title="Payments Calculation" guideTo="/docs">
+                <CalcCard
+                  title="Payments Calculation"
+                  guideTo={docsPath(level)}
+                >
                   <table className="w-full">
                     <tbody>
                       <SectionHeader title="Bid costs" />
@@ -686,6 +721,7 @@ export const ValidatorDetail = ({
                 setSimEnabled(true)
                 setTab('overview')
               }}
+              level={level}
             />
           </div>
         )}
@@ -701,6 +737,7 @@ export const ValidatorDetail = ({
                 setSimEnabled(true)
                 setTab('overview')
               }}
+              level={level}
             />
           </div>
         )}
@@ -771,14 +808,6 @@ export const ValidatorDetail = ({
                       : `${Math.round(bondRunway)} epochs`
                   }
                 />
-                {bondRiskFeeSol > 0 && (
-                  <MetricRow
-                    label="Bond risk fee"
-                    help="An extra fee Marinade takes out of your bond when it slips below the minimum we want you to keep. Stop the leak by topping the bond back up."
-                    value={`${formatSolAmount(bondRiskFeeSol, 2)} SOL`}
-                    valueStyle={{ color: CSS_DESTRUCTIVE }}
-                  />
-                )}
                 <button
                   className="text-xs text-primary hover:underline"
                   onClick={() => setTab('bond')}
@@ -816,25 +845,32 @@ export const ValidatorDetail = ({
                     }}
                   />
                 )}
-                {(() => {
-                  const penaltyTotal =
-                    bidTooLowPenaltySol + blacklistPenaltySol + bondRiskFeeSol
-                  return (
-                    <MetricRow
-                      label="Penalty"
-                      value={
-                        penaltyTotal > 0
-                          ? `${formatSolAmount(penaltyTotal, 2)} SOL`
-                          : '—'
-                      }
-                      valueStyle={
-                        penaltyTotal > 0
-                          ? { color: CSS_DESTRUCTIVE }
-                          : undefined
-                      }
-                    />
-                  )
-                })()}
+                {bidTooLowPenaltySol === 0 &&
+                  blacklistPenaltySol === 0 &&
+                  bondRiskFeeSol === 0 && (
+                    <MetricRow label="Penalty" value="—" />
+                  )}
+                {bidTooLowPenaltySol > 0 && (
+                  <PenaltyRow
+                    label="Bid-too-low penalty"
+                    value={`${formatSolAmount(bidTooLowPenaltySol, 2)} SOL`}
+                    onSeeBreakdown={() => setTab('penalty')}
+                  />
+                )}
+                {blacklistPenaltySol > 0 && (
+                  <PenaltyRow
+                    label="Blacklist penalty"
+                    value={`${formatSolAmount(blacklistPenaltySol, 2)} SOL`}
+                    onSeeBreakdown={() => setTab('payments')}
+                  />
+                )}
+                {bondRiskFeeSol > 0 && (
+                  <PenaltyRow
+                    label="Bond risk fee"
+                    value={`${formatSolAmount(bondRiskFeeSol, 2)} SOL`}
+                    onSeeBreakdown={() => setTab('bond')}
+                  />
+                )}
                 <MetricRow
                   label="Total"
                   value={`${formatSolAmount(paymentMetrics.total + bidTooLowPenaltySol + blacklistPenaltySol + bondRiskFeeSol, 2)} SOL`}
