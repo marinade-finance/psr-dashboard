@@ -86,11 +86,19 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
               className="h-full rounded overflow-hidden flex"
               style={{ width: `${(apyBreakdown.total / scale) * 100}%` }}
             >
-              {rows.map(([label, val, color]) =>
-                val > 0 ? (
-                  <div key={label} style={{ flex: val, background: color }} />
-                ) : null,
-              )}
+              {apyBreakdown.total > 0 &&
+                rows.map(([label, val, color]) =>
+                  val > 0 ? (
+                    <div
+                      key={label}
+                      style={{
+                        width: `${(val / apyBreakdown.total) * 100}%`,
+                        background: color,
+                        flexShrink: 0,
+                      }}
+                    />
+                  ) : null,
+                )}
             </div>
             <div
               className="absolute top-[-3px] h-[calc(100%+6px)] w-0.5 rounded-full bg-foreground/50"
