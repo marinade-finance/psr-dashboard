@@ -15,6 +15,20 @@ export const SectionHeader: React.FC<{ title: string; colSpan?: number }> = ({
   </tr>
 )
 
+const MARKER_CLASSES: Record<'red' | 'yellow' | 'green', string> = {
+  red: 'bg-destructive',
+  yellow: 'bg-status-yellow',
+  green: 'bg-primary',
+}
+
+export const Marker: React.FC<{ tone: 'red' | 'yellow' | 'green' }> = ({
+  tone,
+}) => (
+  <span
+    className={`inline-block w-1.5 h-1.5 rounded-full mr-2 align-middle ${MARKER_CLASSES[tone]}`}
+  />
+)
+
 export const CalcRow: React.FC<{
   label: string
   secondary?: string
@@ -23,13 +37,15 @@ export const CalcRow: React.FC<{
   large?: boolean
   accent?: 'red' | 'yellow' | 'green'
   separator?: boolean
-}> = ({ label, secondary, value, bold, large, accent, separator }) => (
+  marker?: 'red' | 'yellow' | 'green'
+}> = ({ label, secondary, value, bold, large, accent, separator, marker }) => (
   <tr
     className={`border-b border-border-grid/50 last:border-b-0 ${separator ? 'border-t-2 border-t-border' : ''}`}
   >
     <td
       className={`py-1.5 pr-2 text-xs ${bold ? 'font-semibold' : ''} ${large ? 'text-[13px]' : ''} ${separator ? 'text-foreground' : ''}`}
     >
+      {marker && <Marker tone={marker} />}
       {label}
     </td>
     <td className="py-1.5 px-2 text-right font-mono text-xs text-muted-foreground">

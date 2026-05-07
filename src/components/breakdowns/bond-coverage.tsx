@@ -166,6 +166,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
               large
               accent="yellow"
               separator
+              marker="yellow"
             />
           ) : (
             <OkRow message="Bond covers your current stake." />
@@ -199,6 +200,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
               large
               accent="yellow"
               separator
+              marker="yellow"
             />
           ) : (
             <OkRow message="Bond covers ideal — eligible for more stake." />
@@ -232,6 +234,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
                   large
                   accent="red"
                   separator
+                  marker="red"
                 />
               )}
               {bondRiskFeeSol > 0 && (
@@ -239,6 +242,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
                   label="Bond risk fee charged this epoch"
                   value={pay(bondRiskFeeSol)}
                   bold
+                  marker="red"
                 />
               )}
               {m.topUpToAvoidFee === 0 && bondRiskFeeSol === 0 && (
