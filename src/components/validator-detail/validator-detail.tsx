@@ -705,18 +705,12 @@ export const ValidatorDetail = ({
                 <MetricRow
                   label="Active Stake Cost"
                   value={`${formatSolAmount(paymentMetrics.cost, 2)} SOL`}
-                />
-                <MetricRow
-                  label="↳ auction effective bid"
-                  value={`${pmpe(paymentMetrics.effBid)} PMPE`}
-                  valueStyle={{
-                    color: CSS_MUTED_FG,
-                    fontSize: '11px',
-                  }}
+                  onSeeBreakdown={() => setTab('payments')}
                 />
                 <MetricRow
                   label="Activating Stake Cost"
                   value={`${formatSolAmount(paymentMetrics.activatingCost, 2)} SOL`}
+                  onSeeBreakdown={() => setTab('payments')}
                 />
                 {paymentMetrics.activating > 0 && (
                   <MetricRow
