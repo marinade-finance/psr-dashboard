@@ -111,14 +111,18 @@ const MetricRow = ({
   value,
   valueStyle,
   onSeeBreakdown,
+  separator,
 }: {
   label: string
   help?: string
   value: React.ReactNode
   valueStyle?: React.CSSProperties
   onSeeBreakdown?: () => void
+  separator?: boolean
 }) => (
-  <div className="flex items-center justify-between">
+  <div
+    className={`flex items-center justify-between ${separator ? 'border-t border-border-grid pt-2 mt-1' : ''}`}
+  >
     <span className="text-xs text-muted-foreground flex items-center gap-1">
       {onSeeBreakdown ? (
         <button
@@ -768,6 +772,7 @@ export const ValidatorDetail = ({
                 <MetricRow
                   label="Total"
                   value={`${formatSolAmount(paymentMetrics.total + bidTooLowPenaltySol + blacklistPenaltySol + bondRiskFeeSol, 2)} SOL`}
+                  separator
                 />
               </div>
             </div>

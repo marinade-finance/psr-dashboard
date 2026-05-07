@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState, useCallback, useEffect, useMemo } from 'react'
 import { useQuery } from 'react-query'
 
 import { Banner } from 'src/components/banner/banner'
@@ -32,9 +32,16 @@ type Props = {
   level: UserLevel
 }
 
+// Read the validator vote-account from the URL `?v=...` query so the detail
+// sheet survives a page reload and the browser back button.
+const readValidatorFromUrl = (): string | null => {
+  if (typeof window === 'undefined') return null
+  return new URLSearchParams(window.location.search).get('v')
+}
+
 export const SamPage: React.FC<Props> = ({ level }) => {
   const [selectedValidator, setSelectedValidator] = useState<string | null>(
-    null,
+    readValidatorFromUrl,
   )
   const [simulationModeActive, setSimulationModeActive] = useState(false)
   const [editingValidator, setEditingValidator] = useState<string | null>(null)
@@ -156,13 +163,40 @@ export const SamPage: React.FC<Props> = ({ level }) => {
         setPendingEdits({})
         return
       }
-      setSelectedValidator(voteAccount)
+      setSelectedValidator(prev => {
+        const url = new URL(window.location.href)
+        url.searchParams.set('v', voteAccount)
+        if (prev === null) {
+          // Opening — push so browser-back closes the sheet
+          window.history.pushState({ v: voteAccount }, '', url)
+        } else {
+          // Switching between validators — replace, no extra back step
+          window.history.replaceState({ v: voteAccount }, '', url)
+        }
+        return voteAccount
+      })
     },
     [simulationModeActive, editingValidator],
   )
 
   const handleBack = useCallback(() => {
-    setSelectedValidator(null)
+    const state = window.history.state as { v?: string } | null
+    if (state?.v) {
+      window.history.back()
+    } else {
+      // No pushed state to pop (e.g. opened via deep link); strip the param.
+      const url = new URL(window.location.href)
+      url.searchParams.delete('v')
+      window.history.replaceState(null, '', url)
+      setSelectedValidator(null)
+    }
+  }, [])
+
+  // Keep state in sync with the URL when the user uses the browser back/forward.
+  useEffect(() => {
+    const onPop = () => setSelectedValidator(readValidatorFromUrl())
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
   }, [])
 
   const handleCancelEditing = useCallback(() => {
