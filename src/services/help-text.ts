@@ -21,7 +21,7 @@ export const HELP_TEXT = {
   effectiveBid:
     'What you actually pay per stake. Marinade auctions are settled at one shared price — the lowest winning bid — so everyone pays the same rate, even if some bid higher.',
   bondRunway:
-    'How many epochs your bond can keep paying your bid before it runs dry. Once it slips below the penalty threshold, Marinade charges a bond risk fee from your bond — and if that’s not enough, pulls stake back.',
+    'How many epochs your bond can keep paying your bid before it runs dry. Once it slips below the penalty threshold, Marinade both charges a bond risk fee from your bond and pulls stake back.',
   totalAuctionStake:
     'Total SOL Marinade plans to spread across the winners of this epoch’s auction — the goal allocation, which the network will move toward over the next few epochs.',
   projectedApy:
