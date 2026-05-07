@@ -4,7 +4,7 @@ import { pay, pmpe, stake } from 'src/format'
 import { docsPath } from 'src/lib/utils'
 import { computeSamRevenueMetrics } from 'src/services/breakdowns'
 
-import { CalcCard, SectionHeader } from './shared'
+import { CalcCard, Marker, SectionHeader } from './shared'
 
 import type { UserLevel } from 'src/components/navigation/navigation'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
@@ -25,13 +25,24 @@ const RevRow: React.FC<{
   bold?: boolean
   accent?: 'green' | 'yellow' | 'red'
   separator?: boolean
-}> = ({ label, pct, pmpe: pmpeStr, value, bold, accent, separator }) => (
+  marker?: 'red' | 'yellow' | 'green'
+}> = ({
+  label,
+  pct,
+  pmpe: pmpeStr,
+  value,
+  bold,
+  accent,
+  separator,
+  marker,
+}) => (
   <tr
     className={`border-b border-border-grid/50 last:border-b-0 ${separator ? 'border-t-2 border-t-border' : ''}`}
   >
     <td
       className={`py-1.5 pr-2 text-xs ${bold ? 'font-semibold' : ''} ${separator ? 'text-foreground' : ''}`}
     >
+      {marker && <Marker tone={marker} />}
       {label}
     </td>
     <td className="py-1.5 px-2 text-right font-mono text-xs text-muted-foreground">
@@ -149,7 +160,13 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
               value={pay(m.activatingCost)}
             />
           )}
-          <RevRow label="Total per epoch" value={pay(m.total)} bold separator />
+          <RevRow
+            label="Total per epoch"
+            value={pay(m.total)}
+            bold
+            separator
+            marker="green"
+          />
         </tbody>
       </table>
     </CalcCard>

@@ -3,12 +3,8 @@ import { useQuery } from 'react-query'
 
 import { BidPenaltyBreakdown } from 'src/components/breakdowns/bid-penalty'
 import { BondCoverageBreakdown } from 'src/components/breakdowns/bond-coverage'
+import { PaymentsBreakdown } from 'src/components/breakdowns/payments'
 import { SamRevenueBreakdown } from 'src/components/breakdowns/sam-revenue'
-import {
-  CalcCard,
-  CalcRow,
-  SectionHeader,
-} from 'src/components/breakdowns/shared'
 import { HelpTip } from 'src/components/help-tip/help-tip'
 import { Button } from 'src/components/ui/button'
 import { Input } from 'src/components/ui/input'
@@ -25,7 +21,6 @@ import {
   CSS_STATUS_YELLOW,
   CSS_WARNING,
   CSS_MUTED_FG,
-  docsPath,
 } from 'src/lib/utils'
 import {
   bondHealthFromAuction,
@@ -34,11 +29,6 @@ import {
   computeBidPenaltyMetrics,
 } from 'src/services/breakdowns'
 import { HELP_TEXT } from 'src/services/help-text'
-import {
-  isProtectedEvent,
-  selectAmount,
-  selectProtectedStakeReason,
-} from 'src/services/protected-events'
 import { fetchPsrEstimatesForValidator } from 'src/services/protected-events-estimator'
 import {
   selectExpectedStakeChange,
@@ -550,122 +540,26 @@ export const ValidatorDetail = ({
           </div>
         )}
 
-        {tab === 'payments' &&
-          (() => {
-            const psrTotal = psrEstimates.reduce(
-              (sum, e) => sum + selectAmount(e),
-              0,
-            )
-            const total =
-              paymentMetrics.total +
-              bidTooLowPenaltySol +
-              blacklistPenaltySol +
-              bondRiskFeeSol +
-              psrTotal
-            const hasPenalty =
-              bidTooLowPenaltySol > 0 ||
-              blacklistPenaltySol > 0 ||
-              bondRiskFeeSol > 0
-            return (
-              <div className="p-4 sm:p-6 space-y-6">
-                <CalcCard
-                  title="Payments Calculation"
-                  guideTo={`${docsPath(level)}#detail-panel`}
-                >
-                  <table className="w-full">
-                    <tbody>
-                      <SectionHeader title="Bid costs" />
-                      <CalcRow
-                        label="Active Stake Cost"
-                        value={pay(paymentMetrics.cost)}
-                      />
-                      <CalcRow
-                        label="Activating Stake Cost"
-                        value={pay(paymentMetrics.activatingCost)}
-                      />
-                      <SectionHeader title="Penalties" />
-                      <CalcRow
-                        label="Bid-too-low penalty"
-                        value={
-                          penaltyMetrics.penaltySol > 0
-                            ? pay(penaltyMetrics.penaltySol)
-                            : '—'
-                        }
-                        accent={
-                          penaltyMetrics.penaltySol > 0 ? 'red' : undefined
-                        }
-                      />
-                      <CalcRow
-                        label="Blacklist penalty"
-                        value={
-                          blacklistPenaltySol > 0
-                            ? pay(blacklistPenaltySol)
-                            : '—'
-                        }
-                        accent={blacklistPenaltySol > 0 ? 'red' : undefined}
-                      />
-                      <CalcRow
-                        label="Bond risk fee"
-                        value={bondRiskFeeSol > 0 ? pay(bondRiskFeeSol) : '—'}
-                        accent={bondRiskFeeSol > 0 ? 'red' : undefined}
-                      />
-                      {psrEstimates.length > 0 && (
-                        <>
-                          <SectionHeader title="PSR Settlements (estimated)" />
-                          {psrEstimates.map((e, i) => {
-                            const label = isProtectedEvent(e.reason)
-                              ? selectProtectedStakeReason(e)
-                              : e.reason
-                            return (
-                              <CalcRow
-                                key={i}
-                                label={String(label)}
-                                secondary={
-                                  e.meta.funder === 'ValidatorBond'
-                                    ? 'from bond'
-                                    : 'from Marinade'
-                                }
-                                value={pay(selectAmount(e))}
-                                accent="red"
-                              />
-                            )
-                          })}
-                        </>
-                      )}
-                      <CalcRow
-                        label="Total"
-                        value={pay(total)}
-                        bold
-                        large
-                        separator
-                      />
-                    </tbody>
-                  </table>
-                  <div
-                    className={`mt-4 pt-3 border-t flex flex-col gap-2 ${hasPenalty || psrTotal > 0 ? 'border-destructive/30' : 'border-border'}`}
-                  >
-                    {penaltyMetrics.penaltySol > 0 && (
-                      <button
-                        className="text-xs text-destructive hover:underline text-left"
-                        onClick={() => setTab('penalty')}
-                      >
-                        See bid-too-low penalty calculation →
-                      </button>
-                    )}
-                    <button
-                      className="text-xs text-primary hover:underline text-left"
-                      onClick={() => {
-                        setSimEnabled(true)
-                        setTab('overview')
-                      }}
-                    >
-                      Simulate commission or bid changes →
-                    </button>
-                  </div>
-                </CalcCard>
-              </div>
-            )
-          })()}
+        {tab === 'payments' && (
+          <div className="p-4 sm:p-6 space-y-6">
+            <PaymentsBreakdown
+              validator={validator}
+              dsSamConfig={dsSamConfig}
+              winningTotalPmpe={winningTotalPmpe}
+              bondRiskFeeSol={bondRiskFeeSol}
+              blacklistPenaltySol={blacklistPenaltySol}
+              bidTooLowPenaltySol={bidTooLowPenaltySol}
+              psrEstimates={psrEstimates}
+              isSimulated={isSimulated}
+              onGoToSim={() => {
+                setSimEnabled(true)
+                setTab('overview')
+              }}
+              onGoToPenalty={() => setTab('penalty')}
+              level={level}
+            />
+          </div>
+        )}
 
         {tab === 'revenue' && (
           <div className="p-4 sm:p-6">
