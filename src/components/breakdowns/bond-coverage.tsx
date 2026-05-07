@@ -16,6 +16,7 @@ type Props = {
   dsSamConfig: DsSamConfig
   winningTotalPmpe: number
   bondState: BondHealthState
+  bondRiskFeeSol: number
   isSimulated?: boolean
   onGoToSim?: () => void
 }
@@ -54,6 +55,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
   dsSamConfig,
   winningTotalPmpe,
   bondState,
+  bondRiskFeeSol,
   isSimulated,
   onGoToSim,
 }) => {
@@ -134,6 +136,14 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
             />
           ) : (
             <OkRow message="You have enough bond to cover the minimum." />
+          )}
+          {bondRiskFeeSol > 0 && (
+            <CalcRow
+              label="Bond risk fee charged this epoch"
+              value={pay(bondRiskFeeSol)}
+              bold
+              accent="red"
+            />
           )}
 
           <SectionHeader title={`Ideal Coverage (${m.idealEp} epochs)`} />

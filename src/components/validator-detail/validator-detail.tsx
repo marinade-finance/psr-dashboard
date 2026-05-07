@@ -190,6 +190,12 @@ export const ValidatorDetail = ({
     { staleTime: 5 * 60 * 1000 },
   )
 
+  const bondRiskFeeSol = validator.values.bondRiskFeeSol ?? 0
+  const blacklistPenaltySol =
+    (validator.revShare.blacklistPenaltyPmpe / 1000) *
+    validator.marinadeActivatedStakeSol
+  const bidTooLowPenaltySol = penaltyMetrics.penaltySol
+
   const [editBid, setEditBid] = useState(validator.revShare.bidPmpe.toString())
   const [editInflation, setEditInflation] = useState(
     (validator.inflationCommissionDec * 100).toString(),
@@ -427,6 +433,7 @@ export const ValidatorDetail = ({
               dsSamConfig={dsSamConfig}
               winningTotalPmpe={winningTotalPmpe}
               bondState={bondHealth}
+              bondRiskFeeSol={bondRiskFeeSol}
               isSimulated={isSimulated}
               onGoToSim={() => {
                 setSimEnabled(true)
@@ -438,22 +445,18 @@ export const ValidatorDetail = ({
 
         {tab === 'payments' &&
           (() => {
-            const blacklistPenaltySol =
-              (validator.revShare.blacklistPenaltyPmpe / 1000) *
-              validator.marinadeActivatedStakeSol
-            const bondRiskFeeSol = validator.values.bondRiskFeeSol ?? 0
             const psrTotal = psrEstimates.reduce(
               (sum, e) => sum + selectAmount(e),
               0,
             )
             const total =
               paymentMetrics.total +
-              penaltyMetrics.penaltySol +
+              bidTooLowPenaltySol +
               blacklistPenaltySol +
               bondRiskFeeSol +
               psrTotal
             const hasPenalty =
-              penaltyMetrics.penaltySol > 0 ||
+              bidTooLowPenaltySol > 0 ||
               blacklistPenaltySol > 0 ||
               bondRiskFeeSol > 0
             return (
@@ -634,13 +637,13 @@ export const ValidatorDetail = ({
                   value={`${formatSolAmount(validator.bondBalanceSol, 0)} SOL`}
                 />
                 <MetricRow
-                  label="Coverage"
+                  label="Reserve"
                   help={HELP_TEXT.bondCoverage}
                   value={bondCoverageLabel(bondHealth, bondCoverage)}
                   valueStyle={{ color: bondCoverageColor(bondHealth) }}
                 />
                 <MetricRow
-                  label="Runway"
+                  label="Bid runway"
                   help={HELP_TEXT.bondRunway}
                   value={
                     bondRunway <= 0
@@ -648,6 +651,14 @@ export const ValidatorDetail = ({
                       : `${Math.round(bondRunway)} epochs`
                   }
                 />
+                {bondRiskFeeSol > 0 && (
+                  <MetricRow
+                    label="Bond risk fee"
+                    help="Fee charged from the bond when claimable balance falls below the minimum coverage threshold. Estimated for the current epoch by the SDK."
+                    value={`${formatSolAmount(bondRiskFeeSol, 2)} SOL`}
+                    valueStyle={{ color: CSS_DESTRUCTIVE }}
+                  />
+                )}
                 <button
                   className="text-xs text-primary hover:underline"
                   onClick={() => setTab('bond')}
@@ -685,22 +696,35 @@ export const ValidatorDetail = ({
                     }}
                   />
                 )}
-                <MetricRow
-                  label="Penalty"
-                  value={
-                    penaltyMetrics.penaltySol > 0
-                      ? `${formatSolAmount(penaltyMetrics.penaltySol, 2)} SOL`
-                      : '—'
-                  }
-                  valueStyle={
-                    penaltyMetrics.penaltySol > 0
-                      ? { color: CSS_DESTRUCTIVE }
-                      : undefined
-                  }
-                />
+                {bidTooLowPenaltySol > 0 && (
+                  <MetricRow
+                    label="Bid-too-low penalty"
+                    value={`${formatSolAmount(bidTooLowPenaltySol, 2)} SOL`}
+                    valueStyle={{ color: CSS_DESTRUCTIVE }}
+                  />
+                )}
+                {blacklistPenaltySol > 0 && (
+                  <MetricRow
+                    label="Blacklist penalty"
+                    value={`${formatSolAmount(blacklistPenaltySol, 2)} SOL`}
+                    valueStyle={{ color: CSS_DESTRUCTIVE }}
+                  />
+                )}
+                {bondRiskFeeSol > 0 && (
+                  <MetricRow
+                    label="Bond risk fee"
+                    value={`${formatSolAmount(bondRiskFeeSol, 2)} SOL`}
+                    valueStyle={{ color: CSS_DESTRUCTIVE }}
+                  />
+                )}
+                {bidTooLowPenaltySol === 0 &&
+                  blacklistPenaltySol === 0 &&
+                  bondRiskFeeSol === 0 && (
+                    <MetricRow label="Penalty" value="—" />
+                  )}
                 <MetricRow
                   label="Total"
-                  value={`${formatSolAmount(paymentMetrics.total + penaltyMetrics.penaltySol, 2)} SOL`}
+                  value={`${formatSolAmount(paymentMetrics.total + bidTooLowPenaltySol + blacklistPenaltySol + bondRiskFeeSol, 2)} SOL`}
                 />
                 <button
                   className="text-xs text-primary hover:underline"
