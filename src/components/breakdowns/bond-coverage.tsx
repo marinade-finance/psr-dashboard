@@ -109,7 +109,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
 
   return (
     <CalcCard
-      title="Bond"
+      title="Bond Calculation"
       guideTo="/docs"
       isSimulated={isSimulated}
       status={status}

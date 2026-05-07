@@ -464,7 +464,7 @@ export const ValidatorDetail = ({
               bondRiskFeeSol > 0
             return (
               <div className="p-4 sm:p-6 space-y-6">
-                <CalcCard title="Expected Payments This Epoch" guideTo="/docs">
+                <CalcCard title="Payments Calculation" guideTo="/docs">
                   <table className="w-full">
                     <tbody>
                       <SectionHeader title="Bid costs" />
