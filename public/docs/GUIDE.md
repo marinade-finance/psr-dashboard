@@ -34,7 +34,7 @@ validators based on their bids and performance.
 - **Winning APY** &mdash; Estimated APY of the last validator winning the auction
 - **Projected APY** &mdash; Expected staker return based on total revenue from all winning validators
 - **Winning Validators** &mdash; Count of validators receiving stake in current auction
-- **Re-delegation** &mdash; Stake the protocol will move toward under-target validators next epoch. This is the gross inflow side of stake movement; its counterpart is natural withdrawals, which exit over-target validators (see Stability Mechanisms below).
+- **Re-delegation** &mdash; Estimated SOL the protocol will send to validators that have less than their target stake next epoch. Only counts stake moving in; stake leaving over-funded validators is tracked separately as natural withdrawals (see Stability Mechanisms below).
 
 **Simulation Mode:** Click "Enter Simulation" to test how changing a validator's parameters would affect their auction
 position. Edit commission rates or bid amounts, then click "Simulate" to see projected results.
