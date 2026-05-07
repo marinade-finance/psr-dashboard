@@ -253,16 +253,12 @@ export const ValidatorDetail = ({
       <SheetContent
         side="right"
         className={`w-full max-w-4xl overflow-y-auto p-0 ${
-          isSimulated
-            ? 'border-t-4 border-t-[var(--status-yellow,#b58900)]'
-            : ''
+          isSimulated ? 'border-t-4 border-t-status-yellow' : ''
         }`}
       >
         <div
           className={`flex items-start justify-between px-4 sm:px-6 py-4 border-b border-border sticky top-0 z-10 gap-2 ${
-            isSimulated
-              ? 'bg-[var(--status-yellow-light,rgba(181,137,0,0.06))]'
-              : 'bg-background'
+            isSimulated ? 'bg-status-yellow-light' : 'bg-background'
           }`}
         >
           <div className="flex flex-col gap-1 min-w-0">
@@ -316,12 +312,7 @@ export const ValidatorDetail = ({
               </span>
               {isSimulated && (
                 <span
-                  className="px-2 py-0.5 rounded-md text-xs font-semibold shrink-0 uppercase tracking-wide"
-                  style={{
-                    background:
-                      'var(--status-yellow-light, rgba(181,137,0,0.18))',
-                    color: CSS_STATUS_YELLOW,
-                  }}
+                  className="px-2 py-0.5 rounded-md text-xs font-semibold shrink-0 uppercase tracking-wide bg-status-yellow-light text-status-yellow"
                   title="This validator's metrics reflect simulated commission/bid overrides"
                 >
                   Simulated
@@ -805,12 +796,12 @@ export const ValidatorDetail = ({
                   <span className="flex items-center gap-1.5">
                     {isCalculating ? (
                       <>
-                        <span className="inline-block w-2 h-2 rounded-full bg-[var(--status-yellow,#b58900)] animate-pulse" />
+                        <span className="inline-block w-2 h-2 rounded-full bg-status-yellow animate-pulse" />
                         Recalculating…
                       </>
                     ) : (
                       <>
-                        <span className="inline-block w-2 h-2 rounded-full bg-[var(--status-green,#2aa198)]" />
+                        <span className="inline-block w-2 h-2 rounded-full bg-status-green" />
                         Auto-recalc on change
                       </>
                     )}

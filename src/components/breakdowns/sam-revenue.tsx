@@ -24,7 +24,7 @@ const RevRow: React.FC<{
   separator?: boolean
 }> = ({ label, pct, pmpe: pmpeStr, value, bold, accent, separator }) => (
   <tr
-    className={`border-b border-border-grid/50 last:border-0 ${separator ? 'border-t-2 border-t-border' : ''}`}
+    className={`border-b border-border-grid/50 last:border-b-0 ${separator ? 'border-t-2 border-t-border' : ''}`}
   >
     <td
       className={`py-1.5 pr-2 text-xs ${bold ? 'font-semibold' : ''} ${separator ? 'text-foreground' : ''}`}
@@ -40,9 +40,9 @@ const RevRow: React.FC<{
     <td
       className={`py-1.5 pl-2 text-right font-mono text-xs ${bold ? 'font-semibold' : ''} ${
         accent === 'green'
-          ? 'text-[var(--status-green,#2aa198)]'
+          ? 'text-status-green'
           : accent === 'yellow'
-            ? 'text-[var(--status-yellow,#b58900)]'
+            ? 'text-status-yellow'
             : accent === 'red'
               ? 'text-destructive'
               : ''
