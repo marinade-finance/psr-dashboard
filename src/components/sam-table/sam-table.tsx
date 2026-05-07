@@ -467,7 +467,7 @@ export const SamTable: React.FC<Props> = ({
       label: 'Total Auction Stake',
       value: formatSolAmount(samDistributedStake, 0),
       unit: 'SOL',
-      help: undefined,
+      help: HELP_TEXT.totalAuctionStake,
     },
     {
       label: 'Winning APY',
@@ -479,13 +479,13 @@ export const SamTable: React.FC<Props> = ({
       label: 'Projected APY',
       value: formatPercentage(projectedApy, 2),
       unit: '',
-      help: undefined,
+      help: HELP_TEXT.projectedApy,
     },
     {
       label: 'Winning Validators',
       value: `${winningCount} / ${totalValidators}`,
       unit: '',
-      help: undefined,
+      help: HELP_TEXT.winningValidators,
     },
     {
       label: 'Re-delegation',

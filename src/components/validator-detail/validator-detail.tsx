@@ -86,15 +86,20 @@ function bondCoverageColor(health: BondHealth): string {
 
 const MetricRow = ({
   label,
+  help,
   value,
   valueStyle,
 }: {
   label: string
+  help?: string
   value: React.ReactNode
   valueStyle?: React.CSSProperties
 }) => (
   <div className="flex items-center justify-between">
-    <span className="text-xs text-muted-foreground">{label}</span>
+    <span className="text-xs text-muted-foreground flex items-center gap-1">
+      {label}
+      {help && <HelpTip text={help} />}
+    </span>
     <span className="text-sm font-semibold font-mono" style={valueStyle}>
       {value}
     </span>
@@ -500,11 +505,13 @@ export const ValidatorDetail = ({
                 />
                 <MetricRow
                   label="Coverage"
+                  help={HELP_TEXT.bondCoverage}
                   value={bondCoverageLabel(bondHealth, bondCoverage)}
                   valueStyle={{ color: bondCoverageColor(bondHealth) }}
                 />
                 <MetricRow
                   label="Runway"
+                  help={HELP_TEXT.bondRunway}
                   value={
                     bondRunway <= 0
                       ? 'Depleted'
@@ -537,6 +544,7 @@ export const ValidatorDetail = ({
                 {paymentMetrics.activating > 0 && (
                   <MetricRow
                     label="↳ bid gap"
+                    help={HELP_TEXT.bidGap}
                     value={`${pmpe(paymentMetrics.bidGap)} PMPE`}
                     valueStyle={{
                       color:

@@ -10,7 +10,7 @@ export const HELP_TEXT = {
     'The clearing price of the auction \u2014 the minimum APY that won stake this epoch. You must exceed this to be in the winning set.',
   want: "Maximum stake you're willing to accept. Setting WANT too low may leave stake on the table. Reducing WANT may trigger penalties.",
   bondHealth:
-    'Healthy = bond can sustain current stake for 10+ epochs. Watch = 5-10 epochs runway. Critical = <5 epochs, risk of forced unstaking.',
+    'Bond health is based on coverage, not time. Critical = claimable bond is below the penalty floor (bid penalties start). Watch = bond covers minimum but not the ideal level needed to receive more stake. Healthy = bond fully covers the ideal threshold.',
   sfdp: 'Stake Focused Delegation Program alignment. Validators aligned with SFDP criteria receive favorable stake weighting.',
   penalty:
     'Reducing your bid, WANT, or bond below certain thresholds within an epoch may result in temporary ranking penalties. Changes take effect next epoch.',
@@ -21,7 +21,17 @@ export const HELP_TEXT = {
   bidDistribution:
     'Shows how your bid compares to the full distribution of bids across all auction participants. Helps gauge competitive positioning.',
   effectiveBid:
-    'The bid value after accounting for penalties and adjustments. This is the actual bid used in the auction ranking.',
+    'The actual bid rate applied in the last-price auction. All winners pay the same clearing rate (the lowest winning bid), regardless of their submitted bid.',
   bondRunway:
-    'Number of epochs until bond is depleted at current bid rate. Lower runway means higher risk of forced unstaking.',
+    'Number of epochs the bond will remain valid at the current bid rate, as computed by the SDK. Lower means higher risk of forced unstaking.',
+  totalAuctionStake:
+    'Total SOL targeted by Marinade across all auction winners this epoch. This is the sum of each winning validator\u2019s SAM target allocation, not the currently active stake.',
+  projectedApy:
+    'Expected staker return this epoch, computed as total bid+commission revenue across all winning validators divided by Marinade\u2019s SAM TVL, compounded annually.',
+  winningValidators:
+    'Count of validators that received a non-zero stake target this epoch. Validators with zero target are below the auction cutoff.',
+  bondCoverage:
+    'Whether the bond balance covers the minimum required threshold. Below minimum = bid penalties apply. Below ideal = bond is adequate but limits stake growth.',
+  bidGap:
+    'Difference between your submitted bid and the auction\u2019s effective bid (clearing price). A positive gap means you bid more than required \u2014 you still pay only the clearing price.',
 } as const
