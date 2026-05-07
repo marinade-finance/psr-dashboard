@@ -461,7 +461,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
               {
                 header: 'Marinade Stake [SOL]',
                 headerHelp:
-                  'Total SOL delegated by Marinade to this validator — native stake plus liquid staking stake combined.',
+                  'All the SOL Marinade has staked with this validator — both directly staked SOL and SOL backing mSOL.',
                 render: ({ validator }) => (
                   <span
                     {...tooltipAttributes(
@@ -479,7 +479,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
               {
                 header: 'Bond Balance [SOL]',
                 headerHelp:
-                  "Effective SOL deposited in this validator's on-chain bond account, available to cover potential protected events.",
+                  'How much SOL the validator has in its safety deposit, ready to reimburse stakers if something goes wrong.',
                 render: ({ bond }) => (
                   <>
                     {formatSolAmount(
