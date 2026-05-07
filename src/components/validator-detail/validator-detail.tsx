@@ -571,6 +571,11 @@ export const ValidatorDetail = ({
                       : undefined
                   }
                 />
+                <MetricRow
+                  label="Total"
+                  value={`${formatSolAmount(paymentMetrics.total + penaltyMetrics.penaltySol, 2)} SOL`}
+                  valueStyle={{ fontWeight: 600 }}
+                />
                 <button
                   className="text-xs text-primary hover:underline"
                   onClick={() => setTab('revenue')}
