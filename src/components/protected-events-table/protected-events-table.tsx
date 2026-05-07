@@ -5,7 +5,7 @@ import { EpochRangePicker } from 'src/components/ui/epoch-range-picker'
 import { Input } from 'src/components/ui/input'
 import { Label } from 'src/components/ui/label'
 import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
-import { formatSolAmount } from 'src/format'
+import { formatPercentage, formatSolAmount } from 'src/format'
 import {
   selectAmount,
   selectProtectedStakeReason,
@@ -176,7 +176,9 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
     .reduce((sum, { protectedEvent }) => sum + selectAmount(protectedEvent), 0)
 
   const filtered = preFilteredData.length !== data.length
-  const bondPct = totalAmount > 0 ? (validatorBondTotal / totalAmount) * 100 : 0
+  const bondRatio = totalAmount > 0 ? validatorBondTotal / totalAmount : 0
+  // Integer-by-construction; only fed into CSS widths.
+  const bondPct = Math.round(bondRatio * 100)
 
   return (
     <div className="relative">
@@ -204,7 +206,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
               <div
                 className="cursor-help"
                 {...tooltipAttributes(
-                  `Validator Bond: ${formatSolAmount(validatorBondTotal)} SOL (${bondPct.toFixed(0)}%)<br/>Marinade backstop: ${formatSolAmount(marinadePaidTotal)} SOL (${(100 - bondPct).toFixed(0)}%)`,
+                  `Validator Bond: ${formatSolAmount(validatorBondTotal)} SOL (${formatPercentage(bondRatio, 0)})<br/>Marinade backstop: ${formatSolAmount(marinadePaidTotal)} SOL (${formatPercentage(1 - bondRatio, 0)})`,
                 )}
               >
                 <div className="flex h-1.5 rounded-sm overflow-hidden bg-secondary">
@@ -218,8 +220,8 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
                   />
                 </div>
                 <div className="flex justify-between text-[10px] text-muted-foreground font-mono mt-1">
-                  <span>Bond {bondPct.toFixed(0)}%</span>
-                  <span>Marinade {(100 - bondPct).toFixed(0)}%</span>
+                  <span>Bond {formatPercentage(bondRatio, 0)}</span>
+                  <span>Marinade {formatPercentage(1 - bondRatio, 0)}</span>
                 </div>
               </div>
             ) : null

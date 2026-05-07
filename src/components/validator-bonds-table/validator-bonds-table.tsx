@@ -185,7 +185,7 @@ const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
                                 textShadow: '0 1px 2px rgba(0,0,0,0.4)',
                               }}
                             >
-                              {coveragePct}% cov.
+                              {formatPercentage(ratio, 0)} cov.
                             </div>
                           )}
                         </div>
@@ -287,20 +287,18 @@ export const ValidatorBondsTable: React.FC<Props> = ({
     (sum, entry) => sum + selectMaxProtectedStake(entry),
     0,
   )
-  const effectiveBalance = Math.round(
-    data.reduce(
-      (sum, { bond }) => sum + (bond ? selectEffectiveAmount(bond) : 0),
-      0,
-    ),
+  const effectiveBalance = data.reduce(
+    (sum, { bond }) => sum + (bond ? selectEffectiveAmount(bond) : 0),
+    0,
   )
   const totalFundedBonds = data.filter(
     ({ bond }) => (bond ? selectEffectiveAmount(bond) : 0) > 0,
   ).length
 
-  const coveredPct =
-    totalMarinadeStake > 0
-      ? Math.round((totalProtectedStake / totalMarinadeStake) * 100)
-      : 0
+  const coveredRatio =
+    totalMarinadeStake > 0 ? totalProtectedStake / totalMarinadeStake : 0
+  // Integer-by-construction, used only for CSS width math and threshold checks.
+  const coveredPct = Math.round(coveredRatio * 100)
 
   const expertColumns: {
     header: string
@@ -332,7 +330,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
         <div className="metricWrap bg-card rounded-xl border border-border shadow-card p-5">
           <div className="flex items-baseline gap-2 mb-3">
             <span className="metric text-3xl font-bold font-mono text-primary">
-              {coveredPct}%
+              {formatPercentage(coveredRatio, 0)}
             </span>
             <span className="text-sm text-muted-foreground">
               of Marinade stake is bond-protected
