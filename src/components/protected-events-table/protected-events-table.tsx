@@ -16,7 +16,13 @@ import { selectName } from 'src/services/validators'
 import { tooltipAttributes } from '../../services/utils'
 import { Metric } from '../metric/metric'
 import { UserLevel } from '../navigation/navigation'
-import { Alignment, OrderDirection, Table } from '../table/table'
+import {
+  Alignment,
+  OrderDirection,
+  TABLE_SHELL_HOVER,
+  Table,
+  TableShell,
+} from '../table/table'
 
 import type { ProtectedEvent } from 'src/services/protected-events'
 import type { ProtectedEventWithValidator } from 'src/services/validator-with-protected_event'
@@ -258,9 +264,9 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
         </div>
       </div>
       <div className="px-4 pb-4">
-        <div className="bg-card rounded-xl border border-border shadow-card overflow-x-auto">
+        <TableShell>
           <Table
-            className="[&_tbody]:bg-card [&_tbody_tr]:bg-card [&_tbody_tr:hover]:bg-secondary"
+            className={TABLE_SHELL_HOVER}
             data={filteredData}
             showRowNumber
             columns={[
@@ -327,7 +333,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
             ]}
             defaultOrder={[[1, OrderDirection.DESC]]}
           />
-        </div>
+        </TableShell>
       </div>
     </div>
   )

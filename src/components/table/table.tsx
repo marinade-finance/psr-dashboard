@@ -13,9 +13,35 @@ import {
 import { cn } from 'src/lib/utils'
 import { Color } from 'src/services/types'
 
-import type { HTMLAttributes } from 'react'
+import type { HTMLAttributes, ReactNode } from 'react'
 
 export { Color }
+
+// Canonical card chrome for any page that drops a generic Table inside a
+// content section. Bundles the outer surface (rounded card, border, shadow),
+// the horizontal scroll behaviour, and the muted row-hover override that the
+// non-SAM tables share. SAM table has its own bespoke wrapper and does not
+// use this.
+export const TABLE_SHELL_HOVER = '[&_tbody_tr:hover]:bg-secondary' as const
+
+export function TableShell({
+  children,
+  className,
+}: {
+  children: ReactNode
+  className?: string
+}): JSX.Element {
+  return (
+    <div
+      className={cn(
+        'bg-card rounded-xl border border-border shadow-card overflow-hidden overflow-x-auto',
+        className,
+      )}
+    >
+      {children}
+    </div>
+  )
+}
 
 export const enum OrderDirection {
   ASC,

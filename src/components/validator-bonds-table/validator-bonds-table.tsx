@@ -19,7 +19,13 @@ import {
 
 import { tooltipAttributes } from '../../services/utils'
 import { BellIcon } from '../icons/bell-icon'
-import { Alignment, OrderDirection, Table } from '../table/table'
+import {
+  Alignment,
+  OrderDirection,
+  TABLE_SHELL_HOVER,
+  Table,
+  TableShell,
+} from '../table/table'
 
 import type { NotificationSummary } from 'src/services/notifications'
 import type { ValidatorWithBond } from 'src/services/validator-with-bond'
@@ -424,9 +430,9 @@ export const ValidatorBondsTable: React.FC<Props> = ({
       <ValidatorBondsTileMap data={data} />
 
       <div className="px-4 pb-4">
-        <div className="bg-card rounded-xl border border-border shadow-card overflow-hidden overflow-x-auto">
+        <TableShell>
           <Table
-            className="[&_tbody]:bg-card [&_tbody_tr]:bg-card [&_tbody_tr:hover]:bg-secondary"
+            className={TABLE_SHELL_HOVER}
             showRowNumber
             data={data}
             columns={[
@@ -547,7 +553,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
             ]}
             defaultOrder={[[1, OrderDirection.DESC]]}
           />
-        </div>
+        </TableShell>
       </div>
     </div>
   )

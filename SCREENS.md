@@ -279,6 +279,7 @@ Centered `max-w-3xl` column. Renders `public/docs/GUIDE.md` (Basic) or
 Pointer list — for the full design language see CLAUDE.md.
 
 - **`<Card>`** (`src/components/ui/card.tsx`) — `rounded-xl border border-border bg-card shadow-card`.
+- **`<TableShell>`** (`src/components/table/table.tsx`) — canonical outer card chrome for any page that drops a generic `<Table>` into a content section. Wraps the table in `bg-card rounded-xl border border-border shadow-card overflow-hidden overflow-x-auto`. Both the bonds and protected-events tables sit inside one. Pair with `TABLE_SHELL_HOVER` on the `<Table>`'s `className` to get the muted `bg-secondary` row-hover (the default `<Table>` hover, `bg-primary-light`, is reserved for SAM, which has its own bespoke wrapper).
 - **`<Metric>`** (`src/components/metric/metric.tsx`) — KPI tile with optional `subline` + `extra` slots.
 - **`<ValidatorIdentity>`** (`src/components/validator-identity/validator-identity.tsx`) — canonical "name + truncated vote account" cell.
 - **`<CalcCard>` / `<CalcRow>` / `<RevRow>` / `<OkRow>` / `<SectionHeader>` / `<Marker>`** (`src/components/breakdowns/shared.tsx`) — calculation breakdown primitives. Total/result rows use `separator` + `SEPARATOR_TR_CLASS` / `SEPARATOR_CELL_PAD`. The same separator visual is exposed for flex layouts via `SEPARATOR_DIV_CLASS`.
