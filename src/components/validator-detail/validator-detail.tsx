@@ -677,6 +677,14 @@ export const ValidatorDetail = ({
                   value={`${formatSolAmount(paymentMetrics.cost, 2)} SOL`}
                 />
                 <MetricRow
+                  label="↳ auction effective bid"
+                  value={`${pmpe(paymentMetrics.effBid)} PMPE`}
+                  valueStyle={{
+                    color: CSS_MUTED_FG,
+                    fontSize: '11px',
+                  }}
+                />
+                <MetricRow
                   label="Activating Stake Cost"
                   value={`${formatSolAmount(paymentMetrics.activatingCost, 2)} SOL`}
                 />
@@ -694,28 +702,42 @@ export const ValidatorDetail = ({
                     }}
                   />
                 )}
-                {bidTooLowPenaltySol === 0 &&
-                  blacklistPenaltySol === 0 &&
-                  bondRiskFeeSol === 0 && (
-                    <MetricRow label="Penalty" value="—" />
-                  )}
+                {(() => {
+                  const penaltyTotal =
+                    bidTooLowPenaltySol + blacklistPenaltySol + bondRiskFeeSol
+                  return (
+                    <MetricRow
+                      label="Penalty"
+                      value={
+                        penaltyTotal > 0
+                          ? `${formatSolAmount(penaltyTotal, 2)} SOL`
+                          : '—'
+                      }
+                      valueStyle={
+                        penaltyTotal > 0
+                          ? { color: CSS_DESTRUCTIVE }
+                          : undefined
+                      }
+                    />
+                  )
+                })()}
                 {bidTooLowPenaltySol > 0 && (
                   <PenaltyRow
-                    label="Bid-too-low penalty"
+                    label="↳ bid-too-low penalty"
                     value={`${formatSolAmount(bidTooLowPenaltySol, 2)} SOL`}
                     onSeeBreakdown={() => setTab('penalty')}
                   />
                 )}
                 {blacklistPenaltySol > 0 && (
                   <PenaltyRow
-                    label="Blacklist penalty"
+                    label="↳ blacklist penalty"
                     value={`${formatSolAmount(blacklistPenaltySol, 2)} SOL`}
                     onSeeBreakdown={() => setTab('payments')}
                   />
                 )}
                 {bondRiskFeeSol > 0 && (
                   <PenaltyRow
-                    label="Bond risk fee"
+                    label="↳ bond risk fee"
                     value={`${formatSolAmount(bondRiskFeeSol, 2)} SOL`}
                     onSeeBreakdown={() => setTab('bond')}
                   />
