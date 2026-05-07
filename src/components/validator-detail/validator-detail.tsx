@@ -707,14 +707,19 @@ export const ValidatorDetail = ({
                 {(() => {
                   const penaltyTotal =
                     bidTooLowPenaltySol + blacklistPenaltySol + bondRiskFeeSol
-                  if (penaltyTotal === 0) {
-                    return <MetricRow label="Penalty" value="—" />
-                  }
                   return (
-                    <PenaltyRow
+                    <MetricRow
                       label="Penalty"
-                      value={`${formatSolAmount(penaltyTotal, 2)} SOL`}
-                      onSeeBreakdown={() => setTab('payments')}
+                      value={
+                        penaltyTotal > 0
+                          ? `${formatSolAmount(penaltyTotal, 2)} SOL`
+                          : '—'
+                      }
+                      valueStyle={
+                        penaltyTotal > 0
+                          ? { color: CSS_DESTRUCTIVE }
+                          : undefined
+                      }
                     />
                   )
                 })()}
