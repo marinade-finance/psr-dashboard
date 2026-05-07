@@ -119,7 +119,7 @@ Each epoch, SAM runs a **last-price auction** to allocate stake.
   stakers redeem mSOL. These outflows come first from validators that are above
   their auction target; if no one's over-target, they're spread pro-rata.
 
-_See [Stake Auction Market — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market) for the full protocol spec._
+_See [Stake Auction Marketplace — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market#stake-auction-marketplace) for the full protocol spec._
 
 ---
 
@@ -215,7 +215,7 @@ downtime events, and stake growth without the bond becoming the binding
 constraint on the auction. The Bond tab's calculation breakdown shows the
 top-up amount required to reach each level.
 
-_See [Protected Staking Rewards — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/protected-staking-rewards) for the bond contract and PSR mechanics._
+_See [Setup for Validators — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/protected-staking-rewards#setup-for-validators) for the bond contract and PSR mechanics._
 
 <a id="bond-risk-fee"></a>
 ### Bond Risk Fee
@@ -287,7 +287,7 @@ bounded amount of SOL:
   rebalancing budget is shared across the whole pool. A validator far below
   target won't close the entire gap in one epoch.
 
-_See [Delegation Strategy v2 — Marinade Docs](https://docs.marinade.finance/marinade-protocol/system-overview/delegation-strategy-v2) for the rebalancing algorithm._
+_See [Stake Matching — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market#stake-matching) for the rebalancing algorithm._
 
 <a id="psr"></a>
 ### Protected Staking Rewards (PSR)
@@ -301,7 +301,7 @@ which is *also* why under-collateralized bonds are penalised (see
 The Protected Events tab shows the history of every PSR settlement, including
 which were paid by the validator's bond vs Marinade's backstop.
 
-_See [Protected Staking Rewards — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/protected-staking-rewards) for the protection guarantee, settlement flow, and bond requirements._
+_See [How Protected Staking Rewards work — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/protected-staking-rewards#how-protected-staking-rewards-work) for the protection guarantee, settlement flow, and bond requirements._
 
 ---
 
@@ -382,7 +382,7 @@ Tip colour matches the rank cell's severity icon.
 
 ### Click anywhere on a row to open the [Validator Detail Panel](#detail-panel).
 
-_See [Stake Auction Market — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market) for the auction algorithm itself._
+_See [Eligibility Criteria — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market#eligibility-criteria-to-receive-stake-from-marinade) for the auction algorithm itself._
 
 ---
 
