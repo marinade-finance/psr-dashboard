@@ -537,11 +537,11 @@ export const ValidatorDetail = ({
               </h3>
               <div className="space-y-3">
                 <MetricRow
-                  label="Bid (active stake)"
+                  label="Payment for active stake"
                   value={`${formatSolAmount(paymentMetrics.cost, 2)} SOL`}
                 />
                 <MetricRow
-                  label="Activating stake"
+                  label="Payment for activating stake"
                   value={`${formatSolAmount(paymentMetrics.activatingCost, 2)} SOL`}
                 />
                 {paymentMetrics.activating > 0 && (

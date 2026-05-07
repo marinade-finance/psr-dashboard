@@ -155,10 +155,10 @@ export const getValidatorTip = (
     )
     const topUpStr =
       bondCoverage.topUpToIdeal > 0
-        ? ` Top up ${formatSolAmount(bondCoverage.topUpToIdeal, 0)} SOL.`
+        ? ` Top up ${formatSolAmount(bondCoverage.topUpToIdeal, 0)} SOL to receive more stake.`
         : ''
     return {
-      text: `Bond runway ${Math.round(bondGoodForEpochs)} epochs — top up soon.${topUpStr}`,
+      text: `Bond runway ${Math.round(bondGoodForEpochs)} epochs.${topUpStr}`,
       urgency: 'warning',
       constraint: 'bond',
     }
