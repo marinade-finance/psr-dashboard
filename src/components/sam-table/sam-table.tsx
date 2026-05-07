@@ -724,171 +724,173 @@ export const SamTable: React.FC<Props> = ({
     <div
       className={`w-full ${isCalculating ? 'opacity-70 pointer-events-none' : ''}`}
     >
-      {/* Stats Bar */}
-      <div className="flex flex-wrap items-start gap-3 mb-6 px-4">
-        {stats.map(stat => (
-          <Card
-            key={stat.label}
-            className="px-3 py-3 sm:px-5 sm:py-4 flex-1 min-w-[140px] sm:min-w-[160px] overflow-hidden"
-          >
-            <div className="text-xs uppercase tracking-wider font-medium text-muted-foreground mb-1 flex items-center gap-1">
-              {stat.label}
-              {stat.help && <HelpTip text={stat.help} />}
-            </div>
-            <div className="flex items-baseline gap-0.5 min-w-0 overflow-hidden">
-              <span className="text-xl sm:text-2xl font-semibold text-foreground font-mono truncate">
-                {stat.value}
-              </span>
-              {stat.unit && (
-                <span className="text-sm text-muted-foreground font-mono shrink-0">
-                  {stat.unit}
+      <div className="max-w-[1920px] mx-auto">
+        {/* Stats Bar */}
+        <div className="flex flex-wrap items-start gap-3 mb-6 px-4">
+          {stats.map(stat => (
+            <Card
+              key={stat.label}
+              className="px-3 py-3 sm:px-5 sm:py-4 flex-1 min-w-[140px] sm:min-w-[160px] overflow-hidden"
+            >
+              <div className="text-xs uppercase tracking-wider font-medium text-muted-foreground mb-1 flex items-center gap-1">
+                {stat.label}
+                {stat.help && <HelpTip text={stat.help} />}
+              </div>
+              <div className="flex items-baseline gap-0.5 min-w-0 overflow-hidden">
+                <span className="text-xl sm:text-2xl font-semibold text-foreground font-mono truncate">
+                  {stat.value}
                 </span>
-              )}
-            </div>
-          </Card>
-        ))}
-        {simulatedValidators.size > 0 && onResetSimulation && (
-          <button
-            onClick={onResetSimulation}
-            className="self-stretch px-4 py-3 rounded-xl border border-destructive/40 bg-destructive/5 text-destructive text-sm font-medium hover:bg-destructive/10 transition-colors whitespace-nowrap"
-          >
-            Reset Simulation ({simulatedValidators.size})
-          </button>
-        )}
-      </div>
+                {stat.unit && (
+                  <span className="text-sm text-muted-foreground font-mono shrink-0">
+                    {stat.unit}
+                  </span>
+                )}
+              </div>
+            </Card>
+          ))}
+          {simulatedValidators.size > 0 && onResetSimulation && (
+            <button
+              onClick={onResetSimulation}
+              className="self-stretch px-4 py-3 rounded-xl border border-destructive/40 bg-destructive/5 text-destructive text-sm font-medium hover:bg-destructive/10 transition-colors whitespace-nowrap"
+            >
+              Reset Simulation ({simulatedValidators.size})
+            </button>
+          )}
+        </div>
 
-      {/* Table */}
-      <div className="mx-4 bg-card rounded-xl border border-border shadow-card overflow-hidden overflow-x-auto">
-        <ShadTable className="font-sans text-sm">
-          <TableHeader>
-            <TableRow className="border-b border-border-grid">
-              <TableHead
-                className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-10 text-center cursor-pointer hover:text-primary"
-                onClick={() => handleSort('rank')}
-              >
-                #
-                <SortIndicator
-                  column="rank"
-                  sortColumn={sortColumn}
-                  sortDirection={sortDirection}
-                />
-              </TableHead>
-              <TableHead
-                className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted min-w-[150px] cursor-pointer hover:text-primary"
-                onClick={() => handleSort('validator')}
-              >
-                Validator
-                <SortIndicator
-                  column="validator"
-                  sortColumn={sortColumn}
-                  sortDirection={sortDirection}
-                />
-              </TableHead>
-              <TableHead
-                className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-[100px] cursor-pointer hover:text-primary"
-                onClick={() => handleSort('maxApy')}
-              >
-                Max APY
-                <SortIndicator
-                  column="maxApy"
-                  sortColumn={sortColumn}
-                  sortDirection={sortDirection}
-                />
-                <HelpTip text={HELP_TEXT.maxApy} />
-              </TableHead>
-              <TableHead
-                className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-40 cursor-pointer hover:text-primary"
-                onClick={() => handleSort('bond')}
-              >
-                Bond
-                <SortIndicator
-                  column="bond"
-                  sortColumn={sortColumn}
-                  sortDirection={sortDirection}
-                />
-                <HelpTip text={HELP_TEXT.bondHealth} />
-              </TableHead>
-              <TableHead
-                className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-[140px] cursor-pointer hover:text-primary"
-                onClick={() => handleSort('stakeDelta')}
-              >
-                Stake / Next {'\u0394'}
-                <SortIndicator
-                  column="stakeDelta"
-                  sortColumn={sortColumn}
-                  sortDirection={sortDirection}
-                />
-                <HelpTip text="Current SAM-active stake and projected change next epoch. Positive deltas are limited by undeployed TVL (deposited SOL not yet delegated). Negative deltas come from natural withdrawals (~0.7% of TVL/epoch) drawn first from over-target validators." />
-              </TableHead>
-              <TableHead
-                className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted min-w-[200px] cursor-pointer hover:text-primary"
-                onClick={() => handleSort('nextStep')}
-              >
-                Next Step
-                <SortIndicator
-                  column="nextStep"
-                  sortColumn={sortColumn}
-                  sortDirection={sortDirection}
-                />
-              </TableHead>
-              <TableHead className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-10"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {allDisplayValidators
-              .filter(
-                d =>
-                  d.isGhost ||
-                  d.validator.auctionStake.marinadeSamTargetSol > 0,
-              )
-              .map((d, i) => renderRow(d.validator, i, d.isGhost))}
+        {/* Table */}
+        <div className="mx-4 bg-card rounded-xl border border-border shadow-card overflow-hidden overflow-x-auto">
+          <ShadTable className="font-sans text-sm">
+            <TableHeader>
+              <TableRow className="border-b border-border-grid">
+                <TableHead
+                  className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-10 text-center cursor-pointer hover:text-primary"
+                  onClick={() => handleSort('rank')}
+                >
+                  #
+                  <SortIndicator
+                    column="rank"
+                    sortColumn={sortColumn}
+                    sortDirection={sortDirection}
+                  />
+                </TableHead>
+                <TableHead
+                  className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted min-w-[150px] cursor-pointer hover:text-primary"
+                  onClick={() => handleSort('validator')}
+                >
+                  Validator
+                  <SortIndicator
+                    column="validator"
+                    sortColumn={sortColumn}
+                    sortDirection={sortDirection}
+                  />
+                </TableHead>
+                <TableHead
+                  className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-[100px] cursor-pointer hover:text-primary"
+                  onClick={() => handleSort('maxApy')}
+                >
+                  Max APY
+                  <SortIndicator
+                    column="maxApy"
+                    sortColumn={sortColumn}
+                    sortDirection={sortDirection}
+                  />
+                  <HelpTip text={HELP_TEXT.maxApy} />
+                </TableHead>
+                <TableHead
+                  className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-40 cursor-pointer hover:text-primary"
+                  onClick={() => handleSort('bond')}
+                >
+                  Bond
+                  <SortIndicator
+                    column="bond"
+                    sortColumn={sortColumn}
+                    sortDirection={sortDirection}
+                  />
+                  <HelpTip text={HELP_TEXT.bondHealth} />
+                </TableHead>
+                <TableHead
+                  className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-[140px] cursor-pointer hover:text-primary"
+                  onClick={() => handleSort('stakeDelta')}
+                >
+                  Stake / Next {'\u0394'}
+                  <SortIndicator
+                    column="stakeDelta"
+                    sortColumn={sortColumn}
+                    sortDirection={sortDirection}
+                  />
+                  <HelpTip text="Current SAM-active stake and projected change next epoch. Positive deltas are limited by undeployed TVL (deposited SOL not yet delegated). Negative deltas come from natural withdrawals (~0.7% of TVL/epoch) drawn first from over-target validators." />
+                </TableHead>
+                <TableHead
+                  className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted min-w-[200px] cursor-pointer hover:text-primary"
+                  onClick={() => handleSort('nextStep')}
+                >
+                  Next Step
+                  <SortIndicator
+                    column="nextStep"
+                    sortColumn={sortColumn}
+                    sortDirection={sortDirection}
+                  />
+                </TableHead>
+                <TableHead className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-10"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {allDisplayValidators
+                .filter(
+                  d =>
+                    d.isGhost ||
+                    d.validator.auctionStake.marinadeSamTargetSol > 0,
+                )
+                .map((d, i) => renderRow(d.validator, i, d.isGhost))}
 
-            {/* Winning Set Cutoff Divider */}
-            {nonWinningValidatorsCount > 0 && (
-              <TableRow>
-                <TableCell colSpan={7} className="p-0">
-                  <div className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-primary-light-10 via-primary-light to-primary-light-10 border-y-2 border-primary">
-                    <div className="flex items-center gap-1.5">
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 16 16"
-                        fill="none"
-                      >
-                        <path
-                          d="M8 2L10 6H14L11 9L12 13L8 10.5L4 13L5 9L2 6H6L8 2Z"
-                          fill="var(--primary)"
-                          opacity="0.8"
-                        />
-                      </svg>
-                      <span className="text-xs font-semibold text-primary">
-                        Winning Set Cutoff
+              {/* Winning Set Cutoff Divider */}
+              {nonWinningValidatorsCount > 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="p-0">
+                    <div className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-primary-light-10 via-primary-light to-primary-light-10 border-y-2 border-primary">
+                      <div className="flex items-center gap-1.5">
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                        >
+                          <path
+                            d="M8 2L10 6H14L11 9L12 13L8 10.5L4 13L5 9L2 6H6L8 2Z"
+                            fill="var(--primary)"
+                            opacity="0.8"
+                          />
+                        </svg>
+                        <span className="text-xs font-semibold text-primary">
+                          Winning Set Cutoff
+                        </span>
+                      </div>
+                      <div className="flex-1 h-px bg-primary opacity-20" />
+                      <span className="text-xs text-primary font-mono font-semibold">
+                        Winning APY: {formatPercentage(winningAPY, 2)}
+                      </span>
+                      <div className="flex-1 h-px bg-primary opacity-20" />
+                      <span className="text-xs text-muted-foreground">
+                        {winningCount} of {totalValidators} validators
                       </span>
                     </div>
-                    <div className="flex-1 h-px bg-primary opacity-20" />
-                    <span className="text-xs text-primary font-mono font-semibold">
-                      Winning APY: {formatPercentage(winningAPY, 2)}
-                    </span>
-                    <div className="flex-1 h-px bg-primary opacity-20" />
-                    <span className="text-xs text-muted-foreground">
-                      {winningCount} of {totalValidators} validators
-                    </span>
-                  </div>
-                </TableCell>
-              </TableRow>
-            )}
-
-            {allDisplayValidators
-              .filter(
-                d =>
-                  d.isGhost ||
-                  d.validator.auctionStake.marinadeSamTargetSol === 0,
-              )
-              .map((d, i) =>
-                renderRow(d.validator, winningCount + i, d.isGhost),
+                  </TableCell>
+                </TableRow>
               )}
-          </TableBody>
-        </ShadTable>
+
+              {allDisplayValidators
+                .filter(
+                  d =>
+                    d.isGhost ||
+                    d.validator.auctionStake.marinadeSamTargetSol === 0,
+                )
+                .map((d, i) =>
+                  renderRow(d.validator, winningCount + i, d.isGhost),
+                )}
+            </TableBody>
+          </ShadTable>
+        </div>
       </div>
     </div>
   )

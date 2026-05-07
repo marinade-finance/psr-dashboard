@@ -248,7 +248,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
     <div className="bg-background-page">
       <Navigation level={level} />
       {latestBroadcastNotification && (
-        <div className="px-4 pt-3 pb-0">
+        <div className="px-4 pt-3 pb-0 max-w-[1920px] mx-auto">
           <Banner
             key={latestBroadcastNotification.id}
             title={latestBroadcastNotification.title ?? 'Announcement'}
