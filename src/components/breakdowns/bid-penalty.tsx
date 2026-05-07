@@ -86,9 +86,9 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
             label="Effective participating bid PMPE"
             value={pmpe(m.effParticipatingBidPmpe)}
           />
-          <CalcRow label="Limit — min of above" value={pmpe(m.limit)} />
+          <CalcRow label="Limit — minimum of the above" value={pmpe(m.limit)} />
           <CalcRow
-            label="Adjusted limit after deviation"
+            label="Adjusted limit after permitted deviation"
             value={pmpe(m.adjustedLimit)}
           />
           <CalcRow
