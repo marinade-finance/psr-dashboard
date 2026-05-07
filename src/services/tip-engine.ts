@@ -162,6 +162,7 @@ export const getValidatorTip = (
       text: `Bond runway ${Math.round(bondGoodForEpochs)} epochs.${topUpStr}`,
       urgency: 'warning',
       constraint: 'bond',
+      icon: '⚠',
     }
   }
 
@@ -170,6 +171,7 @@ export const getValidatorTip = (
       text: `${Math.round(delta).toLocaleString()} SOL arriving next epoch.`,
       urgency: 'positive',
       constraint: 'none',
+      icon: '↗',
     }
   }
 
