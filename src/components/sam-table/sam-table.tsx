@@ -845,7 +845,7 @@ export const SamTable: React.FC<Props> = ({
                 .map((d, i) => renderRow(d.validator, i, d.isGhost))}
 
               {/* Winning Set Cutoff Divider — only meaningful when sorted by default APY rank */}
-              {nonWinningValidatorsCount > 0 && sortColumn === 'rank' && (
+              {nonWinningValidatorsCount > 0 && sortColumn === 'stakeDelta' && (
                 <TableRow>
                   <TableCell colSpan={7} className="p-0">
                     <div className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-primary-light-10 via-primary-light to-primary-light-10 border-y-2 border-primary">
