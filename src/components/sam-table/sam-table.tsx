@@ -380,9 +380,19 @@ export const SamTable: React.FC<Props> = ({
   const winningValidators = allDisplayValidators.filter(
     d => !d.isGhost && d.validator.auctionStake.marinadeSamTargetSol > 0,
   )
-  const nonWinningValidatorsCount = allDisplayValidators.filter(
-    d => !d.isGhost && d.validator.auctionStake.marinadeSamTargetSol === 0,
-  ).length
+  // Cutoff partition: who would clear the bid threshold by yield, regardless
+  // of whether the auction actually allocated them target stake. Bid-eligible
+  // bond-blocked validators belong above the line; only validators whose max
+  // APY is below the winning APY belong below.
+  const bidQualifies = (v: AuctionValidator) =>
+    selectMaxAPY(v, epochsPerYear) >= winningAPY
+  const aboveCutoff = allDisplayValidators.filter(
+    d => d.isGhost || bidQualifies(d.validator),
+  )
+  const belowCutoff = allDisplayValidators.filter(
+    d => !d.isGhost && !bidQualifies(d.validator),
+  )
+  const aboveCount = aboveCutoff.filter(d => !d.isGhost).length
   const totalRedelegation = useMemo(
     () =>
       validatorsWithBond.reduce((s, v) => {
@@ -768,16 +778,10 @@ export const SamTable: React.FC<Props> = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {allDisplayValidators
-                .filter(
-                  d =>
-                    d.isGhost ||
-                    d.validator.auctionStake.marinadeSamTargetSol > 0,
-                )
-                .map((d, i) => renderRow(d.validator, i, d.isGhost))}
+              {aboveCutoff.map((d, i) => renderRow(d.validator, i, d.isGhost))}
 
               {/* Winning Set Cutoff Divider — only meaningful when sorted by default APY rank */}
-              {nonWinningValidatorsCount > 0 && sortColumn === 'maxApy' && (
+              {belowCutoff.length > 0 && sortColumn === 'maxApy' && (
                 <TableRow>
                   <TableCell colSpan={7} className="p-0">
                     <div className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-primary-light-10 via-primary-light to-primary-light-10 border-y-2 border-primary">
@@ -804,22 +808,16 @@ export const SamTable: React.FC<Props> = ({
                       </span>
                       <div className="flex-1 h-px bg-primary opacity-20" />
                       <span className="text-xs text-muted-foreground">
-                        {winningCount} of {totalValidators} validators
+                        {aboveCount} bid-eligible · {winningCount} winning
                       </span>
                     </div>
                   </TableCell>
                 </TableRow>
               )}
 
-              {allDisplayValidators
-                .filter(
-                  d =>
-                    d.isGhost ||
-                    d.validator.auctionStake.marinadeSamTargetSol === 0,
-                )
-                .map((d, i) =>
-                  renderRow(d.validator, winningCount + i, d.isGhost),
-                )}
+              {belowCutoff.map((d, i) =>
+                renderRow(d.validator, aboveCount + i, d.isGhost),
+              )}
             </TableBody>
           </ShadTable>
         </div>

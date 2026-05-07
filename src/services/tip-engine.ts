@@ -103,7 +103,29 @@ export const getValidatorTip = (
   const delta = validator.values.expectedStakeChangeSol ?? 0
   const health = bondHealthFromAuction(validator, dsSamConfig, winningTotalPmpe)
 
+  // Out-of-set validators: distinguish bid-too-low from bond-blocked.
+  // A would-be winner whose bid clears the threshold but whose bond can't
+  // back more stake gets the bond CTA, not the rank CTA.
   if (!inSet) {
+    if (health !== 'healthy') {
+      const m = computeBondCoverageMetrics(
+        validator,
+        dsSamConfig.minBondEpochs,
+        dsSamConfig.idealBondEpochs,
+        winningTotalPmpe,
+        dsSamConfig.bondRiskFeeMult,
+      )
+      const topUp =
+        m.topUpToIdealKeep > 0 ? m.topUpToIdealKeep : m.topUpToKeepStake
+      if (topUp > 0) {
+        return {
+          text: `Bond too small for stake. Top up ${formatSolAmount(topUp, 0)} SOL to win more.`,
+          urgency: 'warning',
+          constraint: 'bond',
+          icon: 'warning',
+        }
+      }
+    }
     return {
       text: 'Out of auction — raise bid or cut commission.',
       urgency: 'warning',
