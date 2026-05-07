@@ -23,7 +23,6 @@ import {
   CSS_DESTRUCTIVE_LIGHT,
   CSS_STATUS_GREEN,
   CSS_STATUS_YELLOW,
-  CSS_STATUS_YELLOW_LIGHT,
   CSS_WARNING,
 } from 'src/lib/utils'
 import {
@@ -702,7 +701,6 @@ export const ValidatorDetail = ({
                 <MetricRow
                   label="Total"
                   value={`${formatSolAmount(paymentMetrics.total + penaltyMetrics.penaltySol, 2)} SOL`}
-                  valueStyle={{ fontWeight: 600 }}
                 />
                 <button
                   className="text-xs text-primary hover:underline"
@@ -721,17 +719,8 @@ export const ValidatorDetail = ({
             />
 
             {simEnabled && (
-              <div
-                className="bg-card rounded-xl border-2 p-5"
-                style={{
-                  borderColor: CSS_STATUS_YELLOW,
-                  background: CSS_STATUS_YELLOW_LIGHT,
-                }}
-              >
-                <h3
-                  className="text-base font-semibold flex items-center gap-2"
-                  style={{ color: CSS_STATUS_YELLOW }}
-                >
+              <div className="rounded-xl border-2 p-5 border-status-yellow bg-status-yellow-light">
+                <h3 className="text-base font-semibold flex items-center gap-2 text-status-yellow">
                   What-If Simulation
                   <HelpTip text={HELP_TEXT.simulation} />
                 </h3>

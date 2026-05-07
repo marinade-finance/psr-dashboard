@@ -70,7 +70,6 @@ const STATUS_CLASSES: Record<'red' | 'yellow' | 'green', string> = {
 
 export const CalcCard: React.FC<{
   title: string
-  helpText?: string
   guideTo?: string
   isSimulated?: boolean
   status?: { label: string; tone: 'red' | 'yellow' | 'green' }

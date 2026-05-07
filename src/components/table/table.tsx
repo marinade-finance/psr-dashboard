@@ -55,9 +55,8 @@ function colorClassName(color?: Color): string {
     case Color.GREEN:
       return 'bg-cell-green'
     case Color.YELLOW:
-      return 'bg-cell-yellow'
     case Color.ORANGE:
-      return 'bg-cell-orange'
+      return 'bg-cell-yellow'
     case Color.GREY:
       return 'bg-cell-grey'
     default:

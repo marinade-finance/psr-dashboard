@@ -143,7 +143,6 @@
     --tertiary: #3a4e4d;
     --tertiary-foreground: #9ab1b2;
     --muted: #182120;
-    --muted-foreground: #6c8383;
     --border: rgba(255, 255, 255, 0.15);
     --border-grid: rgba(255, 255, 255, 0.06);
     --primary: #179f99;
@@ -171,12 +170,6 @@
     --status-yellow: #fbbf24;
     --status-yellow-light: rgba(251, 191, 36, 0.15);
     --status-red: #f87171;
-    --status-grey: #6b7280;
-    --bond-none: hsl(220, 8%, 28%);
-    --bond-low: hsl(0, 50%, 30%);
-    --bond-mid: hsl(38, 65%, 30%);
-    --bond-high: hsl(172, 45%, 28%);
-    --bond-full: hsl(168, 55%, 32%);
     --accent: #212c2b;
     --accent-foreground: #f0fdfa;
     --input: rgba(255, 255, 255, 0.15);
@@ -185,14 +178,6 @@
     --chart-3: #f59e0b;
     --chart-4: #a855f7;
     --chart-5: #f43f5e;
-    --sim-from: rgba(5, 30, 28, 1);
-    --sim-to: rgba(15, 50, 48, 1);
-    --sim-glow-from: rgba(10, 60, 56, 1);
-    --sim-glow-to: rgba(20, 80, 76, 1);
-    --sim-tbody: rgba(5, 30, 28, 0.08);
-    --sim-row: rgba(5, 30, 28, 0.06);
-    --shadow-hover-val: 0 4px 12px rgba(0, 0, 0, 0.15);
-    --shadow-button-val: 0 1px 3px rgba(0, 0, 0, 0.3);
   }
 
   html {
@@ -229,7 +214,7 @@
 .react-tooltip {
   --rt-opacity: 1 !important;
   background-color: rgba(0, 0, 0, 0.9) !important;
-  color: var(--text-light-2);
+  color: rgba(255, 255, 255, 0.95);
   width: max-content;
   max-width: min(640px, calc(100vw - 24px));
 }

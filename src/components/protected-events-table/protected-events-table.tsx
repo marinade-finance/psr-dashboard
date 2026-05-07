@@ -4,6 +4,7 @@ import { Badge } from 'src/components/ui/badge'
 import { EpochRangePicker } from 'src/components/ui/epoch-range-picker'
 import { Input } from 'src/components/ui/input'
 import { Label } from 'src/components/ui/label'
+import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
 import { formatSolAmount } from 'src/format'
 import {
   selectAmount,
@@ -237,20 +238,12 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
             columns={[
               {
                 header: 'Validator',
-                render: ({ protectedEvent, validator }) => {
-                  const name = validator ? selectName(validator) : null
-                  const va = protectedEvent.vote_account
-                  return (
-                    <div>
-                      <div className="font-medium text-[13px] text-foreground">
-                        {name ?? '---'}
-                      </div>
-                      <div className="text-[11px] font-mono text-secondary-foreground mt-px">
-                        {va.slice(0, 8)}...{va.slice(-4)}
-                      </div>
-                    </div>
-                  )
-                },
+                render: ({ protectedEvent, validator }) => (
+                  <ValidatorIdentity
+                    name={validator ? selectName(validator) : null}
+                    voteAccount={protectedEvent.vote_account}
+                  />
+                ),
                 compare: (a, b) =>
                   a.protectedEvent.vote_account.localeCompare(
                     b.protectedEvent.vote_account,
