@@ -111,7 +111,7 @@ export const getValidatorTip = (
     }
   }
 
-  // Bond CTA cascade — priority: stop fee > keep stake > ideal.
+  // Bond CTA cascade — priority: avoid fee > keep stake > ideal.
   if (health === 'critical' || health === 'watch') {
     const m = computeBondCoverageMetrics(
       validator,
@@ -122,10 +122,10 @@ export const getValidatorTip = (
     )
     const bondRiskFeeSol = validator.values?.bondRiskFeeSol ?? 0
 
-    if (bondRiskFeeSol > 0 || m.topUpToStopFee > 0) {
+    if (bondRiskFeeSol > 0 || m.topUpToAvoidFee > 0) {
       const topUpStr =
-        m.topUpToStopFee > 0
-          ? ` Top up ${formatSolAmount(m.topUpToStopFee, 0)} SOL to stop the fee.`
+        m.topUpToAvoidFee > 0
+          ? ` Top up ${formatSolAmount(m.topUpToAvoidFee, 0)} SOL to stop the fee.`
           : ''
       const feeStr =
         bondRiskFeeSol > 0

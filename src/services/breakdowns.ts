@@ -108,7 +108,7 @@ export type BondCoverageMetrics = {
   topUpToIdealKeep: number
   // Risk section (projected basis): SDK penalty trigger
   floorBaseProjected: number
-  topUpToStopFee: number
+  topUpToAvoidFee: number
 }
 
 export function computeBondCoverageMetrics(
@@ -182,10 +182,10 @@ export function computeBondCoverageMetrics(
 
   // Projected basis: post-undelegation. Mirrors the SDK's fee trigger:
   //   claimableBond >= minUnprotectedReserve + projectedExposed * minBondPmpe/1000
-  // Used only for the Bond Risk section (top up to stop the fee).
+  // Used only for the Bond Risk section (top up to avoid the fee).
   const floorBaseProjected =
     minUnprotectedReserveSol + (minBondPmpe / 1000) * projectedExposedStakeSol
-  const topUpToStopFee = Math.max(
+  const topUpToAvoidFee = Math.max(
     0,
     floorBaseProjected - claimableBondBalanceSol,
   )
@@ -210,7 +210,7 @@ export function computeBondCoverageMetrics(
     requiredIdealKeep,
     topUpToIdealKeep,
     floorBaseProjected,
-    topUpToStopFee,
+    topUpToAvoidFee,
   }
 }
 
@@ -231,7 +231,7 @@ export function penaltyRiskColor(
     winningTotalPmpe,
     bondRiskFeeMult,
   )
-  if (m.topUpToStopFee > 0) return Color.RED
+  if (m.topUpToAvoidFee > 0) return Color.RED
   if (m.topUpToKeepStake > 0 || m.topUpToIdealKeep > 0) return Color.YELLOW
   return Color.GREEN
 }

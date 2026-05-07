@@ -82,8 +82,8 @@ function bondCoverageLabel(
   coverage: BondCoverageMetrics,
 ): string {
   if (health === 'critical')
-    return coverage.topUpToStopFee > 0
-      ? `Top up ${pay(coverage.topUpToStopFee)} to stop fee`
+    return coverage.topUpToAvoidFee > 0
+      ? `Top up ${pay(coverage.topUpToAvoidFee)} to avoid fee`
       : 'Critical'
   if (health === 'watch') {
     if (coverage.topUpToKeepStake > 0)

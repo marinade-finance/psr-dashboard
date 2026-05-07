@@ -23,7 +23,7 @@ type Props = {
 
 const statusLine = (
   state: BondHealthState,
-  topUpToStopFee: number,
+  topUpToAvoidFee: number,
   topUpToKeepStake: number,
   topUpToIdealKeep: number,
   bondRiskFeeSol: number,
@@ -32,16 +32,16 @@ const statusLine = (
     if (bondRiskFeeSol > 0) {
       return {
         label:
-          topUpToStopFee > 0
-            ? `Bond risk fee will be charged. Top up ${pay(topUpToStopFee)} to stop it.`
+          topUpToAvoidFee > 0
+            ? `Bond risk fee will be charged. Top up ${pay(topUpToAvoidFee)} to avoid it.`
             : 'Bond risk fee will be charged.',
         tone: 'red',
       }
     }
     return {
       label:
-        topUpToStopFee > 0
-          ? `Penalty imminent. Top up ${pay(topUpToStopFee)} to avoid it.`
+        topUpToAvoidFee > 0
+          ? `Penalty imminent. Top up ${pay(topUpToAvoidFee)} to avoid it.`
           : 'Penalty imminent.',
       tone: 'red',
     }
@@ -85,7 +85,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
   )
   const status = statusLine(
     bondState,
-    m.topUpToStopFee,
+    m.topUpToAvoidFee,
     m.topUpToKeepStake,
     m.topUpToIdealKeep,
     bondRiskFeeSol,
@@ -95,7 +95,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
   // (some undelegation already queued) or a fee/top-up is actually outstanding.
   const showRiskSection =
     bondRiskFeeSol > 0 ||
-    m.topUpToStopFee > 0 ||
+    m.topUpToAvoidFee > 0 ||
     m.carriedPaidUndelegationSol > 0
 
   const cta = onGoToSim ? (
@@ -220,10 +220,10 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
                 value={pay(m.floorBaseProjected)}
                 bold
               />
-              {m.topUpToStopFee > 0 && (
+              {m.topUpToAvoidFee > 0 && (
                 <CalcRow
-                  label="Top up to stop the fee"
-                  value={pay(m.topUpToStopFee)}
+                  label="Top up to avoid the fee"
+                  value={pay(m.topUpToAvoidFee)}
                   bold
                   large
                   accent="red"
@@ -238,7 +238,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
                   accent="red"
                 />
               )}
-              {m.topUpToStopFee === 0 && bondRiskFeeSol === 0 && (
+              {m.topUpToAvoidFee === 0 && bondRiskFeeSol === 0 && (
                 <OkRow message="Bond above the penalty threshold." />
               )}
             </>
