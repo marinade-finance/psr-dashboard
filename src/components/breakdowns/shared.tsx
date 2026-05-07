@@ -101,6 +101,18 @@ export const CalcCard: React.FC<{
       </div>
     )}
     {children}
-    {cta && <div className="mt-4 pt-3 border-t border-border">{cta}</div>}
+    {cta && (
+      <div
+        className={`mt-4 pt-3 border-t ${
+          status?.tone === 'red'
+            ? 'border-destructive/30 [&_button]:text-destructive [&_a]:text-destructive'
+            : status?.tone === 'yellow'
+              ? 'border-[var(--status-yellow,#b58900)]/30 [&_button]:text-[var(--status-yellow,#b58900)] [&_a]:text-[var(--status-yellow,#b58900)]'
+              : 'border-border'
+        }`}
+      >
+        {cta}
+      </div>
+    )}
   </div>
 )
