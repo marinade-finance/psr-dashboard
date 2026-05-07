@@ -10,6 +10,7 @@ import {
   TableHead,
   TableCell,
 } from 'src/components/ui/table'
+import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
 import { formatPercentage, formatSolAmount } from 'src/format'
 import { bondHealthFromAuction } from 'src/services/breakdowns'
 import { HELP_TEXT } from 'src/services/help-text'
@@ -605,20 +606,16 @@ export const SamTable: React.FC<Props> = ({
 
         {/* Validator */}
         <TableCell className="px-3.5 py-3 min-w-[180px] sm:min-w-[320px]">
-          <div className="flex items-center gap-1.5">
-            <span className="text-foreground font-medium text-sm">
-              {validatorName}
-            </span>
-            {hasAlert && (
-              <span className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0 animate-pulse" />
-            )}
-          </div>
-          <div className="text-secondary-foreground text-xs mt-px font-mono hidden sm:block">
-            {voteAccount}
-          </div>
-          <div className="text-secondary-foreground text-xs mt-px font-mono sm:hidden">
-            {voteAccount.slice(0, 8)}…{voteAccount.slice(-4)}
-          </div>
+          <ValidatorIdentity
+            name={validatorName}
+            voteAccount={voteAccount}
+            responsive
+            trailing={
+              hasAlert ? (
+                <span className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0 animate-pulse" />
+              ) : null
+            }
+          />
         </TableCell>
 
         {/* Max APY with hover tooltip */}
