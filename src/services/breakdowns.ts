@@ -90,16 +90,25 @@ export type BondCoverageMetrics = {
   marinadeActivatedStakeSol: number
   expectedMaxEffBidPmpe: number
   onchainDistributedPmpe: number
+  // Two stake bases:
+  //   currentExposedStakeSol  — full active − unprotected. Drives "keep stake" sizing.
+  //   projectedExposedStakeSol — current minus pending undelegations. Drives the
+  //     SDK's penalty trigger and the bondRiskFee charge.
+  currentExposedStakeSol: number
   projectedExposedStakeSol: number
+  carriedPaidUndelegationSol: number
   minUnprotectedReserveSol: number
   idealUnprotectedReserveSol: number
-  onchainBase: number
-  minCoverageBid: number
-  floorBase: number
-  topUpToMin: number
-  idealCoverageBid: number
-  requiredIdeal: number
-  topUpToIdeal: number
+  // Coverage section (current basis): "keep your stake"
+  minCoverageBidKeep: number
+  floorBaseKeep: number
+  topUpToKeepStake: number
+  idealCoverageBidKeep: number
+  requiredIdealKeep: number
+  topUpToIdealKeep: number
+  // Risk section (projected basis): SDK penalty trigger
+  floorBaseProjected: number
+  topUpToStopFee: number
 }
 
 export function computeBondCoverageMetrics(
@@ -151,21 +160,35 @@ export function computeBondCoverageMetrics(
   const minBondPmpe = finite(v.minBondPmpe)
   const idealBondPmpe = finite(v.idealBondPmpe)
 
-  const onchainBase = (onchainDistributedPmpe / 1000) * projectedExposedStakeSol
-  const minCoverageBid =
-    ((minEp * expectedMaxEffBidPmpe) / 1000) * projectedExposedStakeSol
-  // floorBase mirrors SDK fee trigger threshold:
-  //   claimableBond >= minUnprotectedReserve + projectedExposed * minBondPmpe/1000
-  const floorBase =
-    minUnprotectedReserveSol + (minBondPmpe / 1000) * projectedExposedStakeSol
-  const topUpToMin = Math.max(0, floorBase - claimableBondBalanceSol)
+  // Current basis: full active stake (no undelegation subtraction).
+  // Drives "keep your stake" sizing — what bond is required to cover what
+  // the validator currently has, so the protocol won't trigger any further
+  // undelegation next epoch.
+  const currentExposedStakeSol = Math.max(
+    0,
+    marinadeActivatedStakeSol - unprotectedStakeSol,
+  )
+  const minCoverageBidKeep =
+    ((minEp * expectedMaxEffBidPmpe) / 1000) * currentExposedStakeSol
+  const floorBaseKeep =
+    minUnprotectedReserveSol + (minBondPmpe / 1000) * currentExposedStakeSol
+  const topUpToKeepStake = Math.max(0, floorBaseKeep - claimableBondBalanceSol)
 
-  const idealCoverageBid =
-    ((idealEp * expectedMaxEffBidPmpe) / 1000) * projectedExposedStakeSol
-  const requiredIdeal =
-    idealUnprotectedReserveSol +
-    (idealBondPmpe / 1000) * projectedExposedStakeSol
-  const topUpToIdeal = Math.max(0, requiredIdeal - bondBalanceSol)
+  const idealCoverageBidKeep =
+    ((idealEp * expectedMaxEffBidPmpe) / 1000) * currentExposedStakeSol
+  const requiredIdealKeep =
+    idealUnprotectedReserveSol + (idealBondPmpe / 1000) * currentExposedStakeSol
+  const topUpToIdealKeep = Math.max(0, requiredIdealKeep - bondBalanceSol)
+
+  // Projected basis: post-undelegation. Mirrors the SDK's fee trigger:
+  //   claimableBond >= minUnprotectedReserve + projectedExposed * minBondPmpe/1000
+  // Used only for the Bond Risk section (top up to stop the fee).
+  const floorBaseProjected =
+    minUnprotectedReserveSol + (minBondPmpe / 1000) * projectedExposedStakeSol
+  const topUpToStopFee = Math.max(
+    0,
+    floorBaseProjected - claimableBondBalanceSol,
+  )
 
   return {
     minEp,
@@ -175,16 +198,19 @@ export function computeBondCoverageMetrics(
     marinadeActivatedStakeSol,
     expectedMaxEffBidPmpe,
     onchainDistributedPmpe,
+    currentExposedStakeSol,
     projectedExposedStakeSol,
+    carriedPaidUndelegationSol,
     minUnprotectedReserveSol,
     idealUnprotectedReserveSol,
-    onchainBase,
-    minCoverageBid,
-    floorBase,
-    topUpToMin,
-    idealCoverageBid,
-    requiredIdeal,
-    topUpToIdeal,
+    minCoverageBidKeep,
+    floorBaseKeep,
+    topUpToKeepStake,
+    idealCoverageBidKeep,
+    requiredIdealKeep,
+    topUpToIdealKeep,
+    floorBaseProjected,
+    topUpToStopFee,
   }
 }
 
@@ -205,8 +231,8 @@ export function penaltyRiskColor(
     winningTotalPmpe,
     bondRiskFeeMult,
   )
-  if (m.topUpToMin > 0) return Color.RED
-  if (m.topUpToIdeal > 0) return Color.YELLOW
+  if (m.topUpToStopFee > 0) return Color.RED
+  if (m.topUpToKeepStake > 0 || m.topUpToIdealKeep > 0) return Color.YELLOW
   return Color.GREEN
 }
 
