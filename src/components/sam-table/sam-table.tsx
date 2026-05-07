@@ -11,7 +11,7 @@ import {
   TableCell,
 } from 'src/components/ui/table'
 import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
-import { formatPercentage, formatSolAmount } from 'src/format'
+import { formatPercentage, formatSolAmount, stake } from 'src/format'
 import { bondHealthFromAuction } from 'src/services/breakdowns'
 import { HELP_TEXT } from 'src/services/help-text'
 import {
@@ -586,7 +586,7 @@ export const SamTable: React.FC<Props> = ({
               {bondChip.label}
             </span>
             <span className="text-muted-foreground text-xs font-mono">
-              {formatSolAmount(selectBondSize(validator), 0)} SOL
+              {stake(selectBondSize(validator))}
             </span>
           </div>
           <div className="flex items-center gap-1.5">
@@ -608,7 +608,7 @@ export const SamTable: React.FC<Props> = ({
         <TableCell className="px-3.5 py-3">
           <div className="flex flex-col gap-0.5">
             <span className="text-muted-foreground text-xs font-mono">
-              {formatSolAmount(validator.marinadeActivatedStakeSol, 0)} SOL
+              {stake(validator.marinadeActivatedStakeSol)}
             </span>
             <span
               className={`font-mono text-xs ${
@@ -626,7 +626,7 @@ export const SamTable: React.FC<Props> = ({
               }
             >
               {expectedChange > 0 ? '+' : ''}
-              {formatSolAmount(Math.round(expectedChange), 0)} SOL
+              {stake(expectedChange)}
             </span>
           </div>
         </TableCell>

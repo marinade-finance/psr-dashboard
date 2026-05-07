@@ -12,7 +12,7 @@ import { Input } from 'src/components/ui/input'
 import { Sheet, SheetContent } from 'src/components/ui/sheet'
 import { Switch } from 'src/components/ui/switch'
 import { ApyCompositionCard } from 'src/components/validator-detail/apy-composition-card'
-import { formatSolAmount, pay } from 'src/format'
+import { pay, stake } from 'src/format'
 import {
   CSS_PRIMARY,
   CSS_DESTRUCTIVE,
@@ -632,22 +632,22 @@ export const ValidatorDetail = ({
                 <MetricRow
                   label="Active Marinade stake"
                   help="How much SOL Marinade has staked with you right now."
-                  value={`${formatSolAmount(validator.marinadeActivatedStakeSol, 0)} SOL`}
+                  value={stake(validator.marinadeActivatedStakeSol)}
                 />
                 <MetricRow
                   label="Target Marinade stake"
                   help="How much stake the auction decided you should have this epoch, based on your bid and how you scored."
-                  value={`${formatSolAmount(validator.auctionStake.marinadeSamTargetSol, 0)} SOL`}
+                  value={stake(validator.auctionStake.marinadeSamTargetSol)}
                 />
                 <MetricRow
                   label="Expected change next epoch"
                   help="How much stake you should gain or lose next epoch. Gains are capped by how much new SOL Marinade has to spread around; losses come from stakers withdrawing."
                   value={
                     expectedStakeDelta > 0
-                      ? `+${formatSolAmount(expectedStakeDelta, 0)} SOL`
+                      ? `+${stake(expectedStakeDelta)}`
                       : expectedStakeDelta < 0
-                        ? `${formatSolAmount(expectedStakeDelta, 0)} SOL`
-                        : '0 SOL'
+                        ? stake(expectedStakeDelta)
+                        : stake(0)
                   }
                   valueStyle={{
                     color:
@@ -669,7 +669,7 @@ export const ValidatorDetail = ({
               <div className="mt-3 space-y-3">
                 <MetricRow
                   label="Balance"
-                  value={`${formatSolAmount(validator.bondBalanceSol, 0)} SOL`}
+                  value={stake(validator.bondBalanceSol)}
                 />
                 <MetricRow
                   label="Reserve"
@@ -703,12 +703,12 @@ export const ValidatorDetail = ({
               <div className="space-y-3">
                 <MetricRow
                   label="Active Stake Cost"
-                  value={`${formatSolAmount(paymentMetrics.cost, 2)} SOL`}
+                  value={pay(paymentMetrics.cost)}
                   onSeeBreakdown={() => setTab('payments')}
                 />
                 <MetricRow
                   label="Activating Stake Cost"
-                  value={`${formatSolAmount(paymentMetrics.activatingCost, 2)} SOL`}
+                  value={pay(paymentMetrics.activatingCost)}
                   onSeeBreakdown={() => setTab('payments')}
                 />
                 {(() => {
@@ -720,7 +720,7 @@ export const ValidatorDetail = ({
                   return (
                     <MetricRow
                       label="Penalty"
-                      value={`${formatSolAmount(penaltyTotal, 2)} SOL`}
+                      value={pay(penaltyTotal)}
                       valueStyle={{ color: CSS_DESTRUCTIVE }}
                     />
                   )
@@ -728,7 +728,7 @@ export const ValidatorDetail = ({
                 {bidTooLowPenaltySol > 0 && (
                   <PenaltyRow
                     label="↳ bid-too-low penalty"
-                    value={`${formatSolAmount(bidTooLowPenaltySol, 2)} SOL`}
+                    value={pay(bidTooLowPenaltySol)}
                     onSeeBreakdown={() => setTab('penalty')}
                     sub
                   />
@@ -736,7 +736,7 @@ export const ValidatorDetail = ({
                 {blacklistPenaltySol > 0 && (
                   <PenaltyRow
                     label="↳ blacklist penalty"
-                    value={`${formatSolAmount(blacklistPenaltySol, 2)} SOL`}
+                    value={pay(blacklistPenaltySol)}
                     onSeeBreakdown={() => setTab('payments')}
                     sub
                   />
@@ -744,14 +744,19 @@ export const ValidatorDetail = ({
                 {bondRiskFeeSol > 0 && (
                   <PenaltyRow
                     label="↳ bond risk fee"
-                    value={`${formatSolAmount(bondRiskFeeSol, 2)} SOL`}
+                    value={pay(bondRiskFeeSol)}
                     onSeeBreakdown={() => setTab('bond')}
                     sub
                   />
                 )}
                 <MetricRow
                   label="Total"
-                  value={`${formatSolAmount(paymentMetrics.total + bidTooLowPenaltySol + blacklistPenaltySol + bondRiskFeeSol, 2)} SOL`}
+                  value={pay(
+                    paymentMetrics.total +
+                      bidTooLowPenaltySol +
+                      blacklistPenaltySol +
+                      bondRiskFeeSol,
+                  )}
                   separator
                 />
               </div>

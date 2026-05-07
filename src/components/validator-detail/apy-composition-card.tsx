@@ -26,13 +26,9 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
   winningApy,
   validator,
 }) => {
-  const inflComm = validator.inflationCommissionDec * 100
-  const mevComm =
-    validator.mevCommissionDec !== null ? validator.mevCommissionDec * 100 : 0
-  const blockComm =
-    validator.blockRewardsCommissionDec !== null
-      ? validator.blockRewardsCommissionDec * 100
-      : 0
+  const inflComm = validator.inflationCommissionDec
+  const mevComm = validator.mevCommissionDec ?? 0
+  const blockComm = validator.blockRewardsCommissionDec ?? 0
 
   const r = validator.revShare
   // Bar widths use raw PMPE (linear, sums to totalPmpe); the displayed % is
@@ -44,21 +40,21 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
       apy: apyBreakdown.inflation,
       pmpe: r.inflationPmpe,
       swatch: 'bg-chart-1',
-      context: `${inflComm.toFixed(0)}% commission`,
+      context: `${formatPercentage(inflComm, 0)} commission`,
     },
     {
       label: 'MEV',
       apy: apyBreakdown.mev,
       pmpe: r.mevPmpe,
       swatch: 'bg-chart-2',
-      context: `${mevComm.toFixed(0)}% commission`,
+      context: `${formatPercentage(mevComm, 0)} commission`,
     },
     {
       label: 'Block rewards',
       apy: apyBreakdown.blockRewards,
       pmpe: r.blockPmpe ?? 0,
       swatch: 'bg-chart-3',
-      context: `${blockComm.toFixed(0)}% shared`,
+      context: `${formatPercentage(blockComm, 0)} shared`,
     },
     {
       label: 'Stake bid',
