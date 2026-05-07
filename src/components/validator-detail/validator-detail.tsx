@@ -24,6 +24,7 @@ import {
   CSS_STATUS_GREEN,
   CSS_STATUS_YELLOW,
   CSS_STATUS_YELLOW_LIGHT,
+  CSS_WARNING,
 } from 'src/lib/utils'
 import {
   bondHealthFromAuction,
@@ -94,7 +95,7 @@ function bondCoverageLabel(
 
 function bondCoverageColor(health: BondHealth): string {
   if (health === 'critical') return CSS_DESTRUCTIVE
-  if (health === 'watch') return 'var(--warning)'
+  if (health === 'watch') return CSS_WARNING
   return CSS_PRIMARY
 }
 
@@ -379,11 +380,10 @@ export const ValidatorDetail = ({
               </span>
               {tipTarget && (
                 <span
-                  className="text-xs font-medium shrink-0 px-2 py-0.5 rounded border whitespace-nowrap"
+                  className="text-xs font-medium shrink-0 px-2 py-0.5 rounded border whitespace-nowrap bg-card/55"
                   style={{
                     color: tipStyle.color,
                     borderColor: tipStyle.color,
-                    background: 'rgba(255,255,255,0.55)',
                   }}
                 >
                   {tip.constraint === 'bond' ? 'Bond tab →' : 'Simulate →'}
