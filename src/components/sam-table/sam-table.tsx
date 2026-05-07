@@ -62,17 +62,17 @@ const BOND_CHIP: Record<
   { chip: string; dot: string; bar: string; shortText: string; label: string }
 > = {
   healthy: {
-    chip: 'bg-[var(--primary-light-10)] text-primary',
+    chip: 'bg-primary-light-10 text-primary',
     dot: 'bg-primary',
     bar: 'bg-primary',
     shortText: 'text-primary',
     label: 'Healthy',
   },
   watch: {
-    chip: 'bg-[var(--warning-light)] text-[var(--warning)]',
-    dot: 'bg-[var(--warning)]',
-    bar: 'bg-[var(--warning)]',
-    shortText: 'text-[var(--warning)]',
+    chip: 'bg-warning-light text-warning',
+    dot: 'bg-warning',
+    bar: 'bg-warning',
+    shortText: 'text-warning',
     label: 'Watch',
   },
   critical: {
