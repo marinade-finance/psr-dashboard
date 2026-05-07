@@ -88,12 +88,14 @@ backstop.
 
 **Top metric tiles**
 
-- **Events Protected** — total count of protected events.
-- **Validator Bond Paid** — SOL paid out from validators' own bonds.
-- **Marinade Paid** — SOL paid out from Marinade's backstop (bond was
-  insufficient).
-- **Total SOL to Stakers** — sum of the above.
-- **Filtered Events** — appears only when a filter narrows the list.
+- **Events** — count of protected events. When a validator or epoch filter
+  is active, the primary number is the filtered subset and the subline shows
+  `of N total`.
+- **Amount** — total SOL paid out to stakers. Same filter behaviour as Events.
+  Below the value, a Bond / Marinade split bar shows what fraction came from
+  validator bonds vs. Marinade's backstop (hover for exact SOL).
+- **Last settled epoch** — most recent epoch where settlements have been
+  finalised on-chain.
 
 **Table columns**: Validator · Epoch · Reason · Paid Out (SOL + status badge)
 · Funded by (Validator Bond / Marinade).
