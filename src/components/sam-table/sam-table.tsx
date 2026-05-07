@@ -338,7 +338,7 @@ export const SamTable: React.FC<Props> = ({
   const [hoveredRow, setHoveredRow] = useState<string | null>(null)
 
   // Sorting state
-  const [sortColumn, setSortColumn] = useState<SortColumn>('stakeDelta')
+  const [sortColumn, setSortColumn] = useState<SortColumn>('maxApy')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
 
   const handleSort = (column: SortColumn) => {
@@ -845,7 +845,7 @@ export const SamTable: React.FC<Props> = ({
                 .map((d, i) => renderRow(d.validator, i, d.isGhost))}
 
               {/* Winning Set Cutoff Divider — only meaningful when sorted by default APY rank */}
-              {nonWinningValidatorsCount > 0 && sortColumn === 'stakeDelta' && (
+              {nonWinningValidatorsCount > 0 && sortColumn === 'maxApy' && (
                 <TableRow>
                   <TableCell colSpan={7} className="p-0">
                     <div className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-primary-light-10 via-primary-light to-primary-light-10 border-y-2 border-primary">
