@@ -258,7 +258,7 @@ export const ValidatorDetail = ({
                   {rank}
                 </span>
                 <span
-                  className={`text-[10px] font-mono ${inSet ? 'text-muted-foreground' : 'text-destructive'}`}
+                  className={`text-xs font-mono ${inSet ? 'text-muted-foreground' : 'text-destructive'}`}
                 >
                   {inSet
                     ? cutoffRank === 0
@@ -295,9 +295,13 @@ export const ValidatorDetail = ({
                 </span>
               )}
             </div>
-            <span className="text-xs font-mono text-muted-foreground break-all leading-tight">
-              {voteAccount}
-            </span>
+            <button
+              className="text-xs font-mono text-muted-foreground hover:text-foreground leading-tight text-left transition-colors"
+              title={voteAccount}
+              onClick={() => void navigator.clipboard.writeText(voteAccount)}
+            >
+              {voteAccount.slice(0, 8)}…{voteAccount.slice(-8)}
+            </button>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <label
