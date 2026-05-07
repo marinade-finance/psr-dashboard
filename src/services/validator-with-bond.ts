@@ -30,11 +30,9 @@ export const selectMaxProtectedStake = ({
 }
 
 export const selectProtectedStake = (entry: ValidatorWithBond) =>
-  Math.round(
-    Math.min(
-      entry.bond ? selectMaxProtectedStake(entry) : 0,
-      selectTotalMarinadeStake(entry.validator),
-    ),
+  Math.min(
+    entry.bond ? selectMaxProtectedStake(entry) : 0,
+    selectTotalMarinadeStake(entry.validator),
   )
 
 export const fetchValidatorsWithBonds = async (): Promise<

@@ -247,7 +247,7 @@ export const SamTable: React.FC<Props> = ({
   const {
     auctionData: { validators },
   } = auctionResult
-  const samDistributedStake = Math.round(selectSamDistributedStake(validators))
+  const samDistributedStake = selectSamDistributedStake(validators)
   const winningAPY = selectWinningAPY(auctionResult, epochsPerYear)
   const projectedApy = selectProjectedAPY(auctionResult, epochsPerYear)
 
@@ -443,7 +443,7 @@ export const SamTable: React.FC<Props> = ({
     },
     {
       label: 'Re-delegation',
-      value: formatSolAmount(Math.round(totalRedelegation), 0),
+      value: formatSolAmount(totalRedelegation, 0),
       unit: 'SOL',
       help: 'Roughly how much SOL Marinade will move into under-stake validators next epoch to push them toward their goal allocation.',
     },

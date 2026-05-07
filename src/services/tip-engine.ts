@@ -207,7 +207,7 @@ export const getValidatorTip = (
 
   if (delta > 0) {
     return {
-      text: `${Math.round(delta).toLocaleString()} SOL arriving next epoch.`,
+      text: `${pay(delta)} arriving next epoch.`,
       urgency: 'positive',
       constraint: 'none',
       icon: '↗',
@@ -223,7 +223,7 @@ export const getValidatorTip = (
   }
 
   return {
-    text: `Losing ${Math.round(Math.abs(delta)).toLocaleString()} SOL next epoch.`,
+    text: `Losing ${pay(Math.abs(delta))} next epoch.`,
     urgency: 'warning',
     constraint: 'none',
     icon: '↘',
@@ -273,18 +273,18 @@ export const formatStakeDelta = (
     return { text: '\u2014', color: VAR_MUTED_FG, arrow: '' }
   }
 
-  const delta = Math.round(samTarget - samActive)
+  const delta = samTarget - samActive
 
   if (delta > 0) {
     return {
-      text: `+${delta.toLocaleString()}`,
+      text: `+${formatSolAmount(delta, 0)}`,
       color: VAR_PRIMARY,
       arrow: '\u2191',
     }
   }
   if (delta < 0) {
     return {
-      text: delta.toLocaleString(),
+      text: formatSolAmount(delta, 0),
       color: VAR_DESTRUCTIVE,
       arrow: '\u2193',
     }

@@ -23,14 +23,14 @@ export type Validator = {
   epoch_stats: ValidatorEpoch[]
 }
 
+// SOL-valued selectors return the full precision lamports → SOL gives.
+// Rounding belongs at the formatter, never at the source — see CLAUDE.md.
 export const selectTotalMarinadeStake = (validator: Validator) =>
-  Math.round(
-    selectLiquidMarinadeStake(validator) + selectNativeMarinadeStake(validator),
-  )
+  selectLiquidMarinadeStake(validator) + selectNativeMarinadeStake(validator)
 export const selectLiquidMarinadeStake = (validator: Validator) =>
-  Math.round(Number(lamportsToSol(validator.marinade_stake)))
+  Number(lamportsToSol(validator.marinade_stake))
 export const selectNativeMarinadeStake = (validator: Validator) =>
-  Math.round(Number(lamportsToSol(validator.marinade_native_stake)))
+  Number(lamportsToSol(validator.marinade_native_stake))
 
 export const selectVoteAccount = (validator: Validator) =>
   validator.vote_account

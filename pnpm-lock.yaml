@@ -24,9 +24,6 @@ importers:
       '@radix-ui/react-tooltip':
         specifier: ^1.2.8
         version: 1.2.8(@types/react-dom@18.3.0)(@types/react@18.3.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@types/lodash.round':
-        specifier: ^4.0.9
-        version: 4.0.9
       '@types/react-gtm-module':
         specifier: ^2.0.4
         version: 2.0.4
@@ -36,9 +33,6 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
-      lodash.round:
-        specifier: ^4.0.4
-        version: 4.0.4
       marinade-psr-dashboard:
         specifier: 'link:'
         version: 'link:'
@@ -1239,12 +1233,6 @@ packages:
 
   '@types/json5@0.0.29':
     resolution: {integrity: sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==}
-
-  '@types/lodash.round@4.0.9':
-    resolution: {integrity: sha512-rP29rMt+DQs4AwWLUUclI17+nrTZ63o9+rwZOzqVV+U3dRDzdnXZwz2LLweBnhYhhHH4eJOdvCYHKxAgdcbjyA==}
-
-  '@types/lodash@4.17.24':
-    resolution: {integrity: sha512-gIW7lQLZbue7lRSWEFql49QJJWThrTFFeIMJdp3eH4tKoxm1OvEPg02rm4wCCSHS0cL3/Fizimb35b7k8atwsQ==}
 
   '@types/mdast@4.0.4':
     resolution: {integrity: sha512-kGaNbPh1k7AFzgpud/gMdvIm5xuECykRR+JnWKQno9TAXVa6WIVCGTPvYGekIDL4uwCZQSYbUxNBSb1aUo79oA==}
@@ -2982,9 +2970,6 @@ packages:
 
   lodash.merge@4.6.2:
     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
-
-  lodash.round@4.0.4:
-    resolution: {integrity: sha512-dzDLNwFMXbjN1pEC0LgLPKVOI5o2DOpBx+oGxWthVE+a9mlV3rEdvoz2i3se/ico4Y3G62Yg3/e1fcp/GMu2lQ==}
 
   log-update@6.1.0:
     resolution: {integrity: sha512-9ie8ItPR6tjY5uYJh8K/Zrv/RMZ5VOlOWvtZdEHYSTFKZfIBPQa9tOAEeAWhd+AnIneLJ22w5fjOYtoutpWq5w==}
@@ -5275,12 +5260,6 @@ snapshots:
 
   '@types/json5@0.0.29': {}
 
-  '@types/lodash.round@4.0.9':
-    dependencies:
-      '@types/lodash': 4.17.24
-
-  '@types/lodash@4.17.24': {}
-
   '@types/mdast@4.0.4':
     dependencies:
       '@types/unist': 3.0.3
@@ -7398,8 +7377,6 @@ snapshots:
   lodash.memoize@4.1.2: {}
 
   lodash.merge@4.6.2: {}
-
-  lodash.round@4.0.4: {}
 
   log-update@6.1.0:
     dependencies:

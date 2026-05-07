@@ -1,7 +1,11 @@
-import round from 'lodash.round'
+// Formatting layer. All display rounding lives here — services and
+// components should NEVER `Math.round` a value before handing it to one of
+// these functions. `toLocaleString` and `toFixed` both round half-away-from-
+// zero, which is what we want for monetary display (matches what lodash.round
+// used to do, without the dependency).
 
 export const formatSolAmount = (amount: number, digits = 2) =>
-  round(amount, digits).toLocaleString(undefined, {
+  amount.toLocaleString(undefined, {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   })
@@ -9,11 +13,7 @@ export const formatSolAmount = (amount: number, digits = 2) =>
 const formatPercentageString = (
   amount: number,
   fractionDigits: number = 2,
-): string => {
-  const x = round(100 * amount, fractionDigits)
-  const str = fractionDigits > 0 ? x.toFixed(fractionDigits) : x
-  return `${str}%`
-}
+): string => `${(100 * amount).toFixed(fractionDigits)}%`
 
 export const formatPercentage = (
   amount: number,
@@ -21,11 +21,9 @@ export const formatPercentage = (
   maxValue: number = 1e18,
 ): string => {
   if (amount >= maxValue) {
-    const maxValueLabel = formatPercentageString(maxValue, fractionDigits)
-    return `>${maxValueLabel}`
+    return `>${formatPercentageString(maxValue, fractionDigits)}`
   } else if (amount <= -maxValue) {
-    const maxValueLabel = formatPercentageString(maxValue, fractionDigits)
-    return `<-${maxValueLabel}`
+    return `<-${formatPercentageString(maxValue, fractionDigits)}`
   }
   return formatPercentageString(amount, fractionDigits)
 }
