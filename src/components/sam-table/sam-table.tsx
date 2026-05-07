@@ -36,7 +36,8 @@ import {
   calculateBondUtilization,
 } from 'src/services/tip-engine'
 
-import type { UserLevel } from '../navigation/navigation'
+import { UserLevel } from '../navigation/navigation'
+
 import type {
   AuctionResult,
   AuctionValidator,
@@ -317,7 +318,7 @@ export const SamTable: React.FC<Props> = ({
   originalAuctionResult,
   epochsPerYear,
   dsSamConfig,
-  level: _level,
+  level,
   simulatedValidators = new Set(),
   isCalculating,
   validatorMeta,
@@ -354,12 +355,22 @@ export const SamTable: React.FC<Props> = ({
   const validatorsWithBond: ValidatorWithBondState[] = useMemo(
     () =>
       augmentAuctionResult(auctionResult)
-        .filter(v => selectBondSize(v) > 0)
+        .filter(v => {
+          if (!selectBondSize(v)) return false
+          // Basic mode: only show validators active in the auction
+          if (level !== UserLevel.Expert) {
+            return (
+              v.marinadeActivatedStakeSol > 0 ||
+              v.auctionStake.marinadeSamTargetSol > 0
+            )
+          }
+          return true
+        })
         .map(v => ({
           ...v,
           bondHealth: bondHealthFromAuction(v, dsSamConfig, winningTotalPmpe),
         })),
-    [auctionResult, dsSamConfig, winningTotalPmpe],
+    [auctionResult, dsSamConfig, winningTotalPmpe, level],
   )
 
   // Stable auction rank by maxApy desc — independent of display sort
