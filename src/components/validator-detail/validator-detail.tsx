@@ -75,7 +75,7 @@ interface ValidatorDetailProps {
 
 type Tab = 'overview' | 'bond' | 'revenue' | 'penalty' | 'payments'
 
-type BondHealth = 'healthy' | 'watch' | 'critical'
+type BondHealth = 'healthy' | 'soft' | 'watch' | 'critical'
 
 function bondCoverageLabel(
   health: BondHealth,
@@ -85,19 +85,21 @@ function bondCoverageLabel(
     return coverage.topUpToAvoidFee > 0
       ? `Top up ${pay(coverage.topUpToAvoidFee)} to avoid fee`
       : 'Critical'
-  if (health === 'watch') {
-    if (coverage.topUpToKeepStake > 0)
-      return `Top up ${pay(coverage.topUpToKeepStake)} to keep stake`
-    if (coverage.topUpToIdealKeep > 0)
-      return `Top up ${pay(coverage.topUpToIdealKeep)} for more stake`
-    return 'Watch'
-  }
+  if (health === 'watch')
+    return coverage.topUpToKeepStake > 0
+      ? `Top up ${pay(coverage.topUpToKeepStake)} to keep stake`
+      : 'Watch'
+  if (health === 'soft')
+    return coverage.topUpToIdealKeep > 0
+      ? `Top up ${pay(coverage.topUpToIdealKeep)} for more stake`
+      : 'Sub-ideal'
   return 'Fully covered'
 }
 
 function bondCoverageColor(health: BondHealth): string {
   if (health === 'critical') return CSS_DESTRUCTIVE
   if (health === 'watch') return CSS_WARNING
+  if (health === 'soft') return 'var(--info)'
   return CSS_PRIMARY
 }
 

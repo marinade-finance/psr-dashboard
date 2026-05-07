@@ -236,22 +236,31 @@ export function penaltyRiskColor(
   return Color.GREEN
 }
 
-export type BondHealthState = 'healthy' | 'watch' | 'critical'
+// Four tiers so the bond chip and the page-level CTA agree on tone:
+//   critical → fee being charged or about to (red)
+//   watch    → bond too thin to keep current stake (orange)
+//   soft     → bond covers current stake but not ideal (indigo, info)
+//   healthy  → bond covers ideal target (green)
+export type BondHealthState = 'healthy' | 'soft' | 'watch' | 'critical'
 
 export function bondHealthFromAuction(
   v: AuctionValidator,
   config: DsSamConfig,
   winningTotalPmpe: number,
 ): BondHealthState {
-  const c = penaltyRiskColor(
+  if (!v.auctionStake.marinadeSamTargetSol && !v.marinadeActivatedStakeSol) {
+    return 'healthy'
+  }
+  const m = computeBondCoverageMetrics(
     v,
     config.minBondEpochs,
     config.idealBondEpochs,
     winningTotalPmpe,
     config.bondRiskFeeMult,
   )
-  if (c === Color.RED) return 'critical'
-  if (c === Color.YELLOW) return 'watch'
+  if (m.topUpToAvoidFee > 0) return 'critical'
+  if (m.topUpToKeepStake > 0) return 'watch'
+  if (m.topUpToIdealKeep > 0) return 'soft'
   return 'healthy'
 }
 

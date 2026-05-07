@@ -235,7 +235,6 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
                   label="Bond risk fee charged this epoch"
                   value={pay(bondRiskFeeSol)}
                   bold
-                  accent="red"
                 />
               )}
               {m.topUpToAvoidFee === 0 && bondRiskFeeSol === 0 && (

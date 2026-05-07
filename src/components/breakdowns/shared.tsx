@@ -101,9 +101,9 @@ export const CalcCard: React.FC<{
       <div
         className={`mt-4 pt-3 border-t ${
           status?.tone === 'red'
-            ? 'border-destructive/30 [&_button]:text-destructive [&_a]:text-destructive'
+            ? 'border-destructive/30'
             : status?.tone === 'yellow'
-              ? 'border-status-yellow/30 [&_button]:text-status-yellow [&_a]:text-status-yellow'
+              ? 'border-status-yellow/30'
               : 'border-border'
         }`}
       >
