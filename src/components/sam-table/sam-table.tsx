@@ -55,11 +55,11 @@ export type ValidatorMeta = {
 
 // Validator with computed bond state
 type ValidatorWithBondState = AugmentedAuctionValidator & {
-  bondHealth: 'healthy' | 'watch' | 'critical'
+  bondHealth: 'healthy' | 'soft' | 'watch' | 'critical'
 }
 
 const BOND_CHIP: Record<
-  'healthy' | 'watch' | 'critical',
+  'healthy' | 'soft' | 'watch' | 'critical',
   { chip: string; dot: string; bar: string; shortText: string; label: string }
 > = {
   healthy: {
@@ -68,6 +68,13 @@ const BOND_CHIP: Record<
     bar: 'bg-primary',
     shortText: 'text-primary',
     label: 'Healthy',
+  },
+  soft: {
+    chip: 'bg-info-light text-info',
+    dot: 'bg-info',
+    bar: 'bg-info',
+    shortText: 'text-info',
+    label: 'Sub-ideal',
   },
   watch: {
     chip: 'bg-warning-light text-warning',
