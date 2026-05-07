@@ -514,7 +514,7 @@ export const SamTable: React.FC<Props> = ({
       label: 'Re-delegation',
       value: formatSolAmount(Math.round(totalRedelegation), 0),
       unit: 'SOL',
-      help: 'Estimated SOL the protocol will send to validators that have less than their target stake next epoch. Only counts stake moving in — stake leaving over-funded validators is tracked separately.',
+      help: 'Estimated SOL the protocol will send to validators that have less than their target stake next epoch.',
     },
   ]
 
