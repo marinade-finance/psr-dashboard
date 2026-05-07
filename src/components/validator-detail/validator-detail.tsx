@@ -816,32 +816,25 @@ export const ValidatorDetail = ({
                     }}
                   />
                 )}
-                {bidTooLowPenaltySol > 0 && (
-                  <MetricRow
-                    label="Bid-too-low penalty"
-                    value={`${formatSolAmount(bidTooLowPenaltySol, 2)} SOL`}
-                    valueStyle={{ color: CSS_DESTRUCTIVE }}
-                  />
-                )}
-                {blacklistPenaltySol > 0 && (
-                  <MetricRow
-                    label="Blacklist penalty"
-                    value={`${formatSolAmount(blacklistPenaltySol, 2)} SOL`}
-                    valueStyle={{ color: CSS_DESTRUCTIVE }}
-                  />
-                )}
-                {bondRiskFeeSol > 0 && (
-                  <MetricRow
-                    label="Bond risk fee"
-                    value={`${formatSolAmount(bondRiskFeeSol, 2)} SOL`}
-                    valueStyle={{ color: CSS_DESTRUCTIVE }}
-                  />
-                )}
-                {bidTooLowPenaltySol === 0 &&
-                  blacklistPenaltySol === 0 &&
-                  bondRiskFeeSol === 0 && (
-                    <MetricRow label="Penalty" value="—" />
-                  )}
+                {(() => {
+                  const penaltyTotal =
+                    bidTooLowPenaltySol + blacklistPenaltySol + bondRiskFeeSol
+                  return (
+                    <MetricRow
+                      label="Penalty"
+                      value={
+                        penaltyTotal > 0
+                          ? `${formatSolAmount(penaltyTotal, 2)} SOL`
+                          : '—'
+                      }
+                      valueStyle={
+                        penaltyTotal > 0
+                          ? { color: CSS_DESTRUCTIVE }
+                          : undefined
+                      }
+                    />
+                  )
+                })()}
                 <MetricRow
                   label="Total"
                   value={`${formatSolAmount(paymentMetrics.total + bidTooLowPenaltySol + blacklistPenaltySol + bondRiskFeeSol, 2)} SOL`}
