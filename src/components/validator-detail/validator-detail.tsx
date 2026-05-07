@@ -3,7 +3,11 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { BidPenaltyBreakdown } from 'src/components/breakdowns/bid-penalty'
 import { BondCoverageBreakdown } from 'src/components/breakdowns/bond-coverage'
 import { SamRevenueBreakdown } from 'src/components/breakdowns/sam-revenue'
-import { CalcCard, CalcRow } from 'src/components/breakdowns/shared'
+import {
+  CalcCard,
+  CalcRow,
+  SectionHeader,
+} from 'src/components/breakdowns/shared'
 import { HelpTip } from 'src/components/help-tip/help-tip'
 import { Button } from 'src/components/ui/button'
 import { Input } from 'src/components/ui/input'
@@ -431,64 +435,95 @@ export const ValidatorDetail = ({
           </div>
         )}
 
-        {tab === 'payments' && (
-          <div className="p-4 sm:p-6">
-            <CalcCard title="Payments This Epoch" guideTo="/docs">
-              <table className="w-full">
-                <tbody>
-                  <CalcRow
-                    label="Active stake bid"
-                    value={pay(paymentMetrics.cost)}
-                  />
-                  <CalcRow
-                    label="Activating stake bid"
-                    value={pay(paymentMetrics.activatingCost)}
-                  />
-                  <CalcRow
-                    label="Bid penalty"
-                    value={
-                      penaltyMetrics.penaltySol > 0
-                        ? pay(penaltyMetrics.penaltySol)
-                        : '—'
-                    }
-                    accent={penaltyMetrics.penaltySol > 0 ? 'red' : undefined}
-                  />
-                  <CalcRow
-                    label="Total"
-                    value={pay(
-                      paymentMetrics.total + penaltyMetrics.penaltySol,
+        {tab === 'payments' &&
+          (() => {
+            const blacklistPenaltySol =
+              (validator.revShare.blacklistPenaltyPmpe / 1000) *
+              validator.marinadeActivatedStakeSol
+            const bondRiskFeeSol = validator.values.bondRiskFeeSol ?? 0
+            const total =
+              paymentMetrics.total +
+              penaltyMetrics.penaltySol +
+              blacklistPenaltySol +
+              bondRiskFeeSol
+            const hasPenalty =
+              penaltyMetrics.penaltySol > 0 ||
+              blacklistPenaltySol > 0 ||
+              bondRiskFeeSol > 0
+            return (
+              <div className="p-4 sm:p-6">
+                <CalcCard title="Expected Payments This Epoch" guideTo="/docs">
+                  <table className="w-full">
+                    <tbody>
+                      <SectionHeader title="Bid costs" />
+                      <CalcRow
+                        label="Active stake bid"
+                        value={pay(paymentMetrics.cost)}
+                      />
+                      <CalcRow
+                        label="Activating stake bid"
+                        value={pay(paymentMetrics.activatingCost)}
+                      />
+                      <SectionHeader title="Penalties" />
+                      <CalcRow
+                        label="Bid-too-low penalty"
+                        value={
+                          penaltyMetrics.penaltySol > 0
+                            ? pay(penaltyMetrics.penaltySol)
+                            : '—'
+                        }
+                        accent={
+                          penaltyMetrics.penaltySol > 0 ? 'red' : undefined
+                        }
+                      />
+                      <CalcRow
+                        label="Blacklist penalty"
+                        value={
+                          blacklistPenaltySol > 0
+                            ? pay(blacklistPenaltySol)
+                            : '—'
+                        }
+                        accent={blacklistPenaltySol > 0 ? 'red' : undefined}
+                      />
+                      <CalcRow
+                        label="Bond risk fee"
+                        value={bondRiskFeeSol > 0 ? pay(bondRiskFeeSol) : '—'}
+                        accent={bondRiskFeeSol > 0 ? 'red' : undefined}
+                      />
+                      <CalcRow
+                        label="Total"
+                        value={pay(total)}
+                        bold
+                        large
+                        separator
+                      />
+                    </tbody>
+                  </table>
+                  <div
+                    className={`mt-4 pt-3 border-t flex flex-col gap-2 ${hasPenalty ? 'border-destructive/30' : 'border-border'}`}
+                  >
+                    {penaltyMetrics.penaltySol > 0 && (
+                      <button
+                        className="text-xs text-destructive hover:underline text-left"
+                        onClick={() => setTab('penalty')}
+                      >
+                        See bid-too-low penalty calculation →
+                      </button>
                     )}
-                    bold
-                    large
-                    separator
-                  />
-                </tbody>
-              </table>
-              {penaltyMetrics.penaltySol > 0 ? (
-                <div className="mt-4 pt-3 border-t border-destructive/30">
-                  <button
-                    className="text-xs text-destructive hover:underline"
-                    onClick={() => setTab('penalty')}
-                  >
-                    See bid penalty calculation →
-                  </button>
-                </div>
-              ) : (
-                <div className="mt-4 pt-3 border-t border-border">
-                  <button
-                    className="text-xs text-primary hover:underline"
-                    onClick={() => {
-                      setSimEnabled(true)
-                      setTab('overview')
-                    }}
-                  >
-                    Simulate commission or bid changes →
-                  </button>
-                </div>
-              )}
-            </CalcCard>
-          </div>
-        )}
+                    <button
+                      className="text-xs text-primary hover:underline text-left"
+                      onClick={() => {
+                        setSimEnabled(true)
+                        setTab('overview')
+                      }}
+                    >
+                      Simulate commission or bid changes →
+                    </button>
+                  </div>
+                </CalcCard>
+              </div>
+            )
+          })()}
 
         {tab === 'revenue' && (
           <div className="p-4 sm:p-6">
@@ -593,7 +628,7 @@ export const ValidatorDetail = ({
 
             <div className="bg-card rounded-xl border border-border p-5">
               <h3 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
-                Payment This Epoch
+                Expected Payment This Epoch
                 <HelpTip text="SOL paid to Marinade: effective bid on active stake, activating stake priced at activatingStakePmpe, plus any bid-reduction penalty charged from bond." />
               </h3>
               <div className="space-y-3">
