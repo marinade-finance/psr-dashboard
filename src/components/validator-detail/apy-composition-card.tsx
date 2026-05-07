@@ -15,7 +15,8 @@ interface ApyCompositionCardProps {
 
 type Row = {
   label: string
-  value: number
+  apy: number
+  pmpe: number
   swatch: string
   context: string
 }
@@ -33,35 +34,45 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
       ? validator.blockRewardsCommissionDec * 100
       : 0
 
+  const r = validator.revShare
+  // Bar widths use raw PMPE (linear, sums to totalPmpe); the displayed % is
+  // the compounded APY for that component (non-linear, won't sum to total).
+  const totalPmpe = r.totalPmpe
   const rows: Row[] = [
     {
       label: 'Inflation',
-      value: apyBreakdown.inflation,
+      apy: apyBreakdown.inflation,
+      pmpe: r.inflationPmpe,
       swatch: 'bg-chart-1',
       context: `${inflComm.toFixed(0)}% commission`,
     },
     {
       label: 'MEV',
-      value: apyBreakdown.mev,
+      apy: apyBreakdown.mev,
+      pmpe: r.mevPmpe,
       swatch: 'bg-chart-2',
       context: `${mevComm.toFixed(0)}% commission`,
     },
     {
       label: 'Block rewards',
-      value: apyBreakdown.blockRewards,
+      apy: apyBreakdown.blockRewards,
+      pmpe: r.blockPmpe ?? 0,
       swatch: 'bg-chart-3',
       context: `${blockComm.toFixed(0)}% shared`,
     },
     {
       label: 'Stake bid',
-      value: apyBreakdown.stakeBid,
+      apy: apyBreakdown.stakeBid,
+      pmpe: r.bidPmpe,
       swatch: 'bg-chart-4',
       context: 'your bid',
     },
   ]
 
-  const scale = Math.max(apyBreakdown.total, winningApy) * 1.2
-  const winPct = (winningApy / scale) * 100
+  // Two scales: APY for the per-row bars (so Total APY anchors the rightmost
+  // tick); PMPE for the stacked Total bar segments (so they actually sum).
+  const apyScale = Math.max(apyBreakdown.total, winningApy) * 1.2
+  const winPct = (winningApy / apyScale) * 100
   const delta = apyBreakdown.total - winningApy
   const above = delta >= 0
 
@@ -89,7 +100,7 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
         </span>
       </div>
       <div className="space-y-2">
-        {rows.map(({ label, value, swatch, context }) => (
+        {rows.map(({ label, apy, pmpe, swatch, context }) => (
           <div key={label} className="flex items-center gap-2">
             <span className={`w-2 h-2 rounded-sm shrink-0 ${swatch}`} />
             <div className="w-24 shrink-0">
@@ -103,11 +114,16 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
             <div className="flex-1 relative h-3 bg-secondary rounded">
               <div
                 className={`h-full rounded ${swatch}`}
-                style={{ width: `${Math.max(0, (value / scale) * 100)}%` }}
+                style={{
+                  width:
+                    totalPmpe > 0
+                      ? `${Math.max(0, (pmpe / totalPmpe) * 100)}%`
+                      : '0%',
+                }}
               />
             </div>
             <span className="text-xs font-mono text-foreground w-12 text-right shrink-0">
-              {formatPercentage(value, 2)}
+              {formatPercentage(apy, 2)}
             </span>
           </div>
         ))}
@@ -117,17 +133,17 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
           <div className="flex-1 relative h-4 bg-secondary rounded overflow-visible">
             <div
               className="h-full rounded overflow-hidden flex"
-              style={{ width: `${(apyBreakdown.total / scale) * 100}%` }}
+              style={{
+                width: `${(apyBreakdown.total / apyScale) * 100}%`,
+              }}
             >
-              {apyBreakdown.total > 0 &&
-                rows.map(({ label, value, swatch }) =>
-                  value > 0 ? (
+              {totalPmpe > 0 &&
+                rows.map(({ label, pmpe, swatch }) =>
+                  pmpe > 0 ? (
                     <div
                       key={label}
                       className={`shrink-0 ${swatch}`}
-                      style={{
-                        width: `${(value / apyBreakdown.total) * 100}%`,
-                      }}
+                      style={{ width: `${(pmpe / totalPmpe) * 100}%` }}
                     />
                   ) : null,
                 )}
