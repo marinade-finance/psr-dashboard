@@ -35,7 +35,7 @@ export const finite = (x: number | null | undefined): number =>
 
 export const pmpe = (x: number) => x.toFixed(5)
 export const stake = (n: number) => `${formatSolAmount(n, 0)} SOL`
-export const pay = (n: number) => `${formatSolAmount(Math.round(n), 2)} SOL`
+export const pay = (n: number) => `${formatSolAmount(n, 2)} SOL`
 
 export const lamportsToSol = (lamports: string) =>
   lamports.padStart(10, '0').replace(/(.{9})$/, '.$1')
