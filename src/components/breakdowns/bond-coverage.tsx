@@ -114,7 +114,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
   return (
     <CalcCard
       title="Bond Calculation"
-      guideTo={docsPath(level)}
+      guideTo={`${docsPath(level)}#bond`}
       isSimulated={isSimulated}
       status={status}
       cta={cta}

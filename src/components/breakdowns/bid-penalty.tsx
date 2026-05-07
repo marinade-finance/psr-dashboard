@@ -55,7 +55,7 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
   return (
     <CalcCard
       title="Bid Penalty Calculation"
-      guideTo={docsPath(level)}
+      guideTo={`${docsPath(level)}#bid-penalty`}
       isSimulated={isSimulated}
       status={status}
       cta={cta}

@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { useQuery } from 'react-query'
+import rehypeRaw from 'rehype-raw'
 import remarkGfm from 'remark-gfm'
 
 import { Loader } from 'src/components/loader/loader'
@@ -147,6 +148,20 @@ export const DocsPage: React.FC<Props> = ({ level }) => {
 
   const components = useMemo(() => makeComponents(setActiveDoc), [])
 
+  // Scroll to the URL hash anchor once the doc has rendered. Re-runs on
+  // doc-tab switch and on browser hash changes (back/forward navigation).
+  useEffect(() => {
+    if (status !== 'success') return undefined
+    const hash = window.location.hash.slice(1)
+    if (!hash) return undefined
+    // Defer one frame so the markdown DOM is mounted before we look up the id.
+    const id = requestAnimationFrame(() => {
+      const el = document.getElementById(hash)
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+    return () => cancelAnimationFrame(id)
+  }, [status, activeDoc])
+
   return (
     <div className="bg-background-page min-h-screen">
       <Navigation level={level} />
@@ -177,6 +192,7 @@ export const DocsPage: React.FC<Props> = ({ level }) => {
             {status === 'success' && data && (
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeRaw]}
                 components={components}
               >
                 {data}

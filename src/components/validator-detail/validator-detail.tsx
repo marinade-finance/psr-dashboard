@@ -615,7 +615,7 @@ export const ValidatorDetail = ({
               <div className="p-4 sm:p-6 space-y-6">
                 <CalcCard
                   title="Payments Calculation"
-                  guideTo={docsPath(level)}
+                  guideTo={`${docsPath(level)}#detail-panel`}
                 >
                   <table className="w-full">
                     <tbody>

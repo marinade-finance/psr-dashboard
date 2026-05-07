@@ -87,7 +87,7 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
   return (
     <CalcCard
       title="SAM Revenue Calculation"
-      guideTo={docsPath(level)}
+      guideTo={`${docsPath(level)}#cpmpe`}
       isSimulated={isSimulated}
       status={status}
       cta={cta}
