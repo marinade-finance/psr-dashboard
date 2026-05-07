@@ -21,6 +21,7 @@ export interface ValidatorTip {
   text: string
   urgency: TipUrgency
   constraint: TipConstraint
+  icon?: string
 }
 
 export interface TipStyle {
@@ -184,6 +185,7 @@ export const getValidatorTip = (
     text: `Losing ${Math.round(Math.abs(delta)).toLocaleString()} SOL next epoch.`,
     urgency: 'warning',
     constraint: 'none',
+    icon: '↘',
   }
 }
 
