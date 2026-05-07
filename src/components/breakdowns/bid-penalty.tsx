@@ -117,6 +117,7 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
               bold
               large
               accent="red"
+              separator
             />
           ) : (
             <OkRow message="No penalty deducted this epoch." />

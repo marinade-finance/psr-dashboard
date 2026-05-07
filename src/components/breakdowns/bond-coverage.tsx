@@ -130,6 +130,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
               bold
               large
               accent="red"
+              separator
             />
           ) : (
             <OkRow message="You have enough bond to cover the minimum." />
@@ -159,6 +160,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
               bold
               large
               accent="yellow"
+              separator
             />
           ) : (
             <OkRow message="Bond has enough coverage to receive more stake." />

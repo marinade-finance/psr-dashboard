@@ -22,8 +22,11 @@ export const CalcRow: React.FC<{
   bold?: boolean
   large?: boolean
   accent?: 'red' | 'yellow' | 'green'
-}> = ({ label, secondary, value, bold, large, accent }) => (
-  <tr className="border-b border-border-grid/50 last:border-0">
+  separator?: boolean
+}> = ({ label, secondary, value, bold, large, accent, separator }) => (
+  <tr
+    className={`border-b border-border-grid/50 last:border-0 ${separator ? 'border-t-2 border-t-border' : ''}`}
+  >
     <td
       className={`py-1.5 pr-2 text-xs ${bold ? 'font-semibold' : ''} ${large ? 'text-[13px]' : ''}`}
     >
