@@ -278,7 +278,15 @@ export const ValidatorDetail = ({
 
   // Debounced auto-recalc whenever inputs change while simulation is enabled.
   // 400ms covers fast number-input arrow clicking without thrashing the SDK.
+  // The parent's `onSimulate` callback identity churns every time the auction
+  // re-runs (it closes over `data` and `simulationOverrides`). Routing it
+  // through a ref keeps this effect's deps to the actual inputs only —
+  // otherwise each settle re-schedules the timer and we loop forever.
   const firstRun = useRef(true)
+  const onSimulateRef = useRef(onSimulate)
+  useEffect(() => {
+    onSimulateRef.current = onSimulate
+  }, [onSimulate])
   useEffect(() => {
     if (!simEnabled) return undefined
     if (firstRun.current) {
@@ -291,7 +299,7 @@ export const ValidatorDetail = ({
       const inflationValue = parseFloat(editInflation) / 100
       const mevValue = editMev ? parseFloat(editMev) / 100 : null
       const blockValue = editBlock ? parseFloat(editBlock) / 100 : null
-      onSimulate(
+      onSimulateRef.current(
         !isNaN(inflationValue) ? inflationValue : null,
         mevValue,
         blockValue,
@@ -299,7 +307,7 @@ export const ValidatorDetail = ({
       )
     }, 400)
     return () => clearTimeout(t)
-  }, [simEnabled, editBid, editInflation, editMev, editBlock, onSimulate])
+  }, [simEnabled, editBid, editInflation, editMev, editBlock])
 
   const handleSimToggle = (enabled: boolean) => {
     setSimEnabled(enabled)
