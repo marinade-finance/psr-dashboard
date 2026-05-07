@@ -27,7 +27,7 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
 }) => {
   const m = computeBidPenaltyMetrics(validator, dsSamConfig, winningTotalPmpe)
 
-  const status = {
+  const status: { label: string; tone: 'red' | 'green' | 'yellow' } = {
     label:
       m.penaltyPmpe > 0
         ? `Penalty active: ${pmpe(m.penaltyPmpe)} PMPE this epoch.`
