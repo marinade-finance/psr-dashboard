@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react'
-import { TipGlyph } from 'src/components/tip-glyph/tip-glyph'
 
 import { HelpTip } from 'src/components/help-tip/help-tip'
 import { Card } from 'src/components/ui/card'
