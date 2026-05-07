@@ -23,26 +23,43 @@ type Props = {
 
 const statusLine = (
   state: BondHealthState,
-  topUpToMin: number,
-  topUpToIdeal: number,
+  topUpToStopFee: number,
+  topUpToKeepStake: number,
+  topUpToIdealKeep: number,
+  bondRiskFeeSol: number,
 ): { label: string; tone: 'red' | 'yellow' | 'green' } => {
   if (state === 'critical') {
+    if (bondRiskFeeSol > 0) {
+      return {
+        label:
+          topUpToStopFee > 0
+            ? `Bond risk fee active. Top up ${pay(topUpToStopFee)} to stop it.`
+            : 'Bond risk fee active.',
+        tone: 'red',
+      }
+    }
     return {
       label:
-        topUpToMin > 0
-          ? `Penalty imminent. Top up ${pay(topUpToMin)} to avoid it.`
-          : 'Penalty imminent. Top up to avoid it.',
+        topUpToStopFee > 0
+          ? `Penalty imminent. Top up ${pay(topUpToStopFee)} to avoid it.`
+          : 'Penalty imminent.',
       tone: 'red',
     }
   }
   if (state === 'watch') {
-    return {
-      label:
-        topUpToIdeal > 0
-          ? `Bond covers current stake. Top up ${pay(topUpToIdeal)} for more stake.`
-          : 'Bond covers current stake. Top up for more stake.',
-      tone: 'yellow',
+    if (topUpToKeepStake > 0) {
+      return {
+        label: `Top up ${pay(topUpToKeepStake)} to keep your current stake.`,
+        tone: 'yellow',
+      }
     }
+    if (topUpToIdealKeep > 0) {
+      return {
+        label: `Top up ${pay(topUpToIdealKeep)} for more stake.`,
+        tone: 'yellow',
+      }
+    }
+    return { label: 'Bond covers current stake.', tone: 'yellow' }
   }
   return {
     label: 'Bond has enough coverage. Keep it topped up.',
@@ -66,7 +83,20 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
     winningTotalPmpe,
     dsSamConfig.bondRiskFeeMult,
   )
-  const status = statusLine(bondState, m.topUpToMin, m.topUpToIdeal)
+  const status = statusLine(
+    bondState,
+    m.topUpToStopFee,
+    m.topUpToKeepStake,
+    m.topUpToIdealKeep,
+    bondRiskFeeSol,
+  )
+
+  // Risk section is informational; show only when the projected basis matters
+  // (some undelegation already queued) or a fee/top-up is actually outstanding.
+  const showRiskSection =
+    bondRiskFeeSol > 0 ||
+    m.topUpToStopFee > 0 ||
+    m.carriedPaidUndelegationSol > 0
 
   const cta = onGoToSim ? (
     <button
@@ -79,7 +109,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
 
   return (
     <CalcCard
-      title="Bond Coverage Calculation"
+      title="Bond"
       guideTo="/docs"
       isSimulated={isSimulated}
       status={status}
@@ -99,7 +129,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
             value=""
           />
 
-          <SectionHeader title={`Minimum Coverage (${m.minEp} epochs)`} />
+          <SectionHeader title={`Bond Coverage — ${m.minEp} epochs`} />
           <CalcRow
             label="Claimable bond balance"
             value={pay(m.claimableBondBalanceSol)}
@@ -111,8 +141,8 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
             value=""
           />
           <CalcRow
-            label="Projected exposed stake"
-            secondary={stake(m.projectedExposedStakeSol)}
+            label="Current exposed stake"
+            secondary={stake(m.currentExposedStakeSol)}
             value=""
           />
           <CalcRow
@@ -120,37 +150,28 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
             value={pay(m.minUnprotectedReserveSol)}
           />
           <CalcRow
-            label="On-chain distributed reserve"
-            value={pay(m.onchainBase)}
+            label="Minimum bid coverage"
+            value={pay(m.minCoverageBidKeep)}
           />
-          <CalcRow label="Minimum bid coverage" value={pay(m.minCoverageBid)} />
-          <CalcRow label="Minimum required" value={pay(m.floorBase)} bold />
-          {m.topUpToMin > 0 ? (
+          <CalcRow label="Minimum required" value={pay(m.floorBaseKeep)} bold />
+          {m.topUpToKeepStake > 0 ? (
             <CalcRow
-              label="Top-up to minimum coverage"
-              value={pay(m.topUpToMin)}
+              label="Top up to keep your stake"
+              value={pay(m.topUpToKeepStake)}
               bold
               large
-              accent="red"
+              accent="yellow"
               separator
             />
           ) : (
-            <OkRow message="You have enough bond to cover the minimum." />
-          )}
-          {bondRiskFeeSol > 0 && (
-            <CalcRow
-              label="Bond risk fee charged this epoch"
-              value={pay(bondRiskFeeSol)}
-              bold
-              accent="red"
-            />
+            <OkRow message="Bond covers your current stake." />
           )}
 
-          <SectionHeader title={`Ideal Coverage (${m.idealEp} epochs)`} />
+          <SectionHeader title={`Ideal Coverage — ${m.idealEp} epochs`} />
           <CalcRow label="Bond balance" value={pay(m.bondBalanceSol)} bold />
           <CalcRow
-            label="Projected exposed stake"
-            secondary={stake(m.projectedExposedStakeSol)}
+            label="Current exposed stake"
+            secondary={stake(m.currentExposedStakeSol)}
             value=""
           />
           <CalcRow
@@ -158,22 +179,69 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
             value={pay(m.idealUnprotectedReserveSol)}
           />
           <CalcRow
-            label="On-chain distributed reserve"
-            value={pay(m.onchainBase)}
+            label="Ideal bid coverage"
+            value={pay(m.idealCoverageBidKeep)}
           />
-          <CalcRow label="Ideal bid coverage" value={pay(m.idealCoverageBid)} />
-          <CalcRow label="Ideal required" value={pay(m.requiredIdeal)} bold />
-          {m.topUpToIdeal > 0 ? (
+          <CalcRow
+            label="Ideal required"
+            value={pay(m.requiredIdealKeep)}
+            bold
+          />
+          {m.topUpToIdealKeep > 0 ? (
             <CalcRow
-              label="To get more stake, top up"
-              value={pay(m.topUpToIdeal)}
+              label="Top up for more stake"
+              value={pay(m.topUpToIdealKeep)}
               bold
               large
               accent="yellow"
               separator
             />
           ) : (
-            <OkRow message="Bond has enough coverage to receive more stake." />
+            <OkRow message="Bond covers ideal — eligible for more stake." />
+          )}
+
+          {showRiskSection && (
+            <>
+              <SectionHeader title="Bond Risk — after undelegations finalize" />
+              {m.carriedPaidUndelegationSol > 0 && (
+                <CalcRow
+                  label="Carried paid undelegation"
+                  secondary={stake(m.carriedPaidUndelegationSol)}
+                  value=""
+                />
+              )}
+              <CalcRow
+                label="Projected exposed stake"
+                secondary={stake(m.projectedExposedStakeSol)}
+                value=""
+              />
+              <CalcRow
+                label="Penalty trigger threshold"
+                value={pay(m.floorBaseProjected)}
+                bold
+              />
+              {m.topUpToStopFee > 0 && (
+                <CalcRow
+                  label="Top up to stop the fee"
+                  value={pay(m.topUpToStopFee)}
+                  bold
+                  large
+                  accent="red"
+                  separator
+                />
+              )}
+              {bondRiskFeeSol > 0 && (
+                <CalcRow
+                  label="Bond risk fee charged this epoch"
+                  value={pay(bondRiskFeeSol)}
+                  bold
+                  accent="red"
+                />
+              )}
+              {m.topUpToStopFee === 0 && bondRiskFeeSol === 0 && (
+                <OkRow message="Bond above the penalty threshold." />
+              )}
+            </>
           )}
         </tbody>
       </table>

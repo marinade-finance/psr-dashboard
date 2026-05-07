@@ -101,7 +101,6 @@ export const getValidatorTip = (
 ): ValidatorTip => {
   const inSet = validator.auctionStake.marinadeSamTargetSol > 0
   const delta = validator.values.expectedStakeChangeSol ?? 0
-  const bondGoodForEpochs = validator.bondGoodForNEpochs ?? 0
   const health = bondHealthFromAuction(validator, dsSamConfig, winningTotalPmpe)
 
   if (!inSet) {
@@ -112,57 +111,49 @@ export const getValidatorTip = (
     }
   }
 
-  if (health === 'critical') {
-    const bondCoverage = computeBondCoverageMetrics(
+  // Bond CTA cascade — priority: stop fee > keep stake > ideal.
+  if (health === 'critical' || health === 'watch') {
+    const m = computeBondCoverageMetrics(
       validator,
       dsSamConfig.minBondEpochs,
       dsSamConfig.idealBondEpochs,
       winningTotalPmpe,
       dsSamConfig.bondRiskFeeMult,
     )
-    const topUpStr =
-      bondCoverage.topUpToMin > 0
-        ? ` Top up ${formatSolAmount(bondCoverage.topUpToMin, 0)} SOL.`
-        : ''
-    if (bondGoodForEpochs <= 0) {
-      return {
-        text: `Bond depleted — top up now.${topUpStr}`,
-        urgency: 'critical',
-        constraint: 'bond',
-      }
-    }
-    if (bondGoodForEpochs <= 5) {
-      const epochs = Math.round(bondGoodForEpochs)
-      return {
-        text: `Bond depletes in ${epochs} epoch${epochs === 1 ? '' : 's'} — top up.${topUpStr}`,
-        urgency: 'critical',
-        constraint: 'bond',
-      }
-    }
-    return {
-      text: `Bond below minimum — bid penalty active.${topUpStr}`,
-      urgency: 'critical',
-      constraint: 'bond',
-    }
-  }
+    const bondRiskFeeSol = validator.values?.bondRiskFeeSol ?? 0
 
-  if (health === 'watch') {
-    const bondCoverage = computeBondCoverageMetrics(
-      validator,
-      dsSamConfig.minBondEpochs,
-      dsSamConfig.idealBondEpochs,
-      winningTotalPmpe,
-      dsSamConfig.bondRiskFeeMult,
-    )
-    const topUpStr =
-      bondCoverage.topUpToIdeal > 0
-        ? ` Top up ${formatSolAmount(bondCoverage.topUpToIdeal, 0)} SOL to receive more stake.`
-        : ''
-    return {
-      text: `Bond runway ${Math.round(bondGoodForEpochs)} epochs.${topUpStr}`,
-      urgency: 'warning',
-      constraint: 'bond',
-      icon: '⚠',
+    if (bondRiskFeeSol > 0 || m.topUpToStopFee > 0) {
+      const topUpStr =
+        m.topUpToStopFee > 0
+          ? ` Top up ${formatSolAmount(m.topUpToStopFee, 0)} SOL to stop the fee.`
+          : ''
+      const feeStr =
+        bondRiskFeeSol > 0
+          ? `Bond risk fee ${formatSolAmount(bondRiskFeeSol, 2)} SOL active.`
+          : 'Bond below penalty threshold.'
+      return {
+        text: `${feeStr}${topUpStr}`,
+        urgency: 'critical',
+        constraint: 'bond',
+        icon: 'warning',
+      }
+    }
+
+    if (m.topUpToKeepStake > 0) {
+      return {
+        text: `Top up ${formatSolAmount(m.topUpToKeepStake, 0)} SOL to keep your stake.`,
+        urgency: 'warning',
+        constraint: 'bond',
+        icon: 'warning',
+      }
+    }
+
+    if (m.topUpToIdealKeep > 0) {
+      return {
+        text: `Top up ${formatSolAmount(m.topUpToIdealKeep, 0)} SOL for more stake.`,
+        urgency: 'info',
+        constraint: 'bond',
+      }
     }
   }
 

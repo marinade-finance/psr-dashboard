@@ -82,13 +82,16 @@ function bondCoverageLabel(
   coverage: BondCoverageMetrics,
 ): string {
   if (health === 'critical')
-    return coverage.topUpToMin > 0
-      ? `Top up ${pay(coverage.topUpToMin)}`
+    return coverage.topUpToStopFee > 0
+      ? `Top up ${pay(coverage.topUpToStopFee)} to stop fee`
       : 'Critical'
-  if (health === 'watch')
-    return coverage.topUpToIdeal > 0
-      ? `Top up ${pay(coverage.topUpToIdeal)}`
-      : 'Watch'
+  if (health === 'watch') {
+    if (coverage.topUpToKeepStake > 0)
+      return `Top up ${pay(coverage.topUpToKeepStake)} to keep stake`
+    if (coverage.topUpToIdealKeep > 0)
+      return `Top up ${pay(coverage.topUpToIdealKeep)} for more stake`
+    return 'Watch'
+  }
   return 'Fully covered'
 }
 
