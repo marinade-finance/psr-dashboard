@@ -1,6 +1,5 @@
 import React from 'react'
-
-import { HelpTip } from 'src/components/help-tip/help-tip'
+import { Link } from 'react-router-dom'
 
 export const SectionHeader: React.FC<{ title: string; colSpan?: number }> = ({
   title,
@@ -69,19 +68,27 @@ const STATUS_CLASSES: Record<'red' | 'yellow' | 'green', string> = {
 
 export const CalcCard: React.FC<{
   title: string
-  helpText: string
+  helpText?: string
+  guideTo?: string
   isSimulated?: boolean
   status?: { label: string; tone: 'red' | 'yellow' | 'green' }
   cta?: React.ReactNode
   children: React.ReactNode
-}> = ({ title, helpText, isSimulated, status, cta, children }) => (
+}> = ({ title, guideTo, isSimulated, status, cta, children }) => (
   <div className="bg-card rounded-xl border border-border p-5">
     <h3 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
       {isSimulated && (
         <span className="text-[var(--status-yellow,#b58900)]">Simulated ·</span>
       )}
       {title}
-      <HelpTip text={helpText} />
+      {guideTo && (
+        <Link
+          to={guideTo}
+          className="text-xs font-normal text-muted-foreground hover:text-primary transition-colors"
+        >
+          Guide →
+        </Link>
+      )}
     </h3>
     {status && (
       <div

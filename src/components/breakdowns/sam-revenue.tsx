@@ -78,7 +78,7 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
   return (
     <CalcCard
       title="SAM Revenue Calculation"
-      helpText="Per-component breakdown of effective bid (PMPE) and the SOL cost per epoch on active and activating stake."
+      guideTo="/docs"
       isSimulated={isSimulated}
       status={status}
       cta={cta}

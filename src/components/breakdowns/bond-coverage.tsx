@@ -78,7 +78,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
   return (
     <CalcCard
       title="Bond Coverage Calculation"
-      helpText="Mirrors the SDK fee-trigger threshold: claimable bond ≥ minUnprotectedReserve + projectedExposed × minBondPmpe / 1000. The two sections show coverage at minimum (penalty floor) and ideal (capacity for more stake) horizons."
+      guideTo="/docs"
       isSimulated={isSimulated}
       status={status}
       cta={cta}

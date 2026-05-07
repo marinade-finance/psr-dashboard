@@ -462,6 +462,7 @@ export const ValidatorDetail = ({
             <div className="bg-card rounded-xl border border-border p-5">
               <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
                 Stake
+                <HelpTip text="Active = SOL currently delegated by SAM. Target = auction-assigned amount this epoch. Next epoch = expected delta routed through the rebalancing budget." />
               </h3>
               <div className="space-y-3 mt-3">
                 <MetricRow
@@ -496,7 +497,7 @@ export const ValidatorDetail = ({
             <div className="bg-card rounded-xl border border-border p-5">
               <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
                 Bond
-                <HelpTip text={HELP_TEXT.bondHealth} />
+                <HelpTip text="Pre-funded vault covering bid costs and protecting delegators. Coverage = whether the bond is sufficient for the configured epochs. Runway = epochs the bond can last at current rates." />
               </h3>
               <div className="mt-3 space-y-3">
                 <MetricRow
@@ -530,7 +531,7 @@ export const ValidatorDetail = ({
             <div className="bg-card rounded-xl border border-border p-5">
               <h3 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
                 Payment This Epoch
-                <HelpTip text="SOL paid to Marinade this epoch: bid cost on active stake, cost on activating stake, and any bid-too-low penalty." />
+                <HelpTip text="SOL paid to Marinade: effective bid on active stake, activating stake priced at activatingStakePmpe, plus any bid-reduction penalty charged from bond." />
               </h3>
               <div className="space-y-3">
                 <MetricRow
