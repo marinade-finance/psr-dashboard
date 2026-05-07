@@ -1,85 +1,78 @@
-// Docs page tests: content rendering, title, tabs (Guide default, Expert
-// Guide with ?from=expert), hash navigation, back button links (basic →
-// ../, expert → /expert-), docs link from navigation.
-import { test, expect } from '@playwright/test'
+// Docs page tests: React DocsPage at /docs (basic) and /expert-docs (expert).
+// Tab switcher visible only in expert mode; default doc differs by level;
+// in-doc anchor links (e.g. #GUIDE) switch the active doc.
+import { expect, test } from './fixtures/mock-api'
 
 test.describe('Docs page', () => {
-  test('loads /docs/ and renders guide content', async ({ page }) => {
-    await page.goto('/docs/')
-    await expect(page.locator('#content')).toBeVisible()
-    await expect(page.locator('#content')).toContainText('PSR Dashboard Guide')
+  test('/docs loads basic guide', async ({ page }) => {
+    await page.goto('/docs')
+    await expect(
+      page.getByRole('heading', { name: 'PSR Dashboard Guide' }),
+    ).toBeVisible()
   })
 
-  test('has page title', async ({ page }) => {
-    await page.goto('/docs/')
-    await expect(page).toHaveTitle('Docs | PSR Dashboard')
+  test('/docs guide has Data Sources section', async ({ page }) => {
+    await page.goto('/docs')
+    await expect(page.getByText('Data Sources')).toBeVisible()
   })
 
-  test('back button: basic links to ../, expert links to /expert-', async ({ page }) => {
-    await page.goto('/docs/')
-    await expect(page.locator('#back')).toHaveAttribute('href', '../')
-
-    await page.goto('/docs/?from=expert')
-    await expect(page.locator('#back')).toHaveAttribute('href', '/expert-')
+  test('/expert-docs defaults to expert guide', async ({ page }) => {
+    await page.goto('/expert-docs')
+    await expect(
+      page.getByRole('heading', { name: /Expert View/ }),
+    ).toBeVisible()
   })
 
-  test('Guide tab is active by default', async ({ page }) => {
-    await page.goto('/docs/')
-    await expect(page.locator('.tab[data-doc="GUIDE"]')).toHaveClass(/active/)
+  test('basic mode: tab switcher is hidden', async ({ page }) => {
+    await page.goto('/docs')
+    await expect(
+      page.getByRole('button', { name: 'Expert Guide' }),
+    ).toHaveCount(0)
   })
 
-  test('guide content has Data Sources section', async ({ page }) => {
-    await page.goto('/docs/')
-    await expect(page.locator('#content')).toContainText('Data Sources')
+  test('expert mode: both tabs are visible', async ({ page }) => {
+    await page.goto('/expert-docs')
+    await expect(
+      page.getByRole('button', { name: 'Guide', exact: true }),
+    ).toBeVisible()
+    await expect(
+      page.getByRole('button', { name: 'Expert Guide' }),
+    ).toBeVisible()
   })
 
-  test('guide content has table with API endpoints', async ({ page }) => {
-    await page.goto('/docs/')
-    await expect(page.locator('#content table').first()).toBeVisible()
-    await expect(page.locator('#content table').first()).toContainText('Validators API')
+  test('expert mode: clicking Guide tab loads basic guide', async ({
+    page,
+  }) => {
+    await page.goto('/expert-docs')
+    await page.getByRole('button', { name: 'Guide', exact: true }).click()
+    await expect(
+      page.getByRole('heading', { name: 'PSR Dashboard Guide' }),
+    ).toBeVisible()
   })
 
-  test('expert guide tab appears with ?from=expert', async ({ page }) => {
-    await page.goto('/docs/?from=expert')
-    const tab = page.locator('.tab[data-doc="GUIDE-EXPERT"]')
-    await expect(tab).toBeVisible()
-    await expect(tab).toHaveText('Expert Guide')
-  })
-
-  test('expert guide tab is not visible without ?from=expert', async ({ page }) => {
-    await page.goto('/docs/')
-    await expect(page.locator('.tab[data-doc="GUIDE-EXPERT"]')).toHaveCount(0)
-  })
-
-  test('clicking Expert Guide tab loads expert content', async ({ page }) => {
-    await page.goto('/docs/?from=expert')
-    const tab = page.locator('.tab[data-doc="GUIDE-EXPERT"]')
-    await tab.click()
-    await expect(tab).toHaveClass(/active/)
-    await expect(page.locator('#content')).toContainText('Expert View Guide')
-  })
-
-  test('hash navigation loads correct doc', async ({ page }) => {
-    await page.goto('/docs/?from=expert#GUIDE-EXPERT')
-    await expect(page.locator('#content')).toContainText('Expert View Guide')
-    await expect(page.locator('.tab[data-doc="GUIDE-EXPERT"]')).toHaveClass(/active/)
+  test('expert guide #GUIDE link switches to basic guide', async ({ page }) => {
+    await page.goto('/expert-docs')
+    // Markdown body link "[Dashboard Guide](#GUIDE)" rendered as a button.
+    await page.getByRole('button', { name: 'Dashboard Guide' }).click()
+    await expect(
+      page.getByRole('heading', { name: 'PSR Dashboard Guide' }),
+    ).toBeVisible()
   })
 })
 
 test.describe('Docs link from navigation', () => {
-  test('basic mode Docs link navigates to /docs/', async ({ page }) => {
+  test('basic mode Docs link navigates to /docs', async ({ page }) => {
     await page.goto('/')
     await page.waitForSelector('.navigation', { timeout: 15000 })
     const docs = page.locator('.docsButton').first()
     await expect(docs).toBeVisible()
-    await expect(docs).toHaveAttribute('href', '/docs/')
+    await expect(docs).toHaveAttribute('href', '/docs')
   })
 
-  test('expert mode has Expert Guide link to /docs/?from=expert', async ({ page }) => {
+  test('expert mode Docs link navigates to /expert-docs', async ({ page }) => {
     await page.goto('/expert-')
     await page.waitForSelector('.navigation', { timeout: 15000 })
-    const link = page.locator('.navigation a').filter({ hasText: 'Expert Guide' })
-    await expect(link).toBeVisible()
-    await expect(link).toHaveAttribute('href', '/docs/?from=expert#GUIDE-EXPERT')
+    const docs = page.locator('.docsButton').first()
+    await expect(docs).toHaveAttribute('href', '/expert-docs')
   })
 })

@@ -24,7 +24,9 @@ test.describe('Navigation', () => {
       await expect(page.getByRole('link', { name: tab })).toBeVisible()
     }
     // Docs link — match by text, not class name
-    await expect(page.getByRole('link', { name: /Docs/i }).first()).toBeVisible()
+    await expect(
+      page.getByRole('link', { name: /Docs/i }).first(),
+    ).toBeVisible()
   })
 
   for (const { path, tab } of ROUTES) {
@@ -48,34 +50,38 @@ test.describe('Navigation', () => {
     })
   }
 
-  test('basic mode hides Expert Guide link in nav', async ({ page }) => {
-    await expect(page.getByRole('link', { name: 'Expert Guide' })).not.toBeVisible()
-  })
-
-  test('/expert- shows Expert Guide link and expert Docs link', async ({ page }) => {
+  test('/expert- Docs link points to /expert-docs', async ({ page }) => {
     await page.goto('/expert-')
     await waitForNav(page)
-    await expect(page.getByRole('link', { name: 'Expert Guide' })).toBeVisible()
-    // Expert mode Docs link points to expert docs
-    const docsLink = page.getByRole('link', { name: /Expert Guide/ }).first()
-    const href = await docsLink.getAttribute('href')
-    expect(href).toContain('from=expert')
+    const docsLink = page.locator('.docsButton').first()
+    await expect(docsLink).toHaveAttribute('href', '/expert-docs')
   })
 
-  test('active tab: SAM NavLink has aria-current=page on /', async ({ page }) => {
+  test('basic mode Docs link points to /docs', async ({ page }) => {
+    const docsLink = page.locator('.docsButton').first()
+    await expect(docsLink).toHaveAttribute('href', '/docs')
+  })
+
+  test('active tab: SAM NavLink has aria-current=page on /', async ({
+    page,
+  }) => {
     // React Router NavLink adds aria-current="page" to the active link
     const samLink = page.locator('.navigation a[href="/"]')
     await expect(samLink).toHaveAttribute('aria-current', 'page')
   })
 
-  test('active tab: Bonds NavLink has aria-current=page on /bonds', async ({ page }) => {
+  test('active tab: Bonds NavLink has aria-current=page on /bonds', async ({
+    page,
+  }) => {
     await page.goto('/bonds')
     await waitForNav(page)
     const bondsLink = page.locator('.navigation a[href="/bonds"]')
     await expect(bondsLink).toHaveAttribute('aria-current', 'page')
   })
 
-  test('active tab: Events NavLink has aria-current=page on /protected-events', async ({ page }) => {
+  test('active tab: Events NavLink has aria-current=page on /protected-events', async ({
+    page,
+  }) => {
     await page.goto('/protected-events')
     await waitForNav(page)
     const eventsLink = page.locator('.navigation a[href="/protected-events"]')

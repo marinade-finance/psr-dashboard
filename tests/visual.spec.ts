@@ -5,11 +5,15 @@ import { test, expect } from './fixtures/mock-api'
 
 test('no console errors on SAM page', async ({ page }) => {
   const errors: string[] = []
-  page.on('console', m => { if (m.type() === 'error') errors.push(m.text()) })
+  page.on('console', m => {
+    if (m.type() === 'error') errors.push(m.text())
+  })
   await page.goto('/')
   await page.waitForSelector('tbody tr', { timeout: 50000 })
   // Filter out known non-critical network errors from HAR not found
-  const real = errors.filter(e => !e.includes('Failed to load resource') && !e.includes('net::'))
+  const real = errors.filter(
+    e => !e.includes('Failed to load resource') && !e.includes('net::'),
+  )
   expect(real).toHaveLength(0)
 })
 
@@ -27,8 +31,9 @@ test('all main routes render without crash', async ({ page }) => {
   }
 })
 
-test('/docs/ renders guide content', async ({ page }) => {
-  await page.goto('/docs/')
-  await expect(page.locator('#content')).toBeVisible()
-  await expect(page.locator('#content')).toContainText('PSR Dashboard Guide')
+test('/docs renders guide content', async ({ page }) => {
+  await page.goto('/docs')
+  await expect(
+    page.getByRole('heading', { name: 'PSR Dashboard Guide' }),
+  ).toBeVisible()
 })
