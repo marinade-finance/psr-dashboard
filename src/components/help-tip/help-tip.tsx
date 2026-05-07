@@ -18,7 +18,7 @@ export const HelpTip: React.FC<Props> = ({ html, text }) => (
         )
       }
     >
-      <span className="cursor-help text-[10px] leading-none text-muted-foreground/60 hover:text-muted-foreground border border-muted-foreground/30 rounded-full w-3.5 h-3.5 inline-flex items-center justify-center select-none">
+      <span className="cursor-help text-[10px] leading-none text-muted-foreground/60 hover:text-muted-foreground border border-muted-foreground/30 rounded-full w-3.5 h-3.5 inline-flex items-center justify-center select-none shrink-0">
         ?
       </span>
     </Tooltip>

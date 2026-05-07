@@ -15,6 +15,7 @@ import {
   fetchValidatorNames,
   loadSam,
   selectBondSize,
+  selectMaxAPY,
 } from 'src/services/sam'
 import {
   buildOverrideValues,
@@ -232,8 +233,8 @@ export const SamPage: React.FC<Props> = ({ level }) => {
       .filter(v => selectBondSize(v) > 0)
       .sort(
         (a, b) =>
-          b.auctionStake.marinadeSamTargetSol -
-          a.auctionStake.marinadeSamTargetSol,
+          selectMaxAPY(b, data.epochsPerYear) -
+          selectMaxAPY(a, data.epochsPerYear),
       )
     const index = validators.findIndex(v => v.voteAccount === selectedValidator)
     if (index === -1) return null

@@ -362,6 +362,14 @@ export const SamTable: React.FC<Props> = ({
     [auctionResult, dsSamConfig, winningTotalPmpe],
   )
 
+  // Stable auction rank by maxApy desc — independent of display sort
+  const auctionRankMap = useMemo(() => {
+    const sorted = [...validatorsWithBond].sort(
+      (a, b) => selectMaxAPY(b, epochsPerYear) - selectMaxAPY(a, epochsPerYear),
+    )
+    return new Map(sorted.map((v, i) => [selectVoteAccount(v), i + 1]))
+  }, [validatorsWithBond, epochsPerYear])
+
   // Sort validators based on current sort column and direction
   const sortedValidators = useMemo(
     () =>
@@ -502,7 +510,9 @@ export const SamTable: React.FC<Props> = ({
   ) => {
     const voteAccount = selectVoteAccount(validator)
     const inSet = validator.auctionStake.marinadeSamTargetSol > 0
-    const rank = index + 1
+    const rank = isGhost
+      ? index + 1
+      : (auctionRankMap.get(voteAccount) ?? index + 1)
     const isHovered = !isGhost && hoveredRow === voteAccount
     const isSimulated = simulatedValidators.has(voteAccount)
 
@@ -786,40 +796,46 @@ export const SamTable: React.FC<Props> = ({
                   />
                 </TableHead>
                 <TableHead
-                  className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-[100px] cursor-pointer hover:text-primary"
+                  className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-[100px] cursor-pointer hover:text-primary whitespace-nowrap"
                   onClick={() => handleSort('maxApy')}
                 >
-                  Max APY
-                  <SortIndicator
-                    column="maxApy"
-                    sortColumn={sortColumn}
-                    sortDirection={sortDirection}
-                  />
-                  <HelpTip text={HELP_TEXT.maxApy} />
+                  <div className="flex items-center gap-1">
+                    Max APY
+                    <SortIndicator
+                      column="maxApy"
+                      sortColumn={sortColumn}
+                      sortDirection={sortDirection}
+                    />
+                    <HelpTip text={HELP_TEXT.maxApy} />
+                  </div>
                 </TableHead>
                 <TableHead
-                  className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-40 cursor-pointer hover:text-primary"
+                  className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-40 cursor-pointer hover:text-primary whitespace-nowrap"
                   onClick={() => handleSort('bond')}
                 >
-                  Bond
-                  <SortIndicator
-                    column="bond"
-                    sortColumn={sortColumn}
-                    sortDirection={sortDirection}
-                  />
-                  <HelpTip text={HELP_TEXT.bondHealth} />
+                  <div className="flex items-center gap-1">
+                    Bond
+                    <SortIndicator
+                      column="bond"
+                      sortColumn={sortColumn}
+                      sortDirection={sortDirection}
+                    />
+                    <HelpTip text={HELP_TEXT.bondHealth} />
+                  </div>
                 </TableHead>
                 <TableHead
-                  className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-[140px] cursor-pointer hover:text-primary"
+                  className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-[140px] cursor-pointer hover:text-primary whitespace-nowrap"
                   onClick={() => handleSort('stakeDelta')}
                 >
-                  Stake / Next {'\u0394'}
-                  <SortIndicator
-                    column="stakeDelta"
-                    sortColumn={sortColumn}
-                    sortDirection={sortDirection}
-                  />
-                  <HelpTip text="Current SAM-active stake and projected change next epoch. Positive deltas are limited by undeployed TVL (deposited SOL not yet delegated). Negative deltas come from natural withdrawals (~0.7% of TVL/epoch) drawn first from over-target validators." />
+                  <div className="flex items-center gap-1">
+                    Stake / Next {'\u0394'}
+                    <SortIndicator
+                      column="stakeDelta"
+                      sortColumn={sortColumn}
+                      sortDirection={sortDirection}
+                    />
+                    <HelpTip text="Current SAM-active stake and projected change next epoch. Positive deltas are limited by undeployed TVL (deposited SOL not yet delegated). Negative deltas come from natural withdrawals (~0.7% of TVL/epoch) drawn first from over-target validators." />
+                  </div>
                 </TableHead>
                 <TableHead
                   className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted min-w-[200px] cursor-pointer hover:text-primary"
