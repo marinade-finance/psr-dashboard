@@ -158,17 +158,17 @@ const PenaltyRow = ({
 }) => (
   <div className="flex items-center justify-between gap-2">
     <button
-      className={`text-left flex-1 flex items-center gap-1 group ${
+      className={`text-left flex-1 flex items-center gap-1 ${
         sub
           ? 'text-[11px] text-muted-foreground'
           : 'text-xs text-muted-foreground'
-      } hover:text-foreground`}
+      } hover:text-foreground hover:underline`}
       onClick={onSeeBreakdown}
       title="See calculation"
     >
       <span>{label}</span>
       <span
-        className={`group-hover:underline shrink-0 ${
+        className={`shrink-0 ${
           sub ? 'text-muted-foreground' : 'text-destructive'
         }`}
       >
