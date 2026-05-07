@@ -14,15 +14,13 @@ import {
 
 import { CalcCard, CalcRow, SectionHeader } from './shared'
 
-import type {
-  AuctionValidator,
-  DsSamConfig,
-} from '@marinade.finance/ds-sam-sdk'
+import type { DsSamConfig } from '@marinade.finance/ds-sam-sdk'
 import type { UserLevel } from 'src/components/navigation/navigation'
 import type { ProtectedEvent } from 'src/services/protected-events'
+import type { AugmentedAuctionValidator } from 'src/services/sam'
 
 type Props = {
-  validator: AuctionValidator
+  validator: AugmentedAuctionValidator
   dsSamConfig: DsSamConfig
   winningTotalPmpe: number
   bondRiskFeeSol: number
