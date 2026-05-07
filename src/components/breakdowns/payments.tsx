@@ -113,17 +113,14 @@ export const PaymentsBreakdown: React.FC<Props> = ({
           <CalcRow
             label="Bid-too-low penalty"
             value={bidTooLowPenaltySol > 0 ? pay(bidTooLowPenaltySol) : '—'}
-            accent={bidTooLowPenaltySol > 0 ? 'red' : undefined}
           />
           <CalcRow
             label="Blacklist penalty"
             value={blacklistPenaltySol > 0 ? pay(blacklistPenaltySol) : '—'}
-            accent={blacklistPenaltySol > 0 ? 'red' : undefined}
           />
           <CalcRow
             label="Bond risk fee"
             value={bondRiskFeeSol > 0 ? pay(bondRiskFeeSol) : '—'}
-            accent={bondRiskFeeSol > 0 ? 'red' : undefined}
           />
           {psrEstimates.length > 0 && (
             <>
@@ -142,7 +139,6 @@ export const PaymentsBreakdown: React.FC<Props> = ({
                         : 'from Marinade'
                     }
                     value={pay(selectAmount(e))}
-                    accent="red"
                   />
                 )
               })}
