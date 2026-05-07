@@ -1,6 +1,7 @@
 import React from 'react'
 
 import { UserLevel } from 'src/components/navigation/navigation'
+import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
 import { formatPercentage, formatSolAmount, lamportsToSol } from 'src/format'
 import { selectEffectiveAmount } from 'src/services/bonds'
 import { notificationTooltip } from 'src/services/notifications'
@@ -430,26 +431,22 @@ export const ValidatorBondsTable: React.FC<Props> = ({
                   const va = selectVoteAccount(validator)
                   const summary = notificationsMap?.[va]
                   return (
-                    <div className="flex items-center gap-1.5">
-                      <div>
-                        <div className="font-medium text-[13px] text-foreground">
-                          {name || '---'}
-                        </div>
-                        <div className="text-[11px] font-mono text-secondary-foreground mt-px">
-                          {va.slice(0, 8)}...{va.slice(-4)}
-                        </div>
-                      </div>
-                      {summary && (
-                        <button
-                          type="button"
-                          className="shrink-0 text-warning opacity-80 hover:opacity-100 w-4 h-4"
-                          {...tooltipAttributes(notificationTooltip(summary))}
-                          aria-label={`${summary.count} notification${summary.count === 1 ? '' : 's'}`}
-                        >
-                          {BellIcon}
-                        </button>
-                      )}
-                    </div>
+                    <ValidatorIdentity
+                      name={name}
+                      voteAccount={va}
+                      trailing={
+                        summary && (
+                          <button
+                            type="button"
+                            className="shrink-0 text-warning opacity-80 hover:opacity-100 w-4 h-4"
+                            {...tooltipAttributes(notificationTooltip(summary))}
+                            aria-label={`${summary.count} notification${summary.count === 1 ? '' : 's'}`}
+                          >
+                            {BellIcon}
+                          </button>
+                        )
+                      }
+                    />
                   )
                 },
                 compare: (a, b) =>
