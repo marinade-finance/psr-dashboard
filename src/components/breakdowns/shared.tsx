@@ -40,9 +40,9 @@ export const CalcRow: React.FC<{
         accent === 'red'
           ? 'text-destructive'
           : accent === 'yellow'
-            ? 'text-[var(--status-yellow,#b58900)]'
+            ? 'text-status-yellow'
             : accent === 'green'
-              ? 'text-[var(--status-green,#2aa198)]'
+              ? 'text-status-green'
               : ''
       }`}
     >
@@ -56,7 +56,7 @@ export const OkRow: React.FC<{ message: string }> = ({ message }) => (
     <td colSpan={2} className="py-1.5 pr-2 text-xs text-muted-foreground">
       {message}
     </td>
-    <td className="py-1.5 pl-2 text-right font-mono text-xs text-[var(--status-green,#2aa198)]">
+    <td className="py-1.5 pl-2 text-right font-mono text-xs text-status-green">
       ●
     </td>
   </tr>
@@ -64,8 +64,7 @@ export const OkRow: React.FC<{ message: string }> = ({ message }) => (
 
 const STATUS_CLASSES: Record<'red' | 'yellow' | 'green', string> = {
   red: 'bg-destructive-light text-destructive',
-  yellow:
-    'bg-[var(--status-yellow-light,rgba(181,137,0,0.12))] text-[var(--status-yellow,#b58900)]',
+  yellow: 'bg-status-yellow-light text-status-yellow',
   green: 'bg-primary-light text-primary',
 }
 
@@ -80,9 +79,7 @@ export const CalcCard: React.FC<{
 }> = ({ title, guideTo, isSimulated, status, cta, children }) => (
   <div className="bg-card rounded-xl border border-border p-5">
     <h3 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
-      {isSimulated && (
-        <span className="text-[var(--status-yellow,#b58900)]">Simulated ·</span>
-      )}
+      {isSimulated && <span className="text-status-yellow">Simulated ·</span>}
       {title}
       {guideTo && (
         <Link
@@ -107,7 +104,7 @@ export const CalcCard: React.FC<{
           status?.tone === 'red'
             ? 'border-destructive/30 [&_button]:text-destructive [&_a]:text-destructive'
             : status?.tone === 'yellow'
-              ? 'border-[var(--status-yellow,#b58900)]/30 [&_button]:text-[var(--status-yellow,#b58900)] [&_a]:text-[var(--status-yellow,#b58900)]'
+              ? 'border-status-yellow/30 [&_button]:text-status-yellow [&_a]:text-status-yellow'
               : 'border-border'
         }`}
       >
