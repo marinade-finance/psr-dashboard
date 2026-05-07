@@ -99,7 +99,7 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
           <RevRow label="Active SAM stake" value={stake(m.active)} bold />
           <RevRow label="SAM target" value={stake(m.target)} />
           <RevRow
-            label="Expected next-epoch Δ"
+            label="Expected next-epoch difference"
             value={deltaText}
             accent={deltaAccent}
           />

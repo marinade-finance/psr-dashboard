@@ -839,7 +839,7 @@ export const SamTable: React.FC<Props> = ({
                   onClick={() => handleSort('stakeDelta')}
                 >
                   <div className="flex items-center gap-1">
-                    Stake / Next {'\u0394'}
+                    Stake / Next change
                     <SortIndicator
                       column="stakeDelta"
                       sortColumn={sortColumn}
