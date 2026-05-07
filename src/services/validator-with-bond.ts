@@ -46,16 +46,20 @@ export const fetchValidatorsWithBonds = async (): Promise<
     loadSam(),
   ])
 
+  // Index the auction once so the per-validator lookup is O(1) instead of
+  // a linear .find() scan per row (≈N² with ~700 validators).
+  const auctionByVoteAccount = new Map<string, AuctionValidator>()
+  for (const v of auctionResult.auctionData.validators) {
+    auctionByVoteAccount.set(v.voteAccount, v)
+  }
+
   const validatorsWithBonds: Record<string, ValidatorWithBond> = {}
 
   for (const validator of validators) {
-    const auction = auctionResult.auctionData.validators.find(
-      ({ voteAccount }) => voteAccount === validator.vote_account,
-    )
     validatorsWithBonds[validator.vote_account] = {
       validator,
       bond: null,
-      auction,
+      auction: auctionByVoteAccount.get(validator.vote_account),
     }
   }
 

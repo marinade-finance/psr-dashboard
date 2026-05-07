@@ -519,9 +519,19 @@ export const SamTable: React.FC<Props> = ({
         key={isGhost ? `${voteAccount}-ghost` : voteAccount}
         className={rowClasses}
         style={posColor ? { borderLeftColor: posColor } : undefined}
+        role={isGhost ? undefined : 'button'}
+        tabIndex={isGhost ? -1 : 0}
+        aria-label={isGhost ? undefined : `Open detail for ${validatorName}`}
         onMouseEnter={() => !isGhost && setHoveredRow(voteAccount)}
         onMouseLeave={() => setHoveredRow(null)}
         onClick={() => !isGhost && onValidatorClick(voteAccount)}
+        onKeyDown={e => {
+          if (isGhost) return
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onValidatorClick(voteAccount)
+          }
+        }}
       >
         {/* Rank / ✕ */}
         <TableCell className="px-3.5 py-3 text-center w-10">
