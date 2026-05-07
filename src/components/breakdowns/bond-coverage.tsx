@@ -33,8 +33,8 @@ const statusLine = (
       return {
         label:
           topUpToStopFee > 0
-            ? `Bond risk fee active. Top up ${pay(topUpToStopFee)} to stop it.`
-            : 'Bond risk fee active.',
+            ? `Bond risk fee will be charged. Top up ${pay(topUpToStopFee)} to stop it.`
+            : 'Bond risk fee will be charged.',
         tone: 'red',
       }
     }

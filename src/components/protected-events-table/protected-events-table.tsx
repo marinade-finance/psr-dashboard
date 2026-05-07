@@ -28,7 +28,7 @@ const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
         <Badge
           variant="secondary"
           {...tooltipAttributes(
-            'This settlement is not claimable as it was created during the testing period.',
+            'This was logged during a test run — no money actually changes hands.',
           )}
           className="badge cursor-help float-left"
         >
@@ -40,7 +40,7 @@ const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
         <Badge
           variant="default"
           {...tooltipAttributes(
-            'This is an estimate based on live data but may change during the epoch<br />before the settlements for this epoch are created on-chain.',
+            'An early estimate from live data. The final number gets locked in at the end of the epoch and may shift before then.',
           )}
           className="badge cursor-help float-left"
         >
@@ -57,7 +57,7 @@ const renderFunderBadge = (protectedEvent: ProtectedEvent) => {
     return (
       <Badge
         {...tooltipAttributes(
-          "The validator's own bond covered this settlement — the validator paid.",
+          "Paid out of the validator's own bond — the validator footed the bill.",
         )}
         className="cursor-help bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/30"
       >
@@ -69,7 +69,7 @@ const renderFunderBadge = (protectedEvent: ProtectedEvent) => {
     return (
       <Badge
         {...tooltipAttributes(
-          "Marinade's backstop covered this settlement — the validator's bond was insufficient.",
+          "Marinade had to step in and pay because the validator's bond ran out.",
         )}
         className="cursor-help bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30"
       >
@@ -171,7 +171,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
             filtered ? `of ${totalEvents.toLocaleString()} total` : undefined
           }
           {...tooltipAttributes(
-            'Protected events paid out to stakers. When a filter is active, the primary value is the filtered subset.',
+            'Number of times stakers got reimbursed because a validator under-delivered. Shows the filtered count when filters are on.',
           )}
         />
         <Metric
@@ -208,7 +208,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
             ) : null
           }
           {...tooltipAttributes(
-            'SOL paid out to stakers across protected events. When a filter is active, the primary value is the filtered subset.',
+            'Total SOL stakers received as reimbursement when validators under-delivered. Shows the filtered total when filters are on.',
           )}
         />
         <Metric
@@ -220,7 +220,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
               : undefined
           }
           {...tooltipAttributes(
-            'Most recent epoch where settlements have been finalised on-chain.',
+            'The most recent epoch where reimbursements have been fully paid out and locked in.',
           )}
         />
       </div>
@@ -269,7 +269,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
               {
                 header: 'Epoch',
                 headerHelp:
-                  'Solana epoch (~2 days) in which this event occurred',
+                  'Which Solana epoch this happened in — each epoch is about two days long.',
                 render: ({ protectedEvent }) => <>{protectedEvent.epoch}</>,
                 compare: (a, b) =>
                   a.protectedEvent.epoch - b.protectedEvent.epoch,
@@ -278,7 +278,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
               {
                 header: 'Reason',
                 headerHelp:
-                  'Why the protection was triggered — commission increase, low uptime, or downtime',
+                  'Why stakers needed reimbursing — the validator hiked its commission, missed too many slots, or went down entirely.',
                 render: ({ protectedEvent }) => (
                   <>{selectProtectedStakeReason(protectedEvent)}</>
                 ),
@@ -290,7 +290,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
               {
                 header: 'Paid Out',
                 headerHelp:
-                  'SOL paid to compensate stakers for this event. Estimate = live data, may change before epoch settles.',
+                  "How much SOL stakers received for this event. 'Estimate' means the epoch is still live and the number may shift.",
                 render: ({ protectedEvent, status }) => (
                   <>
                     {renderProtectedEventStatus(status)}{' '}
@@ -305,7 +305,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
               {
                 header: 'Funded by',
                 headerHelp:
-                  "Validator Bond = validator's own collateral covered this. Marinade = backstop fund covered it (validator bond was insufficient).",
+                  "Who actually paid: Validator Bond means the validator's own deposit covered it; Marinade means our reserve fund had to step in because the bond came up short.",
                 render: ({ protectedEvent }) =>
                   renderFunderBadge(protectedEvent),
                 compare: (a, b) =>

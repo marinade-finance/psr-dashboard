@@ -499,7 +499,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
               {
                 header: 'Protected Stake [SOL]',
                 headerHelp:
-                  "How much of this validator's Marinade stake is currently covered by the bond — stakers on this portion are protected.",
+                  "The slice of this validator's Marinade stake that the bond is big enough to reimburse if needed.",
                 render: entry => (
                   <>{formatSolAmount(selectProtectedStake(entry))}</>
                 ),
@@ -510,7 +510,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
               {
                 header: 'Coverage',
                 headerHelp:
-                  'Ratio of protected stake to total Marinade stake for this validator. 100% means the bond fully covers all delegated stake.',
+                  "What share of this validator's Marinade stake the bond can fully cover. 100% means everything is protected.",
                 render: entry => {
                   const stake = selectTotalMarinadeStake(entry.validator)
                   const coveredStake = selectProtectedStake(entry)

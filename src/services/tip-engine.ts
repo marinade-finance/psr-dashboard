@@ -129,7 +129,7 @@ export const getValidatorTip = (
           : ''
       const feeStr =
         bondRiskFeeSol > 0
-          ? `Bond risk fee ${formatSolAmount(bondRiskFeeSol, 2)} SOL active.`
+          ? `Bond risk fee ${formatSolAmount(bondRiskFeeSol, 2)} SOL will be charged.`
           : 'Bond below penalty threshold.'
       return {
         text: `${feeStr}${topUpStr}`,
