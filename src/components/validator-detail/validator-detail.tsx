@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { BidPenaltyBreakdown } from 'src/components/breakdowns/bid-penalty'
 import { BondCoverageBreakdown } from 'src/components/breakdowns/bond-coverage'
 import { SamRevenueBreakdown } from 'src/components/breakdowns/sam-revenue'
+import { CalcCard, CalcRow } from 'src/components/breakdowns/shared'
 import { HelpTip } from 'src/components/help-tip/help-tip'
 import { Button } from 'src/components/ui/button'
 import { Input } from 'src/components/ui/input'
@@ -59,7 +60,7 @@ interface ValidatorDetailProps {
   isCalculating: boolean
 }
 
-type Tab = 'overview' | 'bond' | 'revenue' | 'penalty'
+type Tab = 'overview' | 'bond' | 'revenue' | 'penalty' | 'payments'
 
 type BondHealth = 'healthy' | 'watch' | 'critical'
 
@@ -393,9 +394,9 @@ export const ValidatorDetail = ({
             {(
               [
                 ['overview', 'Overview'],
-                ['revenue', 'Payments'],
+                ['payments', 'Payments'],
+                ['revenue', 'Bidding'],
                 ['bond', 'Bond'],
-                ['penalty', 'Bid Penalty'],
               ] satisfies [Tab, string][]
             ).map(([id, label]) => (
               <button
@@ -426,6 +427,65 @@ export const ValidatorDetail = ({
                 setTab('overview')
               }}
             />
+          </div>
+        )}
+
+        {tab === 'payments' && (
+          <div className="p-4 sm:p-6">
+            <CalcCard title="Payments This Epoch" guideTo="/docs">
+              <table className="w-full">
+                <tbody>
+                  <CalcRow
+                    label="Active stake bid"
+                    value={pay(paymentMetrics.cost)}
+                  />
+                  <CalcRow
+                    label="Activating stake bid"
+                    value={pay(paymentMetrics.activatingCost)}
+                  />
+                  <CalcRow
+                    label="Bid penalty"
+                    value={
+                      penaltyMetrics.penaltySol > 0
+                        ? pay(penaltyMetrics.penaltySol)
+                        : '—'
+                    }
+                    accent={penaltyMetrics.penaltySol > 0 ? 'red' : undefined}
+                  />
+                  <CalcRow
+                    label="Total"
+                    value={pay(
+                      paymentMetrics.total + penaltyMetrics.penaltySol,
+                    )}
+                    bold
+                    large
+                    separator
+                  />
+                </tbody>
+              </table>
+              {penaltyMetrics.penaltySol > 0 ? (
+                <div className="mt-4 pt-3 border-t border-destructive/30">
+                  <button
+                    className="text-xs text-destructive hover:underline"
+                    onClick={() => setTab('penalty')}
+                  >
+                    See bid penalty calculation →
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-4 pt-3 border-t border-border">
+                  <button
+                    className="text-xs text-primary hover:underline"
+                    onClick={() => {
+                      setSimEnabled(true)
+                      setTab('overview')
+                    }}
+                  >
+                    Simulate commission or bid changes →
+                  </button>
+                </div>
+              )}
+            </CalcCard>
           </div>
         )}
 
@@ -578,7 +638,7 @@ export const ValidatorDetail = ({
                 />
                 <button
                   className="text-xs text-primary hover:underline"
-                  onClick={() => setTab('revenue')}
+                  onClick={() => setTab('payments')}
                 >
                   See full payments breakdown →
                 </button>
