@@ -1,16 +1,19 @@
 import React from 'react'
 
 import { pay, pmpe, stake } from 'src/format'
+import { docsPath } from 'src/lib/utils'
 import { computeSamRevenueMetrics } from 'src/services/breakdowns'
 
 import { CalcCard, SectionHeader } from './shared'
 
+import type { UserLevel } from 'src/components/navigation/navigation'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
 
 type Props = {
   validator: AugmentedAuctionValidator
   isSimulated?: boolean
   onGoToSim?: () => void
+  level?: UserLevel
 }
 
 // 4-column row unique to revenue breakdown (pct | pmpe | sol)
@@ -57,6 +60,7 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
   validator,
   isSimulated,
   onGoToSim,
+  level,
 }) => {
   const m = computeSamRevenueMetrics(validator)
   const deltaAccent = m.delta > 0 ? 'green' : m.delta < 0 ? 'red' : undefined
@@ -83,7 +87,7 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
   return (
     <CalcCard
       title="SAM Revenue Calculation"
-      guideTo="/docs"
+      guideTo={docsPath(level)}
       isSimulated={isSimulated}
       status={status}
       cta={cta}

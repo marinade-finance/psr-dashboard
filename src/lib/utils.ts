@@ -1,8 +1,14 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
+import { UserLevel } from 'src/components/navigation/navigation'
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
+}
+
+export function docsPath(level?: UserLevel): string {
+  return level === UserLevel.Expert ? '/expert-docs' : '/docs'
 }
 
 // CSS variable references for inline styles. Use a Tailwind class

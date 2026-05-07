@@ -1,6 +1,7 @@
 import React from 'react'
 
 import { formatPercentage, pay, pmpe, stake } from 'src/format'
+import { docsPath } from 'src/lib/utils'
 import { computeBidPenaltyMetrics } from 'src/services/breakdowns'
 
 import { CalcCard, CalcRow, OkRow, SectionHeader } from './shared'
@@ -9,6 +10,7 @@ import type {
   AuctionValidator,
   DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
+import type { UserLevel } from 'src/components/navigation/navigation'
 
 type Props = {
   validator: AuctionValidator
@@ -16,6 +18,7 @@ type Props = {
   winningTotalPmpe: number
   isSimulated?: boolean
   onGoToSim?: () => void
+  level?: UserLevel
 }
 
 export const BidPenaltyBreakdown: React.FC<Props> = ({
@@ -24,6 +27,7 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
   winningTotalPmpe,
   isSimulated,
   onGoToSim,
+  level,
 }) => {
   const m = computeBidPenaltyMetrics(validator, dsSamConfig, winningTotalPmpe)
 
@@ -51,7 +55,7 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
   return (
     <CalcCard
       title="Bid Penalty Calculation"
-      guideTo="/docs"
+      guideTo={docsPath(level)}
       isSimulated={isSimulated}
       status={status}
       cta={cta}

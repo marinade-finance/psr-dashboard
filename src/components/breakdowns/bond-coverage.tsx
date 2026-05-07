@@ -1,6 +1,7 @@
 import React from 'react'
 
 import { pay, pmpe, stake } from 'src/format'
+import { docsPath } from 'src/lib/utils'
 import { computeBondCoverageMetrics } from 'src/services/breakdowns'
 
 import { CalcCard, CalcRow, OkRow, SectionHeader } from './shared'
@@ -9,6 +10,7 @@ import type {
   AuctionValidator,
   DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
+import type { UserLevel } from 'src/components/navigation/navigation'
 import type { BondHealthState } from 'src/services/breakdowns'
 
 type Props = {
@@ -19,6 +21,7 @@ type Props = {
   bondRiskFeeSol: number
   isSimulated?: boolean
   onGoToSim?: () => void
+  level?: UserLevel
 }
 
 const statusLine = (
@@ -75,6 +78,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
   bondRiskFeeSol,
   isSimulated,
   onGoToSim,
+  level,
 }) => {
   const m = computeBondCoverageMetrics(
     validator,
@@ -110,7 +114,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
   return (
     <CalcCard
       title="Bond Calculation"
-      guideTo="/docs"
+      guideTo={docsPath(level)}
       isSimulated={isSimulated}
       status={status}
       cta={cta}

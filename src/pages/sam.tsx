@@ -306,6 +306,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
                 : undefined
             }
             isCalculating={isCalculating}
+            level={level}
           />
         )}
     </div>
