@@ -244,7 +244,7 @@ const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
         <div className="flex items-center gap-1.5">
           <div
             className="rounded-sm shrink-0"
-            style={{ width: 10, height: 10, background: 'hsl(168, 55%, 32%)' }}
+            style={{ width: 10, height: 10, background: 'var(--bond-full)' }}
           />
           <span>≥95% covered</span>
         </div>
