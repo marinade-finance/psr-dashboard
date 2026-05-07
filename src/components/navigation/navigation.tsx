@@ -113,12 +113,15 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
         </NavLink>
       </div>
       <div className="ml-auto flex items-center gap-2 shrink-0">
-        <a
-          href={isExpert ? '/docs/?from=Expert' : '/docs/'}
-          className={cn(
-            tab,
-            'docsButton hidden sm:flex items-center gap-1.5 border border-transparent hover:border-border',
-          )}
+        <NavLink
+          to={isExpert ? '/expert-docs' : '/docs'}
+          className={({ isActive }) =>
+            cn(
+              tab,
+              'docsButton hidden sm:flex items-center gap-1.5 border border-transparent hover:border-border',
+              isActive && tabActive,
+            )
+          }
         >
           <svg
             width="14"
@@ -146,18 +149,7 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
             />
           </svg>
           Docs
-        </a>
-        {isExpert && (
-          <a
-            href="/docs/?from=Expert#GUIDE-EXPERT"
-            className={cn(
-              tab,
-              'hidden sm:inline border border-transparent hover:border-border',
-            )}
-          >
-            Expert Guide
-          </a>
-        )}
+        </NavLink>
         {children}
         <ThemeToggle />
       </div>

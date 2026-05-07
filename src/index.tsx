@@ -13,6 +13,7 @@ import { Tooltip } from 'react-tooltip'
 import 'react-tooltip/dist/react-tooltip.css'
 import { UserLevel } from './components/navigation/navigation'
 import { TooltipProvider } from './components/ui/tooltip'
+import { DocsPage } from './pages/docs'
 import { ProtectedEventsPage } from './pages/protected-events'
 import { SamPage } from './pages/sam'
 import { TestSamPage } from './pages/test-sam'
@@ -80,6 +81,16 @@ const router = createBrowserRouter([
   {
     path: '/test-expert-',
     element: <TestSamPage level={UserLevel.Expert} />,
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: '/docs',
+    element: <DocsPage level={UserLevel.Basic} />,
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: '/expert-docs',
+    element: <DocsPage level={UserLevel.Expert} />,
     errorElement: <ErrorPage />,
   },
 ])
