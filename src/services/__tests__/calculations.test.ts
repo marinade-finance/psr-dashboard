@@ -122,46 +122,29 @@ describe('bondRunwayDays', () => {
 })
 
 describe('bondUtilizationPct', () => {
-  it('typical utilization < 100', () => {
-    // 10000 active / (100 * 5000) * 100 = 2%
-    const v = makeValidator({
-      bondBalanceSol: 100,
-      marinadeActivatedStakeSol: 10000,
-    })
-    expect(bondUtilizationPct(v)).toBe(2)
+  it('typical utilization < 100: 3/4 epochs covered → 25%', () => {
+    const v = makeValidator({ bondGoodForNEpochs: 3, bondBalanceSol: 100 })
+    expect(bondUtilizationPct(v, 4)).toBe(25)
   })
 
-  it('capped at 100 when stake far exceeds bond', () => {
-    const v = makeValidator({
-      bondBalanceSol: 1,
-      marinadeActivatedStakeSol: 999999,
-    })
-    expect(bondUtilizationPct(v)).toBe(100)
+  it('runway depleted → capped at 100', () => {
+    const v = makeValidator({ bondGoodForNEpochs: 0, bondBalanceSol: 10 })
+    expect(bondUtilizationPct(v, 5)).toBe(100)
   })
 
   it('zero bond → 100', () => {
-    const v = makeValidator({
-      bondBalanceSol: 0,
-      marinadeActivatedStakeSol: 1000,
-    })
-    expect(bondUtilizationPct(v)).toBe(100)
+    const v = makeValidator({ bondBalanceSol: 0 })
+    expect(bondUtilizationPct(v, 5)).toBe(100)
   })
 
-  it('zero stake → 0%', () => {
-    const v = makeValidator({
-      bondBalanceSol: 100,
-      marinadeActivatedStakeSol: 0,
-    })
-    expect(bondUtilizationPct(v)).toBe(0)
+  it('runway exceeds min → 0%', () => {
+    const v = makeValidator({ bondGoodForNEpochs: 10, bondBalanceSol: 100 })
+    expect(bondUtilizationPct(v, 5)).toBe(0)
   })
 
-  it('exactly at cap boundary', () => {
-    // 250000 active / (100 * 5000) * 100 = 50%
-    const v = makeValidator({
-      bondBalanceSol: 100,
-      marinadeActivatedStakeSol: 250000,
-    })
-    expect(bondUtilizationPct(v)).toBe(50)
+  it('exactly half covered → 50%', () => {
+    const v = makeValidator({ bondGoodForNEpochs: 2, bondBalanceSol: 100 })
+    expect(bondUtilizationPct(v, 4)).toBe(50)
   })
 })
 
