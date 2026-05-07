@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useQuery } from 'react-query'
 
 import { BidPenaltyBreakdown } from 'src/components/breakdowns/bid-penalty'
 import { BondCoverageBreakdown } from 'src/components/breakdowns/bond-coverage'
@@ -12,6 +13,7 @@ import { HelpTip } from 'src/components/help-tip/help-tip'
 import { Button } from 'src/components/ui/button'
 import { Input } from 'src/components/ui/input'
 import { Sheet, SheetContent } from 'src/components/ui/sheet'
+import { Switch } from 'src/components/ui/switch'
 import { ApyCompositionCard } from 'src/components/validator-detail/apy-composition-card'
 import { formatSolAmount, pay, pmpe } from 'src/format'
 import {
@@ -30,6 +32,12 @@ import {
   computeBidPenaltyMetrics,
 } from 'src/services/breakdowns'
 import { HELP_TEXT } from 'src/services/help-text'
+import {
+  isProtectedEvent,
+  selectAmount,
+  selectProtectedStakeReason,
+} from 'src/services/protected-events'
+import { fetchPsrEstimatesForValidator } from 'src/services/protected-events-estimator'
 import {
   selectExpectedStakeChange,
   selectVoteAccount,
@@ -167,6 +175,11 @@ export const ValidatorDetail = ({
   const penaltyMetrics = useMemo(
     () => computeBidPenaltyMetrics(validator, dsSamConfig, winningTotalPmpe),
     [validator, dsSamConfig, winningTotalPmpe],
+  )
+  const { data: psrEstimates = [] } = useQuery(
+    ['psrEstimates', voteAccount],
+    () => fetchPsrEstimatesForValidator(voteAccount),
+    { staleTime: 5 * 60 * 1000 },
   )
 
   const [editBid, setEditBid] = useState(validator.revShare.bidPmpe.toString())
@@ -317,23 +330,11 @@ export const ValidatorDetail = ({
               title="When enabled, edits to commission/bid below auto-recalculate the auction"
             >
               <span className="text-muted-foreground">Simulate</span>
-              <button
-                role="switch"
-                aria-checked={simEnabled}
+              <Switch
+                checked={simEnabled}
+                onCheckedChange={handleSimToggle}
                 aria-label="Toggle simulation mode"
-                onClick={() => handleSimToggle(!simEnabled)}
-                className={`relative inline-block w-9 h-5 rounded-full transition-colors focus-visible:outline focus-visible:outline-2 ${
-                  simEnabled
-                    ? 'bg-[var(--status-yellow,#b58900)]'
-                    : 'bg-secondary'
-                }`}
-              >
-                <span
-                  className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
-                    simEnabled ? 'translate-x-4' : 'translate-x-0.5'
-                  }`}
-                />
-              </button>
+              />
             </label>
             {isSimulated && onClearSimulation && (
               <Button
@@ -441,17 +442,22 @@ export const ValidatorDetail = ({
               (validator.revShare.blacklistPenaltyPmpe / 1000) *
               validator.marinadeActivatedStakeSol
             const bondRiskFeeSol = validator.values.bondRiskFeeSol ?? 0
+            const psrTotal = psrEstimates.reduce(
+              (sum, e) => sum + selectAmount(e),
+              0,
+            )
             const total =
               paymentMetrics.total +
               penaltyMetrics.penaltySol +
               blacklistPenaltySol +
-              bondRiskFeeSol
+              bondRiskFeeSol +
+              psrTotal
             const hasPenalty =
               penaltyMetrics.penaltySol > 0 ||
               blacklistPenaltySol > 0 ||
               bondRiskFeeSol > 0
             return (
-              <div className="p-4 sm:p-6">
+              <div className="p-4 sm:p-6 space-y-6">
                 <CalcCard title="Expected Payments This Epoch" guideTo="/docs">
                   <table className="w-full">
                     <tbody>
@@ -490,6 +496,29 @@ export const ValidatorDetail = ({
                         value={bondRiskFeeSol > 0 ? pay(bondRiskFeeSol) : '—'}
                         accent={bondRiskFeeSol > 0 ? 'red' : undefined}
                       />
+                      {psrEstimates.length > 0 && (
+                        <>
+                          <SectionHeader title="PSR Settlements (estimated)" />
+                          {psrEstimates.map((e, i) => {
+                            const label = isProtectedEvent(e.reason)
+                              ? selectProtectedStakeReason(e)
+                              : e.reason
+                            return (
+                              <CalcRow
+                                key={i}
+                                label={String(label)}
+                                secondary={
+                                  e.meta.funder === 'ValidatorBond'
+                                    ? 'from bond'
+                                    : 'from Marinade'
+                                }
+                                value={pay(selectAmount(e))}
+                                accent="red"
+                              />
+                            )
+                          })}
+                        </>
+                      )}
                       <CalcRow
                         label="Total"
                         value={pay(total)}
@@ -500,7 +529,7 @@ export const ValidatorDetail = ({
                     </tbody>
                   </table>
                   <div
-                    className={`mt-4 pt-3 border-t flex flex-col gap-2 ${hasPenalty ? 'border-destructive/30' : 'border-border'}`}
+                    className={`mt-4 pt-3 border-t flex flex-col gap-2 ${hasPenalty || psrTotal > 0 ? 'border-destructive/30' : 'border-border'}`}
                   >
                     {penaltyMetrics.penaltySol > 0 && (
                       <button
@@ -560,19 +589,21 @@ export const ValidatorDetail = ({
             <div className="bg-card rounded-xl border border-border p-5">
               <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
                 Stake
-                <HelpTip text="Active = SOL currently delegated by SAM. Target = auction-assigned amount this epoch. Next epoch = expected delta routed through the rebalancing budget." />
               </h3>
               <div className="space-y-3 mt-3">
                 <MetricRow
                   label="Active"
+                  help="SOL currently delegated by Marinade SAM to this validator."
                   value={`${formatSolAmount(validator.marinadeActivatedStakeSol, 0)} SOL`}
                 />
                 <MetricRow
                   label="Target"
+                  help="Auction-assigned stake allocation for this epoch — what SAM wants to delegate based on your bid and score."
                   value={`${formatSolAmount(validator.auctionStake.marinadeSamTargetSol, 0)} SOL`}
                 />
                 <MetricRow
                   label="Next epoch"
+                  help="Expected stake change next epoch. Positive deltas are limited by the rebalancing budget (undeployed TVL). Negative deltas come from natural withdrawals."
                   value={
                     expectedStakeDelta > 0
                       ? `+${formatSolAmount(expectedStakeDelta, 0)} SOL`
