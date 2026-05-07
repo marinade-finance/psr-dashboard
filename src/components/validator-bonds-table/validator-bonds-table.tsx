@@ -37,15 +37,18 @@ const TIER_HIGH = 50_000
 const TIER_MID = 20_000
 
 function coverageColor(ratio: number, hasBond: boolean): string {
-  if (!hasBond) return 'hsl(220, 8%, 28%)'
-  if (ratio >= 0.95) return 'hsl(168, 55%, 32%)'
-  if (ratio >= 0.7) return 'hsl(172, 45%, 28%)'
-  if (ratio >= 0.4) return 'hsl(38, 65%, 30%)'
-  return 'hsl(0, 50%, 30%)'
+  if (!hasBond) return 'var(--bond-none)'
+  if (ratio >= 0.95) return 'var(--bond-full)'
+  if (ratio >= 0.7) return 'var(--bond-high)'
+  if (ratio >= 0.4) return 'var(--bond-mid)'
+  return 'var(--bond-low)'
 }
 
 type GradientPair = { from: string; to: string }
 
+// Bar fill uses lightened variants of the tier colors to make the gauge pop
+// against the tile background. Defined here rather than as tokens because
+// they only appear in this one component.
 function coverageBarFill(ratio: number, hasBond: boolean): GradientPair | null {
   if (!hasBond) return null
   if (ratio >= 0.95)
@@ -213,28 +216,28 @@ const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
         <div className="flex items-center gap-1.5">
           <div
             className="rounded-sm shrink-0"
-            style={{ width: 10, height: 10, background: 'hsl(220, 8%, 28%)' }}
+            style={{ width: 10, height: 10, background: 'var(--bond-none)' }}
           />
           <span>No bond</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div
             className="rounded-sm shrink-0"
-            style={{ width: 10, height: 10, background: 'hsl(0, 50%, 30%)' }}
+            style={{ width: 10, height: 10, background: 'var(--bond-low)' }}
           />
           <span>&lt;40% covered</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div
             className="rounded-sm shrink-0"
-            style={{ width: 10, height: 10, background: 'hsl(38, 65%, 30%)' }}
+            style={{ width: 10, height: 10, background: 'var(--bond-mid)' }}
           />
           <span>40–70%</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div
             className="rounded-sm shrink-0"
-            style={{ width: 10, height: 10, background: 'hsl(172, 45%, 28%)' }}
+            style={{ width: 10, height: 10, background: 'var(--bond-high)' }}
           />
           <span>70–95%</span>
         </div>
