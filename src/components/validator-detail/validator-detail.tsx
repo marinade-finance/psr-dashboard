@@ -705,41 +705,36 @@ export const ValidatorDetail = ({
                 {(() => {
                   const penaltyTotal =
                     bidTooLowPenaltySol + blacklistPenaltySol + bondRiskFeeSol
+                  if (penaltyTotal === 0) {
+                    return <MetricRow label="Penalty" value="—" />
+                  }
                   return (
-                    <MetricRow
+                    <PenaltyRow
                       label="Penalty"
-                      value={
-                        penaltyTotal > 0
-                          ? `${formatSolAmount(penaltyTotal, 2)} SOL`
-                          : '—'
-                      }
-                      valueStyle={
-                        penaltyTotal > 0
-                          ? { color: CSS_DESTRUCTIVE }
-                          : undefined
-                      }
+                      value={`${formatSolAmount(penaltyTotal, 2)} SOL`}
+                      onSeeBreakdown={() => setTab('payments')}
                     />
                   )
                 })()}
                 {bidTooLowPenaltySol > 0 && (
-                  <PenaltyRow
+                  <MetricRow
                     label="↳ bid-too-low penalty"
                     value={`${formatSolAmount(bidTooLowPenaltySol, 2)} SOL`}
-                    onSeeBreakdown={() => setTab('penalty')}
+                    valueStyle={{ color: CSS_MUTED_FG, fontSize: '11px' }}
                   />
                 )}
                 {blacklistPenaltySol > 0 && (
-                  <PenaltyRow
+                  <MetricRow
                     label="↳ blacklist penalty"
                     value={`${formatSolAmount(blacklistPenaltySol, 2)} SOL`}
-                    onSeeBreakdown={() => setTab('payments')}
+                    valueStyle={{ color: CSS_MUTED_FG, fontSize: '11px' }}
                   />
                 )}
                 {bondRiskFeeSol > 0 && (
-                  <PenaltyRow
+                  <MetricRow
                     label="↳ bond risk fee"
                     value={`${formatSolAmount(bondRiskFeeSol, 2)} SOL`}
-                    onSeeBreakdown={() => setTab('bond')}
+                    valueStyle={{ color: CSS_MUTED_FG, fontSize: '11px' }}
                   />
                 )}
                 <MetricRow

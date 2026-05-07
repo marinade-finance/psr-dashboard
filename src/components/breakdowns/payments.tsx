@@ -69,8 +69,8 @@ export const PaymentsBreakdown: React.FC<Props> = ({
 
   const status: { label: string; tone: 'red' | 'green' | 'yellow' } = {
     label: hasPenalty
-      ? `Total ${pay(total)} this epoch (includes penalties).`
-      : `Total ${pay(total)} this epoch — no penalties.`,
+      ? `You will pay ${pay(total)} in total this epoch — includes penalties.`
+      : `You will pay ${pay(total)} in total this epoch — no penalties.`,
     tone: hasPenalty ? 'red' : 'green',
   }
 
