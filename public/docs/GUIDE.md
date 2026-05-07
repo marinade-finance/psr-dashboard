@@ -9,8 +9,8 @@ It displays DS SAM max yield auction results, validator bonds on-chain, and prot
 
 The dashboard aggregates data from multiple Marinade APIs:
 
-| API                  | Endpoint                                                                                                     | Purpose                                                                    |
-| -------------------- | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| API                  | Endpoint                                                                                                     | Purpose                                                                     |
+| -------------------- | ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
 | Validators API       | [`validators-api.marinade.finance/validators`](https://validators-api.marinade.finance/docs)                 | Validator information, commissions, stake amounts (updated once per hour)   |
 | Validator Bonds API  | [`validator-bonds-api.marinade.finance/bonds`](https://validator-bonds-api.marinade.finance/docs)            | Bond balances, configurations, commission overrides (updated once per hour) |
 | Protected Events API | [`validator-bonds-api.marinade.finance/protected-events`](https://validator-bonds-api.marinade.finance/docs) | Settlement claims and protected event history (updated once per epoch)      |
@@ -34,7 +34,7 @@ validators based on their bids and performance.
 - **Winning APY** &mdash; Estimated APY of the last validator winning the auction
 - **Projected APY** &mdash; Expected staker return based on total revenue from all winning validators
 - **Winning Validators** &mdash; Count of validators receiving stake in current auction
-- **Re-delegation** &mdash; Total stake flowing to validators next epoch (sum of positive expected deltas). This equals the amount of undeployed TVL — SOL that has been deposited into Marinade but not yet delegated to any validator. It is allocated first to under-target validators, highest bid first. This is unrelated to the ~0.7% natural withdrawal rate (which represents stake leaving the pool entirely).
+- **Re-delegation** &mdash; Stake the protocol will move toward under-target validators next epoch. This is the gross inflow side of stake movement; its counterpart is natural withdrawals, which exit over-target validators (see Stability Mechanisms below).
 
 **Simulation Mode:** Click "Enter Simulation" to test how changing a validator's parameters would affect their auction
 position. Edit commission rates or bid amounts, then click "Simulate" to see projected results.

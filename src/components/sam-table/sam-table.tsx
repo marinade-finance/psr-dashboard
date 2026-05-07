@@ -514,7 +514,7 @@ export const SamTable: React.FC<Props> = ({
       label: 'Re-delegation',
       value: formatSolAmount(Math.round(totalRedelegation), 0),
       unit: 'SOL',
-      help: 'Total stake flowing into validators next epoch — sum of positive expected deltas. Limited by undeployed TVL (deposited SOL not yet delegated). Separate from natural withdrawals (~0.7% of TVL/epoch) which reduce stake to over-target validators.',
+      help: 'Stake the protocol will move toward under-target validators next epoch. Gross inflow only — counterpart to natural withdrawals, which exit over-target validators.',
     },
   ]
 
