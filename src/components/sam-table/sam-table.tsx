@@ -201,7 +201,7 @@ const RankCell: React.FC<{
   onClearValidator,
 }) => {
   if (isGhost)
-    return <span className={`text-muted-foreground ${RANK_MONO}`}>{rank}</span>
+    return <span className={`text-muted-foreground ${RANK_MONO}`}>#{rank}</span>
   if (isSimulated && onClearValidator)
     return (
       <div className="flex flex-col items-center gap-0.5">
@@ -209,7 +209,7 @@ const RankCell: React.FC<{
           className={`font-medium ${RANK_MONO}`}
           style={{ color: posColor ?? 'var(--muted-foreground)' }}
         >
-          {rank}
+          #{rank}
         </span>
         <button
           className="text-[10px] text-muted-foreground hover:text-destructive leading-none"
@@ -229,7 +229,7 @@ const RankCell: React.FC<{
       className={`font-medium ${RANK_MONO} flex items-center justify-center gap-1.5 text-foreground`}
     >
       {dotClass ? <span className={dotClass} aria-hidden /> : null}
-      <span>{rank}</span>
+      <span>#{rank}</span>
     </span>
   )
 }
