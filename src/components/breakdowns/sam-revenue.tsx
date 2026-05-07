@@ -4,7 +4,14 @@ import { pay, pmpe, stake } from 'src/format'
 import { docsPath } from 'src/lib/utils'
 import { computeSamRevenueMetrics } from 'src/services/breakdowns'
 
-import { CalcCard, Marker, SectionHeader } from './shared'
+import {
+  CalcCard,
+  Marker,
+  NORMAL_CELL_PAD,
+  SectionHeader,
+  SEPARATOR_CELL_PAD,
+  SEPARATOR_TR_CLASS,
+} from './shared'
 
 import type { UserLevel } from 'src/components/navigation/navigation'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
@@ -37,22 +44,26 @@ const RevRow: React.FC<{
   marker,
 }) => (
   <tr
-    className={`border-b border-border-grid/50 last:border-b-0 ${separator ? 'border-t-2 border-t-border' : ''}`}
+    className={`border-b border-border-grid/50 last:border-b-0 ${separator ? SEPARATOR_TR_CLASS : ''}`}
   >
     <td
-      className={`py-1.5 pr-2 text-xs ${bold ? 'font-semibold' : ''} ${separator ? 'text-foreground' : ''}`}
+      className={`pr-2 text-xs ${separator ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${bold ? 'font-semibold' : ''} ${separator ? 'text-foreground' : ''}`}
     >
       {marker && <Marker tone={marker} />}
       {label}
     </td>
-    <td className="py-1.5 px-2 text-right font-mono text-xs text-muted-foreground">
+    <td
+      className={`px-2 text-right font-mono text-xs text-muted-foreground ${separator ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD}`}
+    >
       {pct ?? ''}
     </td>
-    <td className="py-1.5 px-2 text-right font-mono text-xs text-muted-foreground">
+    <td
+      className={`px-2 text-right font-mono text-xs text-muted-foreground ${separator ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD}`}
+    >
       {pmpeStr ?? ''}
     </td>
     <td
-      className={`py-1.5 pl-2 text-right font-mono text-xs ${bold ? 'font-semibold' : ''} ${
+      className={`pl-2 text-right font-mono text-xs ${separator ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${bold ? 'font-semibold' : ''} ${
         accent === 'green'
           ? 'text-status-green'
           : accent === 'yellow'

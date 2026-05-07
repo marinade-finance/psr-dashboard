@@ -5,6 +5,7 @@ import { BidPenaltyBreakdown } from 'src/components/breakdowns/bid-penalty'
 import { BondCoverageBreakdown } from 'src/components/breakdowns/bond-coverage'
 import { PaymentsBreakdown } from 'src/components/breakdowns/payments'
 import { SamRevenueBreakdown } from 'src/components/breakdowns/sam-revenue'
+import { SEPARATOR_DIV_CLASS } from 'src/components/breakdowns/shared'
 import { HelpTip } from 'src/components/help-tip/help-tip'
 import { Button } from 'src/components/ui/button'
 import { Input } from 'src/components/ui/input'
@@ -121,7 +122,7 @@ const MetricRow = ({
   separator?: boolean
 }) => (
   <div
-    className={`flex items-center justify-between ${separator ? 'border-t border-border-grid pt-2 mt-1' : ''}`}
+    className={`flex items-center justify-between ${separator ? SEPARATOR_DIV_CLASS : ''}`}
   >
     <span className="text-xs text-muted-foreground flex items-center gap-1">
       {onSeeBreakdown ? (

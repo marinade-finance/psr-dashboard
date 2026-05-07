@@ -1,6 +1,18 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 
+// Shared separator visual for "total / result" rows. The same `border-t` is
+// used by the overview MetricRow's `separator` prop and by every CalcRow /
+// RevRow that marks a section conclusion — keeps the divider style identical
+// across the whole dashboard.
+export const SEPARATOR_TR_CLASS = 'border-t border-border-grid'
+export const SEPARATOR_DIV_CLASS = 'border-t border-border-grid pt-2 mt-1'
+// Cell padding for table rows above/below the separator border. The extra
+// top space is what makes the total row breathe — a thin border alone reads
+// as "more rows below" without it.
+export const SEPARATOR_CELL_PAD = 'pt-3 pb-1.5'
+export const NORMAL_CELL_PAD = 'py-1.5'
+
 export const SectionHeader: React.FC<{ title: string; colSpan?: number }> = ({
   title,
   colSpan = 3,
@@ -40,19 +52,21 @@ export const CalcRow: React.FC<{
   marker?: 'red' | 'yellow' | 'green'
 }> = ({ label, secondary, value, bold, large, accent, separator, marker }) => (
   <tr
-    className={`border-b border-border-grid/50 last:border-b-0 ${separator ? 'border-t-2 border-t-border' : ''}`}
+    className={`border-b border-border-grid/50 last:border-b-0 ${separator ? SEPARATOR_TR_CLASS : ''}`}
   >
     <td
-      className={`py-1.5 pr-2 text-xs ${bold ? 'font-semibold' : ''} ${large ? 'text-[13px]' : ''} ${separator ? 'text-foreground' : ''}`}
+      className={`pr-2 text-xs ${separator ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${bold ? 'font-semibold' : ''} ${large ? 'text-[13px]' : ''} ${separator ? 'text-foreground' : ''}`}
     >
       {marker && <Marker tone={marker} />}
       {label}
     </td>
-    <td className="py-1.5 px-2 text-right font-mono text-xs text-muted-foreground">
+    <td
+      className={`px-2 text-right font-mono text-xs text-muted-foreground ${separator ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD}`}
+    >
       {secondary ?? ''}
     </td>
     <td
-      className={`py-1.5 pl-2 text-right font-mono ${large ? 'text-sm' : 'text-xs'} ${bold ? 'font-semibold' : ''} ${
+      className={`pl-2 text-right font-mono ${separator ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${large ? 'text-sm' : 'text-xs'} ${bold ? 'font-semibold' : ''} ${
         accent === 'red'
           ? 'text-destructive'
           : accent === 'yellow'
