@@ -26,7 +26,9 @@ const RevRow: React.FC<{
   <tr
     className={`border-b border-border-grid/50 last:border-0 ${separator ? 'border-t-2 border-t-border' : ''}`}
   >
-    <td className={`py-1.5 pr-2 text-xs ${bold ? 'font-semibold' : ''}`}>
+    <td
+      className={`py-1.5 pr-2 text-xs ${bold ? 'font-semibold' : ''} ${separator ? 'text-foreground' : ''}`}
+    >
       {label}
     </td>
     <td className="py-1.5 px-2 text-right font-mono text-xs text-muted-foreground">

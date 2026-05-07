@@ -28,7 +28,7 @@ export const CalcRow: React.FC<{
     className={`border-b border-border-grid/50 last:border-b-0 ${separator ? 'border-t-2 border-t-border' : ''}`}
   >
     <td
-      className={`py-1.5 pr-2 text-xs ${bold ? 'font-semibold' : ''} ${large ? 'text-[13px]' : ''}`}
+      className={`py-1.5 pr-2 text-xs ${bold ? 'font-semibold' : ''} ${large ? 'text-[13px]' : ''} ${separator ? 'text-foreground' : ''}`}
     >
       {label}
     </td>
