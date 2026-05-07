@@ -3,6 +3,7 @@ import React from 'react'
 import { pay, pmpe, stake } from 'src/format'
 import { docsPath } from 'src/lib/utils'
 import { computeBondCoverageMetrics } from 'src/services/breakdowns'
+import { bondStatusText } from 'src/services/tip-engine'
 
 import { CalcCard, CalcRow, OkRow, SectionHeader } from './shared'
 
@@ -32,36 +33,19 @@ const statusLine = (
   bondRiskFeeSol: number,
 ): { label: string; tone: 'red' | 'yellow' | 'green' } => {
   if (state === 'critical') {
-    if (bondRiskFeeSol > 0) {
-      return {
-        label:
-          topUpToAvoidFee > 0
-            ? `Bond risk fee ${pay(bondRiskFeeSol)} will be charged. Top up ${pay(topUpToAvoidFee)} to avoid the fee.`
-            : `Bond risk fee ${pay(bondRiskFeeSol)} will be charged.`,
-        tone: 'red',
-      }
-    }
     return {
-      label:
-        topUpToAvoidFee > 0
-          ? `Bond below penalty threshold. Top up ${pay(topUpToAvoidFee)} to avoid the fee.`
-          : 'Bond below penalty threshold.',
+      label: bondStatusText(
+        topUpToAvoidFee,
+        topUpToKeepStake,
+        topUpToIdealKeep,
+        bondRiskFeeSol,
+      ),
       tone: 'red',
     }
   }
   if (state === 'watch') {
-    if (topUpToKeepStake > 0) {
-      return {
-        label: `Top up ${pay(topUpToKeepStake)} to keep your current stake.`,
-        tone: 'yellow',
-      }
-    }
-    if (topUpToIdealKeep > 0) {
-      return {
-        label: `Top up ${pay(topUpToIdealKeep)} for more stake.`,
-        tone: 'yellow',
-      }
-    }
+    const text = bondStatusText(0, topUpToKeepStake, topUpToIdealKeep, 0)
+    if (text) return { label: text, tone: 'yellow' }
     return { label: 'Bond covers current stake.', tone: 'yellow' }
   }
   return {
@@ -239,7 +223,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
               )}
               {bondRiskFeeSol > 0 && (
                 <CalcRow
-                  label="Bond risk fee charged this epoch"
+                  label="Estimated bond risk fee this epoch"
                   value={pay(bondRiskFeeSol)}
                   bold
                   marker="red"

@@ -52,13 +52,18 @@ export type ValidatorMeta = {
   rank?: number
 }
 
+type BondHealthTier = 'healthy' | 'soft' | 'watch' | 'critical'
+
 // Validator with computed bond state
 type ValidatorWithBondState = AugmentedAuctionValidator & {
-  bondHealth: 'healthy' | 'soft' | 'watch' | 'critical'
+  bondHealth: BondHealthTier
 }
 
+const TEXT_MUTED = 'text-muted-foreground'
+const BG_MUTED = 'bg-muted-foreground'
+
 const BOND_CHIP: Record<
-  'healthy' | 'soft' | 'watch' | 'critical',
+  BondHealthTier,
   { chip: string; dot: string; bar: string; shortText: string; label: string }
 > = {
   healthy: {
@@ -69,10 +74,10 @@ const BOND_CHIP: Record<
     label: 'Healthy',
   },
   soft: {
-    chip: 'bg-secondary text-muted-foreground',
-    dot: 'bg-muted-foreground',
-    bar: 'bg-muted-foreground',
-    shortText: 'text-muted-foreground',
+    chip: `bg-secondary ${TEXT_MUTED}`,
+    dot: BG_MUTED,
+    bar: BG_MUTED,
+    shortText: TEXT_MUTED,
     label: 'OK',
   },
   watch: {
@@ -469,7 +474,10 @@ export const SamTable: React.FC<Props> = ({
           : undefined
 
     // Bond health
-    const bondUtilPct = calculateBondUtilization(validator)
+    const bondUtilPct = calculateBondUtilization(
+      validator,
+      dsSamConfig.minBondEpochs,
+    )
     const bondRunway = validator.bondGoodForNEpochs ?? 0
     const bondHealth = validator.bondHealth
     const bondChip = BOND_CHIP[bondHealth]
@@ -579,7 +587,7 @@ export const SamTable: React.FC<Props> = ({
               />
             </div>
             <span
-              className={`text-[10px] font-mono whitespace-nowrap ${bondRunway <= 10 ? bondChip.shortText : 'text-muted-foreground'}`}
+              className={`text-[10px] font-mono whitespace-nowrap ${bondRunway <= 10 ? bondChip.shortText : TEXT_MUTED}`}
             >
               ({Math.round(bondRunway)}ep)
             </span>
@@ -592,24 +600,24 @@ export const SamTable: React.FC<Props> = ({
             <span className="text-muted-foreground text-xs font-mono">
               {formatSolAmount(validator.marinadeActivatedStakeSol, 0)} SOL
             </span>
-            {expectedChange === 0 ? (
-              <span className="text-muted-foreground text-xs font-mono">
-                &mdash;
-              </span>
-            ) : (
-              <span
-                className="font-semibold text-sm font-mono"
-                style={{
-                  color:
-                    expectedChange > 0
-                      ? 'var(--status-green)'
-                      : 'var(--destructive)',
-                }}
-              >
-                {expectedChange > 0 ? '+' : ''}
-                {formatSolAmount(Math.round(expectedChange), 0)} SOL
-              </span>
-            )}
+            <span
+              className={`font-mono text-xs ${
+                expectedChange === 0 ? TEXT_MUTED : 'font-semibold text-sm'
+              }`}
+              style={
+                expectedChange === 0
+                  ? undefined
+                  : {
+                      color:
+                        expectedChange > 0
+                          ? 'var(--status-green)'
+                          : 'var(--destructive)',
+                    }
+              }
+            >
+              {expectedChange > 0 ? '+' : ''}
+              {formatSolAmount(Math.round(expectedChange), 0)} SOL
+            </span>
           </div>
         </TableCell>
 

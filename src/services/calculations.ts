@@ -23,11 +23,18 @@ export function bondRunwayDays(epochsRunway: number): number {
   return (epochsRunway * 48) / 24
 }
 
-export function bondUtilizationPct(validator: AuctionValidator): number {
-  const bondBalance = validator.bondBalanceSol
-  const samActive = validator.marinadeActivatedStakeSol
-  if (bondBalance <= 0) return 100
-  return Math.min((samActive / (bondBalance * 5000)) * 100, 100)
+// Bond utilization 0..100. 0 = bond fully covers, 100 = depleted relative to
+// the SDK-required minBondEpochs runway. Derives from `bondGoodForNEpochs` so
+// it tracks the protocol params instead of a hard-coded PMPE factor.
+export function bondUtilizationPct(
+  validator: AuctionValidator,
+  minBondEpochs: number,
+): number {
+  if (validator.bondBalanceSol <= 0) return 100
+  const runway = validator.bondGoodForNEpochs ?? 0
+  if (minBondEpochs <= 0) return 0
+  const used = 1 - runway / minBondEpochs
+  return Math.max(0, Math.min(100, used * 100))
 }
 
 export function stakeDelta(validator: AuctionValidator): number {

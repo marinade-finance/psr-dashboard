@@ -92,7 +92,7 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
   const status = {
     label:
       m.total > 0
-        ? `Paid ${pay(m.total)} to Marinade this epoch.`
+        ? `Estimated ${pay(m.total)} payment to Marinade this epoch.`
         : 'No bid cost this epoch.',
     tone: 'green' as const,
   }

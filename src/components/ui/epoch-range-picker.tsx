@@ -78,6 +78,11 @@ export const EpochRangePicker: React.FC<Props> = ({
 
   const pickEnd = (ep: number) => {
     const s = draft.start
+    if (s === null) {
+      // No start picked yet — treat the click as the start instead.
+      pickStart(ep)
+      return
+    }
     const [lo, hi] = ep < s ? [ep, s] : [s, ep]
     setDraft({ start: lo, end: hi })
     setSelecting('start')

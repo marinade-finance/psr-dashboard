@@ -65,11 +65,10 @@ describe('B1 — marinadeStake lamport unit', () => {
     ])
     for (const event of events) {
       expect(Number.isFinite(event.amount)).toBe(true)
-      // Amounts are in lamports but should reflect SOL-based calculation.
-      // A 1000 SOL stake with full EPR loss produces ~few SOL claim at most.
-      // With the lamport bug the amount would be ~1e10; without it it's filtered
-      // by min_settlement (1e8) so no events at all.
-      expect(event.amount).toBeLessThan(1e9)
+      // Amounts are lamports. With correct SOL calc, a 1000 SOL stake produces
+      // amounts in the tens-of-SOL range (< 1e12 lamports).
+      // With the lamport bug, marinadeStake ≈ 1e12, amounts ≈ 1e18 lamports.
+      expect(event.amount).toBeLessThan(1e12)
     }
   })
 })

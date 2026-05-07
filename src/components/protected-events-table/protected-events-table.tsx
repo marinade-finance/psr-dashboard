@@ -102,10 +102,16 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
   const [validatorFilter, setValidatorFilter] = useState('')
   const [minEpochFilter, setMinEpochFilter] = useState(minEpoch)
   const [maxEpochFilter, setMaxEpochFilter] = useState(maxEpoch)
-
+  // Seed filter bounds the first time real data lands. After that, leave the
+  // user's selection alone — refetches must not silently widen a narrowed
+  // filter back to the dataset minimum.
+  const seeded = React.useRef(false)
   useEffect(() => {
-    setMinEpochFilter(prev => Math.min(prev, minEpoch))
-    setMaxEpochFilter(prev => Math.max(prev, maxEpoch))
+    if (seeded.current) return
+    if (minEpoch === 9999 || maxEpoch === 0) return
+    seeded.current = true
+    setMinEpochFilter(minEpoch)
+    setMaxEpochFilter(maxEpoch)
   }, [minEpoch, maxEpoch])
 
   const preFilteredData = data.filter(({ protectedEvent, validator }) => {

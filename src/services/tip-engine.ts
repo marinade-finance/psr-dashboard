@@ -1,4 +1,4 @@
-import { formatSolAmount } from 'src/format'
+import { formatSolAmount, pay } from 'src/format'
 
 import { bondHealthFromAuction, computeBondCoverageMetrics } from './breakdowns'
 import { bondUtilizationPct, compoundApy, apyBreakdown } from './calculations'
@@ -29,6 +29,32 @@ export interface TipStyle {
   color: string
   bg: string
   icon: string
+}
+
+// Single source of truth for bond CTA text. Used by getValidatorTip and
+// bond-coverage.tsx's statusLine so both surfaces stay in sync.
+export function bondStatusText(
+  topUpToAvoidFee: number,
+  topUpToKeepStake: number,
+  topUpToIdealKeep: number,
+  bondRiskFeeSol: number,
+): string {
+  if (bondRiskFeeSol > 0 || topUpToAvoidFee > 0) {
+    const feeStr =
+      bondRiskFeeSol > 0
+        ? `Estimated bond risk fee: ${pay(bondRiskFeeSol)}.`
+        : 'Bond below penalty threshold.'
+    const topUpStr =
+      topUpToAvoidFee > 0
+        ? ` Top up ${pay(topUpToAvoidFee)} to avoid the fee.`
+        : ''
+    return `${feeStr}${topUpStr}`
+  }
+  if (topUpToKeepStake > 0)
+    return `Top up ${pay(topUpToKeepStake)} to keep your stake.`
+  if (topUpToIdealKeep > 0)
+    return `Top up ${pay(topUpToIdealKeep)} for more stake.`
+  return ''
 }
 
 const VAR_DESTRUCTIVE = 'var(--destructive)'
@@ -153,16 +179,8 @@ export const getValidatorTip = (
     const bondRiskFeeSol = validator.values?.bondRiskFeeSol ?? 0
 
     if (bondRiskFeeSol > 0 || m.topUpToAvoidFee > 0) {
-      const topUpStr =
-        m.topUpToAvoidFee > 0
-          ? ` Top up ${formatSolAmount(m.topUpToAvoidFee, 0)} SOL to avoid the fee.`
-          : ''
-      const feeStr =
-        bondRiskFeeSol > 0
-          ? `Bond risk fee ${formatSolAmount(bondRiskFeeSol, 2)} SOL will be charged.`
-          : 'Bond below penalty threshold.'
       return {
-        text: `${feeStr}${topUpStr}`,
+        text: bondStatusText(m.topUpToAvoidFee, 0, 0, bondRiskFeeSol),
         urgency: 'critical',
         constraint: 'bond',
         icon: 'warning',
@@ -171,7 +189,7 @@ export const getValidatorTip = (
 
     if (m.topUpToKeepStake > 0) {
       return {
-        text: `Top up ${formatSolAmount(m.topUpToKeepStake, 0)} SOL to keep your stake.`,
+        text: bondStatusText(0, m.topUpToKeepStake, 0, 0),
         urgency: 'warning',
         constraint: 'bond',
         icon: 'warning',
@@ -180,7 +198,7 @@ export const getValidatorTip = (
 
     if (m.topUpToIdealKeep > 0) {
       return {
-        text: `Top up ${formatSolAmount(m.topUpToIdealKeep, 0)} SOL for more stake.`,
+        text: bondStatusText(0, 0, m.topUpToIdealKeep, 0),
         urgency: 'info',
         constraint: 'bond',
       }
@@ -212,8 +230,10 @@ export const getValidatorTip = (
   }
 }
 
-export const calculateBondUtilization = (validator: AuctionValidator): number =>
-  bondUtilizationPct(validator)
+export const calculateBondUtilization = (
+  validator: AuctionValidator,
+  minBondEpochs: number,
+): number => bondUtilizationPct(validator, minBondEpochs)
 
 export const calculateMaxApy = (
   validator: AuctionValidator,

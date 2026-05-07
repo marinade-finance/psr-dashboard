@@ -270,10 +270,10 @@ export const ValidatorDetail = ({
   )
   const [simEnabled, setSimEnabled] = useState(isSimulated)
 
-  // Auto-sync the toggle when the parent simulation state changes (e.g. user
-  // clears all simulations elsewhere).
+  // Mirror the parent simulation state in both directions so the toggle
+  // doesn't desync when the user clears simulations from outside the panel.
   useEffect(() => {
-    if (isSimulated) setSimEnabled(true)
+    setSimEnabled(isSimulated)
   }, [isSimulated])
 
   // Debounced auto-recalc whenever inputs change while simulation is enabled.

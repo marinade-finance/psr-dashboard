@@ -7,11 +7,7 @@ import {
 
 import { formatPercentage } from 'src/format'
 
-import {
-  bondRunwayEpochs,
-  bondUtilizationPct,
-  compoundApy,
-} from './calculations'
+import { bondRunwayEpochs, compoundApy } from './calculations'
 import { fetchValidatorsWithEpochs } from './validators'
 
 import type {
@@ -315,6 +311,3 @@ export function augmentAuctionResult(
 export const selectExpectedStakeChange = (
   v: AugmentedAuctionValidator,
 ): number => v.values.expectedStakeChangeSol ?? 0
-
-export const selectBondUtilization = (validator: AuctionValidator): number =>
-  bondUtilizationPct(validator) / 100

@@ -410,7 +410,9 @@ export const ValidatorBondsTable: React.FC<Props> = ({
                 Max protectable:{' '}
                 <strong className="text-foreground">
                   {formatPercentage(
-                    totalMaxProtectedStake / totalMarinadeStake,
+                    totalMarinadeStake > 0
+                      ? totalMaxProtectedStake / totalMarinadeStake
+                      : 0,
                   )}
                 </strong>
               </span>

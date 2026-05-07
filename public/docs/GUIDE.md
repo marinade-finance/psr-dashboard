@@ -344,10 +344,12 @@ A compact summary of the validator's bond:
 
 - **Health pill** — colour-coded status:
   - **Healthy** (green) — bond comfortably above ideal coverage.
-  - **Watch** (yellow) — bond between minimum and ideal coverage. Bond risk
-    fee is being charged. See [Bond Risk Fee](#bond-risk-fee).
-  - **Critical** (red) — bond near or below the minimum floor. Validator is
-    at risk of being blocked from receiving more stake.
+  - **OK** (muted) — bond covers current stake but not the ideal target;
+    validator is fine but not eligible for more stake.
+  - **Watch** (yellow) — bond can no longer back the validator's current
+    stake; some stake will be undelegated unless the bond is topped up.
+  - **Critical** (red) — bond is below the penalty threshold. The bond
+    risk fee is being charged this epoch. See [Bond Risk Fee](#bond-risk-fee).
 - **Balance** — bond size in SOL.
 - **Runway** — `(Nep)` shows how many epochs the bond will last at the current
   burn rate (CPMPE bid + risk fee). `(0ep)` or "Depleted" means out of money
@@ -496,7 +498,7 @@ restore the live auction.
 ## Technical Notes
 
 - API data is reloaded periodically by Marinade (typically once per hour).
-- Solana epochs are roughly 2.5 days (~182 epochs per year).
+- Solana epochs are roughly 2 days (~182 epochs per year).
 - The page does not auto-refresh — reload to fetch new data.
 - All auction math runs client-side via the SDK. Numbers should match Marinade's
   backend to the SOL.

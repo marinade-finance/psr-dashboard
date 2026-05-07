@@ -56,20 +56,14 @@ const DS_SAM_CONFIG = {
 // --- calculateBondUtilization ---
 
 describe('calculateBondUtilization', () => {
-  it('delegates to bondUtilizationPct: 10k active / (100 * 5000) * 100 = 2%', () => {
-    const v = makeValidator({
-      bondBalanceSol: 100,
-      marinadeActivatedStakeSol: 10000,
-    })
-    expect(calculateBondUtilization(v)).toBe(2)
+  it('3 of 4 epochs covered → 25% utilization', () => {
+    const v = makeValidator({ bondGoodForNEpochs: 3, bondBalanceSol: 100 })
+    expect(calculateBondUtilization(v, 4)).toBe(25)
   })
 
   it('zero bond → 100', () => {
-    const v = makeValidator({
-      bondBalanceSol: 0,
-      marinadeActivatedStakeSol: 1000,
-    })
-    expect(calculateBondUtilization(v)).toBe(100)
+    const v = makeValidator({ bondBalanceSol: 0 })
+    expect(calculateBondUtilization(v, 5)).toBe(100)
   })
 })
 
