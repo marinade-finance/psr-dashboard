@@ -51,7 +51,7 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
   return (
     <CalcCard
       title="Bid Penalty Calculation"
-      helpText="Triggered when this epoch's bid drops below 99.999% of last epoch's bid. Penalty scales with shortfall against the worst historical effective participating bid (clipped to bond obligation)."
+      guideTo="/docs"
       isSimulated={isSimulated}
       status={status}
       cta={cta}
