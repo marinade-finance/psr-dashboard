@@ -23,6 +23,23 @@ npx tsc --noEmit          # type check (no Makefile, run directly)
 Pre-commit hooks run lint-staged (eslint --fix + prettier) via husky.
 First run may reformat — retry commit once if it fails.
 
+## Live UI inventory — `SCREENS.md`
+
+`SCREENS.md` at the repo root is the authoritative live inventory of every
+page, panel, table column, badge, status tier and tab. **Update it in the
+same commit whenever the UI changes.** Examples that require an update:
+
+- adding / removing / renaming a column on any data table
+- adding / removing a tab on the validator detail panel
+- changing a default sort, a tier threshold, a status label, or a token
+- moving a route, renaming a section, replacing a status badge style
+- adding a new card on a page
+
+If a section's diff would be larger than rewording, rewrite the whole
+section — patches sentence-by-sentence age badly. The file is the contract
+between code and reviewers; if it drifts, neither reviewer nor onboarding
+maintainer can trust it.
+
 ## Architecture
 
 Webpack + TypeScript 4.9 + React 18 SPA. Tailwind CSS utility classes
