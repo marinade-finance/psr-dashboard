@@ -139,20 +139,22 @@ const PenaltyRow = ({
   sub?: boolean
 }) => (
   <div className="flex items-center justify-between gap-2">
-    <span className="text-xs text-muted-foreground flex-1">{label}</span>
+    <span className="text-xs text-muted-foreground flex-1 flex items-center gap-1">
+      {label}
+      <button
+        className={`hover:underline shrink-0 ${sub ? 'text-[11px] text-muted-foreground' : 'text-xs text-destructive'}`}
+        onClick={onSeeBreakdown}
+        title="See calculation"
+      >
+        →
+      </button>
+    </span>
     <span
       className={`font-mono ${sub ? 'text-[11px]' : 'text-sm font-semibold'}`}
       style={{ color: sub ? CSS_MUTED_FG : CSS_DESTRUCTIVE }}
     >
       {value}
     </span>
-    <button
-      className={`hover:underline shrink-0 ${sub ? 'text-[11px] text-muted-foreground' : 'text-xs text-destructive'}`}
-      onClick={onSeeBreakdown}
-      title="See calculation"
-    >
-      →
-    </button>
   </div>
 )
 
