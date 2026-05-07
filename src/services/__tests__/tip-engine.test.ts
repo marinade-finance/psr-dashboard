@@ -240,7 +240,7 @@ describe('getValidatorTip', () => {
     expect(tip.text).toContain('Out of auction')
   })
 
-  it('critical health + epochs <= 5 → critical/bond with epoch count', () => {
+  it('critical health (near-zero bond) → critical/bond penalty threshold message', () => {
     const v = makeValidator({
       bondGoodForNEpochs: 4,
       bondBalanceSol: 0.001,
@@ -250,8 +250,8 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(v, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
-    expect(tip.text).toContain('Bond depletes')
-    expect(tip.text).toContain('4 epochs')
+    expect(tip.text).toContain('Bond below penalty threshold')
+    expect(tip.text).toContain('Top up')
   })
 
   it('critical health (epochs > 5) → critical/bond penalty message', () => {
@@ -267,16 +267,16 @@ describe('getValidatorTip', () => {
     expect(tip.text).toContain('penalty')
   })
 
-  it('watch → warning/bond runway', () => {
+  it('soft health (bond covers stake but not ideal) → info/bond top-up', () => {
     const v = makeValidator({
       bondBalanceSol: 50,
       claimableBondBalanceSol: 50,
       marinadeActivatedStakeSol: 10000,
     })
     const tip = getValidatorTip(v, DS_SAM_CONFIG, 100)
-    expect(tip.urgency).toBe('warning')
+    expect(tip.urgency).toBe('info')
     expect(tip.constraint).toBe('bond')
-    expect(tip.text).toContain('runway')
+    expect(tip.text).toContain('Top up')
   })
 
   it('healthy + gaining stake → positive with SOL count', () => {
