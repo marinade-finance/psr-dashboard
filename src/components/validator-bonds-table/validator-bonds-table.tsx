@@ -259,9 +259,9 @@ const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
 
 function rowCoverageBarColor(ratio: number, hasBond: boolean): string {
   if (!hasBond) return 'bg-muted-foreground/30'
-  if (ratio >= 0.9) return 'bg-green-500'
-  if (ratio >= 0.5) return 'bg-yellow-500'
-  return 'bg-red-500'
+  if (ratio >= 0.9) return 'bg-status-green'
+  if (ratio >= 0.5) return 'bg-warning'
+  return 'bg-destructive'
 }
 
 export const ValidatorBondsTable: React.FC<Props> = ({

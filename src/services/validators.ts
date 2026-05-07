@@ -1,5 +1,6 @@
 import { lamportsToSol } from 'src/format'
 import { VALIDATORS_API_URL } from 'src/services/apiUrls'
+import { fetchJson } from 'src/services/fetch-utils'
 
 export type ValidatorEpoch = {
   credits: number
@@ -47,18 +48,14 @@ export const fetchValidatorsWithEpochs = (
 ): Promise<ValidatorsResponse> => {
   const cached = cache.get(epochs)
   if (cached !== undefined) return cached
-  const promise = (async () => {
-    const res = await fetch(
-      `${VALIDATORS_API_URL}/validators?limit=9999&epochs=${epochs}`,
-    )
-    const data = (await res.json()) as ValidatorsResponse
-    return {
-      validators: data.validators.filter(
-        v =>
-          Number(v.marinade_stake) > 0 || Number(v.marinade_native_stake) > 0,
-      ),
-    }
-  })()
+  const promise = fetchJson<ValidatorsResponse>(
+    `${VALIDATORS_API_URL}/validators?limit=9999&epochs=${epochs}`,
+  ).then(data => ({
+    validators: data.validators.filter(
+      v => Number(v.marinade_stake) > 0 || Number(v.marinade_native_stake) > 0,
+    ),
+  }))
   cache.set(epochs, promise)
+  promise.catch(() => cache.delete(epochs))
   return promise
 }

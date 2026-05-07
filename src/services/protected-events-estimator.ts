@@ -133,7 +133,8 @@ const buildLowCreditsProtectedEvent = (
     (epochStat.credits / targetCredits)
 
   const marinadeStake =
-    Number(epochStat.marinade_native_stake) + Number(epochStat.marinade_stake)
+    Number(lamportsToSol(epochStat.marinade_native_stake)) +
+    Number(lamportsToSol(epochStat.marinade_stake))
   if (marinadeStake === 0) {
     return null
   }
@@ -196,7 +197,8 @@ const buildCommissionIncreaseProtectedEvent = (
   const actualEpr = eprCalculator(epochStat.commission_advertised)
 
   const marinadeStake =
-    Number(epochStat.marinade_native_stake) + Number(epochStat.marinade_stake)
+    Number(lamportsToSol(epochStat.marinade_native_stake)) +
+    Number(lamportsToSol(epochStat.marinade_stake))
   if (marinadeStake === 0) {
     return null
   }
@@ -205,7 +207,7 @@ const buildCommissionIncreaseProtectedEvent = (
   const actualRewards = marinadeStake * actualEpr
 
   const eprLossBps = Math.round(10000 * (1 - actualRewards / expectedRewards))
-  if (eprLossBps < config.grace_commission_increase) {
+  if (eprLossBps < config.grace_commission_increase * 100) {
     return null
   }
 
@@ -251,7 +253,7 @@ const calculateLowCreditsEstimates = (
     for (const epochStat of validator.epoch_stats) {
       const targetCredits = targetCreditsByEpoch.get(epochStat.epoch)
       const eprCalculator = eprCalculators.get(epochStat.epoch)
-      if (eprCalculator) {
+      if (eprCalculator && targetCredits !== undefined) {
         for (const config of lowCreditsSettlementConfigs) {
           const event = buildLowCreditsProtectedEvent(
             config,

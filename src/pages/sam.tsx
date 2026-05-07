@@ -265,7 +265,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
       : originalAuctionResult
 
   const sheetValidatorData = useMemo(() => {
-    if (!selectedValidator || !displayAuctionResult) return null
+    if (!selectedValidator || !displayAuctionResult || !data) return null
     const augmented = augmentAuctionResult(displayAuctionResult)
     const validators = augmented
       .filter(v => selectBondSize(v) > 0)
@@ -281,7 +281,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
       rank: index + 1,
       totalValidators: validators.length,
     }
-  }, [selectedValidator, displayAuctionResult])
+  }, [selectedValidator, displayAuctionResult, data])
 
   return (
     <div className="bg-background-page">
@@ -336,7 +336,8 @@ export const SamPage: React.FC<Props> = ({ level }) => {
             onSimulate={handleDetailSimulate}
             onClearSimulation={
               simulatedValidators.has(selectedValidator ?? '')
-                ? () => handleClearValidator(selectedValidator)
+                ? () =>
+                    selectedValidator && handleClearValidator(selectedValidator)
                 : undefined
             }
             isCalculating={isCalculating}

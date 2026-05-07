@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 
 import {
   compoundApy,
@@ -10,8 +10,38 @@ import {
   isNonProductive,
   selectMaxWantedStake,
 } from '../calculations'
+import { selectProjectedAPY } from '../sam'
+import { selectMaxProtectedStake } from '../validator-with-bond'
 
-import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
+import type { ValidatorWithBond } from '../validator-with-bond'
+import type * as ValidatorsModule from '../validators'
+import type {
+  AuctionValidator,
+  AuctionResult,
+} from '@marinade.finance/ds-sam-sdk'
+
+// sam.ts calls loadSam which hits external APIs — mock the module-level fetches
+// selectProjectedAPY is a pure function, no mocking needed for it
+// But sam.ts imports from validators which does a fetch at module level — mock it
+vi.mock('../validators', async importOriginal => {
+  const actual = await importOriginal<typeof ValidatorsModule>()
+  return { ...actual }
+})
+
+function makeAuctionResult(
+  tvlSol: number,
+  validators: Partial<AuctionValidator>[] = [],
+): AuctionResult {
+  return {
+    winningTotalPmpe: 10,
+    auctionData: {
+      validators: validators as AuctionValidator[],
+      stakeAmounts: {
+        marinadeSamTvlSol: tvlSol,
+      },
+    },
+  } as unknown as AuctionResult
+}
 
 function makeValidator(
   overrides: Partial<AuctionValidator> = {},
@@ -236,6 +266,100 @@ describe('apyBreakdown', () => {
     expect(bd.inflation).toBeGreaterThan(0)
     expect(bd.mev).toBe(0)
     expect(bd.bid).toBe(0)
+  })
+})
+
+// B2: selectMaxProtectedStake returns Infinity for zero-bid validators
+describe('B2 — selectMaxProtectedStake zero-pmpe guard', () => {
+  it('returns 0 when all revShare pmpe fields are 0 (no division by zero)', () => {
+    const entry: ValidatorWithBond = {
+      validator: {} as ValidatorWithBond['validator'],
+      bond: {
+        pubkey: 'pk',
+        vote_account: 'vote1',
+        authority: 'auth',
+        cpmpe: 0,
+        updated_at: '2024-01-01',
+        epoch: 700,
+        funded_amount: 1000000000,
+        effective_amount: 1000000000, // 1 SOL in lamports
+        max_stake_wanted: 0,
+        remaining_witdraw_request_amount: 0,
+        remainining_settlement_claim_amount: 0,
+      },
+      auction: makeValidator({
+        revShare: {
+          inflationPmpe: 0,
+          mevPmpe: 0,
+          blockPmpe: 0,
+          bidPmpe: 0,
+          totalPmpe: 0,
+          bondObligationPmpe: 0,
+          auctionEffectiveBidPmpe: 0,
+          effParticipatingBidPmpe: 0,
+        } as AuctionValidator['revShare'],
+      }),
+    }
+    const result = selectMaxProtectedStake(entry)
+    expect(result).toBe(0)
+    expect(Number.isFinite(result)).toBe(true)
+  })
+
+  it('returns > 0 when pmpe fields are non-zero', () => {
+    const entry: ValidatorWithBond = {
+      validator: {} as ValidatorWithBond['validator'],
+      bond: {
+        pubkey: 'pk',
+        vote_account: 'vote1',
+        authority: 'auth',
+        cpmpe: 0,
+        updated_at: '2024-01-01',
+        epoch: 700,
+        funded_amount: 1000000000,
+        effective_amount: 5000000000, // 5 SOL
+        max_stake_wanted: 0,
+        remaining_witdraw_request_amount: 0,
+        remainining_settlement_claim_amount: 0,
+      },
+      auction: makeValidator(), // default has non-zero pmpe fields
+    }
+    const result = selectMaxProtectedStake(entry)
+    expect(result).toBeGreaterThan(0)
+  })
+})
+
+// B3: selectProjectedAPY divides by tvl which can be 0
+describe('B3 — selectProjectedAPY zero-tvl guard', () => {
+  it('returns 0 when marinadeSamTvlSol is 0', () => {
+    const auctionResult = makeAuctionResult(0, [
+      {
+        marinadeActivatedStakeSol: 1000,
+        revShare: {
+          auctionEffectiveBidPmpe: 5,
+          inflationPmpe: 3,
+          mevPmpe: 2,
+        },
+      } as Partial<AuctionValidator>,
+    ])
+    const result = selectProjectedAPY(auctionResult, 182)
+    expect(result).toBe(0)
+    expect(Number.isFinite(result)).toBe(true)
+  })
+
+  it('returns a finite positive value when tvl > 0', () => {
+    const auctionResult = makeAuctionResult(100000, [
+      {
+        marinadeActivatedStakeSol: 1000,
+        revShare: {
+          auctionEffectiveBidPmpe: 5,
+          inflationPmpe: 3,
+          mevPmpe: 2,
+        },
+      } as Partial<AuctionValidator>,
+    ])
+    const result = selectProjectedAPY(auctionResult, 182)
+    expect(result).toBeGreaterThan(0)
+    expect(Number.isFinite(result)).toBe(true)
   })
 })
 

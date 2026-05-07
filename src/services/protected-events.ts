@@ -104,12 +104,17 @@ export const selectProtectedStakeReason = (protectedEvent: ProtectedEvent) => {
       return `Inflation Commission ${formatPercentage(reason.CommissionSamIncrease.expected_inflation_commission)} -> ${formatPercentage(reason.CommissionSamIncrease.actual_inflation_commission)}; MEV Commission ${formatPercentage(reason.CommissionSamIncrease.expected_mev_commission)} -> ${formatPercentage(reason.CommissionSamIncrease.actual_mev_commission)}`
     }
     if (isLowCreditsReason(reason)) {
-      return `Uptime ${formatPercentage(reason.LowCredits.actual_credits / reason.LowCredits.expected_credits)}`
+      const { actual_credits: actual, expected_credits: expected } =
+        reason.LowCredits
+      return `Uptime ${formatPercentage(expected > 0 ? actual / expected : 0)}`
     }
     if (isDowntimeRevenueImpactReason(reason)) {
-      return `Uptime ${formatPercentage(reason.DowntimeRevenueImpact.actual_credits / reason.DowntimeRevenueImpact.expected_credits)}`
+      const { actual_credits: actual, expected_credits: expected } =
+        reason.DowntimeRevenueImpact
+      return `Uptime ${formatPercentage(expected > 0 ? actual / expected : 0)}`
     }
   }
+  if (protectedEvent.reason === 'Bidding') return 'Bidding'
   if (protectedEvent.reason === 'BidTooLowPenalty') return 'BidTooLow'
   if (protectedEvent.reason === 'BlacklistPenalty') return 'Blacklist'
   if (protectedEvent.reason === 'BondRiskFee') return 'BondRiskFee'

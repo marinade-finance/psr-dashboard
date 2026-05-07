@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 
+import { selectProtectedStakeReason } from '../protected-events'
 import {
   getValidatorTip,
   getApyBreakdown,
@@ -10,6 +11,7 @@ import {
   calculateMaxApy,
 } from '../tip-engine'
 
+import type { ProtectedEvent } from '../protected-events'
 import type { AugmentedAuctionValidator } from '../sam'
 import type { DsSamConfig } from '@marinade.finance/ds-sam-sdk'
 
@@ -303,5 +305,85 @@ describe('getValidatorTip', () => {
     expect(tip.urgency).toBe('warning')
     expect(tip.constraint).toBe('none')
     expect(tip.text).toContain('Losing')
+  })
+})
+
+// --- B7: getBondHealthStyle 'soft' ---
+
+describe("getBondHealthStyle 'soft'", () => {
+  it("returns info style with label 'Soft'", () => {
+    const s = getBondHealthStyle('soft')
+    expect(s.label).toBe('Soft')
+    // color should NOT be the primary/green color
+    expect(s.color).not.toBe('var(--primary)')
+    expect(s.color).toContain('info')
+  })
+})
+
+// --- B8: getValidatorTip soft health gets bond CTA ---
+
+describe('getValidatorTip soft health', () => {
+  it('soft health with topUpToIdealKeep > 0 → info/bond tip', () => {
+    // bondBalanceSol=50 < idealBondPmpe/1000 * stake = (6/1000)*10000 = 60
+    // claimableBondBalanceSol=50 >= minBondPmpe/1000 * stake = (1/1000)*10000 = 10
+    // → topUpToAvoidFee=0, topUpToKeepStake=0, topUpToIdealKeep=10 → 'soft'
+    const v = makeValidator({
+      bondBalanceSol: 50,
+      claimableBondBalanceSol: 50,
+      marinadeActivatedStakeSol: 10000,
+      values: { expectedStakeChangeSol: 0 },
+    })
+    const tip = getValidatorTip(v, DS_SAM_CONFIG, 100)
+    expect(tip.constraint).toBe('bond')
+    expect(tip.urgency).toBe('info')
+    expect(tip.text).toContain('SOL')
+  })
+})
+
+// --- B9: selectProtectedStakeReason handles 'Bidding' ---
+
+describe('selectProtectedStakeReason', () => {
+  it("handles 'Bidding' reason", () => {
+    const event = {
+      epoch: 1,
+      amount: 1000,
+      vote_account: 'test',
+      meta: { funder: 'Marinade' },
+      reason: 'Bidding',
+    } as ProtectedEvent
+    const result = selectProtectedStakeReason(event)
+    expect(result).not.toBe('Unsupported')
+    expect(result).toBe('Bidding')
+  })
+})
+
+// --- B10: selectProtectedStakeReason LowCredits with expected_credits=0 ---
+
+describe('selectProtectedStakeReason LowCredits zero guard', () => {
+  it('expected_credits=0 does not produce Infinity or NaN', () => {
+    const event = {
+      epoch: 1,
+      amount: 1000,
+      vote_account: 'test',
+      meta: { funder: 'Marinade' },
+      reason: {
+        ProtectedEvent: {
+          LowCredits: {
+            vote_account: 'test',
+            expected_credits: 0,
+            actual_credits: 0,
+            commission: 0,
+            expected_epr: 0,
+            actual_epr: 0,
+            epr_loss_bps: 0,
+            stake: 1000,
+          },
+        },
+      },
+    } as ProtectedEvent
+    const result = selectProtectedStakeReason(event)
+    expect(result).not.toContain('Infinity')
+    expect(result).not.toContain('NaN')
+    expect(typeof result).toBe('string')
   })
 })

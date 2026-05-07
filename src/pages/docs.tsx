@@ -109,7 +109,7 @@ function makeComponents(
     li: ({ children }) => <li className="leading-relaxed">{children}</li>,
     hr: () => <hr className="border-border my-9" />,
     blockquote: ({ children }) => (
-      <blockquote className="border-l-[3px] border-primary bg-primary/5 pl-4 py-2.5 my-4 rounded-r-md text-sm">
+      <blockquote className="bg-muted pl-5 py-2.5 my-4 rounded-md text-sm">
         {children}
       </blockquote>
     ),

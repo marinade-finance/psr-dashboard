@@ -25,6 +25,7 @@ export const selectMaxProtectedStake = ({
       auction.revShare.mevPmpe +
       auction.revShare.effParticipatingBidPmpe
     : Infinity
+  if (participatingTotalBidPmpe === 0) return 0
   return Math.max(0, effBondBalance / (participatingTotalBidPmpe / 1000))
 }
 

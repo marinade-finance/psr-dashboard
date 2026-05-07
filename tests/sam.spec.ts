@@ -73,8 +73,8 @@ test.describe('SAM sorting', () => {
     await waitForData(page)
   })
 
-  test('default sort: Stake Δ header shows ↓', async ({ page }) => {
-    const h = page.locator('th').filter({ hasText: /Stake/ }).first()
+  test('default sort: Max APY header shows ↓', async ({ page }) => {
+    const h = page.locator('th').filter({ hasText: /Max APY/ }).first()
     await expect(h).toContainText('↓')
   })
 
@@ -131,12 +131,11 @@ test.describe('SAM sort secondary', () => {
     await waitForData(page)
   })
 
-  test('switching sort column: default Stake ↓ → Max APY ↓ → Max APY ↑', async ({ page }) => {
+  test('switching sort column: default Max APY ↓ → click again → Max APY ↑', async ({ page }) => {
     const maxApyH = page.locator('th').filter({ hasText: /Max APY/ }).first()
-    const stakeH = page.locator('th').filter({ hasText: /Stake/ }).first()
 
-    // Initially stake column has ↓
-    await expect(stakeH).toContainText('↓')
+    // Initially Max APY column has ↓
+    await expect(maxApyH).toContainText('↓')
 
     // First click on Max APY = new column → DESC
     await maxApyH.click()
@@ -156,10 +155,10 @@ test.describe('SAM expert', () => {
     await expect(page.getByText('Error fetching data')).not.toBeVisible()
   })
 
-  test('Expert Guide link visible in nav', async ({ page }) => {
+  test('Docs link visible in nav on expert route', async ({ page }) => {
     await page.goto('/expert-')
     await waitForData(page)
-    await expect(page.getByRole('link', { name: 'Expert Guide' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Docs' })).toBeVisible()
   })
 })
 

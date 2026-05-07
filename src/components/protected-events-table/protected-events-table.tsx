@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 import { Badge } from 'src/components/ui/badge'
 import { EpochRangePicker } from 'src/components/ui/epoch-range-picker'
@@ -59,7 +59,7 @@ const renderFunderBadge = (protectedEvent: ProtectedEvent) => {
         {...tooltipAttributes(
           "Paid out of the validator's own bond — the validator footed the bill.",
         )}
-        className="cursor-help bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/30"
+        className="cursor-help bg-status-green-light text-status-green border-status-green/30"
       >
         Validator Bond
       </Badge>
@@ -71,7 +71,7 @@ const renderFunderBadge = (protectedEvent: ProtectedEvent) => {
         {...tooltipAttributes(
           "Marinade had to step in and pay because the validator's bond ran out.",
         )}
-        className="cursor-help bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30"
+        className="cursor-help bg-warning-light text-warning border-warning/30"
       >
         Marinade
       </Badge>
@@ -102,6 +102,11 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
   const [validatorFilter, setValidatorFilter] = useState('')
   const [minEpochFilter, setMinEpochFilter] = useState(minEpoch)
   const [maxEpochFilter, setMaxEpochFilter] = useState(maxEpoch)
+
+  useEffect(() => {
+    setMinEpochFilter(prev => Math.min(prev, minEpoch))
+    setMaxEpochFilter(prev => Math.max(prev, maxEpoch))
+  }, [minEpoch, maxEpoch])
 
   const preFilteredData = data.filter(({ protectedEvent, validator }) => {
     const lowerCaseValidatorFilter = validatorFilter.toLocaleLowerCase()

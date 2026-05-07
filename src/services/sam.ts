@@ -107,6 +107,7 @@ export const selectProjectedAPY = (
 ) => {
   const profit = selectActiveProfit(auctionResult.auctionData.validators)
   const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
+  if (tvl <= 0) return 0
   return Math.pow(1 + profit / tvl, epochsPerYear) - 1
 }
 

@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react'
 import { useQueryClient } from 'react-query'
-import { NavLink } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 
 import { ThemeToggle } from 'src/components/theme-toggle/theme-toggle'
 import { cn } from 'src/lib/utils'
@@ -66,8 +66,8 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
 
   return (
     <div className="navigation flex items-center h-14 bg-card border-b border-border shadow-card [&_a]:no-underline overflow-x-auto">
-      <a
-        href="/"
+      <Link
+        to={`/${prefix}`}
         className="flex items-center gap-2.5 mx-3 hover:opacity-80 transition-opacity shrink-0"
       >
         <MarinadeLogo />
@@ -79,7 +79,7 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
             Protected Stake Rewards
           </span>
         </div>
-      </a>
+      </Link>
       <div className="w-px h-6 bg-border mr-2 hidden sm:block shrink-0" />
       <div className="flex items-center gap-1 shrink-0">
         <NavLink to={`/${prefix}`}>
