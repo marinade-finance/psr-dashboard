@@ -140,7 +140,7 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
           <RevRow label="Active stake cost" value={pay(m.cost)} />
           {m.activating > 0 && (
             <RevRow
-              label={`Activating stake cost (${stake(m.activating)})`}
+              label="Activating stake cost"
               pmpe={pmpe(m.activatingStakePmpe)}
               value={pay(m.activatingCost)}
             />
