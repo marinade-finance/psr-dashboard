@@ -4,6 +4,7 @@ import { Badge } from 'src/components/ui/badge'
 import { EpochRangePicker } from 'src/components/ui/epoch-range-picker'
 import { Input } from 'src/components/ui/input'
 import { Label } from 'src/components/ui/label'
+import { HtmlTooltip } from 'src/components/ui/tooltip'
 import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
 import { formatPercentage, formatSolAmount } from 'src/format'
 import {
@@ -13,7 +14,6 @@ import {
 import { ProtectedEventStatus } from 'src/services/validator-with-protected_event'
 import { selectName } from 'src/services/validators'
 
-import { tooltipAttributes } from '../../services/utils'
 import { Metric } from '../metric/metric'
 import { UserLevel } from '../navigation/navigation'
 import {
@@ -31,27 +31,19 @@ const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
   switch (status) {
     case ProtectedEventStatus.DRYRUN:
       return (
-        <Badge
-          variant="secondary"
-          {...tooltipAttributes(
-            'This was logged during a test run — no money actually changes hands.',
-          )}
-          className="badge cursor-help float-left"
-        >
-          Dryrun
-        </Badge>
+        <HtmlTooltip html="This was logged during a test run — no money actually changes hands.">
+          <Badge variant="secondary" className="badge cursor-help float-left">
+            Dryrun
+          </Badge>
+        </HtmlTooltip>
       )
     case ProtectedEventStatus.ESTIMATE:
       return (
-        <Badge
-          variant="default"
-          {...tooltipAttributes(
-            'An early estimate from live data. The final number gets locked in at the end of the epoch and may shift before then.',
-          )}
-          className="badge cursor-help float-left"
-        >
-          Estimate
-        </Badge>
+        <HtmlTooltip html="An early estimate from live data. The final number gets locked in at the end of the epoch and may shift before then.">
+          <Badge variant="default" className="badge cursor-help float-left">
+            Estimate
+          </Badge>
+        </HtmlTooltip>
       )
     default:
       return null
@@ -61,26 +53,20 @@ const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
 const renderFunderBadge = (protectedEvent: ProtectedEvent) => {
   if (protectedEvent.meta.funder === 'ValidatorBond') {
     return (
-      <Badge
-        {...tooltipAttributes(
-          "Paid out of the validator's own bond — the validator footed the bill.",
-        )}
-        className="cursor-help bg-status-green-light text-status-green border-status-green/30"
-      >
-        Validator Bond
-      </Badge>
+      <HtmlTooltip html="Paid out of the validator's own bond — the validator footed the bill.">
+        <Badge className="cursor-help bg-status-green-light text-status-green border-status-green/30">
+          Validator Bond
+        </Badge>
+      </HtmlTooltip>
     )
   }
   if (protectedEvent.meta.funder === 'Marinade') {
     return (
-      <Badge
-        {...tooltipAttributes(
-          "Marinade had to step in and pay because the validator's bond ran out.",
-        )}
-        className="cursor-help bg-warning-light text-warning border-warning/30"
-      >
-        Marinade
-      </Badge>
+      <HtmlTooltip html="Marinade had to step in and pay because the validator's bond ran out.">
+        <Badge className="cursor-help bg-warning-light text-warning border-warning/30">
+          Marinade
+        </Badge>
+      </HtmlTooltip>
     )
   }
   return null
@@ -189,9 +175,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
           subline={
             filtered ? `of ${totalEvents.toLocaleString()} total` : undefined
           }
-          {...tooltipAttributes(
-            'Number of times stakers got reimbursed because a validator under-delivered. Shows the filtered count when filters are on.',
-          )}
+          tooltipHtml="Number of times stakers got reimbursed because a validator under-delivered. Shows the filtered count when filters are on."
         />
         <Metric
           label="Amount"
@@ -203,32 +187,29 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
           }
           extra={
             !filtered && totalAmount > 0 ? (
-              <div
-                className="cursor-help"
-                {...tooltipAttributes(
-                  `Validator Bond: ${formatSolAmount(validatorBondTotal)} SOL (${formatPercentage(bondRatio, 0)})<br/>Marinade backstop: ${formatSolAmount(marinadePaidTotal)} SOL (${formatPercentage(1 - bondRatio, 0)})`,
-                )}
+              <HtmlTooltip
+                html={`Validator Bond: ${formatSolAmount(validatorBondTotal)} SOL (${formatPercentage(bondRatio, 0)})<br/>Marinade backstop: ${formatSolAmount(marinadePaidTotal)} SOL (${formatPercentage(1 - bondRatio, 0)})`}
               >
-                <div className="flex h-1.5 rounded-sm overflow-hidden bg-secondary">
-                  <div
-                    className="bg-primary"
-                    style={{ width: `${bondPct}%` }}
-                  />
-                  <div
-                    className="bg-warning"
-                    style={{ width: `${100 - bondPct}%` }}
-                  />
+                <div className="cursor-help">
+                  <div className="flex h-1.5 rounded-sm overflow-hidden bg-secondary">
+                    <div
+                      className="bg-primary"
+                      style={{ width: `${bondPct}%` }}
+                    />
+                    <div
+                      className="bg-warning"
+                      style={{ width: `${100 - bondPct}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[10px] text-muted-foreground font-mono mt-1">
+                    <span>Bond {formatPercentage(bondRatio, 0)}</span>
+                    <span>Marinade {formatPercentage(1 - bondRatio, 0)}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between text-[10px] text-muted-foreground font-mono mt-1">
-                  <span>Bond {formatPercentage(bondRatio, 0)}</span>
-                  <span>Marinade {formatPercentage(1 - bondRatio, 0)}</span>
-                </div>
-              </div>
+              </HtmlTooltip>
             ) : null
           }
-          {...tooltipAttributes(
-            'Total SOL stakers received as reimbursement when validators under-delivered. Shows the filtered total when filters are on.',
-          )}
+          tooltipHtml="Total SOL stakers received as reimbursement when validators under-delivered. Shows the filtered total when filters are on."
         />
         <Metric
           label="Last settled epoch"
@@ -238,9 +219,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
               ? `${formatSolAmount(lastEpochBids)} SOL bids`
               : undefined
           }
-          {...tooltipAttributes(
-            'The most recent epoch where reimbursements have been fully paid out and locked in.',
-          )}
+          tooltipHtml="The most recent epoch where reimbursements have been fully paid out and locked in."
         />
       </div>
       <div className="flex flex-col sm:flex-row flex-wrap gap-4 px-4 mb-4">

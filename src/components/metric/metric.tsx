@@ -8,7 +8,7 @@ type Props = {
   value: React.ReactNode
   subline?: React.ReactNode
   extra?: React.ReactNode
-  'data-tooltip-html'?: string
+  tooltipHtml?: string
 }
 
 export const Metric: React.FC<Props> = ({
@@ -16,7 +16,7 @@ export const Metric: React.FC<Props> = ({
   value,
   subline,
   extra,
-  'data-tooltip-html': tooltipHtml,
+  tooltipHtml,
 }) => (
   <Card className="metric px-3 py-3 sm:px-5 sm:py-4 transition-shadow hover:shadow-hover">
     <div className="flex items-center gap-1 sm:whitespace-nowrap text-[11px] uppercase tracking-wider font-medium text-muted-foreground mb-1">

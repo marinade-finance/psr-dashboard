@@ -1,6 +1,7 @@
 import React from 'react'
 
 import { UserLevel } from 'src/components/navigation/navigation'
+import { HtmlTooltip } from 'src/components/ui/tooltip'
 import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
 import { formatPercentage, formatSolAmount, lamportsToSol } from 'src/format'
 import { selectEffectiveAmount } from 'src/services/bonds'
@@ -17,7 +18,6 @@ import {
   selectVoteAccount,
 } from 'src/services/validators'
 
-import { tooltipAttributes } from '../../services/utils'
 import { BellIcon } from '../icons/bell-icon'
 import {
   Alignment,
@@ -138,76 +138,80 @@ const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
                   const fillRadius = coveragePct < 100 ? '0 2px 2px 0' : '0'
 
                   return (
-                    <div
+                    <HtmlTooltip
                       key={selectVoteAccount(entry.validator)}
-                      className="relative flex flex-col rounded-lg overflow-hidden shrink-0 cursor-default"
-                      style={{
-                        width: size,
-                        height: size,
-                        background: tileBg,
-                        boxShadow:
-                          'inset 0 1px 0 rgba(255,255,255,0.10), inset 0 -1px 0 rgba(0,0,0,0.25)',
-                      }}
-                      {...tooltipAttributes(
+                      html={
                         `${name}<br/>` +
-                          `Stake: ${formatSolAmount(stake)} SOL<br/>` +
-                          `Coverage: ${formatPercentage(ratio)}` +
-                          (!hasBond ? '<br/>No bond' : ''),
-                      )}
+                        `Stake: ${formatSolAmount(stake)} SOL<br/>` +
+                        `Coverage: ${formatPercentage(ratio)}` +
+                        (!hasBond ? '<br/>No bond' : '')
+                      }
                     >
-                      {size >= 36 && (
-                        <div className="flex-1 px-1.5 pt-1 overflow-hidden">
-                          <div
-                            className="text-[10px] font-bold leading-tight truncate"
-                            style={{
-                              color: 'rgba(255,255,255,0.95)',
-                              textShadow: '0 1px 2px rgba(0,0,0,0.5)',
-                            }}
-                          >
-                            {name}
+                      <div
+                        className="relative flex flex-col rounded-lg overflow-hidden shrink-0 cursor-default"
+                        style={{
+                          width: size,
+                          height: size,
+                          background: tileBg,
+                          boxShadow:
+                            'inset 0 1px 0 rgba(255,255,255,0.10), inset 0 -1px 0 rgba(0,0,0,0.25)',
+                        }}
+                      >
+                        {size >= 36 && (
+                          <div className="flex-1 px-1.5 pt-1 overflow-hidden">
+                            <div
+                              className="text-[10px] font-bold leading-tight truncate"
+                              style={{
+                                color: 'rgba(255,255,255,0.95)',
+                                textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                              }}
+                            >
+                              {name}
+                            </div>
+                            {size >= 56 && (
+                              <div
+                                className="text-[9px] leading-tight truncate mt-0.5 font-medium"
+                                style={{
+                                  color: 'rgba(255,255,255,0.72)',
+                                  textShadow: '0 1px 2px rgba(0,0,0,0.4)',
+                                }}
+                              >
+                                {formatSolAmount(stake)} SOL
+                              </div>
+                            )}
+                            {size >= 76 && (
+                              <div
+                                className="text-[9px] leading-tight truncate mt-0.5 font-medium"
+                                style={{
+                                  color: 'rgba(255,255,255,0.65)',
+                                  textShadow: '0 1px 2px rgba(0,0,0,0.4)',
+                                }}
+                              >
+                                {formatPercentage(ratio, 0)} cov.
+                              </div>
+                            )}
                           </div>
-                          {size >= 56 && (
+                        )}
+                        {/* Coverage bar — always at bottom via mt-auto */}
+                        <div
+                          className="mt-auto shrink-0 w-full"
+                          style={{ height: 10, background: 'rgba(0,0,0,0.40)' }}
+                        >
+                          {barFill && (
                             <div
-                              className="text-[9px] leading-tight truncate mt-0.5 font-medium"
                               style={{
-                                color: 'rgba(255,255,255,0.72)',
-                                textShadow: '0 1px 2px rgba(0,0,0,0.4)',
+                                height: '100%',
+                                width: `${coveragePct}%`,
+                                background: `linear-gradient(to right, ${barFill.from}, ${barFill.to})`,
+                                borderRadius: fillRadius,
+                                boxShadow:
+                                  'inset 0 1px 0 rgba(255,255,255,0.20)',
                               }}
-                            >
-                              {formatSolAmount(stake)} SOL
-                            </div>
-                          )}
-                          {size >= 76 && (
-                            <div
-                              className="text-[9px] leading-tight truncate mt-0.5 font-medium"
-                              style={{
-                                color: 'rgba(255,255,255,0.65)',
-                                textShadow: '0 1px 2px rgba(0,0,0,0.4)',
-                              }}
-                            >
-                              {formatPercentage(ratio, 0)} cov.
-                            </div>
+                            />
                           )}
                         </div>
-                      )}
-                      {/* Coverage bar — always at bottom via mt-auto */}
-                      <div
-                        className="mt-auto shrink-0 w-full"
-                        style={{ height: 10, background: 'rgba(0,0,0,0.40)' }}
-                      >
-                        {barFill && (
-                          <div
-                            style={{
-                              height: '100%',
-                              width: `${coveragePct}%`,
-                              background: `linear-gradient(to right, ${barFill.from}, ${barFill.to})`,
-                              borderRadius: fillRadius,
-                              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.20)',
-                            }}
-                          />
-                        )}
                       </div>
-                    </div>
+                    </HtmlTooltip>
                   )
                 })}
               </div>
@@ -337,89 +341,78 @@ export const ValidatorBondsTable: React.FC<Props> = ({
             </span>
           </div>
           {/* Stacked bar */}
-          <div
-            className="h-8 rounded-lg overflow-hidden flex mb-4 w-full"
-            {...tooltipAttributes(
+          <HtmlTooltip
+            html={
               `Protected: ${formatSolAmount(totalProtectedStake)} SOL<br/>` +
-                `Uncovered: ${formatSolAmount(totalMarinadeStake - totalProtectedStake)} SOL`,
-            )}
+              `Uncovered: ${formatSolAmount(totalMarinadeStake - totalProtectedStake)} SOL`
+            }
           >
-            <div
-              className="flex items-center justify-center text-xs font-medium text-white overflow-hidden"
-              style={{
-                width: `${coveredPct}%`,
-                background: 'var(--primary)',
-                flexShrink: 0,
-                flexBasis: `${coveredPct}%`,
-                maxWidth: `${coveredPct}%`,
-              }}
-            >
-              <span className="truncate px-1 hidden sm:block">
-                {coveredPct > 25
-                  ? `${formatSolAmount(totalProtectedStake)} SOL covered`
-                  : ''}
-              </span>
+            <div className="h-8 rounded-lg overflow-hidden flex mb-4 w-full">
+              <div
+                className="flex items-center justify-center text-xs font-medium text-white overflow-hidden"
+                style={{
+                  width: `${coveredPct}%`,
+                  background: 'var(--primary)',
+                  flexShrink: 0,
+                  flexBasis: `${coveredPct}%`,
+                  maxWidth: `${coveredPct}%`,
+                }}
+              >
+                <span className="truncate px-1 hidden sm:block">
+                  {coveredPct > 25
+                    ? `${formatSolAmount(totalProtectedStake)} SOL covered`
+                    : ''}
+                </span>
+              </div>
+              <div
+                className="flex items-center justify-center text-xs font-medium text-muted-foreground overflow-hidden flex-1 min-w-0"
+                style={{ background: 'var(--muted)' }}
+              >
+                <span className="truncate px-1 hidden sm:block">
+                  {100 - coveredPct > 25
+                    ? `${formatSolAmount(totalMarinadeStake - totalProtectedStake)} SOL uncovered`
+                    : ''}
+                </span>
+              </div>
             </div>
-            <div
-              className="flex items-center justify-center text-xs font-medium text-muted-foreground overflow-hidden flex-1 min-w-0"
-              style={{ background: 'var(--muted)' }}
-            >
-              <span className="truncate px-1 hidden sm:block">
-                {100 - coveredPct > 25
-                  ? `${formatSolAmount(totalMarinadeStake - totalProtectedStake)} SOL uncovered`
-                  : ''}
-              </span>
-            </div>
-          </div>
+          </HtmlTooltip>
           {/* Stat chips */}
           <div className="flex flex-wrap gap-4 text-sm">
-            <span
-              className="text-muted-foreground"
-              {...tooltipAttributes(
-                'How many validators have at least some SOL in their bond right now.',
-              )}
-            >
-              Bonds funded:{' '}
-              <strong className="text-foreground">{totalFundedBonds}</strong>
-            </span>
-            <span
-              className="text-muted-foreground"
-              {...tooltipAttributes(
-                'Total SOL sitting in all validator bonds combined.',
-              )}
-            >
-              Total bonds:{' '}
-              <strong className="text-foreground">
-                {formatSolAmount(effectiveBalance)} SOL
-              </strong>
-            </span>
-            <span
-              className="text-muted-foreground"
-              {...tooltipAttributes(
-                'Total SOL Marinade has staked across all validators.',
-              )}
-            >
-              Total stake:{' '}
-              <strong className="text-foreground">
-                {formatSolAmount(totalMarinadeStake)} SOL
-              </strong>
-            </span>
-            {level === UserLevel.Expert && (
-              <span
-                className="text-muted-foreground"
-                {...tooltipAttributes(
-                  "If every bond stretched as far as it could, this is the share of Marinade's stake that would be covered.",
-                )}
-              >
-                Max protectable:{' '}
+            <HtmlTooltip html="How many validators have at least some SOL in their bond right now.">
+              <span className="text-muted-foreground">
+                Bonds funded:{' '}
+                <strong className="text-foreground">{totalFundedBonds}</strong>
+              </span>
+            </HtmlTooltip>
+            <HtmlTooltip html="Total SOL sitting in all validator bonds combined.">
+              <span className="text-muted-foreground">
+                Total bonds:{' '}
                 <strong className="text-foreground">
-                  {formatPercentage(
-                    totalMarinadeStake > 0
-                      ? totalMaxProtectedStake / totalMarinadeStake
-                      : 0,
-                  )}
+                  {formatSolAmount(effectiveBalance)} SOL
                 </strong>
               </span>
+            </HtmlTooltip>
+            <HtmlTooltip html="Total SOL Marinade has staked across all validators.">
+              <span className="text-muted-foreground">
+                Total stake:{' '}
+                <strong className="text-foreground">
+                  {formatSolAmount(totalMarinadeStake)} SOL
+                </strong>
+              </span>
+            </HtmlTooltip>
+            {level === UserLevel.Expert && (
+              <HtmlTooltip html="If every bond stretched as far as it could, this is the share of Marinade's stake that would be covered.">
+                <span className="text-muted-foreground">
+                  Max protectable:{' '}
+                  <strong className="text-foreground">
+                    {formatPercentage(
+                      totalMarinadeStake > 0
+                        ? totalMaxProtectedStake / totalMarinadeStake
+                        : 0,
+                    )}
+                  </strong>
+                </span>
+              </HtmlTooltip>
             )}
           </div>
         </div>
@@ -446,14 +439,15 @@ export const ValidatorBondsTable: React.FC<Props> = ({
                       voteAccount={va}
                       trailing={
                         summary && (
-                          <button
-                            type="button"
-                            className="shrink-0 text-warning opacity-80 hover:opacity-100 w-4 h-4"
-                            {...tooltipAttributes(notificationTooltip(summary))}
-                            aria-label={`${summary.count} notification${summary.count === 1 ? '' : 's'}`}
-                          >
-                            {BellIcon}
-                          </button>
+                          <HtmlTooltip html={notificationTooltip(summary)}>
+                            <button
+                              type="button"
+                              className="shrink-0 text-warning opacity-80 hover:opacity-100 w-4 h-4"
+                              aria-label={`${summary.count} notification${summary.count === 1 ? '' : 's'}`}
+                            >
+                              {BellIcon}
+                            </button>
+                          </HtmlTooltip>
                         )
                       }
                     />
@@ -469,13 +463,13 @@ export const ValidatorBondsTable: React.FC<Props> = ({
                 headerHelp:
                   'All the SOL Marinade has staked with this validator — both directly staked SOL and SOL backing mSOL.',
                 render: ({ validator }) => (
-                  <span
-                    {...tooltipAttributes(
-                      `Native: ${formatSolAmount(selectNativeMarinadeStake(validator))}, Liquid: ${formatSolAmount(selectLiquidMarinadeStake(validator))}`,
-                    )}
+                  <HtmlTooltip
+                    html={`Native: ${formatSolAmount(selectNativeMarinadeStake(validator))}, Liquid: ${formatSolAmount(selectLiquidMarinadeStake(validator))}`}
                   >
-                    {formatSolAmount(selectTotalMarinadeStake(validator))}
-                  </span>
+                    <span>
+                      {formatSolAmount(selectTotalMarinadeStake(validator))}
+                    </span>
+                  </HtmlTooltip>
                 ),
                 compare: (a, b) =>
                   selectTotalMarinadeStake(a.validator) -

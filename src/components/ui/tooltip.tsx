@@ -43,4 +43,30 @@ function Tooltip({ content, children, delayDuration = 300 }: TooltipProps) {
   )
 }
 
-export { TooltipProvider, TooltipRoot, TooltipTrigger, TooltipContent, Tooltip }
+// Tooltip with HTML-string content. Forwards the trigger via Radix asChild —
+// the caller's element receives ref/event handlers directly, so layout (table
+// cells, flex tiles) stays intact. Pass exactly one element child.
+type HtmlTooltipProps = {
+  html: string
+  children: React.ReactElement
+}
+
+function HtmlTooltip({ html, children }: HtmlTooltipProps) {
+  return (
+    <TooltipRoot delayDuration={300}>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent className="max-w-[min(640px,calc(100vw-24px))] bg-black/90 text-white/95">
+        <span dangerouslySetInnerHTML={{ __html: html }} />
+      </TooltipContent>
+    </TooltipRoot>
+  )
+}
+
+export {
+  TooltipProvider,
+  TooltipRoot,
+  TooltipTrigger,
+  TooltipContent,
+  Tooltip,
+  HtmlTooltip,
+}

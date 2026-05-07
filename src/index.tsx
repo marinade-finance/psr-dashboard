@@ -8,9 +8,7 @@ import {
   RouterProvider,
   useRouteError,
 } from 'react-router-dom'
-import { Tooltip } from 'react-tooltip'
 
-import 'react-tooltip/dist/react-tooltip.css'
 import { UserLevel } from './components/navigation/navigation'
 import { TooltipProvider } from './components/ui/tooltip'
 import { DocsPage } from './pages/docs'
@@ -111,7 +109,6 @@ ReactDOM.render(
       <TooltipProvider>
         <RouterProvider router={router} />
       </TooltipProvider>
-      <Tooltip id="tooltip" style={{ zIndex: 2 }} />
     </QueryClientProvider>
   </React.StrictMode>,
   document.getElementById('root'),
