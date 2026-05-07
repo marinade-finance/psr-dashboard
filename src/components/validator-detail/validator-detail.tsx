@@ -126,12 +126,11 @@ const MetricRow = ({
     <span className="text-xs text-muted-foreground flex items-center gap-1">
       {onSeeBreakdown ? (
         <button
-          className="text-xs text-muted-foreground hover:text-primary inline-flex items-center gap-1 group"
+          className="text-xs text-muted-foreground hover:text-primary hover:underline"
           onClick={onSeeBreakdown}
           title="See calculation"
         >
-          {label}
-          <span className="text-primary group-hover:underline">→</span>
+          {label} →
         </button>
       ) : (
         label
@@ -157,7 +156,7 @@ const PenaltyRow = ({
 }) => (
   <div className="flex items-center justify-between gap-2">
     <button
-      className={`text-left flex-1 flex items-center gap-1 ${
+      className={`text-left flex-1 ${
         sub
           ? 'text-[11px] text-muted-foreground'
           : 'text-xs text-muted-foreground'
@@ -165,14 +164,7 @@ const PenaltyRow = ({
       onClick={onSeeBreakdown}
       title="See calculation"
     >
-      <span>{label}</span>
-      <span
-        className={`shrink-0 ${
-          sub ? 'text-muted-foreground' : 'text-destructive'
-        }`}
-      >
-        →
-      </span>
+      {label} →
     </button>
     <span
       className={`font-mono ${sub ? 'text-[11px]' : 'text-sm font-semibold'}`}
