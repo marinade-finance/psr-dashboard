@@ -81,7 +81,7 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
         </div>
       </a>
       <div className="w-px h-6 bg-border mr-2 hidden sm:block shrink-0" />
-      <div className="flex items-center gap-0.5 shrink-0">
+      <div className="flex items-center gap-1 shrink-0">
         <NavLink to={`/${prefix}`}>
           {({ isActive }) => (
             <div className={cn(tab, isActive && tabActive)}>
