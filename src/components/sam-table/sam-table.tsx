@@ -154,6 +154,15 @@ type Props = {
 
 const RANK_MONO = 'font-mono text-xs'
 
+// Coloured dot beside the rank number — drives attention without colouring
+// the digit itself. Critical/warning use a 6px solid dot; info uses a smaller
+// muted dot. Positive/neutral rows render no dot at all (clean zero-state).
+const URGENCY_DOT: Partial<Record<TipUrgency, string>> = {
+  critical: 'w-1.5 h-1.5 rounded-full bg-destructive shrink-0',
+  warning: 'w-1.5 h-1.5 rounded-full bg-warning shrink-0',
+  info: 'w-1 h-1 rounded-full bg-info/70 shrink-0',
+}
+
 const SortIndicator: React.FC<{
   column: SortColumn
   sortColumn: SortColumn
@@ -185,7 +194,7 @@ const RankCell: React.FC<{
   onClearValidator,
 }) => {
   if (isGhost)
-    return <span className={`text-muted-foreground ${RANK_MONO}`}>#{rank}</span>
+    return <span className={`text-muted-foreground ${RANK_MONO}`}>{rank}</span>
   if (isSimulated && onClearValidator)
     return (
       <div className="flex flex-col items-center gap-0.5">
@@ -193,7 +202,7 @@ const RankCell: React.FC<{
           className={`font-medium ${RANK_MONO}`}
           style={{ color: posColor ?? 'var(--muted-foreground)' }}
         >
-          #{rank}
+          {rank}
         </span>
         <button
           className="text-[10px] text-muted-foreground hover:text-destructive leading-none"
@@ -207,15 +216,13 @@ const RankCell: React.FC<{
         </button>
       </div>
     )
-  // Healthy/positive rows render as plain `#N` — no icon noise.
-  // Critical/warning rows get a coloured SVG glyph next to the number.
-  const showGlyph = urgency === 'critical' || urgency === 'warning'
+  const dotClass = URGENCY_DOT[urgency]
   return (
     <span
-      className={`font-medium ${RANK_MONO} flex items-center justify-center gap-1 text-foreground`}
+      className={`font-medium ${RANK_MONO} flex items-center justify-center gap-1.5 text-foreground`}
     >
-      {showGlyph && <TipGlyph urgency={urgency} />}
-      <span>#{rank}</span>
+      {dotClass ? <span className={dotClass} aria-hidden /> : null}
+      <span>{rank}</span>
     </span>
   )
 }
