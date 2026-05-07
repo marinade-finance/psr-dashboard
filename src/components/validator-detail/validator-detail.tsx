@@ -110,15 +110,28 @@ const MetricRow = ({
   help,
   value,
   valueStyle,
+  onSeeBreakdown,
 }: {
   label: string
   help?: string
   value: React.ReactNode
   valueStyle?: React.CSSProperties
+  onSeeBreakdown?: () => void
 }) => (
   <div className="flex items-center justify-between">
     <span className="text-xs text-muted-foreground flex items-center gap-1">
-      {label}
+      {onSeeBreakdown ? (
+        <button
+          className="text-xs text-muted-foreground hover:text-primary inline-flex items-center gap-1 group"
+          onClick={onSeeBreakdown}
+          title="See calculation"
+        >
+          {label}
+          <span className="text-primary group-hover:underline">→</span>
+        </button>
+      ) : (
+        label
+      )}
       {help && <HelpTip text={help} />}
     </span>
     <span className="text-sm font-semibold font-mono" style={valueStyle}>
@@ -139,16 +152,24 @@ const PenaltyRow = ({
   sub?: boolean
 }) => (
   <div className="flex items-center justify-between gap-2">
-    <span className="text-xs text-muted-foreground flex-1 flex items-center gap-1">
-      {label}
-      <button
-        className={`hover:underline shrink-0 ${sub ? 'text-[11px] text-muted-foreground' : 'text-xs text-destructive'}`}
-        onClick={onSeeBreakdown}
-        title="See calculation"
+    <button
+      className={`text-left flex-1 flex items-center gap-1 group ${
+        sub
+          ? 'text-[11px] text-muted-foreground'
+          : 'text-xs text-muted-foreground'
+      } hover:text-foreground`}
+      onClick={onSeeBreakdown}
+      title="See calculation"
+    >
+      <span>{label}</span>
+      <span
+        className={`group-hover:underline shrink-0 ${
+          sub ? 'text-muted-foreground' : 'text-destructive'
+        }`}
       >
         →
-      </button>
-    </span>
+      </span>
+    </button>
     <span
       className={`font-mono ${sub ? 'text-[11px]' : 'text-sm font-semibold'}`}
       style={{ color: sub ? CSS_MUTED_FG : CSS_DESTRUCTIVE }}
