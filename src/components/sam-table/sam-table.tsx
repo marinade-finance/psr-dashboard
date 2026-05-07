@@ -491,7 +491,7 @@ export const SamTable: React.FC<Props> = ({
       label: 'Re-delegation',
       value: formatSolAmount(Math.round(totalRedelegation), 0),
       unit: 'SOL',
-      help: 'Total SAM stake expected to move next epoch (~0.7% of TVL rebalancing budget)',
+      help: 'Total stake flowing into validators next epoch — sum of positive expected deltas. Limited by undeployed TVL (deposited SOL not yet delegated). Separate from natural withdrawals (~0.7% of TVL/epoch) which reduce stake to over-target validators.',
     },
   ]
 
@@ -818,7 +818,7 @@ export const SamTable: React.FC<Props> = ({
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
                 />
-                <HelpTip text="Current active stake and expected change next epoch based on auction results and rebalancing budget (~0.7% TVL/epoch)" />
+                <HelpTip text="Current SAM-active stake and projected change next epoch. Positive deltas are limited by undeployed TVL (deposited SOL not yet delegated). Negative deltas come from natural withdrawals (~0.7% of TVL/epoch) drawn first from over-target validators." />
               </TableHead>
               <TableHead
                 className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted min-w-[200px] cursor-pointer hover:text-primary"

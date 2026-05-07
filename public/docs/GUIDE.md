@@ -34,6 +34,7 @@ validators based on their bids and performance.
 - **Winning APY** &mdash; Estimated APY of the last validator winning the auction
 - **Projected APY** &mdash; Expected staker return based on total revenue from all winning validators
 - **Winning Validators** &mdash; Count of validators receiving stake in current auction
+- **Re-delegation** &mdash; Total stake flowing to validators next epoch (sum of positive expected deltas). This equals the amount of undeployed TVL — SOL that has been deposited into Marinade but not yet delegated to any validator. It is allocated first to under-target validators, highest bid first. This is unrelated to the ~0.7% natural withdrawal rate (which represents stake leaving the pool entirely).
 
 **Simulation Mode:** Click "Enter Simulation" to test how changing a validator's parameters would affect their auction
 position. Edit commission rates or bid amounts, then click "Simulate" to see projected results.
@@ -132,6 +133,10 @@ reduces their bid significantly, penalties are charged from their bond to preven
 
 **Undelegation Caps** &mdash; Stake movements are rate-limited per epoch to minimize activation/deactivation costs
 and maintain stability.
+
+**Natural Withdrawals** &mdash; Approximately 0.7% of total SAM TVL leaves the pool each epoch as stakers redeem.
+This withdrawal is drawn proportionally from validators that are above their auction target first; if no validator is
+over target, it is distributed pro-rata across all active stake. This is a separate mechanism from re-delegation.
 
 ---
 
