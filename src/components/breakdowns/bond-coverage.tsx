@@ -203,7 +203,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
               marker="yellow"
             />
           ) : (
-            <OkRow message="Bond covers ideal — eligible for more stake." />
+            <OkRow message="Bond meets ideal coverage — eligible for more stake." />
           )}
 
           {showRiskSection && (
