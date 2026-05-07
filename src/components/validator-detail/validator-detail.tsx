@@ -412,6 +412,10 @@ export const ValidatorDetail = ({
               winningTotalPmpe={winningTotalPmpe}
               bondState={bondHealth}
               isSimulated={isSimulated}
+              onGoToSim={() => {
+                setSimEnabled(true)
+                setTab('overview')
+              }}
             />
           </div>
         )}
@@ -421,6 +425,10 @@ export const ValidatorDetail = ({
             <SamRevenueBreakdown
               validator={validator}
               isSimulated={isSimulated}
+              onGoToSim={() => {
+                setSimEnabled(true)
+                setTab('overview')
+              }}
             />
           </div>
         )}
@@ -432,6 +440,10 @@ export const ValidatorDetail = ({
               dsSamConfig={dsSamConfig}
               winningTotalPmpe={winningTotalPmpe}
               isSimulated={isSimulated}
+              onGoToSim={() => {
+                setSimEnabled(true)
+                setTab('overview')
+              }}
             />
           </div>
         )}

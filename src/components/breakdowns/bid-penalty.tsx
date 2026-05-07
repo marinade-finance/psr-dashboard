@@ -1,8 +1,9 @@
 import React from 'react'
 
-import { HelpTip } from 'src/components/help-tip/help-tip'
 import { formatPercentage, pay, pmpe, stake } from 'src/format'
 import { computeBidPenaltyMetrics } from 'src/services/breakdowns'
+
+import { CalcCard, CalcRow, OkRow, SectionHeader } from './shared'
 
 import type {
   AuctionValidator,
@@ -14,140 +15,102 @@ type Props = {
   dsSamConfig: DsSamConfig
   winningTotalPmpe: number
   isSimulated?: boolean
+  onGoToSim?: () => void
 }
-
-const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
-  <tr>
-    <td
-      colSpan={3}
-      className="pt-4 pb-1 text-xs uppercase tracking-wider text-muted-foreground border-b border-dashed border-border"
-    >
-      {title}
-    </td>
-  </tr>
-)
-
-const Row: React.FC<{
-  label: string
-  secondary?: string
-  value: string
-  bold?: boolean
-  large?: boolean
-  accent?: 'red'
-}> = ({ label, secondary, value, bold, large, accent }) => (
-  <tr className="border-b border-border-grid/50 last:border-0">
-    <td
-      className={`py-1.5 pr-2 text-xs ${bold ? 'font-semibold' : ''} ${large ? 'text-[13px]' : ''}`}
-    >
-      {label}
-    </td>
-    <td className="py-1.5 px-2 text-right font-mono text-xs text-muted-foreground">
-      {secondary ?? ''}
-    </td>
-    <td
-      className={`py-1.5 pl-2 text-right font-mono ${large ? 'text-sm' : 'text-xs'} ${
-        bold ? 'font-semibold' : ''
-      } ${accent === 'red' ? 'text-destructive' : ''}`}
-    >
-      {value}
-    </td>
-  </tr>
-)
-
-const OkRow: React.FC<{ message: string }> = ({ message }) => (
-  <tr>
-    <td colSpan={2} className="py-1.5 pr-2 text-xs text-muted-foreground">
-      {message}
-    </td>
-    <td className="py-1.5 pl-2 text-right font-mono text-xs text-[var(--status-green,#2aa198)]">
-      ●
-    </td>
-  </tr>
-)
 
 export const BidPenaltyBreakdown: React.FC<Props> = ({
   validator,
   dsSamConfig,
   winningTotalPmpe,
   isSimulated,
+  onGoToSim,
 }) => {
   const m = computeBidPenaltyMetrics(validator, dsSamConfig, winningTotalPmpe)
 
+  const status = {
+    label:
+      m.penaltyPmpe > 0
+        ? `Penalty active: ${pmpe(m.penaltyPmpe)} PMPE this epoch.`
+        : m.isNegativeBiddingChange
+          ? 'Bid dropped this epoch but bond obligation covers it — no penalty.'
+          : 'Bid did not decrease — no penalty.',
+    tone: m.penaltyPmpe > 0 ? 'red' : 'green',
+  }
+
+  const cta = onGoToSim ? (
+    <button
+      className="text-xs text-primary hover:underline"
+      onClick={onGoToSim}
+    >
+      {m.penaltyPmpe > 0
+        ? `Raise bid to ≥ ${pmpe(m.adjustedLimit)} PMPE in simulation →`
+        : 'Simulate bid or commission changes →'}
+    </button>
+  ) : null
+
   return (
-    <div className="bg-card rounded-xl border border-border p-5">
-      <h3 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
-        {isSimulated && (
-          <span className="text-[var(--status-yellow,#b58900)]">
-            Simulated ·
-          </span>
-        )}
-        Bid Too Low Penalty
-        <HelpTip text="Triggered when this epoch's bid drops below 99.999% of last epoch's bid. Penalty scales with shortfall against the worst historical effective participating bid (clipped to bond obligation)." />
-      </h3>
-
-      <div
-        className={`rounded-lg px-3 py-2 text-sm mb-4 ${
-          m.penaltyPmpe > 0
-            ? 'bg-destructive-light text-destructive'
-            : 'bg-primary-light text-primary'
-        }`}
-      >
-        {m.penaltyPmpe > 0
-          ? `Penalty active: ${pmpe(m.penaltyPmpe)} PMPE this epoch.`
-          : m.isNegativeBiddingChange
-            ? 'Bid dropped this epoch but bond obligation covers it — no penalty.'
-            : 'Bid did not decrease — no penalty.'}
-      </div>
-
+    <CalcCard
+      title="Bid Penalty Calculation"
+      helpText="Triggered when this epoch's bid drops below 99.999% of last epoch's bid. Penalty scales with shortfall against the worst historical effective participating bid (clipped to bond obligation)."
+      isSimulated={isSimulated}
+      status={status}
+      cta={cta}
+    >
       <table className="w-full">
         <tbody>
           <SectionHeader title="Bid history" />
-          <Row label="Last epoch bid PMPE" value={pmpe(m.lastEpochBidPmpe)} />
-          <Row label="This epoch bid PMPE" value={pmpe(m.thisEpochBidPmpe)} />
-          <Row
+          <CalcRow
+            label="Last epoch bid PMPE"
+            value={pmpe(m.lastEpochBidPmpe)}
+          />
+          <CalcRow
+            label="This epoch bid PMPE"
+            value={pmpe(m.thisEpochBidPmpe)}
+          />
+          <CalcRow
             label="History window"
             secondary={`${m.historyEpochs} epochs`}
             value=""
           />
-          <Row
+          <CalcRow
             label="Worst historical effective participating bid PMPE"
             value={pmpe(m.worstHistoricalPmpe)}
           />
 
           <SectionHeader title="Threshold" />
-          <Row
+          <CalcRow
             label="Effective participating bid PMPE"
             value={pmpe(m.effParticipatingBidPmpe)}
           />
-          <Row label="Limit (min of above two)" value={pmpe(m.limit)} />
-          <Row
+          <CalcRow label="Limit (min of above two)" value={pmpe(m.limit)} />
+          <CalcRow
             label="Adjusted limit (after permitted deviation)"
             value={pmpe(m.adjustedLimit)}
           />
-          <Row
+          <CalcRow
             label="Bond obligation PMPE"
             value={pmpe(m.bondObligationPmpe)}
           />
-          <Row label="Shortfall" value={pmpe(m.shortfall)} bold />
+          <CalcRow label="Shortfall" value={pmpe(m.shortfall)} bold />
 
           <SectionHeader title="Penalty" />
-          <Row
+          <CalcRow
             label="Penalty coefficient"
             secondary={formatPercentage(m.penaltyCoef, 2)}
             value=""
           />
-          <Row
+          <CalcRow
             label="Base (winning PMPE + effective participating bid PMPE)"
             value={pmpe(m.base)}
           />
-          <Row
+          <CalcRow
             label="Penalty PMPE"
             value={pmpe(m.penaltyPmpe)}
             bold
             accent={m.penaltyPmpe > 0 ? 'red' : undefined}
           />
           {m.penaltySol > 0 ? (
-            <Row
+            <CalcRow
               label="Penalty this epoch"
               secondary={stake(m.marinadeActivatedStakeSol)}
               value={pay(m.penaltySol)}
@@ -160,6 +123,6 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
           )}
         </tbody>
       </table>
-    </div>
+    </CalcCard>
   )
 }

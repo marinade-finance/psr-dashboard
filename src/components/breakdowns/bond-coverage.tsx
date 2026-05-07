@@ -1,8 +1,9 @@
 import React from 'react'
 
-import { HelpTip } from 'src/components/help-tip/help-tip'
 import { pay, pmpe, stake } from 'src/format'
 import { computeBondCoverageMetrics } from 'src/services/breakdowns'
+
+import { CalcCard, CalcRow, OkRow, SectionHeader } from './shared'
 
 import type {
   AuctionValidator,
@@ -16,6 +17,7 @@ type Props = {
   winningTotalPmpe: number
   bondState: BondHealthState
   isSimulated?: boolean
+  onGoToSim?: () => void
 }
 
 const statusLine = (
@@ -47,67 +49,13 @@ const statusLine = (
   }
 }
 
-const Row: React.FC<{
-  label: string
-  qty?: string
-  value: string
-  bold?: boolean
-  large?: boolean
-  accent?: 'red' | 'yellow'
-}> = ({ label, qty, value, bold, large, accent }) => (
-  <tr className="border-b border-border-grid/50 last:border-0">
-    <td
-      className={`py-1.5 pr-2 text-xs ${bold ? 'font-semibold' : ''} ${large ? 'text-[13px]' : ''}`}
-    >
-      {label}
-    </td>
-    <td className="py-1.5 px-2 text-right font-mono text-xs text-muted-foreground">
-      {qty ?? ''}
-    </td>
-    <td
-      className={`py-1.5 pl-2 text-right font-mono ${large ? 'text-sm' : 'text-xs'} ${
-        bold ? 'font-semibold' : ''
-      } ${
-        accent === 'red'
-          ? 'text-destructive'
-          : accent === 'yellow'
-            ? 'text-[var(--status-yellow,#b58900)]'
-            : ''
-      }`}
-    >
-      {value}
-    </td>
-  </tr>
-)
-
-const OkRow: React.FC<{ message: string }> = ({ message }) => (
-  <tr>
-    <td colSpan={2} className="py-1.5 pr-2 text-xs text-muted-foreground">
-      {message}
-    </td>
-    <td className="py-1.5 pl-2 text-right font-mono text-xs text-[var(--status-green,#2aa198)]">
-      ●
-    </td>
-  </tr>
-)
-
-const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
-  <tr>
-    <td
-      colSpan={3}
-      className="pt-4 pb-1 text-xs uppercase tracking-wider text-muted-foreground border-b border-dashed border-border"
-    >
-      {title}
-    </td>
-  </tr>
-)
-
 export const BondCoverageBreakdown: React.FC<Props> = ({
   validator,
   dsSamConfig,
   winningTotalPmpe,
   bondState,
   isSimulated,
+  onGoToSim,
 }) => {
   const m = computeBondCoverageMetrics(
     validator,
@@ -117,70 +65,66 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
     dsSamConfig.bondRiskFeeMult,
   )
   const status = statusLine(bondState, m.topUpToMin, m.topUpToIdeal)
-  const toneBg = {
-    red: 'bg-destructive-light text-destructive',
-    yellow:
-      'bg-[var(--status-yellow-light,rgba(181,137,0,0.12))] text-[var(--status-yellow,#b58900)]',
-    green: 'bg-primary-light text-primary',
-  }[status.tone]
+
+  const cta = onGoToSim ? (
+    <button
+      className="text-xs text-primary hover:underline"
+      onClick={onGoToSim}
+    >
+      Simulate commission or bid changes →
+    </button>
+  ) : null
 
   return (
-    <div className="bg-card rounded-xl border border-border p-5">
-      <h3 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
-        {isSimulated && (
-          <span className="text-[var(--status-yellow,#b58900)]">
-            Simulated ·
-          </span>
-        )}
-        Bond Coverage Calculation
-        <HelpTip text="Mirrors the SDK fee-trigger threshold: claimable bond ≥ minUnprotectedReserve + projectedExposed × minBondPmpe / 1000. The two sections show coverage at minimum (penalty floor) and ideal (capacity for more stake) horizons." />
-      </h3>
-      <div className={`rounded-lg px-3 py-2 text-sm mb-4 ${toneBg}`}>
-        {status.label}
-      </div>
-
+    <CalcCard
+      title="Bond Coverage Calculation"
+      helpText="Mirrors the SDK fee-trigger threshold: claimable bond ≥ minUnprotectedReserve + projectedExposed × minBondPmpe / 1000. The two sections show coverage at minimum (penalty floor) and ideal (capacity for more stake) horizons."
+      isSimulated={isSimulated}
+      status={status}
+      cta={cta}
+    >
       <table className="w-full">
         <tbody>
           <SectionHeader title="Rates" />
-          <Row
+          <CalcRow
             label="Expected max effective bid PMPE"
-            qty={pmpe(m.expectedMaxEffBidPmpe)}
+            secondary={pmpe(m.expectedMaxEffBidPmpe)}
             value=""
           />
-          <Row
+          <CalcRow
             label="On-chain distributed rewards PMPE"
-            qty={pmpe(m.onchainDistributedPmpe)}
+            secondary={pmpe(m.onchainDistributedPmpe)}
             value=""
           />
 
           <SectionHeader title={`Minimum Coverage (${m.minEp} epochs)`} />
-          <Row
+          <CalcRow
             label="Claimable bond balance"
             value={pay(m.claimableBondBalanceSol)}
             bold
           />
-          <Row
+          <CalcRow
             label="Activated Marinade stake"
-            qty={stake(m.marinadeActivatedStakeSol)}
+            secondary={stake(m.marinadeActivatedStakeSol)}
             value=""
           />
-          <Row
+          <CalcRow
             label="Projected exposed stake"
-            qty={stake(m.projectedExposedStakeSol)}
+            secondary={stake(m.projectedExposedStakeSol)}
             value=""
           />
-          <Row
+          <CalcRow
             label="Minimum unprotected reserve"
             value={pay(m.minUnprotectedReserveSol)}
           />
-          <Row
+          <CalcRow
             label="On-chain distributed reserve"
             value={pay(m.onchainBase)}
           />
-          <Row label="Minimum bid coverage" value={pay(m.minCoverageBid)} />
-          <Row label="Minimum required" value={pay(m.floorBase)} bold />
+          <CalcRow label="Minimum bid coverage" value={pay(m.minCoverageBid)} />
+          <CalcRow label="Minimum required" value={pay(m.floorBase)} bold />
           {m.topUpToMin > 0 ? (
-            <Row
+            <CalcRow
               label="Top-up to minimum coverage"
               value={pay(m.topUpToMin)}
               bold
@@ -192,24 +136,24 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           )}
 
           <SectionHeader title={`Ideal Coverage (${m.idealEp} epochs)`} />
-          <Row label="Bond balance" value={pay(m.bondBalanceSol)} bold />
-          <Row
+          <CalcRow label="Bond balance" value={pay(m.bondBalanceSol)} bold />
+          <CalcRow
             label="Projected exposed stake"
-            qty={stake(m.projectedExposedStakeSol)}
+            secondary={stake(m.projectedExposedStakeSol)}
             value=""
           />
-          <Row
+          <CalcRow
             label="Ideal unprotected reserve"
             value={pay(m.idealUnprotectedReserveSol)}
           />
-          <Row
+          <CalcRow
             label="On-chain distributed reserve"
             value={pay(m.onchainBase)}
           />
-          <Row label="Ideal bid coverage" value={pay(m.idealCoverageBid)} />
-          <Row label="Ideal required" value={pay(m.requiredIdeal)} bold />
+          <CalcRow label="Ideal bid coverage" value={pay(m.idealCoverageBid)} />
+          <CalcRow label="Ideal required" value={pay(m.requiredIdeal)} bold />
           {m.topUpToIdeal > 0 ? (
-            <Row
+            <CalcRow
               label="To get more stake, top up"
               value={pay(m.topUpToIdeal)}
               bold
@@ -221,6 +165,6 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           )}
         </tbody>
       </table>
-    </div>
+    </CalcCard>
   )
 }
