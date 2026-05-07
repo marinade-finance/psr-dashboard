@@ -324,6 +324,7 @@ export const ValidatorDetail = ({
     >
       <SheetContent
         side="right"
+        title="Validator detail"
         className={`w-full max-w-4xl overflow-y-auto p-0 ${
           isSimulated ? 'border-t-4 border-t-status-yellow' : ''
         }`}

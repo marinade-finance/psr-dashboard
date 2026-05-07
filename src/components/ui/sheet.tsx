@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react'
+import * as DialogPrimitive from '@radix-ui/react-dialog'
+import React from 'react'
 
 import { cn } from 'src/lib/utils'
 
@@ -9,45 +10,27 @@ interface SheetProps {
 }
 
 export function Sheet({ open, onOpenChange, children }: SheetProps) {
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && open) onOpenChange(false)
-    }
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
-  }, [open, onOpenChange])
-
-  useEffect(() => {
-    if (!open) return undefined
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [open])
-
-  if (!open) return null
-
   return (
-    <div className="fixed inset-0 z-50">
-      <div
-        className="fixed inset-0 bg-black/50"
-        style={{ animation: 'sheet-fade-in 150ms ease' }}
-        onClick={() => onOpenChange(false)}
-      />
+    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       {children}
-    </div>
+    </DialogPrimitive.Root>
   )
 }
 
 interface SheetContentProps {
   side?: 'right' | 'left' | 'top' | 'bottom'
   className?: string
+  title?: string
   children: React.ReactNode
 }
+
+const SR_ONLY =
+  'absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0'
 
 export function SheetContent({
   side = 'right',
   className,
+  title = 'Detail',
   children,
 }: SheetContentProps) {
   const base = 'fixed z-50 bg-background shadow-xl overflow-y-auto'
@@ -65,11 +48,23 @@ export function SheetContent({
       ? { animation: 'sheet-slide-in-right 300ms ease' }
       : side === 'left'
         ? { animation: 'sheet-slide-in-right 300ms ease reverse' }
-        : {}
+        : undefined
 
   return (
-    <div className={cn(base, sideClass, className)} style={animationStyle}>
-      {children}
-    </div>
+    <DialogPrimitive.Portal>
+      <DialogPrimitive.Overlay
+        className="fixed inset-0 z-50 bg-black/50"
+        style={{ animation: 'sheet-fade-in 150ms ease' }}
+      />
+      <DialogPrimitive.Content
+        className={cn(base, sideClass, className)}
+        style={animationStyle}
+      >
+        <DialogPrimitive.Title className={SR_ONLY}>
+          {title}
+        </DialogPrimitive.Title>
+        {children}
+      </DialogPrimitive.Content>
+    </DialogPrimitive.Portal>
   )
 }
