@@ -12,14 +12,13 @@ import { Input } from 'src/components/ui/input'
 import { Sheet, SheetContent } from 'src/components/ui/sheet'
 import { Switch } from 'src/components/ui/switch'
 import { ApyCompositionCard } from 'src/components/validator-detail/apy-composition-card'
-import { formatSolAmount, pay, pmpe } from 'src/format'
+import { formatSolAmount, pay } from 'src/format'
 import {
   CSS_PRIMARY,
   CSS_DESTRUCTIVE,
   CSS_PRIMARY_LIGHT,
   CSS_DESTRUCTIVE_LIGHT,
   CSS_STATUS_GREEN,
-  CSS_STATUS_YELLOW,
   CSS_WARNING,
   CSS_MUTED_FG,
 } from 'src/lib/utils'
@@ -712,20 +711,6 @@ export const ValidatorDetail = ({
                   value={`${formatSolAmount(paymentMetrics.activatingCost, 2)} SOL`}
                   onSeeBreakdown={() => setTab('payments')}
                 />
-                {paymentMetrics.activating > 0 && (
-                  <MetricRow
-                    label="↳ bid gap"
-                    help={HELP_TEXT.bidGap}
-                    value={`${pmpe(paymentMetrics.bidGap)} PMPE`}
-                    valueStyle={{
-                      color:
-                        paymentMetrics.bidGap > 2
-                          ? CSS_STATUS_YELLOW
-                          : CSS_MUTED_FG,
-                      fontSize: '11px',
-                    }}
-                  />
-                )}
                 {(() => {
                   const penaltyTotal =
                     bidTooLowPenaltySol + blacklistPenaltySol + bondRiskFeeSol
