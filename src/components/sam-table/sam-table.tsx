@@ -31,7 +31,6 @@ import {
   insertGhostRows,
 } from 'src/services/simulation'
 import {
-  getApyBreakdown,
   getValidatorTip,
   getTipStyle,
   calculateBondUtilization,
@@ -219,95 +218,6 @@ const RankCell: React.FC<{
   )
 }
 
-// APY Tooltip component for Max APY hover
-const ApyTooltip: React.FC<{
-  validator: AuctionValidator
-  epochsPerYear: number
-}> = ({ validator, epochsPerYear }) => {
-  const breakdown = getApyBreakdown(validator, epochsPerYear)
-  const inflComm = validator.inflationCommissionDec * 100
-  const mevComm =
-    validator.mevCommissionDec !== null ? validator.mevCommissionDec * 100 : 0
-  const blockComm =
-    validator.blockRewardsCommissionDec !== null
-      ? validator.blockRewardsCommissionDec * 100
-      : 0
-
-  return (
-    <div className="absolute top-[-4px] left-[calc(100%-16px)] z-[100] bg-card border border-border rounded-lg px-4 py-3 min-w-[230px] shadow-lg">
-      <div className="text-xs text-muted-foreground mb-2 font-medium">
-        APY Composition
-      </div>
-      <div className="flex items-start text-xs mb-1 gap-[5px]">
-        <span
-          className="w-2 h-2 rounded-sm shrink-0 mt-[3px]"
-          style={{ background: 'var(--chart-1)' }}
-        />
-        <span className="flex-1">
-          <span className="text-secondary-foreground">Inflation</span>
-          <span className="block text-muted-foreground text-[10px]">
-            {inflComm.toFixed(0)}% commission
-          </span>
-        </span>
-        <span className="text-foreground font-mono font-medium">
-          {formatPercentage(breakdown.inflation, 2)}
-        </span>
-      </div>
-      <div className="flex items-start text-xs mb-1 gap-[5px]">
-        <span
-          className="w-2 h-2 rounded-sm shrink-0 mt-[3px]"
-          style={{ background: 'var(--chart-2)' }}
-        />
-        <span className="flex-1">
-          <span className="text-secondary-foreground">MEV Tips</span>
-          <span className="block text-muted-foreground text-[10px]">
-            {mevComm.toFixed(0)}% commission
-          </span>
-        </span>
-        <span className="text-foreground font-mono font-medium">
-          {formatPercentage(breakdown.mev, 2)}
-        </span>
-      </div>
-      <div className="flex items-start text-xs mb-1 gap-[5px]">
-        <span
-          className="w-2 h-2 rounded-sm shrink-0 mt-[3px]"
-          style={{ background: 'var(--chart-3)' }}
-        />
-        <span className="flex-1">
-          <span className="text-secondary-foreground">Block Rewards</span>
-          <span className="block text-muted-foreground text-[10px]">
-            {blockComm.toFixed(0)}% shared
-          </span>
-        </span>
-        <span className="text-foreground font-mono font-medium">
-          {formatPercentage(breakdown.blockRewards, 2)}
-        </span>
-      </div>
-      <div className="flex items-start text-xs mb-1 gap-[5px]">
-        <span
-          className="w-2 h-2 rounded-sm shrink-0 mt-[3px]"
-          style={{ background: 'var(--chart-4)' }}
-        />
-        <span className="flex-1">
-          <span className="text-secondary-foreground">Stake Bid</span>
-          <span className="block text-muted-foreground text-[10px]">
-            your bid
-          </span>
-        </span>
-        <span className="text-foreground font-mono font-medium">
-          {formatPercentage(breakdown.stakeBid, 2)}
-        </span>
-      </div>
-      <div className="border-t border-border-grid mt-1.5 pt-1.5 flex justify-between text-xs font-semibold">
-        <span className="text-secondary-foreground">Total</span>
-        <span className="text-primary font-mono">
-          {formatPercentage(breakdown.total, 2)}
-        </span>
-      </div>
-    </div>
-  )
-}
-
 export const SamTable: React.FC<Props> = ({
   auctionResult,
   originalAuctionResult,
@@ -329,8 +239,6 @@ export const SamTable: React.FC<Props> = ({
   const winningAPY = selectWinningAPY(auctionResult, epochsPerYear)
   const projectedApy = selectProjectedAPY(auctionResult, epochsPerYear)
 
-  // Hovered row for APY tooltip
-  const [hoveredApyRow, setHoveredApyRow] = useState<string | null>(null)
   const [hoveredRow, setHoveredRow] = useState<string | null>(null)
 
   // Sorting state
@@ -515,7 +423,7 @@ export const SamTable: React.FC<Props> = ({
       label: 'Re-delegation',
       value: formatSolAmount(Math.round(totalRedelegation), 0),
       unit: 'SOL',
-      help: 'Estimated SOL the protocol will send to validators that have less than their target stake next epoch.',
+      help: 'Roughly how much SOL Marinade will move into under-stake validators next epoch to push them toward their goal allocation.',
     },
   ]
 
@@ -618,15 +526,8 @@ export const SamTable: React.FC<Props> = ({
           />
         </TableCell>
 
-        {/* Max APY with hover tooltip */}
-        <TableCell
-          className="px-3.5 py-3 relative"
-          onMouseEnter={e => {
-            e.stopPropagation()
-            setHoveredApyRow(voteAccount)
-          }}
-          onMouseLeave={() => setHoveredApyRow(null)}
-        >
+        {/* Max APY */}
+        <TableCell className="px-3.5 py-3">
           <span
             className={`inline-block px-2.5 py-[3px] rounded-md font-semibold text-sm font-mono ${
               inSet
@@ -636,9 +537,6 @@ export const SamTable: React.FC<Props> = ({
           >
             {formatPercentage(maxApy, 2)}
           </span>
-          {hoveredApyRow === voteAccount && (
-            <ApyTooltip validator={validator} epochsPerYear={epochsPerYear} />
-          )}
         </TableCell>
 
         {/* Bond Health */}
@@ -845,7 +743,7 @@ export const SamTable: React.FC<Props> = ({
                       sortColumn={sortColumn}
                       sortDirection={sortDirection}
                     />
-                    <HelpTip text="Current SAM-active stake and projected change next epoch. Positive deltas are limited by undeployed TVL (deposited SOL not yet delegated). Negative deltas come from natural withdrawals (~0.7% of TVL/epoch) drawn first from over-target validators." />
+                    <HelpTip text="How much stake you have right now, and how much it'll change next epoch. Gains depend on fresh deposits coming in; losses come from regular withdrawals, which Marinade pulls from the most over-stake validators first." />
                   </div>
                 </TableHead>
                 <TableHead

@@ -1,37 +1,35 @@
 export const HELP_TEXT = {
   maxApy:
-    'Maximum APY offered to stakers. Composed of inflation rewards, MEV tips, block rewards, and your stake bid. Higher Max APY = higher rank in the auction.',
-  bond: 'SOL deposited as collateral. Protects stakers if you fail to deliver promised APY. Bond utilization shows how much of your bond is backing active stake \u2014 higher means less runway.',
+    'The yearly return your validator promises stakers — inflation rewards, network tips, block rewards, plus the bid you pay on top. Higher Max APY means a better rank and more stake from Marinade.',
+  bond: 'SOL you lock up as a safety deposit. If you under-deliver on the promised APY, stakers get reimbursed from this. The fuller your bond is being drawn down, the sooner it runs out.',
   stakeDelta:
-    'Difference between your target stake allocation and current active stake. Positive = gaining stake next epoch. Negative = losing stake.',
+    "How much stake you'll gain or lose next epoch. Positive means Marinade will send you more SOL; negative means some will be pulled back.",
   stakeBid:
-    'Additional APY you offer on top of base rewards. This is the primary lever to improve your auction rank. Bid is deducted from your bond over time.',
+    'Extra yearly return you pay stakers out of your own pocket — added on top of normal validator rewards. This is the main knob to climb the ranking. The cost comes out of your bond each epoch.',
   winningApy:
-    'The clearing price of the auction \u2014 the minimum APY that won stake this epoch. You must exceed this to be in the winning set.',
-  want: "Maximum stake you're willing to accept. Setting WANT too low may leave stake on the table. Reducing WANT may trigger penalties.",
+    'The lowest yearly return that still won stake this epoch. Your Max APY has to clear this bar — beat it and you receive stake, fall short and you don’t.',
+  want: 'The cap you set on how much stake you’ll take. Set it too low and you miss out; lower it mid-epoch and you may be penalised.',
   bondHealth:
-    'Bond health is based on coverage, not time. Critical = claimable bond is below the penalty floor (bid penalties start). Watch = bond covers minimum but not the ideal level needed to receive more stake. Healthy = bond fully covers the ideal threshold.',
-  sfdp: 'Stake Focused Delegation Program alignment. Validators aligned with SFDP criteria receive favorable stake weighting.',
+    'How well your bond covers the upcoming bid costs. Critical — too thin, fee penalties already kicking in. Watch — covers the minimum, but too low to qualify for more stake. Healthy — comfortably covers what you’ll owe.',
+  sfdp: 'Whether you meet Solana Foundation’s SFDP criteria — the foundation’s own delegation programme. Meeting it gives you a small boost in Marinade’s auction too.',
   penalty:
-    'Reducing your bid, WANT, or bond below certain thresholds within an epoch may result in temporary ranking penalties. Changes take effect next epoch.',
+    'Cutting your bid, WANT, or bond too aggressively mid-epoch is treated as bailing on commitments — you get a temporary rank hit. Adjustments only land in the next epoch anyway, so plan ahead.',
   simulation:
-    'Explore how parameter changes affect your rank, stake allocation, and bond runway. Shows constraint-by-constraint impact, not just survival.',
-  profitability:
-    'Estimated net return after accounting for bond cost, operational expenses, and opportunity cost. Varies by validator infrastructure.',
+    'Try out different commission and bid values to see how your rank, stake, and bond would change — without actually committing anything.',
   bidDistribution:
-    'Shows how your bid compares to the full distribution of bids across all auction participants. Helps gauge competitive positioning.',
+    'Where your bid sits compared to everyone else’s. Use it to spot whether you’re well above the pack, mid, or barely in.',
   effectiveBid:
-    'The actual bid rate applied in the last-price auction. All winners pay the same clearing rate (the lowest winning bid), regardless of their submitted bid.',
+    'What you actually pay per stake. Marinade auctions are settled at one shared price — the lowest winning bid — so everyone pays the same rate, even if some bid higher.',
   bondRunway:
-    'Number of epochs the bond will remain valid at the current bid rate, as computed by the SDK. Lower means higher risk of forced unstaking.',
+    'How many epochs your bond can keep paying your bid before it runs dry. When it hits zero, Marinade pulls its stake back from you.',
   totalAuctionStake:
-    'Total SOL targeted by Marinade across all auction winners this epoch. This is the sum of each winning validator\u2019s SAM target allocation, not the currently active stake.',
+    'Total SOL Marinade plans to spread across the winners of this epoch’s auction — the goal allocation, which the network will move toward over the next few epochs.',
   projectedApy:
-    'Expected staker return this epoch, computed as total bid+commission revenue across all winning validators divided by Marinade\u2019s SAM TVL, compounded annually.',
+    'What stakers should expect to earn in a year if every winning validator delivers what they promised this epoch.',
   winningValidators:
-    'Count of validators that received a non-zero stake target this epoch. Validators with zero target are below the auction cutoff.',
+    'How many validators won at least some stake this epoch. The rest bid too low to make the cut.',
   bondCoverage:
-    'Whether the bond balance covers the minimum required threshold. Below minimum = bid penalties apply. Below ideal = bond is adequate but limits stake growth.',
+    'Whether your bond is fat enough for Marinade to feel comfortable. Under the minimum and you start paying fee penalties; under the ideal and you can stay in but won’t be given more stake.',
   bidGap:
-    'Difference between your submitted bid and the auction\u2019s effective bid (clearing price). A positive gap means you bid more than required \u2014 you still pay only the clearing price.',
+    'How much higher your own bid was than what you’ll actually pay. Bid a lot more than needed and this number grows — but you still only pay the auction-wide rate.',
 } as const

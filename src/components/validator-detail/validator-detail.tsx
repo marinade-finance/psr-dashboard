@@ -324,7 +324,7 @@ export const ValidatorDetail = ({
               {isSimulated && (
                 <span
                   className="px-2 py-0.5 rounded-md text-xs font-semibold shrink-0 uppercase tracking-wide bg-status-yellow-light text-status-yellow"
-                  title="This validator's metrics reflect simulated commission/bid overrides"
+                  title="Numbers shown here use your what-if commission and bid, not the live values."
                 >
                   Simulated
                 </span>
@@ -337,7 +337,7 @@ export const ValidatorDetail = ({
           <div className="flex items-center gap-2 shrink-0">
             <label
               className="flex items-center gap-2 text-xs font-medium cursor-pointer select-none"
-              title="When enabled, edits to commission/bid below auto-recalculate the auction"
+              title="Turn this on to see how changing your commission or bid would shift your rank — updates as you type."
             >
               <span className="text-muted-foreground">Simulate</span>
               <Switch
@@ -599,17 +599,17 @@ export const ValidatorDetail = ({
               <div className="space-y-3 mt-3">
                 <MetricRow
                   label="Active"
-                  help="SOL currently delegated by Marinade SAM to this validator."
+                  help="How much SOL Marinade has staked with you right now."
                   value={`${formatSolAmount(validator.marinadeActivatedStakeSol, 0)} SOL`}
                 />
                 <MetricRow
                   label="Target"
-                  help="Auction-assigned stake allocation for this epoch — what SAM wants to delegate based on your bid and score."
+                  help="How much stake the auction decided you should have this epoch, based on your bid and how you scored."
                   value={`${formatSolAmount(validator.auctionStake.marinadeSamTargetSol, 0)} SOL`}
                 />
                 <MetricRow
                   label="Next epoch"
-                  help="Expected stake change next epoch. Positive deltas are limited by the rebalancing budget (undeployed TVL). Negative deltas come from natural withdrawals."
+                  help="How much stake you should gain or lose next epoch. Gains are capped by how much new SOL Marinade has to spread around; losses come from stakers withdrawing."
                   value={
                     expectedStakeDelta > 0
                       ? `+${formatSolAmount(expectedStakeDelta, 0)} SOL`
@@ -632,7 +632,7 @@ export const ValidatorDetail = ({
             <div className="bg-card rounded-xl border border-border p-5">
               <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
                 Bond
-                <HelpTip text="Pre-funded vault covering bid costs and protecting delegators. Coverage = whether the bond is sufficient for the configured epochs. Runway = epochs the bond can last at current rates." />
+                <HelpTip text="SOL you've locked up as a deposit. It pays your bid each epoch and reimburses stakers if you misbehave. Coverage tells you whether it's thick enough; runway tells you how many epochs it'll last." />
               </h3>
               <div className="mt-3 space-y-3">
                 <MetricRow
@@ -657,7 +657,7 @@ export const ValidatorDetail = ({
                 {bondRiskFeeSol > 0 && (
                   <MetricRow
                     label="Bond risk fee"
-                    help="Fee charged from the bond when claimable balance falls below the minimum coverage threshold. Estimated for the current epoch by the SDK."
+                    help="An extra fee Marinade takes out of your bond when it slips below the minimum we want you to keep. Stop the leak by topping the bond back up."
                     value={`${formatSolAmount(bondRiskFeeSol, 2)} SOL`}
                     valueStyle={{ color: CSS_DESTRUCTIVE }}
                   />
@@ -674,7 +674,7 @@ export const ValidatorDetail = ({
             <div className="bg-card rounded-xl border border-border p-5">
               <h3 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
                 Expected Payment This Epoch
-                <HelpTip text="SOL paid to Marinade: effective bid on active stake, activating stake priced at activatingStakePmpe, plus any bid-reduction penalty charged from bond." />
+                <HelpTip text="What you'll owe Marinade this epoch. Includes your bid on stake you already hold, your bid on stake that's still warming up, and any penalties for cutting your bid mid-epoch." />
               </h3>
               <div className="space-y-3">
                 <MetricRow
@@ -743,6 +743,7 @@ export const ValidatorDetail = ({
             <ApyCompositionCard
               apyBreakdown={apyBreakdown}
               winningApy={winningApy}
+              validator={validator}
             />
 
             {simEnabled && (

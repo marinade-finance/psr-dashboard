@@ -308,7 +308,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
           {
             header: 'Max protectable [SOL]',
             headerHelp:
-              'Maximum Marinade stake that could be protected if the bond is used optimally. Higher bond balances raise this ceiling.',
+              'The most stake this bond could ever reimburse if it were stretched to its limit. A bigger bond pushes this number up.',
             render: (entry: ValidatorWithBond) => (
               <>{formatSolAmount(selectMaxProtectedStake(entry))}</>
             ),
@@ -371,7 +371,9 @@ export const ValidatorBondsTable: React.FC<Props> = ({
           <div className="flex flex-wrap gap-4 text-sm">
             <span
               className="text-muted-foreground"
-              {...tooltipAttributes('Count of currently funded bonds')}
+              {...tooltipAttributes(
+                'How many validators have at least some SOL in their bond right now.',
+              )}
             >
               Bonds funded:{' '}
               <strong className="text-foreground">{totalFundedBonds}</strong>
@@ -379,7 +381,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
             <span
               className="text-muted-foreground"
               {...tooltipAttributes(
-                'Total effective amount of SOL deposited to bonds',
+                'Total SOL sitting in all validator bonds combined.',
               )}
             >
               Total bonds:{' '}
@@ -389,7 +391,9 @@ export const ValidatorBondsTable: React.FC<Props> = ({
             </span>
             <span
               className="text-muted-foreground"
-              {...tooltipAttributes('Total stake distributed by Marinade')}
+              {...tooltipAttributes(
+                'Total SOL Marinade has staked across all validators.',
+              )}
             >
               Total stake:{' '}
               <strong className="text-foreground">
@@ -400,7 +404,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
               <span
                 className="text-muted-foreground"
                 {...tooltipAttributes(
-                  "How much of Marinade's stake can be potentially protected if all bonds are used optimally",
+                  "If every bond stretched as far as it could, this is the share of Marinade's stake that would be covered.",
                 )}
               >
                 Max protectable:{' '}
