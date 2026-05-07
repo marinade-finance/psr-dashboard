@@ -36,16 +36,16 @@ const statusLine = (
       return {
         label:
           topUpToAvoidFee > 0
-            ? `Bond risk fee will be charged. Top up ${pay(topUpToAvoidFee)} to avoid it.`
-            : 'Bond risk fee will be charged.',
+            ? `Bond risk fee ${pay(bondRiskFeeSol)} will be charged. Top up ${pay(topUpToAvoidFee)} to avoid the fee.`
+            : `Bond risk fee ${pay(bondRiskFeeSol)} will be charged.`,
         tone: 'red',
       }
     }
     return {
       label:
         topUpToAvoidFee > 0
-          ? `Penalty imminent. Top up ${pay(topUpToAvoidFee)} to avoid it.`
-          : 'Penalty imminent.',
+          ? `Bond below penalty threshold. Top up ${pay(topUpToAvoidFee)} to avoid the fee.`
+          : 'Bond below penalty threshold.',
       tone: 'red',
     }
   }
