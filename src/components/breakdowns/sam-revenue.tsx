@@ -100,10 +100,10 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
       <table className="w-full">
         <tbody>
           <SectionHeader title="Stake" colSpan={4} />
-          <RevRow label="Active SAM stake" value={stake(m.active)} bold />
-          <RevRow label="SAM target" value={stake(m.target)} />
+          <RevRow label="Active Marinade stake" value={stake(m.active)} bold />
+          <RevRow label="Target Marinade stake" value={stake(m.target)} />
           <RevRow
-            label="Expected next-epoch difference"
+            label="Expected change next epoch"
             value={deltaText}
             accent={deltaAccent}
           />
@@ -124,7 +124,7 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
           />
 
           <SectionHeader title="Bid" colSpan={4} />
-          <RevRow label="Stake bid PMPE" pmpe={pmpe(m.bid)} value="" />
+          <RevRow label="Static bid PMPE" pmpe={pmpe(m.bid)} value="" />
           <RevRow
             label="Auction effective bid PMPE"
             pmpe={pmpe(m.effBid)}
@@ -141,10 +141,10 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
           />
 
           <SectionHeader title="Cost" colSpan={4} />
-          <RevRow label="Active stake cost" value={pay(m.cost)} />
+          <RevRow label="Active Stake Cost" value={pay(m.cost)} />
           {m.activating > 0 && (
             <RevRow
-              label="Activating stake cost"
+              label="Activating Stake Cost"
               pmpe={pmpe(m.activatingStakePmpe)}
               value={pay(m.activatingCost)}
             />

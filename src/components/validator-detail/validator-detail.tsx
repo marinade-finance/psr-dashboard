@@ -478,51 +478,6 @@ export const ValidatorDetail = ({
           <div className="p-4 sm:p-6 space-y-6">
             <div className="bg-card rounded-xl border border-border p-5">
               <h3 className="text-base font-semibold text-foreground mb-3">
-                Pending penalties — this epoch
-              </h3>
-              <div className="space-y-3">
-                <MetricRow
-                  label="Bid-too-low penalty"
-                  value={
-                    bidTooLowPenaltySol > 0
-                      ? `${formatSolAmount(bidTooLowPenaltySol, 2)} SOL`
-                      : '—'
-                  }
-                  valueStyle={
-                    bidTooLowPenaltySol > 0
-                      ? { color: CSS_DESTRUCTIVE }
-                      : undefined
-                  }
-                />
-                <MetricRow
-                  label="Blacklist penalty"
-                  value={
-                    blacklistPenaltySol > 0
-                      ? `${formatSolAmount(blacklistPenaltySol, 2)} SOL`
-                      : '—'
-                  }
-                  valueStyle={
-                    blacklistPenaltySol > 0
-                      ? { color: CSS_DESTRUCTIVE }
-                      : undefined
-                  }
-                />
-                <MetricRow
-                  label="Bond risk fee"
-                  value={
-                    bondRiskFeeSol > 0
-                      ? `${formatSolAmount(bondRiskFeeSol, 2)} SOL`
-                      : '—'
-                  }
-                  valueStyle={
-                    bondRiskFeeSol > 0 ? { color: CSS_DESTRUCTIVE } : undefined
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="bg-card rounded-xl border border-border p-5">
-              <h3 className="text-base font-semibold text-foreground mb-3">
                 Notifications
               </h3>
               {notificationSummary?.notifications?.length ? (
@@ -621,11 +576,11 @@ export const ValidatorDetail = ({
                     <tbody>
                       <SectionHeader title="Bid costs" />
                       <CalcRow
-                        label="Active stake bid"
+                        label="Active Stake Cost"
                         value={pay(paymentMetrics.cost)}
                       />
                       <CalcRow
-                        label="Activating stake bid"
+                        label="Activating Stake Cost"
                         value={pay(paymentMetrics.activatingCost)}
                       />
                       <SectionHeader title="Penalties" />
@@ -752,17 +707,17 @@ export const ValidatorDetail = ({
               </h3>
               <div className="space-y-3 mt-3">
                 <MetricRow
-                  label="Active"
+                  label="Active Marinade stake"
                   help="How much SOL Marinade has staked with you right now."
                   value={`${formatSolAmount(validator.marinadeActivatedStakeSol, 0)} SOL`}
                 />
                 <MetricRow
-                  label="Target"
+                  label="Target Marinade stake"
                   help="How much stake the auction decided you should have this epoch, based on your bid and how you scored."
                   value={`${formatSolAmount(validator.auctionStake.marinadeSamTargetSol, 0)} SOL`}
                 />
                 <MetricRow
-                  label="Next epoch"
+                  label="Expected change next epoch"
                   help="How much stake you should gain or lose next epoch. Gains are capped by how much new SOL Marinade has to spread around; losses come from stakers withdrawing."
                   value={
                     expectedStakeDelta > 0
@@ -824,11 +779,11 @@ export const ValidatorDetail = ({
               </h3>
               <div className="space-y-3">
                 <MetricRow
-                  label="Payment for active stake"
+                  label="Active Stake Cost"
                   value={`${formatSolAmount(paymentMetrics.cost, 2)} SOL`}
                 />
                 <MetricRow
-                  label="Payment for activating stake"
+                  label="Activating Stake Cost"
                   value={`${formatSolAmount(paymentMetrics.activatingCost, 2)} SOL`}
                 />
                 {paymentMetrics.activating > 0 && (

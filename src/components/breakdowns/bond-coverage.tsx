@@ -140,7 +140,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
             bold
           />
           <CalcRow
-            label="Activated Marinade stake"
+            label="Active Marinade stake"
             secondary={stake(m.marinadeActivatedStakeSol)}
             value=""
           />
