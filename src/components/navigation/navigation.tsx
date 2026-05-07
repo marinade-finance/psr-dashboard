@@ -66,8 +66,8 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
 
   return (
     <div className="navigation flex items-center h-14 bg-card border-b border-border shadow-card [&_a]:no-underline overflow-x-auto">
-      <NavLink
-        to="/"
+      <a
+        href="/"
         className="flex items-center gap-2.5 mx-3 hover:opacity-80 transition-opacity shrink-0"
       >
         <MarinadeLogo />
@@ -79,7 +79,7 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
             Protected Stake Rewards
           </span>
         </div>
-      </NavLink>
+      </a>
       <div className="w-px h-6 bg-border mr-2 hidden sm:block shrink-0" />
       <div className="flex items-center gap-0.5 shrink-0">
         <NavLink to={`/${prefix}`}>
