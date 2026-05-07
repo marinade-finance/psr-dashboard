@@ -48,8 +48,13 @@ Each route has Basic and Expert variants (Expert shows extra metrics/columns):
   simulation mode (ghost rows, position change grading); rank cell shows
   cutoff-relative rank (+N/-N), severity icon colored by tip urgency;
   bond runway displayed as `(Nep)` with parentheses; horizontally scrollable
+- `src/components/validator-identity/validator-identity.tsx` — canonical
+  "validator name + truncated vote account" cell. Use this in every table
+  that lists validators (sam, bonds, protected-events) — don't reinvent
+  the truncation/typography locally.
 - `src/components/table/table.tsx` — generic sortable table; Color enum
-  (RED/GREEN/YELLOW/ORANGE/GREY) for cell backgrounds
+  (RED/GREEN/YELLOW/ORANGE/GREY) for cell backgrounds. ORANGE shares the
+  `bg-cell-yellow` token (no distinct orange cell shade).
 - `src/components/metric/metric.tsx` — metric card; tooltip shown as a
   `HelpTip` inline icon next to label
 - `src/components/help-tip/help-tip.tsx` — shared inline `?` tooltip icon
@@ -82,9 +87,11 @@ maps passed to `dsSam.runFinalOnly(overrides)`.
 All colour and layout tokens live in `src/index.css` and are exposed to
 Tailwind via the `@theme` block. **Use the semantic class — never inline
 `var(...)`, never raw hex/rgb/hsl, never arbitrary `text-[var(--…)]`.**
-Adding a new colour means: define the CSS var in both `:root` and `.dark`,
-then expose it as `--color-…` inside `@theme`. After that, Tailwind
-generates `bg-…`, `text-…`, `border-…` automatically.
+Adding a new colour means: define the CSS var in `:root`, override in
+`.dark` only if the dark value actually differs, then expose it as
+`--color-…` inside `@theme`. After that, Tailwind generates `bg-…`,
+`text-…`, `border-…` automatically. Don't duplicate byte-identical vars
+across `:root` and `.dark` — `.dark` inherits from `:root`.
 
 ### Surfaces
 
@@ -145,7 +152,8 @@ interactive content.
   `Sheet`, `Input`, `Label`, `Tooltip`, `Select`, `Badge`, `Table`,
   `EpochRangePicker`). Customised primitives (e.g. `Switch` with the
   Marinade yellow checked state) live here as standalone files so they're
-  testable in isolation.
+  testable in isolation. All primitives are plain `function` exports —
+  no `React.forwardRef` (refs aren't needed for the way we compose them).
 - `src/components/breakdowns/shared.tsx` — `CalcCard`, `CalcRow`, `OkRow`,
   `SectionHeader`. The summary/total row of a breakdown gets `separator`
   + `bold` + `large` to render as the section conclusion.
