@@ -64,7 +64,7 @@ const claimAmountInLossRange = (
   const claimPerStake =
     Math.min(expectedEpr - actualEpr, maxClaimPerStake) - ignoredClaimPerStake
 
-  return Math.round(Math.max(stake * claimPerStake, 0))
+  return Math.max(stake * claimPerStake, 0)
 }
 
 const calcStakeByEpoch = (validators: Validator[]) => {
