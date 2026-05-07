@@ -56,7 +56,6 @@ const renderFunderBadge = (protectedEvent: ProtectedEvent) => {
   if (protectedEvent.meta.funder === 'ValidatorBond') {
     return (
       <Badge
-        variant="outline"
         {...tooltipAttributes(
           "The validator's own bond covered this settlement — the validator paid.",
         )}
@@ -69,7 +68,6 @@ const renderFunderBadge = (protectedEvent: ProtectedEvent) => {
   if (protectedEvent.meta.funder === 'Marinade') {
     return (
       <Badge
-        variant="outline"
         {...tooltipAttributes(
           "Marinade's backstop covered this settlement — the validator's bond was insufficient.",
         )}
@@ -133,21 +131,24 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
   const totalEvents = data.length
   const filteredEvents = filteredData.length
 
-  const validatorBondTotal = data.reduce(
-    (sum, { protectedEvent }) =>
-      protectedEvent.meta.funder === 'ValidatorBond'
-        ? sum + selectAmount(protectedEvent)
-        : sum,
-    0,
-  )
-  const marinadePaidTotal = data.reduce(
-    (sum, { protectedEvent }) =>
-      protectedEvent.meta.funder === 'Marinade'
-        ? sum + selectAmount(protectedEvent)
-        : sum,
-    0,
-  )
+  const sumAmount = (rows: ProtectedEventWithValidator[]) =>
+    rows.reduce(
+      (sum, { protectedEvent }) => sum + selectAmount(protectedEvent),
+      0,
+    )
+  const sumByFunder = (rows: ProtectedEventWithValidator[], funder: string) =>
+    rows.reduce(
+      (sum, { protectedEvent }) =>
+        protectedEvent.meta.funder === funder
+          ? sum + selectAmount(protectedEvent)
+          : sum,
+      0,
+    )
+
+  const validatorBondTotal = sumByFunder(data, 'ValidatorBond')
+  const marinadePaidTotal = sumByFunder(data, 'Marinade')
   const totalAmount = validatorBondTotal + marinadePaidTotal
+  const filteredAmount = sumAmount(filteredData)
 
   const lastEpochBids = preFilteredData
     .filter(
@@ -158,54 +159,70 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
     .reduce((sum, { protectedEvent }) => sum + selectAmount(protectedEvent), 0)
 
   const filtered = preFilteredData.length !== data.length
+  const bondPct = totalAmount > 0 ? (validatorBondTotal / totalAmount) * 100 : 0
 
   return (
     <div className="relative">
-      <div className="metricWrap grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 px-4 pb-4">
+      <div className="metricWrap grid grid-cols-1 sm:grid-cols-3 gap-3 px-4 pb-4">
         <Metric
-          label="Events Protected"
-          value={totalEvents.toLocaleString()}
+          label="Events"
+          value={(filtered ? filteredEvents : totalEvents).toLocaleString()}
+          subline={
+            filtered ? `of ${totalEvents.toLocaleString()} total` : undefined
+          }
           {...tooltipAttributes(
-            'Total number of protected events paid out to stakers',
+            'Protected events paid out to stakers. When a filter is active, the primary value is the filtered subset.',
           )}
         />
         <Metric
-          label="Validator Bond Paid"
-          value={`${formatSolAmount(validatorBondTotal)} SOL`}
+          label="Amount"
+          value={`${formatSolAmount(filtered ? filteredAmount : totalAmount)} SOL`}
+          subline={
+            filtered
+              ? `of ${formatSolAmount(totalAmount)} SOL total`
+              : undefined
+          }
+          extra={
+            !filtered && totalAmount > 0 ? (
+              <div
+                className="cursor-help"
+                {...tooltipAttributes(
+                  `Validator Bond: ${formatSolAmount(validatorBondTotal)} SOL (${bondPct.toFixed(0)}%)<br/>Marinade backstop: ${formatSolAmount(marinadePaidTotal)} SOL (${(100 - bondPct).toFixed(0)}%)`,
+                )}
+              >
+                <div className="flex h-1.5 rounded-sm overflow-hidden bg-secondary">
+                  <div
+                    className="bg-primary"
+                    style={{ width: `${bondPct}%` }}
+                  />
+                  <div
+                    className="bg-warning"
+                    style={{ width: `${100 - bondPct}%` }}
+                  />
+                </div>
+                <div className="flex justify-between text-[10px] text-muted-foreground font-mono mt-1">
+                  <span>Bond {bondPct.toFixed(0)}%</span>
+                  <span>Marinade {(100 - bondPct).toFixed(0)}%</span>
+                </div>
+              </div>
+            ) : null
+          }
           {...tooltipAttributes(
-            "SOL paid from validators' own bonds — validator covered their stakers' loss",
+            'SOL paid out to stakers across protected events. When a filter is active, the primary value is the filtered subset.',
           )}
         />
         <Metric
-          label="Marinade Paid"
-          value={`${formatSolAmount(marinadePaidTotal)} SOL`}
+          label="Last settled epoch"
+          value={lastSettledEpoch > 0 ? lastSettledEpoch.toLocaleString() : '—'}
+          subline={
+            level === UserLevel.Expert && lastEpochBids > 0
+              ? `${formatSolAmount(lastEpochBids)} SOL bids`
+              : undefined
+          }
           {...tooltipAttributes(
-            "SOL paid by Marinade's backstop — validator bond was insufficient",
+            'Most recent epoch where settlements have been finalised on-chain.',
           )}
         />
-        <Metric
-          label="Total SOL to Stakers"
-          value={`${formatSolAmount(totalAmount)} SOL`}
-          {...tooltipAttributes(
-            'Total SOL paid out to stakers across all protected events',
-          )}
-        />
-        {filtered && (
-          <Metric
-            label="Filtered Events"
-            value={filteredEvents.toLocaleString()}
-            {...tooltipAttributes('Count of filtered protected events')}
-          />
-        )}
-        {level === UserLevel.Expert && (
-          <Metric
-            label="Last Epoch Bids"
-            value={`${formatSolAmount(lastEpochBids)} SOL`}
-            {...tooltipAttributes(
-              "Last settled epoch's bids collectable by users",
-            )}
-          />
-        )}
       </div>
       <div className="flex flex-col sm:flex-row flex-wrap gap-4 px-4 mb-4">
         <div className="flex flex-col gap-1 flex-1 sm:flex-none">

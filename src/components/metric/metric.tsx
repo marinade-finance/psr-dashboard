@@ -6,12 +6,16 @@ import { Card } from 'src/components/ui/card'
 type Props = {
   label: string
   value: React.ReactNode
+  subline?: React.ReactNode
+  extra?: React.ReactNode
   'data-tooltip-html'?: string
 }
 
 export const Metric: React.FC<Props> = ({
   label,
   value,
+  subline,
+  extra,
   'data-tooltip-html': tooltipHtml,
 }) => (
   <Card className="metric px-3 py-3 sm:px-5 sm:py-4 transition-shadow hover:shadow-hover">
@@ -22,5 +26,11 @@ export const Metric: React.FC<Props> = ({
     <div className="metricValue text-xl sm:text-2xl font-semibold font-mono truncate">
       {value}
     </div>
+    {subline && (
+      <div className="text-[11px] text-muted-foreground font-mono mt-0.5">
+        {subline}
+      </div>
+    )}
+    {extra && <div className="mt-2">{extra}</div>}
   </Card>
 )
