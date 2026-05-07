@@ -24,6 +24,7 @@ import {
   CSS_STATUS_GREEN,
   CSS_STATUS_YELLOW,
   CSS_WARNING,
+  CSS_MUTED_FG,
 } from 'src/lib/utils'
 import {
   bondHealthFromAuction,
@@ -92,14 +93,14 @@ function bondCoverageLabel(
   if (health === 'soft')
     return coverage.topUpToIdealKeep > 0
       ? `Top up ${pay(coverage.topUpToIdealKeep)} for more stake`
-      : 'Sub-ideal'
+      : 'OK'
   return 'Fully covered'
 }
 
 function bondCoverageColor(health: BondHealth): string {
   if (health === 'critical') return CSS_DESTRUCTIVE
   if (health === 'watch') return CSS_WARNING
-  if (health === 'soft') return 'var(--info)'
+  if (health === 'soft') return CSS_MUTED_FG
   return CSS_PRIMARY
 }
 
@@ -625,7 +626,7 @@ export const ValidatorDetail = ({
                         ? CSS_STATUS_GREEN
                         : expectedStakeDelta < 0
                           ? CSS_DESTRUCTIVE
-                          : 'var(--muted-foreground)',
+                          : CSS_MUTED_FG,
                   }}
                 />
               </div>
@@ -696,7 +697,7 @@ export const ValidatorDetail = ({
                       color:
                         paymentMetrics.bidGap > 2
                           ? CSS_STATUS_YELLOW
-                          : 'var(--muted-foreground)',
+                          : CSS_MUTED_FG,
                       fontSize: '11px',
                     }}
                   />

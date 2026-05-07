@@ -45,7 +45,6 @@ import type {
 } from '@marinade.finance/ds-sam-sdk'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
 import type { PendingEdits } from 'src/services/simulation'
-import type { TipUrgency } from 'src/services/tip-engine'
 
 export type ValidatorMeta = {
   name?: string
@@ -70,11 +69,11 @@ const BOND_CHIP: Record<
     label: 'Healthy',
   },
   soft: {
-    chip: 'bg-info-light text-info',
-    dot: 'bg-info',
-    bar: 'bg-info',
-    shortText: 'text-info',
-    label: 'Sub-ideal',
+    chip: 'bg-secondary text-muted-foreground',
+    dot: 'bg-muted-foreground',
+    bar: 'bg-muted-foreground',
+    shortText: 'text-muted-foreground',
+    label: 'OK',
   },
   watch: {
     chip: 'bg-warning-light text-warning',
@@ -161,15 +160,6 @@ type Props = {
 
 const RANK_MONO = 'font-mono text-xs'
 
-// Coloured dot beside the rank number — drives attention without colouring
-// the digit itself. Critical/warning use a 6px solid dot; info uses a smaller
-// muted dot. Positive/neutral rows render no dot at all (clean zero-state).
-const URGENCY_DOT: Partial<Record<TipUrgency, string>> = {
-  critical: 'w-1.5 h-1.5 rounded-full bg-destructive shrink-0',
-  warning: 'w-1.5 h-1.5 rounded-full bg-warning shrink-0',
-  info: 'w-1 h-1 rounded-full bg-info/70 shrink-0',
-}
-
 const SortIndicator: React.FC<{
   column: SortColumn
   sortColumn: SortColumn
@@ -188,7 +178,8 @@ const RankCell: React.FC<{
   isGhost: boolean
   isSimulated: boolean
   posColor: string | undefined
-  urgency: TipUrgency
+  tipColor: string
+  tipIcon: string
   voteAccount: string
   onClearValidator?: (voteAccount: string) => void
 }> = ({
@@ -196,7 +187,8 @@ const RankCell: React.FC<{
   isGhost,
   isSimulated,
   posColor,
-  urgency,
+  tipColor,
+  tipIcon,
   voteAccount,
   onClearValidator,
 }) => {
@@ -223,13 +215,12 @@ const RankCell: React.FC<{
         </button>
       </div>
     )
-  const dotClass = URGENCY_DOT[urgency]
   return (
     <span
-      className={`font-medium ${RANK_MONO} flex items-center justify-center gap-1.5 text-foreground`}
+      className={`font-medium ${RANK_MONO} flex items-center justify-center gap-0.5`}
+      style={{ color: tipColor }}
     >
-      {dotClass ? <span className={dotClass} aria-hidden /> : null}
-      <span>#{rank}</span>
+      <span className="text-[11px] leading-none">{tipIcon}</span>#{rank}
     </span>
   )
 }
@@ -521,7 +512,8 @@ export const SamTable: React.FC<Props> = ({
             isGhost={isGhost}
             isSimulated={isSimulated}
             posColor={posColor}
-            urgency={tip.urgency}
+            tipColor={tipStyle.color}
+            tipIcon={tip.icon ?? tipStyle.icon}
             voteAccount={voteAccount}
             onClearValidator={onClearValidator}
           />
