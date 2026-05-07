@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react'
+import { TipGlyph } from 'src/components/tip-glyph/tip-glyph'
 
 import { HelpTip } from 'src/components/help-tip/help-tip'
 import { Card } from 'src/components/ui/card'
@@ -45,6 +46,7 @@ import type {
 } from '@marinade.finance/ds-sam-sdk'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
 import type { PendingEdits } from 'src/services/simulation'
+import type { TipUrgency } from 'src/services/tip-engine'
 
 export type ValidatorMeta = {
   name?: string
@@ -171,8 +173,7 @@ const RankCell: React.FC<{
   isGhost: boolean
   isSimulated: boolean
   posColor: string | undefined
-  tipColor: string
-  tipIcon: string
+  urgency: TipUrgency
   voteAccount: string
   onClearValidator?: (voteAccount: string) => void
 }> = ({
@@ -180,13 +181,12 @@ const RankCell: React.FC<{
   isGhost,
   isSimulated,
   posColor,
-  tipColor,
-  tipIcon,
+  urgency,
   voteAccount,
   onClearValidator,
 }) => {
   if (isGhost)
-    return <span className={`text-muted-foreground ${RANK_MONO}`}>{rank}</span>
+    return <span className={`text-muted-foreground ${RANK_MONO}`}>#{rank}</span>
   if (isSimulated && onClearValidator)
     return (
       <div className="flex flex-col items-center gap-0.5">
@@ -208,12 +208,15 @@ const RankCell: React.FC<{
         </button>
       </div>
     )
+  // Healthy/positive rows render as plain `#N` — no icon noise.
+  // Critical/warning rows get a coloured SVG glyph next to the number.
+  const showGlyph = urgency === 'critical' || urgency === 'warning'
   return (
     <span
-      className={`font-medium ${RANK_MONO} flex items-center gap-0.5`}
-      style={{ color: tipColor }}
+      className={`font-medium ${RANK_MONO} flex items-center justify-center gap-1 text-foreground`}
     >
-      <span className="text-[10px] leading-none">{tipIcon}</span>#{rank}
+      {showGlyph && <TipGlyph urgency={urgency} />}
+      <span>#{rank}</span>
     </span>
   )
 }
@@ -505,8 +508,7 @@ export const SamTable: React.FC<Props> = ({
             isGhost={isGhost}
             isSimulated={isSimulated}
             posColor={posColor}
-            tipColor={tipStyle.color}
-            tipIcon={tip.icon ?? tipStyle.icon}
+            urgency={tip.urgency}
             voteAccount={voteAccount}
             onClearValidator={onClearValidator}
           />
