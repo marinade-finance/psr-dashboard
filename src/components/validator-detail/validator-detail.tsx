@@ -312,11 +312,12 @@ export const ValidatorDetail = ({
               title="When enabled, edits to commission/bid below auto-recalculate the auction"
             >
               <span className="text-muted-foreground">Simulate</span>
-              <span
+              <button
                 role="switch"
                 aria-checked={simEnabled}
+                aria-label="Toggle simulation mode"
                 onClick={() => handleSimToggle(!simEnabled)}
-                className={`relative inline-block w-9 h-5 rounded-full transition-colors ${
+                className={`relative inline-block w-9 h-5 rounded-full transition-colors focus-visible:outline focus-visible:outline-2 ${
                   simEnabled
                     ? 'bg-[var(--status-yellow,#b58900)]'
                     : 'bg-secondary'
@@ -327,7 +328,7 @@ export const ValidatorDetail = ({
                     simEnabled ? 'translate-x-4' : 'translate-x-0.5'
                   }`}
                 />
-              </span>
+              </button>
             </label>
             {isSimulated && onClearSimulation && (
               <Button
@@ -344,6 +345,7 @@ export const ValidatorDetail = ({
               variant="ghost"
               size="icon"
               onClick={onClose}
+              aria-label="Close"
               className="text-muted-foreground hover:text-foreground"
             >
               &times;

@@ -170,7 +170,6 @@ const RankCell: React.FC<{
   rank: number
   isGhost: boolean
   isSimulated: boolean
-  origPos: number | null
   posColor: string | undefined
   tipColor: string
   tipIcon: string
@@ -180,7 +179,6 @@ const RankCell: React.FC<{
   rank,
   isGhost,
   isSimulated,
-  origPos,
   posColor,
   tipColor,
   tipIcon,
@@ -188,11 +186,7 @@ const RankCell: React.FC<{
   onClearValidator,
 }) => {
   if (isGhost)
-    return (
-      <span className={`text-muted-foreground ${RANK_MONO}`}>
-        {origPos ?? rank}
-      </span>
-    )
+    return <span className={`text-muted-foreground ${RANK_MONO}`}>{rank}</span>
   if (isSimulated && onClearValidator)
     return (
       <div className="flex flex-col items-center gap-0.5">
@@ -381,6 +375,16 @@ export const SamTable: React.FC<Props> = ({
     return new Map(sorted.map((v, i) => [selectVoteAccount(v), i + 1]))
   }, [validatorsWithBond, epochsPerYear])
 
+  // Original auction rank map — same maxApy sort, built from pre-simulation data
+  // Used for ghost row rank display and position-change comparison
+  const originalAuctionRankMap = useMemo(() => {
+    if (!originalAuctionResult) return null
+    return buildOriginalPositionsMap(
+      originalAuctionResult,
+      (a, b) => selectMaxAPY(b, epochsPerYear) - selectMaxAPY(a, epochsPerYear),
+    )
+  }, [originalAuctionResult, epochsPerYear])
+
   // Sort validators based on current sort column and direction
   const sortedValidators = useMemo(
     () =>
@@ -396,7 +400,7 @@ export const SamTable: React.FC<Props> = ({
     ],
   )
 
-  // Simulation: original position map (same sort as current)
+  // Simulation: display-sort-based original position map — used only for ghost row insertion index
   const originalPositionsMap = useMemo(() => {
     if (!originalAuctionResult) return null
     return buildOriginalPositionsMap(
@@ -521,16 +525,16 @@ export const SamTable: React.FC<Props> = ({
   ) => {
     const voteAccount = selectVoteAccount(validator)
     const inSet = validator.auctionStake.marinadeSamTargetSol > 0
+    const origAuctionRank = originalAuctionRankMap?.get(voteAccount) ?? null
     const rank = isGhost
-      ? index + 1
+      ? (origAuctionRank ?? index + 1)
       : (auctionRankMap.get(voteAccount) ?? index + 1)
     const isHovered = !isGhost && hoveredRow === voteAccount
     const isSimulated = simulatedValidators.has(voteAccount)
 
-    // Position change for simulated rows
-    const origPos = originalPositionsMap?.get(voteAccount) ?? null
+    // Position change for simulated rows — compare original vs new auction rank
     const posChange =
-      isSimulated && !isGhost ? getPositionChange(origPos, rank) : null
+      isSimulated && !isGhost ? getPositionChange(origAuctionRank, rank) : null
     const posColor =
       posChange?.direction === 'improved'
         ? 'var(--status-green)'
@@ -591,7 +595,6 @@ export const SamTable: React.FC<Props> = ({
             rank={rank}
             isGhost={isGhost}
             isSimulated={isSimulated}
-            origPos={origPos}
             posColor={posColor}
             tipColor={tipStyle.color}
             tipIcon={tipStyle.icon}
