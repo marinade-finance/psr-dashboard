@@ -40,6 +40,7 @@ import {
 import { fetchPsrEstimatesForValidator } from 'src/services/protected-events-estimator'
 import {
   selectExpectedStakeChange,
+  selectMaxAPY,
   selectVoteAccount,
   selectWinningAPY,
 } from 'src/services/sam'
@@ -149,14 +150,21 @@ export const ValidatorDetail = ({
   const [tab, setTab] = useState<Tab>('overview')
 
   const inSet = validator.auctionStake.marinadeSamTargetSol > 0
-  const inSetCount = useMemo(
-    () =>
-      auctionResult.auctionData.validators.filter(
-        v => v.auctionStake.marinadeSamTargetSol > 0,
-      ).length,
-    [auctionResult],
-  )
-  const cutoffRank = inSet ? inSetCount - rank : -(rank - inSetCount)
+  // In-set/out-of-set validators are interleaved by maxApy when the auction
+  // skips high-yield validators (constraints, blacklist) for lower-yield ones,
+  // so the cutoff distance must be counted, not derived from rank − inSetCount.
+  const cutoffRank = useMemo(() => {
+    const ourApy = selectMaxAPY(validator, epochsPerYear)
+    let count = 0
+    for (const v of auctionResult.auctionData.validators) {
+      if (selectVoteAccount(v) === voteAccount) continue
+      const vInSet = v.auctionStake.marinadeSamTargetSol > 0
+      const vApy = selectMaxAPY(v, epochsPerYear)
+      if (inSet && vInSet && vApy < ourApy) count++
+      else if (!inSet && !vInSet && vApy > ourApy) count++
+    }
+    return inSet ? count : -count
+  }, [auctionResult, validator, voteAccount, inSet, epochsPerYear])
   const bondCoverage = useMemo(
     () =>
       computeBondCoverageMetrics(
