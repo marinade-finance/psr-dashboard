@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react'
-import { useQuery, useQueryClient } from 'react-query'
+import { useQuery } from 'react-query'
 
 import { Banner } from 'src/components/banner/banner'
 import { Loader } from 'src/components/loader/loader'
@@ -33,7 +33,6 @@ type Props = {
 }
 
 export const SamPage: React.FC<Props> = ({ level }) => {
-  const queryClient = useQueryClient()
   const [selectedValidator, setSelectedValidator] = useState<string | null>(
     null,
   )
@@ -69,8 +68,13 @@ export const SamPage: React.FC<Props> = ({ level }) => {
     { staleTime: Infinity },
   )
 
-  void queryClient.prefetchQuery(['notifications-all', 'sam_auction'], () =>
-    fetchAllNotifications('sam_auction'),
+  const { data: notificationsMap } = useQuery(
+    ['notifications-all', 'sam_auction'],
+    () => fetchAllNotifications('sam_auction'),
+    {
+      refetchInterval: 5 * 60 * 1000,
+      keepPreviousData: true,
+    },
   )
 
   const { data: latestBroadcastNotification } = useQuery(
@@ -291,6 +295,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
             dsSamConfig={data.dcSamConfig}
             epochsPerYear={data.epochsPerYear}
             nameMap={nameMap}
+            notificationsMap={notificationsMap}
             rank={sheetValidatorData.rank}
             isSimulated={simulatedValidators.has(selectedValidator ?? '')}
             onClose={handleBack}
