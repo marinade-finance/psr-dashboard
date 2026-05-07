@@ -131,21 +131,23 @@ const PenaltyRow = ({
   label,
   value,
   onSeeBreakdown,
+  sub,
 }: {
   label: string
   value: string
   onSeeBreakdown: () => void
+  sub?: boolean
 }) => (
   <div className="flex items-center justify-between gap-2">
     <span className="text-xs text-muted-foreground flex-1">{label}</span>
     <span
-      className="text-sm font-semibold font-mono"
-      style={{ color: CSS_DESTRUCTIVE }}
+      className={`font-mono ${sub ? 'text-[11px]' : 'text-sm font-semibold'}`}
+      style={{ color: sub ? CSS_MUTED_FG : CSS_DESTRUCTIVE }}
     >
       {value}
     </span>
     <button
-      className="text-xs text-destructive hover:underline shrink-0"
+      className={`hover:underline shrink-0 ${sub ? 'text-[11px] text-muted-foreground' : 'text-xs text-destructive'}`}
       onClick={onSeeBreakdown}
       title="See calculation"
     >
@@ -717,24 +719,27 @@ export const ValidatorDetail = ({
                   )
                 })()}
                 {bidTooLowPenaltySol > 0 && (
-                  <MetricRow
+                  <PenaltyRow
                     label="↳ bid-too-low penalty"
                     value={`${formatSolAmount(bidTooLowPenaltySol, 2)} SOL`}
-                    valueStyle={{ color: CSS_MUTED_FG, fontSize: '11px' }}
+                    onSeeBreakdown={() => setTab('penalty')}
+                    sub
                   />
                 )}
                 {blacklistPenaltySol > 0 && (
-                  <MetricRow
+                  <PenaltyRow
                     label="↳ blacklist penalty"
                     value={`${formatSolAmount(blacklistPenaltySol, 2)} SOL`}
-                    valueStyle={{ color: CSS_MUTED_FG, fontSize: '11px' }}
+                    onSeeBreakdown={() => setTab('payments')}
+                    sub
                   />
                 )}
                 {bondRiskFeeSol > 0 && (
-                  <MetricRow
+                  <PenaltyRow
                     label="↳ bond risk fee"
                     value={`${formatSolAmount(bondRiskFeeSol, 2)} SOL`}
-                    valueStyle={{ color: CSS_MUTED_FG, fontSize: '11px' }}
+                    onSeeBreakdown={() => setTab('bond')}
+                    sub
                   />
                 )}
                 <MetricRow
