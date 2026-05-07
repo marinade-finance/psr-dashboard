@@ -125,7 +125,7 @@ export const getValidatorTip = (
     if (bondRiskFeeSol > 0 || m.topUpToAvoidFee > 0) {
       const topUpStr =
         m.topUpToAvoidFee > 0
-          ? ` Top up ${formatSolAmount(m.topUpToAvoidFee, 0)} SOL to stop the fee.`
+          ? ` Top up ${formatSolAmount(m.topUpToAvoidFee, 0)} SOL to avoid the fee.`
           : ''
       const feeStr =
         bondRiskFeeSol > 0
