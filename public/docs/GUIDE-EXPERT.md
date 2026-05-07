@@ -1,76 +1,58 @@
-# Expert View Guide
+# Expert View
 
-See the [Dashboard Guide](#GUIDE) for general documentation. Additional metrics visible in expert mode.
+Expert mode is reached via the `/expert-…` URL prefix or by toggling the docs
+selector. It exposes a small set of additional metrics and removes the basic-mode
+filter that hides inactive validators.
+
+See the [Dashboard Guide](#GUIDE) for everything else.
 
 ---
 
-## Expert Metrics
+## What changes in expert mode
 
-### Ideal APY
+### Stake Auction Marketplace — full validator list
 
-Estimated APY of currently active stake. Unlike Projected APY in basic mode, divides by active stake ratio to show the
-return on stake that is actually earning rewards. Assumes no Marinade fees and that all distributed stake is active.
+In basic mode, the SAM table shows only validators that either currently have
+active Marinade stake **or** are receiving stake in this epoch's auction.
+Everyone else is hidden because the row would show all-zeros.
 
-### Stake to Move
+In expert mode, **every validator known to the auction is listed** — including
+those that bid but didn't win, those that aren't bidding, and those that have
+neither active stake nor a target. Useful when investigating the long tail (why
+did this validator not get any stake? what's their bid? bond? rank in the order?).
 
-Percentage of total auction stake that needs to be redistributed to match current auction results. High values indicate
-the current on-chain delegation diverges significantly from the auction's target distribution.
+The cutoff line still marks the boundary between winners and non-winners; the
+extra rows simply continue below it.
 
-### Avg. Stake
+### Validator Bonds — Max Protectable
 
-Average SOL stake per winning validator. Calculated as total auction stake divided by number of winning validators.
+Two extras appear on the Validator Bonds page:
 
-### Conc. TVL
+- **Hero-bar stat: "Max protectable: NN%"** — what fraction of total Marinade
+  stake *could* be protected if every existing bond were fully utilized. This is
+  always ≥ the currently-protected percentage; the gap shows headroom.
+- **Table column: "Max protectable [SOL]"** — per-validator maximum bond-only
+  protection capacity. Computed from bond effective amount and the validator's
+  configured `cpmpe` × the protection horizon.
 
-Total target stake concentrated in the top 5 validators by target stake. Shows absolute SOL exposure to the largest
-validators, complementing Conc. Risk which shows the APY impact of their departure.
+These are useful for asking "how much more stake could this validator absorb
+before their bond becomes the binding constraint?".
 
-### Target Protected
+### Protected Events — Last Epoch Bids
 
-Percentage of total SAM target stake with validator bond coverage.
-Calculated as `1 - (actuallyUnprotectedStake / totalTargetStake)`,
-where unprotected stake is `max(0, targetStake - (bondCapacity - existingUnprotectedStake))`.
+One extra metric tile at the top of the Protected Events page:
 
-### Target Unprotected
+- **Last Epoch Bids** — total SOL collected as bid payments in the most recent
+  fully-settled epoch, summed across all validators. (The basic page only shows
+  protected-event payouts; this tile adds the routine bid revenue stream.)
 
-Total SOL where target stake exceeds validator bond-only capacity.
-Sum of `max(0, targetStake - (bondCapacity - unprotectedStake))` across all validators.
-Represents stake lacking bond coverage if validators fail to pay bids.
+---
 
-### Conc. Risk (Backstop)
+## Notes
 
-APY impact if top 5 validators by target stake departed. Stake redistributes proportionally to remaining validators.
-Both APYs use formula `(1 + profit/tvl)^epochsPerYear - 1` with identical TVL. Difference: base profit from all
-validators at current stake, backstop profit from remaining validators earning on original plus redistributed stake.
-Result: `backstopAPY - baseAPY`.
-
-- **Positive value** (e.g., +0.18%) &mdash; Departed validators had below-average effective bids; APY improves
-- **Negative value** &mdash; Departed validators contributed above-average revenue; APY declines
-
-Measures concentration risk and dependence on largest validators for yield.
-
-### +10% TVL
-
-APY impact if 10% more TVL enters the pool. Computed by re-running the full SAM auction with
-`marinadeSamTvlSol * 1.1` and `marinadeRemainingSamSol * 1.1`. The auction recalculates constraints (stake caps scale
-with TVL), re-evaluates all validators, and produces a new stake distribution.
-Result: `joinAPY - baseAPY` where each APY = `(1 + profit/tvl)^epochsPerYear - 1`.
-
-- **Negative value** (typical, e.g., -0.70%) &mdash; More TVL dilutes per-SOL revenue; validators bid the same but
-  stake is spread across more SOL
-- **Near zero** &mdash; Additional TVL unlocks enough new validator capacity to offset dilution
-
-### -10% TVL
-
-APY impact if 10% of TVL leaves the pool. Computed by re-running the full SAM auction with
-`marinadeSamTvlSol * 0.9` and `marinadeRemainingSamSol * 0.9`. Constraints shrink with TVL (per-validator caps,
-concentration limits). Result: `leaveAPY - baseAPY`.
-
-- **Positive value** (typical) &mdash; Less TVL concentrates per-SOL revenue; same bids spread over fewer SOL
-- **Near zero** &mdash; Reduced capacity offsets the concentration benefit
-
-### Productive Stake / Active Stake
-
-- **Productive Stake** &mdash; Ratio of activated stake on validators paying ≥90% of effective participating bid.
-  Measures stake delegated to validators meeting revenue commitments.
-- **Active Stake** &mdash; Ratio of currently activated stake vs total target auction stake (marinadeSamTargetSol)
+- The `expert-` URL prefix persists across navigation: clicking between SAM,
+  Bonds, Protected Events, and Docs keeps you in expert mode.
+- Expert mode does not unlock additional table columns on the SAM table or the
+  Protected Events table — those columns are the same as in basic mode.
+- Simulation mode, the validator-detail panel, and all calculation breakdowns are
+  available in both modes.
