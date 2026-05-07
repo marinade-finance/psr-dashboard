@@ -20,7 +20,7 @@ const RevRow: React.FC<{
   pmpe?: string
   value: string
   bold?: boolean
-  accent?: 'green' | 'red'
+  accent?: 'green' | 'yellow' | 'red'
 }> = ({ label, pct, pmpe: pmpeStr, value, bold, accent }) => (
   <tr className="border-b border-border-grid/50 last:border-0">
     <td className={`py-1.5 pr-2 text-xs ${bold ? 'font-semibold' : ''}`}>
@@ -36,9 +36,11 @@ const RevRow: React.FC<{
       className={`py-1.5 pl-2 text-right font-mono text-xs ${bold ? 'font-semibold' : ''} ${
         accent === 'green'
           ? 'text-[var(--status-green,#2aa198)]'
-          : accent === 'red'
-            ? 'text-destructive'
-            : ''
+          : accent === 'yellow'
+            ? 'text-[var(--status-yellow,#b58900)]'
+            : accent === 'red'
+              ? 'text-destructive'
+              : ''
       }`}
     >
       {value}
@@ -59,7 +61,7 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
   const status = {
     label:
       m.total > 0
-        ? `Total cost this epoch: ${pay(m.total)}.`
+        ? `Paid ${pay(m.total)} to Marinade this epoch.`
         : 'No bid cost this epoch.',
     tone: 'green' as const,
   }
@@ -120,12 +122,21 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
             value=""
             bold
           />
+          <RevRow
+            label="Bid gap"
+            pmpe={pmpe(m.bidGap)}
+            value=""
+            accent={
+              m.bidGap > 2 ? 'yellow' : m.bidGap === 0 ? 'green' : undefined
+            }
+          />
 
           <SectionHeader title="Cost" colSpan={4} />
           <RevRow label="Active stake cost" value={pay(m.cost)} />
           {m.activating > 0 && (
             <RevRow
               label={`Activating stake cost (${stake(m.activating)})`}
+              pmpe={pmpe(m.activatingStakePmpe)}
               value={pay(m.activatingCost)}
             />
           )}

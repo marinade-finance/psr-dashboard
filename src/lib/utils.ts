@@ -10,3 +10,6 @@ export const CSS_DESTRUCTIVE: string = 'var(--destructive)'
 export const CSS_PRIMARY_LIGHT: string = 'var(--primary-light)'
 export const CSS_DESTRUCTIVE_LIGHT: string = 'var(--destructive-light)'
 export const CSS_STATUS_GREEN: string = 'var(--status-green, #2aa198)'
+export const CSS_STATUS_YELLOW: string = 'var(--status-yellow, #b58900)'
+export const CSS_STATUS_YELLOW_LIGHT: string =
+  'var(--status-yellow-light, rgba(181,137,0,0.06))'

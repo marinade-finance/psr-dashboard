@@ -83,26 +83,22 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
           <span className="text-[13px] font-semibold w-24 shrink-0">Total</span>
           <div className="flex-1 relative h-4 bg-secondary rounded overflow-visible">
             <div
-              className="h-full rounded"
-              style={{
-                width: `${(apyBreakdown.total / scale) * 100}%`,
-                background:
-                  apyBreakdown.total >= winningApy
-                    ? CSS_PRIMARY
-                    : CSS_DESTRUCTIVE,
-              }}
-            />
-            {/* winning APY threshold marker — only meaningful on the total */}
+              className="h-full rounded overflow-hidden flex"
+              style={{ width: `${(apyBreakdown.total / scale) * 100}%` }}
+            >
+              {rows.map(([label, val, color]) =>
+                val > 0 ? (
+                  <div key={label} style={{ flex: val, background: color }} />
+                ) : null,
+              )}
+            </div>
             <div
               className="absolute top-[-3px] h-[calc(100%+6px)] w-0.5 rounded-full bg-foreground/50"
               style={{ left: `${winPct}%` }}
             />
             <span
               className="absolute top-[-18px] text-[10px] font-mono text-muted-foreground"
-              style={{
-                left: `${winPct}%`,
-                transform: 'translateX(-50%)',
-              }}
+              style={{ left: `${winPct}%`, transform: 'translateX(-50%)' }}
             >
               {formatPercentage(winningApy, 2)}
             </span>

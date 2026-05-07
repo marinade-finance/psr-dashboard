@@ -8,13 +8,15 @@ import { Button } from 'src/components/ui/button'
 import { Input } from 'src/components/ui/input'
 import { Sheet, SheetContent } from 'src/components/ui/sheet'
 import { ApyCompositionCard } from 'src/components/validator-detail/apy-composition-card'
-import { formatSolAmount, pay } from 'src/format'
+import { formatSolAmount, pay, pmpe } from 'src/format'
 import {
   CSS_PRIMARY,
   CSS_DESTRUCTIVE,
   CSS_PRIMARY_LIGHT,
   CSS_DESTRUCTIVE_LIGHT,
   CSS_STATUS_GREEN,
+  CSS_STATUS_YELLOW,
+  CSS_STATUS_YELLOW_LIGHT,
 } from 'src/lib/utils'
 import {
   bondHealthFromAuction,
@@ -287,7 +289,7 @@ export const ValidatorDetail = ({
                   style={{
                     background:
                       'var(--status-yellow-light, rgba(181,137,0,0.18))',
-                    color: 'var(--status-yellow, #b58900)',
+                    color: CSS_STATUS_YELLOW,
                   }}
                   title="This validator's metrics reflect simulated commission/bid overrides"
                 >
@@ -532,6 +534,19 @@ export const ValidatorDetail = ({
                   label="Activating stake"
                   value={`${formatSolAmount(paymentMetrics.activatingCost, 2)} SOL`}
                 />
+                {paymentMetrics.activating > 0 && (
+                  <MetricRow
+                    label="↳ bid gap"
+                    value={`${pmpe(paymentMetrics.bidGap)} PMPE`}
+                    valueStyle={{
+                      color:
+                        paymentMetrics.bidGap > 2
+                          ? CSS_STATUS_YELLOW
+                          : 'var(--muted-foreground)',
+                      fontSize: '11px',
+                    }}
+                  />
+                )}
                 <MetricRow
                   label="Penalty"
                   value={
@@ -562,8 +577,17 @@ export const ValidatorDetail = ({
             />
 
             {simEnabled && (
-              <div className="bg-card rounded-xl border border-border p-5">
-                <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+              <div
+                className="bg-card rounded-xl border-2 p-5"
+                style={{
+                  borderColor: CSS_STATUS_YELLOW,
+                  background: CSS_STATUS_YELLOW_LIGHT,
+                }}
+              >
+                <h3
+                  className="text-base font-semibold flex items-center gap-2"
+                  style={{ color: CSS_STATUS_YELLOW }}
+                >
                   What-If Simulation
                   <HelpTip text={HELP_TEXT.simulation} />
                 </h3>

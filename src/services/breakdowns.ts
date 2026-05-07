@@ -32,6 +32,8 @@ export type SamRevenueMetrics = {
   delta: number
   effBid: number
   bid: number
+  bidGap: number
+  activatingStakePmpe: number
   stake: number
   activating: number
   cost: number
@@ -53,14 +55,18 @@ export function computeSamRevenueMetrics(
   const delta = selectExpectedStakeChange(v)
   const activating = Math.max(0, delta)
   const bid = selectBid(v)
+  const effBid = selectEffectiveBid(v)
   const cost = selectEffectiveCost(v)
-  const activatingCost = (v.revShare.activatingStakePmpe * activating) / 1000
+  const activatingStakePmpe = v.revShare.activatingStakePmpe
+  const activatingCost = (activatingStakePmpe * activating) / 1000
   return {
     active: selectSamActiveStake(v),
     target: selectSamTargetStake(v),
     delta,
-    effBid: selectEffectiveBid(v),
+    effBid,
     bid,
+    bidGap: Math.max(0, bid - effBid),
+    activatingStakePmpe,
     stake,
     activating,
     cost,
