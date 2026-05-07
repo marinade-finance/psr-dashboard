@@ -397,6 +397,7 @@ export const ValidatorDetail = ({
                 ['payments', 'Payments'],
                 ['revenue', 'Bidding'],
                 ['bond', 'Bond'],
+                ['penalty', 'Bid Penalty'],
               ] satisfies [Tab, string][]
             ).map(([id, label]) => (
               <button
