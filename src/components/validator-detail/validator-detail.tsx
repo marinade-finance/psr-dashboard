@@ -53,6 +53,7 @@ import {
 
 import type { AuctionResult, DsSamConfig } from '@marinade.finance/ds-sam-sdk'
 import type { BondCoverageMetrics } from 'src/services/breakdowns'
+import type { NotificationSummary } from 'src/services/notifications'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
 
 interface ValidatorDetailProps {
@@ -61,6 +62,7 @@ interface ValidatorDetailProps {
   dsSamConfig: DsSamConfig
   epochsPerYear: number
   nameMap?: Map<string, { name?: string }>
+  notificationsMap?: Record<string, NotificationSummary>
   rank: number
   isSimulated?: boolean
   onClose: () => void
@@ -74,7 +76,13 @@ interface ValidatorDetailProps {
   isCalculating: boolean
 }
 
-type Tab = 'overview' | 'bond' | 'revenue' | 'penalty' | 'payments'
+type Tab =
+  | 'overview'
+  | 'notifications'
+  | 'bond'
+  | 'revenue'
+  | 'penalty'
+  | 'payments'
 
 type BondHealth = 'healthy' | 'soft' | 'watch' | 'critical'
 
@@ -132,6 +140,7 @@ export const ValidatorDetail = ({
   dsSamConfig,
   epochsPerYear,
   nameMap,
+  notificationsMap,
   rank,
   isSimulated = false,
   onClose,
@@ -141,6 +150,7 @@ export const ValidatorDetail = ({
 }: ValidatorDetailProps) => {
   const voteAccount = selectVoteAccount(validator)
   const validatorName = nameMap?.get(voteAccount)?.name
+  const notificationSummary = notificationsMap?.[voteAccount]
   const winningApy = selectWinningAPY(auctionResult, epochsPerYear)
   const winningTotalPmpe = auctionResult.winningTotalPmpe
   const apyBreakdown = getApyBreakdown(validator, epochsPerYear)
@@ -411,6 +421,7 @@ export const ValidatorDetail = ({
             {(
               [
                 ['overview', 'Overview'],
+                ['notifications', 'Notifications'],
                 ['payments', 'Payments'],
                 ['revenue', 'Bidding'],
                 ['bond', 'Bond'],
@@ -431,6 +442,109 @@ export const ValidatorDetail = ({
             ))}
           </div>
         </div>
+
+        {tab === 'notifications' && (
+          <div className="p-4 sm:p-6 space-y-6">
+            <div className="bg-card rounded-xl border border-border p-5">
+              <h3 className="text-base font-semibold text-foreground mb-3">
+                Pending penalties — this epoch
+              </h3>
+              <div className="space-y-3">
+                <MetricRow
+                  label="Bid-too-low penalty"
+                  value={
+                    bidTooLowPenaltySol > 0
+                      ? `${formatSolAmount(bidTooLowPenaltySol, 2)} SOL`
+                      : '—'
+                  }
+                  valueStyle={
+                    bidTooLowPenaltySol > 0
+                      ? { color: CSS_DESTRUCTIVE }
+                      : undefined
+                  }
+                />
+                <MetricRow
+                  label="Blacklist penalty"
+                  value={
+                    blacklistPenaltySol > 0
+                      ? `${formatSolAmount(blacklistPenaltySol, 2)} SOL`
+                      : '—'
+                  }
+                  valueStyle={
+                    blacklistPenaltySol > 0
+                      ? { color: CSS_DESTRUCTIVE }
+                      : undefined
+                  }
+                />
+                <MetricRow
+                  label="Bond risk fee"
+                  value={
+                    bondRiskFeeSol > 0
+                      ? `${formatSolAmount(bondRiskFeeSol, 2)} SOL`
+                      : '—'
+                  }
+                  valueStyle={
+                    bondRiskFeeSol > 0 ? { color: CSS_DESTRUCTIVE } : undefined
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="bg-card rounded-xl border border-border p-5">
+              <h3 className="text-base font-semibold text-foreground mb-3">
+                Notifications
+              </h3>
+              {notificationSummary?.notifications?.length ? (
+                <div className="space-y-4">
+                  {notificationSummary.notifications.map(n => {
+                    const tone =
+                      n.priority === 'critical'
+                        ? 'bg-destructive-light text-destructive'
+                        : n.priority === 'warning'
+                          ? 'bg-warning-light text-warning'
+                          : 'bg-info-light text-info'
+                    const [body, ...footerParts] =
+                      n.message.split('\n\nEmitted:')
+                    const footer = footerParts.length
+                      ? `Emitted:${footerParts.join('\n\nEmitted:')}`
+                      : null
+                    return (
+                      <div
+                        key={n.id}
+                        className="border-t border-border first:border-t-0 first:pt-0 pt-3"
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wide ${tone}`}
+                          >
+                            {n.priority}
+                          </span>
+                          {n.title && (
+                            <span className="text-sm font-semibold text-foreground">
+                              {n.title}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground whitespace-pre-line">
+                          {body}
+                        </div>
+                        {footer && (
+                          <div className="text-[10px] text-muted-foreground italic mt-1.5">
+                            {footer}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No notifications for this validator.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
 
         {tab === 'bond' && (
           <div className="p-4 sm:p-6">
