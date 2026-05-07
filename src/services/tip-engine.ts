@@ -3,6 +3,7 @@ import { formatSolAmount } from 'src/format'
 import { bondHealthFromAuction, computeBondCoverageMetrics } from './breakdowns'
 import { bondUtilizationPct, compoundApy, apyBreakdown } from './calculations'
 
+import type { BondHealthState } from './breakdowns'
 import type { AugmentedAuctionValidator } from './sam'
 import type {
   AuctionValidator,
@@ -36,7 +37,7 @@ const VAR_MUTED_FG = 'var(--muted-foreground)'
 const VAR_PRIMARY = 'var(--primary)'
 
 export const getBondHealthStyle = (
-  health: 'healthy' | 'watch' | 'critical',
+  health: BondHealthState,
 ): { color: string; bg: string; label: string } => {
   if (health === 'critical') {
     return {
@@ -50,6 +51,13 @@ export const getBondHealthStyle = (
       color: VAR_WARNING,
       bg: 'var(--warning-light)',
       label: 'Watch',
+    }
+  }
+  if (health === 'soft') {
+    return {
+      color: 'var(--info)',
+      bg: 'var(--info-light)',
+      label: 'Soft',
     }
   }
   return {
@@ -134,7 +142,7 @@ export const getValidatorTip = (
   }
 
   // Bond CTA cascade — priority: avoid fee > keep stake > ideal.
-  if (health === 'critical' || health === 'watch') {
+  if (health === 'critical' || health === 'watch' || health === 'soft') {
     const m = computeBondCoverageMetrics(
       validator,
       dsSamConfig.minBondEpochs,
