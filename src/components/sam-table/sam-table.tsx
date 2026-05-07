@@ -597,7 +597,7 @@ export const SamTable: React.FC<Props> = ({
             isSimulated={isSimulated}
             posColor={posColor}
             tipColor={tipStyle.color}
-            tipIcon={tipStyle.icon}
+            tipIcon={tip.icon ?? tipStyle.icon}
             voteAccount={voteAccount}
             onClearValidator={onClearValidator}
           />
@@ -707,7 +707,7 @@ export const SamTable: React.FC<Props> = ({
             className="inline-flex items-start gap-[5px] text-xs leading-[1.35] px-2.5 py-1 rounded-md"
             style={{ background: tipStyle.bg, color: tipStyle.color }}
           >
-            <span className="shrink-0">{tipStyle.icon}</span>
+            <span className="shrink-0">{tip.icon ?? tipStyle.icon}</span>
             <span className="break-words">
               {tip.text.replace(/~?\d+\.\d{3,}/g, m => {
                 const n = parseFloat(m.replace(/^~/, ''))
