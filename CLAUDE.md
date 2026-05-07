@@ -23,22 +23,30 @@ npx tsc --noEmit          # type check (no Makefile, run directly)
 Pre-commit hooks run lint-staged (eslint --fix + prettier) via husky.
 First run may reformat — retry commit once if it fails.
 
-## Live UI inventory — `SCREENS.md`
+## Live root docs
 
-`SCREENS.md` at the repo root is the authoritative live inventory of every
-page, panel, table column, badge, status tier and tab. **Update it in the
-same commit whenever the UI changes.** Examples that require an update:
+Three repo-root files are live documentation. **Each must be updated in
+the same commit as the change that affects it.** They are the contract
+between code and reviewers; if they drift, neither reviewer nor onboarding
+maintainer can trust them.
 
-- adding / removing / renaming a column on any data table
-- adding / removing a tab on the validator detail panel
-- changing a default sort, a tier threshold, a status label, or a token
-- moving a route, renaming a section, replacing a status badge style
-- adding a new card on a page
+- **`SCREENS.md`** — every page, panel, table column, badge, status tier,
+  tab. Update when: adding / removing / renaming a column, adding a tab
+  on the validator detail panel, changing a default sort / tier threshold
+  / status label / token, moving a route, replacing a badge style,
+  adding a card.
+- **`ARCHITECTURE.md`** — top-level layout, routes, components, services,
+  state and data flow, build/test, conventions. Update when: adding /
+  removing a top-level dir, adding a service module or page route,
+  adding / removing a react-query key, bumping a major dependency,
+  changing the state shape that flows through `SamPage` or the URL.
+- **`README.md`** — anything a new contributor needs on day one:
+  commands, route list, doc index, deployment notes. Update when the
+  command surface or the route table changes, or when a top-level doc
+  is added / renamed.
 
 If a section's diff would be larger than rewording, rewrite the whole
-section — patches sentence-by-sentence age badly. The file is the contract
-between code and reviewers; if it drifts, neither reviewer nor onboarding
-maintainer can trust it.
+section — patches sentence-by-sentence age badly.
 
 ## Architecture
 
