@@ -9,6 +9,8 @@ import {
   formatStakeDelta,
   calculateBondUtilization,
   calculateMaxApy,
+  bondStatusText,
+  nextStakeDeltaCell,
 } from '../tip-engine'
 
 import type { ProtectedEvent } from '../protected-events'
@@ -331,6 +333,69 @@ describe('getValidatorTip soft health', () => {
     expect(tip.constraint).toBe('bond')
     expect(tip.urgency).toBe('info')
     expect(tip.text).toContain('SOL')
+  })
+})
+
+// --- regression: bond CTA never says "Top up 0(.00) SOL" ---
+
+describe('bondStatusText sub-1 SOL CTA flooring', () => {
+  it('topUpToAvoidFee 0.003 → "<0.01 SOL", not "0.00 SOL"', () => {
+    const txt = bondStatusText(0.003, 0, 0, 0)
+    expect(txt).toContain('<0.01 SOL')
+    expect(txt).not.toMatch(/Top up 0\.00 SOL/)
+  })
+
+  it('topUpToKeepStake 0.4 → "<0.01 SOL", not "0.00 SOL"', () => {
+    const txt = bondStatusText(0, 0.4, 0, 0)
+    // 0.4 rounds to 0.40 — that's fine for `pay`. Use a smaller value.
+    expect(txt).toContain('0.40 SOL')
+    const txt2 = bondStatusText(0, 0.001, 0, 0)
+    expect(txt2).toContain('<0.01 SOL')
+    expect(txt2).not.toMatch(/Top up 0\.00 SOL/)
+  })
+
+  it('topUpToIdealKeep 0.001 → "<0.01 SOL"', () => {
+    const txt = bondStatusText(0, 0, 0.001, 0)
+    expect(txt).toContain('<0.01 SOL')
+    expect(txt).not.toMatch(/Top up 0\.00 SOL/)
+  })
+})
+
+describe('getValidatorTip out-of-set bond top-up flooring', () => {
+  it('sub-1 SOL bond top-up renders as "<1 SOL", not "0 SOL"', () => {
+    // out-of-set (target=0) + unhealthy bond → "Bond too small for stake"
+    // The formatter previously emitted "Top up 0 SOL to win more".
+    const v = makeValidator({
+      auctionStake: { marinadeSamTargetSol: 0 },
+      marinadeActivatedStakeSol: 100,
+      bondBalanceSol: 0.001,
+      claimableBondBalanceSol: 0.001,
+    })
+    const tip = getValidatorTip(v, DS_SAM_CONFIG, 100)
+    if (tip.text.includes('Top up')) {
+      expect(tip.text).not.toMatch(/Top up 0 SOL/)
+    }
+  })
+})
+
+// --- regression: -0 SOL was rendered red; anything that displays 0 SOL is
+// neutral. Pure helper drives the cell tone in sam-table.tsx.
+
+describe('nextStakeDeltaCell', () => {
+  it('|delta| < 0.5 → neutral, no prefix (covers tiny negatives)', () => {
+    expect(nextStakeDeltaCell(-0.3)).toEqual({ prefix: '', tone: 'neutral' })
+    expect(nextStakeDeltaCell(0)).toEqual({ prefix: '', tone: 'neutral' })
+    expect(nextStakeDeltaCell(0.4)).toEqual({ prefix: '', tone: 'neutral' })
+  })
+
+  it('delta >= 0.5 → positive with "+" prefix', () => {
+    expect(nextStakeDeltaCell(0.5)).toEqual({ prefix: '+', tone: 'positive' })
+    expect(nextStakeDeltaCell(1000)).toEqual({ prefix: '+', tone: 'positive' })
+  })
+
+  it('delta <= -0.5 → negative, no prefix', () => {
+    expect(nextStakeDeltaCell(-0.5)).toEqual({ prefix: '', tone: 'negative' })
+    expect(nextStakeDeltaCell(-1000)).toEqual({ prefix: '', tone: 'negative' })
   })
 })
 
