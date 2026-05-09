@@ -226,7 +226,6 @@ export const TestSamPage: React.FC<Props> = ({ level }) => {
           epochsPerYear={TEST_EPOCHS_PER_YEAR}
           nameMap={nameMap}
           rank={sheetValidatorData.rank}
-          totalValidators={sheetValidatorData.totalValidators}
           isSimulated={simulatedValidators.has(selectedValidator ?? '')}
           onClose={handleBack}
           onSimulate={handleDetailSimulate}

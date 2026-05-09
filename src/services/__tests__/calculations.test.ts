@@ -44,7 +44,7 @@ function makeAuctionResult(
 }
 
 function makeValidator(
-  overrides: Partial<AuctionValidator> = {},
+  overrides: Record<string, unknown> = {},
 ): AuctionValidator {
   return {
     voteAccount: 'test',
