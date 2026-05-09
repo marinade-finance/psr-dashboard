@@ -22,7 +22,12 @@ test.describe('SAM basic', () => {
   })
 
   test('all 4 metrics visible', async ({ page }) => {
-    for (const label of ['Total Auction Stake', 'Winning APY', 'Projected APY', 'Winning Validators']) {
+    for (const label of [
+      'Total Auction Stake',
+      'Winning APY',
+      'Projected APY',
+      'Winning Validators',
+    ]) {
       await expect(page.getByText(label).first()).toBeVisible()
     }
   })
@@ -31,23 +36,43 @@ test.describe('SAM basic', () => {
     await expect(page.getByText('Error fetching data')).not.toBeVisible()
   })
 
-  test('header columns present: #, Validator, Max APY, Bond, Stake, Next Step', async ({ page }) => {
+  test('header columns present: #, Validator, Max APY, Bond, Stake, Next Step', async ({
+    page,
+  }) => {
     const headers = await page.locator('thead th').allInnerTexts()
-    for (const col of ['#', 'Validator', 'Max APY', 'Bond', 'Stake', 'Next Step']) {
-      expect(headers.some(h => h.includes(col)), `column "${col}" missing`).toBe(true)
+    for (const col of [
+      '#',
+      'Validator',
+      'Max APY',
+      'Bond',
+      'Stake',
+      'Next Step',
+    ]) {
+      expect(
+        headers.some(h => h.includes(col)),
+        `column "${col}" missing`,
+      ).toBe(true)
     }
   })
 
   test('Total Auction Stake has comma-formatted SOL', async ({ page }) => {
-    const card = page.locator('div').filter({ hasText: /^Total Auction Stake/ }).first()
+    const card = page
+      .locator('div')
+      .filter({ hasText: /^Total Auction Stake/ })
+      .first()
     await expect(card).toBeVisible()
     const text = await card.innerText()
     expect(text).toMatch(/\d{1,3}(,\d{3})+/)
   })
 
-  test('Winning APY and Projected APY contain valid percentages', async ({ page }) => {
+  test('Winning APY and Projected APY contain valid percentages', async ({
+    page,
+  }) => {
     for (const label of ['Winning APY', 'Projected APY']) {
-      const card = page.locator('div').filter({ hasText: new RegExp(`^${label}`) }).first()
+      const card = page
+        .locator('div')
+        .filter({ hasText: new RegExp(`^${label}`) })
+        .first()
       await expect(card).toBeVisible()
       const text = await card.innerText()
       expect(text).toContain('%')
@@ -74,7 +99,10 @@ test.describe('SAM sorting', () => {
   })
 
   test('default sort: Max APY header shows ↓', async ({ page }) => {
-    const h = page.locator('th').filter({ hasText: /Max APY/ }).first()
+    const h = page
+      .locator('th')
+      .filter({ hasText: /Max APY/ })
+      .first()
     await expect(h).toContainText('↓')
   })
 
@@ -185,6 +213,8 @@ test.describe('SAM error state', () => {
   test('shows error when API fails', async ({ page }) => {
     await page.route(/marinade\.finance/, route => route.abort())
     await page.goto('/')
-    await expect(page.getByText('Error fetching data')).toBeVisible({ timeout: 30000 })
+    await expect(page.getByText('Error fetching data')).toBeVisible({
+      timeout: 30000,
+    })
   })
 })

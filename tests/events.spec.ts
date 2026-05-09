@@ -33,7 +33,9 @@ test.describe('Events basic', () => {
     }
   })
 
-  test('funder badges visible (Validator Bond or Marinade)', async ({ page }) => {
+  test('funder badges visible (Validator Bond or Marinade)', async ({
+    page,
+  }) => {
     const pageText = await page.locator('table tbody').innerText()
     expect(pageText).toMatch(/Validator Bond|Marinade/)
   })
@@ -60,7 +62,9 @@ test.describe('Events validator filter', () => {
     const total = await rows.count()
 
     // Column 2 is Validator (col 1 is # row number)
-    const first = await page.locator('table tbody tr:first-child td:nth-child(2)').innerText()
+    const first = await page
+      .locator('table tbody tr:first-child td:nth-child(2)')
+      .innerText()
     const prefix = first.trim().slice(0, 6)
     // Validator-filter <label> is not associated to its <input>; the only
     // text input on the events page is the validator filter.
@@ -90,12 +94,16 @@ test.describe('Events epoch filter', () => {
     await waitForEvents(page)
 
     // The epoch picker is a button dropdown — click the trigger
-    const trigger = page.getByRole('button', { name: /epoch|All epochs/i }).first()
+    const trigger = page
+      .getByRole('button', { name: /epoch|All epochs/i })
+      .first()
     await expect(trigger).toBeVisible()
     await trigger.click()
 
     // Dropdown opens, shows epoch number buttons
-    const popup = page.locator('[class*="absolute"][class*="rounded"]').filter({ hasText: /Select.*epoch/i })
+    const popup = page
+      .locator('[class*="absolute"][class*="rounded"]')
+      .filter({ hasText: /Select.*epoch/i })
     await expect(popup).toBeVisible({ timeout: 3000 })
     // Epoch buttons are present
     const epochBtns = popup.locator('button[class*="font-mono"]')
@@ -110,9 +118,13 @@ test.describe('Events epoch filter', () => {
     const total = await rows.count()
 
     // Open picker and pick the last (newest) epoch twice to select a single-epoch range
-    const trigger = page.getByRole('button', { name: /epoch|All epochs/i }).first()
+    const trigger = page
+      .getByRole('button', { name: /epoch|All epochs/i })
+      .first()
     await trigger.click()
-    const popup = page.locator('[class*="absolute"][class*="rounded"]').filter({ hasText: /Select.*epoch/i })
+    const popup = page
+      .locator('[class*="absolute"][class*="rounded"]')
+      .filter({ hasText: /Select.*epoch/i })
     await expect(popup).toBeVisible({ timeout: 3000 })
 
     const epochBtns = popup.locator('button[class*="font-mono"]')
