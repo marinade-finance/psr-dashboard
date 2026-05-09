@@ -65,8 +65,9 @@ test.describe('Navigation', () => {
   test('active tab: SAM NavLink has aria-current=page on /', async ({
     page,
   }) => {
-    // React Router NavLink adds aria-current="page" to the active link
-    const samLink = page.locator('.navigation a[href="/"]')
+    // React Router NavLink adds aria-current="page" to the active link.
+    // The logo also links to '/' (no aria-current); pick the NavLink by class.
+    const samLink = page.locator('.navigation a[href="/"].active')
     await expect(samLink).toHaveAttribute('aria-current', 'page')
   })
 

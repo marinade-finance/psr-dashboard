@@ -3,8 +3,11 @@
 import { test, expect } from './fixtures/mock-api'
 
 async function waitForEvents(page: import('@playwright/test').Page) {
-  // Wait for both table and metrics; use the metric label as it appears after data loads
-  await page.getByText('Events Protected').first().waitFor({ timeout: 110000 })
+  // Wait for the events table to render — that's the proxy for "data loaded
+  // and metrics computed". The previous textual probes were brittle: the
+  // metric labels were renamed AND the navigation has a mobile-only hidden
+  // 'Events' span that .getByText would otherwise match first.
+  await page.waitForSelector('table tbody tr', { timeout: 110000 })
 }
 
 test.describe('Events basic', () => {
@@ -18,9 +21,15 @@ test.describe('Events basic', () => {
     await expect(page.locator('table')).toBeVisible()
   })
 
-  test('4 cost/payment metrics visible', async ({ page }) => {
-    for (const label of ['Events Protected', 'Validator Bond Paid', 'Marinade Paid', 'Total SOL to Stakers']) {
-      await expect(page.getByText(label).first()).toBeVisible()
+  test('cost/payment metrics visible (Events / Amount / Last settled epoch)', async ({
+    page,
+  }) => {
+    const wrap = page.locator('.metricWrap')
+    for (const label of ['Events', 'Amount', 'Last settled epoch']) {
+      // .getByText(string) uses substring match against accessible text;
+      // scoped regex lookups inside .metricWrap behave oddly with the
+      // `text-transform: uppercase` style on metric labels.
+      await expect(wrap.getByText(label).first()).toBeVisible()
     }
   })
 
@@ -53,7 +62,9 @@ test.describe('Events validator filter', () => {
     // Column 2 is Validator (col 1 is # row number)
     const first = await page.locator('table tbody tr:first-child td:nth-child(2)').innerText()
     const prefix = first.trim().slice(0, 6)
-    const input = page.getByLabel('Validator filter')
+    // Validator-filter <label> is not associated to its <input>; the only
+    // text input on the events page is the validator filter.
+    const input = page.locator('input[type="text"]').first()
     await input.fill(prefix)
     await page.waitForTimeout(300)
 
@@ -64,7 +75,9 @@ test.describe('Events validator filter', () => {
 
   test('gibberish filter produces 0 rows', async ({ page }) => {
     await expect(page.locator('table tbody tr').first()).toBeVisible()
-    const input = page.getByLabel('Validator filter')
+    // Validator-filter <label> is not associated to its <input>; the only
+    // text input on the events page is the validator filter.
+    const input = page.locator('input[type="text"]').first()
     await input.fill('zzzzNONEXISTENT999')
     await page.waitForTimeout(300)
     expect(await page.locator('table tbody tr').count()).toBe(0)
@@ -120,39 +133,46 @@ test.describe('Events epoch filter', () => {
 })
 
 test.describe('Events filtered metrics', () => {
-  test('filtered metrics appear when validator filter active', async ({ page }) => {
+  test('filtered subline appears when validator filter active', async ({
+    page,
+  }) => {
     await page.goto('/protected-events')
     await waitForEvents(page)
 
-    // Verify "Filtered Events" metric is not visible initially
-    await expect(page.getByText('Filtered Events').first()).not.toBeVisible()
+    // Subline "of N total" only renders when a filter is active.
+    await expect(page.getByText(/of \d.* total/).first()).not.toBeVisible()
 
-    // Apply a filter that matches at least some rows (use vote account from Validator column)
-    const firstVa = await page.locator('table tbody tr:first-child td:nth-child(2)').innerText()
+    const firstVa = await page
+      .locator('table tbody tr:first-child td:nth-child(2)')
+      .innerText()
     const prefix = firstVa.trim().slice(0, 6)
-    const input = page.getByLabel('Validator filter')
+    // Validator-filter <label> is not associated to its <input>; the only
+    // text input on the events page is the validator filter.
+    const input = page.locator('input[type="text"]').first()
     await input.fill(prefix)
     await page.waitForTimeout(300)
 
-    // "Filtered Events" metric should now appear
-    await expect(page.getByText('Filtered Events').first()).toBeVisible()
+    await expect(page.getByText(/of \d.* total/).first()).toBeVisible()
   })
 
-  test('filtered metrics disappear when filter cleared', async ({ page }) => {
+  test('filtered subline disappears when filter cleared', async ({ page }) => {
     await page.goto('/protected-events')
     await waitForEvents(page)
 
-    const firstVa = await page.locator('table tbody tr:first-child td:nth-child(2)').innerText()
+    const firstVa = await page
+      .locator('table tbody tr:first-child td:nth-child(2)')
+      .innerText()
     const prefix = firstVa.trim().slice(0, 6)
-    const input = page.getByLabel('Validator filter')
+    // Validator-filter <label> is not associated to its <input>; the only
+    // text input on the events page is the validator filter.
+    const input = page.locator('input[type="text"]').first()
     await input.fill(prefix)
     await page.waitForTimeout(300)
-    await expect(page.getByText('Filtered Events').first()).toBeVisible()
+    await expect(page.getByText(/of \d.* total/).first()).toBeVisible()
 
-    // Clear filter
     await input.fill('')
     await page.waitForTimeout(300)
-    await expect(page.getByText('Filtered Events').first()).not.toBeVisible()
+    await expect(page.getByText(/of \d.* total/).first()).not.toBeVisible()
   })
 })
 
@@ -169,8 +189,13 @@ test.describe('Events badges', () => {
   })
 })
 
-test('expert-protected-events has Last Epoch Bids metric', async ({ page }) => {
+test('expert-protected-events shows last-epoch bid subline (SOL bids)', async ({
+  page,
+}) => {
   await page.goto('/expert-protected-events')
-  await page.getByText('Last Epoch Bids').waitFor({ timeout: 50000 })
-  await expect(page.getByText('Last Epoch Bids').first()).toBeVisible()
+  await waitForEvents(page)
+  // Last settled epoch metric renders a "<N> SOL bids" subline in expert mode.
+  await expect(page.getByText(/SOL bids/).first()).toBeVisible({
+    timeout: 50000,
+  })
 })

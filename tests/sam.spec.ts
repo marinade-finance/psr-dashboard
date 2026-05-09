@@ -78,18 +78,30 @@ test.describe('SAM sorting', () => {
     await expect(h).toContainText('↓')
   })
 
-  test('click Max APY header: first click DESC (↓), second click ASC (↑)', async ({ page }) => {
-    const h = page.locator('th').filter({ hasText: /Max APY/ }).first()
-    await h.click()
-    await expect(h).toContainText('↓', { timeout: 5000 })
+  test('click Max APY header toggles ASC/DESC (default is ↓)', async ({
+    page,
+  }) => {
+    const h = page
+      .locator('th')
+      .filter({ hasText: /Max APY/ })
+      .first()
+    // Default is Max APY ↓. First click on the active column flips to ↑.
     await h.click()
     await expect(h).toContainText('↑', { timeout: 5000 })
+    // Second click flips back to ↓.
+    await h.click()
+    await expect(h).toContainText('↓', { timeout: 5000 })
   })
 
-  test('sort values: Max APY ASC produces ascending numbers', async ({ page }) => {
-    const h = page.locator('th').filter({ hasText: /Max APY/ }).first()
-    await h.click() // first click = DESC
-    await h.click() // second click = ASC
+  test('sort values: Max APY ASC produces ascending numbers', async ({
+    page,
+  }) => {
+    const h = page
+      .locator('th')
+      .filter({ hasText: /Max APY/ })
+      .first()
+    // Default is ↓; one click flips to ↑.
+    await h.click()
     await expect(h).toContainText('↑')
 
     const cells = page.locator('tbody tr td:nth-child(3)')
@@ -131,19 +143,23 @@ test.describe('SAM sort secondary', () => {
     await waitForData(page)
   })
 
-  test('switching sort column: default Max APY ↓ → click again → Max APY ↑', async ({ page }) => {
-    const maxApyH = page.locator('th').filter({ hasText: /Max APY/ }).first()
+  test('Max APY ↓ default → click toggles ↑ → click toggles ↓', async ({
+    page,
+  }) => {
+    const maxApyH = page
+      .locator('th')
+      .filter({ hasText: /Max APY/ })
+      .first()
 
-    // Initially Max APY column has ↓
+    // Default sort column = Max APY ↓ (handleSort treats same-column click
+    // as a toggle).
     await expect(maxApyH).toContainText('↓')
 
-    // First click on Max APY = new column → DESC
-    await maxApyH.click()
-    await expect(maxApyH).toContainText('↓')
-
-    // Second click on same column = toggle to ASC
     await maxApyH.click()
     await expect(maxApyH).toContainText('↑')
+
+    await maxApyH.click()
+    await expect(maxApyH).toContainText('↓')
   })
 })
 
@@ -158,7 +174,10 @@ test.describe('SAM expert', () => {
   test('Docs link visible in nav on expert route', async ({ page }) => {
     await page.goto('/expert-')
     await waitForData(page)
-    await expect(page.getByRole('link', { name: 'Docs' })).toBeVisible()
+    // Match the nav Docs link only (sam page also has a "Full docs↗" link).
+    await expect(
+      page.getByRole('link', { name: 'Docs', exact: true }).first(),
+    ).toBeVisible()
   })
 })
 
