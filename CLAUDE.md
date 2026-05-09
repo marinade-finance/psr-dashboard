@@ -12,11 +12,15 @@ validator bonds. Uses `@marinade.finance/ds-sam-sdk` for auction computation.
 
 ```bash
 pnpm install              # install deps
-pnpm start:dev            # dev server (webpack, HMR)
+pnpm start:dev            # dev server (vite, HMR)
 pnpm build                # production build → dist/
 pnpm lint                 # eslint
 pnpm format:check         # prettier check
 pnpm check                # lint + format check
+pnpm test                 # vitest unit tests (src/__tests__)
+pnpm test:e2e             # playwright e2e (tests/)
+pnpm test:e2e:ui          # playwright UI mode
+pnpm test:e2e:update      # update playwright snapshots
 npx tsc --noEmit          # type check (no Makefile, run directly)
 ```
 
@@ -50,8 +54,9 @@ section — patches sentence-by-sentence age badly.
 
 ## Architecture
 
-Webpack + TypeScript 4.9 + React 18 SPA. Tailwind CSS utility classes
-(no CSS Modules). react-query for data fetching. react-router-dom v6 for routing.
+Vite + TypeScript 4.9 + React 18 SPA. Tailwind CSS v4 (`@tailwindcss/vite`,
+no CSS Modules). react-query v3 for data fetching. react-router-dom v6 for
+routing. Unit tests with vitest, e2e + visual regression with Playwright.
 
 ### Routes
 
