@@ -68,7 +68,7 @@ header.
 | `#` | `rank` | `{tipIcon}#N` coloured by tip urgency. Ghost rows: muted `#N`. Simulated rows: posColor-tinted `#N` + `✕` clear button. Keyboard-activatable (`role="button"`, `tabIndex`). |
 | Validator | `validator` | `<ValidatorIdentity>` — name + responsive vote account. Trailing red pulsing dot when validator has a notification (`hasAlert`). |
 | Max APY | `maxApy` | `selectMaxAPY` pill. Primary tone if in winning set, destructive if not. |
-| Bond | `bond` | `<BondChip>` (Healthy / OK / Watch / Critical, see § Bond chip below) + balance + utilization bar + `(Nep)` runway suffix. |
+| Bond | `bond` | `<BondChip>` (Healthy / Adequate / Watch / Critical, see § Bond chip below) + balance + utilization bar + `(Nep)` runway suffix. |
 | Stake / Next Δ | `stakeDelta` | Active SAM stake on top, expected next-epoch change underneath. `0 SOL` (muted) when delta is zero, otherwise tinted +/− SOL. |
 | Next Step | `nextStep` | One-line tip from `getValidatorTip`. Background tinted by urgency. |
 | (chevron) | — | Drill-in cue, recolours on row hover. |
@@ -104,7 +104,7 @@ Four tiers, `BOND_CHIP` record in `sam-table.tsx`:
 | Tier | Style | Meaning |
 |---|---|---|
 | `healthy` | `bg-primary-light-10 text-primary` | bond exceeds ideal coverage |
-| `soft` ("OK") | `bg-secondary text-muted-foreground` | covers current stake but not ideal target |
+| `soft` ("Adequate") | `bg-secondary text-muted-foreground` | covers current stake but not ideal target |
 | `watch` | `bg-warning-light text-warning` | can't keep current stake; some will be undelegated |
 | `critical` | `bg-destructive-light text-destructive` | below penalty threshold; bond risk fee charged |
 

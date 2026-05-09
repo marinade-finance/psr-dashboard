@@ -34,6 +34,7 @@ import {
   getValidatorTip,
   getTipStyle,
   calculateBondUtilization,
+  nextStakeDeltaCell,
 } from 'src/services/tip-engine'
 
 import { UserLevel } from '../navigation/navigation'
@@ -62,7 +63,7 @@ type ValidatorWithBondState = AugmentedAuctionValidator & {
 const TEXT_MUTED = 'text-muted-foreground'
 const BG_MUTED = 'bg-muted-foreground'
 
-const BOND_CHIP: Record<
+export const BOND_CHIP: Record<
   BondHealthTier,
   { chip: string; dot: string; bar: string; shortText: string; label: string }
 > = {
@@ -78,7 +79,7 @@ const BOND_CHIP: Record<
     dot: BG_MUTED,
     bar: BG_MUTED,
     shortText: TEXT_MUTED,
-    label: 'OK',
+    label: 'Adequate',
   },
   watch: {
     chip: 'bg-warning-light text-warning',
@@ -96,16 +97,16 @@ const BOND_CHIP: Record<
   },
 }
 
-type SortColumn =
+export type SortColumn =
   | 'rank'
   | 'validator'
   | 'maxApy'
   | 'bond'
   | 'stakeDelta'
   | 'nextStep'
-type SortDirection = 'asc' | 'desc'
+export type SortDirection = 'asc' | 'desc'
 
-function makeCompareFn(
+export function makeCompareFn(
   col: SortColumn,
   dir: SortDirection,
   validatorMeta: Map<string, ValidatorMeta> | undefined,
@@ -115,6 +116,10 @@ function makeCompareFn(
     let cmp = 0
     switch (col) {
       case 'rank':
+        // Rank is built from selectMaxAPY desc (auctionRankMap below). The
+        // base cmp is asc; the dir flip below produces desc on default click.
+        cmp = selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
+        break
       case 'stakeDelta':
         cmp =
           a.auctionStake.marinadeSamTargetSol -
@@ -610,24 +615,31 @@ export const SamTable: React.FC<Props> = ({
             <span className="text-muted-foreground text-xs font-mono">
               {stake(validator.marinadeActivatedStakeSol)}
             </span>
-            <span
-              className={`font-mono text-xs ${
-                expectedChange === 0 ? TEXT_MUTED : 'font-semibold text-sm'
-              }`}
-              style={
-                expectedChange === 0
-                  ? undefined
-                  : {
-                      color:
-                        expectedChange > 0
-                          ? 'var(--status-green)'
-                          : 'var(--destructive)',
-                    }
-              }
-            >
-              {expectedChange > 0 ? '+' : ''}
-              {stake(expectedChange)}
-            </span>
+            {(() => {
+              const cell = nextStakeDeltaCell(expectedChange)
+              return (
+                <span
+                  className={`font-mono text-xs ${
+                    cell.tone === 'neutral'
+                      ? TEXT_MUTED
+                      : 'font-semibold text-sm'
+                  }`}
+                  style={
+                    cell.tone === 'neutral'
+                      ? undefined
+                      : {
+                          color:
+                            cell.tone === 'positive'
+                              ? 'var(--status-green)'
+                              : 'var(--destructive)',
+                        }
+                  }
+                >
+                  {cell.prefix}
+                  {stake(expectedChange)}
+                </span>
+              )
+            })()}
           </div>
         </TableCell>
 

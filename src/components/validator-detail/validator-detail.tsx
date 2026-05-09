@@ -12,7 +12,7 @@ import { Input } from 'src/components/ui/input'
 import { Sheet, SheetContent } from 'src/components/ui/sheet'
 import { Switch } from 'src/components/ui/switch'
 import { ApyCompositionCard } from 'src/components/validator-detail/apy-composition-card'
-import { pay, stake } from 'src/format'
+import { pay, payCta, stake } from 'src/format'
 import {
   CSS_PRIMARY,
   CSS_DESTRUCTIVE,
@@ -77,24 +77,24 @@ type Tab =
   | 'penalty'
   | 'payments'
 
-type BondHealth = 'healthy' | 'soft' | 'watch' | 'critical'
+export type BondHealth = 'healthy' | 'soft' | 'watch' | 'critical'
 
-function bondCoverageLabel(
+export function bondCoverageLabel(
   health: BondHealth,
   coverage: BondCoverageMetrics,
 ): string {
   if (health === 'critical')
     return coverage.topUpToAvoidFee > 0
-      ? `Top up ${pay(coverage.topUpToAvoidFee)} to avoid fee`
+      ? `Top up ${payCta(coverage.topUpToAvoidFee)} to avoid fee`
       : 'Critical'
   if (health === 'watch')
     return coverage.topUpToKeepStake > 0
-      ? `Top up ${pay(coverage.topUpToKeepStake)} to keep stake`
+      ? `Top up ${payCta(coverage.topUpToKeepStake)} to keep stake`
       : 'Watch'
   if (health === 'soft')
     return coverage.topUpToIdealKeep > 0
-      ? `Top up ${pay(coverage.topUpToIdealKeep)} for more stake`
-      : 'OK'
+      ? `Top up ${payCta(coverage.topUpToIdealKeep)} for more stake`
+      : 'Adequate'
   return 'Fully covered'
 }
 
