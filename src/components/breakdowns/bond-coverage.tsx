@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { pay, pmpe, stake } from 'src/format'
+import { pay, payCta, pmpe, stake } from 'src/format'
 import { docsPath } from 'src/lib/utils'
 import { computeBondCoverageMetrics } from 'src/services/breakdowns'
 import { bondStatusText } from 'src/services/tip-engine'
@@ -145,7 +145,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           {m.topUpToKeepStake > 0 ? (
             <CalcRow
               label="Top up to keep your stake"
-              value={pay(m.topUpToKeepStake)}
+              value={payCta(m.topUpToKeepStake)}
               bold
               large
               accent="yellow"
@@ -179,7 +179,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           {m.topUpToIdealKeep > 0 ? (
             <CalcRow
               label="Top up for more stake"
-              value={pay(m.topUpToIdealKeep)}
+              value={payCta(m.topUpToIdealKeep)}
               bold
               large
               accent="yellow"
@@ -213,7 +213,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
               {m.topUpToAvoidFee > 0 && (
                 <CalcRow
                   label="Top up to avoid the fee"
-                  value={pay(m.topUpToAvoidFee)}
+                  value={payCta(m.topUpToAvoidFee)}
                   bold
                   large
                   accent="red"

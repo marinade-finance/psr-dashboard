@@ -1,4 +1,4 @@
-import { formatSolAmount, pay } from 'src/format'
+import { formatSolAmount, pay, payCta, stakeCta } from 'src/format'
 
 import { bondHealthFromAuction, computeBondCoverageMetrics } from './breakdowns'
 import { bondUtilizationPct, compoundApy, apyBreakdown } from './calculations'
@@ -33,6 +33,10 @@ export interface TipStyle {
 
 // Single source of truth for bond CTA text. Used by getValidatorTip and
 // bond-coverage.tsx's statusLine so both surfaces stay in sync.
+//
+// `payCta` is used for top-up amounts: when raw value is positive but rounds
+// to "0.00 SOL" we surface "<0.01 SOL" instead so the call to action stays
+// honest ("Top up 0.00 SOL to avoid fee" reads as a no-op).
 export function bondStatusText(
   topUpToAvoidFee: number,
   topUpToKeepStake: number,
@@ -46,14 +50,14 @@ export function bondStatusText(
         : 'Bond below penalty threshold.'
     const topUpStr =
       topUpToAvoidFee > 0
-        ? ` Top up ${pay(topUpToAvoidFee)} to avoid the fee.`
+        ? ` Top up ${payCta(topUpToAvoidFee)} to avoid the fee.`
         : ''
     return `${feeStr}${topUpStr}`
   }
   if (topUpToKeepStake > 0)
-    return `Top up ${pay(topUpToKeepStake)} to keep your stake.`
+    return `Top up ${payCta(topUpToKeepStake)} to keep your stake.`
   if (topUpToIdealKeep > 0)
-    return `Top up ${pay(topUpToIdealKeep)} for more stake.`
+    return `Top up ${payCta(topUpToIdealKeep)} for more stake.`
   return ''
 }
 
@@ -153,7 +157,7 @@ export const getValidatorTip = (
         m.topUpToIdealKeep > 0 ? m.topUpToIdealKeep : m.topUpToKeepStake
       if (topUp > 0) {
         return {
-          text: `Bond too small for stake. Top up ${formatSolAmount(topUp, 0)} SOL to win more.`,
+          text: `Bond too small for stake. Top up ${stakeCta(topUp)} to win more.`,
           urgency: 'warning',
           constraint: 'bond',
           icon: 'warning',
@@ -260,6 +264,19 @@ export const getApyBreakdown = (
     stakeBid: bd.bid,
     total: bd.total,
   }
+}
+
+// Used by sam-table's "Stake / Next Δ" cell. Anything that displays as 0 SOL
+// (|delta| < 0.5) is muted/neutral — printing "-0 SOL" in red was misleading.
+export type NextStakeDeltaTone = 'positive' | 'negative' | 'neutral'
+export type NextStakeDeltaCell = {
+  prefix: '+' | ''
+  tone: NextStakeDeltaTone
+}
+export function nextStakeDeltaCell(expectedChange: number): NextStakeDeltaCell {
+  if (Math.abs(expectedChange) < 0.5) return { prefix: '', tone: 'neutral' }
+  if (expectedChange > 0) return { prefix: '+', tone: 'positive' }
+  return { prefix: '', tone: 'negative' }
 }
 
 export const formatStakeDelta = (
