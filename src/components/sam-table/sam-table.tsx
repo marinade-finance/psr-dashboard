@@ -106,6 +106,25 @@ export type SortColumn =
   | 'nextStep'
 export type SortDirection = 'asc' | 'desc'
 
+// Basic mode: hide validators with no marinade stake (current or target) and
+// validators whose bond runway is below the SDK-required minimum — these
+// generate the noisiest CTAs and aren't actionable for most readers. Expert
+// mode keeps the long tail; the jump-to-validator search can still open
+// detail for any filtered-out validator.
+export function passesTableFilter(
+  v: AuctionValidator,
+  level: UserLevel,
+  minBondEpochs: number,
+): boolean {
+  if (!v.bondBalanceSol) return false
+  if (level === UserLevel.Expert) return true
+  const inSetOrStaked =
+    v.marinadeActivatedStakeSol > 0 || v.auctionStake.marinadeSamTargetSol > 0
+  if (!inSetOrStaked) return false
+  if ((v.bondGoodForNEpochs ?? 0) < minBondEpochs) return false
+  return true
+}
+
 export function makeCompareFn(
   col: SortColumn,
   dir: SortDirection,
@@ -275,17 +294,7 @@ export const SamTable: React.FC<Props> = ({
   const validatorsWithBond: ValidatorWithBondState[] = useMemo(
     () =>
       augmentAuctionResult(auctionResult)
-        .filter(v => {
-          if (!selectBondSize(v)) return false
-          // Basic mode: only show validators active in the auction
-          if (level !== UserLevel.Expert) {
-            return (
-              v.marinadeActivatedStakeSol > 0 ||
-              v.auctionStake.marinadeSamTargetSol > 0
-            )
-          }
-          return true
-        })
+        .filter(v => passesTableFilter(v, level, dsSamConfig.minBondEpochs))
         .map(v => ({
           ...v,
           bondHealth: bondHealthFromAuction(v, dsSamConfig, winningTotalPmpe),

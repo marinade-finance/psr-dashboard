@@ -13,7 +13,7 @@ contributor rules, see `CLAUDE.md`.
 ## Stack
 
 - **Bundler**: Vite 7 (`vite.config.ts`). Dev server on port 3000 (`pnpm
-  start:dev`), build output to `build/` (`pnpm build`), preview on 8080
+start:dev`), build output to `build/` (`pnpm build`), preview on 8080
   (`pnpm preview`).
 - **Language**: TypeScript 4.9. No `tsc` build step — Vite transpiles;
   `npx tsc --noEmit` for type checks. `src` alias → `./src`.
@@ -44,22 +44,22 @@ contributor rules, see `CLAUDE.md`.
 
 ## Top-level layout
 
-| Path | Purpose |
-|---|---|
-| `src/pages/` | Route components — one file per page. |
-| `src/components/` | All view components, grouped by feature. |
-| `src/services/` | Data fetching, computation, types. UI-free. |
-| `src/lib/utils.ts` | `cn` helper + `CSS_*` runtime colour escape hatches + `docsPath`. |
-| `src/fixtures/` | Test fixtures (`test-validators.ts`). |
-| `src/index.css` | Design tokens, dark-mode overrides, `@theme` Tailwind exposure, global transition rule, keyframes. |
-| `src/index.tsx` | App entry: router, query client, GTM, prefetches. |
-| `src/format.ts` | Number / SOL / percentage formatters. |
-| `public/docs/*.md` | `GUIDE.md`, `GUIDE-EXPERT.md` — rendered by the docs page. |
-| `public/_redirects` | Netlify-style SPA fallback for the deploy host. |
-| `specs/` | Design specs — phase-numbered subdirs (`3/`, `5/`), `index.md` is the master index. |
-| `tests/` | Playwright e2e specs and `__screenshots__/` baselines. |
-| `.diary/` | Date-named milestone notes (YYYYMMDD.md), checked in. |
-| `.ship/` | Ephemeral shipping artifacts, gitignored. |
+| Path                | Purpose                                                                                            |
+| ------------------- | -------------------------------------------------------------------------------------------------- |
+| `src/pages/`        | Route components — one file per page.                                                              |
+| `src/components/`   | All view components, grouped by feature.                                                           |
+| `src/services/`     | Data fetching, computation, types. UI-free.                                                        |
+| `src/lib/utils.ts`  | `cn` helper + `CSS_*` runtime colour escape hatches + `docsPath`.                                  |
+| `src/fixtures/`     | Test fixtures (`test-validators.ts`).                                                              |
+| `src/index.css`     | Design tokens, dark-mode overrides, `@theme` Tailwind exposure, global transition rule, keyframes. |
+| `src/index.tsx`     | App entry: router, query client, GTM, prefetches.                                                  |
+| `src/format.ts`     | Number / SOL / percentage formatters.                                                              |
+| `public/docs/*.md`  | `GUIDE.md`, `GUIDE-EXPERT.md` — rendered by the docs page.                                         |
+| `public/_redirects` | Netlify-style SPA fallback for the deploy host.                                                    |
+| `specs/`            | Design specs — phase-numbered subdirs (`3/`, `5/`), `index.md` is the master index.                |
+| `tests/`            | Playwright e2e specs and `__screenshots__/` baselines.                                             |
+| `.diary/`           | Date-named milestone notes (YYYYMMDD.md), checked in.                                              |
+| `.ship/`            | Ephemeral shipping artifacts, gitignored.                                                          |
 
 `SCREENS.md`, `ARCHITECTURE.md`, `README.md`, `CLAUDE.md`, `TODO.md`,
 `IMPROVE.md`, `bugs.md` live at repo root.
@@ -70,17 +70,17 @@ contributor rules, see `CLAUDE.md`.
 
 `src/index.tsx` registers the full route table.
 
-| Route | Component | Level |
-|---|---|---|
-| `/` | `SamPage` (`src/pages/sam.tsx`) | Basic |
-| `/expert-` | `SamPage` | Expert |
-| `/bonds` | `ValidatorBondsPage` (`src/pages/validator-bonds.tsx`) | Basic |
-| `/expert-bonds` | `ValidatorBondsPage` | Expert |
-| `/protected-events` | `ProtectedEventsPage` (`src/pages/protected-events.tsx`) | Basic |
-| `/expert-protected-events` | `ProtectedEventsPage` | Expert |
-| `/docs` | `DocsPage` (`src/pages/docs.tsx`) | Basic (`GUIDE.md`) |
-| `/expert-docs` | `DocsPage` | Expert (`GUIDE-EXPERT.md`) |
-| `/test-`, `/test-expert-` | `TestSamPage` (`src/pages/test-sam.tsx`) | Internal sandbox |
+| Route                      | Component                                                | Level                      |
+| -------------------------- | -------------------------------------------------------- | -------------------------- |
+| `/`                        | `SamPage` (`src/pages/sam.tsx`)                          | Basic                      |
+| `/expert-`                 | `SamPage`                                                | Expert                     |
+| `/bonds`                   | `ValidatorBondsPage` (`src/pages/validator-bonds.tsx`)   | Basic                      |
+| `/expert-bonds`            | `ValidatorBondsPage`                                     | Expert                     |
+| `/protected-events`        | `ProtectedEventsPage` (`src/pages/protected-events.tsx`) | Basic                      |
+| `/expert-protected-events` | `ProtectedEventsPage`                                    | Expert                     |
+| `/docs`                    | `DocsPage` (`src/pages/docs.tsx`)                        | Basic (`GUIDE.md`)         |
+| `/expert-docs`             | `DocsPage`                                               | Expert (`GUIDE-EXPERT.md`) |
+| `/test-`, `/test-expert-`  | `TestSamPage` (`src/pages/test-sam.tsx`)                 | Internal sandbox           |
 
 `UserLevel` enum lives in `src/components/navigation/navigation.tsx`. The
 `level` prop threads from each route into the page and downstream into
@@ -160,6 +160,7 @@ override.
 - `components/help-tip/help-tip.tsx` — Radix `Tooltip` triggered by a `?` icon.
 - `components/metric/metric.tsx` — KPI card with label + value + optional `subline` and `extra`.
 - `components/validator-identity/validator-identity.tsx` — canonical name + truncated vote-account cell. Use it in every validator-listing table.
+- `components/validator-jump/validator-jump.tsx` — search input on the SAM page; matches on vote account or validator name and opens the detail sheet via `onValidatorClick`. Bypasses the Basic-mode bond filter (sheet reads from the full auction set).
 - `components/loader/loader.tsx` — full-page spinner.
 - `components/theme-toggle/theme-toggle.tsx` — light/dark switch.
 - `components/icons/bell-icon.tsx` — notification bell.
@@ -267,21 +268,22 @@ where applicable.
 Created at module scope in `src/index.tsx` (prefetched immediately) and
 inside individual pages:
 
-| Key | Owner | Notes |
-|---|---|---|
-| `['sam', simulationRunId]` | `SamPage` | `simulationRunId` increments on every simulate/reset → re-runs with `simulationOverrides`. `keepPreviousData` smooths the transition. |
-| `'sam'` (prefetch with `0`) | `index.tsx` | Warms the cache on cold load. |
-| `['validator-names']` | `SamPage` | `staleTime: Infinity`. |
-| `['notifications-all', 'sam_auction']` | SAM + bonds | Refetch every 5 min. |
-| `'notifications-broadcast'` | SAM, bonds, events | Refetch every 5 min. |
-| `'bonds'` | `ValidatorBondsPage` + `index.tsx` prefetch | |
-| `'protected-events'` | `ProtectedEventsPage` + `index.tsx` prefetch | |
-| `['psrEstimates', voteAccount]` | `ValidatorDetail` | `staleTime: 5 min`, per-validator. |
-| `['doc', activeDoc]` | `DocsPage` | `staleTime: Infinity`. |
+| Key                                    | Owner                                        | Notes                                                                                                                                 |
+| -------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `['sam', simulationRunId]`             | `SamPage`                                    | `simulationRunId` increments on every simulate/reset → re-runs with `simulationOverrides`. `keepPreviousData` smooths the transition. |
+| `'sam'` (prefetch with `0`)            | `index.tsx`                                  | Warms the cache on cold load.                                                                                                         |
+| `['validator-names']`                  | `SamPage`                                    | `staleTime: Infinity`.                                                                                                                |
+| `['notifications-all', 'sam_auction']` | SAM + bonds                                  | Refetch every 5 min.                                                                                                                  |
+| `'notifications-broadcast'`            | SAM, bonds, events                           | Refetch every 5 min.                                                                                                                  |
+| `'bonds'`                              | `ValidatorBondsPage` + `index.tsx` prefetch  |                                                                                                                                       |
+| `'protected-events'`                   | `ProtectedEventsPage` + `index.tsx` prefetch |                                                                                                                                       |
+| `['psrEstimates', voteAccount]`        | `ValidatorDetail`                            | `staleTime: 5 min`, per-validator.                                                                                                    |
+| `['doc', activeDoc]`                   | `DocsPage`                                   | `staleTime: Infinity`.                                                                                                                |
 
 ### SAM page state
 
 Tracked entirely in `SamPage`:
+
 - `selectedValidator` (URL-synced via `?v=`).
 - `simulationModeActive`, `simulationOverrides`, `simulatedValidators`,
   `pendingEdits`, `editingValidator`, `originalAuctionResult`,
@@ -310,18 +312,18 @@ backed by `src/index.css` tokens — never raw colours.
 
 ## Build & test
 
-| Command | Purpose |
-|---|---|
-| `pnpm install` | Install (pnpm 9.12). |
-| `pnpm start:dev` | Vite dev server with HMR. |
-| `pnpm build` | Production build → `build/`. |
-| `pnpm preview` | Serve `build/` on :8080 (used by Playwright). |
-| `pnpm lint` / `pnpm lint:fix` | ESLint over `./src/**/*.{ts,tsx,js,jsx}`. |
-| `pnpm format:check` / `pnpm format` | Prettier check / write. |
-| `pnpm check` | `lint && format:check`. |
-| `pnpm test` | Vitest unit tests. |
-| `pnpm test:e2e` | Playwright e2e. |
-| `npx tsc --noEmit` | Type check (no Makefile). |
+| Command                             | Purpose                                       |
+| ----------------------------------- | --------------------------------------------- |
+| `pnpm install`                      | Install (pnpm 9.12).                          |
+| `pnpm start:dev`                    | Vite dev server with HMR.                     |
+| `pnpm build`                        | Production build → `build/`.                  |
+| `pnpm preview`                      | Serve `build/` on :8080 (used by Playwright). |
+| `pnpm lint` / `pnpm lint:fix`       | ESLint over `./src/**/*.{ts,tsx,js,jsx}`.     |
+| `pnpm format:check` / `pnpm format` | Prettier check / write.                       |
+| `pnpm check`                        | `lint && format:check`.                       |
+| `pnpm test`                         | Vitest unit tests.                            |
+| `pnpm test:e2e`                     | Playwright e2e.                               |
+| `npx tsc --noEmit`                  | Type check (no Makefile).                     |
 
 Pre-commit (husky + lint-staged) runs `eslint --fix` + `prettier --write`
 on staged TS/TSX. First run may reformat — retry once.

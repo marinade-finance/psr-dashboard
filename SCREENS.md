@@ -23,11 +23,11 @@ Protected Stake Rewards" wordmark (wordmark hidden below `sm`).
 
 **Tabs**
 
-| Desktop label | Mobile label | Route |
-|---|---|---|
-| Stake Auction Marketplace | SAM | `/{prefix}` |
-| Protected Events | Events | `/{prefix}protected-events` |
-| Validator Bonds | Bonds | `/{prefix}bonds` |
+| Desktop label             | Mobile label | Route                       |
+| ------------------------- | ------------ | --------------------------- |
+| Stake Auction Marketplace | SAM          | `/{prefix}`                 |
+| Protected Events          | Events       | `/{prefix}protected-events` |
+| Validator Bonds           | Bonds        | `/{prefix}bonds`            |
 
 `prefix = ''` (Basic) or `'expert-'` (Expert). Active tab styled
 `bg-primary text-primary-foreground`. Hovering Events / Bonds prefetches the
@@ -42,18 +42,36 @@ respective query (`staleTime: 5min`).
 
 `src/pages/sam.tsx` · `src/components/sam-table/sam-table.tsx`
 
+### Jump-to-validator search
+
+Above the stats bar, a `max-w-md` text input
+(`src/components/validator-jump/validator-jump.tsx`).
+Accepts a vote account (exact / prefix) or a validator name (prefix /
+substring). Up to 8 ranked matches in a dropdown; click or `Enter` opens
+the detail sheet for that validator — even if the validator is hidden by
+the Basic-mode bond filter, because the detail reads from the full
+auction set, not from the visible table rows.
+
+### Basic vs Expert filter
+
+Basic mode hides validators whose bond runway (`bondGoodForNEpochs`) is
+below `dsSamConfig.minBondEpochs`, on top of the existing "must have
+some marinade stake" rule. Expert mode shows the long tail. The
+jump-to-validator search bypasses the filter, so a deep link still
+works.
+
 ### Stats bar
 
 Five `Card` tiles, `flex flex-wrap`. When ≥1 simulation is active a sixth
 tile is the destructive **"Reset Simulation (N)"** chip-button.
 
-| Tile | Source |
-|---|---|
-| Total Auction Stake | `selectSamDistributedStake(validators)` |
-| Winning APY | `selectWinningAPY(auctionResult, epochsPerYear)` |
-| Projected APY | `selectProjectedAPY(auctionResult, epochsPerYear)` |
-| Winning Validators | `winningCount / totalValidators` |
-| Re-delegation | sum of positive `expectedStakeChangeSol` (capped per epoch) |
+| Tile                | Source                                                      |
+| ------------------- | ----------------------------------------------------------- |
+| Total Auction Stake | `selectSamDistributedStake(validators)`                     |
+| Winning APY         | `selectWinningAPY(auctionResult, epochsPerYear)`            |
+| Projected APY       | `selectProjectedAPY(auctionResult, epochsPerYear)`          |
+| Winning Validators  | `winningCount / totalValidators`                            |
+| Re-delegation       | sum of positive `expectedStakeChangeSol` (capped per epoch) |
 
 Tooltips via `HelpTip` on Winning APY, Re-delegation, and Max APY column
 header.
@@ -63,15 +81,15 @@ header.
 7 columns, sortable. **Default sort: Max APY descending.** Sort indicator
 `↑`/`↓` next to active header.
 
-| Column | Sort key | What's there |
-|---|---|---|
-| `#` | `rank` | `{tipIcon}#N` coloured by tip urgency. Ghost rows: muted `#N`. Simulated rows: posColor-tinted `#N` + `✕` clear button. Keyboard-activatable (`role="button"`, `tabIndex`). |
-| Validator | `validator` | `<ValidatorIdentity>` — name + responsive vote account. Trailing red pulsing dot when validator has a notification (`hasAlert`). |
-| Max APY | `maxApy` | `selectMaxAPY` pill. Primary tone if in winning set, destructive if not. |
-| Bond | `bond` | `<BondChip>` (Healthy / Adequate / Watch / Critical, see § Bond chip below) + balance + utilization bar + `(Nep)` runway suffix. |
-| Stake / Next Δ | `stakeDelta` | Active SAM stake on top, expected next-epoch change underneath. `0 SOL` (muted) when delta is zero, otherwise tinted +/− SOL. |
-| Next Step | `nextStep` | One-line tip from `getValidatorTip`. Background tinted by urgency. |
-| (chevron) | — | Drill-in cue, recolours on row hover. |
+| Column         | Sort key     | What's there                                                                                                                                                                |
+| -------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `#`            | `rank`       | `{tipIcon}#N` coloured by tip urgency. Ghost rows: muted `#N`. Simulated rows: posColor-tinted `#N` + `✕` clear button. Keyboard-activatable (`role="button"`, `tabIndex`). |
+| Validator      | `validator`  | `<ValidatorIdentity>` — name + responsive vote account. Trailing red pulsing dot when validator has a notification (`hasAlert`).                                            |
+| Max APY        | `maxApy`     | `selectMaxAPY` pill. Primary tone if in winning set, destructive if not.                                                                                                    |
+| Bond           | `bond`       | `<BondChip>` (Healthy / Adequate / Watch / Critical, see § Bond chip below) + balance + utilization bar + `(Nep)` runway suffix.                                            |
+| Stake / Next Δ | `stakeDelta` | Active SAM stake on top, expected next-epoch change underneath. `0 SOL` (muted) when delta is zero, otherwise tinted +/− SOL.                                               |
+| Next Step      | `nextStep`   | One-line tip from `getValidatorTip`. Background tinted by urgency.                                                                                                          |
+| (chevron)      | —            | Drill-in cue, recolours on row hover.                                                                                                                                       |
 
 ### Cutoff divider
 
@@ -82,12 +100,12 @@ validators stay above the line because they'd win on yield. Label reads
 
 ### Row tints
 
-| State | Background |
-|---|---|
-| In set | `bg-card`, hover `bg-primary-light` |
-| Out of set (bid-too-low) | `bg-destructive/[0.02]`, hover `bg-destructive/[0.05]` |
-| Ghost (simulation original) | `opacity-40 line-through bg-muted/30 cursor-default` |
-| Simulated (post-edit) | `ring-1 ring-current/20`, `borderLeftColor` = posColor (green up, red down) |
+| State                       | Background                                                                  |
+| --------------------------- | --------------------------------------------------------------------------- |
+| In set                      | `bg-card`, hover `bg-primary-light`                                         |
+| Out of set (bid-too-low)    | `bg-destructive/[0.02]`, hover `bg-destructive/[0.05]`                      |
+| Ghost (simulation original) | `opacity-40 line-through bg-muted/30 cursor-default`                        |
+| Simulated (post-edit)       | `ring-1 ring-current/20`, `borderLeftColor` = posColor (green up, red down) |
 
 ### Simulation mode
 
@@ -101,12 +119,12 @@ positions of changed validators.
 
 Four tiers, `BOND_CHIP` record in `sam-table.tsx`:
 
-| Tier | Style | Meaning |
-|---|---|---|
-| `healthy` | `bg-primary-light-10 text-primary` | bond exceeds ideal coverage |
-| `soft` ("Adequate") | `bg-secondary text-muted-foreground` | covers current stake but not ideal target |
-| `watch` | `bg-warning-light text-warning` | can't keep current stake; some will be undelegated |
-| `critical` | `bg-destructive-light text-destructive` | below penalty threshold; bond risk fee charged |
+| Tier                | Style                                   | Meaning                                            |
+| ------------------- | --------------------------------------- | -------------------------------------------------- |
+| `healthy`           | `bg-primary-light-10 text-primary`      | bond exceeds ideal coverage                        |
+| `soft` ("Adequate") | `bg-secondary text-muted-foreground`    | covers current stake but not ideal target          |
+| `watch`             | `bg-warning-light text-warning`         | can't keep current stake; some will be undelegated |
+| `critical`          | `bg-destructive-light text-destructive` | below penalty threshold; bond risk fee charged     |
 
 ### Validator detail sheet
 
@@ -124,8 +142,8 @@ Bond · Bid Penalty.
   coverage breakdown →" link.
 - **Expected Payment This Epoch** — Active stake cost, Activating stake
   cost, optional `↳ bid gap` sub-row, Penalty group (single `Penalty: No
-  penalties` line OR an itemised list of `↳ bid-too-low / blacklist / bond
-  risk fee` `PenaltyRow`s, each clickable to its own breakdown tab),
+penalties` line OR an itemised list of `↳ bid-too-low / blacklist / bond
+risk fee` `PenaltyRow`s, each clickable to its own breakdown tab),
   Total (separated by horizontal line via `SEPARATOR_DIV_CLASS`).
 - **APY Composition** (right column) — segmented bar showing inflation /
   MEV / block rewards / stake bid. Bar widths use raw PMPE proportions
@@ -161,12 +179,12 @@ Full-width card.
 `<ValidatorBondsTileMap>` inside the bonds table component. 4 tier rows by
 total Marinade stake:
 
-| Row | Range |
-|---|---|
-| `>100k` | ≥ 100,000 SOL |
+| Row        | Range                |
+| ---------- | -------------------- |
+| `>100k`    | ≥ 100,000 SOL        |
 | `50k–100k` | 50,000 – 100,000 SOL |
-| `20k–50k` | 20,000 – 50,000 SOL |
-| `<20k` | < 20,000 SOL |
+| `20k–50k`  | 20,000 – 50,000 SOL  |
+| `<20k`     | < 20,000 SOL         |
 
 Empty tiers omitted. Tile size = `MIN_TILE + √(stake / globalMaxStake) × (MAX_TILE − MIN_TILE)` clamped 28..120px.
 
@@ -175,13 +193,13 @@ coverage % (`size ≥ 76`).
 
 **Tile colour by coverage tier** (semantic CSS vars):
 
-| Tier | Token |
-|---|---|
-| no bond | `var(--bond-none)` |
-| < 40% | `var(--bond-low)` |
-| 40 – 70% | `var(--bond-mid)` |
+| Tier     | Token              |
+| -------- | ------------------ |
+| no bond  | `var(--bond-none)` |
+| < 40%    | `var(--bond-low)`  |
+| 40 – 70% | `var(--bond-mid)`  |
 | 70 – 95% | `var(--bond-high)` |
-| ≥ 95% | `var(--bond-full)` |
+| ≥ 95%    | `var(--bond-full)` |
 
 Coverage bar fixed at the tile's bottom edge, gradient-filled to
 `coveragePct%`. Hover tooltip via `tooltipAttributes`. Legend below.
@@ -191,14 +209,14 @@ Coverage bar fixed at the tile's bottom edge, gradient-filled to
 Generic `<Table>` with `showRowNumber`. **Default sort: Marinade Stake
 DESC.**
 
-| Column | Notes | Expert only |
-|---|---|---|
-| Validator | `<ValidatorIdentity>` + bell-icon trailing slot when notifications exist | |
-| Marinade Stake [SOL] | tooltip breaks out native vs liquid | |
-| Bond Balance [SOL] | `bond.effective_amount` | |
-| Protected Stake [SOL] | `selectProtectedStake` | |
-| Coverage | mini bar (`bg-status-green` ≥90% · `bg-warning` ≥50% · `bg-destructive` <50%) + percentage | |
-| Max protectable [SOL] | `selectMaxProtectedStake` | ✓ |
+| Column                | Notes                                                                                      | Expert only |
+| --------------------- | ------------------------------------------------------------------------------------------ | ----------- |
+| Validator             | `<ValidatorIdentity>` + bell-icon trailing slot when notifications exist                   |             |
+| Marinade Stake [SOL]  | tooltip breaks out native vs liquid                                                        |             |
+| Bond Balance [SOL]    | `bond.effective_amount`                                                                    |             |
+| Protected Stake [SOL] | `selectProtectedStake`                                                                     |             |
+| Coverage              | mini bar (`bg-status-green` ≥90% · `bg-warning` ≥50% · `bg-destructive` <50%) + percentage |             |
+| Max protectable [SOL] | `selectMaxProtectedStake`                                                                  | ✓           |
 
 ---
 
@@ -214,12 +232,12 @@ Data: `fetchProtectedEventsWithValidator()`. Rows where
 
 Responsive grid (`grid-cols-1 sm:grid-cols-3`):
 
-| Tile | Value | Note |
-|---|---|---|
-| Events | filtered count w/ subline `of N total` when filter active | always |
-| Amount | total SOL paid out + Bond/Marinade split bar (hover for SOL) | always |
-| Last settled epoch | most recent fully on-chain epoch | always |
-| Last Epoch Bids | bids collectable from last settled epoch | Expert only |
+| Tile               | Value                                                        | Note        |
+| ------------------ | ------------------------------------------------------------ | ----------- |
+| Events             | filtered count w/ subline `of N total` when filter active    | always      |
+| Amount             | total SOL paid out + Bond/Marinade split bar (hover for SOL) | always      |
+| Last settled epoch | most recent fully on-chain epoch                             | always      |
+| Last Epoch Bids    | bids collectable from last settled epoch                     | Expert only |
 
 ### Filters
 
@@ -235,23 +253,23 @@ Strip above the table.
 
 Generic `<Table>`, `showRowNumber`. **Default sort: Epoch DESC.**
 
-| Column | Notes |
-|---|---|
-| Validator | `<ValidatorIdentity>` |
-| Epoch | integer epoch |
-| Reason | human-readable string from `selectProtectedStakeReason` |
-| Paid Out | SOL amount + status badge |
-| Funded by | funder badge |
+| Column    | Notes                                                   |
+| --------- | ------------------------------------------------------- |
+| Validator | `<ValidatorIdentity>`                                   |
+| Epoch     | integer epoch                                           |
+| Reason    | human-readable string from `selectProtectedStakeReason` |
+| Paid Out  | SOL amount + status badge                               |
+| Funded by | funder badge                                            |
 
 **Status badges** (Paid Out column): `Dryrun` (variant `secondary`) ·
 `Estimate` (variant `default`) · no badge for finalised events.
 
 **Funder badges**:
 
-| Badge | Style |
-|---|---|
+| Badge          | Style                                                            |
+| -------------- | ---------------------------------------------------------------- |
 | Validator Bond | `bg-status-green-light text-status-green border-status-green/30` |
-| Marinade | `bg-warning-light text-warning border-warning/30` |
+| Marinade       | `bg-warning-light text-warning border-warning/30`                |
 
 ---
 
