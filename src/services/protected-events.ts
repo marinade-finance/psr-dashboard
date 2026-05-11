@@ -77,6 +77,7 @@ export type SettlementReason =
   | 'BidTooLowPenalty'
   | 'BlacklistPenalty'
   | 'BondRiskFee'
+  | 'PriorityFee'
 
 export const isProtectedEvent = (
   e: SettlementReason,
@@ -119,6 +120,7 @@ export const selectProtectedStakeReason = (protectedEvent: ProtectedEvent) => {
   if (protectedEvent.reason === 'BidTooLowPenalty') return 'BidTooLow'
   if (protectedEvent.reason === 'BlacklistPenalty') return 'Blacklist'
   if (protectedEvent.reason === 'BondRiskFee') return 'BondRiskFee'
+  if (protectedEvent.reason === 'PriorityFee') return 'PriorityFee'
   console.log('unsupported event:', protectedEvent)
   return 'Unsupported'
 }

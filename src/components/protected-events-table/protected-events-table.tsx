@@ -120,9 +120,15 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
       protectedEvent.epoch <= maxEpochFilter
     return matchesEpoch && matchesValidator
   })
-  const filteredData = preFilteredData.filter(
-    ({ protectedEvent }) => protectedEvent.reason !== 'Bidding',
-  )
+  const filteredData = preFilteredData.filter(({ protectedEvent }) => {
+    if (protectedEvent.reason === 'Bidding') return false
+    if (
+      protectedEvent.reason === 'PriorityFee' &&
+      selectAmount(protectedEvent) < 0.01
+    )
+      return false
+    return true
+  })
   const lastSettledEpoch = data.reduce(
     (epoch, { protectedEvent, status }) =>
       status === ProtectedEventStatus.FACT
