@@ -46,7 +46,6 @@ import type {
   DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
-import type { PendingEdits } from 'src/services/simulation'
 
 export type ValidatorMeta = {
   name?: string
@@ -175,16 +174,9 @@ type Props = {
   level: UserLevel
   simulatedValidators?: Set<string>
   isCalculating: boolean
-  simulationModeActive?: boolean
-  editingValidator?: string | null
-  pendingEdits?: PendingEdits
   validatorMeta?: Map<string, ValidatorMeta>
   onValidatorClick: (voteAccount: string) => void
   onValidatorSearch?: (voteAccount: string) => void
-  onFieldChange?: (field: string, value: string) => void
-  onRunSimulation?: () => void
-  onCancelEditing?: () => void
-  onToggleSimulation?: () => void
   onClearValidator?: (voteAccount: string) => void
   onResetSimulation?: () => void
 }
