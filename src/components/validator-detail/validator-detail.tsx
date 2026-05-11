@@ -232,7 +232,13 @@ export const ValidatorDetail = ({
         winningTotalPmpe,
         dsSamConfig.bondRiskFeeMult,
       ),
-    [validator, dsSamConfig, winningTotalPmpe],
+    [
+      validator,
+      dsSamConfig.minBondEpochs,
+      dsSamConfig.idealBondEpochs,
+      dsSamConfig.bondRiskFeeMult,
+      winningTotalPmpe,
+    ],
   )
   const paymentMetrics = useMemo(
     () => computeSamRevenueMetrics(validator),
@@ -240,7 +246,12 @@ export const ValidatorDetail = ({
   )
   const penaltyMetrics = useMemo(
     () => computeBidPenaltyMetrics(validator, dsSamConfig, winningTotalPmpe),
-    [validator, dsSamConfig, winningTotalPmpe],
+    [
+      validator,
+      dsSamConfig.minBondEpochs,
+      dsSamConfig.bondRiskFeeMult,
+      winningTotalPmpe,
+    ],
   )
   const { data: psrEstimates = [] } = useQuery(
     ['psrEstimates', voteAccount],
