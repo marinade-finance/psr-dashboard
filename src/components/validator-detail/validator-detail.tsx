@@ -211,7 +211,7 @@ export const ValidatorDetail = ({
   // In-set/out-of-set validators are interleaved by maxApy when the auction
   // skips high-yield validators (constraints, blacklist) for lower-yield ones,
   // so the cutoff distance must be counted, not derived from rank − inSetCount.
-  const cutoffRank = useMemo(() => {
+  const posVsWinning = useMemo(() => {
     const ourApy = selectMaxAPY(validator, epochsPerYear)
     let count = 0
     for (const other of auctionResult.auctionData.validators) {
@@ -370,9 +370,9 @@ export const ValidatorDetail = ({
                   <span className="text-sm leading-none">
                     {tip.icon ?? tipStyle.icon}
                   </span>
-                  {cutoffRank < 0
-                    ? `-#${Math.abs(cutoffRank)}`
-                    : `#${cutoffRank}`}
+                  {posVsWinning < 0
+                    ? `-#${Math.abs(posVsWinning)}`
+                    : `#${posVsWinning}`}
                 </span>
               </span>
               {validatorName && (
