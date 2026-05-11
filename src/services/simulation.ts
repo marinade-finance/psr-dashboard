@@ -92,12 +92,12 @@ export function detectChangedValidators(
   originalAuctionResult: AuctionResult,
 ): Set<string> {
   const changed = new Set<string>()
-  for (const va of simulatedVAs) {
+  for (const voteAccount of simulatedVAs) {
     const orig = originalAuctionResult.auctionData.validators.find(
-      validator => validator.voteAccount === va,
+      validator => validator.voteAccount === voteAccount,
     )
     const cur = currentValidators.find(
-      validator => validator.voteAccount === va,
+      validator => validator.voteAccount === voteAccount,
     )
     if (!orig || !cur) continue
     if (
@@ -106,7 +106,7 @@ export function detectChangedValidators(
       orig.blockRewardsCommissionDec !== cur.blockRewardsCommissionDec ||
       orig.revShare.bidPmpe !== cur.revShare.bidPmpe
     ) {
-      changed.add(va)
+      changed.add(voteAccount)
     }
   }
   return changed
@@ -122,16 +122,18 @@ export function insertGhostRows<T extends { voteAccount: string }>(
   const result = [...display]
   const inserts: Array<{ insertIndex: number; item: DisplayValidator<T> }> = []
 
-  for (const va of changedVAs) {
+  for (const voteAccount of changedVAs) {
     const orig = originalAuctionResult.auctionData.validators.find(
-      v => v.voteAccount === va,
+      validator => validator.voteAccount === voteAccount,
     )
     if (!orig) continue
 
-    const originalPosition = originalPositionsMap.get(va) ?? null
+    const originalPosition = originalPositionsMap.get(voteAccount) ?? null
     if (originalPosition === null || originalPosition <= 0) continue
 
-    const currentIndex = result.findIndex(d => d.validator.voteAccount === va)
+    const currentIndex = result.findIndex(
+      d => d.validator.voteAccount === voteAccount,
+    )
     if (currentIndex === -1) continue
 
     const adjustedOrigPos = originalPosition - 1
