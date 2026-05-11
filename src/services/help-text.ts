@@ -8,12 +8,12 @@ export const HELP_TEXT = {
     'Extra yearly return you pay stakers out of your own pocket — added on top of normal validator rewards. This is the main knob to climb the ranking. The cost comes out of your bond each epoch.',
   winningApy:
     'The lowest yearly return that still won stake this epoch. Your Max APY has to clear this bar — beat it and you receive stake, fall short and you don’t.',
-  want: 'The cap you set on how much stake you’ll take. Set it too low and you miss out; lower it mid-epoch and you may be penalised.',
+  want: 'The cap you set on how much stake you’ll take. Set it too low and you miss out on stake you could have earned.',
   bondHealth:
     'How well your bond covers the upcoming bid costs. Critical — too thin, fee penalties already kicking in. Watch — covers the minimum, but too low to qualify for more stake. Healthy — comfortably covers what you’ll owe.',
   sfdp: 'Whether you meet Solana Foundation’s SFDP criteria — the foundation’s own delegation programme. Meeting it gives you a small boost in Marinade’s auction too.',
   penalty:
-    'Cutting your bid, WANT, or bond too aggressively mid-epoch is treated as bailing on commitments — you get a temporary rank hit. Adjustments only land in the next epoch anyway, so plan ahead.',
+    "Charged when your bid drops from the previous epoch and your bond obligation doesn't cover what you previously committed to pay. The shortfall is collected as forced stake undelegation — Marinade withdraws stake proportional to how much you under-delivered on your prior bid.",
   simulation:
     'Try out different commission and bid values to see how your rank, stake, and bond would change — without actually committing anything.',
   bidDistribution:
