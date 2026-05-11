@@ -73,3 +73,16 @@ the rank number is hard to interpret.
 - APY numbers in the table and breakdown shift accordingly.
 
 **Why:** The constant overestimates APY during slow epochs and underestimates during fast ones. Operators making bonding decisions benefit from accurate compound-rate math.
+
+
+### 4. PSR estimate query: share all-validator fetch across detail sheet opens
+
+`fetchPsrEstimatesForValidator` (`protected-events-estimator.ts:348`) fetches all validators (3 epochs) and filters client-side for one. The react-query key is `['psrEstimates', voteAccount]` — per-validator — so opening 5 different detail sheets makes 5 full `fetchValidatorsWithEpochs(3)` calls with no data reuse.
+
+**Fix:** Split into two cached queries:
+1. `['psrEstimatesAll']` — fetches all validators and runs `calculateProtectedEventEstimates`, `staleTime: 5 min`
+2. Per-validator filter runs client-side from the cached result
+
+Opening N detail sheets in a session then costs 1 fetch instead of N.
+
+**Why:** Browsing multiple validators in a session makes redundant API calls proportional to the number of sheets opened.
