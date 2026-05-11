@@ -14,6 +14,8 @@ import { TooltipProvider } from './components/ui/tooltip'
 import { DocsPage } from './pages/docs'
 import { ProtectedEventsPage } from './pages/protected-events'
 import { SamPage } from './pages/sam'
+import { TestBondsPage } from './pages/test-bonds'
+import { TestProtectedEventsPage } from './pages/test-protected-events'
 import { TestSamPage } from './pages/test-sam'
 import { ValidatorBondsPage } from './pages/validator-bonds'
 import { loadSam } from './services/sam'
@@ -79,6 +81,26 @@ const router = createBrowserRouter([
   {
     path: '/test-expert-',
     element: <TestSamPage level={UserLevel.Expert} />,
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: '/test-bonds',
+    element: <TestBondsPage level={UserLevel.Basic} />,
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: '/test-expert-bonds',
+    element: <TestBondsPage level={UserLevel.Expert} />,
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: '/test-protected-events',
+    element: <TestProtectedEventsPage level={UserLevel.Basic} />,
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: '/test-expert-protected-events',
+    element: <TestProtectedEventsPage level={UserLevel.Expert} />,
     errorElement: <ErrorPage />,
   },
   {
