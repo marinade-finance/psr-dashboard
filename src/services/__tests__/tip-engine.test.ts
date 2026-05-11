@@ -233,7 +233,7 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(v, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('warning')
     expect(tip.constraint).toBe('rank')
-    expect(tip.text).toContain('Out of auction')
+    expect(tip.text).toContain('Below the winning threshold')
   })
 
   it('critical health (near-zero bond) → critical/bond penalty threshold message', () => {

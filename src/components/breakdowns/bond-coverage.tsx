@@ -48,6 +48,14 @@ const statusLine = (
     if (text) return { label: text, tone: 'yellow' }
     return { label: 'Bond covers current stake.', tone: 'yellow' }
   }
+  if (state === 'soft') {
+    if (topUpToIdealKeep > 0)
+      return {
+        label: `Bond covers current stake. Top up ${payCta(topUpToIdealKeep)} for more.`,
+        tone: 'yellow',
+      }
+    return { label: 'Bond meets ideal coverage.', tone: 'green' }
+  }
   return {
     label: 'Bond has enough coverage. Keep it topped up.',
     tone: 'green',
@@ -152,9 +160,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
               separator
               marker="yellow"
             />
-          ) : (
-            <OkRow message="Bond covers your current stake." />
-          )}
+          ) : null}
 
           <SectionHeader title={`Ideal Coverage — ${m.idealEp} epochs`} />
           <CalcRow label="Bond balance" value={pay(m.bondBalanceSol)} bold />
@@ -186,8 +192,10 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
               separator
               marker="yellow"
             />
-          ) : (
+          ) : m.topUpToKeepStake > 0 ? (
             <OkRow message="Bond meets ideal coverage — eligible for more stake." />
+          ) : (
+            <OkRow message="Bond covers current stake and meets ideal coverage." />
           )}
 
           {showRiskSection && (

@@ -85,15 +85,15 @@ export function bondCoverageLabel(
 ): string {
   if (health === 'critical')
     return coverage.topUpToAvoidFee > 0
-      ? `Top up ${payCta(coverage.topUpToAvoidFee)} to avoid fee`
+      ? `Top up ${payCta(coverage.topUpToAvoidFee)} to avoid the fee`
       : 'Critical'
   if (health === 'watch')
     return coverage.topUpToKeepStake > 0
-      ? `Top up ${payCta(coverage.topUpToKeepStake)} to keep stake`
+      ? `Top up ${payCta(coverage.topUpToKeepStake)} to keep your stake`
       : 'Watch'
   if (health === 'soft')
     return coverage.topUpToIdealKeep > 0
-      ? `Top up ${payCta(coverage.topUpToIdealKeep)} for more stake`
+      ? `Top up ${payCta(coverage.topUpToIdealKeep)} to qualify for more`
       : 'Adequate'
   return 'Fully covered'
 }

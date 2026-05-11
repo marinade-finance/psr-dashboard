@@ -36,7 +36,7 @@ export interface TipStyle {
 //
 // `payCta` is used for top-up amounts: when raw value is positive but rounds
 // to "0.00 SOL" we surface "<0.01 SOL" instead so the call to action stays
-// honest ("Top up 0.00 SOL to avoid fee" reads as a no-op).
+// honest ("Top up 0.00 SOL to avoid the fee" reads as a no-op).
 export function bondStatusText(
   topUpToAvoidFee: number,
   topUpToKeepStake: number,
@@ -157,15 +157,14 @@ export const getValidatorTip = (
         m.topUpToIdealKeep > 0 ? m.topUpToIdealKeep : m.topUpToKeepStake
       if (topUp > 0) {
         return {
-          text: `Bond too small for stake. Top up ${stakeCta(topUp)} to win more.`,
+          text: `Bond too small for stake. Top up ${stakeCta(topUp)} to qualify for more.`,
           urgency: 'warning',
           constraint: 'bond',
-          icon: 'warning',
         }
       }
     }
     return {
-      text: 'Out of auction — raise bid or cut commission.',
+      text: 'Below the winning threshold.',
       urgency: 'warning',
       constraint: 'rank',
     }
@@ -187,7 +186,6 @@ export const getValidatorTip = (
         text: bondStatusText(m.topUpToAvoidFee, 0, 0, bondRiskFeeSol),
         urgency: 'critical',
         constraint: 'bond',
-        icon: 'warning',
       }
     }
 
@@ -196,7 +194,6 @@ export const getValidatorTip = (
         text: bondStatusText(0, m.topUpToKeepStake, 0, 0),
         urgency: 'warning',
         constraint: 'bond',
-        icon: 'warning',
       }
     }
 
