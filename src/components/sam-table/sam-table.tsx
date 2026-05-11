@@ -140,10 +140,7 @@ export function makeCompareFn(
         cmp = selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
         break
       case 'stakeDelta':
-        cmp =
-          a.auctionStake.marinadeSamTargetSol -
-          a.marinadeActivatedStakeSol -
-          (b.auctionStake.marinadeSamTargetSol - b.marinadeActivatedStakeSol)
+        cmp = a.marinadeActivatedStakeSol - b.marinadeActivatedStakeSol
         break
       case 'validator': {
         const nameA = validatorMeta?.get(a.voteAccount)?.name ?? a.voteAccount
