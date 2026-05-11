@@ -211,3 +211,43 @@ test('expert-protected-events shows last-epoch bid subline (SOL bids)', async ({
     timeout: 50000,
   })
 })
+
+test.describe('Events expert', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/expert-protected-events')
+    await waitForEvents(page)
+  })
+
+  test('table loads at /expert-protected-events', async ({ page }) => {
+    await expect(page).toHaveURL('/expert-protected-events')
+    await expect(page.locator('table')).toBeVisible()
+    await expect(page.getByText('Error fetching data')).not.toBeVisible()
+  })
+
+  test('metrics visible in expert mode', async ({ page }) => {
+    const wrap = page.locator('.metricWrap')
+    for (const label of ['Events', 'Amount', 'Last settled epoch']) {
+      await expect(wrap.getByText(label).first()).toBeVisible()
+    }
+  })
+
+  test('funder badges visible in expert mode', async ({ page }) => {
+    const pageText = await page.locator('table tbody').innerText()
+    expect(pageText).toMatch(/Validator Bond|Marinade/)
+  })
+
+  test('no error message in expert mode', async ({ page }) => {
+    await expect(page.getByText('Error fetching data')).not.toBeVisible()
+  })
+
+  test('validator filter works in expert mode', async ({ page }) => {
+    const rows = page.locator('table tbody tr')
+    await expect(rows.first()).toBeVisible()
+    const total = await rows.count()
+
+    const input = page.locator('input[type="text"]').first()
+    await input.fill('zzzzNONEXISTENT999')
+    await page.waitForTimeout(300)
+    expect(await rows.count()).toBeLessThan(total)
+  })
+})

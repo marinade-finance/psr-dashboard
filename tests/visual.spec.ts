@@ -23,6 +23,8 @@ test('all main routes render without crash', async ({ page }) => {
     { path: '/bonds', wait: 'table' },
     { path: '/protected-events', wait: 'table' },
     { path: '/expert-', wait: 'tbody tr' },
+    { path: '/expert-bonds', wait: 'table' },
+    { path: '/expert-protected-events', wait: 'table' },
   ]
   for (const { path, wait } of routes) {
     await page.goto(path)
@@ -36,4 +38,50 @@ test('/docs renders guide content', async ({ page }) => {
   await expect(
     page.getByRole('heading', { name: 'PSR Dashboard Guide' }),
   ).toBeVisible()
+})
+
+test('/expert-docs renders expert guide content', async ({ page }) => {
+  await page.goto('/expert-docs')
+  await expect(
+    page.getByRole('heading', { name: /Expert View/ }),
+  ).toBeVisible()
+})
+
+test('no console errors on expert SAM page', async ({ page }) => {
+  const errors: string[] = []
+  page.on('console', m => {
+    if (m.type() === 'error') errors.push(m.text())
+  })
+  await page.goto('/expert-')
+  await page.waitForSelector('tbody tr', { timeout: 50000 })
+  const real = errors.filter(
+    e => !e.includes('Failed to load resource') && !e.includes('net::'),
+  )
+  expect(real).toHaveLength(0)
+})
+
+test('no console errors on expert bonds page', async ({ page }) => {
+  const errors: string[] = []
+  page.on('console', m => {
+    if (m.type() === 'error') errors.push(m.text())
+  })
+  await page.goto('/expert-bonds')
+  await page.waitForSelector('table', { timeout: 90000 })
+  const real = errors.filter(
+    e => !e.includes('Failed to load resource') && !e.includes('net::'),
+  )
+  expect(real).toHaveLength(0)
+})
+
+test('no console errors on expert protected-events page', async ({ page }) => {
+  const errors: string[] = []
+  page.on('console', m => {
+    if (m.type() === 'error') errors.push(m.text())
+  })
+  await page.goto('/expert-protected-events')
+  await page.waitForSelector('table tbody tr', { timeout: 90000 })
+  const real = errors.filter(
+    e => !e.includes('Failed to load resource') && !e.includes('net::'),
+  )
+  expect(real).toHaveLength(0)
 })

@@ -100,4 +100,37 @@ test.describe('Bonds expert', () => {
   test('expert has max protectable stat chip', async ({ page }) => {
     await expect(page.getByText(/Max protectable/i).first()).toBeVisible()
   })
+
+  test('expert has max protectable column in table', async ({ page }) => {
+    const headers = await page.locator('table th').allInnerTexts()
+    expect(headers.some(h => /Max protectable/i.test(h))).toBe(true)
+  })
+
+  test('expert coverage hero shows percentage', async ({ page }) => {
+    const hero = page.getByText(/of Marinade stake is bond-protected/i).first()
+    await expect(hero).toBeVisible()
+  })
+
+  test('expert table has rows with no error', async ({ page }) => {
+    expect(await page.locator('table tbody tr').count()).toBeGreaterThan(0)
+    await expect(page.getByText('Error fetching data')).not.toBeVisible()
+  })
+
+  test('expert stats chips visible (Bonds funded, Total bonds, Total stake)', async ({
+    page,
+  }) => {
+    for (const label of ['Bonds funded', 'Total bonds', 'Total stake']) {
+      await expect(page.getByText(new RegExp(label, 'i')).first()).toBeVisible()
+    }
+  })
+
+  test('expert validator column shows truncated vote accounts', async ({
+    page,
+  }) => {
+    const cells = page.locator('table tbody tr td:nth-child(2)')
+    const count = await cells.count()
+    expect(count).toBeGreaterThan(0)
+    const text = await cells.first().innerText()
+    expect(text).toMatch(/[1-9A-HJ-NP-Za-km-z]{4,}…[1-9A-HJ-NP-Za-km-z]{4}/)
+  })
 })

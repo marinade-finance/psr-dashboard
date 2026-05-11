@@ -192,20 +192,131 @@ test.describe('SAM sort secondary', () => {
 })
 
 test.describe('SAM expert', () => {
-  test('loads with rows and no error', async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
     await page.goto('/expert-')
     await waitForData(page)
+  })
+
+  test('loads with rows and no error', async ({ page }) => {
     expect(await page.locator('tbody tr').count()).toBeGreaterThan(0)
     await expect(page.getByText('Error fetching data')).not.toBeVisible()
   })
 
   test('Docs link visible in nav on expert route', async ({ page }) => {
-    await page.goto('/expert-')
-    await waitForData(page)
     // Match the nav Docs link only (sam page also has a "Full docs↗" link).
     await expect(
       page.getByRole('link', { name: 'Docs', exact: true }).first(),
     ).toBeVisible()
+  })
+
+  test('all 4 metrics visible on expert route', async ({ page }) => {
+    for (const label of [
+      'Total Auction Stake',
+      'Winning APY',
+      'Projected APY',
+      'Winning Validators',
+    ]) {
+      await expect(page.getByText(label).first()).toBeVisible()
+    }
+  })
+
+  test('expert has at least as many rows as basic', async ({ page }) => {
+    const expertCount = await page.locator('tbody tr').count()
+    await page.goto('/')
+    await waitForData(page)
+    const basicCount = await page.locator('tbody tr').count()
+    // Expert shows sub-min-bond validators too, so count >= basic
+    expect(expertCount).toBeGreaterThanOrEqual(basicCount)
+  })
+
+  test('jump-to-validator search box visible', async ({ page }) => {
+    // ValidatorJump search is rendered when onValidatorSearch is passed (both modes)
+    const search = page.locator('input[placeholder*="Jump"]').or(
+      page.locator('input[placeholder*="Search"]').or(
+        page.locator('input[placeholder*="validator"]'),
+      ),
+    )
+    await expect(search.first()).toBeVisible()
+  })
+
+  test('winning-set divider present in expert mode', async ({ page }) => {
+    await expect(page.getByText(/Winning Set Cutoff/i).first()).toBeVisible()
+  })
+
+  test('Re-delegation stat visible in expert mode', async ({ page }) => {
+    await expect(page.getByText('Re-delegation').first()).toBeVisible()
+  })
+})
+
+test.describe('SAM simulation mode (via detail sheet)', () => {
+  // The simulation toggle lives in the ValidatorDetail sheet.
+  // Open a bonded row, toggle simulation on, verify the What-If section appears.
+
+  async function openSheetForBondedRow(page: import('@playwright/test').Page): Promise<boolean> {
+    const SHEET_OVERLAY = '[role="dialog"]'
+    const rows = page.locator('tbody tr')
+    const count = await rows.count()
+    for (let i = 0; i < Math.min(count, 30); i++) {
+      await rows.nth(i).click()
+      await page.waitForTimeout(300)
+      const visible = await page
+        .locator(SHEET_OVERLAY)
+        .first()
+        .isVisible()
+        .catch(() => false)
+      if (visible) return true
+    }
+    return false
+  }
+
+  test('simulation toggle appears in detail sheet', async ({ page }) => {
+    await page.goto('/')
+    await waitForData(page)
+    const opened = await openSheetForBondedRow(page)
+    test.skip(!opened, 'no bonded validators in dataset')
+    // The sheet has a "Simulate" label next to a Switch
+    await expect(
+      page.locator('[role="dialog"]').getByText('Simulate').first(),
+    ).toBeVisible()
+  })
+
+  test('toggling simulation reveals What-If section', async ({ page }) => {
+    await page.goto('/')
+    await waitForData(page)
+    const opened = await openSheetForBondedRow(page)
+    test.skip(!opened, 'no bonded validators in dataset')
+
+    // Toggle simulation on
+    const toggle = page
+      .locator('[role="dialog"]')
+      .locator('button[role="switch"], [aria-label="Toggle simulation mode"]')
+      .first()
+    await toggle.click()
+
+    // What-If Simulation section should now be visible
+    await expect(
+      page.locator('[role="dialog"]').getByText('What-If Simulation').first(),
+    ).toBeVisible({ timeout: 5000 })
+  })
+
+  test('simulation inputs present after enabling', async ({ page }) => {
+    await page.goto('/')
+    await waitForData(page)
+    const opened = await openSheetForBondedRow(page)
+    test.skip(!opened, 'no bonded validators in dataset')
+
+    const toggle = page
+      .locator('[role="dialog"]')
+      .locator('button[role="switch"], [aria-label="Toggle simulation mode"]')
+      .first()
+    await toggle.click()
+
+    // Should have numeric inputs for commission / bid fields
+    const inputs = page
+      .locator('[role="dialog"]')
+      .locator('input[type="number"]')
+    await expect(inputs.first()).toBeVisible({ timeout: 5000 })
+    expect(await inputs.count()).toBeGreaterThanOrEqual(2)
   })
 })
 
