@@ -77,13 +77,13 @@ export const EpochRangePicker: React.FC<Props> = ({
   }
 
   const pickEnd = (ep: number) => {
-    const s = draft.start
-    if (s === null) {
+    const start = draft.start
+    if (start === null) {
       // No start picked yet — treat the click as the start instead.
       pickStart(ep)
       return
     }
-    const [lo, hi] = ep < s ? [ep, s] : [s, ep]
+    const [lo, hi] = ep < start ? [ep, start] : [start, ep]
     setDraft({ start: lo, end: hi })
     setSelecting('start')
     setHoverEpoch(null)
@@ -107,13 +107,13 @@ export const EpochRangePicker: React.FC<Props> = ({
     hoverEnd !== null ? Math.max(draft.start ?? hoverEnd, hoverEnd) : draft.end
 
   function cellState(ep: number): CellState {
-    const s = effectiveStart
-    const e = effectiveEnd
-    if (s === null || e === null)
+    const start = effectiveStart
+    const end = effectiveEnd
+    if (start === null || end === null)
       return ep === draft.start ? CS_EDGE_START : 'none'
-    if (ep === s) return CS_EDGE_START
-    if (ep === e) return CS_EDGE_END
-    if (ep > s && ep < e) return CS_IN_RANGE
+    if (ep === start) return CS_EDGE_START
+    if (ep === end) return CS_EDGE_END
+    if (ep > start && ep < end) return CS_IN_RANGE
     return 'none'
   }
 
@@ -202,7 +202,7 @@ export const EpochRangePicker: React.FC<Props> = ({
       <button
         type="button"
         onClick={() => {
-          setOpen(v => !v)
+          setOpen(isOpen => !isOpen)
           setSelecting('start')
         }}
         className={cn(

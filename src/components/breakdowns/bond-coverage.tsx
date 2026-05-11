@@ -2,7 +2,6 @@ import React from 'react'
 
 import { pay, payCta, pmpe, stake } from 'src/format'
 import { computeBondCoverageMetrics } from 'src/services/breakdowns'
-import { bondStatusText } from 'src/services/tip-engine'
 
 import { CalcCard, CalcRow, OkRow, SectionHeader, docsPath } from './shared'
 
@@ -32,18 +31,23 @@ const statusLine = (
   bondRiskFeeSol: number,
 ): { label: string; tone: 'red' | 'yellow' | 'green' } => {
   if (state === 'critical') {
-    return {
-      label: bondStatusText(
-        topUpToAvoidFee,
-        topUpToKeepStake,
-        topUpToIdealKeep,
-        bondRiskFeeSol,
-      ),
-      tone: 'red',
-    }
+    const feeStr =
+      bondRiskFeeSol > 0
+        ? `Estimated bond risk fee: ${pay(bondRiskFeeSol)}.`
+        : 'Bond below penalty threshold.'
+    const topUpStr =
+      topUpToAvoidFee > 0
+        ? ` Top up ${payCta(topUpToAvoidFee)} to avoid the fee.`
+        : ''
+    return { label: `${feeStr}${topUpStr}`, tone: 'red' }
   }
   if (state === 'watch') {
-    const text = bondStatusText(0, topUpToKeepStake, topUpToIdealKeep, 0)
+    const text =
+      topUpToKeepStake > 0
+        ? `Top up ${payCta(topUpToKeepStake)} to keep your stake.`
+        : topUpToIdealKeep > 0
+          ? `Top up ${payCta(topUpToIdealKeep)} for more stake.`
+          : ''
     if (text) return { label: text, tone: 'yellow' }
     return { label: 'Bond covers current stake.', tone: 'yellow' }
   }

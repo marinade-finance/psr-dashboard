@@ -113,14 +113,14 @@ export const SamPage: React.FC<Props> = ({ level }) => {
       const next = removeFromOverrides(simulationOverrides, voteAccount)
       setSimulationOverrides(next)
       setSimulatedValidators(prev => {
-        const s = new Set(prev)
-        s.delete(voteAccount)
-        if (s.size === 0) {
+        const selected = new Set(prev)
+        selected.delete(voteAccount)
+        if (selected.size === 0) {
           // All cleared — full reset
           setOriginalAuctionResult(null)
           setSimulationOverrides(null)
         }
-        return s
+        return selected
       })
       setIsCalculating(true)
       setSimulationRunId(prev => prev + 1)
@@ -192,13 +192,15 @@ export const SamPage: React.FC<Props> = ({ level }) => {
     if (!selectedValidator || !displayAuctionResult || !data) return null
     const augmented = augmentAuctionResult(displayAuctionResult)
     const validators = augmented
-      .filter(v => selectBondSize(v) > 0)
+      .filter(validator => selectBondSize(validator) > 0)
       .sort(
         (a, b) =>
           selectMaxAPY(b, data.epochsPerYear) -
           selectMaxAPY(a, data.epochsPerYear),
       )
-    const index = validators.findIndex(v => v.voteAccount === selectedValidator)
+    const index = validators.findIndex(
+      validator => validator.voteAccount === selectedValidator,
+    )
     if (index === -1) return null
     return {
       validator: validators[index],

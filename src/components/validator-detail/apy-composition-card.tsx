@@ -5,10 +5,10 @@ import { formatPercentage } from 'src/format'
 import { HELP_TEXT } from 'src/services/help-text'
 
 import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
-import type { ApyBreakdownDisplay } from 'src/services/tip-engine'
+import type { ApyBreakdownValue } from 'src/services/tip-engine'
 
 interface ApyCompositionCardProps {
-  apyBreakdown: ApyBreakdownDisplay
+  apyBreakdown: ApyBreakdownValue
   winningApy: number
   validator: AuctionValidator
 }

@@ -10,16 +10,10 @@ import {
   TEST_VALIDATOR_NAMES,
 } from 'src/fixtures/test-validators'
 import { augmentAuctionResult, selectBondSize } from 'src/services/sam'
-import {
-  buildOverrideValues,
-  mergeOverrides,
-  removeFromOverrides,
-} from 'src/services/simulation'
+import { mergeOverrides, removeFromOverrides } from 'src/services/simulation'
 
-import type { AuctionResult } from '@marinade.finance/ds-sam-sdk'
 import type { UserLevel } from 'src/components/navigation/navigation'
 import type { SourceDataOverrides } from 'src/services/sam'
-import type { PendingEdits } from 'src/services/simulation'
 
 const NAME_MAP = new Map<string, { name?: string; countryIso?: string | null }>(
   [...TEST_VALIDATOR_NAMES.entries()].map(([vote, name]) => [vote, { name }]),
@@ -33,122 +27,40 @@ export const TestSamPage: React.FC<Props> = ({ level }) => {
   const [selectedValidator, setSelectedValidator] = useState<string | null>(
     null,
   )
-  const [simulationModeActive, setSimulationModeActive] = useState(false)
-  const [editingValidator, setEditingValidator] = useState<string | null>(null)
-  const isCalculating = false
   const [simulationOverrides, setSimulationOverrides] =
     useState<SourceDataOverrides | null>(null)
   const [simulatedValidators, setSimulatedValidators] = useState<Set<string>>(
     new Set(),
   )
-  const [pendingEdits, setPendingEdits] = useState<PendingEdits>({})
-  const [originalAuctionResult, setOriginalAuctionResult] =
-    useState<AuctionResult | null>(null)
 
-  // Static fixture data — no API calls
+  // Static fixture — simulation re-runs the auction in-process (no async)
   const auctionResult = TEST_AUCTION_RESULT
-
-  const nameMap = NAME_MAP
-
-  const ensureOriginalSaved = useCallback(() => {
-    if (!originalAuctionResult) {
-      setOriginalAuctionResult(auctionResult)
-      return auctionResult
-    }
-    return originalAuctionResult
-  }, [originalAuctionResult, auctionResult])
 
   const handleResetSimulation = useCallback(() => {
     setSimulationOverrides(null)
     setSimulatedValidators(new Set())
-    setSimulationModeActive(false)
-    setEditingValidator(null)
-    setPendingEdits({})
-    setOriginalAuctionResult(null)
   }, [])
 
-  const handleClearValidator = useCallback(
-    (voteAccount: string) => {
-      const next = removeFromOverrides(simulationOverrides, voteAccount)
-      setSimulationOverrides(next)
-      setSimulatedValidators(prev => {
-        const s = new Set(prev)
-        s.delete(voteAccount)
-        if (s.size === 0) {
-          setSimulationModeActive(false)
-          setOriginalAuctionResult(null)
-          setSimulationOverrides(null)
-        }
-        return s
-      })
-    },
-    [simulationOverrides],
-  )
+  const handleClearValidator = useCallback((voteAccount: string) => {
+    setSimulationOverrides(prev => {
+      const next = removeFromOverrides(prev, voteAccount)
+      return next
+    })
+    setSimulatedValidators(prev => {
+      const next = new Set(prev)
+      next.delete(voteAccount)
+      if (next.size === 0) setSimulationOverrides(null)
+      return next
+    })
+  }, [])
 
-  const handleToggleSimulationMode = useCallback(() => {
-    if (simulationModeActive) {
-      handleResetSimulation()
-    } else {
-      ensureOriginalSaved()
-      setSimulationModeActive(true)
-    }
-  }, [simulationModeActive, handleResetSimulation, ensureOriginalSaved])
-
-  const handleValidatorClick = useCallback(
-    (voteAccount: string) => {
-      if (simulationModeActive) {
-        if (voteAccount === editingValidator) {
-          setEditingValidator(null)
-          setPendingEdits({})
-          return
-        }
-        setEditingValidator(voteAccount)
-        setPendingEdits({})
-        return
-      }
-      setSelectedValidator(voteAccount)
-    },
-    [simulationModeActive, editingValidator],
-  )
+  const handleValidatorClick = useCallback((voteAccount: string) => {
+    setSelectedValidator(voteAccount)
+  }, [])
 
   const handleBack = useCallback(() => {
     setSelectedValidator(null)
   }, [])
-
-  const handleCancelEditing = useCallback(() => {
-    setEditingValidator(null)
-    setPendingEdits({})
-  }, [])
-
-  const handleFieldChange = useCallback(
-    (field: keyof PendingEdits, value: string) =>
-      setPendingEdits(prev => ({ ...prev, [field]: value })),
-    [],
-  )
-
-  const handleRunSimulation = useCallback(() => {
-    if (!editingValidator) return
-    const current = auctionResult.auctionData.validators.find(
-      v => v.voteAccount === editingValidator,
-    )
-    if (!current) return
-
-    const overrides = buildOverrideValues(current, pendingEdits)
-    ensureOriginalSaved()
-    const next = mergeOverrides(
-      simulationOverrides,
-      editingValidator,
-      overrides,
-    )
-    setSimulationOverrides(next)
-    setSimulatedValidators(prev => new Set([...prev, editingValidator]))
-  }, [
-    editingValidator,
-    pendingEdits,
-    simulationOverrides,
-    auctionResult,
-    ensureOriginalSaved,
-  ])
 
   const handleDetailSimulate = useCallback(
     (
@@ -158,7 +70,6 @@ export const TestSamPage: React.FC<Props> = ({ level }) => {
       bidPmpe: number | null,
     ) => {
       if (!selectedValidator) return
-      ensureOriginalSaved()
       const next = mergeOverrides(simulationOverrides, selectedValidator, {
         inflationCommissionDec: inflationCommission,
         mevCommissionDec: mevCommission,
@@ -168,74 +79,66 @@ export const TestSamPage: React.FC<Props> = ({ level }) => {
       setSimulationOverrides(next)
       setSimulatedValidators(prev => new Set([...prev, selectedValidator]))
     },
-    [selectedValidator, simulationOverrides, ensureOriginalSaved],
+    [selectedValidator, simulationOverrides],
   )
 
-  const displayAuctionResult =
-    simulationModeActive || !originalAuctionResult
-      ? auctionResult
-      : originalAuctionResult
-
   const sheetValidatorData = useMemo(() => {
-    if (!selectedValidator || !displayAuctionResult) return null
-    const augmented = augmentAuctionResult(displayAuctionResult)
+    if (!selectedValidator) return null
+    const augmented = augmentAuctionResult(auctionResult)
     const validators = augmented
       .filter(validator => selectBondSize(validator) > 0)
       .sort(
-        (a, b) =>
-          b.auctionStake.marinadeSamTargetSol -
-          a.auctionStake.marinadeSamTargetSol,
+        (va, vb) =>
+          vb.auctionStake.marinadeSamTargetSol -
+          va.auctionStake.marinadeSamTargetSol,
       )
-    const index = validators.findIndex(v => v.voteAccount === selectedValidator)
+    const index = validators.findIndex(
+      validator => validator.voteAccount === selectedValidator,
+    )
     if (index === -1) return null
     return {
       validator: validators[index],
       rank: index + 1,
       totalValidators: validators.length,
     }
-  }, [selectedValidator, displayAuctionResult])
+  }, [selectedValidator, auctionResult])
 
   return (
     <div className="bg-background-page">
       <Navigation level={level} />
       <SamTable
-        auctionResult={displayAuctionResult}
-        originalAuctionResult={originalAuctionResult}
+        auctionResult={auctionResult}
+        originalAuctionResult={null}
         epochsPerYear={TEST_EPOCHS_PER_YEAR}
         dsSamConfig={TEST_DS_SAM_CONFIG}
         level={level}
-        simulationModeActive={simulationModeActive}
-        editingValidator={editingValidator}
         simulatedValidators={simulatedValidators}
-        isCalculating={isCalculating}
-        pendingEdits={pendingEdits}
-        validatorMeta={nameMap}
+        isCalculating={false}
+        validatorMeta={NAME_MAP}
         onValidatorClick={handleValidatorClick}
-        onFieldChange={handleFieldChange}
-        onRunSimulation={handleRunSimulation}
-        onCancelEditing={handleCancelEditing}
-        onToggleSimulation={handleToggleSimulationMode}
+        onValidatorSearch={handleValidatorClick}
         onClearValidator={handleClearValidator}
         onResetSimulation={handleResetSimulation}
       />
       {sheetValidatorData && (
         <ValidatorDetail
           validator={sheetValidatorData.validator}
-          auctionResult={displayAuctionResult}
+          auctionResult={auctionResult}
           dsSamConfig={TEST_DS_SAM_CONFIG}
           epochsPerYear={TEST_EPOCHS_PER_YEAR}
-          nameMap={nameMap}
+          nameMap={NAME_MAP}
           rank={sheetValidatorData.rank}
           isSimulated={simulatedValidators.has(selectedValidator ?? '')}
           onClose={handleBack}
           onSimulate={handleDetailSimulate}
           onClearSimulation={
-            simulatedValidators.has(selectedValidator ?? '') &&
-            selectedValidator
-              ? () => handleClearValidator(selectedValidator)
+            simulatedValidators.has(selectedValidator ?? '')
+              ? () =>
+                  selectedValidator && handleClearValidator(selectedValidator)
               : undefined
           }
-          isCalculating={isCalculating}
+          isCalculating={false}
+          level={level}
         />
       )}
     </div>

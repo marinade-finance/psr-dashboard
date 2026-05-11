@@ -16,9 +16,9 @@ type Doc = 'GUIDE' | 'GUIDE-EXPERT'
 const DOCS: readonly Doc[] = ['GUIDE', 'GUIDE-EXPERT'] as const
 
 const fetchDoc = (name: Doc) =>
-  fetch(`/docs/${name}.md`).then(r => {
-    if (!r.ok) throw new Error('Failed to load')
-    return r.text()
+  fetch(`/docs/${name}.md`).then(res => {
+    if (!res.ok) throw new Error('Failed to load')
+    return res.text()
   })
 
 function makeComponents(
