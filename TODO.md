@@ -4,22 +4,34 @@
 
 ### 1. Move calculations to ds-sam-sdk
 
-Several computations currently duplicated in the dashboard should be upstreamed to the SDK:
+Several computations currently duplicated in the dashboard should be upstreamed to the SDK.
 
-- **`computeBidPenaltyMetrics`** (`src/services/breakdowns.ts:251`) — reimplements `calcBidTooLowPenalty` from
-  `calculations.js:117`. Uses SDK-internal constants `TOL_COEF = 0.99999` and `SCALE_COEF = 1.5` that ideally
-  should be exported from the SDK.
-- **`computeBondCoverageMetrics`** (`src/services/breakdowns.ts:105`) — reimplements bond coverage math using
-  `minBondPmpe`, `idealBondPmpe`, `minUnprotectedReserve`, `idealUnprotectedReserve`. Logic mirrors internal
-  fee-trigger conditions in the SDK.
-- **`computeExpectedStakeChanges`** (`src/services/sam.ts:251`) — dashboard-side projection of per-validator
-  stake delta next epoch. Uses `selectRedelegationBudget` (undeployed TVL) and `computeNaturalWithdrawal`
-  (~0.7%/epoch). This is the authoritative model of what the on-chain crank will do; belongs in the SDK.
-- Expose `expectedStakeChangeSol` per validator directly from `AuctionResult` / `AuctionValidator` in the SDK
-  rather than requiring consumers to re-derive it.
+**SDK version audited: 0.0.48** (`calculations.d.ts` not re-exported from `index.d.ts` — functions listed
+below as "not exported" are compiled into SDK but inaccessible to consumers without an SDK change.)
 
-**Why:** Dashboard math drifts from SDK logic when SDK is updated. Centralising it means one source of truth and
+- **`computeBidPenaltyMetrics`** (`src/services/breakdowns.ts:251`) — reimplements `calcBidTooLowPenalty`
+  from `calculations.js:116`. SDK function exists and is exported from `calculations.d.ts` but **not
+  re-exported** from the SDK `index.d.ts`. Dashboard hardcodes `TOL_COEF = 0.99999` and `SCALE_COEF = 1.5`
+  which are SDK-internal locals. To fix: add `export * from './calculations'` to the SDK index, then
+  call `calcBidTooLowPenalty` directly and drop the local reimplementation.
+
+- **`computeBondCoverageMetrics`** (`src/services/breakdowns.ts:114`) — reimplements bond coverage math
+  using `minBondPmpe`, `idealBondPmpe`, `minUnprotectedReserve`, `idealUnprotectedReserve` (all present on
+  `AuctionValidator`). Logic mirrors the SDK's `calcBondRiskFee` fee-trigger conditions. `calcBondRiskFee` is
+  exported from `calculations.d.ts` but not from the SDK index. This function does more than the SDK primitive
+  (dual current/projected basis, top-up amounts) so it probably stays in the dashboard; but the SDK should
+  at minimum export the constants it depends on.
+
+- **`computeExpectedStakeChanges`** (`src/services/sam.ts:264`) — dashboard-side projection of per-validator
+  stake delta next epoch. Uses `selectRedelegationBudget` (TVL − Σactive) and `computeNaturalWithdrawal`
+  (~0.7%/epoch). `AuctionValidator` has no `expectedStakeChangeSol` field in SDK 0.0.48.
+  This is the authoritative crank model; belongs in the SDK. To fix: SDK should compute and expose
+  `expectedStakeChangeSol` per `AuctionValidator` so the dashboard drops `augmentAuctionResult` entirely.
+
+**Why:** Dashboard math drifts from SDK logic when SDK is updated. Centralising means one source of truth and
 easier testing at the SDK level.
+
+**Blocked on:** SDK changes (export calculations index, add `expectedStakeChangeSol` to `AuctionValidator`).
 
 
 ### 2. Rank tracking — surface position history in the dashboard
