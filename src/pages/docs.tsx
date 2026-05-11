@@ -136,8 +136,11 @@ function makeComponents(
 
 export const DocsPage: React.FC<Props> = ({ level }) => {
   const isExpert = level === UserLevel.Expert
+  // When navigating directly to a hash anchor (e.g. from a breakdown "Guide →"
+  // link), all substantive section anchors live in GUIDE.md. Default to GUIDE
+  // so the scroll target is present regardless of which expert tab was last open.
   const [activeDoc, setActiveDoc] = useState<Doc>(
-    isExpert ? 'GUIDE-EXPERT' : 'GUIDE',
+    isExpert && !window.location.hash ? 'GUIDE-EXPERT' : 'GUIDE',
   )
 
   const { data, status } = useQuery(
