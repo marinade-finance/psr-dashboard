@@ -65,7 +65,7 @@ const TABLE_BASE = [
   '[&_thead_th:last-child]:rounded-tr-xl',
   '[&_tbody]:bg-card',
   '[&_tbody_tr]:bg-card',
-  '[&_th]:relative [&_th]:px-3.5 [&_th]:py-[11px] [&_th]:whitespace-nowrap [&_th]:text-[11px] [&_th]:font-medium [&_th]:tracking-[0.06em] [&_th]:text-muted-foreground',
+  '[&_th]:relative [&_th]:px-3.5 [&_th]:py-[11px] [&_th]:whitespace-nowrap [&_th]:text-xs [&_th]:font-medium [&_th]:tracking-[0.06em] [&_th]:text-muted-foreground',
   '[&_td]:relative [&_td]:px-3.5 [&_td]:py-3 [&_td]:whitespace-nowrap [&_td]:align-top',
   '[&_tbody_tr:hover]:bg-primary-light',
 ].join(' ')
@@ -130,7 +130,7 @@ function renderHeader<Item>(
             {isSortable && (
               <span
                 className={cn(
-                  'ml-1 text-[11px] opacity-40',
+                  'ml-1 text-[10px] opacity-40',
                   isUserSorted && 'opacity-100! text-primary!',
                   isDefaultSorted && 'opacity-60! text-muted-foreground!',
                 )}

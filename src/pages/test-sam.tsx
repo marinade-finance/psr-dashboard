@@ -180,7 +180,7 @@ export const TestSamPage: React.FC<Props> = ({ level }) => {
     if (!selectedValidator || !displayAuctionResult) return null
     const augmented = augmentAuctionResult(displayAuctionResult)
     const validators = augmented
-      .filter(v => selectBondSize(v) > 0)
+      .filter(validator => selectBondSize(validator) > 0)
       .sort(
         (a, b) =>
           b.auctionStake.marinadeSamTargetSol -

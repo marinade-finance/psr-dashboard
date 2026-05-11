@@ -19,7 +19,7 @@ export const Metric: React.FC<Props> = ({
   tooltipHtml,
 }) => (
   <Card className="metric px-3 py-3 sm:px-5 sm:py-4 transition-shadow hover:shadow-hover">
-    <div className="flex items-center gap-1 sm:whitespace-nowrap text-[11px] uppercase tracking-wider font-medium text-muted-foreground mb-1">
+    <div className="flex items-center gap-1 sm:whitespace-nowrap text-xs uppercase tracking-wider font-medium text-muted-foreground mb-1">
       {label}
       {tooltipHtml && <HelpTip html={tooltipHtml} />}
     </div>
@@ -27,7 +27,7 @@ export const Metric: React.FC<Props> = ({
       {value}
     </div>
     {subline && (
-      <div className="text-[11px] text-muted-foreground font-mono mt-0.5">
+      <div className="text-[10px] text-muted-foreground font-mono mt-0.5">
         {subline}
       </div>
     )}

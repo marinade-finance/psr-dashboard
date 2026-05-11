@@ -73,19 +73,31 @@ type TierRow = {
 }
 
 function buildTierRows(active: ValidatorWithBond[]): TierRow[] {
-  const s = (e: ValidatorWithBond) => selectTotalMarinadeStake(e.validator)
+  const totalStake = (entry: ValidatorWithBond) =>
+    selectTotalMarinadeStake(entry.validator)
   return [
-    { label: '>100k', entries: active.filter(e => s(e) >= TIER_LARGE) },
+    {
+      label: '>100k',
+      entries: active.filter(entry => totalStake(entry) >= TIER_LARGE),
+    },
     {
       label: '50k–100k',
-      entries: active.filter(e => s(e) >= TIER_HIGH && s(e) < TIER_LARGE),
+      entries: active.filter(
+        entry =>
+          totalStake(entry) >= TIER_HIGH && totalStake(entry) < TIER_LARGE,
+      ),
     },
     {
       label: '20k–50k',
-      entries: active.filter(e => s(e) >= TIER_MID && s(e) < TIER_HIGH),
+      entries: active.filter(
+        entry => totalStake(entry) >= TIER_MID && totalStake(entry) < TIER_HIGH,
+      ),
     },
-    { label: '<20k', entries: active.filter(e => s(e) < TIER_MID) },
-  ].filter(r => r.entries.length > 0)
+    {
+      label: '<20k',
+      entries: active.filter(entry => totalStake(entry) < TIER_MID),
+    },
+  ].filter(tier => tier.entries.length > 0)
 }
 
 const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({

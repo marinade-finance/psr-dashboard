@@ -251,7 +251,7 @@ const RankCell: React.FC<{
       className={`font-medium ${RANK_MONO} flex items-center justify-center gap-0.5`}
       style={{ color: tipColor }}
     >
-      <span className="text-[11px] leading-none">{tipIcon}</span>#{rank}
+      <span className="text-[10px] leading-none">{tipIcon}</span>#{rank}
     </span>
   )
 }
@@ -297,10 +297,16 @@ export const SamTable: React.FC<Props> = ({
   const validatorsWithBond: ValidatorWithBondState[] = useMemo(
     () =>
       augmentAuctionResult(auctionResult)
-        .filter(v => passesTableFilter(v, level, dsSamConfig.minBondEpochs))
-        .map(v => ({
-          ...v,
-          bondHealth: bondHealthFromAuction(v, dsSamConfig, winningTotalPmpe),
+        .filter(validator =>
+          passesTableFilter(validator, level, dsSamConfig.minBondEpochs),
+        )
+        .map(validator => ({
+          ...validator,
+          bondHealth: bondHealthFromAuction(
+            validator,
+            dsSamConfig,
+            winningTotalPmpe,
+          ),
         })),
     [auctionResult, dsSamConfig, winningTotalPmpe, level],
   )
@@ -308,9 +314,12 @@ export const SamTable: React.FC<Props> = ({
   // Stable auction rank by maxApy desc — independent of display sort
   const auctionRankMap = useMemo(() => {
     const sorted = [...validatorsWithBond].sort(
-      (a, b) => selectMaxAPY(b, epochsPerYear) - selectMaxAPY(a, epochsPerYear),
+      (va, vb) =>
+        selectMaxAPY(vb, epochsPerYear) - selectMaxAPY(va, epochsPerYear),
     )
-    return new Map(sorted.map((v, i) => [selectVoteAccount(v), i + 1]))
+    return new Map(
+      sorted.map((validator, i) => [selectVoteAccount(validator), i + 1]),
+    )
   }, [validatorsWithBond, epochsPerYear])
 
   // Original auction rank map — same maxApy sort, built from pre-simulation data
@@ -319,7 +328,8 @@ export const SamTable: React.FC<Props> = ({
     if (!originalAuctionResult) return null
     return buildOriginalPositionsMap(
       originalAuctionResult,
-      (a, b) => selectMaxAPY(b, epochsPerYear) - selectMaxAPY(a, epochsPerYear),
+      (va, vb) =>
+        selectMaxAPY(vb, epochsPerYear) - selectMaxAPY(va, epochsPerYear),
     )
   }, [originalAuctionResult, epochsPerYear])
 
@@ -367,8 +377,8 @@ export const SamTable: React.FC<Props> = ({
 
   // Split into winners and non-winners, with ghost rows inserted
   const allDisplayValidators = useMemo(() => {
-    const base = sortedValidators.map(v => ({
-      validator: v,
+    const base = sortedValidators.map(validator => ({
+      validator,
       isGhost: false as const,
     }))
     if (
@@ -414,12 +424,12 @@ export const SamTable: React.FC<Props> = ({
   const belowCutoff = allDisplayValidators.filter(
     d => !d.isGhost && !bidQualifies(d.validator),
   )
-  const aboveCount = aboveCutoff.filter(d => !d.isGhost).length
+  const aboveCount = aboveCutoff.filter(row => !row.isGhost).length
   const totalRedelegation = useMemo(
     () =>
-      validatorsWithBond.reduce((s, v) => {
-        const change = selectExpectedStakeChange(v)
-        return change > 0 ? s + change : s
+      validatorsWithBond.reduce((sum, validator) => {
+        const change = selectExpectedStakeChange(validator)
+        return change > 0 ? sum + change : sum
       }, 0),
     [validatorsWithBond],
   )
@@ -828,7 +838,9 @@ export const SamTable: React.FC<Props> = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {aboveCutoff.map((d, i) => renderRow(d.validator, i, d.isGhost))}
+              {aboveCutoff.map((row, i) =>
+                renderRow(row.validator, i, row.isGhost),
+              )}
 
               {/* Winning Set Cutoff Divider — only meaningful when sorted by default APY rank */}
               {belowCutoff.length > 0 && sortColumn === 'maxApy' && (
@@ -865,8 +877,8 @@ export const SamTable: React.FC<Props> = ({
                 </TableRow>
               )}
 
-              {belowCutoff.map((d, i) =>
-                renderRow(d.validator, aboveCount + i, d.isGhost),
+              {belowCutoff.map((row, i) =>
+                renderRow(row.validator, aboveCount + i, row.isGhost),
               )}
             </TableBody>
           </ShadTable>

@@ -164,7 +164,7 @@ export const EpochRangePicker: React.FC<Props> = ({
   function renderPanel(panelEpochs: number[], label: string) {
     return (
       <div className="flex-1 min-w-0">
-        <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider text-center mb-2 px-2">
+        <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-center mb-2 px-2">
           {label}
         </div>
         <div className="grid grid-cols-6">
@@ -297,7 +297,7 @@ export const EpochRangePicker: React.FC<Props> = ({
         <div className="absolute top-full mt-2 z-50 bg-card border border-border rounded-2xl shadow-xl p-4 w-[calc(100vw-2rem)] sm:w-[540px] right-0 sm:right-auto">
           {/* Header row */}
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
+            <span className="text-xs uppercase tracking-wider font-medium text-muted-foreground">
               {selecting === 'start'
                 ? 'Select start epoch'
                 : 'Select end epoch'}
@@ -313,7 +313,7 @@ export const EpochRangePicker: React.FC<Props> = ({
                 setOpen(false)
               }}
               className={cn(
-                'text-[11px] hover:underline',
+                'text-xs hover:underline',
                 isAllEpochs
                   ? 'text-muted-foreground/40 pointer-events-none'
                   : 'text-primary',
@@ -350,7 +350,7 @@ export const EpochRangePicker: React.FC<Props> = ({
               </svg>
               older
             </button>
-            <span className="text-[11px] text-muted-foreground">
+            <span className="text-[10px] text-muted-foreground">
               {epochs[pageStart]}–
               {
                 epochs[

@@ -158,7 +158,7 @@ const PenaltyRow = ({
     <button
       className={`text-left flex-1 ${
         sub
-          ? 'text-[11px] text-muted-foreground'
+          ? 'text-[10px] text-muted-foreground'
           : 'text-xs text-muted-foreground'
       } hover:text-foreground hover:underline`}
       onClick={onSeeBreakdown}
@@ -167,7 +167,7 @@ const PenaltyRow = ({
       {label} →
     </button>
     <span
-      className={`font-mono ${sub ? 'text-[11px]' : 'text-sm font-semibold'}`}
+      className={`font-mono ${sub ? 'text-[10px]' : 'text-sm font-semibold'}`}
       style={{ color: sub ? CSS_MUTED_FG : CSS_DESTRUCTIVE }}
     >
       {value}
@@ -214,12 +214,12 @@ export const ValidatorDetail = ({
   const cutoffRank = useMemo(() => {
     const ourApy = selectMaxAPY(validator, epochsPerYear)
     let count = 0
-    for (const v of auctionResult.auctionData.validators) {
-      if (selectVoteAccount(v) === voteAccount) continue
-      const vInSet = v.auctionStake.marinadeSamTargetSol > 0
-      const vApy = selectMaxAPY(v, epochsPerYear)
-      if (inSet && vInSet && vApy < ourApy) count++
-      else if (!inSet && !vInSet && vApy > ourApy) count++
+    for (const other of auctionResult.auctionData.validators) {
+      if (selectVoteAccount(other) === voteAccount) continue
+      const otherInSet = other.auctionStake.marinadeSamTargetSol > 0
+      const otherApy = selectMaxAPY(other, epochsPerYear)
+      if (inSet && otherInSet && otherApy < ourApy) count++
+      else if (!inSet && !otherInSet && otherApy > ourApy) count++
     }
     return inSet ? count : -count
   }, [auctionResult, validator, voteAccount, inSet, epochsPerYear])
@@ -495,32 +495,32 @@ export const ValidatorDetail = ({
               </h3>
               {notificationSummary?.notifications?.length ? (
                 <div className="space-y-4">
-                  {notificationSummary.notifications.map(n => {
+                  {notificationSummary.notifications.map(notification => {
                     const tone =
-                      n.priority === 'critical'
+                      notification.priority === 'critical'
                         ? 'bg-destructive-light text-destructive'
-                        : n.priority === 'warning'
+                        : notification.priority === 'warning'
                           ? 'bg-warning-light text-warning'
                           : 'bg-info-light text-info'
                     const [body, ...footerParts] =
-                      n.message.split('\n\nEmitted:')
+                      notification.message.split('\n\nEmitted:')
                     const footer = footerParts.length
                       ? `Emitted:${footerParts.join('\n\nEmitted:')}`
                       : null
                     return (
                       <div
-                        key={n.id}
+                        key={notification.id}
                         className="border-t border-border first:border-t-0 first:pt-0 pt-3"
                       >
                         <div className="flex items-center gap-2 mb-1">
                           <span
-                            className={`px-2 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wide ${tone}`}
+                            className={`px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wide ${tone}`}
                           >
-                            {n.priority}
+                            {notification.priority}
                           </span>
-                          {n.title && (
+                          {notification.title && (
                             <span className="text-sm font-semibold text-foreground">
-                              {n.title}
+                              {notification.title}
                             </span>
                           )}
                         </div>

@@ -7,6 +7,9 @@
   "license": "UNLICENSED",
   "scripts": {
     "start:dev": "vite",
+    "dev": "vite",
+    "play": "playwright test --ui",
+    "test:play": "playwright test --ui",
     "build": "vite build",
     "preview": "vite preview --port 8080",
     "lint": "eslint './src/**/*.{ts,tsx,js,jsx}'",

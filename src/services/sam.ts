@@ -62,8 +62,9 @@ export type AugmentedAuctionValidator = Omit<AuctionValidator, 'values'> & {
 export const fetchValidatorNames = async (): Promise<Map<string, string>> => {
   const { validators } = await fetchValidatorsWithEpochs(FETCHED_EPOCHS)
   const nameByVote = new Map<string, string>()
-  for (const v of validators) {
-    if (v.info_name) nameByVote.set(v.vote_account, v.info_name)
+  for (const validator of validators) {
+    if (validator.info_name)
+      nameByVote.set(validator.vote_account, validator.info_name)
   }
   return nameByVote
 }
@@ -197,7 +198,10 @@ export const selectEffectiveCost = (validator: AuctionValidator) =>
 function selectRedelegationBudget(auctionResult: AuctionResult): number {
   const validators = auctionResult.auctionData.validators
   const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
-  const active = validators.reduce((s, v) => s + v.marinadeActivatedStakeSol, 0)
+  const active = validators.reduce(
+    (sum, validator) => sum + validator.marinadeActivatedStakeSol,
+    0,
+  )
   return Math.max(0, tvl - active)
 }
 
@@ -213,14 +217,15 @@ function computeNaturalWithdrawal(
   const out = new Map<string, number>()
   const withdrawal = WITHDRAWAL_FRACTION_PER_EPOCH * tvl
   if (withdrawal <= 0) return out
-  const excess = validators.map(v => ({
-    va: v.voteAccount,
+  const excess = validators.map(validator => ({
+    va: validator.voteAccount,
     x: Math.max(
       0,
-      v.marinadeActivatedStakeSol - v.auctionStake.marinadeSamTargetSol,
+      validator.marinadeActivatedStakeSol -
+        validator.auctionStake.marinadeSamTargetSol,
     ),
   }))
-  const totalExcess = excess.reduce((s, e) => s + e.x, 0)
+  const totalExcess = excess.reduce((sum, entry) => sum + entry.x, 0)
   let remaining = withdrawal
   if (totalExcess > 0) {
     for (const { va, x } of excess) {
@@ -238,9 +243,13 @@ function computeNaturalWithdrawal(
     0,
   )
   if (totalActive <= 0) return out
-  for (const v of validators) {
-    const add = (remaining * v.marinadeActivatedStakeSol) / totalActive
-    if (add > 0) out.set(v.voteAccount, (out.get(v.voteAccount) ?? 0) + add)
+  for (const validator of validators) {
+    const add = (remaining * validator.marinadeActivatedStakeSol) / totalActive
+    if (add > 0)
+      out.set(
+        validator.voteAccount,
+        (out.get(validator.voteAccount) ?? 0) + add,
+      )
   }
   return out
 }
@@ -258,7 +267,10 @@ function computeExpectedStakeChanges(
   const validators = auctionResult.auctionData.validators
   const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
   const paidOf = (v: AuctionValidator) => v.values?.paidUndelegationSol ?? 0
-  const totalPaid = validators.reduce((s, v) => s + paidOf(v), 0)
+  const totalPaid = validators.reduce(
+    (sum, validator) => sum + paidOf(validator),
+    0,
+  )
   const budget = selectRedelegationBudget(auctionResult) + totalPaid
   const effectiveActive = (v: AuctionValidator) =>
     v.marinadeActivatedStakeSol - paidOf(v)
@@ -266,21 +278,24 @@ function computeExpectedStakeChanges(
     v.auctionStake.marinadeSamTargetSol - effectiveActive(v)
   const result = new Map<string, number>()
 
-  for (const v of validators) {
-    const paid = paidOf(v)
-    if (paid > 0) result.set(v.voteAccount, -paid)
+  for (const validator of validators) {
+    const paid = paidOf(validator)
+    if (paid > 0) result.set(validator.voteAccount, -paid)
   }
 
   if (budget > 0) {
     const sorted = [...validators].sort(
-      (a, b) => (b.revShare.totalPmpe ?? 0) - (a.revShare.totalPmpe ?? 0),
+      (va, vb) => (vb.revShare.totalPmpe ?? 0) - (va.revShare.totalPmpe ?? 0),
     )
     let remaining = budget
-    for (const v of sorted) {
-      const delta = rawDelta(v)
+    for (const validator of sorted) {
+      const delta = rawDelta(validator)
       if (delta > 0 && remaining > 0) {
         const alloc = Math.min(delta, remaining)
-        result.set(v.voteAccount, (result.get(v.voteAccount) ?? 0) + alloc)
+        result.set(
+          validator.voteAccount,
+          (result.get(validator.voteAccount) ?? 0) + alloc,
+        )
         remaining -= alloc
       }
     }

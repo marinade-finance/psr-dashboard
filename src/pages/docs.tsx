@@ -119,7 +119,7 @@ function makeComponents(
       </div>
     ),
     th: ({ children }) => (
-      <th className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground bg-muted px-3.5 py-2.5 text-left border-b border-border">
+      <th className="text-xs font-semibold uppercase tracking-wide text-muted-foreground bg-muted px-3.5 py-2.5 text-left border-b border-border">
         {children}
       </th>
     ),

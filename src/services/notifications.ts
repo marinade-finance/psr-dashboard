@@ -48,17 +48,17 @@ export async function fetchAllNotifications(
       // eslint-disable-next-line no-await-in-loop
       const notifications = (await res.json()) as ValidatorNotification[]
 
-      for (const n of notifications) {
-        const existing = result[n.user_id]
+      for (const notification of notifications) {
+        const existing = result[notification.user_id]
         if (existing) {
           existing.count++
           if (existing.notifications.length < TOOLTIP_MAX_NOTIFICATIONS) {
-            existing.notifications.push(n)
+            existing.notifications.push(notification)
           }
         } else {
-          result[n.user_id] = {
+          result[notification.user_id] = {
             count: 1,
-            notifications: [n],
+            notifications: [notification],
           }
         }
       }
@@ -105,14 +105,15 @@ export function notificationTooltip(summary: NotificationSummary): string {
   const shown = summary.notifications.slice(0, TOOLTIP_MAX_NOTIFICATIONS)
   const remaining = summary.count - shown.length
   const rendered = shown
-    .map(n => {
+    .map(notification => {
       const prefix =
-        n.priority === 'critical'
+        notification.priority === 'critical'
           ? '[CRITICAL]'
-          : n.priority === 'warning'
+          : notification.priority === 'warning'
             ? '[WARNING]'
             : '[INFO]'
-      const [bodyPart, ...footerParts] = n.message.split('\n\nEmitted:')
+      const [bodyPart, ...footerParts] =
+        notification.message.split('\n\nEmitted:')
       const body = escapeHtml(bodyPart).replace(/\n/g, '<br/>')
       const footer = footerParts.length
         ? `<br/><small><em>Emitted:${escapeHtml(footerParts.join('\n\nEmitted:'))}</em></small>`

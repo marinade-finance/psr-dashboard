@@ -34,8 +34,8 @@ export function findMatches(
   const nameStarts: Match[] = []
   const nameContains: Match[] = []
 
-  for (const v of validators) {
-    const vote = v.voteAccount
+  for (const validator of validators) {
+    const vote = validator.voteAccount
     const name = nameMap.get(vote)?.name ?? ''
     const nameLower = name.toLowerCase()
 
@@ -146,9 +146,9 @@ export const ValidatorJump: React.FC<Props> = ({
               No validator matches “{query.trim()}”.
             </div>
           )}
-          {matches.map((m, i) => (
+          {matches.map((match, i) => (
             <button
-              key={m.voteAccount}
+              key={match.voteAccount}
               type="button"
               role="option"
               aria-selected={i === highlighted}
@@ -156,9 +156,12 @@ export const ValidatorJump: React.FC<Props> = ({
                 i === highlighted ? 'bg-accent' : 'hover:bg-accent'
               }`}
               onMouseEnter={() => setHighlighted(i)}
-              onClick={() => select(m.voteAccount)}
+              onClick={() => select(match.voteAccount)}
             >
-              <ValidatorIdentity name={m.name} voteAccount={m.voteAccount} />
+              <ValidatorIdentity
+                name={match.name}
+                voteAccount={match.voteAccount}
+              />
             </button>
           ))}
         </div>

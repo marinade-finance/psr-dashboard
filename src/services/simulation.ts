@@ -59,7 +59,7 @@ export function buildOriginalPositionsMap(
     compareFn,
   )
   const map = new Map<string, number>()
-  sorted.forEach((v, i) => map.set(v.voteAccount, i + 1))
+  sorted.forEach((validator, i) => map.set(validator.voteAccount, i + 1))
   return map
 }
 
@@ -94,9 +94,11 @@ export function detectChangedValidators(
   const changed = new Set<string>()
   for (const va of simulatedVAs) {
     const orig = originalAuctionResult.auctionData.validators.find(
-      v => v.voteAccount === va,
+      validator => validator.voteAccount === va,
     )
-    const cur = currentValidators.find(v => v.voteAccount === va)
+    const cur = currentValidators.find(
+      validator => validator.voteAccount === va,
+    )
     if (!orig || !cur) continue
     if (
       orig.inflationCommissionDec !== cur.inflationCommissionDec ||

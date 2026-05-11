@@ -51,7 +51,10 @@ export const PaymentsBreakdown: React.FC<Props> = ({
     dsSamConfig,
     winningTotalPmpe,
   )
-  const psrTotal = psrEstimates.reduce((sum, e) => sum + selectAmount(e), 0)
+  const psrTotal = psrEstimates.reduce(
+    (sum, estimate) => sum + selectAmount(estimate),
+    0,
+  )
   const total =
     paymentMetrics.total +
     bidTooLowPenaltySol +
@@ -124,20 +127,20 @@ export const PaymentsBreakdown: React.FC<Props> = ({
           {psrEstimates.length > 0 && (
             <>
               <SectionHeader title="PSR Settlements (estimated)" />
-              {psrEstimates.map((e, i) => {
-                const label = isProtectedEvent(e.reason)
-                  ? selectProtectedStakeReason(e)
-                  : e.reason
+              {psrEstimates.map((estimate, i) => {
+                const label = isProtectedEvent(estimate.reason)
+                  ? selectProtectedStakeReason(estimate)
+                  : estimate.reason
                 return (
                   <CalcRow
                     key={i}
                     label={String(label)}
                     secondary={
-                      e.meta.funder === 'ValidatorBond'
+                      estimate.meta.funder === 'ValidatorBond'
                         ? 'from bond'
                         : 'from Marinade'
                     }
-                    value={pay(selectAmount(e))}
+                    value={pay(selectAmount(estimate))}
                   />
                 )
               })}
