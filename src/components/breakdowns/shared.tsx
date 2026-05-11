@@ -59,7 +59,7 @@ export const CalcRow: React.FC<{
     className={`border-b border-border-grid/50 last:border-b-0 ${separator ? SEPARATOR_TR_CLASS : ''}`}
   >
     <td
-      className={`pr-2 text-xs ${separator ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${bold ? 'font-semibold' : ''} ${large ? 'text-sm' : ''} ${separator ? 'text-foreground' : ''}`}
+      className={`pr-2 text-xs ${separator ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${bold ? 'font-semibold' : ''} ${large ? 'text-base' : ''} ${separator ? 'text-foreground' : ''}`}
     >
       {marker && <Marker tone={marker} />}
       {label}
@@ -70,7 +70,7 @@ export const CalcRow: React.FC<{
       {secondary ?? ''}
     </td>
     <td
-      className={`pl-2 text-right font-mono ${separator ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${large ? 'text-sm' : 'text-xs'} ${bold ? 'font-semibold' : ''} ${
+      className={`pl-2 text-right font-mono ${separator ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${large ? 'text-base' : 'text-xs'} ${bold ? 'font-semibold' : ''} ${
         accent === 'red'
           ? 'text-destructive'
           : accent === 'yellow'
