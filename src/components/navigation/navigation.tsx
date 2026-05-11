@@ -18,8 +18,8 @@ export type UserLevelProps = {
 
 const MarinadeLogo = () => (
   <svg
-    width="34"
-    height="34"
+    width="41"
+    height="41"
     viewBox="0 0 50 33"
     fill="none"
     className="text-primary shrink-0"
