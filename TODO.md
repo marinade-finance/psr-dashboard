@@ -56,3 +56,20 @@ Add per-validator rank history so that the table and detail view can show positi
 
 **Why:** Operators want to know whether they're trending up or down, not just their current rank. Without history
 the rank number is hard to interpret.
+
+
+### 3. Precise APY annualization from real epoch timestamps
+
+`sam.ts` currently uses `EPOCHS_PER_YEAR = (365.25 * 24 * 3600) / 172800` (theoretical: 432000 slots × 0.4 s/slot = 48 h exactly). In practice Solana epochs drift from the theoretical duration due to missed slots, validator halts, etc.
+
+**What to do:**
+- Fetch the last N epoch `epoch_start_at` / `epoch_end_at` timestamps from the validators API (already available on `epoch_stats` per validator in `fetchValidatorsWithEpochs`).
+- Derive `epochsPerYear` from the observed average epoch duration over the sample window instead of the constant.
+- This was previously implemented as `estimateEpochsPerYear` but removed in favour of the simpler constant. The constant is correct within ~0.1% in normal conditions, but diverges during extended outages.
+
+**Acceptance criteria:**
+- `epochsPerYear` is derived from at least 10 real epochs rather than the slot-time constant.
+- Falls back to the constant if timestamp data is missing or the sample window is too narrow.
+- APY numbers in the table and breakdown shift accordingly.
+
+**Why:** The constant overestimates APY during slow epochs and underestimates during fast ones. Operators making bonding decisions benefit from accurate compound-rate math.
