@@ -1,7 +1,6 @@
 import React from 'react'
 
 import { pay } from 'src/format'
-import { docsPath } from 'src/lib/utils'
 import {
   computeBidPenaltyMetrics,
   computeSamRevenueMetrics,
@@ -12,7 +11,7 @@ import {
   selectProtectedStakeReason,
 } from 'src/services/protected-events'
 
-import { CalcCard, CalcRow, SectionHeader } from './shared'
+import { CalcCard, CalcRow, SectionHeader, docsPath } from './shared'
 
 import type { DsSamConfig } from '@marinade.finance/ds-sam-sdk'
 import type { UserLevel } from 'src/components/navigation/navigation'

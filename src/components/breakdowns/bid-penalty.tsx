@@ -1,10 +1,9 @@
 import React from 'react'
 
 import { formatPercentage, pay, pmpe, stake } from 'src/format'
-import { docsPath } from 'src/lib/utils'
 import { computeBidPenaltyMetrics } from 'src/services/breakdowns'
 
-import { CalcCard, CalcRow, OkRow, SectionHeader } from './shared'
+import { CalcCard, CalcRow, OkRow, SectionHeader, docsPath } from './shared'
 
 import type {
   AuctionValidator,

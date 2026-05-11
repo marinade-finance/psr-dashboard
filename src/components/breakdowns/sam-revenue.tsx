@@ -1,11 +1,11 @@
 import React from 'react'
 
 import { pay, pmpe, stake } from 'src/format'
-import { docsPath } from 'src/lib/utils'
 import { computeSamRevenueMetrics } from 'src/services/breakdowns'
 
 import {
   CalcCard,
+  docsPath,
   Marker,
   NORMAL_CELL_PAD,
   SectionHeader,

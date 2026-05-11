@@ -12,7 +12,6 @@ import { Input } from 'src/components/ui/input'
 import { Sheet, SheetContent } from 'src/components/ui/sheet'
 import { Switch } from 'src/components/ui/switch'
 import { ApyCompositionCard } from 'src/components/validator-detail/apy-composition-card'
-import { pay, payCta, stake } from 'src/format'
 import {
   CSS_PRIMARY,
   CSS_DESTRUCTIVE,
@@ -21,7 +20,8 @@ import {
   CSS_STATUS_GREEN,
   CSS_WARNING,
   CSS_MUTED_FG,
-} from 'src/lib/utils'
+} from 'src/css_utils'
+import { pay, payCta, stake } from 'src/format'
 import {
   bondHealthFromAuction,
   computeBondCoverageMetrics,

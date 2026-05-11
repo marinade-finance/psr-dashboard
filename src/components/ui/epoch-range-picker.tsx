@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 
-import { cn } from 'src/lib/utils'
+import { cn } from 'src/class_utils'
 
 // How many epochs per panel column × rows
 const PANEL_SIZE = 30 // 6 cols × 5 rows

@@ -1,11 +1,10 @@
 import React from 'react'
 
 import { pay, payCta, pmpe, stake } from 'src/format'
-import { docsPath } from 'src/lib/utils'
 import { computeBondCoverageMetrics } from 'src/services/breakdowns'
 import { bondStatusText } from 'src/services/tip-engine'
 
-import { CalcCard, CalcRow, OkRow, SectionHeader } from './shared'
+import { CalcCard, CalcRow, OkRow, SectionHeader, docsPath } from './shared'
 
 import type {
   AuctionValidator,

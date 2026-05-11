@@ -1,7 +1,7 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import React from 'react'
 
-import { cn } from 'src/lib/utils'
+import { cn } from 'src/class_utils'
 
 interface SheetProps {
   open: boolean

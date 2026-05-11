@@ -1,6 +1,10 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 
+export function docsPath(level?: string): string {
+  return level === 'expert' ? '/expert-docs' : '/docs'
+}
+
 // Shared separator visual for "total / result" rows. The same `border-t` is
 // used by the overview MetricRow's `separator` prop and by every CalcRow /
 // RevRow that marks a section conclusion — keeps the divider style identical

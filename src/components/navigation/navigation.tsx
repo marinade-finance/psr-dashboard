@@ -2,8 +2,8 @@ import React, { useCallback } from 'react'
 import { useQueryClient } from 'react-query'
 import { Link, NavLink } from 'react-router-dom'
 
+import { cn } from 'src/class_utils'
 import { ThemeToggle } from 'src/components/theme-toggle/theme-toggle'
-import { cn } from 'src/lib/utils'
 import { fetchValidatorsWithBonds } from 'src/services/validator-with-bond'
 import { fetchProtectedEventsWithValidator } from 'src/services/validator-with-protected_event'
 

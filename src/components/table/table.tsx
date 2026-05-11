@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 
+import { cn } from 'src/class_utils'
 import { HelpTip } from 'src/components/help-tip/help-tip'
 import {
   TableBody,
@@ -10,7 +11,6 @@ import {
   TableRow,
   Table as UiTable,
 } from 'src/components/ui/table'
-import { cn } from 'src/lib/utils'
 import { Color } from 'src/services/types'
 
 import type { HTMLAttributes, ReactNode } from 'react'
