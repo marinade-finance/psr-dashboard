@@ -41,21 +41,15 @@ export type ValidatorsResponse = {
   validators: Validator[]
 }
 
-const cache = new Map<number, Promise<ValidatorsResponse>>()
-
 export const fetchValidatorsWithEpochs = (
   epochs: number,
-): Promise<ValidatorsResponse> => {
-  const cached = cache.get(epochs)
-  if (cached !== undefined) return cached
-  const promise = fetchJson<ValidatorsResponse>(
+): Promise<ValidatorsResponse> =>
+  fetchJson<ValidatorsResponse>(
     `${VALIDATORS_API_URL}/validators?limit=9999&epochs=${epochs}`,
   ).then(data => ({
     validators: data.validators.filter(
-      v => Number(v.marinade_stake) > 0 || Number(v.marinade_native_stake) > 0,
+      validator =>
+        Number(validator.marinade_stake) > 0 ||
+        Number(validator.marinade_native_stake) > 0,
     ),
   }))
-  cache.set(epochs, promise)
-  promise.catch(() => cache.delete(epochs))
-  return promise
-}
