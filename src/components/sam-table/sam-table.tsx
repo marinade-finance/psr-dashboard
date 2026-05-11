@@ -11,6 +11,7 @@ import {
   TableCell,
 } from 'src/components/ui/table'
 import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
+import { ValidatorJump } from 'src/components/validator-jump/validator-jump'
 import { formatPercentage, formatSolAmount, stake } from 'src/format'
 import { bondHealthFromAuction } from 'src/services/breakdowns'
 import { HELP_TEXT } from 'src/services/help-text'
@@ -179,6 +180,7 @@ type Props = {
   pendingEdits?: PendingEdits
   validatorMeta?: Map<string, ValidatorMeta>
   onValidatorClick: (voteAccount: string) => void
+  onValidatorSearch?: (voteAccount: string) => void
   onFieldChange?: (field: string, value: string) => void
   onRunSimulation?: () => void
   onCancelEditing?: () => void
@@ -264,6 +266,7 @@ export const SamTable: React.FC<Props> = ({
   isCalculating,
   validatorMeta,
   onValidatorClick,
+  onValidatorSearch,
   onClearValidator,
   onResetSimulation,
 }) => {
@@ -730,6 +733,14 @@ export const SamTable: React.FC<Props> = ({
             >
               Reset Simulation ({simulatedValidators.size})
             </button>
+          )}
+          {onValidatorSearch && (
+            <ValidatorJump
+              validators={validators}
+              nameMap={validatorMeta ?? new Map()}
+              onSelect={onValidatorSearch}
+              className="ml-auto self-center min-w-[220px] max-w-[300px]"
+            />
           )}
         </div>
 

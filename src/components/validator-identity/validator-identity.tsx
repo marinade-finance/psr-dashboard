@@ -8,7 +8,8 @@ type Props = {
   trailing?: React.ReactNode
 }
 
-const truncate = (va: string) => `${va.slice(0, 8)}…${va.slice(-4)}`
+const truncate4 = (va: string) => `${va.slice(0, 4)}…${va.slice(-4)}`
+const truncate8 = (va: string) => `${va.slice(0, 8)}…${va.slice(-8)}`
 
 export const ValidatorIdentity: React.FC<Props> = ({
   name,
@@ -24,15 +25,15 @@ export const ValidatorIdentity: React.FC<Props> = ({
       {responsive ? (
         <>
           <div className="text-xs font-mono text-secondary-foreground mt-px hidden sm:block">
-            {voteAccount}
+            {truncate8(voteAccount)}
           </div>
           <div className="text-xs font-mono text-secondary-foreground mt-px sm:hidden">
-            {truncate(voteAccount)}
+            {truncate4(voteAccount)}
           </div>
         </>
       ) : (
         <div className="text-xs font-mono text-secondary-foreground mt-px">
-          {truncate(voteAccount)}
+          {truncate4(voteAccount)}
         </div>
       )}
     </div>

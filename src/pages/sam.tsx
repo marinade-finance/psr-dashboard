@@ -6,7 +6,6 @@ import { Loader } from 'src/components/loader/loader'
 import { Navigation } from 'src/components/navigation/navigation'
 import { SamTable } from 'src/components/sam-table/sam-table'
 import { ValidatorDetail } from 'src/components/validator-detail/validator-detail'
-import { ValidatorJump } from 'src/components/validator-jump/validator-jump'
 import {
   fetchAllNotifications,
   fetchLatestSamAuctionBroadcastNotification,
@@ -299,16 +298,6 @@ export const SamPage: React.FC<Props> = ({ level }) => {
       {status === 'error' && <p>Error fetching data</p>}
       {status === 'loading' && <Loader />}
       {status === 'success' && displayAuctionResult && (
-        <div className="px-4 pt-3 max-w-[1920px] mx-auto">
-          <ValidatorJump
-            validators={displayAuctionResult.auctionData.validators}
-            nameMap={nameMap}
-            onSelect={handleValidatorClick}
-            className="max-w-md"
-          />
-        </div>
-      )}
-      {status === 'success' && displayAuctionResult && (
         <SamTable
           auctionResult={displayAuctionResult}
           originalAuctionResult={originalAuctionResult}
@@ -322,6 +311,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
           pendingEdits={pendingEdits}
           validatorMeta={nameMap}
           onValidatorClick={handleValidatorClick}
+          onValidatorSearch={handleValidatorClick}
           onFieldChange={handleFieldChange}
           onRunSimulation={handleRunSimulation}
           onCancelEditing={handleCancelEditing}
