@@ -1,4 +1,4 @@
-import { formatSolAmount, pay, payCta, stakeCta } from 'src/format'
+import { formatSolAmount, pay, payCta, stake, stakeCta } from 'src/format'
 
 import { bondHealthFromAuction, computeBondCoverageMetrics } from './breakdowns'
 import { bondUtilizationPct, compoundApy, apyBreakdown } from './calculations'
@@ -208,7 +208,7 @@ export const getValidatorTip = (
 
   if (delta > 0) {
     return {
-      text: `${pay(delta)} arriving next epoch.`,
+      text: `${stake(delta)} arriving next epoch.`,
       urgency: 'positive',
       constraint: 'none',
       icon: '↗',
@@ -224,7 +224,7 @@ export const getValidatorTip = (
   }
 
   return {
-    text: `Losing ${pay(Math.abs(delta))} next epoch.`,
+    text: `Losing ${stake(Math.abs(delta))} next epoch.`,
     urgency: 'warning',
     constraint: 'none',
     icon: '↘',
