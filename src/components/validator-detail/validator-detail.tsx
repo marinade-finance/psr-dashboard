@@ -182,7 +182,7 @@ export const ValidatorDetail = ({
   epochsPerYear,
   nameMap,
   notificationsMap,
-  rank,
+  rank: _rank,
   isSimulated = false,
   onClose,
   onSimulate,
@@ -359,16 +359,9 @@ export const ValidatorDetail = ({
                   <span className="text-sm leading-none">
                     {tip.icon ?? tipStyle.icon}
                   </span>
-                  #{rank}
-                </span>
-                <span
-                  className={`text-xs font-mono ${inSet ? 'text-muted-foreground' : 'text-destructive'}`}
-                >
-                  {inSet
-                    ? cutoffRank === 0
-                      ? 'at winning price'
-                      : `${cutoffRank} above winning price`
-                    : `${Math.abs(cutoffRank)} below winning price`}
+                  {cutoffRank < 0
+                    ? `-#${Math.abs(cutoffRank)}`
+                    : `#${cutoffRank}`}
                 </span>
               </span>
               {validatorName && (
