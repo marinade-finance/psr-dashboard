@@ -203,7 +203,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
               <SectionHeader title="Bond Risk — after undelegations finalize" />
               {m.carriedPaidUndelegationSol > 0 && (
                 <CalcRow
-                  label="Carried paid undelegation"
+                  label="Paid undelegation"
                   secondary={stake(m.carriedPaidUndelegationSol)}
                   value=""
                 />
