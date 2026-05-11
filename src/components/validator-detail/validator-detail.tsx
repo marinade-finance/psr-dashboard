@@ -502,11 +502,6 @@ export const ValidatorDetail = ({
                         : notification.priority === 'warning'
                           ? 'bg-warning-light text-warning'
                           : 'bg-info-light text-info'
-                    const [body, ...footerParts] =
-                      notification.message.split('\n\nEmitted:')
-                    const footer = footerParts.length
-                      ? `Emitted:${footerParts.join('\n\nEmitted:')}`
-                      : null
                     return (
                       <div
                         key={notification.id}
@@ -525,11 +520,11 @@ export const ValidatorDetail = ({
                           )}
                         </div>
                         <div className="text-xs text-muted-foreground whitespace-pre-line">
-                          {body}
+                          {notification.body}
                         </div>
-                        {footer && (
+                        {notification.footer && (
                           <div className="text-[10px] text-muted-foreground italic mt-1.5">
-                            {footer}
+                            {notification.footer}
                           </div>
                         )}
                       </div>
