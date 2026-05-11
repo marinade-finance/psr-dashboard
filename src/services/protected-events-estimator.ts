@@ -9,18 +9,19 @@ import type { Validator, ValidatorEpoch } from './validators'
 
 // Internal math runs in SOL; the on-chain `ProtectedEvent.amount` field is
 // in lamports (matches the backend API). Convert at the boundary when
-// constructing the event. min_settlement_sol = 0.1 (= 1e8 lamports).
-const MIN_SETTLEMENT_SOL = 0.1
+// constructing the event.
 const SOL_TO_LAMPORTS = 1e9
 
 type LowCreditsSettlementConfig = {
   meta: SettlementMeta
+  min_settlement_lamports: number
   grace_low_credits_bps: number
   covered_range_bps: [number, number]
 }
 
 type CommissionIncreaseSettlementConfig = {
   meta: SettlementMeta
+  min_settlement_lamports: number
   grace_commission_increase: number
   covered_range_bps: [number, number]
 }
@@ -28,11 +29,13 @@ type CommissionIncreaseSettlementConfig = {
 const lowCreditsSettlementConfigs: LowCreditsSettlementConfig[] = [
   {
     meta: { funder: 'ValidatorBond' },
+    min_settlement_lamports: 100_000_000,
     grace_low_credits_bps: 100,
     covered_range_bps: [0, 2000],
   },
   {
     meta: { funder: 'Marinade' },
+    min_settlement_lamports: 100_000_000,
     grace_low_credits_bps: 100,
     covered_range_bps: [2000, 10000],
   },
@@ -42,6 +45,7 @@ const commissionIncreaseSettlementConfigs: CommissionIncreaseSettlementConfig[] 
   [
     {
       meta: { funder: 'ValidatorBond' },
+      min_settlement_lamports: 100_000_000,
       grace_commission_increase: 1,
       covered_range_bps: [0, 10000],
     },
@@ -154,7 +158,7 @@ const buildLowCreditsProtectedEvent = (
     expectedEpr,
     marinadeStake,
   )
-  if (amountSol < MIN_SETTLEMENT_SOL) {
+  if (amountSol * SOL_TO_LAMPORTS < config.min_settlement_lamports) {
     return null
   }
 
@@ -218,7 +222,7 @@ const buildCommissionIncreaseProtectedEvent = (
     expectedEpr,
     marinadeStake,
   )
-  if (amountSol < MIN_SETTLEMENT_SOL) {
+  if (amountSol * SOL_TO_LAMPORTS < config.min_settlement_lamports) {
     return null
   }
 
