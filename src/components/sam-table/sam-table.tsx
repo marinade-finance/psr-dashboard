@@ -215,7 +215,16 @@ const RankCell: React.FC<{
   onClearValidator,
 }) => {
   if (isGhost)
-    return <span className={`text-muted-foreground ${RANK_MONO}`}>#{rank}</span>
+    return (
+      <span
+        className={`text-muted-foreground ${RANK_MONO} flex flex-col items-center gap-0`}
+      >
+        <span>#{rank}</span>
+        <span className="text-xs opacity-60 font-normal leading-tight">
+          {inSet ? 'above' : 'below'}
+        </span>
+      </span>
+    )
   if (isSimulated && onClearValidator)
     return (
       <div className="flex flex-col items-center gap-0.5">
@@ -226,7 +235,7 @@ const RankCell: React.FC<{
           #{rank}
         </span>
         <button
-          className="text-[10px] text-muted-foreground hover:text-destructive leading-none"
+          className="text-xs text-muted-foreground hover:text-destructive leading-none"
           onClick={e => {
             e.stopPropagation()
             onClearValidator(voteAccount)
@@ -245,7 +254,7 @@ const RankCell: React.FC<{
       <span className="flex items-center gap-0.5">
         <span className="leading-none">{tipIcon}</span>#{rank}
       </span>
-      <span className="text-[10px] font-normal text-muted-foreground leading-tight">
+      <span className="text-xs opacity-60 font-normal text-muted-foreground leading-tight">
         {inSet ? 'above' : 'below'}
       </span>
     </span>
@@ -621,7 +630,7 @@ export const SamTable: React.FC<Props> = ({
               />
             </div>
             <span
-              className={`text-[10px] font-mono whitespace-nowrap ${bondRunway <= 10 ? bondChip.shortText : TEXT_MUTED}`}
+              className={`text-xs opacity-60 font-mono whitespace-nowrap ${bondRunway <= 10 ? bondChip.shortText : TEXT_MUTED}`}
             >
               ({Math.round(bondRunway)}ep)
             </span>

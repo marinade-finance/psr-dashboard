@@ -6,9 +6,7 @@ import {
   getApyBreakdown,
   getBondHealthStyle,
   getTipStyle,
-  formatStakeDelta,
   calculateBondUtilization,
-  calculateMaxApy,
   nextStakeDeltaCell,
 } from '../tip-engine'
 
@@ -68,36 +66,6 @@ describe('calculateBondUtilization', () => {
   it('zero bond → 100', () => {
     const validator = makeValidator({ bondBalanceSol: 0 })
     expect(calculateBondUtilization(validator, 5)).toBe(100)
-  })
-})
-
-// --- calculateMaxApy ---
-
-describe('calculateMaxApy', () => {
-  it('returns compoundApy of totalPmpe', () => {
-    const validator = makeValidator()
-    // totalPmpe = 28
-    const expected = Math.pow(1 + 28 / 1e3, EPOCHS_PER_YEAR) - 1
-    expect(calculateMaxApy(validator, EPOCHS_PER_YEAR)).toBeCloseTo(
-      expected,
-      10,
-    )
-  })
-
-  it('zero totalPmpe → 0', () => {
-    const validator = makeValidator({
-      revShare: {
-        inflationPmpe: 0,
-        mevPmpe: 0,
-        blockPmpe: 0,
-        bidPmpe: 0,
-        totalPmpe: 0,
-        bondObligationPmpe: 0,
-        auctionEffectiveBidPmpe: 0,
-        effParticipatingBidPmpe: 0,
-      },
-    })
-    expect(calculateMaxApy(validator, EPOCHS_PER_YEAR)).toBe(0)
   })
 })
 
@@ -185,50 +153,6 @@ describe('getTipStyle', () => {
     for (const u of urgencies) {
       expect(getTipStyle(u).icon).toBeTruthy()
     }
-  })
-})
-
-// --- formatStakeDelta ---
-
-describe('formatStakeDelta', () => {
-  it('not in set (target=0) → dash text, no arrow', () => {
-    const validator = makeValidator({
-      auctionStake: { marinadeSamTargetSol: 0 },
-    })
-    const r = formatStakeDelta(validator)
-    expect(r.text).toBe('—')
-    expect(r.arrow).toBe('')
-  })
-
-  it('gaining stake → positive formatted with +', () => {
-    const validator = makeValidator({
-      auctionStake: { marinadeSamTargetSol: 20000 },
-      marinadeActivatedStakeSol: 10000,
-    })
-    const r = formatStakeDelta(validator)
-    expect(r.text).toContain('+')
-    expect(r.arrow).toBe('↑')
-  })
-
-  it('losing stake → negative, destructive color, down arrow', () => {
-    const validator = makeValidator({
-      auctionStake: { marinadeSamTargetSol: 5000 },
-      marinadeActivatedStakeSol: 10000,
-    })
-    const r = formatStakeDelta(validator)
-    expect(r.text).not.toContain('+')
-    expect(r.color).toContain('destructive')
-    expect(r.arrow).toBe('↓')
-  })
-
-  it('at target (delta=0) → "0", neutral color, right arrow', () => {
-    const validator = makeValidator({
-      auctionStake: { marinadeSamTargetSol: 10000 },
-      marinadeActivatedStakeSol: 10000,
-    })
-    const r = formatStakeDelta(validator)
-    expect(r.text).toBe('0')
-    expect(r.arrow).toBe('→')
   })
 })
 

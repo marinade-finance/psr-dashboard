@@ -120,12 +120,10 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           <CalcRow
             label="Expected max effective bid PMPE"
             secondary={pmpe(coverage.expectedMaxEffBidPmpe)}
-            value=""
           />
           <CalcRow
             label="On-chain distributed rewards PMPE"
             secondary={pmpe(coverage.onchainDistributedPmpe)}
-            value=""
           />
 
           <SectionHeader title={`Bond Coverage — ${coverage.minEp} epochs`} />
@@ -137,12 +135,10 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           <CalcRow
             label="Active Marinade stake"
             secondary={stake(coverage.marinadeActivatedStakeSol)}
-            value=""
           />
           <CalcRow
             label="Current exposed stake"
             secondary={stake(coverage.currentExposedStakeSol)}
-            value=""
           />
           <CalcRow
             label="Minimum unprotected reserve"
@@ -161,10 +157,8 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
             <CalcRow
               label="Top up to keep your stake"
               value={payCta(coverage.topUpToKeepStake)}
-              bold
-              large
+              total
               accent="yellow"
-              separator
               marker="yellow"
             />
           ) : null}
@@ -180,7 +174,6 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           <CalcRow
             label="Current exposed stake"
             secondary={stake(coverage.currentExposedStakeSol)}
-            value=""
           />
           <CalcRow
             label="Ideal unprotected reserve"
@@ -199,10 +192,8 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
             <CalcRow
               label="Top up for more stake"
               value={payCta(coverage.topUpToIdealKeep)}
-              bold
-              large
+              total
               accent="yellow"
-              separator
               marker="yellow"
             />
           ) : coverage.topUpToKeepStake > 0 ? (
@@ -218,13 +209,11 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
                 <CalcRow
                   label="Paid undelegation"
                   secondary={stake(coverage.carriedPaidUndelegationSol)}
-                  value=""
                 />
               )}
               <CalcRow
                 label="Projected exposed stake"
                 secondary={stake(coverage.projectedExposedStakeSol)}
-                value=""
               />
               <CalcRow
                 label="Penalty trigger threshold"
@@ -235,10 +224,8 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
                 <CalcRow
                   label="Top up to avoid the fee"
                   value={payCta(coverage.topUpToAvoidFee)}
-                  bold
-                  large
+                  total
                   accent="red"
-                  separator
                   marker="red"
                 />
               )}

@@ -70,8 +70,8 @@ Each route has Basic and Expert variants (Expert shows extra metrics/columns):
 - `src/services/sam.ts` — auction data loading, metric selectors, sensitivity
   analysis (`runAlt` pattern: mutate aggregated data, re-run auction)
 - `src/services/breakdowns.ts` — `computeBondCoverageMetrics` (bond coverage
-  model), `bondHealthFromAuction` (returns `'healthy'|'watch'|'critical'`),
-  `penaltyRiskColor`, `computeSamRevenueMetrics`, `computeBidPenaltyMetrics`
+  model), `bondHealthFromAuction` (returns `'healthy'|'soft'|'watch'|'critical'`),
+  `computeSamRevenueMetrics`, `computeBidPenaltyMetrics`
 - `src/services/tip-engine.ts` — `getValidatorTip` (urgency + text + constraint),
   `getTipStyle` (color/bg/icon per urgency), `getBondHealthStyle`
 - `src/components/sam-table/sam-table.tsx` — main auction table with

@@ -149,9 +149,8 @@ export const PaymentsBreakdown: React.FC<Props> = ({
           <CalcRow
             label="Total"
             value={pay(total)}
-            bold
-            large
-            separator
+            total
+            accent={hasPenalty ? 'red' : 'green'}
             marker={hasPenalty ? 'red' : 'green'}
           />
         </tbody>

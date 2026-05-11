@@ -15,7 +15,9 @@ import { selectTotalMarinadeStake } from 'src/services/validators'
 import type { UserLevelProps } from 'src/components/navigation/navigation'
 
 export const ValidatorBondsPage: React.FC<UserLevelProps> = ({ level }) => {
-  const { data, status } = useQuery('bonds', fetchValidatorsWithBonds)
+  const { data, status } = useQuery('bonds', fetchValidatorsWithBonds, {
+    staleTime: 5 * 60 * 1000,
+  })
   const { data: latestBroadcastNotification } = useQuery(
     'notifications-broadcast',
     fetchLatestSamAuctionBroadcastNotification,

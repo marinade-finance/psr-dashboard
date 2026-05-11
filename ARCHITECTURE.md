@@ -123,8 +123,11 @@ voteAccount])` for per-validator PSR estimates.
 
 `bid-penalty.tsx`, `bond-coverage.tsx`, `payments.tsx`, `sam-revenue.tsx`
 — one card per breakdown tab. `shared.tsx` exports the primitives:
-`CalcCard`, `CalcRow`, `RevRow`, `OkRow`, `SectionHeader`, `Marker`, plus
-the `SEPARATOR_*` class constants for the conclusion-row divider.
+`CalcCard`, `CalcRow`, `OkRow`, `SectionHeader`, `Marker`, plus the
+`SEPARATOR_*` class constants for the conclusion-row divider. `CalcRow`
+accepts a `total` prop that implies `separator + bold + large`; `value`
+defaults to `''`. `RevRow` is a local component inside `sam-revenue.tsx`,
+not exported from `shared.tsx`.
 
 ### `components/validator-bonds-table/`
 
@@ -194,14 +197,13 @@ where applicable.
   `bondRunwayDays`, `bondUtilizationPct`, `stakeDelta`,
   `selectMaxWantedStake`, `apyBreakdown`, `isNonProductive`.
 - **`tip-engine.ts`** — `getValidatorTip` (urgency + text + constraint),
-  `getTipStyle`, `getBondHealthStyle`, `bondStatusText`,
-  `getApyBreakdown`, `formatStakeDelta`. Drives the rank-cell icon and
-  the Next Step column.
+  `getTipStyle`, `getBondHealthStyle`, `getApyBreakdown`,
+  `nextStakeDeltaCell`, `calculateBondUtilization`. Drives the rank-cell
+  icon and the Next Step column.
 - **`breakdowns.ts`** — `computeSamRevenueMetrics`,
   `computeBondCoverageMetrics`, `computeBidPenaltyMetrics`,
-  `bondHealthFromAuction` (`'healthy'|'soft'|'watch'|'critical'`),
-  `penaltyRiskColor`. `TOL_COEF`/`SCALE_COEF` mirror SDK
-  `calcBidTooLowPenalty`.
+  `bondHealthFromAuction` (`'healthy'|'soft'|'watch'|'critical'`).
+  `TOL_COEF`/`SCALE_COEF` mirror SDK `calcBidTooLowPenalty`.
 
 ### Validator data
 

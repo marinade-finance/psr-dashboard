@@ -48,40 +48,56 @@ export const Marker: React.FC<{ tone: 'red' | 'yellow' | 'green' }> = ({
 export const CalcRow: React.FC<{
   label: string
   secondary?: string
-  value: string
+  value?: string
   bold?: boolean
   large?: boolean
   accent?: 'red' | 'yellow' | 'green'
   separator?: boolean
+  total?: boolean
   marker?: 'red' | 'yellow' | 'green'
-}> = ({ label, secondary, value, bold, large, accent, separator, marker }) => (
-  <tr className={'border-b border-border-grid/50 last:border-b-0'}>
-    <td
-      className={`pr-2 ${large ? 'text-base' : 'text-xs'} ${separator ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${bold ? 'font-semibold' : ''} ${separator ? 'text-foreground' : ''}`}
-    >
-      {marker && <Marker tone={marker} />}
-      {label}
-    </td>
-    <td
-      className={`px-2 text-right font-mono text-xs text-muted-foreground ${separator ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD}`}
-    >
-      {secondary ?? ''}
-    </td>
-    <td
-      className={`pl-2 text-right font-mono ${separator ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${large ? 'text-base' : 'text-xs'} ${bold ? 'font-semibold' : ''} ${separator ? 'border-t-2 border-border' : ''} ${
-        accent === 'red'
-          ? 'text-destructive'
-          : accent === 'yellow'
-            ? 'text-status-yellow'
-            : accent === 'green'
-              ? 'text-status-green'
-              : ''
-      }`}
-    >
-      {value}
-    </td>
-  </tr>
-)
+}> = ({
+  label,
+  secondary,
+  value = '',
+  bold,
+  large,
+  accent,
+  separator,
+  total,
+  marker,
+}) => {
+  const sep = total || separator
+  const bld = total || bold
+  const lg = total || large
+  return (
+    <tr className={'border-b border-border-grid/50 last:border-b-0'}>
+      <td
+        className={`pr-2 ${lg ? 'text-base' : 'text-xs'} ${sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${bld ? 'font-semibold' : ''}`}
+      >
+        {marker && <Marker tone={marker} />}
+        {label}
+      </td>
+      <td
+        className={`px-2 text-right font-mono text-xs text-muted-foreground ${sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD}`}
+      >
+        {secondary ?? ''}
+      </td>
+      <td
+        className={`pl-2 text-right font-mono ${sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${lg ? 'text-base' : 'text-xs'} ${bld ? 'font-semibold' : ''} ${sep ? 'border-t-2 border-border' : ''} ${
+          accent === 'red'
+            ? 'text-destructive'
+            : accent === 'yellow'
+              ? 'text-status-yellow'
+              : accent === 'green'
+                ? 'text-status-green'
+                : ''
+        }`}
+      >
+        {value}
+      </td>
+    </tr>
+  )
+}
 
 export const OkRow: React.FC<{ message: string }> = ({ message }) => (
   <tr>

@@ -14,7 +14,6 @@ import {
   selectSamActiveStake,
   selectSamTargetStake,
 } from 'src/services/sam'
-import { Color } from 'src/services/types'
 
 import type {
   AuctionValidator,
@@ -212,29 +211,6 @@ export function computeBondCoverageMetrics(
     floorBaseProjected,
     topUpToAvoidFee,
   }
-}
-
-export function penaltyRiskColor(
-  v: AuctionValidator,
-  minBondEpochs: number,
-  idealBondEpochs: number,
-  winningTotalPmpe: number,
-  bondRiskFeeMult: number,
-): Color | undefined {
-  if (!v.auctionStake.marinadeSamTargetSol && !v.marinadeActivatedStakeSol) {
-    return undefined
-  }
-  const coverage = computeBondCoverageMetrics(
-    v,
-    minBondEpochs,
-    idealBondEpochs,
-    winningTotalPmpe,
-    bondRiskFeeMult,
-  )
-  if (coverage.topUpToAvoidFee > 0) return Color.RED
-  if (coverage.topUpToKeepStake > 0 || coverage.topUpToIdealKeep > 0)
-    return Color.YELLOW
-  return Color.GREEN
 }
 
 // Four tiers so the bond chip and the page-level CTA agree on tone:

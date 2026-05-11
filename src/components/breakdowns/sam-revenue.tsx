@@ -27,55 +27,62 @@ const RevRow: React.FC<{
   label: string
   pct?: string
   pmpe?: string
-  value: string
+  value?: string
   bold?: boolean
   large?: boolean
   accent?: 'green' | 'yellow' | 'red'
   separator?: boolean
+  total?: boolean
   marker?: 'red' | 'yellow' | 'green'
 }> = ({
   label,
   pct,
   pmpe: pmpeStr,
-  value,
+  value = '',
   bold,
   large,
   accent,
   separator,
+  total,
   marker,
-}) => (
-  <tr className={'border-b border-border-grid/50 last:border-b-0'}>
-    <td
-      className={`pr-2 ${large ? 'text-base' : 'text-xs'} ${separator ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${bold ? 'font-semibold' : ''} ${separator ? 'text-foreground' : ''}`}
-    >
-      {marker && <Marker tone={marker} />}
-      {label}
-    </td>
-    <td
-      className={`px-2 text-right font-mono text-xs text-muted-foreground ${separator ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD}`}
-    >
-      {pct ?? ''}
-    </td>
-    <td
-      className={`px-2 text-right font-mono text-xs text-muted-foreground ${separator ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD}`}
-    >
-      {pmpeStr ?? ''}
-    </td>
-    <td
-      className={`pl-2 text-right font-mono ${large ? 'text-base' : 'text-xs'} ${separator ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${bold ? 'font-semibold' : ''} ${separator ? 'border-t-2 border-border' : ''} ${
-        accent === 'green'
-          ? 'text-status-green'
-          : accent === 'yellow'
-            ? 'text-status-yellow'
-            : accent === 'red'
-              ? 'text-destructive'
-              : ''
-      }`}
-    >
-      {value}
-    </td>
-  </tr>
-)
+}) => {
+  const sep = total || separator
+  const bld = total || bold
+  const lg = total || large
+  return (
+    <tr className={'border-b border-border-grid/50 last:border-b-0'}>
+      <td
+        className={`pr-2 ${lg ? 'text-base' : 'text-xs'} ${sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${bld ? 'font-semibold' : ''}`}
+      >
+        {marker && <Marker tone={marker} />}
+        {label}
+      </td>
+      <td
+        className={`px-2 text-right font-mono text-xs text-muted-foreground ${sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD}`}
+      >
+        {pct ?? ''}
+      </td>
+      <td
+        className={`px-2 text-right font-mono text-xs text-muted-foreground ${sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD}`}
+      >
+        {pmpeStr ?? ''}
+      </td>
+      <td
+        className={`pl-2 text-right font-mono ${lg ? 'text-base' : 'text-xs'} ${sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${bld ? 'font-semibold' : ''} ${sep ? 'border-t-2 border-border' : ''} ${
+          accent === 'green'
+            ? 'text-status-green'
+            : accent === 'yellow'
+              ? 'text-status-yellow'
+              : accent === 'red'
+                ? 'text-destructive'
+                : ''
+        }`}
+      >
+        {value}
+      </td>
+    </tr>
+  )
+}
 
 export const SamRevenueBreakdown: React.FC<Props> = ({
   validator,
@@ -141,33 +148,28 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
             label="Inflation"
             pct={metrics.inflPct}
             pmpe={pmpe(metrics.inflPmpe)}
-            value=""
           />
           <RevRow
             label="MEV"
             pct={metrics.mevPct}
             pmpe={pmpe(metrics.mevPmpe)}
-            value=""
           />
           <RevRow
             label="Block rewards"
             pct={metrics.blkPct}
             pmpe={pmpe(metrics.blkPmpe)}
-            value=""
           />
 
           <SectionHeader title="Bid" colSpan={4} />
-          <RevRow label="Static bid PMPE" pmpe={pmpe(metrics.bid)} value="" />
+          <RevRow label="Static bid PMPE" pmpe={pmpe(metrics.bid)} />
           <RevRow
             label="Auction effective bid PMPE"
             pmpe={pmpe(metrics.effBid)}
-            value=""
             bold
           />
           <RevRow
             label="Bid gap"
             pmpe={pmpe(metrics.bidGap)}
-            value=""
             accent={
               metrics.bidGap > 2
                 ? 'yellow'
@@ -187,9 +189,7 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
           <RevRow
             label="Total per epoch"
             value={pay(metrics.total)}
-            bold
-            large
-            separator
+            total
             marker="green"
           />
         </tbody>

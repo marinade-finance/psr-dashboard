@@ -77,7 +77,6 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
           <CalcRow
             label="History window"
             secondary={`${metrics.historyEpochs} epochs`}
-            value=""
           />
           <CalcRow
             label="Worst historical effective participating bid PMPE"
@@ -107,7 +106,6 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
           <CalcRow
             label="Penalty coefficient"
             secondary={formatPercentage(metrics.penaltyCoef, 2)}
-            value=""
           />
           <CalcRow
             label="Base — winning PMPE + effective participating bid PMPE"
@@ -124,10 +122,8 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
               label="Penalty this epoch"
               secondary={stake(metrics.marinadeActivatedStakeSol)}
               value={pay(metrics.penaltySol)}
-              bold
-              large
+              total
               accent="red"
-              separator
               marker="red"
             />
           ) : (

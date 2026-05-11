@@ -37,12 +37,12 @@ export function apyBreakdown(
   validator: AuctionValidator,
   epochsPerYear: number,
 ): ApyBreakdown {
-  const r = validator.revShare
+  const rev = validator.revShare
   return {
-    inflation: compoundApy(r.inflationPmpe, epochsPerYear),
-    mev: compoundApy(r.mevPmpe, epochsPerYear),
-    blockRewards: compoundApy(r.blockPmpe ?? 0, epochsPerYear),
-    bid: compoundApy(r.bidPmpe, epochsPerYear),
-    total: compoundApy(r.totalPmpe, epochsPerYear),
+    inflation: compoundApy(rev.inflationPmpe, epochsPerYear),
+    mev: compoundApy(rev.mevPmpe, epochsPerYear),
+    blockRewards: compoundApy(rev.blockPmpe ?? 0, epochsPerYear),
+    bid: compoundApy(rev.bidPmpe, epochsPerYear),
+    total: compoundApy(rev.totalPmpe, epochsPerYear),
   }
 }

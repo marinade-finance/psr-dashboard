@@ -12,10 +12,10 @@ import {
   CSS_WARNING,
   CSS_WARNING_LIGHT,
 } from 'src/css'
-import { formatSolAmount, pay, payCta, stake, stakeCta } from 'src/format'
+import { pay, payCta, stake, stakeCta } from 'src/format'
 
 import { bondHealthFromAuction, computeBondCoverageMetrics } from './breakdowns'
-import { bondUtilizationPct, compoundApy, apyBreakdown } from './calculations'
+import { bondUtilizationPct, apyBreakdown } from './calculations'
 
 import type { BondHealthState } from './breakdowns'
 import type { AugmentedAuctionValidator } from './sam'
@@ -279,11 +279,6 @@ export const calculateBondUtilization = (
   minBondEpochs: number,
 ): number => bondUtilizationPct(validator, minBondEpochs)
 
-export const calculateMaxApy = (
-  validator: AuctionValidator,
-  epochsPerYear: number,
-): number => compoundApy(validator.revShare.totalPmpe, epochsPerYear)
-
 export type ApyBreakdownValue = {
   inflation: number
   mev: number
@@ -319,32 +314,3 @@ export function nextStakeDeltaCell(expectedChange: number): NextStakeDeltaCell {
   return { prefix: '', tone: 'negative' }
 }
 
-export const formatStakeDelta = (
-  validator: AuctionValidator,
-): { text: string; color: string; arrow: string } => {
-  const samTarget = validator.auctionStake.marinadeSamTargetSol
-  const samActive = validator.marinadeActivatedStakeSol
-  const inSet = samTarget > 0
-
-  if (!inSet) {
-    return { text: '\u2014', color: CSS_MUTED_FG, arrow: '' }
-  }
-
-  const delta = samTarget - samActive
-
-  if (delta > 0) {
-    return {
-      text: `+${formatSolAmount(delta, 0)}`,
-      color: CSS_PRIMARY,
-      arrow: '\u2191',
-    }
-  }
-  if (delta < 0) {
-    return {
-      text: formatSolAmount(delta, 0),
-      color: CSS_DESTRUCTIVE,
-      arrow: '\u2193',
-    }
-  }
-  return { text: '0', color: CSS_MUTED_FG, arrow: '\u2192' }
-}
