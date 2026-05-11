@@ -18,7 +18,6 @@ export type ProtectedEventWithValidator = {
   validator: Validator | null
 }
 
-// epoch 608 was the last epoch where PSR ran as dry-run only (no actual settlements)
 const LAST_DRYRUN_EPOCH = 608
 
 export const fetchProtectedEventsWithValidator = async (): Promise<
