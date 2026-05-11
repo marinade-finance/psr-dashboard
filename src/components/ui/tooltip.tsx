@@ -5,10 +5,6 @@ import { cn } from 'src/class_utils'
 
 const TooltipProvider = TooltipPrimitive.Provider
 
-const TooltipRoot = TooltipPrimitive.Root
-
-const TooltipTrigger = TooltipPrimitive.Trigger
-
 function TooltipContent({
   className,
   sideOffset = 4,
@@ -36,10 +32,10 @@ type TooltipProps = {
 
 function Tooltip({ content, children, delayDuration = 300 }: TooltipProps) {
   return (
-    <TooltipRoot delayDuration={delayDuration}>
-      <TooltipTrigger asChild>{children}</TooltipTrigger>
+    <TooltipPrimitive.Root delayDuration={delayDuration}>
+      <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
       <TooltipContent>{content}</TooltipContent>
-    </TooltipRoot>
+    </TooltipPrimitive.Root>
   )
 }
 
@@ -53,20 +49,13 @@ type HtmlTooltipProps = {
 
 function HtmlTooltip({ html, children }: HtmlTooltipProps) {
   return (
-    <TooltipRoot delayDuration={300}>
-      <TooltipTrigger asChild>{children}</TooltipTrigger>
+    <TooltipPrimitive.Root delayDuration={300}>
+      <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
       <TooltipContent className="max-w-[min(640px,calc(100vw-24px))] bg-black/90 text-white/95">
         <span dangerouslySetInnerHTML={{ __html: html }} />
       </TooltipContent>
-    </TooltipRoot>
+    </TooltipPrimitive.Root>
   )
 }
 
-export {
-  TooltipProvider,
-  TooltipRoot,
-  TooltipTrigger,
-  TooltipContent,
-  Tooltip,
-  HtmlTooltip,
-}
+export { TooltipProvider, Tooltip, HtmlTooltip }
