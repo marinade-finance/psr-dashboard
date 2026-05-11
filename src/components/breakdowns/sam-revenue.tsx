@@ -164,13 +164,11 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
 
           <SectionHeader title="Cost" colSpan={4} />
           <RevRow label="Active Stake Cost" value={pay(m.cost)} />
-          {m.activating > 0 && (
-            <RevRow
-              label="Activating Stake Cost"
-              pmpe={pmpe(m.activatingStakePmpe)}
-              value={pay(m.activatingCost)}
-            />
-          )}
+          <RevRow
+            label="Activating Stake Cost"
+            pmpe={pmpe(m.activatingStakePmpe)}
+            value={pay(m.activatingCost)}
+          />
           <RevRow
             label="Total per epoch"
             value={pay(m.total)}

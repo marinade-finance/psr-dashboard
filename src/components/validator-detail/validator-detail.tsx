@@ -366,9 +366,9 @@ export const ValidatorDetail = ({
                 >
                   {inSet
                     ? cutoffRank === 0
-                      ? 'at cutoff'
-                      : `${cutoffRank} above cutoff`
-                    : `${Math.abs(cutoffRank)} below cutoff`}
+                      ? 'at winning price'
+                      : `${cutoffRank} above winning price`
+                    : `${Math.abs(cutoffRank)} below winning price`}
                 </span>
               </span>
               {validatorName && (
