@@ -55,11 +55,9 @@ export const CalcRow: React.FC<{
   separator?: boolean
   marker?: 'red' | 'yellow' | 'green'
 }> = ({ label, secondary, value, bold, large, accent, separator, marker }) => (
-  <tr
-    className={`border-b border-border-grid/50 last:border-b-0 ${separator ? SEPARATOR_TR_CLASS : ''}`}
-  >
+  <tr className={'border-b border-border-grid/50 last:border-b-0'}>
     <td
-      className={`pr-2 text-xs ${separator ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${bold ? 'font-semibold' : ''} ${large ? 'text-base' : ''} ${separator ? 'text-foreground' : ''}`}
+      className={`pr-2 ${large ? 'text-base' : 'text-xs'} ${separator ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${bold ? 'font-semibold' : ''} ${separator ? 'text-foreground' : ''}`}
     >
       {marker && <Marker tone={marker} />}
       {label}
@@ -70,7 +68,7 @@ export const CalcRow: React.FC<{
       {secondary ?? ''}
     </td>
     <td
-      className={`pl-2 text-right font-mono ${separator ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${large ? 'text-base' : 'text-xs'} ${bold ? 'font-semibold' : ''} ${
+      className={`pl-2 text-right font-mono ${separator ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${large ? 'text-base' : 'text-xs'} ${bold ? 'font-semibold' : ''} ${separator ? 'border-t-2 border-border' : ''} ${
         accent === 'red'
           ? 'text-destructive'
           : accent === 'yellow'

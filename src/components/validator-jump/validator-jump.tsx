@@ -43,7 +43,7 @@ export function findMatches(
       exactVote.push({ voteAccount: vote, name, rank: 0 })
       continue
     }
-    if (vote.startsWith(q)) {
+    if (vote.toLowerCase().startsWith(qLower)) {
       votePrefix.push({ voteAccount: vote, name, rank: 1 })
       continue
     }

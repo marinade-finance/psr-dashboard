@@ -195,6 +195,7 @@ const SortIndicator: React.FC<{
 
 const RankCell: React.FC<{
   rank: number
+  inSet: boolean
   isGhost: boolean
   isSimulated: boolean
   posColor: string | undefined
@@ -204,6 +205,7 @@ const RankCell: React.FC<{
   onClearValidator?: (voteAccount: string) => void
 }> = ({
   rank,
+  inSet,
   isGhost,
   isSimulated,
   posColor,
@@ -237,10 +239,15 @@ const RankCell: React.FC<{
     )
   return (
     <span
-      className={`font-medium ${RANK_MONO} flex items-center justify-center gap-0.5`}
+      className={`font-medium ${RANK_MONO} flex flex-col items-center gap-0`}
       style={{ color: tipColor }}
     >
-      <span className="leading-none">{tipIcon}</span>#{rank}
+      <span className="flex items-center gap-0.5">
+        <span className="leading-none">{tipIcon}</span>#{rank}
+      </span>
+      <span className="text-[10px] font-normal text-muted-foreground leading-tight">
+        {inSet ? 'above' : 'below'}
+      </span>
     </span>
   )
 }
@@ -553,6 +560,7 @@ export const SamTable: React.FC<Props> = ({
         <TableCell className="px-3.5 py-3 text-center w-10">
           <RankCell
             rank={rank}
+            inSet={inSet}
             isGhost={isGhost}
             isSimulated={isSimulated}
             posColor={posColor}

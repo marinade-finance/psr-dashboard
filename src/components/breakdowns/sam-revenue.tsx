@@ -10,7 +10,6 @@ import {
   NORMAL_CELL_PAD,
   SectionHeader,
   SEPARATOR_CELL_PAD,
-  SEPARATOR_TR_CLASS,
 } from './shared'
 
 import type { UserLevel } from 'src/components/navigation/navigation'
@@ -30,6 +29,7 @@ const RevRow: React.FC<{
   pmpe?: string
   value: string
   bold?: boolean
+  large?: boolean
   accent?: 'green' | 'yellow' | 'red'
   separator?: boolean
   marker?: 'red' | 'yellow' | 'green'
@@ -39,15 +39,14 @@ const RevRow: React.FC<{
   pmpe: pmpeStr,
   value,
   bold,
+  large,
   accent,
   separator,
   marker,
 }) => (
-  <tr
-    className={`border-b border-border-grid/50 last:border-b-0 ${separator ? SEPARATOR_TR_CLASS : ''}`}
-  >
+  <tr className={'border-b border-border-grid/50 last:border-b-0'}>
     <td
-      className={`pr-2 text-xs ${separator ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${bold ? 'font-semibold' : ''} ${separator ? 'text-foreground' : ''}`}
+      className={`pr-2 ${large ? 'text-base' : 'text-xs'} ${separator ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${bold ? 'font-semibold' : ''} ${separator ? 'text-foreground' : ''}`}
     >
       {marker && <Marker tone={marker} />}
       {label}
@@ -63,7 +62,7 @@ const RevRow: React.FC<{
       {pmpeStr ?? ''}
     </td>
     <td
-      className={`pl-2 text-right font-mono text-xs ${separator ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${bold ? 'font-semibold' : ''} ${
+      className={`pl-2 text-right font-mono ${large ? 'text-base' : 'text-xs'} ${separator ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${bold ? 'font-semibold' : ''} ${separator ? 'border-t-2 border-border' : ''} ${
         accent === 'green'
           ? 'text-status-green'
           : accent === 'yellow'
@@ -189,6 +188,7 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
             label="Total per epoch"
             value={pay(metrics.total)}
             bold
+            large
             separator
             marker="green"
           />
