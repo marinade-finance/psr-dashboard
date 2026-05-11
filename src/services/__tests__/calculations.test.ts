@@ -83,52 +83,64 @@ describe('compoundApy', () => {
 
 describe('bondRunwayEpochs', () => {
   it('positive runway: goodFor - min', () => {
-    const v = makeValidator({ bondGoodForNEpochs: 20 })
-    expect(bondRunwayEpochs(v, 5)).toBe(15)
+    const validator = makeValidator({ bondGoodForNEpochs: 20 })
+    expect(bondRunwayEpochs(validator, 5)).toBe(15)
   })
 
   it('zero: exactly depleted', () => {
-    const v = makeValidator({ bondGoodForNEpochs: 5 })
-    expect(bondRunwayEpochs(v, 5)).toBe(0)
+    const validator = makeValidator({ bondGoodForNEpochs: 5 })
+    expect(bondRunwayEpochs(validator, 5)).toBe(0)
   })
 
   it('negative: overdrawn', () => {
-    const v = makeValidator({ bondGoodForNEpochs: 3 })
-    expect(bondRunwayEpochs(v, 5)).toBe(-2)
+    const validator = makeValidator({ bondGoodForNEpochs: 3 })
+    expect(bondRunwayEpochs(validator, 5)).toBe(-2)
   })
 })
 
 describe('bondUtilizationPct', () => {
   it('typical utilization < 100: 3/4 epochs covered → 25%', () => {
-    const v = makeValidator({ bondGoodForNEpochs: 3, bondBalanceSol: 100 })
-    expect(bondUtilizationPct(v, 4)).toBe(25)
+    const validator = makeValidator({
+      bondGoodForNEpochs: 3,
+      bondBalanceSol: 100,
+    })
+    expect(bondUtilizationPct(validator, 4)).toBe(25)
   })
 
   it('runway depleted → capped at 100', () => {
-    const v = makeValidator({ bondGoodForNEpochs: 0, bondBalanceSol: 10 })
-    expect(bondUtilizationPct(v, 5)).toBe(100)
+    const validator = makeValidator({
+      bondGoodForNEpochs: 0,
+      bondBalanceSol: 10,
+    })
+    expect(bondUtilizationPct(validator, 5)).toBe(100)
   })
 
   it('zero bond → 100', () => {
-    const v = makeValidator({ bondBalanceSol: 0 })
-    expect(bondUtilizationPct(v, 5)).toBe(100)
+    const validator = makeValidator({ bondBalanceSol: 0 })
+    expect(bondUtilizationPct(validator, 5)).toBe(100)
   })
 
   it('runway exceeds min → 0%', () => {
-    const v = makeValidator({ bondGoodForNEpochs: 10, bondBalanceSol: 100 })
-    expect(bondUtilizationPct(v, 5)).toBe(0)
+    const validator = makeValidator({
+      bondGoodForNEpochs: 10,
+      bondBalanceSol: 100,
+    })
+    expect(bondUtilizationPct(validator, 5)).toBe(0)
   })
 
   it('exactly half covered → 50%', () => {
-    const v = makeValidator({ bondGoodForNEpochs: 2, bondBalanceSol: 100 })
-    expect(bondUtilizationPct(v, 4)).toBe(50)
+    const validator = makeValidator({
+      bondGoodForNEpochs: 2,
+      bondBalanceSol: 100,
+    })
+    expect(bondUtilizationPct(validator, 4)).toBe(50)
   })
 })
 
 describe('apyBreakdown', () => {
   it('all components > 0 when all pmpe > 0', () => {
-    const v = makeValidator()
-    const bd = apyBreakdown(v, 182)
+    const validator = makeValidator()
+    const bd = apyBreakdown(validator, 182)
     expect(bd.inflation).toBeGreaterThan(0)
     expect(bd.mev).toBeGreaterThan(0)
     expect(bd.blockRewards).toBeGreaterThan(0)
@@ -137,13 +149,13 @@ describe('apyBreakdown', () => {
   })
 
   it('total = compoundApy(totalPmpe)', () => {
-    const v = makeValidator()
-    const bd = apyBreakdown(v, 182)
+    const validator = makeValidator()
+    const bd = apyBreakdown(validator, 182)
     expect(bd.total).toBeCloseTo(compoundApy(11, 182), 10)
   })
 
   it('all zero when all pmpe = 0', () => {
-    const v = makeValidator({
+    const validator = makeValidator({
       revShare: {
         inflationPmpe: 0,
         mevPmpe: 0,
@@ -155,7 +167,7 @@ describe('apyBreakdown', () => {
         effParticipatingBidPmpe: 0,
       } as AuctionValidator['revShare'],
     })
-    const bd = apyBreakdown(v, 182)
+    const bd = apyBreakdown(validator, 182)
     expect(bd.total).toBe(0)
     expect(bd.inflation).toBe(0)
     expect(bd.mev).toBe(0)
@@ -164,7 +176,7 @@ describe('apyBreakdown', () => {
   })
 
   it('components are independent (each driven by own pmpe)', () => {
-    const v = makeValidator({
+    const validator = makeValidator({
       revShare: {
         inflationPmpe: 10,
         mevPmpe: 0,
@@ -176,7 +188,7 @@ describe('apyBreakdown', () => {
         effParticipatingBidPmpe: 0,
       } as AuctionValidator['revShare'],
     })
-    const bd = apyBreakdown(v, 182)
+    const bd = apyBreakdown(validator, 182)
     expect(bd.inflation).toBeGreaterThan(0)
     expect(bd.mev).toBe(0)
     expect(bd.bid).toBe(0)

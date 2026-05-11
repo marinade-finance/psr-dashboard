@@ -79,14 +79,14 @@ describe('B5 — grace_commission_increase bps unit', () => {
     // 5% → 5.5% = +0.5%, eprLossBps ≈ 53 bps
     // Old code: 53 >= grace_commission_increase(1) → event produced (wrong)
     // Fixed:   53 < grace_commission_increase*100(100) → no event (correct)
-    const v = makeValidator({
+    const validator = makeValidator({
       epoch_stats: [
         makeEpochStat({ epoch: 700, commission_advertised: 5.5 }),
         makeEpochStat({ epoch: 699, commission_advertised: 5.0 }),
       ],
     })
 
-    const events = await calculateProtectedEventEstimates([v])
+    const events = await calculateProtectedEventEstimates([validator])
     const commissionEvents = events.filter(
       e =>
         isProtectedEvent(e.reason) &&
@@ -97,14 +97,14 @@ describe('B5 — grace_commission_increase bps unit', () => {
 
   it('2% commission increase does not throw or produce NaN amounts', async () => {
     // 5% → 7% = +2%, eprLossBps ≈ 211 bps > 100 → passes grace check
-    const v = makeValidator({
+    const validator = makeValidator({
       epoch_stats: [
         makeEpochStat({ epoch: 700, commission_advertised: 7 }),
         makeEpochStat({ epoch: 699, commission_advertised: 5 }),
       ],
     })
 
-    const events = await calculateProtectedEventEstimates([v])
+    const events = await calculateProtectedEventEstimates([validator])
     for (const event of events) {
       expect(Number.isFinite(event.amount)).toBe(true)
     }
@@ -114,15 +114,15 @@ describe('B5 — grace_commission_increase bps unit', () => {
 // B6: targetCredits undefined not guarded before buildLowCreditsProtectedEvent
 describe('B6 — targetCredits undefined guard', () => {
   it('epoch with zero stake (no targetCredits entry) does not crash', async () => {
-    const v = makeValidator({
+    const validator = makeValidator({
       epoch_stats: [
         makeEpochStat({ epoch: 701, activated_stake: '0', credits: 0 }),
       ],
     })
 
-    await expect(calculateProtectedEventEstimates([v])).resolves.toBeInstanceOf(
-      Array,
-    )
+    await expect(
+      calculateProtectedEventEstimates([validator]),
+    ).resolves.toBeInstanceOf(Array)
   })
 
   it('epoch missing from targetCreditsByEpoch produces no event', async () => {

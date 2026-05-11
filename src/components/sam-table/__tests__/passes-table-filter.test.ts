@@ -7,7 +7,9 @@ import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
 
 const MIN_BOND_EPOCHS = 6
 
-const v = (overrides: Partial<AuctionValidator>): AuctionValidator =>
+const makeValidator = (
+  overrides: Partial<AuctionValidator>,
+): AuctionValidator =>
   ({
     voteAccount: 'va',
     bondBalanceSol: 100,
@@ -19,7 +21,7 @@ const v = (overrides: Partial<AuctionValidator>): AuctionValidator =>
 
 describe('passesTableFilter', () => {
   it('drops validators with no bond regardless of level', () => {
-    const noBond = v({ bondBalanceSol: 0 })
+    const noBond = makeValidator({ bondBalanceSol: 0 })
     expect(passesTableFilter(noBond, UserLevel.Expert, MIN_BOND_EPOCHS)).toBe(
       false,
     )
@@ -29,8 +31,8 @@ describe('passesTableFilter', () => {
   })
 
   it('expert mode shows everything else', () => {
-    const tinyBond = v({ bondGoodForNEpochs: 1 })
-    const noStake = v({
+    const tinyBond = makeValidator({ bondGoodForNEpochs: 1 })
+    const noStake = makeValidator({
       marinadeActivatedStakeSol: 0,
       auctionStake: { marinadeSamTargetSol: 0 } as never,
     })
@@ -43,7 +45,7 @@ describe('passesTableFilter', () => {
   })
 
   it('basic mode hides validators with no marinade stake', () => {
-    const noStake = v({
+    const noStake = makeValidator({
       marinadeActivatedStakeSol: 0,
       auctionStake: { marinadeSamTargetSol: 0 } as never,
     })
@@ -53,21 +55,23 @@ describe('passesTableFilter', () => {
   })
 
   it('basic mode hides validators with bond runway below min', () => {
-    const tooShort = v({ bondGoodForNEpochs: MIN_BOND_EPOCHS - 1 })
+    const tooShort = makeValidator({ bondGoodForNEpochs: MIN_BOND_EPOCHS - 1 })
     expect(passesTableFilter(tooShort, UserLevel.Basic, MIN_BOND_EPOCHS)).toBe(
       false,
     )
   })
 
   it('basic mode keeps validators at exactly min runway', () => {
-    const atMin = v({ bondGoodForNEpochs: MIN_BOND_EPOCHS })
+    const atMin = makeValidator({ bondGoodForNEpochs: MIN_BOND_EPOCHS })
     expect(passesTableFilter(atMin, UserLevel.Basic, MIN_BOND_EPOCHS)).toBe(
       true,
     )
   })
 
   it('basic mode treats missing bondGoodForNEpochs as 0 (hidden)', () => {
-    const missing = v({ bondGoodForNEpochs: undefined as unknown as number })
+    const missing = makeValidator({
+      bondGoodForNEpochs: undefined as unknown as number,
+    })
     expect(passesTableFilter(missing, UserLevel.Basic, MIN_BOND_EPOCHS)).toBe(
       false,
     )

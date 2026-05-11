@@ -58,13 +58,16 @@ const DS_SAM_CONFIG = {
 
 describe('calculateBondUtilization', () => {
   it('3 of 4 epochs covered → 25% utilization', () => {
-    const v = makeValidator({ bondGoodForNEpochs: 3, bondBalanceSol: 100 })
-    expect(calculateBondUtilization(v, 4)).toBe(25)
+    const validator = makeValidator({
+      bondGoodForNEpochs: 3,
+      bondBalanceSol: 100,
+    })
+    expect(calculateBondUtilization(validator, 4)).toBe(25)
   })
 
   it('zero bond → 100', () => {
-    const v = makeValidator({ bondBalanceSol: 0 })
-    expect(calculateBondUtilization(v, 5)).toBe(100)
+    const validator = makeValidator({ bondBalanceSol: 0 })
+    expect(calculateBondUtilization(validator, 5)).toBe(100)
   })
 })
 
@@ -72,14 +75,17 @@ describe('calculateBondUtilization', () => {
 
 describe('calculateMaxApy', () => {
   it('returns compoundApy of totalPmpe', () => {
-    const v = makeValidator()
+    const validator = makeValidator()
     // totalPmpe = 28
     const expected = Math.pow(1 + 28 / 1e3, EPOCHS_PER_YEAR) - 1
-    expect(calculateMaxApy(v, EPOCHS_PER_YEAR)).toBeCloseTo(expected, 10)
+    expect(calculateMaxApy(validator, EPOCHS_PER_YEAR)).toBeCloseTo(
+      expected,
+      10,
+    )
   })
 
   it('zero totalPmpe → 0', () => {
-    const v = makeValidator({
+    const validator = makeValidator({
       revShare: {
         inflationPmpe: 0,
         mevPmpe: 0,
@@ -91,7 +97,7 @@ describe('calculateMaxApy', () => {
         effParticipatingBidPmpe: 0,
       },
     })
-    expect(calculateMaxApy(v, EPOCHS_PER_YEAR)).toBe(0)
+    expect(calculateMaxApy(validator, EPOCHS_PER_YEAR)).toBe(0)
   })
 })
 
@@ -99,8 +105,8 @@ describe('calculateMaxApy', () => {
 
 describe('getApyBreakdown', () => {
   it('has all expected keys', () => {
-    const v = makeValidator()
-    const bd = getApyBreakdown(v, EPOCHS_PER_YEAR)
+    const validator = makeValidator()
+    const bd = getApyBreakdown(validator, EPOCHS_PER_YEAR)
     expect(bd).toHaveProperty('inflation')
     expect(bd).toHaveProperty('mev')
     expect(bd).toHaveProperty('blockRewards')
@@ -109,15 +115,15 @@ describe('getApyBreakdown', () => {
   })
 
   it('stakeBid maps to bid pmpe (not named "bid")', () => {
-    const v = makeValidator()
-    const bd = getApyBreakdown(v, EPOCHS_PER_YEAR)
+    const validator = makeValidator()
+    const bd = getApyBreakdown(validator, EPOCHS_PER_YEAR)
     expect(bd.stakeBid).toBeGreaterThan(0)
     expect((bd as Record<string, unknown>).bid).toBeUndefined()
   })
 
   it('total = compoundApy(totalPmpe)', () => {
-    const v = makeValidator()
-    const bd = getApyBreakdown(v, EPOCHS_PER_YEAR)
+    const validator = makeValidator()
+    const bd = getApyBreakdown(validator, EPOCHS_PER_YEAR)
     const expected = Math.pow(1 + 28 / 1e3, EPOCHS_PER_YEAR) - 1
     expect(bd.total).toBeCloseTo(expected, 10)
   })
@@ -186,39 +192,41 @@ describe('getTipStyle', () => {
 
 describe('formatStakeDelta', () => {
   it('not in set (target=0) → dash text, no arrow', () => {
-    const v = makeValidator({ auctionStake: { marinadeSamTargetSol: 0 } })
-    const r = formatStakeDelta(v)
+    const validator = makeValidator({
+      auctionStake: { marinadeSamTargetSol: 0 },
+    })
+    const r = formatStakeDelta(validator)
     expect(r.text).toBe('—')
     expect(r.arrow).toBe('')
   })
 
   it('gaining stake → positive formatted with +', () => {
-    const v = makeValidator({
+    const validator = makeValidator({
       auctionStake: { marinadeSamTargetSol: 20000 },
       marinadeActivatedStakeSol: 10000,
     })
-    const r = formatStakeDelta(v)
+    const r = formatStakeDelta(validator)
     expect(r.text).toContain('+')
     expect(r.arrow).toBe('↑')
   })
 
   it('losing stake → negative, destructive color, down arrow', () => {
-    const v = makeValidator({
+    const validator = makeValidator({
       auctionStake: { marinadeSamTargetSol: 5000 },
       marinadeActivatedStakeSol: 10000,
     })
-    const r = formatStakeDelta(v)
+    const r = formatStakeDelta(validator)
     expect(r.text).not.toContain('+')
     expect(r.color).toContain('destructive')
     expect(r.arrow).toBe('↓')
   })
 
   it('at target (delta=0) → "0", neutral color, right arrow', () => {
-    const v = makeValidator({
+    const validator = makeValidator({
       auctionStake: { marinadeSamTargetSol: 10000 },
       marinadeActivatedStakeSol: 10000,
     })
-    const r = formatStakeDelta(v)
+    const r = formatStakeDelta(validator)
     expect(r.text).toBe('0')
     expect(r.arrow).toBe('→')
   })
@@ -228,21 +236,23 @@ describe('formatStakeDelta', () => {
 
 describe('getValidatorTip', () => {
   it('not in set → warning/rank', () => {
-    const v = makeValidator({ auctionStake: { marinadeSamTargetSol: 0 } })
-    const tip = getValidatorTip(v, DS_SAM_CONFIG, 100)
+    const validator = makeValidator({
+      auctionStake: { marinadeSamTargetSol: 0 },
+    })
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('warning')
     expect(tip.constraint).toBe('rank')
     expect(tip.text).toContain('Below the winning threshold')
   })
 
   it('critical health (near-zero bond) → critical/bond penalty threshold message', () => {
-    const v = makeValidator({
+    const validator = makeValidator({
       bondGoodForNEpochs: 4,
       bondBalanceSol: 0.001,
       claimableBondBalanceSol: 0,
       marinadeActivatedStakeSol: 100000,
     })
-    const tip = getValidatorTip(v, DS_SAM_CONFIG, 100)
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
     expect(tip.text).toContain('Bond below penalty threshold')
@@ -250,53 +260,55 @@ describe('getValidatorTip', () => {
   })
 
   it('critical health (epochs > 5) → critical/bond penalty message', () => {
-    const v = makeValidator({
+    const validator = makeValidator({
       bondGoodForNEpochs: 8,
       bondBalanceSol: 0.001,
       claimableBondBalanceSol: 0,
       marinadeActivatedStakeSol: 100000,
     })
-    const tip = getValidatorTip(v, DS_SAM_CONFIG, 100)
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
     expect(tip.text).toContain('penalty')
   })
 
   it('soft health (bond covers stake but not ideal) → info/bond top-up', () => {
-    const v = makeValidator({
+    const validator = makeValidator({
       bondBalanceSol: 50,
       claimableBondBalanceSol: 50,
       marinadeActivatedStakeSol: 10000,
     })
-    const tip = getValidatorTip(v, DS_SAM_CONFIG, 100)
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('info')
     expect(tip.constraint).toBe('bond')
     expect(tip.text).toContain('Top up')
   })
 
   it('healthy + gaining stake → positive with SOL count', () => {
-    const v = makeValidator({
+    const validator = makeValidator({
       bondBalanceSol: 400,
       claimableBondBalanceSol: 400,
       values: { expectedStakeChangeSol: 150000 },
     })
-    const tip = getValidatorTip(v, DS_SAM_CONFIG, 100)
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('positive')
     expect(tip.constraint).toBe('none')
     expect(tip.text).toContain('arriving next epoch')
   })
 
   it('delta === 0 → neutral/none at-target message', () => {
-    const v = makeValidator({ values: { expectedStakeChangeSol: 0 } })
-    const tip = getValidatorTip(v, DS_SAM_CONFIG, 100)
+    const validator = makeValidator({ values: { expectedStakeChangeSol: 0 } })
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('neutral')
     expect(tip.constraint).toBe('none')
     expect(tip.text).toContain('At target')
   })
 
   it('delta < 0 → warning, losing stake message', () => {
-    const v = makeValidator({ values: { expectedStakeChangeSol: -5000 } })
-    const tip = getValidatorTip(v, DS_SAM_CONFIG, 100)
+    const validator = makeValidator({
+      values: { expectedStakeChangeSol: -5000 },
+    })
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('warning')
     expect(tip.constraint).toBe('none')
     expect(tip.text).toContain('Losing')
@@ -322,13 +334,13 @@ describe('getValidatorTip soft health', () => {
     // bondBalanceSol=50 < idealBondPmpe/1000 * stake = (6/1000)*10000 = 60
     // claimableBondBalanceSol=50 >= minBondPmpe/1000 * stake = (1/1000)*10000 = 10
     // → topUpToAvoidFee=0, topUpToKeepStake=0, topUpToIdealKeep=10 → 'soft'
-    const v = makeValidator({
+    const validator = makeValidator({
       bondBalanceSol: 50,
       claimableBondBalanceSol: 50,
       marinadeActivatedStakeSol: 10000,
       values: { expectedStakeChangeSol: 0 },
     })
-    const tip = getValidatorTip(v, DS_SAM_CONFIG, 100)
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.constraint).toBe('bond')
     expect(tip.urgency).toBe('info')
     expect(tip.text).toContain('SOL')
@@ -339,13 +351,13 @@ describe('getValidatorTip out-of-set bond top-up flooring', () => {
   it('sub-1 SOL bond top-up renders as "<1 SOL", not "0 SOL"', () => {
     // out-of-set (target=0) + unhealthy bond → "Bond too small for stake"
     // The formatter previously emitted "Top up 0 SOL to win more".
-    const v = makeValidator({
+    const validator = makeValidator({
       auctionStake: { marinadeSamTargetSol: 0 },
       marinadeActivatedStakeSol: 100,
       bondBalanceSol: 0.001,
       claimableBondBalanceSol: 0.001,
     })
-    const tip = getValidatorTip(v, DS_SAM_CONFIG, 100)
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     if (tip.text.includes('Top up')) {
       expect(tip.text).not.toMatch(/Top up 0 SOL/)
     }

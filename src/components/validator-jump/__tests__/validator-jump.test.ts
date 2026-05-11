@@ -4,14 +4,14 @@ import { findMatches } from '../validator-jump'
 
 import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
 
-const v = (voteAccount: string): AuctionValidator =>
+const makeValidator = (voteAccount: string): AuctionValidator =>
   ({ voteAccount }) as unknown as AuctionValidator
 
 const VALIDATORS = [
-  v('AaaaPubKey1111111111111111111111111111111111'),
-  v('BbbbCoolNode22222222222222222222222222222222'),
-  v('CcccChorus333333333333333333333333333333333'),
-  v('DdddSolflare4444444444444444444444444444444'),
+  makeValidator('AaaaPubKey1111111111111111111111111111111111'),
+  makeValidator('BbbbCoolNode22222222222222222222222222222222'),
+  makeValidator('CcccChorus333333333333333333333333333333333'),
+  makeValidator('DdddSolflare4444444444444444444444444444444'),
 ]
 
 const NAMES = new Map<string, { name?: string }>([
@@ -57,7 +57,7 @@ describe('findMatches', () => {
 
   it('caps results at MAX_RESULTS', () => {
     const many: AuctionValidator[] = Array.from({ length: 30 }, (_, i) =>
-      v(`prefix${i.toString().padStart(40, '0')}`),
+      makeValidator(`prefix${i.toString().padStart(40, '0')}`),
     )
     const map = new Map<string, { name?: string }>(
       many.map(x => [x.voteAccount, { name: 'mass match' }]),
