@@ -350,5 +350,5 @@ export const fetchPsrEstimatesForValidator = async (
 ): Promise<ProtectedEvent[]> => {
   const { validators } = await fetchValidatorsWithEpochs(3)
   const all = await calculateProtectedEventEstimates(validators)
-  return all.filter(e => e.vote_account === voteAccount)
+  return all.filter(event => event.vote_account === voteAccount)
 }

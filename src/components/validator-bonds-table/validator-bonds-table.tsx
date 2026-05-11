@@ -104,7 +104,7 @@ const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
   data,
 }) => {
   const active = data
-    .filter(e => selectTotalMarinadeStake(e.validator) > 0)
+    .filter(entry => selectTotalMarinadeStake(entry.validator) > 0)
     .sort(
       (a, b) =>
         selectTotalMarinadeStake(b.validator) -

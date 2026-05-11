@@ -224,15 +224,16 @@ export function penaltyRiskColor(
   if (!v.auctionStake.marinadeSamTargetSol && !v.marinadeActivatedStakeSol) {
     return undefined
   }
-  const m = computeBondCoverageMetrics(
+  const coverage = computeBondCoverageMetrics(
     v,
     minBondEpochs,
     idealBondEpochs,
     winningTotalPmpe,
     bondRiskFeeMult,
   )
-  if (m.topUpToAvoidFee > 0) return Color.RED
-  if (m.topUpToKeepStake > 0 || m.topUpToIdealKeep > 0) return Color.YELLOW
+  if (coverage.topUpToAvoidFee > 0) return Color.RED
+  if (coverage.topUpToKeepStake > 0 || coverage.topUpToIdealKeep > 0)
+    return Color.YELLOW
   return Color.GREEN
 }
 
@@ -251,16 +252,16 @@ export function bondHealthFromAuction(
   if (!v.auctionStake.marinadeSamTargetSol && !v.marinadeActivatedStakeSol) {
     return 'healthy'
   }
-  const m = computeBondCoverageMetrics(
+  const coverage = computeBondCoverageMetrics(
     v,
     config.minBondEpochs,
     config.idealBondEpochs,
     winningTotalPmpe,
     config.bondRiskFeeMult,
   )
-  if (m.topUpToAvoidFee > 0) return 'critical'
-  if (m.topUpToKeepStake > 0) return 'watch'
-  if (m.topUpToIdealKeep > 0) return 'soft'
+  if (coverage.topUpToAvoidFee > 0) return 'critical'
+  if (coverage.topUpToKeepStake > 0) return 'watch'
+  if (coverage.topUpToIdealKeep > 0) return 'soft'
   return 'healthy'
 }
 

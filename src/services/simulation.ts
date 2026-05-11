@@ -132,7 +132,7 @@ export function insertGhostRows<T extends { voteAccount: string }>(
     if (originalPosition === null || originalPosition <= 0) continue
 
     const currentIndex = result.findIndex(
-      d => d.validator.voteAccount === voteAccount,
+      row => row.validator.voteAccount === voteAccount,
     )
     if (currentIndex === -1) continue
 

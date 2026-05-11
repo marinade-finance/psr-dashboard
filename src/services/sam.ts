@@ -313,11 +313,11 @@ export function augmentAuctionResult(
   auctionResult: AuctionResult,
 ): AugmentedAuctionValidator[] {
   const changes = computeExpectedStakeChanges(auctionResult)
-  return auctionResult.auctionData.validators.map(v => ({
-    ...v,
+  return auctionResult.auctionData.validators.map(validator => ({
+    ...validator,
     values: {
-      ...v.values,
-      expectedStakeChangeSol: changes.get(v.voteAccount) ?? 0,
+      ...validator.values,
+      expectedStakeChangeSol: changes.get(validator.voteAccount) ?? 0,
     } as AugmentedAuctionValidator['values'],
   }))
 }

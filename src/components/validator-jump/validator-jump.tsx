@@ -110,8 +110,8 @@ export const ValidatorJump: React.FC<Props> = ({
       setHighlighted(h => Math.max(h - 1, 0))
     } else if (e.key === 'Enter') {
       e.preventDefault()
-      const m = matches[highlighted]
-      if (m) select(m.voteAccount)
+      const match = matches[highlighted]
+      if (match) select(match.voteAccount)
     }
   }
 

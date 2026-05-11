@@ -84,15 +84,18 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
   onGoToSim,
   level,
 }) => {
-  const m = computeSamRevenueMetrics(validator)
-  const deltaAccent = m.delta > 0 ? 'green' : m.delta < 0 ? 'red' : undefined
+  const metrics = computeSamRevenueMetrics(validator)
+  const deltaAccent =
+    metrics.delta > 0 ? 'green' : metrics.delta < 0 ? 'red' : undefined
   const deltaText =
-    m.delta === 0 ? '—' : `${m.delta > 0 ? '+' : ''}${stake(m.delta)}`
+    metrics.delta === 0
+      ? '—'
+      : `${metrics.delta > 0 ? '+' : ''}${stake(metrics.delta)}`
 
   const status = {
     label:
-      m.total > 0
-        ? `Estimated ${pay(m.total)} payment to Marinade this epoch.`
+      metrics.total > 0
+        ? `Estimated ${pay(metrics.total)} payment to Marinade this epoch.`
         : 'No bid cost this epoch.',
     tone: 'green' as const,
   }
@@ -114,16 +117,20 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
       status={status}
       tip={tip}
     >
-      {m.overrideMsg && (
+      {metrics.overrideMsg && (
         <div className="rounded-lg px-3 py-2 text-xs mb-4 bg-secondary text-secondary-foreground">
-          {m.overrideMsg}
+          {metrics.overrideMsg}
         </div>
       )}
       <table className="w-full">
         <tbody>
           <SectionHeader title="Stake" colSpan={4} />
-          <RevRow label="Active Marinade stake" value={stake(m.active)} bold />
-          <RevRow label="Target Marinade stake" value={stake(m.target)} />
+          <RevRow
+            label="Active Marinade stake"
+            value={stake(metrics.active)}
+            bold
+          />
+          <RevRow label="Target Marinade stake" value={stake(metrics.target)} />
           <RevRow
             label="Expected change next epoch"
             value={deltaText}
@@ -133,45 +140,54 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
           <SectionHeader title="Commissions" colSpan={4} />
           <RevRow
             label="Inflation"
-            pct={m.inflPct}
-            pmpe={pmpe(m.inflPmpe)}
+            pct={metrics.inflPct}
+            pmpe={pmpe(metrics.inflPmpe)}
             value=""
           />
-          <RevRow label="MEV" pct={m.mevPct} pmpe={pmpe(m.mevPmpe)} value="" />
+          <RevRow
+            label="MEV"
+            pct={metrics.mevPct}
+            pmpe={pmpe(metrics.mevPmpe)}
+            value=""
+          />
           <RevRow
             label="Block rewards"
-            pct={m.blkPct}
-            pmpe={pmpe(m.blkPmpe)}
+            pct={metrics.blkPct}
+            pmpe={pmpe(metrics.blkPmpe)}
             value=""
           />
 
           <SectionHeader title="Bid" colSpan={4} />
-          <RevRow label="Static bid PMPE" pmpe={pmpe(m.bid)} value="" />
+          <RevRow label="Static bid PMPE" pmpe={pmpe(metrics.bid)} value="" />
           <RevRow
             label="Auction effective bid PMPE"
-            pmpe={pmpe(m.effBid)}
+            pmpe={pmpe(metrics.effBid)}
             value=""
             bold
           />
           <RevRow
             label="Bid gap"
-            pmpe={pmpe(m.bidGap)}
+            pmpe={pmpe(metrics.bidGap)}
             value=""
             accent={
-              m.bidGap > 2 ? 'yellow' : m.bidGap === 0 ? 'green' : undefined
+              metrics.bidGap > 2
+                ? 'yellow'
+                : metrics.bidGap === 0
+                  ? 'green'
+                  : undefined
             }
           />
 
           <SectionHeader title="Cost" colSpan={4} />
-          <RevRow label="Active Stake Cost" value={pay(m.cost)} />
+          <RevRow label="Active Stake Cost" value={pay(metrics.cost)} />
           <RevRow
             label="Activating Stake Cost"
-            pmpe={pmpe(m.activatingStakePmpe)}
-            value={pay(m.activatingCost)}
+            pmpe={pmpe(metrics.activatingStakePmpe)}
+            value={pay(metrics.activatingCost)}
           />
           <RevRow
             label="Total per epoch"
-            value={pay(m.total)}
+            value={pay(metrics.total)}
             bold
             separator
             marker="green"

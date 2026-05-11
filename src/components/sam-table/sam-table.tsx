@@ -402,7 +402,7 @@ export const SamTable: React.FC<Props> = ({
   ])
 
   const winningValidators = allDisplayValidators.filter(
-    d => !d.isGhost && d.validator.auctionStake.marinadeSamTargetSol > 0,
+    row => !row.isGhost && row.validator.auctionStake.marinadeSamTargetSol > 0,
   )
   // Cutoff partition: who would clear the bid threshold by yield, regardless
   // of whether the auction actually allocated them target stake. Bid-eligible
@@ -411,10 +411,10 @@ export const SamTable: React.FC<Props> = ({
   const bidQualifies = (v: AuctionValidator) =>
     selectMaxAPY(v, epochsPerYear) >= winningAPY
   const aboveCutoff = allDisplayValidators.filter(
-    d => d.isGhost || bidQualifies(d.validator),
+    row => row.isGhost || bidQualifies(row.validator),
   )
   const belowCutoff = allDisplayValidators.filter(
-    d => !d.isGhost && !bidQualifies(d.validator),
+    row => !row.isGhost && !bidQualifies(row.validator),
   )
   const aboveCount = aboveCutoff.filter(row => !row.isGhost).length
   const totalRedelegation = useMemo(
@@ -665,10 +665,10 @@ export const SamTable: React.FC<Props> = ({
           >
             <span className="shrink-0">{tip.icon ?? tipStyle.icon}</span>
             <span className="break-words">
-              {tip.text.replace(/~?\d+\.\d{3,}/g, m => {
-                const n = parseFloat(m.replace(/^~/, ''))
-                const prefix = m.startsWith('~') ? '~' : ''
-                return `${prefix}${Math.round(n * 100) / 100}`
+              {tip.text.replace(/~?\d+\.\d{3,}/g, numStr => {
+                const num = parseFloat(numStr.replace(/^~/, ''))
+                const prefix = numStr.startsWith('~') ? '~' : ''
+                return `${prefix}${Math.round(num * 100) / 100}`
               })}
             </span>
           </div>

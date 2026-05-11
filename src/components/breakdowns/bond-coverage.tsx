@@ -71,7 +71,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
   onGoToSim,
   level,
 }) => {
-  const m = computeBondCoverageMetrics(
+  const coverage = computeBondCoverageMetrics(
     validator,
     dsSamConfig.minBondEpochs,
     dsSamConfig.idealBondEpochs,
@@ -80,9 +80,9 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
   )
   const status = statusLine(
     bondState,
-    m.topUpToAvoidFee,
-    m.topUpToKeepStake,
-    m.topUpToIdealKeep,
+    coverage.topUpToAvoidFee,
+    coverage.topUpToKeepStake,
+    coverage.topUpToIdealKeep,
     bondRiskFeeSol,
   )
 
@@ -90,8 +90,8 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
   // (some undelegation already queued) or a fee/top-up is actually outstanding.
   const showRiskSection =
     bondRiskFeeSol > 0 ||
-    m.topUpToAvoidFee > 0 ||
-    m.carriedPaidUndelegationSol > 0
+    coverage.topUpToAvoidFee > 0 ||
+    coverage.carriedPaidUndelegationSol > 0
 
   const tip = onGoToSim ? (
     <button
@@ -115,44 +115,48 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           <SectionHeader title="Rates" />
           <CalcRow
             label="Expected max effective bid PMPE"
-            secondary={pmpe(m.expectedMaxEffBidPmpe)}
+            secondary={pmpe(coverage.expectedMaxEffBidPmpe)}
             value=""
           />
           <CalcRow
             label="On-chain distributed rewards PMPE"
-            secondary={pmpe(m.onchainDistributedPmpe)}
+            secondary={pmpe(coverage.onchainDistributedPmpe)}
             value=""
           />
 
-          <SectionHeader title={`Bond Coverage — ${m.minEp} epochs`} />
+          <SectionHeader title={`Bond Coverage — ${coverage.minEp} epochs`} />
           <CalcRow
             label="Claimable bond balance"
-            value={pay(m.claimableBondBalanceSol)}
+            value={pay(coverage.claimableBondBalanceSol)}
             bold
           />
           <CalcRow
             label="Active Marinade stake"
-            secondary={stake(m.marinadeActivatedStakeSol)}
+            secondary={stake(coverage.marinadeActivatedStakeSol)}
             value=""
           />
           <CalcRow
             label="Current exposed stake"
-            secondary={stake(m.currentExposedStakeSol)}
+            secondary={stake(coverage.currentExposedStakeSol)}
             value=""
           />
           <CalcRow
             label="Minimum unprotected reserve"
-            value={pay(m.minUnprotectedReserveSol)}
+            value={pay(coverage.minUnprotectedReserveSol)}
           />
           <CalcRow
             label="Minimum bid coverage"
-            value={pay(m.minCoverageBidKeep)}
+            value={pay(coverage.minCoverageBidKeep)}
           />
-          <CalcRow label="Minimum required" value={pay(m.floorBaseKeep)} bold />
-          {m.topUpToKeepStake > 0 ? (
+          <CalcRow
+            label="Minimum required"
+            value={pay(coverage.floorBaseKeep)}
+            bold
+          />
+          {coverage.topUpToKeepStake > 0 ? (
             <CalcRow
               label="Top up to keep your stake"
-              value={payCta(m.topUpToKeepStake)}
+              value={payCta(coverage.topUpToKeepStake)}
               bold
               large
               accent="yellow"
@@ -161,37 +165,43 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
             />
           ) : null}
 
-          <SectionHeader title={`Ideal Coverage — ${m.idealEp} epochs`} />
-          <CalcRow label="Bond balance" value={pay(m.bondBalanceSol)} bold />
+          <SectionHeader
+            title={`Ideal Coverage — ${coverage.idealEp} epochs`}
+          />
+          <CalcRow
+            label="Bond balance"
+            value={pay(coverage.bondBalanceSol)}
+            bold
+          />
           <CalcRow
             label="Current exposed stake"
-            secondary={stake(m.currentExposedStakeSol)}
+            secondary={stake(coverage.currentExposedStakeSol)}
             value=""
           />
           <CalcRow
             label="Ideal unprotected reserve"
-            value={pay(m.idealUnprotectedReserveSol)}
+            value={pay(coverage.idealUnprotectedReserveSol)}
           />
           <CalcRow
             label="Ideal bid coverage"
-            value={pay(m.idealCoverageBidKeep)}
+            value={pay(coverage.idealCoverageBidKeep)}
           />
           <CalcRow
             label="Ideal required"
-            value={pay(m.requiredIdealKeep)}
+            value={pay(coverage.requiredIdealKeep)}
             bold
           />
-          {m.topUpToIdealKeep > 0 ? (
+          {coverage.topUpToIdealKeep > 0 ? (
             <CalcRow
               label="Top up for more stake"
-              value={payCta(m.topUpToIdealKeep)}
+              value={payCta(coverage.topUpToIdealKeep)}
               bold
               large
               accent="yellow"
               separator
               marker="yellow"
             />
-          ) : m.topUpToKeepStake > 0 ? (
+          ) : coverage.topUpToKeepStake > 0 ? (
             <OkRow message="Bond meets ideal coverage — eligible for more stake." />
           ) : (
             <OkRow message="Bond covers current stake and meets ideal coverage." />
@@ -200,27 +210,27 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           {showRiskSection && (
             <>
               <SectionHeader title="Bond Risk — after undelegations finalize" />
-              {m.carriedPaidUndelegationSol > 0 && (
+              {coverage.carriedPaidUndelegationSol > 0 && (
                 <CalcRow
                   label="Paid undelegation"
-                  secondary={stake(m.carriedPaidUndelegationSol)}
+                  secondary={stake(coverage.carriedPaidUndelegationSol)}
                   value=""
                 />
               )}
               <CalcRow
                 label="Projected exposed stake"
-                secondary={stake(m.projectedExposedStakeSol)}
+                secondary={stake(coverage.projectedExposedStakeSol)}
                 value=""
               />
               <CalcRow
                 label="Penalty trigger threshold"
-                value={pay(m.floorBaseProjected)}
+                value={pay(coverage.floorBaseProjected)}
                 bold
               />
-              {m.topUpToAvoidFee > 0 && (
+              {coverage.topUpToAvoidFee > 0 && (
                 <CalcRow
                   label="Top up to avoid the fee"
-                  value={payCta(m.topUpToAvoidFee)}
+                  value={payCta(coverage.topUpToAvoidFee)}
                   bold
                   large
                   accent="red"
@@ -236,7 +246,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
                   marker="red"
                 />
               )}
-              {m.topUpToAvoidFee === 0 && bondRiskFeeSol === 0 && (
+              {coverage.topUpToAvoidFee === 0 && bondRiskFeeSol === 0 && (
                 <OkRow message="Bond above the penalty threshold." />
               )}
             </>

@@ -28,16 +28,20 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
   onGoToSim,
   level,
 }) => {
-  const m = computeBidPenaltyMetrics(validator, dsSamConfig, winningTotalPmpe)
+  const metrics = computeBidPenaltyMetrics(
+    validator,
+    dsSamConfig,
+    winningTotalPmpe,
+  )
 
   const status: { label: string; tone: 'red' | 'green' | 'yellow' } = {
     label:
-      m.penaltyPmpe > 0
-        ? `Penalty active: ${pmpe(m.penaltyPmpe)} PMPE this epoch.`
-        : m.isNegativeBiddingChange
+      metrics.penaltyPmpe > 0
+        ? `Penalty active: ${pmpe(metrics.penaltyPmpe)} PMPE this epoch.`
+        : metrics.isNegativeBiddingChange
           ? 'Bid dropped this epoch but bond obligation covers it — no penalty.'
           : 'Bid did not decrease — no penalty.',
-    tone: m.penaltyPmpe > 0 ? 'red' : 'green',
+    tone: metrics.penaltyPmpe > 0 ? 'red' : 'green',
   }
 
   const tip = onGoToSim ? (
@@ -45,8 +49,8 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
       className="text-xs text-primary hover:underline"
       onClick={onGoToSim}
     >
-      {m.penaltyPmpe > 0
-        ? `Raise bid to ≥ ${pmpe(m.adjustedLimit)} PMPE in simulation →`
+      {metrics.penaltyPmpe > 0
+        ? `Raise bid to ≥ ${pmpe(metrics.adjustedLimit)} PMPE in simulation →`
         : 'Simulate bid or commission changes →'}
     </button>
   ) : null
@@ -64,59 +68,62 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
           <SectionHeader title="Bid history" />
           <CalcRow
             label="Last epoch bid PMPE"
-            value={pmpe(m.lastEpochBidPmpe)}
+            value={pmpe(metrics.lastEpochBidPmpe)}
           />
           <CalcRow
             label="This epoch bid PMPE"
-            value={pmpe(m.thisEpochBidPmpe)}
+            value={pmpe(metrics.thisEpochBidPmpe)}
           />
           <CalcRow
             label="History window"
-            secondary={`${m.historyEpochs} epochs`}
+            secondary={`${metrics.historyEpochs} epochs`}
             value=""
           />
           <CalcRow
             label="Worst historical effective participating bid PMPE"
-            value={pmpe(m.worstHistoricalPmpe)}
+            value={pmpe(metrics.worstHistoricalPmpe)}
           />
 
           <SectionHeader title="Threshold" />
           <CalcRow
             label="Effective participating bid PMPE"
-            value={pmpe(m.effParticipatingBidPmpe)}
+            value={pmpe(metrics.effParticipatingBidPmpe)}
           />
-          <CalcRow label="Limit — minimum of the above" value={pmpe(m.limit)} />
+          <CalcRow
+            label="Limit — minimum of the above"
+            value={pmpe(metrics.limit)}
+          />
           <CalcRow
             label="Adjusted limit after permitted deviation"
-            value={pmpe(m.adjustedLimit)}
+            value={pmpe(metrics.adjustedLimit)}
           />
           <CalcRow
             label="Bond obligation PMPE"
-            value={pmpe(m.bondObligationPmpe)}
+            value={pmpe(metrics.bondObligationPmpe)}
           />
-          <CalcRow label="Shortfall" value={pmpe(m.shortfall)} bold />
+          <CalcRow label="Shortfall" value={pmpe(metrics.shortfall)} bold />
 
           <SectionHeader title="Penalty" />
           <CalcRow
             label="Penalty coefficient"
-            secondary={formatPercentage(m.penaltyCoef, 2)}
+            secondary={formatPercentage(metrics.penaltyCoef, 2)}
             value=""
           />
           <CalcRow
             label="Base — winning PMPE + effective participating bid PMPE"
-            value={pmpe(m.base)}
+            value={pmpe(metrics.base)}
           />
           <CalcRow
             label="Penalty PMPE"
-            value={pmpe(m.penaltyPmpe)}
+            value={pmpe(metrics.penaltyPmpe)}
             bold
-            accent={m.penaltyPmpe > 0 ? 'red' : undefined}
+            accent={metrics.penaltyPmpe > 0 ? 'red' : undefined}
           />
-          {m.penaltySol > 0 ? (
+          {metrics.penaltySol > 0 ? (
             <CalcRow
               label="Penalty this epoch"
-              secondary={stake(m.marinadeActivatedStakeSol)}
-              value={pay(m.penaltySol)}
+              secondary={stake(metrics.marinadeActivatedStakeSol)}
+              value={pay(metrics.penaltySol)}
               bold
               large
               accent="red"
