@@ -202,7 +202,7 @@ const RankCell: React.FC<{
   isSimulated: boolean
   posColor: string | undefined
   tipColor: string
-  tipIcon: string
+  tipIcon: React.ReactNode
   voteAccount: string
   onClearValidator?: (voteAccount: string) => void
 }> = ({
@@ -243,7 +243,7 @@ const RankCell: React.FC<{
       className={`font-medium ${RANK_MONO} flex items-center justify-center gap-0.5`}
       style={{ color: tipColor }}
     >
-      <span className="text-[10px] leading-none">{tipIcon}</span>#{rank}
+      <span className="leading-none">{tipIcon}</span>#{rank}
     </span>
   )
 }
@@ -706,7 +706,7 @@ export const SamTable: React.FC<Props> = ({
     >
       <div className="max-w-[1920px] mx-auto">
         {/* Stats Bar */}
-        <div className="flex flex-wrap items-start gap-3 mb-6 px-4">
+        <div className="flex flex-wrap items-start gap-3 mb-3 px-4">
           {stats.map(stat => (
             <Card
               key={stat.label}
@@ -736,15 +736,19 @@ export const SamTable: React.FC<Props> = ({
               Reset Simulation ({simulatedValidators.size})
             </button>
           )}
-          {onValidatorSearch && (
+        </div>
+
+        {/* Search row — sits above the table, aligned with validator column */}
+        {onValidatorSearch && (
+          <div className="px-4 mb-4 flex">
             <ValidatorJump
               validators={validators}
               nameMap={validatorMeta ?? new Map()}
               onSelect={onValidatorSearch}
-              className="ml-auto self-center min-w-[220px] max-w-[300px]"
+              className="w-[280px]"
             />
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Table */}
         <div className="mx-4 bg-card rounded-xl border border-border shadow-card overflow-hidden overflow-x-auto">

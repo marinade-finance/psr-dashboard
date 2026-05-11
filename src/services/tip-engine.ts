@@ -1,3 +1,5 @@
+import React from 'react'
+
 import {
   CSS_DESTRUCTIVE,
   CSS_DESTRUCTIVE_LIGHT,
@@ -34,13 +36,13 @@ export interface ValidatorTip {
   text: string
   urgency: TipUrgency
   constraint: TipConstraint
-  icon?: string
+  icon?: React.ReactNode
 }
 
 export interface TipStyle {
   color: string
   bg: string
-  icon: string
+  icon: React.ReactNode
 }
 
 // Single source of truth for bond CTA text. Used by getValidatorTip and
@@ -92,30 +94,104 @@ export const getBondHealthStyle = (
   return { color: CSS_PRIMARY, bg: CSS_PRIMARY_LIGHT_10, label: 'Healthy' }
 }
 
+const ICON_CRITICAL = React.createElement(
+  'svg',
+  { viewBox: '0 0 12 12', width: 12, height: 12, fill: 'currentColor' },
+  React.createElement('path', {
+    d: 'M6 1L11.2 10H.8L6 1zm0 2L2.6 9h6.8L6 3zm-.5 2h1v2h-1V5zm0 2.5h1V9h-1V7.5z',
+  }),
+)
+
+const ICON_UP = React.createElement(
+  'svg',
+  {
+    viewBox: '0 0 12 12',
+    width: 12,
+    height: 12,
+    stroke: 'currentColor',
+    fill: 'none',
+    strokeWidth: '1.5',
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+  },
+  React.createElement('path', { d: 'M2 10L10 2M4 2h6v6' }),
+)
+
+const ICON_INFO = React.createElement(
+  'svg',
+  { viewBox: '0 0 12 12', width: 12, height: 12, fill: 'currentColor' },
+  React.createElement('circle', { cx: 6, cy: 6, r: 5.25, opacity: 0.18 }),
+  React.createElement('circle', { cx: 6, cy: 4, r: 0.75 }),
+  React.createElement('rect', {
+    x: 5.25,
+    y: 5.5,
+    width: 1.5,
+    height: 3.5,
+    rx: 0.5,
+  }),
+)
+
+const ICON_CHECK = React.createElement(
+  'svg',
+  {
+    viewBox: '0 0 12 12',
+    width: 12,
+    height: 12,
+    stroke: 'currentColor',
+    fill: 'none',
+    strokeWidth: '1.8',
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+  },
+  React.createElement('path', { d: 'M2 6l3 3 5-5' }),
+)
+
+const ICON_RIGHT = React.createElement(
+  'svg',
+  {
+    viewBox: '0 0 12 12',
+    width: 12,
+    height: 12,
+    stroke: 'currentColor',
+    fill: 'none',
+    strokeWidth: '1.5',
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+  },
+  React.createElement('path', { d: 'M2 6h8M7 3l3 3-3 3' }),
+)
+
+const ICON_DOWN = React.createElement(
+  'svg',
+  {
+    viewBox: '0 0 12 12',
+    width: 12,
+    height: 12,
+    stroke: 'currentColor',
+    fill: 'none',
+    strokeWidth: '1.5',
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+  },
+  React.createElement('path', { d: 'M2 2L10 10M10 4v6H4' }),
+)
+
 export const getTipStyle = (urgency: TipUrgency): TipStyle => {
   switch (urgency) {
     case 'critical':
       return {
         color: CSS_DESTRUCTIVE,
         bg: CSS_DESTRUCTIVE_LIGHT,
-        icon: '\u26A0',
+        icon: ICON_CRITICAL,
       }
     case 'warning':
-      return { color: CSS_WARNING, bg: CSS_WARNING_LIGHT, icon: '\u2197' }
+      return { color: CSS_WARNING, bg: CSS_WARNING_LIGHT, icon: ICON_UP }
     case 'info':
-      return { color: CSS_INFO, bg: CSS_INFO_LIGHT, icon: '\uD83D\uDCA1' }
+      return { color: CSS_INFO, bg: CSS_INFO_LIGHT, icon: ICON_INFO }
     case 'positive':
-      return {
-        color: CSS_PRIMARY,
-        bg: CSS_PRIMARY_LIGHT_10,
-        icon: '\u2713',
-      }
+      return { color: CSS_PRIMARY, bg: CSS_PRIMARY_LIGHT_10, icon: ICON_CHECK }
     default:
-      return {
-        color: CSS_MUTED_FG,
-        bg: CSS_MUTED,
-        icon: '\u2192',
-      }
+      return { color: CSS_MUTED_FG, bg: CSS_MUTED, icon: ICON_RIGHT }
   }
 }
 
@@ -200,7 +276,7 @@ export const getValidatorTip = (
       text: `${stake(delta)} arriving next epoch.`,
       urgency: 'positive',
       constraint: 'none',
-      icon: '↗',
+      icon: ICON_UP,
     }
   }
 
@@ -216,7 +292,7 @@ export const getValidatorTip = (
     text: `Losing ${stake(Math.abs(delta))} next epoch.`,
     urgency: 'warning',
     constraint: 'none',
-    icon: '↘',
+    icon: ICON_DOWN,
   }
 }
 
@@ -230,7 +306,7 @@ export const calculateMaxApy = (
   epochsPerYear: number,
 ): number => compoundApy(validator.revShare.totalPmpe, epochsPerYear)
 
-export type ApyBreakdownDisplay = {
+export type ApyBreakdownValue = {
   inflation: number
   mev: number
   blockRewards: number
@@ -241,7 +317,7 @@ export type ApyBreakdownDisplay = {
 export const getApyBreakdown = (
   validator: AuctionValidator,
   epochsPerYear: number,
-): ApyBreakdownDisplay => {
+): ApyBreakdownValue => {
   const bd = apyBreakdown(validator, epochsPerYear)
   return {
     inflation: bd.inflation,
