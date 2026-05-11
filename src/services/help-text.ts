@@ -31,5 +31,5 @@ export const HELP_TEXT = {
   bondCoverage:
     'Whether your bond is fat enough for Marinade to feel comfortable. Under the minimum and you start paying fee penalties; under the ideal and you can stay in but won’t be given more stake.',
   bidGap:
-    'How much higher your own bid was than what you’ll actually pay. Bid a lot more than needed and this number grows — but you still only pay the auction-wide rate.',
+    'How much higher your own bid was than what you’ll actually pay. A larger gap means you rank higher and gain stake faster — but also increases the activating fee. You still pay only the auction-wide clearing rate.',
 } as const
