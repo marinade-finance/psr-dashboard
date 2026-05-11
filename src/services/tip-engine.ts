@@ -1,3 +1,15 @@
+import {
+  CSS_DESTRUCTIVE,
+  CSS_DESTRUCTIVE_LIGHT,
+  CSS_INFO,
+  CSS_INFO_LIGHT,
+  CSS_MUTED,
+  CSS_MUTED_FG,
+  CSS_PRIMARY,
+  CSS_PRIMARY_LIGHT_10,
+  CSS_WARNING,
+  CSS_WARNING_LIGHT,
+} from 'src/css'
 import { formatSolAmount, pay, payCta, stake, stakeCta } from 'src/format'
 
 import { bondHealthFromAuction, computeBondCoverageMetrics } from './breakdowns'
@@ -61,72 +73,47 @@ export function bondStatusText(
   return ''
 }
 
-const VAR_DESTRUCTIVE = 'var(--destructive)'
-const VAR_WARNING = 'var(--warning)'
-const VAR_MUTED_FG = 'var(--muted-foreground)'
-const VAR_PRIMARY = 'var(--primary)'
-
 export const getBondHealthStyle = (
   health: BondHealthState,
 ): { color: string; bg: string; label: string } => {
   if (health === 'critical') {
     return {
-      color: VAR_DESTRUCTIVE,
-      bg: 'var(--destructive-light)',
+      color: CSS_DESTRUCTIVE,
+      bg: CSS_DESTRUCTIVE_LIGHT,
       label: 'Critical',
     }
   }
   if (health === 'watch') {
-    return {
-      color: VAR_WARNING,
-      bg: 'var(--warning-light)',
-      label: 'Watch',
-    }
+    return { color: CSS_WARNING, bg: CSS_WARNING_LIGHT, label: 'Watch' }
   }
   if (health === 'soft') {
-    return {
-      color: 'var(--info)',
-      bg: 'var(--info-light)',
-      label: 'Soft',
-    }
+    return { color: CSS_INFO, bg: CSS_INFO_LIGHT, label: 'Soft' }
   }
-  return {
-    color: VAR_PRIMARY,
-    bg: 'var(--primary-light-10)',
-    label: 'Healthy',
-  }
+  return { color: CSS_PRIMARY, bg: CSS_PRIMARY_LIGHT_10, label: 'Healthy' }
 }
 
 export const getTipStyle = (urgency: TipUrgency): TipStyle => {
   switch (urgency) {
     case 'critical':
       return {
-        color: VAR_DESTRUCTIVE,
-        bg: 'var(--destructive-light)',
+        color: CSS_DESTRUCTIVE,
+        bg: CSS_DESTRUCTIVE_LIGHT,
         icon: '\u26A0',
       }
     case 'warning':
-      return {
-        color: VAR_WARNING,
-        bg: 'var(--warning-light)',
-        icon: '\u2197',
-      }
+      return { color: CSS_WARNING, bg: CSS_WARNING_LIGHT, icon: '\u2197' }
     case 'info':
-      return {
-        color: 'var(--info)',
-        bg: 'var(--info-light)',
-        icon: '\uD83D\uDCA1',
-      }
+      return { color: CSS_INFO, bg: CSS_INFO_LIGHT, icon: '\uD83D\uDCA1' }
     case 'positive':
       return {
-        color: VAR_PRIMARY,
-        bg: 'var(--primary-light-10)',
+        color: CSS_PRIMARY,
+        bg: CSS_PRIMARY_LIGHT_10,
         icon: '\u2713',
       }
     default:
       return {
-        color: VAR_MUTED_FG,
-        bg: 'var(--muted)',
+        color: CSS_MUTED_FG,
+        bg: CSS_MUTED,
         icon: '\u2192',
       }
   }
@@ -284,7 +271,7 @@ export const formatStakeDelta = (
   const inSet = samTarget > 0
 
   if (!inSet) {
-    return { text: '\u2014', color: VAR_MUTED_FG, arrow: '' }
+    return { text: '\u2014', color: CSS_MUTED_FG, arrow: '' }
   }
 
   const delta = samTarget - samActive
@@ -292,16 +279,16 @@ export const formatStakeDelta = (
   if (delta > 0) {
     return {
       text: `+${formatSolAmount(delta, 0)}`,
-      color: VAR_PRIMARY,
+      color: CSS_PRIMARY,
       arrow: '\u2191',
     }
   }
   if (delta < 0) {
     return {
       text: formatSolAmount(delta, 0),
-      color: VAR_DESTRUCTIVE,
+      color: CSS_DESTRUCTIVE,
       arrow: '\u2193',
     }
   }
-  return { text: '0', color: VAR_MUTED_FG, arrow: '\u2192' }
+  return { text: '0', color: CSS_MUTED_FG, arrow: '\u2192' }
 }

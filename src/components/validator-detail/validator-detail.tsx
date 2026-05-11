@@ -20,7 +20,7 @@ import {
   CSS_STATUS_GREEN,
   CSS_WARNING,
   CSS_MUTED_FG,
-} from 'src/css_utils'
+} from 'src/css'
 import { pay, payCta, stake } from 'src/format'
 import {
   bondHealthFromAuction,
