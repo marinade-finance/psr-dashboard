@@ -564,7 +564,7 @@ export const SamTable: React.FC<Props> = ({
         </TableCell>
 
         {/* Validator */}
-        <TableCell className="px-3.5 py-3 min-w-[180px] sm:min-w-[320px]">
+        <TableCell className="px-3.5 py-3 min-w-[180px] sm:min-w-[220px]">
           <ValidatorIdentity
             name={validatorName}
             voteAccount={voteAccount}
@@ -742,7 +742,7 @@ export const SamTable: React.FC<Props> = ({
               validators={validators}
               nameMap={validatorMeta ?? new Map()}
               onSelect={onValidatorSearch}
-              className="w-[280px]"
+              className="w-full max-w-sm"
             />
           </div>
         )}

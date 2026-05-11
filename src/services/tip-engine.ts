@@ -199,7 +199,7 @@ export const getValidatorTip = (
       }
     }
     return {
-      text: 'Below the winning threshold. Raise your bid to qualify for Marinade stake.',
+      text: 'Bid too low. Raise it to qualify for stake.',
       urgency: 'warning',
       constraint: 'rank',
     }
