@@ -33,17 +33,6 @@ export function bondUtilizationPct(
   return Math.max(0, Math.min(100, used * 100))
 }
 
-export function stakeDelta(validator: AuctionValidator): number {
-  return (
-    validator.auctionStake.marinadeSamTargetSol -
-    validator.marinadeActivatedStakeSol
-  )
-}
-
-export function selectMaxWantedStake(validator: AuctionValidator): number {
-  return validator.maxStakeWanted
-}
-
 export function apyBreakdown(
   validator: AuctionValidator,
   epochsPerYear: number,
@@ -56,11 +45,4 @@ export function apyBreakdown(
     bid: compoundApy(r.bidPmpe, epochsPerYear),
     total: compoundApy(r.totalPmpe, epochsPerYear),
   }
-}
-
-export function isNonProductive(validator: AuctionValidator): boolean {
-  return (
-    validator.revShare.bondObligationPmpe <
-    validator.revShare.auctionEffectiveBidPmpe * 0.9
-  )
 }

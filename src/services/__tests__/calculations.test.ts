@@ -4,10 +4,7 @@ import {
   compoundApy,
   bondRunwayEpochs,
   bondUtilizationPct,
-  stakeDelta,
   apyBreakdown,
-  isNonProductive,
-  selectMaxWantedStake,
 } from '../calculations'
 import { selectProjectedAPY } from '../sam'
 import { selectMaxProtectedStake } from '../validator-with-bond'
@@ -125,52 +122,6 @@ describe('bondUtilizationPct', () => {
   it('exactly half covered → 50%', () => {
     const v = makeValidator({ bondGoodForNEpochs: 2, bondBalanceSol: 100 })
     expect(bondUtilizationPct(v, 4)).toBe(50)
-  })
-})
-
-describe('stakeDelta', () => {
-  it('gaining stake: target > active', () => {
-    const v = makeValidator({
-      auctionStake: { marinadeSamTargetSol: 20000 },
-      marinadeActivatedStakeSol: 10000,
-    })
-    expect(stakeDelta(v)).toBe(10000)
-  })
-
-  it('losing stake: target < active', () => {
-    const v = makeValidator({
-      auctionStake: { marinadeSamTargetSol: 5000 },
-      marinadeActivatedStakeSol: 10000,
-    })
-    expect(stakeDelta(v)).toBe(-5000)
-  })
-
-  it('at target: delta 0', () => {
-    const v = makeValidator({
-      auctionStake: { marinadeSamTargetSol: 10000 },
-      marinadeActivatedStakeSol: 10000,
-    })
-    expect(stakeDelta(v)).toBe(0)
-  })
-
-  it('not in set (target=0): large negative delta', () => {
-    const v = makeValidator({
-      auctionStake: { marinadeSamTargetSol: 0 },
-      marinadeActivatedStakeSol: 10000,
-    })
-    expect(stakeDelta(v)).toBe(-10000)
-  })
-})
-
-describe('selectMaxWantedStake', () => {
-  it('returns maxStakeWanted directly', () => {
-    const v = makeValidator({ maxStakeWanted: 75000 })
-    expect(selectMaxWantedStake(v)).toBe(75000)
-  })
-
-  it('zero maxStakeWanted', () => {
-    const v = makeValidator({ maxStakeWanted: 0 })
-    expect(selectMaxWantedStake(v)).toBe(0)
   })
 })
 
@@ -323,59 +274,5 @@ describe('B3 — selectProjectedAPY zero-tvl guard', () => {
     const result = selectProjectedAPY(auctionResult, 182)
     expect(result).toBeGreaterThan(0)
     expect(Number.isFinite(result)).toBe(true)
-  })
-})
-
-describe('isNonProductive', () => {
-  it('non-productive: bondObligation far below 90% of effectiveBid', () => {
-    const v = makeValidator({
-      revShare: {
-        bondObligationPmpe: 1,
-        auctionEffectiveBidPmpe: 5,
-      } as AuctionValidator['revShare'],
-    })
-    expect(isNonProductive(v)).toBe(true)
-  })
-
-  it('productive: bondObligation >= 90% of effectiveBid', () => {
-    const v = makeValidator({
-      revShare: {
-        bondObligationPmpe: 9,
-        auctionEffectiveBidPmpe: 10,
-      } as AuctionValidator['revShare'],
-    })
-    expect(isNonProductive(v)).toBe(false)
-  })
-
-  it('boundary: exactly 90% is productive (strict <)', () => {
-    // 90% of 10 = 9, obligation=9 → not non-productive (9 < 9 is false)
-    const v = makeValidator({
-      revShare: {
-        bondObligationPmpe: 9,
-        auctionEffectiveBidPmpe: 10,
-      } as AuctionValidator['revShare'],
-    })
-    expect(isNonProductive(v)).toBe(false)
-  })
-
-  it('just below 90% boundary → non-productive', () => {
-    // 89.9% of 10 = 8.99; obligation=8.99 → 8.99 < 9 → true
-    const v = makeValidator({
-      revShare: {
-        bondObligationPmpe: 8.99,
-        auctionEffectiveBidPmpe: 10,
-      } as AuctionValidator['revShare'],
-    })
-    expect(isNonProductive(v)).toBe(true)
-  })
-
-  it('zero effectiveBid → not non-productive (0 < 0 is false)', () => {
-    const v = makeValidator({
-      revShare: {
-        bondObligationPmpe: 0,
-        auctionEffectiveBidPmpe: 0,
-      } as AuctionValidator['revShare'],
-    })
-    expect(isNonProductive(v)).toBe(false)
   })
 })
