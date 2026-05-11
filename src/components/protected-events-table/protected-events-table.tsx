@@ -6,7 +6,7 @@ import { Input } from 'src/components/ui/input'
 import { Label } from 'src/components/ui/label'
 import { HtmlTooltip } from 'src/components/ui/tooltip'
 import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
-import { formatPercentage, formatSolAmount } from 'src/format'
+import { formatPercentage, formatSolAmount, penalty } from 'src/format'
 import {
   selectAmount,
   selectProtectedStakeReason,
@@ -298,7 +298,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
                 render: ({ protectedEvent, status }) => (
                   <>
                     {renderProtectedEventStatus(status)}{' '}
-                    {formatSolAmount(selectAmount(protectedEvent))} SOL
+                    {penalty(selectAmount(protectedEvent))}
                   </>
                 ),
                 compare: (a, b) =>

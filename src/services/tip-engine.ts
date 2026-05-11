@@ -45,36 +45,6 @@ export interface TipStyle {
   icon: React.ReactNode
 }
 
-// Single source of truth for bond CTA text. Used by getValidatorTip and
-// bond-coverage.tsx's statusLine so both surfaces stay in sync.
-//
-// `payCta` is used for top-up amounts: when raw value is positive but rounds
-// to "0.00 SOL" we surface "<0.01 SOL" instead so the call to action stays
-// honest ("Top up 0.00 SOL to avoid the fee" reads as a no-op).
-export function bondStatusText(
-  topUpToAvoidFee: number,
-  topUpToKeepStake: number,
-  topUpToIdealKeep: number,
-  bondRiskFeeSol: number,
-): string {
-  if (bondRiskFeeSol > 0 || topUpToAvoidFee > 0) {
-    const feeStr =
-      bondRiskFeeSol > 0
-        ? `Estimated bond risk fee: ${pay(bondRiskFeeSol)}.`
-        : 'Bond below penalty threshold.'
-    const topUpStr =
-      topUpToAvoidFee > 0
-        ? ` Top up ${payCta(topUpToAvoidFee)} to avoid the fee.`
-        : ''
-    return `${feeStr}${topUpStr}`
-  }
-  if (topUpToKeepStake > 0)
-    return `Top up ${payCta(topUpToKeepStake)} to keep your stake.`
-  if (topUpToIdealKeep > 0)
-    return `Top up ${payCta(topUpToIdealKeep)} for more stake.`
-  return ''
-}
-
 export const getBondHealthStyle = (
   health: BondHealthState,
 ): { color: string; bg: string; label: string } => {
@@ -247,8 +217,16 @@ export const getValidatorTip = (
     const bondRiskFeeSol = validator.values?.bondRiskFeeSol ?? 0
 
     if (bondRiskFeeSol > 0 || coverage.topUpToAvoidFee > 0) {
+      const feeStr =
+        bondRiskFeeSol > 0
+          ? `Estimated bond risk fee: ${pay(bondRiskFeeSol)}.`
+          : 'Bond below penalty threshold.'
+      const topUpStr =
+        coverage.topUpToAvoidFee > 0
+          ? ` Top up ${payCta(coverage.topUpToAvoidFee)} to avoid the fee.`
+          : ''
       return {
-        text: bondStatusText(coverage.topUpToAvoidFee, 0, 0, bondRiskFeeSol),
+        text: `${feeStr}${topUpStr}`,
         urgency: 'critical',
         constraint: 'bond',
       }
@@ -256,7 +234,7 @@ export const getValidatorTip = (
 
     if (coverage.topUpToKeepStake > 0) {
       return {
-        text: bondStatusText(0, coverage.topUpToKeepStake, 0, 0),
+        text: `Top up ${payCta(coverage.topUpToKeepStake)} to keep your stake.`,
         urgency: 'warning',
         constraint: 'bond',
       }
@@ -264,7 +242,7 @@ export const getValidatorTip = (
 
     if (coverage.topUpToIdealKeep > 0) {
       return {
-        text: bondStatusText(0, 0, coverage.topUpToIdealKeep, 0),
+        text: `Top up ${payCta(coverage.topUpToIdealKeep)} for more stake.`,
         urgency: 'info',
         constraint: 'bond',
       }
@@ -328,15 +306,15 @@ export const getApyBreakdown = (
   }
 }
 
-// Used by sam-table's "Stake / Next Δ" cell. Anything that displays as 0 SOL
-// (|delta| < 0.5) is muted/neutral — printing "-0 SOL" in red was misleading.
+// Used by sam-table's "Stake / Next Δ" cell. Sub-1-SOL deltas are neutral —
+// they round to the same whole-SOL display and aren't actionable.
 export type NextStakeDeltaTone = 'positive' | 'negative' | 'neutral'
 export type NextStakeDeltaCell = {
   prefix: '+' | ''
   tone: NextStakeDeltaTone
 }
 export function nextStakeDeltaCell(expectedChange: number): NextStakeDeltaCell {
-  if (Math.abs(expectedChange) < 0.5) return { prefix: '', tone: 'neutral' }
+  if (Math.abs(expectedChange) < 1) return { prefix: '', tone: 'neutral' }
   if (expectedChange > 0) return { prefix: '+', tone: 'positive' }
   return { prefix: '', tone: 'negative' }
 }
