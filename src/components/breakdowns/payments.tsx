@@ -74,7 +74,7 @@ export const PaymentsBreakdown: React.FC<Props> = ({
     tone: hasPenalty ? 'red' : 'green',
   }
 
-  const cta = (
+  const tip = (
     <div className="flex flex-col gap-2">
       {penaltyMetrics.penaltySol > 0 && onGoToPenalty && (
         <button
@@ -101,7 +101,7 @@ export const PaymentsBreakdown: React.FC<Props> = ({
       guideTo={`${docsPath(level)}#detail-panel`}
       isSimulated={isSimulated}
       status={status}
-      cta={cta}
+      tip={tip}
     >
       <table className="w-full">
         <tbody>

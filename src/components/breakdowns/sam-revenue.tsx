@@ -97,7 +97,7 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
     tone: 'green' as const,
   }
 
-  const cta = onGoToSim ? (
+  const tip = onGoToSim ? (
     <button
       className="text-xs text-primary hover:underline"
       onClick={onGoToSim}
@@ -112,7 +112,7 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
       guideTo={`${docsPath(level)}#cpmpe`}
       isSimulated={isSimulated}
       status={status}
-      cta={cta}
+      tip={tip}
     >
       {m.overrideMsg && (
         <div className="rounded-lg px-3 py-2 text-xs mb-4 bg-secondary text-secondary-foreground">

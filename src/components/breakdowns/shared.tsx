@@ -107,9 +107,9 @@ export const CalcCard: React.FC<{
   guideTo?: string
   isSimulated?: boolean
   status?: { label: string; tone: 'red' | 'yellow' | 'green' }
-  cta?: React.ReactNode
+  tip?: React.ReactNode
   children: React.ReactNode
-}> = ({ title, guideTo, isSimulated, status, cta, children }) => (
+}> = ({ title, guideTo, isSimulated, status, tip, children }) => (
   <div className="bg-card rounded-xl border border-border p-5">
     <h3 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
       {isSimulated && <span className="text-status-yellow">Simulated ·</span>}
@@ -131,6 +131,6 @@ export const CalcCard: React.FC<{
       </div>
     )}
     {children}
-    {cta && <div className="mt-4 pt-3 border-t border-border">{cta}</div>}
+    {tip && <div className="mt-4 pt-3 border-t border-border">{tip}</div>}
   </div>
 )

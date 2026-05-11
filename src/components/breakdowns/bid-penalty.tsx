@@ -40,7 +40,7 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
     tone: m.penaltyPmpe > 0 ? 'red' : 'green',
   }
 
-  const cta = onGoToSim ? (
+  const tip = onGoToSim ? (
     <button
       className="text-xs text-primary hover:underline"
       onClick={onGoToSim}
@@ -57,7 +57,7 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
       guideTo={`${docsPath(level)}#bid-penalty`}
       isSimulated={isSimulated}
       status={status}
-      cta={cta}
+      tip={tip}
     >
       <table className="w-full">
         <tbody>

@@ -93,7 +93,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
     m.topUpToAvoidFee > 0 ||
     m.carriedPaidUndelegationSol > 0
 
-  const cta = onGoToSim ? (
+  const tip = onGoToSim ? (
     <button
       className="text-xs text-primary hover:underline"
       onClick={onGoToSim}
@@ -108,7 +108,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
       guideTo={`${docsPath(level)}#bond`}
       isSimulated={isSimulated}
       status={status}
-      cta={cta}
+      tip={tip}
     >
       <table className="w-full">
         <tbody>
