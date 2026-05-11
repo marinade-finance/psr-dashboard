@@ -19,10 +19,6 @@ export function bondRunwayEpochs(
   return validator.bondGoodForNEpochs - minBondEpochs
 }
 
-export function bondRunwayDays(epochsRunway: number): number {
-  return (epochsRunway * 48) / 24
-}
-
 // Bond utilization 0..100. 0 = bond fully covers, 100 = depleted relative to
 // the SDK-required minBondEpochs runway. Derives from `bondGoodForNEpochs` so
 // it tracks the protocol params instead of a hard-coded PMPE factor.

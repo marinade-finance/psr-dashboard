@@ -3,7 +3,6 @@ import { describe, it, expect, vi } from 'vitest'
 import {
   compoundApy,
   bondRunwayEpochs,
-  bondRunwayDays,
   bondUtilizationPct,
   stakeDelta,
   apyBreakdown,
@@ -99,25 +98,6 @@ describe('bondRunwayEpochs', () => {
   it('negative: overdrawn', () => {
     const v = makeValidator({ bondGoodForNEpochs: 3 })
     expect(bondRunwayEpochs(v, 5)).toBe(-2)
-  })
-})
-
-describe('bondRunwayDays', () => {
-  // epoch = 48h per MEMORY.md and source code (not 52h)
-  it('1 epoch → 2 days (48h, not 52h)', () => {
-    expect(bondRunwayDays(1)).toBe(2)
-  })
-
-  it('10 epochs → 20 days', () => {
-    expect(bondRunwayDays(10)).toBe(20)
-  })
-
-  it('0 epochs → 0 days', () => {
-    expect(bondRunwayDays(0)).toBe(0)
-  })
-
-  it('negative runway → negative days', () => {
-    expect(bondRunwayDays(-3)).toBe(-6)
   })
 })
 
