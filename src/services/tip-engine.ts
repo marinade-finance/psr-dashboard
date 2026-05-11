@@ -133,7 +133,7 @@ export const getValidatorTip = (
   // back more stake gets the bond CTA, not the rank CTA.
   if (!inSet) {
     if (health !== 'healthy') {
-      const m = computeBondCoverageMetrics(
+      const coverage = computeBondCoverageMetrics(
         validator,
         dsSamConfig.minBondEpochs,
         dsSamConfig.idealBondEpochs,
@@ -141,7 +141,9 @@ export const getValidatorTip = (
         dsSamConfig.bondRiskFeeMult,
       )
       const topUp =
-        m.topUpToIdealKeep > 0 ? m.topUpToIdealKeep : m.topUpToKeepStake
+        coverage.topUpToIdealKeep > 0
+          ? coverage.topUpToIdealKeep
+          : coverage.topUpToKeepStake
       if (topUp > 0) {
         return {
           text: `Bond too small for stake. Top up ${stakeCta(topUp)} to qualify for more.`,
@@ -151,7 +153,7 @@ export const getValidatorTip = (
       }
     }
     return {
-      text: 'Below the winning threshold.',
+      text: 'Below the winning threshold. Raise your bid to qualify for Marinade stake.',
       urgency: 'warning',
       constraint: 'rank',
     }
@@ -159,7 +161,7 @@ export const getValidatorTip = (
 
   // Bond CTA cascade — priority: avoid fee > keep stake > ideal.
   if (health === 'critical' || health === 'watch' || health === 'soft') {
-    const m = computeBondCoverageMetrics(
+    const coverage = computeBondCoverageMetrics(
       validator,
       dsSamConfig.minBondEpochs,
       dsSamConfig.idealBondEpochs,
@@ -168,25 +170,25 @@ export const getValidatorTip = (
     )
     const bondRiskFeeSol = validator.values?.bondRiskFeeSol ?? 0
 
-    if (bondRiskFeeSol > 0 || m.topUpToAvoidFee > 0) {
+    if (bondRiskFeeSol > 0 || coverage.topUpToAvoidFee > 0) {
       return {
-        text: bondStatusText(m.topUpToAvoidFee, 0, 0, bondRiskFeeSol),
+        text: bondStatusText(coverage.topUpToAvoidFee, 0, 0, bondRiskFeeSol),
         urgency: 'critical',
         constraint: 'bond',
       }
     }
 
-    if (m.topUpToKeepStake > 0) {
+    if (coverage.topUpToKeepStake > 0) {
       return {
-        text: bondStatusText(0, m.topUpToKeepStake, 0, 0),
+        text: bondStatusText(0, coverage.topUpToKeepStake, 0, 0),
         urgency: 'warning',
         constraint: 'bond',
       }
     }
 
-    if (m.topUpToIdealKeep > 0) {
+    if (coverage.topUpToIdealKeep > 0) {
       return {
-        text: bondStatusText(0, 0, m.topUpToIdealKeep, 0),
+        text: bondStatusText(0, 0, coverage.topUpToIdealKeep, 0),
         urgency: 'info',
         constraint: 'bond',
       }
