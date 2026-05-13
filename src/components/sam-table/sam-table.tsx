@@ -14,7 +14,7 @@ import {
 import { ConcentrationMetric } from 'src/components/concentration-metric/concentration-metric'
 import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
 import { ValidatorSearch } from 'src/components/validator-search/validator-search'
-import { formatPercentage, formatSolAmount, stake } from 'src/format'
+import { formatPercentage, sol, stake } from 'src/format'
 import { bondHealthFromAuction } from 'src/services/breakdowns'
 import { HELP_TEXT } from 'src/services/help-text'
 import {
@@ -205,7 +205,7 @@ const PenaltyBadges: React.FC<{ validator: AuctionValidator }> = ({
     badges.push({ label: 'BondRiskFee', sol: bondRiskSol, kind: 'risk' })
   if (badges.length === 0) return null
   const tip = badges
-    .map(b => `${b.label}: ${formatSolAmount(b.sol, 3)} SOL (estimate)`)
+    .map(b => `${b.label}: ${sol(b.sol, 3)} SOL (estimate)`)
     .join('\n')
   return (
     <span className="inline-flex items-center gap-0.5 shrink-0" title={tip}>
@@ -513,7 +513,7 @@ export const SamTable: React.FC<Props> = ({
   }[] = [
     {
       label: 'Total Auction Stake',
-      value: formatSolAmount(samDistributedStake, 0),
+      value: sol(samDistributedStake, 0),
       unit: 'SOL',
       help: HELP_TEXT.totalAuctionStake,
     },
@@ -537,7 +537,7 @@ export const SamTable: React.FC<Props> = ({
     },
     {
       label: 'Re-delegation',
-      value: formatSolAmount(totalRedelegation, 0),
+      value: sol(totalRedelegation, 0),
       unit: 'SOL',
       help: 'Roughly how much SOL Marinade will move into under-stake validators next epoch to push them toward their goal allocation.',
     },

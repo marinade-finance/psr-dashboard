@@ -3,7 +3,7 @@ import React from 'react'
 import { UserLevel } from 'src/components/navigation/navigation'
 import { HtmlTooltip } from 'src/components/ui/tooltip'
 import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
-import { formatPercentage, formatSolAmount, lamportsToSol } from 'src/format'
+import { formatPercentage, sol, lamportsToSol } from 'src/format'
 import { selectEffectiveAmount } from 'src/services/bonds'
 import { notificationTooltip } from 'src/services/notifications'
 import {
@@ -154,7 +154,7 @@ const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
                       key={selectVoteAccount(entry.validator)}
                       html={
                         `${name}<br/>` +
-                        `Stake: ${formatSolAmount(stake)} SOL<br/>` +
+                        `Stake: ${sol(stake)} SOL<br/>` +
                         `Coverage: ${formatPercentage(ratio)}` +
                         (!hasBond ? '<br/>No bond' : '')
                       }
@@ -188,7 +188,7 @@ const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
                                   textShadow: '0 1px 2px rgba(0,0,0,0.4)',
                                 }}
                               >
-                                {formatSolAmount(stake)} SOL
+                                {sol(stake)} SOL
                               </div>
                             )}
                             {size >= 76 && (
@@ -330,7 +330,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
             headerHelp:
               'The most stake this bond could ever reimburse if it were stretched to its limit. A bigger bond pushes this number up.',
             render: (entry: ValidatorWithBond) => (
-              <>{formatSolAmount(selectMaxProtectedStake(entry))}</>
+              <>{sol(selectMaxProtectedStake(entry))}</>
             ),
             compare: (a: ValidatorWithBond, b: ValidatorWithBond) =>
               selectMaxProtectedStake(a) - selectMaxProtectedStake(b),
@@ -355,8 +355,8 @@ export const ValidatorBondsTable: React.FC<Props> = ({
           {/* Stacked bar */}
           <HtmlTooltip
             html={
-              `Protected: ${formatSolAmount(totalProtectedStake)} SOL<br/>` +
-              `Uncovered: ${formatSolAmount(totalMarinadeStake - totalProtectedStake)} SOL`
+              `Protected: ${sol(totalProtectedStake)} SOL<br/>` +
+              `Uncovered: ${sol(totalMarinadeStake - totalProtectedStake)} SOL`
             }
           >
             <div className="h-8 rounded-lg overflow-hidden flex mb-4 w-full">
@@ -372,7 +372,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
               >
                 <span className="truncate px-1 hidden sm:block">
                   {coveredPct > 25
-                    ? `${formatSolAmount(totalProtectedStake)} SOL covered`
+                    ? `${sol(totalProtectedStake)} SOL covered`
                     : ''}
                 </span>
               </div>
@@ -382,7 +382,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
               >
                 <span className="truncate px-1 hidden sm:block">
                   {100 - coveredPct > 25
-                    ? `${formatSolAmount(totalMarinadeStake - totalProtectedStake)} SOL uncovered`
+                    ? `${sol(totalMarinadeStake - totalProtectedStake)} SOL uncovered`
                     : ''}
                 </span>
               </div>
@@ -400,7 +400,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
               <span className="text-muted-foreground">
                 Total bonds:{' '}
                 <strong className="text-foreground">
-                  {formatSolAmount(effectiveBalance)} SOL
+                  {sol(effectiveBalance)} SOL
                 </strong>
               </span>
             </HtmlTooltip>
@@ -408,7 +408,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
               <span className="text-muted-foreground">
                 Total stake:{' '}
                 <strong className="text-foreground">
-                  {formatSolAmount(totalMarinadeStake)} SOL
+                  {sol(totalMarinadeStake)} SOL
                 </strong>
               </span>
             </HtmlTooltip>
@@ -476,10 +476,10 @@ export const ValidatorBondsTable: React.FC<Props> = ({
                   'All the SOL Marinade has staked with this validator — both directly staked SOL and SOL backing mSOL.',
                 render: ({ validator }) => (
                   <HtmlTooltip
-                    html={`Native: ${formatSolAmount(selectNativeMarinadeStake(validator))}, Liquid: ${formatSolAmount(selectLiquidMarinadeStake(validator))}`}
+                    html={`Native: ${sol(selectNativeMarinadeStake(validator))}, Liquid: ${sol(selectLiquidMarinadeStake(validator))}`}
                   >
                     <span>
-                      {formatSolAmount(selectTotalMarinadeStake(validator))}
+                      {sol(selectTotalMarinadeStake(validator))}
                     </span>
                   </HtmlTooltip>
                 ),
@@ -494,7 +494,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
                   'How much SOL the validator has in its safety deposit, ready to reimburse stakers if something goes wrong.',
                 render: ({ bond }) => (
                   <>
-                    {formatSolAmount(
+                    {sol(
                       Number(
                         lamportsToSol(
                           bond?.effective_amount?.toString() ?? '0',
@@ -513,7 +513,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
                 headerHelp:
                   "The slice of this validator's Marinade stake that the bond is big enough to reimburse if needed.",
                 render: entry => (
-                  <>{formatSolAmount(selectProtectedStake(entry))}</>
+                  <>{sol(selectProtectedStake(entry))}</>
                 ),
                 compare: (a, b) =>
                   selectProtectedStake(a) - selectProtectedStake(b),

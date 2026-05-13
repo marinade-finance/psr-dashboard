@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 
 import {
-  formatSolAmount,
+  sol,
   formatPercentage,
   pay,
   payCta,
@@ -10,21 +10,21 @@ import {
   stakeCta,
 } from '../format'
 
-describe('formatSolAmount', () => {
+describe('sol', () => {
   it('keeps two decimals for sub-unit amounts', () => {
-    expect(formatSolAmount(0.17, 2)).toBe('0.17')
+    expect(sol(0.17, 2)).toBe('0.17')
   })
 
   it('rounds to integer without trailing decimals', () => {
-    expect(formatSolAmount(0.17, 0)).toBe('0')
+    expect(sol(0.17, 0)).toBe('0')
   })
 
   it('uses locale separators and rounds half away from zero', () => {
-    expect(formatSolAmount(1234.567, 2)).toBe('1,234.57')
+    expect(sol(1234.567, 2)).toBe('1,234.57')
   })
 
   it('rounds negative half away from zero (toLocaleString behavior)', () => {
-    expect(formatSolAmount(-0.5, 0)).toBe('-1')
+    expect(sol(-0.5, 0)).toBe('-1')
   })
 })
 

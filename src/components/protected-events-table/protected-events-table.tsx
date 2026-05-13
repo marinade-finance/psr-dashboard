@@ -6,7 +6,7 @@ import { Input } from 'src/components/ui/input'
 import { Label } from 'src/components/ui/label'
 import { HtmlTooltip } from 'src/components/ui/tooltip'
 import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
-import { formatPercentage, formatSolAmount, penalty } from 'src/format'
+import { formatPercentage, sol, penalty } from 'src/format'
 import {
   selectAmount,
   selectProtectedStakeReason,
@@ -185,16 +185,16 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
         />
         <Metric
           label="Amount"
-          value={`${formatSolAmount(filtered ? filteredAmount : totalAmount)} SOL`}
+          value={`${sol(filtered ? filteredAmount : totalAmount)} SOL`}
           subline={
             filtered
-              ? `of ${formatSolAmount(totalAmount)} SOL total`
+              ? `of ${sol(totalAmount)} SOL total`
               : undefined
           }
           extra={
             !filtered && totalAmount > 0 ? (
               <HtmlTooltip
-                html={`Validator Bond: ${formatSolAmount(validatorBondTotal)} SOL (${formatPercentage(bondRatio, 0)})<br/>Marinade backstop: ${formatSolAmount(marinadePaidTotal)} SOL (${formatPercentage(1 - bondRatio, 0)})`}
+                html={`Validator Bond: ${sol(validatorBondTotal)} SOL (${formatPercentage(bondRatio, 0)})<br/>Marinade backstop: ${sol(marinadePaidTotal)} SOL (${formatPercentage(1 - bondRatio, 0)})`}
               >
                 <div className="cursor-help">
                   <div className="flex h-1.5 rounded-sm overflow-hidden bg-secondary">
@@ -222,7 +222,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
           value={lastSettledEpoch > 0 ? lastSettledEpoch.toLocaleString() : '—'}
           subline={
             level === UserLevel.Expert && lastEpochBids > 0
-              ? `${formatSolAmount(lastEpochBids)} SOL bids`
+              ? `${sol(lastEpochBids)} SOL bids`
               : undefined
           }
           tooltipHtml="The most recent epoch where reimbursements have been fully paid out and locked in."

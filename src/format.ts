@@ -4,7 +4,7 @@
 // zero, which is what we want for monetary display (matches what lodash.round
 // used to do, without the dependency).
 
-export const formatSolAmount = (amount: number, digits = 0) =>
+export const sol = (amount: number, digits = 0) =>
   amount.toLocaleString(undefined, {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
@@ -32,9 +32,9 @@ export const finite = (x: number | null | undefined): number =>
   typeof x === 'number' && Number.isFinite(x) ? x : 0
 
 export const pmpe = (x: number) => x.toFixed(5)
-export const stake = (n: number) => `${formatSolAmount(n, 0)} SOL`
-export const pay = (n: number) => `${formatSolAmount(n, 0)} SOL`
-export const penalty = (n: number) => `${formatSolAmount(n, 3)} SOL`
+export const stake = (n: number) => `${sol(n, 0)} SOL`
+export const pay = (n: number) => `${sol(n, 0)} SOL`
+export const penalty = (n: number) => `${sol(n, 3)} SOL`
 
 // Top-up CTAs: never claim "Top up 0 SOL". Sub-1-SOL values show "<1 SOL".
 export const stakeCta = (n: number): string => {

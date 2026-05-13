@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 
-import { formatPercentage, formatSolAmount } from 'src/format'
+import { formatPercentage, sol } from 'src/format'
 
 import type { ConcentrationRow } from 'src/services/sam'
 
@@ -100,7 +100,7 @@ export const ConcentrationMetric: React.FC<Props> = ({
                       {formatPercentage(r.pctOfTotal)}
                     </td>
                     <td className="text-right font-mono py-0.5 opacity-75">
-                      ☉{formatSolAmount(Math.round(r.samStakeSol))}
+                      ☉{sol(Math.round(r.samStakeSol))}
                     </td>
                     <td className="text-right py-0.5">
                       {r.atCap ? (
