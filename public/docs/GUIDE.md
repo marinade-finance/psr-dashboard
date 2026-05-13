@@ -327,9 +327,9 @@ flag, large bid drop, etc.).
 The highest APY this validator could deliver to stakers given their current
 bid and commissions. This is what the auction sorts by.
 
-- Hover the cell to see the **APY composition tooltip** — inflation share,
-  MEV share, block-rewards share, and the stake-bid contribution, each as
-  a separate PMPE line.
+- Click the row to open the detail panel — the **APY composition** card
+  there breaks out inflation, MEV, block-rewards, and stake-bid PMPE
+  contributions.
 - This is the *maximum* yield. The actual yield to stakers (after the
   clearing-price discount) is the **Winning APY** shown on the cutoff line.
 
