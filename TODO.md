@@ -174,3 +174,39 @@ GUIDE.md was updated 2026-05-13 to drop the mSOL-redemption framing
 and defer to Marinade docs. Confirm what 0.7% actually represents in
 the SDK / SAM design and adjust either the model in `computeNaturalWithdrawal`
 or the comment in `sam.ts:209`.
+
+## Feature: "My Validator" address pin + personal notification ribbon
+
+Let a validator save their vote account in the browser and surface
+notifications addressed to that account at the top of every page.
+
+**UX:**
+- Small input in the navigation (or a header chip) where the validator
+  pastes/types their vote account. Validation: the account must exist
+  in the current auction data; otherwise show "not found".
+- Stored in `localStorage` keyed by something like `mnde:myValidator`.
+  No server-side state.
+- Once set, a slim ribbon appears at the top of every page (above the
+  banner) showing the notifications whose `user_id` matches the saved
+  vote account. Each notification: priority chip + title + message,
+  optional dismiss-this-one button.
+- "Clear" button on the chip to forget the saved account.
+
+**Data:** already fetched. `fetchAllNotifications()` returns a
+`Record<user_id, NotificationSummary>` — just look up by the saved
+vote account. No new endpoint needed. Re-uses the existing 5-min
+refresh interval.
+
+**Where:**
+- `src/components/navigation/navigation.tsx` — input/chip.
+- New component: `src/components/my-validator-ribbon/` — renders the
+  notification list when an address is set and matches.
+- Pages mount the ribbon between `<Navigation>` and the broadcast
+  `<Banner>` (or just below).
+
+**Considerations:**
+- Persist priority across sessions; clear on "forget".
+- If the saved vote account isn't in the current auction snapshot,
+  still show notifications matching it (the user_id index is stable),
+  but mark the chip muted ("not in current auction").
+- Mobile: collapse the input into a small icon that expands a popover.
