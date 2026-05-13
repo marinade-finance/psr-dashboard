@@ -67,9 +67,11 @@ export const PaymentsBreakdown: React.FC<Props> = ({
     bondRiskFeeSol > 0 ||
     psrTotal > 0
 
+  const penaltyTotal =
+    bidTooLowPenaltySol + blacklistPenaltySol + bondRiskFeeSol + psrTotal
   const status: { label: string; tone: 'red' | 'green' | 'yellow' } = {
     label: hasPenalty
-      ? `You will pay ${pay(total)} in total this epoch — includes penalties.`
+      ? `You will pay ${pay(total)} in total this epoch — including ${pay(penaltyTotal)} in penalties.`
       : `You will pay ${pay(total)} in total this epoch — no penalties.`,
     tone: hasPenalty ? 'red' : 'green',
   }
