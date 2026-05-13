@@ -1,5 +1,3 @@
-import React from 'react'
-
 import {
   ICON_CHECK,
   ICON_CRITICAL,
@@ -31,6 +29,7 @@ import type {
   AuctionValidator,
   DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
+import type React from 'react'
 
 export type TipUrgency =
   | 'critical'
@@ -239,4 +238,3 @@ export function nextStakeDeltaCell(expectedChange: number): NextStakeDeltaCell {
   if (expectedChange > 0) return { prefix: '+', tone: 'positive' }
   return { prefix: '', tone: 'negative' }
 }
-
