@@ -86,3 +86,38 @@ the rank number is hard to interpret.
 Opening N detail sheets in a session then costs 1 fetch instead of N.
 
 **Why:** Browsing multiple validators in a session makes redundant API calls proportional to the number of sheets opened.
+
+---
+
+## PSR Settlement Pending Status
+
+PSR settlements stamped in the auction but not yet written on-chain need
+a **PENDING** status (distinct from current ESTIMATE). Today everything
+auction-emitted shows as ESTIMATE; the protected-events table cannot
+distinguish "settlement is final but not yet claimed on-chain" from
+"this is just a projection."
+
+**Where:** `src/services/validator-with-protected_event.ts` — gate
+between `ESTIMATE` (current epoch projection) and a new `PENDING`
+(emitted/settled in the auction, on-chain claim not yet visible).
+Surface as a third badge color in `protected-events-table.tsx`.
+
+Three states total:
+
+- **ESTIMATE** — current-epoch projection, accent color (existing)
+- **PENDING** — auction-emitted, not yet on-chain, accent color (new)
+- **FINALIZED** — on-chain settlement done, muted/neutral badge (no
+  accent, but should still show a label so every row has a status)
+
+## Epoch Status Badge
+
+Add an epoch status indicator that explains where the network is in
+the current epoch's lifecycle:
+
+- **Progress bar** for the current epoch (slot / 432000)
+- **Pending epoch**: the prior epoch is finalized or still settling
+- **Finalized**: prior epoch's on-chain claims done
+- **Next auction epoch**: which epoch the next auction will run for
+
+Place it in the SAM page header / stats bar so users can tell at a
+glance how mature the displayed auction snapshot is.

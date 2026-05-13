@@ -1,4 +1,5 @@
 import {
+  AuctionConstraintType,
   DsSamSDK,
   InputsSource,
   loadSamConfig,
@@ -325,3 +326,65 @@ export function augmentAuctionResult(
 export const selectExpectedStakeChange = (
   v: AugmentedAuctionValidator,
 ): number => v.values.expectedStakeChangeSol ?? 0
+
+export type ConcentrationRow = {
+  key: string
+  samStakeSol: number
+  pctOfTotal: number
+  validatorCount: number
+  atCap: boolean
+  cappedValidatorCount: number
+}
+
+export type ConcentrationBreakdown = {
+  countries: ConcentrationRow[]
+  asos: ConcentrationRow[]
+  countryCapPct: number
+  asoCapPct: number
+}
+
+export const buildConcentrationBreakdown = (
+  auctionResult: AuctionResult,
+  config: DsSamConfig,
+): ConcentrationBreakdown => {
+  const validators = auctionResult.auctionData.validators
+  const aggregate = (
+    pick: (v: AuctionValidator) => string,
+    capType: AuctionConstraintType,
+  ): ConcentrationRow[] => {
+    const by = new Map<string, { stake: number; count: number; capped: number }>()
+    let total = 0
+    for (const v of validators) {
+      const stake = v.auctionStake.marinadeSamTargetSol
+      if (stake <= 0) continue
+      const k = pick(v) || '—'
+      const e = by.get(k) ?? { stake: 0, count: 0, capped: 0 }
+      e.stake += stake
+      e.count += 1
+      if (
+        v.lastCapConstraint?.constraintType === capType &&
+        v.lastCapConstraint.constraintName === k
+      ) {
+        e.capped += 1
+      }
+      by.set(k, e)
+      total += stake
+    }
+    const rows: ConcentrationRow[] = [...by.entries()].map(([key, e]) => ({
+      key,
+      samStakeSol: e.stake,
+      validatorCount: e.count,
+      pctOfTotal: total > 0 ? e.stake / total : 0,
+      atCap: e.capped > 0,
+      cappedValidatorCount: e.capped,
+    }))
+    rows.sort((a, b) => b.samStakeSol - a.samStakeSol)
+    return rows
+  }
+  return {
+    countries: aggregate(v => v.country, AuctionConstraintType.COUNTRY),
+    asos: aggregate(v => v.aso, AuctionConstraintType.ASO),
+    countryCapPct: config.maxNetworkStakeConcentrationPerCountryDec,
+    asoCapPct: config.maxNetworkStakeConcentrationPerAsoDec,
+  }
+}

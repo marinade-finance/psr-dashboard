@@ -10,6 +10,7 @@ import {
   TableHead,
   TableCell,
 } from 'src/components/ui/table'
+import { ConcentrationMetric } from 'src/components/concentration-metric/concentration-metric'
 import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
 import { ValidatorJump } from 'src/components/validator-jump/validator-jump'
 import { formatPercentage, formatSolAmount, stake } from 'src/format'
@@ -17,6 +18,7 @@ import { bondHealthFromAuction } from 'src/services/breakdowns'
 import { HELP_TEXT } from 'src/services/help-text'
 import {
   augmentAuctionResult,
+  buildConcentrationBreakdown,
   selectBondSize,
   selectExpectedStakeChange,
   selectMaxAPY,
@@ -375,6 +377,10 @@ export const SamTable: React.FC<Props> = ({
   const samDistributedStake = selectSamDistributedStake(validators)
   const winningAPY = selectWinningAPY(auctionResult, epochsPerYear)
   const projectedApy = selectProjectedAPY(auctionResult, epochsPerYear)
+  const concentration = useMemo(
+    () => buildConcentrationBreakdown(auctionResult, dsSamConfig),
+    [auctionResult, dsSamConfig],
+  )
 
   const [hoveredRow, setHoveredRow] = useState<string | null>(null)
 
@@ -846,6 +852,22 @@ export const SamTable: React.FC<Props> = ({
               Reset Simulation ({simulatedValidators.size})
             </button>
           )}
+        </div>
+
+        {/* Concentration Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3 px-4">
+          <ConcentrationMetric
+            label="Top Countries"
+            rows={concentration.countries}
+            capPct={concentration.countryCapPct}
+            help="Share of auction-distributed stake by validator country. Bar fills against the per-country cap. (capped) means at least one validator was cut by the cap."
+          />
+          <ConcentrationMetric
+            label="Top ASOs"
+            rows={concentration.asos}
+            capPct={concentration.asoCapPct}
+            help="Share of auction-distributed stake by ASO (Autonomous System Operator). Bar fills against the per-ASO cap. (capped) means at least one validator was cut by the cap."
+          />
         </div>
 
         {/* Search row — sits above the table, aligned with validator column */}
