@@ -361,9 +361,8 @@ Two numbers stacked:
 
 - **Top:** currently active SAM stake (SOL).
 - **Bottom (Δ):** projected stake change next epoch.
-  - **Positive (green)** — stake arriving (capped by the redelegation budget).
-  - **Negative (red)** — stake leaving (natural withdrawals or auction loss).
-  - **`0`** — exactly zero (not "no data" — the page distinguishes).
+  - **Positive (green)** — stake arriving, capped by the redelegation budget.
+  - **Negative (red)** — stake leaving via natural turnover or auction loss.
 
 See [Re-delegation](#redelegation) for why the delta is often smaller than the
 gap to target.
