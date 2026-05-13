@@ -1,20 +1,33 @@
-import React from 'react'
+import React, { useState } from 'react'
+import { QueryClient, QueryClientProvider } from 'react-query'
 
-import { Navigation } from 'src/components/navigation/navigation'
-import { ValidatorBondsTable } from 'src/components/validator-bonds-table/validator-bonds-table'
 import { TEST_BONDS_DATA } from 'src/fixtures/test-bonds'
+import { ValidatorBondsPage } from 'src/pages/validator-bonds'
 
-import type { UserLevel } from 'src/components/navigation/navigation'
+import type { UserLevelProps } from 'src/components/navigation/navigation'
 
-type Props = {
-  level: UserLevel
+export const TestBondsPage: React.FC<UserLevelProps> = ({ level }) => {
+  const [client] = useState(() => {
+    const c = new QueryClient({
+      defaultOptions: {
+        queries: {
+          staleTime: Infinity,
+          refetchInterval: false,
+          refetchOnMount: false,
+          refetchOnWindowFocus: false,
+          refetchOnReconnect: false,
+          retry: false,
+        },
+      },
+    })
+    c.setQueryData('bonds', TEST_BONDS_DATA)
+    c.setQueryData('notifications-broadcast', null)
+    c.setQueryData(['notifications-all', 'sam_auction'], undefined)
+    return c
+  })
+  return (
+    <QueryClientProvider client={client}>
+      <ValidatorBondsPage level={level} />
+    </QueryClientProvider>
+  )
 }
-
-export const TestBondsPage: React.FC<Props> = ({ level }) => (
-  <div className="min-h-screen bg-background-page">
-    <Navigation level={level} />
-    <div className="px-4 py-6 max-w-[1920px] mx-auto">
-      <ValidatorBondsTable data={TEST_BONDS_DATA} level={level} />
-    </div>
-  </div>
-)
