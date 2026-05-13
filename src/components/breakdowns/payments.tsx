@@ -150,8 +150,7 @@ export const PaymentsBreakdown: React.FC<Props> = ({
             label="Total"
             value={pay(total)}
             total
-            accent={hasPenalty ? 'red' : 'green'}
-            marker={hasPenalty ? 'red' : 'green'}
+            severity={hasPenalty ? 'error' : 'ok'}
           />
         </tbody>
       </table>

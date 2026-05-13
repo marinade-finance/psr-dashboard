@@ -10,6 +10,7 @@ import {
   NORMAL_CELL_PAD,
   SectionHeader,
   SEPARATOR_CELL_PAD,
+  type Severity,
 } from './shared'
 
 import type { UserLevel } from 'src/components/navigation/navigation'
@@ -22,6 +23,12 @@ type Props = {
   level?: UserLevel
 }
 
+const SEVERITY_TONE: Record<Severity, 'green' | 'yellow' | 'red'> = {
+  ok: 'green',
+  warning: 'yellow',
+  error: 'red',
+}
+
 // 4-column row unique to revenue breakdown (pct | pmpe | sol)
 const RevRow: React.FC<{
   label: string
@@ -30,10 +37,9 @@ const RevRow: React.FC<{
   value?: string
   bold?: boolean
   large?: boolean
-  accent?: 'green' | 'yellow' | 'red'
   separator?: boolean
   total?: boolean
-  marker?: 'red' | 'yellow' | 'green'
+  severity?: Severity
 }> = ({
   label,
   pct,
@@ -41,11 +47,11 @@ const RevRow: React.FC<{
   value = '',
   bold,
   large,
-  accent,
   separator,
   total,
-  marker,
+  severity,
 }) => {
+  const tone = severity ? SEVERITY_TONE[severity] : undefined
   const sep = total || separator
   const bld = total || bold
   const lg = total || large
@@ -54,7 +60,7 @@ const RevRow: React.FC<{
       <td
         className={`pr-2 ${lg ? 'text-base' : 'text-xs'} ${sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${bld ? 'font-semibold' : ''}`}
       >
-        {marker && <Marker tone={marker} />}
+        {tone && <Marker tone={tone} />}
         {label}
       </td>
       <td
@@ -69,11 +75,11 @@ const RevRow: React.FC<{
       </td>
       <td
         className={`pl-2 text-right font-mono ${lg ? 'text-base' : 'text-xs'} ${sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${bld ? 'font-semibold' : ''} ${sep ? 'border-t-2 border-border' : ''} ${
-          accent === 'green'
+          tone === 'green'
             ? 'text-status-green'
-            : accent === 'yellow'
+            : tone === 'yellow'
               ? 'text-status-yellow'
-              : accent === 'red'
+              : tone === 'red'
                 ? 'text-destructive'
                 : ''
         }`}
@@ -91,8 +97,8 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
   level,
 }) => {
   const metrics = computeSamRevenueMetrics(validator)
-  const deltaAccent =
-    metrics.delta > 0 ? 'green' : metrics.delta < 0 ? 'red' : undefined
+  const deltaSeverity: Severity | undefined =
+    metrics.delta > 0 ? 'ok' : metrics.delta < 0 ? 'error' : undefined
   const deltaText =
     metrics.delta === 0
       ? '—'
@@ -140,7 +146,7 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
           <RevRow
             label="Expected change next epoch"
             value={deltaText}
-            accent={deltaAccent}
+            severity={deltaSeverity}
           />
 
           <SectionHeader title="Commissions" colSpan={4} />
@@ -170,11 +176,11 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
           <RevRow
             label="Bid gap"
             pmpe={pmpe(metrics.bidGap)}
-            accent={
+            severity={
               metrics.bidGap > 2
-                ? 'yellow'
+                ? 'warning'
                 : metrics.bidGap === 0
-                  ? 'green'
+                  ? 'ok'
                   : undefined
             }
           />
@@ -190,7 +196,7 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
             label="Total per epoch"
             value={pay(metrics.total)}
             total
-            marker="green"
+            severity="ok"
           />
         </tbody>
       </table>

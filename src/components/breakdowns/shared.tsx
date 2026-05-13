@@ -45,27 +45,34 @@ export const Marker: React.FC<{ tone: 'red' | 'yellow' | 'green' }> = ({
   />
 )
 
+export type Severity = 'ok' | 'warning' | 'error'
+
+const SEVERITY_TONE: Record<Severity, 'green' | 'yellow' | 'red'> = {
+  ok: 'green',
+  warning: 'yellow',
+  error: 'red',
+}
+
 export const CalcRow: React.FC<{
   label: string
   secondary?: string
   value?: string
   bold?: boolean
   large?: boolean
-  accent?: 'red' | 'yellow' | 'green'
   separator?: boolean
   total?: boolean
-  marker?: 'red' | 'yellow' | 'green'
+  severity?: Severity
 }> = ({
   label,
   secondary,
   value = '',
   bold,
   large,
-  accent,
   separator,
   total,
-  marker,
+  severity,
 }) => {
+  const tone = severity ? SEVERITY_TONE[severity] : undefined
   const sep = total || separator
   const bld = total || bold
   const lg = total || large
@@ -74,7 +81,7 @@ export const CalcRow: React.FC<{
       <td
         className={`pr-2 ${lg ? 'text-base' : 'text-xs'} ${sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${bld ? 'font-semibold' : ''}`}
       >
-        {marker && <Marker tone={marker} />}
+        {tone && <Marker tone={tone} />}
         {label}
       </td>
       <td
@@ -84,11 +91,11 @@ export const CalcRow: React.FC<{
       </td>
       <td
         className={`pl-2 text-right font-mono ${sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${lg ? 'text-base' : 'text-xs'} ${bld ? 'font-semibold' : ''} ${sep ? 'border-t-2 border-border' : ''} ${
-          accent === 'red'
+          tone === 'red'
             ? 'text-destructive'
-            : accent === 'yellow'
+            : tone === 'yellow'
               ? 'text-status-yellow'
-              : accent === 'green'
+              : tone === 'green'
                 ? 'text-status-green'
                 : ''
         }`}

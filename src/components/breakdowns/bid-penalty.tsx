@@ -115,7 +115,7 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
             label="Penalty PMPE"
             value={pmpe(metrics.penaltyPmpe)}
             bold
-            accent={metrics.penaltyPmpe > 0 ? 'red' : undefined}
+            severity={metrics.penaltyPmpe > 0 ? 'error' : undefined}
           />
           {metrics.penaltySol > 0 ? (
             <CalcRow
@@ -123,8 +123,7 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
               secondary={stake(metrics.marinadeActivatedStakeSol)}
               value={pay(metrics.penaltySol)}
               total
-              accent="red"
-              marker="red"
+              severity="error"
             />
           ) : (
             <OkRow message="No penalty deducted this epoch." />

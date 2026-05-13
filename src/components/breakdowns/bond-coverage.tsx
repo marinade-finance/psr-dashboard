@@ -40,8 +40,7 @@ const statusLine = (
         ? ` Top up ${payCta(topUpToAvoidFee)} to avoid the fee.`
         : ''
     return { label: `${feeStr}${topUpStr}`, tone: 'red' }
-  }
-  if (state === 'watch') {
+  } else if (state === 'watch') {
     const text =
       topUpToKeepStake > 0
         ? `Top up ${payCta(topUpToKeepStake)} to keep your stake.`
@@ -50,18 +49,18 @@ const statusLine = (
           : ''
     if (text) return { label: text, tone: 'yellow' }
     return { label: 'Bond covers current stake.', tone: 'yellow' }
-  }
-  if (state === 'soft') {
+  } else if (state === 'soft') {
     if (topUpToIdealKeep > 0)
       return {
         label: `Bond covers current stake. Top up ${payCta(topUpToIdealKeep)} for more.`,
         tone: 'yellow',
       }
     return { label: 'Bond meets ideal coverage.', tone: 'green' }
-  }
-  return {
-    label: 'Bond has enough coverage. Keep it topped up.',
-    tone: 'green',
+  } else {
+    return {
+      label: 'Bond has enough coverage. Keep it topped up.',
+      tone: 'green',
+    }
   }
 }
 
@@ -158,8 +157,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
               label="Top up to keep your stake"
               value={payCta(coverage.topUpToKeepStake)}
               total
-              accent="yellow"
-              marker="yellow"
+              severity="warning"
             />
           ) : null}
 
@@ -193,8 +191,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
               label="Top up for more stake"
               value={payCta(coverage.topUpToIdealKeep)}
               total
-              accent="yellow"
-              marker="yellow"
+              severity="warning"
             />
           ) : coverage.topUpToKeepStake > 0 ? (
             <OkRow message="Bond meets ideal coverage — eligible for more stake." />
@@ -225,8 +222,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
                   label="Top up to avoid the fee"
                   value={payCta(coverage.topUpToAvoidFee)}
                   total
-                  accent="red"
-                  marker="red"
+                  severity="error"
                 />
               )}
               {bondRiskFeeSol > 0 && (
@@ -234,7 +230,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
                   label="Estimated bond risk fee this epoch"
                   value={pay(bondRiskFeeSol)}
                   bold
-                  marker="red"
+                  severity="error"
                 />
               )}
               {coverage.topUpToAvoidFee === 0 && bondRiskFeeSol === 0 && (
