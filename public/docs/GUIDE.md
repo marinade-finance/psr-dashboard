@@ -396,65 +396,127 @@ _See [Eligibility Criteria — Marinade Docs](https://docs.marinade.finance/mari
 <a id="detail-panel"></a>
 ## Validator Detail Panel
 
-Clicking a row opens the right-side panel with six tabs.
+Clicking a row opens the side panel. The four calculation tabs
+(Payments, Bidding, Bond, Bid Penalty) **mirror the same math the
+SAM auction runs server-side** — they recompute the SDK's formulas
+locally so you can see each input and intermediate value. Numbers
+match the protocol's settlement decisions to the SOL.
 
 ### Overview tab
 
-Five cards, laid out in two columns:
+Five cards:
 
-- **Stake** — Active SOL, target SOL, and projected next-epoch delta.
-- **Bond** — Balance, reserve / coverage status, bid runway in epochs, and a
-  link straight to the full coverage breakdown on the Bond tab.
-- **Expected Payment This Epoch** — payment for active stake, payment for
-  activating stake (with a `bid gap` sub-row when activating-stake bid differs
-  from active-stake bid), and any active penalties (bid-too-low, blacklist,
-  bond risk fee). Each penalty has a "see breakdown" jump to the relevant tab.
-- **APY Composition** — bar chart breaking down the validator's max APY into
-  inflation / MEV / block / stake-bid components, with the current Winning APY
-  line drawn across for visual comparison.
-- **What-If Simulation** — toggle on, edit commissions or stake bid, the
-  auction re-runs. See [Simulation Mode](#simulation).
+- **Stake** — Active SOL, target SOL, projected next-epoch delta.
+- **Bond** — Balance, coverage status, bid runway in epochs, deep-link
+  to the full Bond tab.
+- **Expected Payment This Epoch** — active-stake bid cost, activating
+  stake cost, and any active penalties (each with a "see breakdown"
+  jump to its tab).
+- **APY Composition** — bar chart of max APY broken into
+  inflation / MEV / block / stake-bid PMPE; Winning APY drawn across.
+- **What-If Simulation** — toggle on, edit commissions or bid; auction
+  re-runs (see [Simulation Mode](#simulation)).
 
 ### Notifications tab
 
-Active alerts for this validator: depleted bond warnings, large bid changes,
-blacklist flags, recent protected events. Click an alert to jump to the
-relevant tab.
+Active alerts for this validator from the notifications API: depleted
+bond warnings, blacklist flags, recent protected events. Click an
+alert to jump to the relevant tab.
 
 ### Payments tab
 
-Full breakdown of payments to Marinade this epoch:
+Sum of every SOL outflow from this validator this epoch.
 
-- Active-stake bid (CPMPE × active SOL).
-- Activating-stake bid (CPMPE × incoming SOL, prorated by activation).
-- All applicable penalties (bid-too-low, blacklist, bond risk fee), each with
-  its own component breakdown.
-- Any PSR settlement estimates from the current epoch.
+| Section | Row | Source |
+|---|---|---|
+| Bid costs | Active Stake Cost | `effectiveCost = marinadeActivatedStakeSol × auctionEffectiveBidPmpe / 1000` |
+| Bid costs | Activating Stake Cost | `activatingStakePmpe × max(0, expectedDelta) / 1000` |
+| Penalties | Bid-too-low penalty | conditional — see Bid Penalty tab |
+| Penalties | Blacklist penalty | `blacklistPenaltyPmpe × activatedStake / 1000` |
+| Penalties | Bond risk fee | conditional — computed in the Bond tab |
+| PSR Settlements | per-event row | `fetchPsrEstimatesForValidator(vote)` — funded "from bond" or "from Marinade" |
+| Total | sum of the above | red-accented when any penalty or PSR row is present, green otherwise |
 
-### Bidding tab
+### Bidding tab (SAM Revenue)
 
-The SAM revenue calculation as the auction sees it: stake math, effective
-commission across the three dimensions, the gap between max bid and clearing
-bid, and the resulting cost. This is where you understand *why* the validator
-is at the rank they're at.
+Why the validator pays what they pay. Tracks the bid construction
+side-by-side with the cost.
+
+- **Stake** — Active / Target Marinade stake and the projected
+  next-epoch delta (`selectExpectedStakeChange`).
+- **Commissions** — Inflation, MEV, Block rewards. The percent column
+  is the validator's retained commission; the PMPE column is what flows
+  into the bid (`revShare.inflationPmpe`, `revShare.mevPmpe`,
+  `revShare.blockPmpe`).
+- **Bid** — Static bid PMPE (`revShare.bidPmpe`), auction effective bid
+  PMPE (`revShare.auctionEffectiveBidPmpe` — the clearing price), and
+  the **bid gap** = `max(0, staticBid − effectiveBid)`. A non-zero gap
+  means you bid above clearing and pay an activating-stake fee.
+- **Cost** — Active Stake Cost, Activating Stake Cost, Total (same
+  formulas as the Payments tab Bid Costs section).
+
+An "**Overrides CPMPE**" notice appears if `values.commissions.bidCpmpeOverrideDec`
+is set — the displayed bid is a manual override, not the on-chain value.
 
 ### Bond tab
 
-The bond coverage calculation:
+The full bond-coverage calculation in three sections.
 
-- Current balance and claimable balance.
-- Current and projected exposed stake.
-- Minimum coverage target with top-up amount.
-- Ideal coverage target with top-up amount.
-- Bond risk fee, if any.
+**Rates** — `expectedMaxEffBidPmpe` and `onchainDistributedPmpe`, the
+two PMPE rates that scale the coverage requirements.
 
-See [Validator Bonds](#bond).
+**Minimum Coverage** (uses *current* exposed stake) — answers "what
+bond do I need to keep my current stake?":
+
+```
+currentExposedStake     = activatedStake − unprotectedStake
+floorBaseKeep           = minUnprotectedReserve
+                          + (minBondPmpe / 1000) × currentExposedStake
+topUpToKeepStake        = max(0, floorBaseKeep − claimableBondBalance)
+```
+
+**Ideal Coverage** (uses *current* exposed stake too, but with
+`idealBondPmpe` and `idealUnprotectedReserve`) — answers "what bond
+unlocks more stake?":
+
+```
+requiredIdealKeep       = idealUnprotectedReserve
+                          + (idealBondPmpe / 1000) × currentExposedStake
+topUpToIdealKeep        = max(0, requiredIdealKeep − bondBalance)
+```
+
+**Bond Risk** (conditional — only when `bondRiskFeeSol > 0`,
+`topUpToAvoidFee > 0`, or there is carried paid undelegation): uses
+`projectedExposedStake = activatedStake − carriedPaidUndelegation −
+unprotectedStake` (always ≤ current). The penalty trigger threshold is
+`floorBaseProjected`; falling below it fires the SDK's
+`calcBondRiskFee`. See [Bond Risk Fee](#bond-risk-fee).
+
+Status colour: critical (red) when top-up-to-avoid-fee > 0; watch
+(yellow) when top-up-to-keep-stake > 0; soft (muted) when only
+top-up-to-ideal > 0; healthy (green) otherwise.
 
 ### Bid Penalty tab
 
-Component-level walkthrough of the bid-too-low penalty (when applicable). Shows
-the historical bid, current bid, the applicable stake, and the resulting SOL
-charge. See [Bid-Too-Low Penalty](#bid-penalty).
+Shows the math behind `calcBidTooLowPenalty`. Renders only when both
+trigger conditions in [Bid-Too-Low Penalty](#bid-penalty) hold.
+
+```
+adjustedLimit  = min(thisEpochEffParticipatingBid,
+                     worstHistoricalEffParticipatingBid)
+                 × (1 − permittedBidDeviation)
+shortfall      = max(0, adjustedLimit − bondObligationPmpe)
+shortfallRatio = shortfall / adjustedLimit
+penaltyCoef    = min(1, sqrt(1.5 × shortfallRatio))   # only if bid dropped
+base           = winningTotalPmpe + effParticipatingBidPmpe
+penaltyPmpe    = penaltyCoef × base
+penaltySol     = (penaltyPmpe / 1000) × activatedStake
+```
+
+The status banner reads "Penalty active" (red) when `penaltySol > 0`,
+"Bid dropped but bond obligation covers it — no penalty" (green) when
+the bid dropped but the obligation didn't fall below `adjustedLimit`,
+and "Bid did not decrease — no penalty" (green) otherwise.
 
 ---
 
