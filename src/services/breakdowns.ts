@@ -25,7 +25,7 @@ import type { AugmentedAuctionValidator } from 'src/services/sam'
 const TOL_COEF = 0.99999
 const SCALE_COEF = 1.5
 
-export type SamRevenueMetrics = {
+export type SamRevenue = {
   active: number
   target: number
   delta: number
@@ -47,9 +47,9 @@ export type SamRevenueMetrics = {
   overrideMsg: string
 }
 
-export function computeSamRevenueMetrics(
+export function computeSamRevenue(
   v: AugmentedAuctionValidator,
-): SamRevenueMetrics {
+): SamRevenue {
   const stake = v.marinadeActivatedStakeSol
   const delta = selectExpectedStakeChange(v)
   const activating = Math.max(0, delta)
@@ -81,7 +81,7 @@ export function computeSamRevenueMetrics(
   }
 }
 
-export type BondCoverageMetrics = {
+export type BondCoverage = {
   minEp: number
   idealEp: number
   bondBalanceSol: number
@@ -110,13 +110,13 @@ export type BondCoverageMetrics = {
   topUpToAvoidFee: number
 }
 
-export function computeBondCoverageMetrics(
+export function computeBondCoverage(
   v: AuctionValidator,
   minBondEpochs: number,
   idealBondEpochs: number,
   winningTotalPmpe: number,
   bondRiskFeeMult: number,
-): BondCoverageMetrics {
+): BondCoverage {
   const bondBalanceSol = v.bondBalanceSol ?? 0
   const claimableBondBalanceSol = v.claimableBondBalanceSol ?? 0
   const marinadeActivatedStakeSol = v.marinadeActivatedStakeSol
@@ -228,7 +228,7 @@ export function bondHealthFromAuction(
   if (!v.auctionStake.marinadeSamTargetSol && !v.marinadeActivatedStakeSol) {
     return 'healthy'
   }
-  const coverage = computeBondCoverageMetrics(
+  const coverage = computeBondCoverage(
     v,
     config.minBondEpochs,
     config.idealBondEpochs,
@@ -241,7 +241,7 @@ export function bondHealthFromAuction(
   return 'healthy'
 }
 
-export type BidPenaltyMetrics = {
+export type BidPenalty = {
   historyEpochs: number
   lastEpochBidPmpe: number
   thisEpochBidPmpe: number
@@ -260,11 +260,11 @@ export type BidPenaltyMetrics = {
   winningTotalPmpe: number
 }
 
-export function computeBidPenaltyMetrics(
+export function computeBidPenalty(
   v: AuctionValidator,
   dsSamConfig: DsSamConfig,
   winningTotalPmpe: number,
-): BidPenaltyMetrics {
+): BidPenalty {
   const historyEpochs = dsSamConfig.bidTooLowPenaltyHistoryEpochs
   // SDK auction.js:202 passes this field as permittedBidDeviation ∈ [0,1].
   const permittedDeviation = dsSamConfig.bidTooLowPenaltyPermittedDeviationPmpe

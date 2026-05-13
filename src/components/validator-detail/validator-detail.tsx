@@ -24,9 +24,9 @@ import {
 import { pay, payCta, stake } from 'src/format'
 import {
   bondHealthFromAuction,
-  computeBondCoverageMetrics,
-  computeSamRevenueMetrics,
-  computeBidPenaltyMetrics,
+  computeBondCoverage,
+  computeSamRevenue,
+  computeBidPenalty,
 } from 'src/services/breakdowns'
 import { HELP_TEXT } from 'src/services/help-text'
 import { fetchPsrEstimatesForValidator } from 'src/services/protected-events-estimator'
@@ -44,7 +44,7 @@ import {
 
 import type { AuctionResult, DsSamConfig } from '@marinade.finance/ds-sam-sdk'
 import type { UserLevel } from 'src/components/navigation/navigation'
-import type { BondCoverageMetrics } from 'src/services/breakdowns'
+import type { BondCoverage } from 'src/services/breakdowns'
 import type { NotificationSummary } from 'src/services/notifications'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
 
@@ -81,7 +81,7 @@ export type BondHealth = 'healthy' | 'soft' | 'watch' | 'critical'
 
 export function bondCoverageLabel(
   health: BondHealth,
-  coverage: BondCoverageMetrics,
+  coverage: BondCoverage,
 ): string {
   if (health === 'critical')
     return coverage.topUpToAvoidFee > 0
@@ -225,7 +225,7 @@ export const ValidatorDetail = ({
   }, [auctionResult, validator, voteAccount, inSet, epochsPerYear])
   const bondCoverage = useMemo(
     () =>
-      computeBondCoverageMetrics(
+      computeBondCoverage(
         validator,
         dsSamConfig.minBondEpochs,
         dsSamConfig.idealBondEpochs,
@@ -241,11 +241,11 @@ export const ValidatorDetail = ({
     ],
   )
   const paymentMetrics = useMemo(
-    () => computeSamRevenueMetrics(validator),
+    () => computeSamRevenue(validator),
     [validator],
   )
   const penaltyMetrics = useMemo(
-    () => computeBidPenaltyMetrics(validator, dsSamConfig, winningTotalPmpe),
+    () => computeBidPenalty(validator, dsSamConfig, winningTotalPmpe),
     [
       validator,
       dsSamConfig.minBondEpochs,

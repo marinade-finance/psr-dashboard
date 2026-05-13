@@ -1,7 +1,7 @@
 import React from 'react'
 
 import { pay, pmpe, stake } from 'src/format'
-import { computeSamRevenueMetrics } from 'src/services/breakdowns'
+import { computeSamRevenue } from 'src/services/breakdowns'
 
 import {
   CalcCard,
@@ -96,7 +96,7 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
   onGoToSim,
   level,
 }) => {
-  const metrics = computeSamRevenueMetrics(validator)
+  const metrics = computeSamRevenue(validator)
   const deltaSeverity: Severity | undefined =
     metrics.delta > 0 ? 'ok' : metrics.delta < 0 ? 'error' : undefined
   const deltaText =

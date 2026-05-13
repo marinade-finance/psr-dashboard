@@ -1,7 +1,7 @@
 import React from 'react'
 
 import { formatPercentage, pay, pmpe, stake } from 'src/format'
-import { computeBidPenaltyMetrics } from 'src/services/breakdowns'
+import { computeBidPenalty } from 'src/services/breakdowns'
 
 import { CalcCard, CalcRow, OkRow, SectionHeader, docsPath } from './shared'
 
@@ -28,7 +28,7 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
   onGoToSim,
   level,
 }) => {
-  const metrics = computeBidPenaltyMetrics(
+  const metrics = computeBidPenalty(
     validator,
     dsSamConfig,
     winningTotalPmpe,

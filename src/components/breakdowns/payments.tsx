@@ -2,8 +2,8 @@ import React from 'react'
 
 import { pay } from 'src/format'
 import {
-  computeBidPenaltyMetrics,
-  computeSamRevenueMetrics,
+  computeBidPenalty,
+  computeSamRevenue,
 } from 'src/services/breakdowns'
 import {
   isProtectedEvent,
@@ -45,8 +45,8 @@ export const PaymentsBreakdown: React.FC<Props> = ({
   onGoToPenalty,
   level,
 }) => {
-  const paymentMetrics = computeSamRevenueMetrics(validator)
-  const penaltyMetrics = computeBidPenaltyMetrics(
+  const paymentMetrics = computeSamRevenue(validator)
+  const penaltyMetrics = computeBidPenalty(
     validator,
     dsSamConfig,
     winningTotalPmpe,

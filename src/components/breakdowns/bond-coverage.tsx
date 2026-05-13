@@ -1,7 +1,7 @@
 import React from 'react'
 
 import { pay, payCta, pmpe, stake } from 'src/format'
-import { computeBondCoverageMetrics } from 'src/services/breakdowns'
+import { computeBondCoverage } from 'src/services/breakdowns'
 
 import { CalcCard, CalcRow, OkRow, SectionHeader, docsPath } from './shared'
 
@@ -74,7 +74,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
   onGoToSim,
   level,
 }) => {
-  const coverage = computeBondCoverageMetrics(
+  const coverage = computeBondCoverage(
     validator,
     dsSamConfig.minBondEpochs,
     dsSamConfig.idealBondEpochs,

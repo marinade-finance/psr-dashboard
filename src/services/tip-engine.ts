@@ -14,7 +14,7 @@ import {
 } from 'src/css'
 import { pay, payCta, stake, stakeCta } from 'src/format'
 
-import { bondHealthFromAuction, computeBondCoverageMetrics } from './breakdowns'
+import { bondHealthFromAuction, computeBondCoverage } from './breakdowns'
 import { bondUtilizationPct, apyBreakdown } from './calculations'
 
 import type { BondHealthState } from './breakdowns'
@@ -179,7 +179,7 @@ export const getValidatorTip = (
   // back more stake gets the bond CTA, not the rank CTA.
   if (!inSet) {
     if (health !== 'healthy') {
-      const coverage = computeBondCoverageMetrics(
+      const coverage = computeBondCoverage(
         validator,
         dsSamConfig.minBondEpochs,
         dsSamConfig.idealBondEpochs,
@@ -207,7 +207,7 @@ export const getValidatorTip = (
 
   // Bond CTA cascade — priority: avoid fee > keep stake > ideal.
   if (health === 'critical' || health === 'watch' || health === 'soft') {
-    const coverage = computeBondCoverageMetrics(
+    const coverage = computeBondCoverage(
       validator,
       dsSamConfig.minBondEpochs,
       dsSamConfig.idealBondEpochs,
