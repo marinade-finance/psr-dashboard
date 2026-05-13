@@ -189,11 +189,7 @@ Real support thread showed a validator confused by:
    same step) is unnamed. Add a short BRRM section linking to
    `https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market/bond-risk-reduction-mechanism`
    and clarify that the fee + the stake drop are one mechanism, not two.
-3. **Solana warmup/cooldown cap** — 25% of the network's active stake
-   per epoch. Activation/deactivation can therefore stretch over
-   several epochs under high churn. None of our copy mentions this; the
-   validator was surprised when their stake didn't move in one shot.
-4. **Snapshot timing** — when does the auction actually run within an
+3. **Snapshot timing** — when does the auction actually run within an
    epoch? When does a bond top-up start counting? Validators ask these
    on every support ticket. Should sit in a small "Epoch lifecycle"
    subsection (overlaps with the existing Epoch Status Badge TODO).
@@ -214,6 +210,30 @@ Items 1-3 are pure GUIDE additions. Item 4 likely needs a small UI
 component (epoch lifecycle indicator). Item 5 is both UI label and
 GUIDE explanation. Item 6 is one extra sentence in the Bid-Too-Low
 section.
+
+## UI: Bond health bar — clearer limit + dramatic "below-limit" state
+
+The bond column's small progress bar today shows `100 − utilization%`
+(width = remaining capacity, colour = health tier). Two improvements:
+
+1. **Show the limit.** The bar has no marker indicating where the
+   minimum-bond threshold sits — the user sees a stub and has to know
+   that "stub = past the limit". Render a small tick or notch at the
+   threshold position so the eye can read the bar against the
+   reference instantly.
+2. **Make below-limit really obvious.** When utilization ≥ 100% the
+   bar is empty and only the colour communicates the state, which is
+   easy to miss in a long table. Add a stronger visual: solid red
+   fill of a narrow "over-limit" strip, pulsing accent, or a tiny
+   icon next to the bar (matches the existing red dot for "alert").
+   Goal: a validator should see at a glance that the bond is past the
+   penalty line, not just realize it after reading the colour.
+
+Touches:
+- `src/components/sam-table/sam-table.tsx` around line 731 (the bar).
+- Possibly `src/services/calculations.ts:bondUtilizationPct` if we
+  want to expose "% above the limit" separately so the over-limit
+  visual can scale with severity.
 
 ## Feature: "My Validator" address pin + personal notification ribbon
 

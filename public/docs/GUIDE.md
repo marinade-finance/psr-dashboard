@@ -349,8 +349,11 @@ A compact summary of the validator's bond:
 - **Runway** — `(Nep)` shows how many epochs the bond will last at the current
   burn rate (CPMPE bid + risk fee). `(0ep)` or "Depleted" means out of money
   imminently.
-- **Utilization bar** — tiny progress bar showing how much of the bond's
-  protective capacity is currently in use.
+- **Health bar** — remaining-runway gauge above the minimum threshold.
+  Full bar = runway well above minimum; partially filled = approaching
+  the minimum; empty bar = at or past minimum, which is the state in
+  which the bond risk fee fires and forced undelegation begins. Bar
+  colour matches the health pill.
 
 ### `Stake / Next Δ` — Active and projected stake
 
