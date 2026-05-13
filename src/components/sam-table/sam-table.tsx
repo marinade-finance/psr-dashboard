@@ -330,7 +330,6 @@ export const SamTable: React.FC<Props> = ({
     [auctionResult, dsSamConfig],
   )
 
-  const [hoveredRow, setHoveredRow] = useState<string | null>(null)
   const [flashId, setFlashId] = useState<string | null>(null)
   const tableRef = useRef<HTMLDivElement>(null)
   const flashTimeoutRef = useRef<number | null>(null)
@@ -556,7 +555,6 @@ export const SamTable: React.FC<Props> = ({
       ? (origAuctionRank ?? index + 1)
       : (auctionRankMap.get(voteAccount) ?? index + 1)
     const cutoffRank = validator.values.cutoffRank ?? rank
-    const isHovered = !isGhost && hoveredRow === voteAccount
     const isSimulated = simulatedValidators.has(voteAccount)
 
     // Position change for simulated rows — compare original vs new auction rank
@@ -595,18 +593,15 @@ export const SamTable: React.FC<Props> = ({
     const ghostHasTarget = isGhost && isSimulated
 
     const rowClasses = [
-      'border-b border-border-grid transition-colors duration-[120ms]',
+      'group border-b border-border-grid transition-colors duration-[120ms]',
       isGhost
         ? ghostHasTarget
           ? 'opacity-40 line-through bg-muted/30 cursor-pointer hover:opacity-60'
           : 'opacity-40 line-through bg-muted/30 cursor-default'
         : 'bg-card cursor-pointer',
       !isGhost && !inSet && 'bg-destructive/[0.02]',
-      !isGhost &&
-        isHovered &&
-        (inSet ? 'bg-primary-light' : 'bg-destructive/[0.05]'),
-      !isGhost && !isHovered && inSet && 'hover:bg-primary-light',
-      !isGhost && !isHovered && !inSet && 'hover:bg-destructive/[0.05]',
+      !isGhost && inSet && 'hover:bg-primary-light',
+      !isGhost && !inSet && 'hover:bg-destructive/[0.05]',
       !isGhost && isSimulated && 'ring-2 ring-inset ring-status-yellow',
       isFlashing && 'bg-status-yellow-light',
     ]
@@ -629,8 +624,6 @@ export const SamTable: React.FC<Props> = ({
               : undefined
             : `Open detail for ${validatorName}`
         }
-        onMouseEnter={() => !isGhost && setHoveredRow(voteAccount)}
-        onMouseLeave={() => setHoveredRow(null)}
         onClick={() => {
           if (isGhost) {
             if (ghostHasTarget) handleGhostClick(voteAccount)
@@ -778,19 +771,11 @@ export const SamTable: React.FC<Props> = ({
 
         {/* Chevron */}
         <TableCell className="px-2.5 py-3 w-10">
-          <div
-            className={`w-7 h-7 rounded-[7px] flex items-center justify-center border transition-all duration-[120ms] ${
-              isHovered
-                ? 'bg-primary-light border-primary/30'
-                : 'bg-secondary border-border'
-            }`}
-          >
+          <div className="w-7 h-7 rounded-[7px] flex items-center justify-center border bg-secondary border-border text-secondary-foreground group-hover:bg-primary-light group-hover:border-primary/30 group-hover:text-primary transition-all duration-[120ms]">
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
                 d="M4.5 3L7.5 6L4.5 9"
-                stroke={
-                  isHovered ? 'var(--primary)' : 'var(--secondary-foreground)'
-                }
+                stroke="currentColor"
                 strokeWidth="1.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
