@@ -14,7 +14,11 @@ export const ProtectedEventsPage: React.FC<UserLevelProps> = ({ level }) => {
   const { data, status } = useQuery(
     'protected-events',
     fetchProtectedEventsWithValidator,
-    { staleTime: 5 * 60 * 1000 },
+    {
+      staleTime: 5 * 60 * 1000,
+      refetchInterval: 60 * 60 * 1000,
+      keepPreviousData: true,
+    },
   )
   const { data: latestBroadcastNotification } = useQuery(
     'notifications-broadcast',

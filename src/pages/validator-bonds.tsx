@@ -17,6 +17,8 @@ import type { UserLevelProps } from 'src/components/navigation/navigation'
 export const ValidatorBondsPage: React.FC<UserLevelProps> = ({ level }) => {
   const { data, status } = useQuery('bonds', fetchValidatorsWithBonds, {
     staleTime: 5 * 60 * 1000,
+    refetchInterval: 60 * 60 * 1000,
+    keepPreviousData: true,
   })
   const { data: latestBroadcastNotification } = useQuery(
     'notifications-broadcast',

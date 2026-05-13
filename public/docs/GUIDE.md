@@ -506,6 +506,7 @@ restore the live auction.
   Marinade — typically once per hour. Other validator and auction data
   follow their own refresh cadences (see the table at the top).
 - Solana epochs are roughly 2 days (~182 epochs per year).
-- The page does not auto-refresh — reload to fetch new data.
+- The page auto-refreshes its main data once an hour. Manual reload
+  forces an immediate refetch.
 - All auction math runs client-side via the SDK. Numbers should match Marinade's
   backend to the SOL.

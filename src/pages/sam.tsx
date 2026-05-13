@@ -53,6 +53,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
     () => loadSam(simulationOverrides),
     {
       keepPreviousData: true,
+      refetchInterval: 60 * 60 * 1000,
       onSettled: () => {
         setIsCalculating(false)
       },
