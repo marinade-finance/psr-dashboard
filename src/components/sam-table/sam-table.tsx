@@ -838,7 +838,7 @@ export const SamTable: React.FC<Props> = ({
       )}
       <div className="max-w-[1920px] mx-auto">
         {/* Stats Bar */}
-        <div className="flex flex-wrap items-start gap-3 mb-3 px-4">
+        <div className="flex flex-wrap items-start gap-3 mt-3 mb-3 px-4">
           {stats.map(stat => (
             <Card
               key={stat.label}
