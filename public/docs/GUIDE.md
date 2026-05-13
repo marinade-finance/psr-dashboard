@@ -502,7 +502,9 @@ restore the live auction.
 
 ## Technical Notes
 
-- API data is reloaded periodically by Marinade (typically once per hour).
+- Bond data (bid/CPMPE and bond balance) is reloaded periodically by
+  Marinade — typically once per hour. Other validator and auction data
+  follow their own refresh cadences (see the table at the top).
 - Solana epochs are roughly 2 days (~182 epochs per year).
 - The page does not auto-refresh — reload to fetch new data.
 - All auction math runs client-side via the SDK. Numbers should match Marinade's
