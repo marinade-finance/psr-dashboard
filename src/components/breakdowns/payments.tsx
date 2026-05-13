@@ -11,7 +11,9 @@ import {
   selectProtectedStakeReason,
 } from 'src/services/protected-events'
 
-import { CalcCard, CalcRow, SectionHeader, docsPath } from './shared'
+import { CalcCard } from './card'
+import { docsPath } from './docs-path'
+import { CalcRow, SectionHeader } from './row'
 
 import type { DsSamConfig } from '@marinade.finance/ds-sam-sdk'
 import type { UserLevel } from 'src/components/navigation/navigation'

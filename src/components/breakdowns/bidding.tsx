@@ -3,15 +3,15 @@ import React from 'react'
 import { pay, pmpe, stake } from 'src/format'
 import { computeBidding } from 'src/services/breakdowns'
 
+import { CalcCard } from './card'
+import { docsPath } from './docs-path'
 import {
-  CalcCard,
-  docsPath,
   Marker,
   NORMAL_CELL_PAD,
   SectionHeader,
   SEPARATOR_CELL_PAD,
   type Severity,
-} from './shared'
+} from './row'
 
 import type { UserLevel } from 'src/components/navigation/navigation'
 import type { AugmentedAuctionValidator } from 'src/services/sam'

@@ -3,7 +3,9 @@ import React from 'react'
 import { pay, payCta, pmpe, stake } from 'src/format'
 import { computeBondCoverage } from 'src/services/breakdowns'
 
-import { CalcCard, CalcRow, OkRow, SectionHeader, docsPath } from './shared'
+import { CalcCard } from './card'
+import { docsPath } from './docs-path'
+import { CalcRow, OkRow, SectionHeader } from './row'
 
 import type {
   AuctionValidator,
