@@ -191,7 +191,7 @@ three jobs:
    [PSR](#psr)).
 3. Signals commitment.
 
-A validator without a bond cannot receive SAM stake.
+A validator without adequate bond coverage cannot receive SAM stake.
 
 #### Three balance/coverage concepts that confuse people
 
