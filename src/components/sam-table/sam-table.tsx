@@ -309,12 +309,13 @@ const RankCell: React.FC<{
   voteAccount,
   onClearValidator,
 }) => {
+  const rankLabel = rank < 0 ? `-#${-rank}` : `#${rank}`
   if (isGhost)
     return (
       <span
         className={`text-muted-foreground ${RANK_MONO} flex flex-col items-center gap-0`}
       >
-        <span>#{rank}</span>
+        <span>{rankLabel}</span>
         <span className="text-xs opacity-60 font-normal leading-tight">
           {inSet ? 'above' : 'below'}
         </span>
@@ -327,7 +328,7 @@ const RankCell: React.FC<{
           className={`font-medium ${RANK_MONO}`}
           style={{ color: posColor ?? 'var(--muted-foreground)' }}
         >
-          #{rank}
+          {rankLabel}
         </span>
         <button
           className="text-xs text-muted-foreground hover:text-destructive leading-none"
@@ -347,7 +348,7 @@ const RankCell: React.FC<{
       style={{ color: tipColor }}
     >
       <span className="flex items-center gap-0.5">
-        <span className="leading-none">{tipIcon}</span>#{rank}
+        <span className="leading-none">{tipIcon}</span>{rankLabel}
       </span>
       <span className="text-xs opacity-60 font-normal text-muted-foreground leading-tight">
         {inSet ? 'above' : 'below'}
@@ -424,6 +425,28 @@ export const SamTable: React.FC<Props> = ({
     return new Map(
       sorted.map((validator, i) => [selectVoteAccount(validator), i + 1]),
     )
+  }, [validatorsWithBond, epochsPerYear])
+
+  // Cutoff-relative rank: positive = above cutoff (1 = closest to cutoff,
+  // i.e. lowest-APY in-set), negative = below cutoff (-1 = closest to cutoff,
+  // i.e. highest-APY out-of-set). Independent of display sort.
+  const cutoffRankMap = useMemo(() => {
+    const map = new Map<string, number>()
+    const inSet = validatorsWithBond.filter(
+      v => v.auctionStake.marinadeSamTargetSol > 0,
+    )
+    const outOfSet = validatorsWithBond.filter(
+      v => v.auctionStake.marinadeSamTargetSol <= 0,
+    )
+    const inSetByApyAsc = [...inSet].sort(
+      (a, b) => selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear),
+    )
+    inSetByApyAsc.forEach((v, i) => map.set(selectVoteAccount(v), i + 1))
+    const outOfSetByApyDesc = [...outOfSet].sort(
+      (a, b) => selectMaxAPY(b, epochsPerYear) - selectMaxAPY(a, epochsPerYear),
+    )
+    outOfSetByApyDesc.forEach((v, i) => map.set(selectVoteAccount(v), -(i + 1)))
+    return map
   }, [validatorsWithBond, epochsPerYear])
 
   // Original auction rank map — same maxApy sort, built from pre-simulation data
@@ -591,6 +614,7 @@ export const SamTable: React.FC<Props> = ({
     const rank = isGhost
       ? (origAuctionRank ?? index + 1)
       : (auctionRankMap.get(voteAccount) ?? index + 1)
+    const cutoffRank = cutoffRankMap.get(voteAccount) ?? rank
     const isHovered = !isGhost && hoveredRow === voteAccount
     const isSimulated = simulatedValidators.has(voteAccount)
 
@@ -664,7 +688,7 @@ export const SamTable: React.FC<Props> = ({
         {/* Rank / ✕ */}
         <TableCell className="px-3.5 py-3 text-center w-10">
           <RankCell
-            rank={rank}
+            rank={cutoffRank}
             inSet={inSet}
             isGhost={isGhost}
             isSimulated={isSimulated}
