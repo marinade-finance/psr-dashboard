@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 
 import {
   sol,
-  formatPercentage,
+  pct,
   pay,
   payCta,
   pmpe,
@@ -78,12 +78,12 @@ describe('stakeCta', () => {
   })
 })
 
-describe('formatPercentage', () => {
+describe('pct', () => {
   it('renders two decimals with percent suffix', () => {
-    expect(formatPercentage(0.0517, 2)).toBe('5.17%')
+    expect(pct(0.0517, 2)).toBe('5.17%')
   })
 
   it('renders integer percent', () => {
-    expect(formatPercentage(0.0517, 0)).toBe('5%')
+    expect(pct(0.0517, 0)).toBe('5%')
   })
 })

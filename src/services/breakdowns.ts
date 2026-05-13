@@ -1,4 +1,4 @@
-import { finite, formatPercentage } from 'src/format'
+import { finite, pct } from 'src/format'
 import {
   formattedBlockRewardsCommission,
   formattedMevCommission,
@@ -71,7 +71,7 @@ export function computeBidding(
     cost,
     activatingCost,
     total: cost + activatingCost,
-    inflPct: formatPercentage(selectCommission(v), 0),
+    inflPct: pct(selectCommission(v), 0),
     mevPct: formattedMevCommission(v),
     blkPct: formattedBlockRewardsCommission(v),
     inflPmpe: selectCommissionPmpe(v),

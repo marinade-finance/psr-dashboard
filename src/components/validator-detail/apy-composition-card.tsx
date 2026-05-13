@@ -1,7 +1,7 @@
 import React from 'react'
 
 import { HelpTip } from 'src/components/help-tip/help-tip'
-import { formatPercentage } from 'src/format'
+import { pct } from 'src/format'
 import { HELP_TEXT } from 'src/services/help-text'
 
 import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
@@ -40,21 +40,21 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
       apy: apyBreakdown.inflation,
       pmpe: r.inflationPmpe,
       swatch: 'bg-chart-1',
-      context: `${formatPercentage(inflComm, 0)} commission`,
+      context: `${pct(inflComm, 0)} commission`,
     },
     {
       label: 'MEV',
       apy: apyBreakdown.mev,
       pmpe: r.mevPmpe,
       swatch: 'bg-chart-2',
-      context: `${formatPercentage(mevComm, 0)} commission`,
+      context: `${pct(mevComm, 0)} commission`,
     },
     {
       label: 'Block rewards',
       apy: apyBreakdown.blockRewards,
       pmpe: r.blockPmpe ?? 0,
       swatch: 'bg-chart-3',
-      context: `${formatPercentage(blockComm, 0)} shared`,
+      context: `${pct(blockComm, 0)} shared`,
     },
     {
       label: 'Stake bid',
@@ -81,7 +81,7 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
             <HelpTip text={HELP_TEXT.maxApy} />
           </h3>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Winning threshold {formatPercentage(winningApy, 2)}
+            Winning threshold {pct(winningApy, 2)}
           </p>
         </div>
         <span
@@ -92,7 +92,7 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
           }`}
         >
           {above ? '+' : ''}
-          {formatPercentage(delta, 2)} vs winning
+          {pct(delta, 2)} vs winning
         </span>
       </div>
       <div className="space-y-2">
@@ -119,7 +119,7 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
               />
             </div>
             <span className="text-xs font-mono text-foreground w-12 text-right shrink-0">
-              {formatPercentage(apy, 2)}
+              {pct(apy, 2)}
             </span>
           </div>
         ))}
@@ -152,7 +152,7 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
               className="absolute top-[-18px] text-[10px] font-mono text-muted-foreground"
               style={{ left: `${winPct}%`, transform: 'translateX(-50%)' }}
             >
-              {formatPercentage(winningApy, 2)}
+              {pct(winningApy, 2)}
             </span>
           </div>
           <span
@@ -160,7 +160,7 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
               above ? 'text-primary' : 'text-destructive'
             }`}
           >
-            {formatPercentage(apyBreakdown.total, 2)}
+            {pct(apyBreakdown.total, 2)}
           </span>
         </div>
       </div>

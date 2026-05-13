@@ -14,7 +14,7 @@ import {
 import { ConcentrationMetric } from 'src/components/concentration-metric/concentration-metric'
 import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
 import { ValidatorSearch } from 'src/components/validator-search/validator-search'
-import { formatPercentage, sol, stake } from 'src/format'
+import { pct, sol, stake } from 'src/format'
 import { bondHealthFromAuction } from 'src/services/breakdowns'
 import { HELP_TEXT } from 'src/services/help-text'
 import {
@@ -519,13 +519,13 @@ export const SamTable: React.FC<Props> = ({
     },
     {
       label: 'Winning APY',
-      value: formatPercentage(winningAPY, 2),
+      value: pct(winningAPY, 2),
       unit: '',
       help: HELP_TEXT.winningApy,
     },
     {
       label: 'Projected APY',
-      value: formatPercentage(projectedApy, 2),
+      value: pct(projectedApy, 2),
       unit: '',
       help: HELP_TEXT.projectedApy,
     },
@@ -684,7 +684,7 @@ export const SamTable: React.FC<Props> = ({
                 : 'bg-destructive-light text-destructive'
             }`}
           >
-            {formatPercentage(maxApy, 2)}
+            {pct(maxApy, 2)}
           </span>
         </TableCell>
 
@@ -979,7 +979,7 @@ export const SamTable: React.FC<Props> = ({
                       </div>
                       <div className="flex-1 h-px bg-primary opacity-20" />
                       <span className="text-xs text-primary font-mono font-semibold">
-                        Winning APY: {formatPercentage(winningAPY, 2)}
+                        Winning APY: {pct(winningAPY, 2)}
                       </span>
                       <div className="flex-1 h-px bg-primary opacity-20" />
                       <span className="text-xs text-muted-foreground">

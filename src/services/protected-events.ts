@@ -1,4 +1,4 @@
-import { formatPercentage } from 'src/format'
+import { pct } from 'src/format'
 import { VALIDATOR_BONDS_API_URL } from 'src/services/apiUrls'
 import { fetchJson } from 'src/services/fetch-utils'
 
@@ -103,17 +103,17 @@ export const selectProtectedStakeReason = (protectedEvent: ProtectedEvent) => {
       return `Commission ${reason.CommissionIncrease.previous_commission}% -> ${reason.CommissionIncrease.current_commission}%`
     }
     if (isCommissionSamIncreaseReason(reason)) {
-      return `Inflation Commission ${formatPercentage(reason.CommissionSamIncrease.expected_inflation_commission)} -> ${formatPercentage(reason.CommissionSamIncrease.actual_inflation_commission)}; MEV Commission ${formatPercentage(reason.CommissionSamIncrease.expected_mev_commission)} -> ${formatPercentage(reason.CommissionSamIncrease.actual_mev_commission)}`
+      return `Inflation Commission ${pct(reason.CommissionSamIncrease.expected_inflation_commission)} -> ${pct(reason.CommissionSamIncrease.actual_inflation_commission)}; MEV Commission ${pct(reason.CommissionSamIncrease.expected_mev_commission)} -> ${pct(reason.CommissionSamIncrease.actual_mev_commission)}`
     }
     if (isLowCreditsReason(reason)) {
       const { actual_credits: actual, expected_credits: expected } =
         reason.LowCredits
-      return `Uptime ${formatPercentage(expected > 0 ? actual / expected : 0)}`
+      return `Uptime ${pct(expected > 0 ? actual / expected : 0)}`
     }
     if (isDowntimeRevenueImpactReason(reason)) {
       const { actual_credits: actual, expected_credits: expected } =
         reason.DowntimeRevenueImpact
-      return `Uptime ${formatPercentage(expected > 0 ? actual / expected : 0)}`
+      return `Uptime ${pct(expected > 0 ? actual / expected : 0)}`
     }
   }
   if (protectedEvent.reason === 'Bidding') return 'Bidding'

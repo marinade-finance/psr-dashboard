@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 
-import { formatPercentage, sol } from 'src/format'
+import { pct, sol } from 'src/format'
 
 import type { ConcentrationRow } from 'src/services/sam'
 
@@ -60,7 +60,7 @@ export const ConcentrationMetric: React.FC<Props> = ({
               <span
                 className={`relative font-mono text-xs pr-1 ${r.atCap ? 'text-destructive' : 'text-muted-foreground'}`}
               >
-                {formatPercentage(r.pctOfTotal)}
+                {pct(r.pctOfTotal)}
               </span>
             </div>
           )
@@ -70,7 +70,7 @@ export const ConcentrationMetric: React.FC<Props> = ({
       {open && rows.length > 0 && (
         <div className="absolute z-30 top-full left-0 mt-1 w-[min(520px,90vw)] max-h-[60vh] overflow-y-auto bg-card border border-border rounded-md shadow-xl p-3 text-xs">
           <div className="text-muted-foreground mb-2 leading-snug">
-            Cap: {formatPercentage(capPct)} of network stake. Bar fills against the cap.
+            Cap: {pct(capPct)} of network stake. Bar fills against the cap.
           </div>
           <table className="w-full">
             <thead className="text-muted-foreground/70 uppercase tracking-wide text-[10px]">
@@ -97,7 +97,7 @@ export const ConcentrationMetric: React.FC<Props> = ({
                       </span>
                     </td>
                     <td className="text-right font-mono py-0.5">
-                      {formatPercentage(r.pctOfTotal)}
+                      {pct(r.pctOfTotal)}
                     </td>
                     <td className="text-right font-mono py-0.5 opacity-75">
                       ☉{sol(Math.round(r.samStakeSol))}

@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { formatPercentage, pay, pmpe, stake } from 'src/format'
+import { pct, pay, pmpe, stake } from 'src/format'
 import { computeBidPenalty } from 'src/services/breakdowns'
 
 import { CalcCard } from './card'
@@ -107,7 +107,7 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
           <SectionHeader title="Penalty" />
           <CalcRow
             label="Penalty coefficient"
-            secondary={formatPercentage(metrics.penaltyCoef, 2)}
+            secondary={pct(metrics.penaltyCoef, 2)}
           />
           <CalcRow
             label="Base — winning PMPE + effective participating bid PMPE"

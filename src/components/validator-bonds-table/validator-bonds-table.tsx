@@ -3,7 +3,7 @@ import React from 'react'
 import { UserLevel } from 'src/components/navigation/navigation'
 import { HtmlTooltip } from 'src/components/ui/tooltip'
 import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
-import { formatPercentage, sol, lamportsToSol } from 'src/format'
+import { pct, sol, lamportsToSol } from 'src/format'
 import { selectEffectiveAmount } from 'src/services/bonds'
 import { notificationTooltip } from 'src/services/notifications'
 import {
@@ -155,7 +155,7 @@ const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
                       html={
                         `${name}<br/>` +
                         `Stake: ${sol(stake)} SOL<br/>` +
-                        `Coverage: ${formatPercentage(ratio)}` +
+                        `Coverage: ${pct(ratio)}` +
                         (!hasBond ? '<br/>No bond' : '')
                       }
                     >
@@ -199,7 +199,7 @@ const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
                                   textShadow: '0 1px 2px rgba(0,0,0,0.4)',
                                 }}
                               >
-                                {formatPercentage(ratio, 0)} cov.
+                                {pct(ratio, 0)} cov.
                               </div>
                             )}
                           </div>
@@ -346,7 +346,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
         <div className="metricWrap bg-card rounded-xl border border-border shadow-card p-5">
           <div className="flex items-baseline gap-2 mb-3">
             <span className="metric text-3xl font-bold font-mono text-primary">
-              {formatPercentage(coveredRatio, 0)}
+              {pct(coveredRatio, 0)}
             </span>
             <span className="text-sm text-muted-foreground">
               of Marinade stake is bond-protected
@@ -417,7 +417,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
                 <span className="text-muted-foreground">
                   Max protectable:{' '}
                   <strong className="text-foreground">
-                    {formatPercentage(
+                    {pct(
                       totalMarinadeStake > 0
                         ? totalMaxProtectedStake / totalMarinadeStake
                         : 0,
@@ -537,7 +537,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
                         />
                       </div>
                       <span className="text-xs tabular-nums w-10 text-right">
-                        {formatPercentage(ratio)}
+                        {pct(ratio)}
                       </span>
                     </div>
                   )

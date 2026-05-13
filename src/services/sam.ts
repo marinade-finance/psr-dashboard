@@ -6,7 +6,7 @@ import {
   LogVerbosity,
 } from '@marinade.finance/ds-sam-sdk'
 
-import { formatPercentage } from 'src/format'
+import { pct } from 'src/format'
 
 import { bondRunwayEpochs, compoundApy } from './calculations'
 import { fetchValidatorsWithEpochs } from './validators'
@@ -122,7 +122,7 @@ function overridesMessage(
   }
   const formatted =
     type === 'percentage'
-      ? formatPercentage(overrideValue, 0)
+      ? pct(overrideValue, 0)
       : String(overrideValue)
   return `<b>Overrides ${label}: ${formatted}</b><br/>`
 }
@@ -149,7 +149,7 @@ export const selectMevCommission = (
 
 export const formattedMevCommission = (validator: AuctionValidator): string => {
   const dec = selectMevCommission(validator)
-  return dec == null ? '-' : formatPercentage(dec, 0)
+  return dec == null ? '-' : pct(dec, 0)
 }
 
 export const selectMevCommissionPmpe = (validator: AuctionValidator) =>
@@ -171,7 +171,7 @@ export const formattedBlockRewardsCommission = (
   validator: AuctionValidator,
 ): string => {
   const v = selectBlockRewardsCommission(validator)
-  return formatPercentage(v ?? 1, 0)
+  return pct(v ?? 1, 0)
 }
 
 export const selectBlockRewardsCommissionPmpe = (validator: AuctionValidator) =>

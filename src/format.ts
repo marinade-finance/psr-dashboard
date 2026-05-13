@@ -10,22 +10,22 @@ export const sol = (amount: number, digits = 0) =>
     maximumFractionDigits: digits,
   })
 
-const formatPercentageString = (
+const pctString = (
   amount: number,
   fractionDigits: number = 2,
 ): string => `${(100 * amount).toFixed(fractionDigits)}%`
 
-export const formatPercentage = (
+export const pct = (
   amount: number,
   fractionDigits: number = 2,
   maxValue: number = 1e18,
 ): string => {
   if (amount >= maxValue) {
-    return `>${formatPercentageString(maxValue, fractionDigits)}`
+    return `>${pctString(maxValue, fractionDigits)}`
   } else if (amount <= -maxValue) {
-    return `<-${formatPercentageString(maxValue, fractionDigits)}`
+    return `<-${pctString(maxValue, fractionDigits)}`
   }
-  return formatPercentageString(amount, fractionDigits)
+  return pctString(amount, fractionDigits)
 }
 
 export const finite = (x: number | null | undefined): number =>

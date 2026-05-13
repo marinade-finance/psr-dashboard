@@ -6,7 +6,7 @@ import { Input } from 'src/components/ui/input'
 import { Label } from 'src/components/ui/label'
 import { HtmlTooltip } from 'src/components/ui/tooltip'
 import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
-import { formatPercentage, sol, penalty } from 'src/format'
+import { pct, sol, penalty } from 'src/format'
 import {
   selectAmount,
   selectProtectedStakeReason,
@@ -194,7 +194,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
           extra={
             !filtered && totalAmount > 0 ? (
               <HtmlTooltip
-                html={`Validator Bond: ${sol(validatorBondTotal)} SOL (${formatPercentage(bondRatio, 0)})<br/>Marinade backstop: ${sol(marinadePaidTotal)} SOL (${formatPercentage(1 - bondRatio, 0)})`}
+                html={`Validator Bond: ${sol(validatorBondTotal)} SOL (${pct(bondRatio, 0)})<br/>Marinade backstop: ${sol(marinadePaidTotal)} SOL (${pct(1 - bondRatio, 0)})`}
               >
                 <div className="cursor-help">
                   <div className="flex h-1.5 rounded-sm overflow-hidden bg-secondary">
@@ -208,8 +208,8 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
                     />
                   </div>
                   <div className="flex justify-between text-[10px] text-muted-foreground font-mono mt-1">
-                    <span>Bond {formatPercentage(bondRatio, 0)}</span>
-                    <span>Marinade {formatPercentage(1 - bondRatio, 0)}</span>
+                    <span>Bond {pct(bondRatio, 0)}</span>
+                    <span>Marinade {pct(1 - bondRatio, 0)}</span>
                   </div>
                 </div>
               </HtmlTooltip>
