@@ -241,16 +241,20 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
 }) => {
   const [userOrder, setUserOrder] = useState<Order | null>(null)
 
+  // Callers typically pass `defaultOrder` as an inline array literal, so its
+  // identity churns every parent render. Key the memo by content instead, so
+  // sorting only re-runs when the actual columns/directions change.
+  const defaultOrderKey = JSON.stringify(defaultOrder)
   const order: [number, OrderDirection][] = useMemo(() => {
     if (userOrder) {
       return [userOrder, ...defaultOrder]
     }
     return [...defaultOrder]
-  }, [userOrder, defaultOrder])
+  }, [userOrder, defaultOrderKey])
 
   useEffect(() => {
     onOrderChange?.(order)
-  }, [order, onOrderChange])
+  }, [order])
 
   const sortedData = useMemo(() => {
     if (presorted) {
