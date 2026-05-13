@@ -211,6 +211,46 @@ component (epoch lifecycle indicator). Item 5 is both UI label and
 GUIDE explanation. Item 6 is one extra sentence in the Bid-Too-Low
 section.
 
+## Tip engine: handle all 6 SDK constraint types
+
+`tip-engine.ts:getValidatorTip` currently emits only `bond | rank |
+bid | none`. The SDK exposes six `AuctionConstraintType`s via
+`validator.lastCapConstraint?.constraintType`, and we ignore four
+of them. A validator at target due to a cap they cannot influence
+gets misleading "At target stake" or no actionable advice at all.
+
+| Type | Meaning | Validator action | Our coverage |
+|---|---|---|---|
+| BOND | Bond too small | Top up | handled |
+| RISK | Backstop / unprotected stake cap | Top up bond | handled (cascades into bond CTA) |
+| WANT | Self-imposed `maxStakeWanted` cap | Raise `maxStakeWanted` | **missing** |
+| VALIDATOR | Protocol-level per-validator cap (`marinadeValidatorStakeCapSol`) | Nothing | **missing** — should at least acknowledge so user stops trying |
+| COUNTRY | Per-country concentration cap | Nothing direct | **missing** |
+| ASO | Per-ASO concentration cap | Nothing direct | **missing** |
+
+What to add:
+
+- WANT branch in `getValidatorTip`: when in set, delta ≤ 0 or near
+  zero, and `lastCapConstraint.constraintType === 'WANT'`, emit a
+  CTA like "You're at your max-stake-wanted (`{N}` SOL). Raise it to
+  qualify for more." with `constraint: 'want'`.
+- VALIDATOR / COUNTRY / ASO branch: when the cap is none of the
+  actionable ones, emit an explanatory tip ("Stake limited by the
+  protocol's per-validator / country / ASO cap — nothing you can
+  do this epoch") with a new `constraint: 'protocol'` (or expose as
+  `'none'` with a more specific text). Goal is to stop validators
+  chasing fixes that won't help.
+- Extend `TipConstraint` type: `'rank' | 'bond' | 'bid' | 'want' |
+  'protocol' | 'none'`.
+- GUIDE `Next Step` bullet list (already updated to mention WANT)
+  should also list the protocol-cap case.
+
+References:
+- `src/services/tip-engine.ts:168-275` (getValidatorTip)
+- SDK `node_modules/@marinade.finance/ds-sam-sdk/dist/src/constraints.js:130-179`
+- `src/services/sam.ts:365` (we already read `lastCapConstraint` for
+  the concentration cards)
+
 ## UI: Bond health bar — clearer limit + dramatic "below-limit" state
 
 The bond column's small progress bar today shows `100 − utilization%`

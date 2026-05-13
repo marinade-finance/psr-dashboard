@@ -360,9 +360,14 @@ A compact summary of the validator's bond:
 Two numbers stacked:
 
 - **Top:** currently active SAM stake (SOL).
-- **Bottom (Δ):** projected stake change next epoch.
-  - **Positive (green)** — stake arriving, capped by the redelegation budget.
-  - **Negative (red)** — stake leaving via natural turnover or auction loss.
+- **Bottom (Δ):** projected stake change next epoch — driven by the
+  validator's auction outcome (bond, bid, max-stake-wanted), capped
+  by the redelegation budget.
+  - **Positive (green)** — the auction set a target above the current
+    active stake; the bond and bid support more.
+  - **Negative (red)** — the auction set a target below the current
+    active stake; the bond, bid, or other cap is squeezing the
+    allocation down.
 
 See [Re-delegation](#redelegation) for why the delta is often smaller than the
 gap to target.
@@ -375,6 +380,9 @@ action that would help most:
 - "Top up bond by N SOL to reach ideal coverage" (bond constraint)
 - "Lower commission by X% to clear winning APY" (rank constraint)
 - "Raise stake bid to Y PMPE" (bid constraint)
+- "Raise your max-stake-wanted to qualify for more" (want constraint —
+  the validator's own self-imposed cap is the binding limit; topping
+  up bond or raising bid would not help)
 - "Nothing — you're winning comfortably" (no constraint)
 
 Tip colour matches the rank cell's severity icon.
