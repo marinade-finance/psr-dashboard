@@ -180,6 +180,44 @@ type Props = {
 
 const RANK_MONO = 'font-mono text-xs'
 
+type PenaltyKind = 'bidLow' | 'blacklist' | 'risk'
+
+const PENALTY_CLASSES: Record<PenaltyKind, string> = {
+  bidLow: 'bg-destructive-light text-destructive',
+  blacklist: 'bg-muted text-muted-foreground',
+  risk: 'bg-warning-light text-warning',
+}
+
+const PenaltyBadges: React.FC<{ validator: AuctionValidator }> = ({
+  validator,
+}) => {
+  const stakeSol = validator.marinadeActivatedStakeSol
+  const badges: { icon: string; label: string; sol: number; kind: PenaltyKind }[] = []
+  const bidLowSol = (stakeSol * validator.revShare.bidTooLowPenaltyPmpe) / 1000
+  const blacklistSol = (stakeSol * validator.revShare.blacklistPenaltyPmpe) / 1000
+  const bondRiskSol = validator.values?.bondRiskFeeSol ?? 0
+  if (bidLowSol > 0)
+    badges.push({ icon: '▼', label: 'BidTooLow', sol: bidLowSol, kind: 'bidLow' })
+  if (blacklistSol > 0)
+    badges.push({ icon: '⊘', label: 'Blacklist', sol: blacklistSol, kind: 'blacklist' })
+  if (bondRiskSol > 0)
+    badges.push({ icon: '⚠', label: 'BondRiskFee', sol: bondRiskSol, kind: 'risk' })
+  if (badges.length === 0) return null
+  return (
+    <>
+      {badges.map(b => (
+        <span
+          key={b.label}
+          title={`${b.label}\n${formatSolAmount(b.sol, 3)} SOL (estimate)`}
+          className={`inline-flex items-center justify-center w-[18px] h-[18px] rounded text-[11px] font-bold font-sans leading-none shrink-0 cursor-help select-none ${PENALTY_CLASSES[b.kind]}`}
+        >
+          {b.icon}
+        </span>
+      ))}
+    </>
+  )
+}
+
 const SortIndicator: React.FC<{
   column: SortColumn
   sortColumn: SortColumn
@@ -587,9 +625,12 @@ export const SamTable: React.FC<Props> = ({
             voteAccount={voteAccount}
             responsive
             trailing={
-              hasAlert ? (
-                <span className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0 animate-pulse" />
-              ) : null
+              <>
+                {hasAlert && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0 animate-pulse" />
+                )}
+                {!isGhost && <PenaltyBadges validator={validator} />}
+              </>
             }
           />
         </TableCell>
