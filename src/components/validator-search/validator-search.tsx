@@ -62,7 +62,7 @@ export function findMatches(
   )
 }
 
-export const ValidatorJump: React.FC<Props> = ({
+export const ValidatorSearch: React.FC<Props> = ({
   validators,
   nameMap,
   onSelect,
@@ -127,7 +127,7 @@ export const ValidatorJump: React.FC<Props> = ({
         autoComplete="off"
         aria-label="Find validator"
         aria-expanded={showDropdown}
-        aria-controls="validator-jump-listbox"
+        aria-controls="validator-search-listbox"
         onChange={e => {
           setQuery(e.target.value)
           setOpen(true)
@@ -137,7 +137,7 @@ export const ValidatorJump: React.FC<Props> = ({
       />
       {showDropdown && (
         <div
-          id="validator-jump-listbox"
+          id="validator-search-listbox"
           role="listbox"
           className="absolute z-30 mt-1 w-full rounded-md border border-border-grid bg-card shadow-lg overflow-hidden"
         >

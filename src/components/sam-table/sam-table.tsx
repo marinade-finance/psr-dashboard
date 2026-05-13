@@ -13,7 +13,7 @@ import {
 } from 'src/components/ui/table'
 import { ConcentrationMetric } from 'src/components/concentration-metric/concentration-metric'
 import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
-import { ValidatorJump } from 'src/components/validator-jump/validator-jump'
+import { ValidatorSearch } from 'src/components/validator-search/validator-search'
 import { formatPercentage, formatSolAmount, stake } from 'src/format'
 import { bondHealthFromAuction } from 'src/services/breakdowns'
 import { HELP_TEXT } from 'src/services/help-text'
@@ -855,7 +855,7 @@ export const SamTable: React.FC<Props> = ({
         {/* Search row — sits above the table, aligned with validator column */}
         {onValidatorSearch && (
           <div className="px-4 mb-4 flex">
-            <ValidatorJump
+            <ValidatorSearch
               validators={validators}
               nameMap={validatorMeta ?? new Map()}
               onSelect={onValidatorSearch}

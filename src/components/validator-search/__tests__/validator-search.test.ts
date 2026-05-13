@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { findMatches } from '../validator-jump'
+import { findMatches } from '../validator-search'
 
 import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
 
