@@ -79,28 +79,13 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
   },
   {
-    path: '/test-expert-',
-    element: <TestSamPage level={UserLevel.Expert} />,
-    errorElement: <ErrorPage />,
-  },
-  {
     path: '/test-bonds',
     element: <TestBondsPage level={UserLevel.Basic} />,
     errorElement: <ErrorPage />,
   },
   {
-    path: '/test-expert-bonds',
-    element: <TestBondsPage level={UserLevel.Expert} />,
-    errorElement: <ErrorPage />,
-  },
-  {
     path: '/test-protected-events',
     element: <TestProtectedEventsPage level={UserLevel.Basic} />,
-    errorElement: <ErrorPage />,
-  },
-  {
-    path: '/test-expert-protected-events',
-    element: <TestProtectedEventsPage level={UserLevel.Expert} />,
     errorElement: <ErrorPage />,
   },
   {
