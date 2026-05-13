@@ -806,7 +806,7 @@ export const SamTable: React.FC<Props> = ({
 
   return (
     <div
-      className={`w-full ${isCalculating ? 'opacity-70 pointer-events-none' : ''} ${inSimulation ? 'ring-4 ring-status-yellow rounded-lg' : ''}`}
+      className={`w-full ${isCalculating ? 'opacity-70 pointer-events-none' : ''} ${inSimulation ? 'ring-4 ring-inset ring-status-yellow rounded-lg overflow-hidden' : ''}`}
     >
       {inSimulation && (
         <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-status-yellow text-background font-semibold text-sm uppercase tracking-wide rounded-t-md">
