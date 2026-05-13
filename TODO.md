@@ -175,6 +175,46 @@ and defer to Marinade docs. Confirm what 0.7% actually represents in
 the SDK / SAM design and adjust either the model in `computeNaturalWithdrawal`
 or the comment in `sam.ts:209`.
 
+## GUIDE gaps surfaced by validator support transcript (2026-04 to 05)
+
+Real support thread showed a validator confused by:
+
+1. **Negative `Cover. [ep]`** ("= -9") — what it means physically and
+   what action it implies. Column shows the value but the GUIDE doesn't
+   explain that negative = under the fee threshold and the undelegation
+   is in flight.
+2. **BRRM** (Bond Risk Reduction Mechanism) — the validator googled
+   it and found the Marinade doc. We name only its component "Bond
+   Risk Fee"; the broader BRRM (fee + forced paid undelegation in the
+   same step) is unnamed. Add a short BRRM section linking to
+   `https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market/bond-risk-reduction-mechanism`
+   and clarify that the fee + the stake drop are one mechanism, not two.
+3. **Solana warmup/cooldown cap** — 25% of the network's active stake
+   per epoch. Activation/deactivation can therefore stretch over
+   several epochs under high churn. None of our copy mentions this; the
+   validator was surprised when their stake didn't move in one shot.
+4. **Snapshot timing** — when does the auction actually run within an
+   epoch? When does a bond top-up start counting? Validators ask these
+   on every support ticket. Should sit in a small "Epoch lifecycle"
+   subsection (overlaps with the existing Epoch Status Badge TODO).
+5. **Top-up amounts are sized to projected stake, not current stake**
+   — the dashboard's "Top up 29 SOL" recommendation in the transcript
+   was sized against the *post-undelegation* stake (171k SOL), but the
+   validator read it as "29 SOL to keep my current 386k SOL stake".
+   Either the dashboard should label the recommendation with which
+   stake basis it's for, or the GUIDE should explain that the top-up
+   keeps the *new* (reduced) stake, and a separate larger figure is
+   needed to defend the current stake. Probably both.
+6. **Bid reduction safe-zone** — "as long as you're still winning,
+   reducing your bid doesn't trigger the penalty." Currently the
+   Bid-Too-Low Penalty section just states the rule; doesn't give the
+   operational intuition that validators need.
+
+Items 1-3 are pure GUIDE additions. Item 4 likely needs a small UI
+component (epoch lifecycle indicator). Item 5 is both UI label and
+GUIDE explanation. Item 6 is one extra sentence in the Bid-Too-Low
+section.
+
 ## Feature: "My Validator" address pin + personal notification ribbon
 
 Let a validator save their vote account in the browser and surface
