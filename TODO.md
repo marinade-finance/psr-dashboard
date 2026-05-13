@@ -121,3 +121,41 @@ the current epoch's lifecycle:
 
 Place it in the SAM page header / stats bar so users can tell at a
 glance how mature the displayed auction snapshot is.
+
+## Investigate: drop CPMPE term
+
+GUIDE.md currently defines CPMPE as "cost per 1000 SOL per epoch":
+
+> **CPMPE** — *cost* per 1000 SOL per epoch. The validator's static bid
+> component: a fixed amount the validator pays out of their bond for
+> every 1000 SOL of stake they receive, every epoch.
+
+Hypothesis: the "C" prefix adds no information for readers — the term
+"static bid (PMPE)" or just **cost** already communicates the same
+thing. Internally we use `cpmpe` in fixtures, simulation overrides,
+bonds, and the GUIDE; column header in `sam.ts:132` says 'CPMPE'.
+
+**Investigate:**
+- Is there any place where C-PMPE meaningfully contrasts with plain PMPE?
+- Could we rename to just "cost" or "static bid (PMPE)" in user copy,
+  keeping `cpmpe` only as the internal identifier?
+- What does the SDK use? (likely also `cpmpe` — but UI labels are ours)
+
+Ask the oracle for a second opinion before changing user-facing copy.
+(Oracle attempt 2026-05-13 hit the usage limit — retry after May 17.)
+
+**My own take pending oracle:** the C-prefix probably IS load-bearing
+because the validator side of the auction reads revenue PMPE and cost
+PMPE side-by-side. A unitless "cost" loses the dimensional anchor
+("per 1000 SOL per epoch") that lets a reader compare it directly
+against the inflation/MEV/block PMPE breakdown numbers. Better gloss
+might be: keep the term, expand the definition so it foregrounds the
+unit relationship — e.g. "**CPMPE** — same unit as PMPE, but
+representing what you pay rather than what you earn."
+
+References:
+- `public/docs/GUIDE.md` lines 128-142 (CPMPE definition)
+- `src/services/sam.ts:132` ('CPMPE' column header string)
+- `src/services/bonds.ts:9` (cpmpe field)
+- `src/services/simulation.ts:173-204` (cpmpesDec map)
+- `src/fixtures/test-bonds.ts:28-105` (test fixture comments)
