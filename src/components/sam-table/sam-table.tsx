@@ -637,10 +637,7 @@ export const SamTable: React.FC<Props> = ({
         (inSet ? 'bg-primary-light' : 'bg-destructive/[0.05]'),
       !isGhost && !isHovered && inSet && 'hover:bg-primary-light',
       !isGhost && !isHovered && !inSet && 'hover:bg-destructive/[0.05]',
-      !isGhost &&
-        isSimulated &&
-        posColor &&
-        'ring-1 ring-inset ring-current/20',
+      !isGhost && isSimulated && 'ring-2 ring-inset ring-status-yellow',
     ]
       .filter(Boolean)
       .join(' ')
@@ -816,10 +813,29 @@ export const SamTable: React.FC<Props> = ({
     )
   }
 
+  const inSimulation = simulatedValidators.size > 0
+
   return (
     <div
-      className={`w-full ${isCalculating ? 'opacity-70 pointer-events-none' : ''}`}
+      className={`w-full ${isCalculating ? 'opacity-70 pointer-events-none' : ''} ${inSimulation ? 'ring-4 ring-status-yellow rounded-lg' : ''}`}
     >
+      {inSimulation && (
+        <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-status-yellow text-background font-semibold text-sm uppercase tracking-wide rounded-t-md">
+          <span className="flex items-center gap-2">
+            <span className="inline-block w-2 h-2 rounded-full bg-background animate-pulse" />
+            Simulation Mode — what-if numbers, not live ({simulatedValidators.size}
+            {' '}validator{simulatedValidators.size === 1 ? '' : 's'} modified)
+          </span>
+          {onResetSimulation && (
+            <button
+              onClick={onResetSimulation}
+              className="px-3 py-1 rounded bg-background text-status-yellow text-xs font-bold hover:bg-background/90 transition-colors"
+            >
+              Reset Simulation
+            </button>
+          )}
+        </div>
+      )}
       <div className="max-w-[1920px] mx-auto">
         {/* Stats Bar */}
         <div className="flex flex-wrap items-start gap-3 mb-3 px-4">
@@ -844,14 +860,6 @@ export const SamTable: React.FC<Props> = ({
               </div>
             </Card>
           ))}
-          {simulatedValidators.size > 0 && onResetSimulation && (
-            <button
-              onClick={onResetSimulation}
-              className="self-stretch px-4 py-3 rounded-xl border border-destructive/40 bg-destructive/5 text-destructive text-sm font-medium hover:bg-destructive/10 transition-colors whitespace-nowrap"
-            >
-              Reset Simulation ({simulatedValidators.size})
-            </button>
-          )}
         </div>
 
         {/* Concentration Stats */}
