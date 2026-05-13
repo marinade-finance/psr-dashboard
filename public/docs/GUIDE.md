@@ -487,16 +487,20 @@ The auction re-runs immediately on every change, using the SDK's
   - **Grey / no tint** — position unchanged.
 - The cutoff line redraws based on the new clearing price.
 
-### Same engine in two places
+### Multiple validators at once
 
-The validator-detail "What-If Simulation" form and the table-wide simulation
-mode use the *same* auction engine and the *same* override mechanism. Anything
-you change in one is reflected in the other immediately.
+Simulation is started from the **What-If Simulation** form on a
+validator's detail panel. You can leave that simulation in place,
+close the panel, open a different validator, and edit theirs too —
+both sets of overrides stay active and the auction re-runs with all
+of them at once. The yellow banner at the top of the page shows how
+many validators currently have what-if values.
 
 ### Resetting
 
-Toggle "Simulate" off (or close the detail panel) to clear all overrides and
-restore the live auction.
+Use the **Reset Simulation** button in the yellow banner to clear all
+overrides and restore the live auction. Closing the detail panel
+alone does not clear the simulation.
 
 ---
 
