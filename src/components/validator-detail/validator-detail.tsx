@@ -4,7 +4,7 @@ import { useQuery } from 'react-query'
 import { BidPenaltyBreakdown } from 'src/components/breakdowns/bid-penalty'
 import { BondCoverageBreakdown } from 'src/components/breakdowns/bond-coverage'
 import { PaymentsBreakdown } from 'src/components/breakdowns/payments'
-import { SamRevenueBreakdown } from 'src/components/breakdowns/sam-revenue'
+import { BiddingBreakdown } from 'src/components/breakdowns/bidding'
 import { SEPARATOR_DIV_CLASS } from 'src/components/breakdowns/shared'
 import { HelpTip } from 'src/components/help-tip/help-tip'
 import { Button } from 'src/components/ui/button'
@@ -25,7 +25,7 @@ import { pay, payCta, stake } from 'src/format'
 import {
   bondHealthFromAuction,
   computeBondCoverage,
-  computeSamRevenue,
+  computeBidding,
   computeBidPenalty,
 } from 'src/services/breakdowns'
 import { HELP_TEXT } from 'src/services/help-text'
@@ -241,7 +241,7 @@ export const ValidatorDetail = ({
     ],
   )
   const paymentMetrics = useMemo(
-    () => computeSamRevenue(validator),
+    () => computeBidding(validator),
     [validator],
   )
   const penaltyMetrics = useMemo(
@@ -599,7 +599,7 @@ export const ValidatorDetail = ({
 
         {tab === 'revenue' && (
           <div className="p-4 sm:p-6">
-            <SamRevenueBreakdown
+            <BiddingBreakdown
               validator={validator}
               isSimulated={isSimulated}
               onGoToSim={() => {

@@ -25,7 +25,7 @@ import type { AugmentedAuctionValidator } from 'src/services/sam'
 const TOL_COEF = 0.99999
 const SCALE_COEF = 1.5
 
-export type SamRevenue = {
+export type Bidding = {
   active: number
   target: number
   delta: number
@@ -47,9 +47,9 @@ export type SamRevenue = {
   overrideMsg: string
 }
 
-export function computeSamRevenue(
+export function computeBidding(
   v: AugmentedAuctionValidator,
-): SamRevenue {
+): Bidding {
   const stake = v.marinadeActivatedStakeSol
   const delta = selectExpectedStakeChange(v)
   const activating = Math.max(0, delta)

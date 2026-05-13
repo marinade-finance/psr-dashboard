@@ -437,7 +437,7 @@ Sum of every SOL outflow from this validator this epoch.
 | PSR Settlements | per-event row | `fetchPsrEstimatesForValidator(vote)` — funded "from bond" or "from Marinade" |
 | Total | sum of the above | red-accented when any penalty or PSR row is present, green otherwise |
 
-### Bidding tab (SAM Revenue)
+### Bidding tab
 
 Why the validator pays what they pay. Tracks the bid construction
 side-by-side with the cost.

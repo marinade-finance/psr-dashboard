@@ -1,7 +1,7 @@
 import React from 'react'
 
 import { pay, pmpe, stake } from 'src/format'
-import { computeSamRevenue } from 'src/services/breakdowns'
+import { computeBidding } from 'src/services/breakdowns'
 
 import {
   CalcCard,
@@ -90,13 +90,13 @@ const RevRow: React.FC<{
   )
 }
 
-export const SamRevenueBreakdown: React.FC<Props> = ({
+export const BiddingBreakdown: React.FC<Props> = ({
   validator,
   isSimulated,
   onGoToSim,
   level,
 }) => {
-  const metrics = computeSamRevenue(validator)
+  const metrics = computeBidding(validator)
   const deltaSeverity: Severity | undefined =
     metrics.delta > 0 ? 'ok' : metrics.delta < 0 ? 'error' : undefined
   const deltaText =
@@ -123,7 +123,7 @@ export const SamRevenueBreakdown: React.FC<Props> = ({
 
   return (
     <CalcCard
-      title="SAM Revenue Calculation"
+      title="Bidding Calculation"
       guideTo={`${docsPath(level)}#cpmpe`}
       isSimulated={isSimulated}
       status={status}
