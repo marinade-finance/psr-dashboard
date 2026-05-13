@@ -1,6 +1,14 @@
 import React from 'react'
 
 import {
+  ICON_CHECK,
+  ICON_CRITICAL,
+  ICON_DOWN,
+  ICON_INFO,
+  ICON_RIGHT,
+  ICON_UP,
+} from 'src/components/icons/tip-icons'
+import {
   CSS_DESTRUCTIVE,
   CSS_DESTRUCTIVE_LIGHT,
   CSS_INFO,
@@ -63,88 +71,6 @@ export const getBondHealthStyle = (
   }
   return { color: CSS_PRIMARY, bg: CSS_PRIMARY_LIGHT_10, label: 'Healthy' }
 }
-
-const ICON_CRITICAL = React.createElement(
-  'svg',
-  { viewBox: '0 0 12 12', width: 12, height: 12, fill: 'currentColor' },
-  React.createElement('path', {
-    d: 'M6 1L11.2 10H.8L6 1zm0 2L2.6 9h6.8L6 3zm-.5 2h1v2h-1V5zm0 2.5h1V9h-1V7.5z',
-  }),
-)
-
-const ICON_UP = React.createElement(
-  'svg',
-  {
-    viewBox: '0 0 12 12',
-    width: 12,
-    height: 12,
-    stroke: 'currentColor',
-    fill: 'none',
-    strokeWidth: '1.5',
-    strokeLinecap: 'round',
-    strokeLinejoin: 'round',
-  },
-  React.createElement('path', { d: 'M2 10L10 2M4 2h6v6' }),
-)
-
-const ICON_INFO = React.createElement(
-  'svg',
-  { viewBox: '0 0 12 12', width: 12, height: 12, fill: 'currentColor' },
-  React.createElement('circle', { cx: 6, cy: 6, r: 5.25, opacity: 0.18 }),
-  React.createElement('circle', { cx: 6, cy: 4, r: 0.75 }),
-  React.createElement('rect', {
-    x: 5.25,
-    y: 5.5,
-    width: 1.5,
-    height: 3.5,
-    rx: 0.5,
-  }),
-)
-
-const ICON_CHECK = React.createElement(
-  'svg',
-  {
-    viewBox: '0 0 12 12',
-    width: 12,
-    height: 12,
-    stroke: 'currentColor',
-    fill: 'none',
-    strokeWidth: '1.8',
-    strokeLinecap: 'round',
-    strokeLinejoin: 'round',
-  },
-  React.createElement('path', { d: 'M2 6l3 3 5-5' }),
-)
-
-const ICON_RIGHT = React.createElement(
-  'svg',
-  {
-    viewBox: '0 0 12 12',
-    width: 12,
-    height: 12,
-    stroke: 'currentColor',
-    fill: 'none',
-    strokeWidth: '1.5',
-    strokeLinecap: 'round',
-    strokeLinejoin: 'round',
-  },
-  React.createElement('path', { d: 'M2 6h8M7 3l3 3-3 3' }),
-)
-
-const ICON_DOWN = React.createElement(
-  'svg',
-  {
-    viewBox: '0 0 12 12',
-    width: 12,
-    height: 12,
-    stroke: 'currentColor',
-    fill: 'none',
-    strokeWidth: '1.5',
-    strokeLinecap: 'round',
-    strokeLinejoin: 'round',
-  },
-  React.createElement('path', { d: 'M2 2L10 10M10 4v6H4' }),
-)
 
 export const getTipStyle = (urgency: TipUrgency): TipStyle => {
   switch (urgency) {
