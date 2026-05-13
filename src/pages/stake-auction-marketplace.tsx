@@ -19,12 +19,26 @@ import {
 } from 'src/services/sam'
 import { mergeOverrides, removeFromOverrides } from 'src/services/simulation'
 
-import type { AuctionResult } from '@marinade.finance/ds-sam-sdk'
+import type { AuctionResult, DsSamConfig } from '@marinade.finance/ds-sam-sdk'
 import type { UserLevel } from 'src/components/navigation/navigation'
 import type { SourceDataOverrides } from 'src/services/sam'
 
+type SamResult = {
+  auctionResult: AuctionResult
+  epochsPerYear: number
+  dcSamConfig: DsSamConfig
+}
+
+// Injection points used by /test-* routes to swap in fixture data.
+// Production callers pass nothing; defaults call the real services.
+export type SamDataSources = {
+  loadAuction: (overrides: SourceDataOverrides | null) => Promise<SamResult>
+  loadValidatorNames: () => Promise<Map<string, string>>
+}
+
 type Props = {
   level: UserLevel
+  dataSources?: SamDataSources
 }
 
 // Read the validator vote-account from the URL `?v=...` query so the detail
@@ -34,7 +48,10 @@ const readValidatorFromUrl = (): string | null => {
   return new URLSearchParams(window.location.search).get('v')
 }
 
-export const SamPage: React.FC<Props> = ({ level }) => {
+export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
+  const loadAuction = dataSources?.loadAuction ?? loadSam
+  const loadValidatorNames =
+    dataSources?.loadValidatorNames ?? fetchValidatorNames
   const [selectedValidator, setSelectedValidator] = useState<string | null>(
     readValidatorFromUrl,
   )
@@ -50,7 +67,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
 
   const { data, status } = useQuery(
     ['sam', simulationRunId],
-    () => loadSam(simulationOverrides),
+    () => loadAuction(simulationOverrides),
     {
       keepPreviousData: true,
       refetchInterval: 60 * 60 * 1000,
@@ -62,7 +79,7 @@ export const SamPage: React.FC<Props> = ({ level }) => {
 
   const { data: validatorNames } = useQuery(
     ['validator-names'],
-    fetchValidatorNames,
+    loadValidatorNames,
     { staleTime: Infinity },
   )
 
