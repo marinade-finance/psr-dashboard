@@ -149,7 +149,7 @@ export const PaymentsBreakdown: React.FC<Props> = ({
             </>
           )}
           <CalcRow
-            label="Total"
+            label="Total per epoch"
             value={pay(total)}
             total
             severity={hasPenalty ? 'error' : 'ok'}

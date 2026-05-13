@@ -323,6 +323,7 @@ export const ValidatorDetail = ({
   const handleSimToggle = (enabled: boolean) => {
     setSimEnabled(enabled)
     firstRun.current = true
+    if (enabled) setTab('overview')
     if (!enabled && onClearSimulation) onClearSimulation()
   }
 

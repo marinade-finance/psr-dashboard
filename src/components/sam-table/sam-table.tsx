@@ -427,28 +427,6 @@ export const SamTable: React.FC<Props> = ({
     )
   }, [validatorsWithBond, epochsPerYear])
 
-  // Cutoff-relative rank: positive = above cutoff (1 = closest to cutoff,
-  // i.e. lowest-APY in-set), negative = below cutoff (-1 = closest to cutoff,
-  // i.e. highest-APY out-of-set). Independent of display sort.
-  const cutoffRankMap = useMemo(() => {
-    const map = new Map<string, number>()
-    const inSet = validatorsWithBond.filter(
-      v => v.auctionStake.marinadeSamTargetSol > 0,
-    )
-    const outOfSet = validatorsWithBond.filter(
-      v => v.auctionStake.marinadeSamTargetSol <= 0,
-    )
-    const inSetByApyAsc = [...inSet].sort(
-      (a, b) => selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear),
-    )
-    inSetByApyAsc.forEach((v, i) => map.set(selectVoteAccount(v), i + 1))
-    const outOfSetByApyDesc = [...outOfSet].sort(
-      (a, b) => selectMaxAPY(b, epochsPerYear) - selectMaxAPY(a, epochsPerYear),
-    )
-    outOfSetByApyDesc.forEach((v, i) => map.set(selectVoteAccount(v), -(i + 1)))
-    return map
-  }, [validatorsWithBond, epochsPerYear])
-
   // Original auction rank map — same maxApy sort, built from pre-simulation data
   // Used for ghost row rank display and position-change comparison
   const originalAuctionRankMap = useMemo(() => {
@@ -614,7 +592,7 @@ export const SamTable: React.FC<Props> = ({
     const rank = isGhost
       ? (origAuctionRank ?? index + 1)
       : (auctionRankMap.get(voteAccount) ?? index + 1)
-    const cutoffRank = cutoffRankMap.get(voteAccount) ?? rank
+    const cutoffRank = validator.values.cutoffRank ?? rank
     const isHovered = !isGhost && hoveredRow === voteAccount
     const isSimulated = simulatedValidators.has(voteAccount)
 

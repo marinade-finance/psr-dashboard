@@ -52,11 +52,14 @@ export type { SourceDataOverrides }
 
 const FETCHED_EPOCHS = 11
 
-// AugmentedAuctionValidator: AuctionValidator with expectedStakeChangeSol attached.
-// Used by the SAM-active tooltip to display expected next-epoch stake change.
+// AugmentedAuctionValidator: AuctionValidator with derived per-validator fields
+// pre-computed. expectedStakeChangeSol drives the next-epoch delta display.
+// cutoffRank is the position relative to the auction cutoff: positive = above
+// (1 = closest to cutoff), negative = below (-1 = closest to cutoff).
 export type AugmentedAuctionValidator = Omit<AuctionValidator, 'values'> & {
   values: NonNullable<AuctionValidator['values']> & {
     expectedStakeChangeSol: number
+    cutoffRank: number
   }
 }
 
@@ -313,12 +316,24 @@ function computeExpectedStakeChanges(
 export function augmentAuctionResult(
   auctionResult: AuctionResult,
 ): AugmentedAuctionValidator[] {
+  const validators = auctionResult.auctionData.validators
   const changes = computeExpectedStakeChanges(auctionResult)
-  return auctionResult.auctionData.validators.map(validator => ({
+  const cutoffRanks = new Map<string, number>()
+  const inSetByApyAsc = validators
+    .filter(v => v.auctionStake.marinadeSamTargetSol > 0)
+    .sort((a, b) => (a.revShare?.totalPmpe ?? 0) - (b.revShare?.totalPmpe ?? 0))
+  inSetByApyAsc.forEach((v, i) => cutoffRanks.set(v.voteAccount, i + 1))
+  const outOfSetByApyDesc = validators
+    .filter(v => v.auctionStake.marinadeSamTargetSol <= 0)
+    .sort((a, b) => (b.revShare?.totalPmpe ?? 0) - (a.revShare?.totalPmpe ?? 0))
+  outOfSetByApyDesc.forEach((v, i) => cutoffRanks.set(v.voteAccount, -(i + 1)))
+
+  return validators.map(validator => ({
     ...validator,
     values: {
       ...validator.values,
       expectedStakeChangeSol: changes.get(validator.voteAccount) ?? 0,
+      cutoffRank: cutoffRanks.get(validator.voteAccount) ?? 0,
     } as AugmentedAuctionValidator['values'],
   }))
 }
@@ -326,6 +341,9 @@ export function augmentAuctionResult(
 export const selectExpectedStakeChange = (
   v: AugmentedAuctionValidator,
 ): number => v.values.expectedStakeChangeSol ?? 0
+
+export const selectCutoffRank = (v: AugmentedAuctionValidator): number =>
+  v.values.cutoffRank ?? 0
 
 export type ConcentrationRow = {
   key: string
