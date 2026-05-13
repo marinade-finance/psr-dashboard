@@ -240,19 +240,9 @@ _See [Stronger Bond Signals and a New Risk Fee in SAM — Marinade Blog](https:/
 
 Charged at auction time when a validator's bid drops between epochs
 and their bond obligation no longer services what their historical
-bid implied.
-
-- **Trigger.** Two conditions must hold: (1) this epoch's bid PMPE is
-  below last epoch's (beyond a small tolerance), and (2)
-  `bondObligationPmpe < adjustedLimit`, where `adjustedLimit` is the
-  minimum of this epoch's effective participating bid PMPE and the
-  worst historical effective participating bid PMPE over a fixed
-  history window, scaled down by `permittedBidDeviation`.
-- **Amount.** Scales with the shortfall ratio
-  `(adjustedLimit − bondObligationPmpe) / adjustedLimit` against a
-  base of `winningTotalPmpe + effParticipatingBidPmpe`, applied to
-  activated Marinade stake. The in-app **Bid Penalty** tab shows
-  every component.
+bid implied. The dashboard's **Bid Penalty** tab on the validator
+detail panel shows the live trigger thresholds, the shortfall, and
+the per-component breakdown.
 
 _See [Bid Reduction Penalty — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market#bid-reduction-penalty)._
 
