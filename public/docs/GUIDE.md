@@ -201,38 +201,39 @@ realistically available to pay penalties and PSR claims after subtracting
 amounts already committed to in-flight settlements. Coverage math uses the
 claimable balance.
 
-**Current vs projected exposed stake.** Current exposed stake is what the
-validator has *right now* — the number that determines this epoch's risk.
-Projected exposed stake is what they're scheduled to have *next epoch* once the
-auction's stake movements settle. A validator currently healthy can become
-under-coverage next epoch if their target jumps and the bond hasn't grown to
-match.
+**Current vs projected exposed stake.** Current exposed stake is
+`activated − unprotected` — the stake the bond must cover for next
+epoch's stake-keep decision. Projected exposed stake subtracts pending
+paid undelegations on top, so it's always ≤ current. The projected
+figure is what the [Bond Risk Fee](#bond-risk-fee) trigger and amount
+are computed against — using the smaller number means stake already
+on its way out doesn't inflate the fee.
 
-**Minimum vs ideal coverage.** *Minimum coverage* is the bare floor below which
-the bond cannot service worst-case PSR claims and the validator becomes blocked.
-*Ideal coverage* is a safer cushion that absorbs commission spikes, brief
-downtime events, and stake growth without the bond becoming the binding
-constraint on the auction. The Bond tab's calculation breakdown shows the
-top-up amount required to reach each level.
+**Minimum vs ideal coverage.** *Minimum coverage* is the threshold at
+which the SDK starts charging the [Bond Risk Fee](#bond-risk-fee) and
+forcing paid undelegations: when `claimableBond − minUnprotectedReserve
+< projectedExposedStake × minBondPmpe / 1000`. *Ideal coverage* is a
+larger buffer above the minimum — bond below it doesn't trigger a fee
+but the SAM auction won't award additional stake until coverage clears
+the ideal line. The Bond tab shows the top-up to reach each level.
 
 _See [Setup for Validators — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/protected-staking-rewards#setup-for-validators) for the bond contract and PSR mechanics._
 
 <a id="bond-risk-fee"></a>
 ### Bond Risk Fee
 
-A small per-epoch fee charged to validators whose bond is below the ideal
-coverage line. Introduced to make under-collateralized bonds price-in their own
-risk rather than free-riding on Marinade's backstop.
+A per-epoch fee charged when the claimable bond cannot cover the
+projected exposed stake at the minimum-bond rate.
 
-- **Trigger.** Charged whenever a validator's bond coverage is between the
-  blocking floor and the ideal target. A fully-covered bond pays nothing.
-- **How the SOL amount is computed (plain language).** The further below the
-  ideal coverage the bond sits, the larger the fee. The amount scales with the
-  validator's current stake — large stake under-covered costs more than small
-  stake under-covered. The exact formula is in the in-app **Bond** tab; click
-  "See full bond coverage breakdown".
+- **Trigger.** `claimableBond − minUnprotectedReserve < projectedExposedStake
+  × minBondPmpe / 1000`. Above this line: no fee.
+- **Amount.** Scales with how far below the minimum the bond sits and
+  with the validator's revenue rate (`onchainDistributed + auctionEffectiveBid`
+  PMPE). The SDK also forces a matching paid undelegation. The in-app
+  **Bond** tab shows the exact figures via "See full bond coverage
+  breakdown".
 
-_See [Stronger Bond Signals and a New Risk Fee in SAM — Marinade Blog](https://marinade.finance/blog/stronger-bond-signals-and-a-new-risk-fee-in-sam) for the design rationale._
+_See [Stronger Bond Signals and a New Risk Fee in SAM — Marinade Blog](https://marinade.finance/blog/stronger-bond-signals-and-a-new-risk-fee-in-sam) for context._
 
 <a id="bid-penalty"></a>
 ### Bid-Too-Low Penalty
