@@ -115,9 +115,10 @@ Each epoch, SAM runs a **last-price auction** to allocate stake.
 - **Bond risk fee** — see [Bond Risk Fee](#bond-risk-fee).
 - **Undelegation caps** — stake movement is rate-limited per epoch to keep
   activation/deactivation costs bounded. See [Re-delegation](#redelegation).
-- **Natural withdrawals** — roughly 0.7% of TVL leaves the pool each epoch as
-  stakers redeem mSOL. These outflows come first from validators that are above
-  their auction target; if no one's over-target, they're spread pro-rata.
+- **Natural turnover** — each epoch a fraction of TVL turns over (mSOL/native
+  redemptions plus the natural-redelegation cap). Outflows come first from
+  validators above their auction target; if no one's over-target, they're
+  spread pro-rata. See the Marinade docs linked below for the exact mechanism.
 
 _See [Stake Auction Marketplace — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market#stake-auction-marketplace) for the full protocol spec._
 
@@ -274,9 +275,9 @@ bounded amount of SOL:
   over-target validators are routed to validators whose auction target exceeds
   their active stake. The total amount moved per epoch is capped to keep
   activation/deactivation costs bounded.
-- **Withdrawal priority** — when stakers redeem mSOL (~0.7% of TVL per epoch),
-  the SOL leaves over-target validators first. Validators sitting at or below
-  target are protected from forced withdrawals as long as anyone is over-target.
+- **Withdrawal priority** — when natural turnover pulls SOL from the pool, it
+  leaves over-target validators first. Validators sitting at or below target
+  are protected from forced withdrawals as long as anyone is over-target.
 - **Why "Next Δ" might be smaller than (target − active).** Because the
   rebalancing budget is shared across the whole pool. A validator far below
   target won't close the entire gap in one epoch.

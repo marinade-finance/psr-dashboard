@@ -159,3 +159,18 @@ References:
 - `src/services/bonds.ts:9` (cpmpe field)
 - `src/services/simulation.ts:173-204` (cpmpesDec map)
 - `src/fixtures/test-bonds.ts:28-105` (test fixture comments)
+
+## Verify: 0.7% natural turnover framing
+
+`src/services/sam.ts:209` calls `WITHDRAWAL_FRACTION_PER_EPOCH = 0.007`
+and comments it as "0.7% of TVL is withdrawn from the pool each epoch
+by redeemers." This may be wrong: the 0.7% is the natural-redelegation
+turnover cap, not specifically an mSOL redemption rate. The model
+treats it as net outflow (pulls stake from over-target validators), but
+if it's actually a redelegation cap, total stake shouldn't drop —
+just redistribute.
+
+GUIDE.md was updated 2026-05-13 to drop the mSOL-redemption framing
+and defer to Marinade docs. Confirm what 0.7% actually represents in
+the SDK / SAM design and adjust either the model in `computeNaturalWithdrawal`
+or the comment in `sam.ts:209`.
