@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 
 import { HelpTip } from 'src/components/help-tip/help-tip'
 import { PENALTY_ICONS, PenaltyKind } from 'src/components/icons/penalty-icons'
@@ -331,6 +331,22 @@ export const SamTable: React.FC<Props> = ({
   )
 
   const [hoveredRow, setHoveredRow] = useState<string | null>(null)
+  const [flashId, setFlashId] = useState<string | null>(null)
+  const tableRef = useRef<HTMLDivElement>(null)
+  const flashTimeoutRef = useRef<number | null>(null)
+
+  const handleGhostClick = (voteAccount: string) => {
+    const root = tableRef.current
+    if (!root) return
+    const target = root.querySelector<HTMLElement>(
+      `[data-vote-account="${voteAccount}"]:not([data-ghost="true"])`,
+    )
+    if (!target) return
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    if (flashTimeoutRef.current) window.clearTimeout(flashTimeoutRef.current)
+    setFlashId(voteAccount)
+    flashTimeoutRef.current = window.setTimeout(() => setFlashId(null), 800)
+  }
 
   // Sorting state
   const [sortColumn, setSortColumn] = useState<SortColumn>('maxApy')
@@ -575,10 +591,15 @@ export const SamTable: React.FC<Props> = ({
     const validatorName =
       validatorMeta?.get(voteAccount)?.name ?? `${voteAccount.slice(0, 8)}...`
 
+    const isFlashing = !isGhost && flashId === voteAccount
+    const ghostHasTarget = isGhost && isSimulated
+
     const rowClasses = [
       'border-b border-border-grid transition-colors duration-[120ms]',
       isGhost
-        ? 'opacity-40 line-through bg-muted/30 cursor-default'
+        ? ghostHasTarget
+          ? 'opacity-40 line-through bg-muted/30 cursor-pointer hover:opacity-60'
+          : 'opacity-40 line-through bg-muted/30 cursor-default'
         : 'bg-card cursor-pointer',
       !isGhost && !inSet && 'bg-destructive/[0.02]',
       !isGhost &&
@@ -587,6 +608,7 @@ export const SamTable: React.FC<Props> = ({
       !isGhost && !isHovered && inSet && 'hover:bg-primary-light',
       !isGhost && !isHovered && !inSet && 'hover:bg-destructive/[0.05]',
       !isGhost && isSimulated && 'ring-2 ring-inset ring-status-yellow',
+      isFlashing && 'bg-status-yellow-light',
     ]
       .filter(Boolean)
       .join(' ')
@@ -596,18 +618,36 @@ export const SamTable: React.FC<Props> = ({
         key={isGhost ? `${voteAccount}-ghost` : voteAccount}
         className={rowClasses}
         style={posColor ? { borderLeftColor: posColor } : undefined}
-        role={isGhost ? undefined : 'button'}
-        tabIndex={isGhost ? -1 : 0}
-        aria-label={isGhost ? undefined : `Open detail for ${validatorName}`}
+        data-vote-account={voteAccount}
+        data-ghost={isGhost ? 'true' : undefined}
+        role={isGhost ? (ghostHasTarget ? 'button' : undefined) : 'button'}
+        tabIndex={isGhost ? (ghostHasTarget ? 0 : -1) : 0}
+        aria-label={
+          isGhost
+            ? ghostHasTarget
+              ? `Scroll to new position of ${validatorName}`
+              : undefined
+            : `Open detail for ${validatorName}`
+        }
         onMouseEnter={() => !isGhost && setHoveredRow(voteAccount)}
         onMouseLeave={() => setHoveredRow(null)}
-        onClick={() => !isGhost && onValidatorClick(voteAccount)}
-        onKeyDown={e => {
-          if (isGhost) return
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            onValidatorClick(voteAccount)
+        onClick={() => {
+          if (isGhost) {
+            if (ghostHasTarget) handleGhostClick(voteAccount)
+            return
           }
+          onValidatorClick(voteAccount)
+        }}
+        onKeyDown={e => {
+          if (e.key !== 'Enter' && e.key !== ' ') return
+          if (isGhost) {
+            if (!ghostHasTarget) return
+            e.preventDefault()
+            handleGhostClick(voteAccount)
+            return
+          }
+          e.preventDefault()
+          onValidatorClick(voteAccount)
         }}
       >
         {/* Rank / ✕ */}
@@ -840,7 +880,10 @@ export const SamTable: React.FC<Props> = ({
         )}
 
         {/* Table */}
-        <div className="mx-4 bg-card rounded-xl border border-border shadow-card overflow-hidden overflow-x-auto">
+        <div
+          ref={tableRef}
+          className="mx-4 bg-card rounded-xl border border-border shadow-card overflow-hidden overflow-x-auto"
+        >
           <ShadTable className="font-sans text-sm">
             <TableHeader>
               <TableRow className="border-b border-border-grid">
