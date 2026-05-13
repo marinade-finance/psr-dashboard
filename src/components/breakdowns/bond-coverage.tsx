@@ -201,17 +201,19 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
 
           {showRiskSection && (
             <>
-              <SectionHeader title="Bond Risk — after undelegations finalize" />
+              <SectionHeader title="Bond Risk" />
               {coverage.carriedPaidUndelegationSol > 0 && (
-                <CalcRow
-                  label="Paid undelegation"
-                  secondary={stake(coverage.carriedPaidUndelegationSol)}
-                />
+                <>
+                  <CalcRow
+                    label="Paid undelegation pending"
+                    secondary={stake(coverage.carriedPaidUndelegationSol)}
+                  />
+                  <CalcRow
+                    label="Projected exposed stake (after undelegation)"
+                    secondary={stake(coverage.projectedExposedStakeSol)}
+                  />
+                </>
               )}
-              <CalcRow
-                label="Projected exposed stake"
-                secondary={stake(coverage.projectedExposedStakeSol)}
-              />
               <CalcRow
                 label="Penalty trigger threshold"
                 value={pay(coverage.floorBaseProjected)}
