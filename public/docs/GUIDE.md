@@ -238,18 +238,21 @@ _See [Stronger Bond Signals and a New Risk Fee in SAM — Marinade Blog](https:/
 <a id="bid-penalty"></a>
 ### Bid-Too-Low Penalty
 
-If a validator drops their bid significantly mid-epoch — after stake has already
-been allocated based on a higher bid — a penalty is charged from their bond. This
-discourages "bait-and-switch" bidding where a validator wins stake at a high
-advertised bid, then immediately lowers it.
+Charged at auction time when a validator's bid drops between epochs
+and their bond obligation no longer services what their historical
+bid implied.
 
-- **Trigger.** The validator's currently-active bid is meaningfully lower than
-  the bid that won them stake at the start of the epoch. Small reductions are
-  tolerated.
-- **How the SOL amount is computed (plain language).** It's the gap between the
-  bid the validator promised when winning stake and the bid they're actually
-  paying, applied to the activated stake for the duration the discrepancy lasts.
-  The in-app **Bid Penalty** tab shows the exact components.
+- **Trigger.** Two conditions must hold: (1) this epoch's bid PMPE is
+  below last epoch's (beyond a small tolerance), and (2)
+  `bondObligationPmpe < adjustedLimit`, where `adjustedLimit` is the
+  minimum of this epoch's effective participating bid PMPE and the
+  worst historical effective participating bid PMPE over a fixed
+  history window, scaled down by `permittedBidDeviation`.
+- **Amount.** Scales with the shortfall ratio
+  `(adjustedLimit − bondObligationPmpe) / adjustedLimit` against a
+  base of `winningTotalPmpe + effParticipatingBidPmpe`, applied to
+  activated Marinade stake. The in-app **Bid Penalty** tab shows
+  every component.
 
 _See [Bid Reduction Penalty — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market#bid-reduction-penalty)._
 
