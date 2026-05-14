@@ -1,11 +1,9 @@
-import {
-  ICON_CHECK,
-  ICON_CRITICAL,
-  ICON_DOWN,
-  ICON_INFO,
-  ICON_RIGHT,
-  ICON_UP,
-} from 'src/components/icons/tip-icons'
+import { ICON_CHECK } from 'src/components/icons/icon-check'
+import { ICON_CRITICAL } from 'src/components/icons/icon-critical'
+import { ICON_DOWN } from 'src/components/icons/icon-down'
+import { ICON_INFO } from 'src/components/icons/icon-info'
+import { ICON_RIGHT } from 'src/components/icons/icon-right'
+import { ICON_UP } from 'src/components/icons/icon-up'
 import {
   CSS_DESTRUCTIVE,
   CSS_DESTRUCTIVE_LIGHT,

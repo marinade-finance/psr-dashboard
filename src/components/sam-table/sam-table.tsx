@@ -1,7 +1,9 @@
 import React, { useMemo, useRef, useState } from 'react'
 
 import { HelpTip } from 'src/components/help-tip/help-tip'
-import { PENALTY_ICONS, PenaltyKind } from 'src/components/icons/penalty-icons'
+import { PENALTY_BID_LOW } from 'src/components/icons/penalty-bid-low'
+import { PENALTY_BLACKLIST } from 'src/components/icons/penalty-blacklist'
+import { PENALTY_RISK } from 'src/components/icons/penalty-risk'
 import { Card } from 'src/components/ui/card'
 import {
   ShadTable,
@@ -183,10 +185,18 @@ type Props = {
 
 const RANK_MONO = 'font-mono text-xs'
 
+type PenaltyKind = 'bidLow' | 'blacklist' | 'risk'
+
 const PENALTY_CLASSES: Record<PenaltyKind, string> = {
   bidLow: 'bg-destructive-light text-destructive',
   blacklist: 'bg-muted text-muted-foreground',
   risk: 'bg-warning-light text-warning',
+}
+
+const PENALTY_ICONS: Record<PenaltyKind, React.ReactElement> = {
+  bidLow: PENALTY_BID_LOW,
+  blacklist: PENALTY_BLACKLIST,
+  risk: PENALTY_RISK,
 }
 
 const PenaltyBadges: React.FC<{ validator: AuctionValidator }> = ({
