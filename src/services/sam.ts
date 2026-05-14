@@ -121,9 +121,7 @@ function overridesMessage(
     return ''
   }
   const formatted =
-    type === 'percentage'
-      ? pct(overrideValue, 0)
-      : String(overrideValue)
+    type === 'percentage' ? pct(overrideValue, 0) : String(overrideValue)
   return `<b>Overrides ${label}: ${formatted}</b><br/>`
 }
 
@@ -154,14 +152,6 @@ export const formattedMevCommission = (validator: AuctionValidator): string => {
 
 export const selectMevCommissionPmpe = (validator: AuctionValidator) =>
   validator.revShare.mevPmpe
-
-export const overridesMevCommissionMessage = (
-  validator: AuctionValidator,
-): string =>
-  overridesMessage(
-    'MEV commission',
-    validator.values?.commissions?.mevCommissionOverrideDec,
-  )
 
 export const selectBlockRewardsCommission = (
   validator: AuctionValidator,
@@ -196,18 +186,6 @@ export const selectEffectiveBid = (validator: AuctionValidator) =>
 export const selectEffectiveCost = (validator: AuctionValidator) =>
   (validator.marinadeActivatedStakeSol / 1000) *
   validator.revShare.auctionEffectiveBidPmpe
-
-// Budget = TVL − Σactive: the already-liquid pool reserve that can be
-// redelegated in the next epoch without waiting for any unstake cooldown.
-function selectRedelegationBudget(auctionResult: AuctionResult): number {
-  const validators = auctionResult.auctionData.validators
-  const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
-  const active = validators.reduce(
-    (sum, validator) => sum + validator.marinadeActivatedStakeSol,
-    0,
-  )
-  return Math.max(0, tvl - active)
-}
 
 // ~0.7% of TVL is withdrawn from the pool each epoch by redeemers.
 const WITHDRAWAL_FRACTION_PER_EPOCH = 0.007
@@ -370,7 +348,10 @@ export const buildConcentrationBreakdown = (
     pick: (v: AuctionValidator) => string,
     capType: AuctionConstraintType,
   ): ConcentrationRow[] => {
-    const by = new Map<string, { stake: number; count: number; capped: number }>()
+    const by = new Map<
+      string,
+      { stake: number; count: number; capped: number }
+    >()
     let total = 0
     for (const v of validators) {
       const stake = v.auctionStake.marinadeSamTargetSol
@@ -405,4 +386,17 @@ export const buildConcentrationBreakdown = (
     countryCapPct: config.maxNetworkStakeConcentrationPerCountryDec,
     asoCapPct: config.maxNetworkStakeConcentrationPerAsoDec,
   }
+}
+
+// Budget for next-epoch re-delegation: TVL − Σ active is the pool stake
+// already liquid in the reserve, free to (re)delegate without waiting for
+// any cooldown. Natural withdrawals exit the pool to redeemers, not budget.
+export function selectRedelegationBudget(auctionResult: AuctionResult): number {
+  const validators = auctionResult.auctionData.validators
+  const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
+  const activeTotal = validators.reduce(
+    (s, v) => s + v.marinadeActivatedStakeSol,
+    0,
+  )
+  return Math.max(0, tvl - activeTotal)
 }
