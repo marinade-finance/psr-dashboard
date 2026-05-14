@@ -1,5 +1,5 @@
 import React from 'react'
-import ReactDOM from 'react-dom'
+import { createRoot } from 'react-dom/client'
 import './index.css'
 import TagManager from 'react-gtm-module'
 import { QueryClient, QueryClientProvider } from 'react-query'
@@ -110,7 +110,10 @@ void queryClient.prefetchQuery(
   fetchProtectedEventsWithValidator,
 )
 
-ReactDOM.render(
+const rootElement = document.getElementById('root')
+if (!rootElement) throw new Error('Root element #root not found')
+
+createRoot(rootElement).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -118,5 +121,4 @@ ReactDOM.render(
       </TooltipProvider>
     </QueryClientProvider>
   </React.StrictMode>,
-  document.getElementById('root'),
 )
