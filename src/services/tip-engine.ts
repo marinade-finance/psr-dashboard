@@ -18,10 +18,11 @@ import {
 } from 'src/css'
 import { pay, payCta, stake, stakeCta } from 'src/format'
 
-import { bondHealthFromAuction, computeBondCoverage } from './breakdowns'
+import { computeBondCoverage } from './bond-coverage'
+import { bondHealthFromAuction } from './bond-health'
 import { bondUtilizationPct, apyBreakdown } from './calculations'
 
-import type { BondHealthState } from './breakdowns'
+import type { BondHealthState } from './bond-health'
 import type { AugmentedAuctionValidator } from './sam'
 import type {
   AuctionValidator,
