@@ -49,7 +49,7 @@ export default defineConfig({
   build: { outDir: 'build' },
   appType: 'mpa',
   test: {
-    environment: 'node',
-    include: ['src/**/*.test.ts'],
+    environment: 'jsdom',
+    include: ['src/**/*.test.{ts,tsx}'],
   },
 })
