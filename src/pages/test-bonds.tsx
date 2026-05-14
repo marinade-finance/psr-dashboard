@@ -7,8 +7,8 @@ import { ValidatorBondsPage } from 'src/pages/validator-bonds'
 import type { UserLevelProps } from 'src/components/navigation/navigation'
 
 export const TestBondsPage: React.FC<UserLevelProps> = ({ level }) => {
-  const [client] = useState(() => {
-    const c = new QueryClient({
+  const [queryClient] = useState(() => {
+    const queryClient = new QueryClient({
       defaultOptions: {
         queries: {
           staleTime: Infinity,
@@ -20,13 +20,13 @@ export const TestBondsPage: React.FC<UserLevelProps> = ({ level }) => {
         },
       },
     })
-    c.setQueryData('bonds', TEST_BONDS_DATA)
-    c.setQueryData('notifications-broadcast', null)
-    c.setQueryData(['notifications-all', 'sam_auction'], undefined)
-    return c
+    queryClient.setQueryData('bonds', TEST_BONDS_DATA)
+    queryClient.setQueryData('notifications-broadcast', null)
+    queryClient.setQueryData(['notifications-all', 'sam_auction'], undefined)
+    return queryClient
   })
   return (
-    <QueryClientProvider client={client}>
+    <QueryClientProvider client={queryClient}>
       <ValidatorBondsPage level={level} />
     </QueryClientProvider>
   )

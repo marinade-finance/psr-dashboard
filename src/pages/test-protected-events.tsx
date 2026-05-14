@@ -9,8 +9,8 @@ import type { UserLevelProps } from 'src/components/navigation/navigation'
 export const TestProtectedEventsPage: React.FC<UserLevelProps> = ({
   level,
 }) => {
-  const [client] = useState(() => {
-    const c = new QueryClient({
+  const [queryClient] = useState(() => {
+    const queryClient = new QueryClient({
       defaultOptions: {
         queries: {
           staleTime: Infinity,
@@ -22,12 +22,12 @@ export const TestProtectedEventsPage: React.FC<UserLevelProps> = ({
         },
       },
     })
-    c.setQueryData('protected-events', TEST_PROTECTED_EVENTS)
-    c.setQueryData('notifications-broadcast', null)
-    return c
+    queryClient.setQueryData('protected-events', TEST_PROTECTED_EVENTS)
+    queryClient.setQueryData('notifications-broadcast', null)
+    return queryClient
   })
   return (
-    <QueryClientProvider client={client}>
+    <QueryClientProvider client={queryClient}>
       <ProtectedEventsPage level={level} />
     </QueryClientProvider>
   )

@@ -19,8 +19,8 @@ const SAM_RESULT = {
 }
 
 export const TestSamPage: React.FC<UserLevelProps> = ({ level }) => {
-  const [client] = useState(() => {
-    const c = new QueryClient({
+  const [queryClient] = useState(() => {
+    const queryClient = new QueryClient({
       defaultOptions: {
         queries: {
           staleTime: Infinity,
@@ -33,10 +33,10 @@ export const TestSamPage: React.FC<UserLevelProps> = ({ level }) => {
       },
     })
     // Suppress notification fetchers; the page checks falsy.
-    c.setQueryDefaults('notifications-broadcast', { enabled: false })
-    c.setQueryData('notifications-broadcast', null)
-    c.setQueryDefaults(['notifications-all'], { enabled: false })
-    return c
+    queryClient.setQueryDefaults('notifications-broadcast', { enabled: false })
+    queryClient.setQueryData('notifications-broadcast', null)
+    queryClient.setQueryDefaults(['notifications-all'], { enabled: false })
+    return queryClient
   })
   const dataSources = useMemo<SamDataSources>(
     () => ({
@@ -46,7 +46,7 @@ export const TestSamPage: React.FC<UserLevelProps> = ({ level }) => {
     [],
   )
   return (
-    <QueryClientProvider client={client}>
+    <QueryClientProvider client={queryClient}>
       <SamPage level={level} dataSources={dataSources} />
     </QueryClientProvider>
   )
