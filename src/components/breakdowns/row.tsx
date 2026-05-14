@@ -1,5 +1,7 @@
 import React from 'react'
 
+import { cn } from 'src/class_utils'
+
 // Shared separator visual for "total / result" rows. The same `border-t` is
 // used by the overview MetricRow's `separator` prop and by every CalcRow /
 // RevRow that marks a section conclusion — keeps the divider style identical
@@ -36,7 +38,10 @@ export const Marker: React.FC<{ tone: 'red' | 'yellow' | 'green' }> = ({
   tone,
 }) => (
   <span
-    className={`inline-block w-1.5 h-1.5 rounded-full mr-2 align-middle ${MARKER_CLASSES[tone]}`}
+    className={cn(
+      'inline-block w-1.5 h-1.5 rounded-full mr-2 align-middle',
+      MARKER_CLASSES[tone],
+    )}
   />
 )
 
@@ -74,26 +79,35 @@ export const CalcRow: React.FC<{
   return (
     <tr className={'border-b border-border-grid/50 last:border-b-0'}>
       <td
-        className={`pr-2 ${lg ? 'text-base' : 'text-xs'} ${sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${bld ? 'font-semibold' : ''}`}
+        className={cn(
+          'pr-2',
+          lg ? 'text-base' : 'text-xs',
+          sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD,
+          bld && 'font-semibold',
+        )}
       >
         {tone && <Marker tone={tone} />}
         {label}
       </td>
       <td
-        className={`px-2 text-right font-mono text-xs text-muted-foreground ${sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD}`}
+        className={cn(
+          'px-2 text-right font-mono text-xs text-muted-foreground',
+          sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD,
+        )}
       >
         {secondary ?? ''}
       </td>
       <td
-        className={`pl-2 text-right font-mono ${sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${lg ? 'text-base' : 'text-xs'} ${bld ? 'font-semibold' : ''} ${sep ? 'border-t-2 border-border' : ''} ${
-          tone === 'red'
-            ? 'text-destructive'
-            : tone === 'yellow'
-              ? 'text-status-yellow'
-              : tone === 'green'
-                ? 'text-status-green'
-                : ''
-        }`}
+        className={cn(
+          'pl-2 text-right font-mono',
+          sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD,
+          lg ? 'text-base' : 'text-xs',
+          bld && 'font-semibold',
+          sep && 'border-t-2 border-border',
+          tone === 'red' && 'text-destructive',
+          tone === 'yellow' && 'text-status-yellow',
+          tone === 'green' && 'text-status-green',
+        )}
       >
         {value}
       </td>

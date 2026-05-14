@@ -1,5 +1,6 @@
 import React, { useMemo, useRef, useState } from 'react'
 
+import { cn } from 'src/class_utils'
 import { HelpTip } from 'src/components/help-tip/help-tip'
 import { PENALTY_BID_LOW } from 'src/components/icons/penalty-bid-low'
 import { PENALTY_BLACKLIST } from 'src/components/icons/penalty-blacklist'
@@ -223,7 +224,10 @@ const PenaltyBadges: React.FC<{ validator: AuctionValidator }> = ({
         <span
           key={b.label}
           aria-label={b.label}
-          className={`inline-flex items-center justify-center w-[18px] h-[18px] rounded cursor-help select-none ${PENALTY_CLASSES[b.kind]}`}
+          className={cn(
+            'inline-flex items-center justify-center w-[18px] h-[18px] rounded cursor-help select-none',
+            PENALTY_CLASSES[b.kind],
+          )}
         >
           {PENALTY_ICONS[b.kind]}
         </span>
@@ -688,11 +692,12 @@ export const SamTable: React.FC<Props> = ({
         {/* Max APY */}
         <TableCell className="px-3.5 py-3">
           <span
-            className={`inline-block px-2.5 py-[3px] rounded-md font-semibold text-sm font-mono ${
+            className={cn(
+              'inline-block px-2.5 py-[3px] rounded-md font-semibold text-sm font-mono',
               inSet
                 ? 'bg-primary-light text-primary'
-                : 'bg-destructive-light text-destructive'
-            }`}
+                : 'bg-destructive-light text-destructive',
+            )}
           >
             {pct(maxApy, 2)}
           </span>
@@ -702,10 +707,13 @@ export const SamTable: React.FC<Props> = ({
         <TableCell className="px-3.5 py-3">
           <div className="flex items-center gap-1.5 mb-1">
             <span
-              className={`inline-flex items-center gap-1 px-2 py-[3px] rounded-md text-xs font-medium ${bondChip.chip}`}
+              className={cn(
+                'inline-flex items-center gap-1 px-2 py-[3px] rounded-md text-xs font-medium',
+                bondChip.chip,
+              )}
             >
               <span
-                className={`w-[7px] h-[7px] rounded-full ${bondChip.dot}`}
+                className={cn('w-[7px] h-[7px] rounded-full', bondChip.dot)}
               />
               {bondChip.label}
             </span>
@@ -716,12 +724,15 @@ export const SamTable: React.FC<Props> = ({
           <div className="flex items-center gap-1.5">
             <div className="h-[3px] bg-secondary rounded-sm w-14 shrink-0">
               <div
-                className={`h-full rounded-sm ${bondChip.bar}`}
+                className={cn('h-full rounded-sm', bondChip.bar)}
                 style={{ width: `${Math.max(100 - bondUtilPct, 0)}%` }}
               />
             </div>
             <span
-              className={`text-xs opacity-60 font-mono whitespace-nowrap ${bondRunway <= 10 ? bondChip.shortText : TEXT_MUTED}`}
+              className={cn(
+                'text-xs opacity-60 font-mono whitespace-nowrap',
+                bondRunway <= 10 ? bondChip.shortText : TEXT_MUTED,
+              )}
             >
               ({Math.round(bondRunway)}ep)
             </span>
@@ -738,11 +749,12 @@ export const SamTable: React.FC<Props> = ({
               const cell = nextStakeDeltaCell(expectedChange)
               return (
                 <span
-                  className={`font-mono text-xs ${
+                  className={cn(
+                    'font-mono text-xs',
                     cell.tone === 'neutral'
                       ? TEXT_MUTED
-                      : 'font-semibold text-sm'
-                  }`}
+                      : 'font-semibold text-sm',
+                  )}
                   style={
                     cell.tone === 'neutral'
                       ? undefined
@@ -801,7 +813,12 @@ export const SamTable: React.FC<Props> = ({
 
   return (
     <div
-      className={`w-full ${isCalculating ? 'opacity-70 pointer-events-none' : ''} ${inSimulation ? 'ring-4 ring-inset ring-status-yellow rounded-lg overflow-hidden' : ''}`}
+      className={cn(
+        'w-full',
+        isCalculating && 'opacity-70 pointer-events-none',
+        inSimulation &&
+          'ring-4 ring-inset ring-status-yellow rounded-lg overflow-hidden',
+      )}
     >
       {inSimulation && (
         <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-status-yellow text-background font-semibold text-sm uppercase tracking-wide rounded-t-md">

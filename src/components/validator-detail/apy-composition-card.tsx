@@ -1,5 +1,6 @@
 import React from 'react'
 
+import { cn } from 'src/class_utils'
 import { HelpTip } from 'src/components/help-tip/help-tip'
 import { pct } from 'src/format'
 import { HELP_TEXT } from 'src/services/help-text'
@@ -85,11 +86,12 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
           </p>
         </div>
         <span
-          className={`text-xs font-mono font-semibold px-2 py-0.5 rounded-md ${
+          className={cn(
+            'text-xs font-mono font-semibold px-2 py-0.5 rounded-md',
             above
               ? 'bg-primary-light text-primary'
-              : 'bg-destructive-light text-destructive'
-          }`}
+              : 'bg-destructive-light text-destructive',
+          )}
         >
           {above ? '+' : ''}
           {pct(delta, 2)} vs winning
@@ -98,7 +100,7 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
       <div className="space-y-2">
         {rows.map(({ label, apy, pmpe, swatch, context }) => (
           <div key={label} className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-sm shrink-0 ${swatch}`} />
+            <span className={cn('w-2 h-2 rounded-sm shrink-0', swatch)} />
             <div className="w-24 shrink-0">
               <div className="text-[13px] text-muted-foreground leading-tight">
                 {label}
@@ -109,7 +111,7 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
             </div>
             <div className="flex-1 relative h-3 bg-secondary rounded">
               <div
-                className={`h-full rounded ${swatch}`}
+                className={cn('h-full rounded', swatch)}
                 style={{
                   width:
                     totalPmpe > 0
@@ -138,7 +140,7 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
                   pmpe > 0 ? (
                     <div
                       key={label}
-                      className={`shrink-0 ${swatch}`}
+                      className={cn('shrink-0', swatch)}
                       style={{ width: `${(pmpe / totalPmpe) * 100}%` }}
                     />
                   ) : null,
@@ -156,9 +158,10 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
             </span>
           </div>
           <span
-            className={`text-xs font-mono font-semibold w-12 text-right shrink-0 ${
-              above ? 'text-primary' : 'text-destructive'
-            }`}
+            className={cn(
+              'text-xs font-mono font-semibold w-12 text-right shrink-0',
+              above ? 'text-primary' : 'text-destructive',
+            )}
           >
             {pct(apyBreakdown.total, 2)}
           </span>

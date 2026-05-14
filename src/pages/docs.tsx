@@ -4,6 +4,7 @@ import { useQuery } from 'react-query'
 import rehypeRaw from 'rehype-raw'
 import remarkGfm from 'remark-gfm'
 
+import { cn } from 'src/class_utils'
 import { Loader } from 'src/components/loader/loader'
 import { Navigation } from 'src/components/navigation/navigation'
 import { UserLevel } from 'src/components/navigation/navigation'
@@ -79,7 +80,7 @@ function makeComponents(
       if (isBlock) {
         return (
           <code
-            className={`font-mono text-sm text-muted-foreground ${className ?? ''}`}
+            className={cn('font-mono text-sm text-muted-foreground', className)}
           >
             {children}
           </code>
@@ -176,11 +177,12 @@ export const DocsPage: React.FC<Props> = ({ level }) => {
                 <button
                   key={doc}
                   onClick={() => setActiveDoc(doc)}
-                  className={`px-3 py-2 text-[13px] font-medium border-b-2 transition-colors -mb-px ${
+                  className={cn(
+                    'px-3 py-2 text-[13px] font-medium border-b-2 transition-colors -mb-px',
                     activeDoc === doc
                       ? 'border-primary text-primary'
-                      : 'border-transparent text-muted-foreground hover:text-foreground'
-                  }`}
+                      : 'border-transparent text-muted-foreground hover:text-foreground',
+                  )}
                 >
                   {doc === 'GUIDE' ? 'Guide' : 'Expert Guide'}
                 </button>

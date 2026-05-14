@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 
+import { cn } from 'src/class_utils'
 import { Input } from 'src/components/ui/input'
 import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
 
@@ -118,7 +119,7 @@ export const ValidatorSearch: React.FC<Props> = ({
   const showDropdown = open && query.trim().length >= 2
 
   return (
-    <div ref={wrapRef} className={`relative ${className ?? ''}`}>
+    <div ref={wrapRef} className={cn('relative', className)}>
       <Input
         type="search"
         value={query}
@@ -152,9 +153,10 @@ export const ValidatorSearch: React.FC<Props> = ({
               type="button"
               role="option"
               aria-selected={i === highlighted}
-              className={`w-full text-left px-3 py-2 transition-colors ${
-                i === highlighted ? 'bg-accent' : 'hover:bg-accent'
-              }`}
+              className={cn(
+                'w-full text-left px-3 py-2 transition-colors',
+                i === highlighted ? 'bg-accent' : 'hover:bg-accent',
+              )}
               onMouseEnter={() => setHighlighted(i)}
               onClick={() => select(match.voteAccount)}
             >

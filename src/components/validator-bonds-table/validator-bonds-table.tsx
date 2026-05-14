@@ -1,5 +1,6 @@
 import React from 'react'
 
+import { cn } from 'src/class_utils'
 import { UserLevel } from 'src/components/navigation/navigation'
 import { HtmlTooltip } from 'src/components/ui/tooltip'
 import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
@@ -123,7 +124,10 @@ const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
           return (
             <div
               key={tier.label}
-              className={`flex items-stretch${i > 0 ? ' border-t border-border/40' : ''}`}
+              className={cn(
+                'flex items-stretch',
+                i > 0 && 'border-t border-border/40',
+              )}
             >
               {/* Stake tier label */}
               <div
@@ -478,9 +482,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
                   <HtmlTooltip
                     html={`Native: ${sol(selectNativeMarinadeStake(validator))}, Liquid: ${sol(selectLiquidMarinadeStake(validator))}`}
                   >
-                    <span>
-                      {sol(selectTotalMarinadeStake(validator))}
-                    </span>
+                    <span>{sol(selectTotalMarinadeStake(validator))}</span>
                   </HtmlTooltip>
                 ),
                 compare: (a, b) =>
@@ -512,9 +514,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
                 header: 'Protected Stake [SOL]',
                 headerHelp:
                   "The slice of this validator's Marinade stake that the bond is big enough to reimburse if needed.",
-                render: entry => (
-                  <>{sol(selectProtectedStake(entry))}</>
-                ),
+                render: entry => <>{sol(selectProtectedStake(entry))}</>,
                 compare: (a, b) =>
                   selectProtectedStake(a) - selectProtectedStake(b),
                 alignment: Alignment.RIGHT,
@@ -532,7 +532,10 @@ export const ValidatorBondsTable: React.FC<Props> = ({
                     <div className="flex items-center gap-2 min-w-[90px]">
                       <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                         <div
-                          className={`h-full rounded-full ${rowCoverageBarColor(ratio, hasBond)}`}
+                          className={cn(
+                            'h-full rounded-full',
+                            rowCoverageBarColor(ratio, hasBond),
+                          )}
                           style={{ width: `${Math.round(ratio * 100)}%` }}
                         />
                       </div>

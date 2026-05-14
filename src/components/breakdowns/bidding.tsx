@@ -1,5 +1,6 @@
 import React from 'react'
 
+import { cn } from 'src/class_utils'
 import { pay, pmpe, stake } from 'src/format'
 import { computeBidding } from 'src/services/breakdowns'
 
@@ -58,31 +59,43 @@ const RevRow: React.FC<{
   return (
     <tr className={'border-b border-border-grid/50 last:border-b-0'}>
       <td
-        className={`pr-2 ${lg ? 'text-base' : 'text-xs'} ${sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${bld ? 'font-semibold' : ''}`}
+        className={cn(
+          'pr-2',
+          lg ? 'text-base' : 'text-xs',
+          sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD,
+          bld && 'font-semibold',
+        )}
       >
         {tone && <Marker tone={tone} />}
         {label}
       </td>
       <td
-        className={`px-2 text-right font-mono text-xs text-muted-foreground ${sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD}`}
+        className={cn(
+          'px-2 text-right font-mono text-xs text-muted-foreground',
+          sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD,
+        )}
       >
         {pct ?? ''}
       </td>
       <td
-        className={`px-2 text-right font-mono text-xs text-muted-foreground ${sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD}`}
+        className={cn(
+          'px-2 text-right font-mono text-xs text-muted-foreground',
+          sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD,
+        )}
       >
         {pmpeStr ?? ''}
       </td>
       <td
-        className={`pl-2 text-right font-mono ${lg ? 'text-base' : 'text-xs'} ${sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD} ${bld ? 'font-semibold' : ''} ${sep ? 'border-t-2 border-border' : ''} ${
-          tone === 'green'
-            ? 'text-status-green'
-            : tone === 'yellow'
-              ? 'text-status-yellow'
-              : tone === 'red'
-                ? 'text-destructive'
-                : ''
-        }`}
+        className={cn(
+          'pl-2 text-right font-mono',
+          lg ? 'text-base' : 'text-xs',
+          sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD,
+          bld && 'font-semibold',
+          sep && 'border-t-2 border-border',
+          tone === 'green' && 'text-status-green',
+          tone === 'yellow' && 'text-status-yellow',
+          tone === 'red' && 'text-destructive',
+        )}
       >
         {value}
       </td>

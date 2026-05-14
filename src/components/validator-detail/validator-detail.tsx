@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from 'react-query'
 
+import { cn } from 'src/class_utils'
 import { BidPenaltyBreakdown } from 'src/components/breakdowns/bid-penalty'
 import { BondCoverageBreakdown } from 'src/components/breakdowns/bond-coverage'
 import { PaymentsBreakdown } from 'src/components/breakdowns/payments'
@@ -121,7 +122,10 @@ const MetricRow = ({
   separator?: boolean
 }) => (
   <div
-    className={`flex items-center justify-between ${separator ? SEPARATOR_DIV_CLASS : ''}`}
+    className={cn(
+      'flex items-center justify-between',
+      separator && SEPARATOR_DIV_CLASS,
+    )}
   >
     <span className="text-xs text-muted-foreground flex items-center gap-1">
       {onSeeBreakdown ? (
@@ -156,18 +160,20 @@ const PenaltyRow = ({
 }) => (
   <div className="flex items-center justify-between gap-2">
     <button
-      className={`text-left flex-1 ${
+      className={cn(
+        'text-left flex-1',
         sub
           ? 'text-[10px] text-muted-foreground'
-          : 'text-xs text-muted-foreground'
-      } hover:text-foreground hover:underline`}
+          : 'text-xs text-muted-foreground',
+        'hover:text-foreground hover:underline',
+      )}
       onClick={onSeeBreakdown}
       title="See calculation"
     >
       {label} →
     </button>
     <span
-      className={`font-mono ${sub ? 'text-[10px]' : 'text-sm font-semibold'}`}
+      className={cn('font-mono', sub ? 'text-[10px]' : 'text-sm font-semibold')}
       style={{ color: sub ? CSS_MUTED_FG : CSS_DESTRUCTIVE }}
     >
       {value}
@@ -337,9 +343,10 @@ export const ValidatorDetail = ({
       <SheetContent
         side="right"
         title="Validator detail"
-        className={`w-full max-w-4xl overflow-y-auto p-0 ${
-          isSimulated ? 'border-t-4 border-t-status-yellow' : ''
-        }`}
+        className={cn(
+          'w-full max-w-4xl overflow-y-auto p-0',
+          isSimulated && 'border-t-4 border-t-status-yellow',
+        )}
       >
         <div className="flex items-start justify-between px-4 sm:px-6 py-4 border-b border-border sticky top-0 z-10 gap-2 bg-background">
           <div className="flex flex-col gap-1 min-w-0">
@@ -450,7 +457,10 @@ export const ValidatorDetail = ({
                 : null
           return (
             <div
-              className={`px-4 sm:px-6 py-3 flex items-center gap-3 ${tipTarget ? 'cursor-pointer select-none' : ''}`}
+              className={cn(
+                'px-4 sm:px-6 py-3 flex items-center gap-3',
+                tipTarget && 'cursor-pointer select-none',
+              )}
               style={{ background: tipStyle.bg }}
               onClick={tipTarget ? () => setTab(tipTarget) : undefined}
             >
@@ -490,11 +500,12 @@ export const ValidatorDetail = ({
               <button
                 key={id}
                 onClick={() => setTab(id)}
-                className={`px-3 py-2.5 text-[13px] font-medium border-b-2 transition-colors whitespace-nowrap ${
+                className={cn(
+                  'px-3 py-2.5 text-[13px] font-medium border-b-2 transition-colors whitespace-nowrap',
                   tab === id
                     ? 'border-primary text-primary'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
+                    : 'border-transparent text-muted-foreground hover:text-foreground',
+                )}
               >
                 {label}
               </button>
@@ -524,7 +535,10 @@ export const ValidatorDetail = ({
                       >
                         <div className="flex items-center gap-2 mb-1">
                           <span
-                            className={`px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wide ${tone}`}
+                            className={cn(
+                              'px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wide',
+                              tone,
+                            )}
                           >
                             {notification.priority}
                           </span>
@@ -625,7 +639,10 @@ export const ValidatorDetail = ({
         )}
 
         <div
-          className={`grid grid-cols-1 lg:grid-cols-2 gap-6 p-6 ${tab === 'overview' ? '' : 'hidden'}`}
+          className={cn(
+            'grid grid-cols-1 lg:grid-cols-2 gap-6 p-6',
+            tab !== 'overview' && 'hidden',
+          )}
         >
           <div className="space-y-6">
             <div className="bg-card rounded-xl border border-border p-5">

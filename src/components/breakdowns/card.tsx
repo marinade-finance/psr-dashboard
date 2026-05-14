@@ -1,6 +1,8 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 
+import { cn } from 'src/class_utils'
+
 const STATUS_CLASSES: Record<'red' | 'yellow' | 'green', string> = {
   red: 'bg-destructive-light text-destructive',
   yellow: 'bg-status-yellow-light text-status-yellow',
@@ -30,7 +32,10 @@ export const CalcCard: React.FC<{
     </h3>
     {status && (
       <div
-        className={`rounded-lg px-3 py-2 text-sm mb-4 ${STATUS_CLASSES[status.tone]}`}
+        className={cn(
+          'rounded-lg px-3 py-2 text-sm mb-4',
+          STATUS_CLASSES[status.tone],
+        )}
       >
         {status.label}
       </div>

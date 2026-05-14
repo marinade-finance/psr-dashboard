@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 
+import { cn } from 'src/class_utils'
 import { pct, sol } from 'src/format'
 
 import type { ConcentrationRow } from 'src/services/sam'
@@ -44,21 +45,37 @@ export const ConcentrationMetric: React.FC<Props> = ({
       <div className="flex flex-col gap-0.5">
         {top.map((r, i) => {
           const fill = capPct > 0 ? Math.min(r.pctOfTotal / capPct, 1) * 100 : 0
-          const barClass = r.atCap ? 'bg-destructive' : BAR_TONES[i] ?? 'bg-chart-1'
-          const textClass = r.atCap ? 'text-destructive font-semibold' : 'text-foreground'
+          const barClass = r.atCap
+            ? 'bg-destructive'
+            : (BAR_TONES[i] ?? 'bg-chart-1')
+          const textClass = r.atCap
+            ? 'text-destructive font-semibold'
+            : 'text-foreground'
           return (
-            <div key={r.key} className="relative h-5 flex items-center text-[13px]">
+            <div
+              key={r.key}
+              className="relative h-5 flex items-center text-[13px]"
+            >
               <span
-                className={`absolute inset-y-0 left-0 rounded-sm opacity-25 ${barClass}`}
+                className={cn(
+                  'absolute inset-y-0 left-0 rounded-sm opacity-25',
+                  barClass,
+                )}
                 style={{ width: `${fill}%` }}
                 aria-hidden
               />
-              <span className={`relative truncate pl-1 pr-2 flex-1 ${textClass}`} title={r.key}>
+              <span
+                className={cn('relative truncate pl-1 pr-2 flex-1', textClass)}
+                title={r.key}
+              >
                 {r.key}
                 {r.atCap && <span className="ml-1.5 font-bold">(capped)</span>}
               </span>
               <span
-                className={`relative font-mono text-xs pr-1 ${r.atCap ? 'text-destructive' : 'text-muted-foreground'}`}
+                className={cn(
+                  'relative font-mono text-xs pr-1',
+                  r.atCap ? 'text-destructive' : 'text-muted-foreground',
+                )}
               >
                 {pct(r.pctOfTotal)}
               </span>
@@ -83,14 +100,21 @@ export const ConcentrationMetric: React.FC<Props> = ({
             </thead>
             <tbody>
               {tipRows.map((r, i) => {
-                const swatch = r.atCap ? 'bg-destructive' : BAR_TONES[i] ?? 'bg-chart-1'
+                const swatch = r.atCap
+                  ? 'bg-destructive'
+                  : (BAR_TONES[i] ?? 'bg-chart-1')
                 return (
                   <tr
                     key={r.key}
                     className={r.atCap ? 'text-destructive font-semibold' : ''}
                   >
                     <td className="py-0.5 flex items-center gap-1.5">
-                      <span className={`inline-block w-[3px] h-3 rounded-sm shrink-0 ${swatch}`} />
+                      <span
+                        className={cn(
+                          'inline-block w-[3px] h-3 rounded-sm shrink-0',
+                          swatch,
+                        )}
+                      />
                       <span className="truncate">{r.key}</span>
                       <span className="text-muted-foreground/60 ml-1">
                         ({r.validatorCount})
