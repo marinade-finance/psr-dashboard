@@ -1,3 +1,69 @@
+.validatorCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  cursor: help;
+  line-height: 1;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 3px;
+  border: 0;
+  border-radius: 4px;
+  line-height: 1;
+  user-select: none;
+  cursor: inherit;
+  transition: filter 120ms ease;
+}
+
+.badges:hover .badge {
+  filter: brightness(1.15);
+}
+
+.badges[data-count='2'] .badge,
+.badges[data-count='3'] .badge,
+.badges[data-count='4'] .badge {
+  width: 14px;
+  height: 14px;
+  padding: 2px;
+}
+
+.badge svg {
+  width: 100%;
+  height: 100%;
+}
+
+.penalty_bidLow {
+  background-color: rgba(239, 68, 68, 0.18);
+  color: #f87171;
+}
+
+.penalty_blacklist {
+  background-color: rgba(100, 116, 139, 0.18);
+  color: #94a3b8;
+}
+
+.penalty_risk {
+  background-color: rgba(234, 179, 8, 0.18);
+  color: #facc15;
+}
+
+.notif {
+  background-color: rgba(96, 165, 250, 0.18);
+  color: #60a5fa;
+}
+
 .simulationBanner {
   padding: 16px 32px;
   background: linear-gradient(135deg, rgba(15, 25, 60, 1), rgba(40, 45, 80, 1));
@@ -55,9 +121,23 @@
 .pubkey {
   display: inline-block;
   width: 100px;
-  padding-top: 4px;
   text-overflow: ellipsis;
   overflow: hidden;
+}
+
+.nameCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 160px;
+}
+
+.nameText {
+  display: inline-block;
+  max-width: 140px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .pubkeySimulated {
@@ -68,14 +148,14 @@
 .metricWrap {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   padding: 10px;
 }
 
 .metricRow {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .inputCell {
