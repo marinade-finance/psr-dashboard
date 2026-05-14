@@ -256,6 +256,10 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
     onOrderChange?.(order)
   }, [order])
 
+  // `columns` is deliberately omitted from deps: call sites pass inline array
+  // literals, so including it would re-sort on every parent render. Sort
+  // results are stable as long as comparators derive their result from the
+  // row data passed in (a, b) — that contract holds for all current consumers.
   const sortedData = useMemo(() => {
     if (presorted) {
       return data
