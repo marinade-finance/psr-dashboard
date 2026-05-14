@@ -1,6 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react'
 
 import { cn } from 'src/class_utils'
+import { ConcentrationMetric } from 'src/components/concentration-metric/concentration-metric'
 import { HelpTip } from 'src/components/help-tip/help-tip'
 import { PENALTY_BID_LOW } from 'src/components/icons/penalty-bid-low'
 import { PENALTY_BLACKLIST } from 'src/components/icons/penalty-blacklist'
@@ -14,7 +15,6 @@ import {
   TableHead,
   TableCell,
 } from 'src/components/ui/table'
-import { ConcentrationMetric } from 'src/components/concentration-metric/concentration-metric'
 import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
 import { ValidatorSearch } from 'src/components/validator-search/validator-search'
 import { pct, sol, stake } from 'src/format'
@@ -68,6 +68,7 @@ type ValidatorWithBondState = AugmentedAuctionValidator & {
 
 const TEXT_MUTED = 'text-muted-foreground'
 const BG_MUTED = 'bg-muted-foreground'
+const DESTRUCTIVE_LIGHT_CHIP = 'bg-destructive-light text-destructive'
 
 export const BOND_CHIP: Record<
   BondHealthTier,
@@ -95,7 +96,7 @@ export const BOND_CHIP: Record<
     label: 'Watch',
   },
   critical: {
-    chip: 'bg-destructive-light text-destructive',
+    chip: DESTRUCTIVE_LIGHT_CHIP,
     dot: 'bg-destructive',
     bar: 'bg-destructive',
     shortText: 'text-destructive',
@@ -189,7 +190,7 @@ const RANK_MONO = 'font-mono text-xs'
 type PenaltyKind = 'bidLow' | 'blacklist' | 'risk'
 
 const PENALTY_CLASSES: Record<PenaltyKind, string> = {
-  bidLow: 'bg-destructive-light text-destructive',
+  bidLow: DESTRUCTIVE_LIGHT_CHIP,
   blacklist: 'bg-muted text-muted-foreground',
   risk: 'bg-warning-light text-warning',
 }
@@ -206,7 +207,8 @@ const PenaltyBadges: React.FC<{ validator: AuctionValidator }> = ({
   const stakeSol = validator.marinadeActivatedStakeSol
   const badges: { label: string; sol: number; kind: PenaltyKind }[] = []
   const bidLowSol = (stakeSol * validator.revShare.bidTooLowPenaltyPmpe) / 1000
-  const blacklistSol = (stakeSol * validator.revShare.blacklistPenaltyPmpe) / 1000
+  const blacklistSol =
+    (stakeSol * validator.revShare.blacklistPenaltyPmpe) / 1000
   const bondRiskSol = validator.values?.bondRiskFeeSol ?? 0
   if (bidLowSol > 0)
     badges.push({ label: 'BidTooLow', sol: bidLowSol, kind: 'bidLow' })
@@ -309,7 +311,8 @@ const RankCell: React.FC<{
       style={{ color: tipColor }}
     >
       <span className="flex items-center gap-0.5">
-        <span className="leading-none">{tipIcon}</span>{rankLabel}
+        <span className="leading-none">{tipIcon}</span>
+        {rankLabel}
       </span>
       <span className="text-xs opacity-60 font-normal text-muted-foreground leading-tight">
         {inSet ? 'above' : 'below'}
@@ -694,9 +697,7 @@ export const SamTable: React.FC<Props> = ({
           <span
             className={cn(
               'inline-block px-2.5 py-[3px] rounded-md font-semibold text-sm font-mono',
-              inSet
-                ? 'bg-primary-light text-primary'
-                : 'bg-destructive-light text-destructive',
+              inSet ? 'bg-primary-light text-primary' : DESTRUCTIVE_LIGHT_CHIP,
             )}
           >
             {pct(maxApy, 2)}
@@ -824,8 +825,9 @@ export const SamTable: React.FC<Props> = ({
         <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-status-yellow text-background font-semibold text-sm uppercase tracking-wide rounded-t-md">
           <span className="flex items-center gap-2">
             <span className="inline-block w-2 h-2 rounded-full bg-background animate-pulse" />
-            Simulation Mode — what-if numbers, not live ({simulatedValidators.size}
-            {' '}validator{simulatedValidators.size === 1 ? '' : 's'} modified)
+            Simulation Mode — what-if numbers, not live (
+            {simulatedValidators.size} validator
+            {simulatedValidators.size === 1 ? '' : 's'} modified)
           </span>
           {onResetSimulation && (
             <button
@@ -876,6 +878,16 @@ export const SamTable: React.FC<Props> = ({
             rows={concentration.asos}
             capPct={concentration.asoCapPct}
             help="Share of auction-distributed stake by ASO (Autonomous System Operator). Bar fills against the per-ASO cap. (capped) means at least one validator was cut by the cap."
+          />
+          <ConcentrationMetric
+            label="Top Countries"
+            rows={concentration.countries}
+            capPct={concentration.countryCapPct}
+          />
+          <ConcentrationMetric
+            label="Top ASOs"
+            rows={concentration.asos}
+            capPct={concentration.asoCapPct}
           />
         </div>
 
