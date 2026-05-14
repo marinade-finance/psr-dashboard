@@ -116,8 +116,8 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
         ?.toLocaleLowerCase()
         .includes(lowerCaseValidatorFilter)
     const matchesEpoch =
-      minEpochFilter <= protectedEvent.epoch &&
-      protectedEvent.epoch <= maxEpochFilter
+      (minEpochFilter ?? minEpoch) <= protectedEvent.epoch &&
+      protectedEvent.epoch <= (maxEpochFilter ?? maxEpoch)
     return matchesEpoch && matchesValidator
   })
   const filteredData = preFilteredData.filter(({ protectedEvent }) => {
@@ -186,11 +186,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
         <Metric
           label="Amount"
           value={`${sol(filtered ? filteredAmount : totalAmount)} SOL`}
-          subline={
-            filtered
-              ? `of ${sol(totalAmount)} SOL total`
-              : undefined
-          }
+          subline={filtered ? `of ${sol(totalAmount)} SOL total` : undefined}
           extra={
             !filtered && totalAmount > 0 ? (
               <HtmlTooltip
