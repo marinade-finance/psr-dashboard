@@ -19,6 +19,12 @@ lerna-debug.log*
 /coverage
 /.nyc_output
 /tests/__screenshots__
+/test-results
+/playwright-report
+
+# Debug captures
+/capture.png
+/tmp
 
 # IDEs and editors
 /.idea
