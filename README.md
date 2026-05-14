@@ -1,4 +1,4 @@
-# PSR Dashboard
+# Marinade PSR Dashboard
 
 Marinade Finance PSR (Protected Staking Rewards) dashboard — a React SPA
 that visualises the live SAM (Stake Auction Marketplace) auction,
@@ -7,7 +7,9 @@ validator bonds, and protected events. Auction computation comes from
 
 ## Local development
 
-```bash
+Start the development server:
+
+```sh
 pnpm install
 pnpm start:dev          # Vite dev server (HMR)
 pnpm build              # production build → build/

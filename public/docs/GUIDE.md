@@ -69,6 +69,17 @@ backstop.
 - **DRYRUN** — test event from the pre-launch period; no real payout.
 - (No badge) — finalized on-chain settlement.
 
+**Table Columns:**
+
+| Column             | Description                          |
+| ------------------ | ------------------------------------ |
+| **Epoch**          | Epoch of the event                   |
+| **Validator**      | Vote account public key              |
+| **Name**           | Validator display name               |
+| **Settlement [☉]** | Settlement amount in SOL             |
+| **Reason**         | Reason for the protected event       |
+| **Funder**         | Who funded the settlement            |
+
 ### Validator Bonds
 
 How much of Marinade's stake is currently bond-protected.
@@ -82,6 +93,18 @@ total bond capacity.
 
 **Table columns**: Validator · Marinade Stake · Bond Balance · Protected Stake ·
 Coverage (bar + percentage).
+
+**Table Columns:**
+
+| Column                   | Description                                                          |
+| ------------------------ | -------------------------------------------------------------------- |
+| **Validator**            | Vote account public key                                              |
+| **Name**                 | Validator display name                                               |
+| **Bond balance [☉]**     | Total bond deposit in SOL                                            |
+| **Max Stake Wanted [☉]** | Maximum stake the validator wants from Marinade                      |
+| **Bond Comm.**           | Commission override configured via bond                              |
+| **Marinade stake [☉]**   | Currently delegated Marinade stake                                   |
+| **Eff. Cost [☉]**        | Effective cost                                                       |
 
 ---
 
