@@ -1,6 +1,6 @@
 export const HELP_TEXT = {
   maxApy:
-    'The yearly return your validator promises stakers — inflation rewards, network tips, block rewards, plus the bid you pay on top. Higher Max APY means a better rank and more stake from Marinade.',
+    'The yearly return your validator promises stakers — inflation rewards, network tips, block rewards, plus the bid you pay on top. Higher Max APY means a better rank and more stake from Marinade, but also a higher bid you pay on the activating stake.',
   bond: 'SOL you lock up as a safety deposit. If you under-deliver on the promised APY, stakers get reimbursed from this. The fuller your bond is being drawn down, the sooner it runs out.',
   stakeDelta:
     "How much stake you'll gain or lose next epoch. Positive means Marinade will send you more SOL; negative means some will be pulled back.",
