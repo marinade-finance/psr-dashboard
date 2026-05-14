@@ -16,65 +16,65 @@ importers:
         specifier: 0.0.48
         version: 0.0.48
       '@radix-ui/react-dialog':
-        specifier: ^1.1.15
+        specifier: 1.1.15
         version: 1.1.15(@types/react-dom@18.3.0)(@types/react@18.3.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@radix-ui/react-slot':
-        specifier: ^1.2.4
+        specifier: 1.2.4
         version: 1.2.4(@types/react@18.3.0)(react@18.3.1)
       '@radix-ui/react-switch':
-        specifier: ^1.2.6
+        specifier: 1.2.6
         version: 1.2.6(@types/react-dom@18.3.0)(@types/react@18.3.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@radix-ui/react-tooltip':
-        specifier: ^1.2.8
+        specifier: 1.2.8
         version: 1.2.8(@types/react-dom@18.3.0)(@types/react@18.3.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@types/react-gtm-module':
-        specifier: ^2.0.4
+        specifier: 2.0.4
         version: 2.0.4
       class-variance-authority:
-        specifier: ^0.7.1
+        specifier: 0.7.1
         version: 0.7.1
       clsx:
-        specifier: ^2.1.1
+        specifier: 2.1.1
         version: 2.1.1
       react:
-        specifier: ^18.3.1
+        specifier: 18.3.1
         version: 18.3.1
       react-dom:
-        specifier: ^18.3.1
+        specifier: 18.3.1
         version: 18.3.1(react@18.3.1)
       react-gtm-module:
-        specifier: ^2.0.11
+        specifier: 2.0.11
         version: 2.0.11
       react-markdown:
-        specifier: ^10.1.0
+        specifier: 10.1.0
         version: 10.1.0(@types/react@18.3.0)(react@18.3.1)
       react-query:
-        specifier: ^3.39.3
+        specifier: 3.39.3
         version: 3.39.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-router-dom:
-        specifier: ^6.30.3
+        specifier: 6.30.3
         version: 6.30.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       rehype-raw:
-        specifier: ^7.0.0
+        specifier: 7.0.0
         version: 7.0.0
       remark-breaks:
-        specifier: ^4.0.0
+        specifier: 4.0.0
         version: 4.0.0
       remark-gfm:
-        specifier: ^4.0.1
+        specifier: 4.0.1
         version: 4.0.1
       tailwind-merge:
-        specifier: ^3.0.0
+        specifier: 3.5.0
         version: 3.5.0
     devDependencies:
       '@marinade.finance/eslint-config':
         specifier: 1.3.3
         version: 1.3.3(eslint@9.39.4(jiti@2.6.1))(jest@28.1.3(@types/node@16.18.24)(ts-node@10.9.2(@types/node@16.18.24)(typescript@4.9.5)))(prettier@3.8.3)(typescript@4.9.5)
       '@playwright/test':
-        specifier: ^1.58.2
+        specifier: 1.59.1
         version: 1.59.1
       '@tailwindcss/vite':
-        specifier: ^4.0.0
+        specifier: 4.2.2
         version: 4.2.2(vite@7.3.2(@types/node@16.18.24)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3))
       '@types/node':
         specifier: 16.18.24
@@ -86,31 +86,31 @@ importers:
         specifier: 18.3.0
         version: 18.3.0
       '@vitejs/plugin-react':
-        specifier: ^5.1.4
+        specifier: 5.2.0
         version: 5.2.0(vite@7.3.2(@types/node@16.18.24)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3))
       eslint:
-        specifier: ^9.39.4
+        specifier: 9.39.4
         version: 9.39.4(jiti@2.6.1)
       husky:
-        specifier: ^9.1.7
+        specifier: 9.1.7
         version: 9.1.7
       lint-staged:
-        specifier: ^16.4.0
+        specifier: 16.4.0
         version: 16.4.0
       prettier:
-        specifier: ^3.8.3
+        specifier: 3.8.3
         version: 3.8.3
       tailwindcss:
-        specifier: ^4.0.0
+        specifier: 4.2.2
         version: 4.2.2
       typescript:
         specifier: 4.9.5
         version: 4.9.5
       vite:
-        specifier: ^7.3.1
+        specifier: 7.3.2
         version: 7.3.2(@types/node@16.18.24)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3)
       vitest:
-        specifier: ^3.0.0
+        specifier: 3.2.4
         version: 3.2.4(@types/debug@4.1.13)(@types/node@16.18.24)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3)
 
 packages:
@@ -1351,6 +1351,7 @@ packages:
 
   '@ungap/structured-clone@1.3.0':
     resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
+    deprecated: Potential CWE-502 - Update to 1.3.1 or higher
 
   '@unrs/resolver-binding-android-arm-eabi@1.11.1':
     resolution: {integrity: sha512-ppLRUgHVaGRWUx0R0Ut06Mjo9gBaBkg3v/8AxusGLhsIotbBLuRk51rAzqLC8gq6NyyAojEXglNjzf6R948DNw==}
