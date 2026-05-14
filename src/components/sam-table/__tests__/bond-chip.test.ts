@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { bondCoverageLabel } from '../../validator-detail/validator-detail'
 import { BOND_CHIP } from '../sam-table'
 
-import type { BondCoverage } from 'src/services/breakdowns'
+import type { BondCoverage } from 'src/services/bond-coverage'
 
 // Regression: soft tier label was 'OK', which collided with the imperative
 // "OK" mood (everything is fine) when the actual meaning is "bond covers the

@@ -200,10 +200,13 @@ where applicable.
   `getTipStyle`, `getBondHealthStyle`, `getApyBreakdown`,
   `nextStakeDeltaCell`, `calculateBondUtilization`. Drives the rank-cell
   icon and the Next Step column.
-- **`breakdowns.ts`** — `computeSamRevenueMetrics`,
-  `computeBondCoverageMetrics`, `computeBidPenaltyMetrics`,
-  `bondHealthFromAuction` (`'healthy'|'soft'|'watch'|'critical'`).
-  `TOL_COEF`/`SCALE_COEF` mirror SDK `calcBidTooLowPenalty`.
+- **`bidding.ts`** — `computeBidding` (per-validator stake/bid/cost row).
+- **`bond-coverage.ts`** — `computeBondCoverage` (keep-stake and avoid-fee
+  top-ups on current vs projected exposed stake).
+- **`bond-health.ts`** — `bondHealthFromAuction`
+  (`'healthy'|'soft'|'watch'|'critical'`).
+- **`bid-penalty.ts`** — `computeBidPenalty`; local `TOL_COEF`/`SCALE_COEF`
+  mirror SDK `calcBidTooLowPenalty`.
 
 ### Validator data
 

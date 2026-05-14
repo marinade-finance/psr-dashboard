@@ -1,7 +1,7 @@
 import React from 'react'
 
 import { pay, payCta, pmpe, stake } from 'src/format'
-import { computeBondCoverage } from 'src/services/breakdowns'
+import { computeBondCoverage } from 'src/services/bond-coverage'
 
 import { CalcCard } from './card'
 import { docsPath } from './docs-path'
@@ -12,7 +12,7 @@ import type {
   DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
 import type { UserLevel } from 'src/components/navigation/navigation'
-import type { BondHealthState } from 'src/services/breakdowns'
+import type { BondHealthState } from 'src/services/bond-health'
 
 type Props = {
   validator: AuctionValidator

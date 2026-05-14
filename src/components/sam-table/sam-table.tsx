@@ -18,7 +18,7 @@ import { ConcentrationMetric } from 'src/components/concentration-metric/concent
 import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
 import { ValidatorSearch } from 'src/components/validator-search/validator-search'
 import { pct, sol, stake } from 'src/format'
-import { bondHealthFromAuction } from 'src/services/breakdowns'
+import { bondHealthFromAuction } from 'src/services/bond-health'
 import { HELP_TEXT } from 'src/services/help-text'
 import {
   augmentAuctionResult,

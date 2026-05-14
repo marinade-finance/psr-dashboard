@@ -2,7 +2,7 @@ import React from 'react'
 
 import { cn } from 'src/class_utils'
 import { pay, pmpe, stake } from 'src/format'
-import { computeBidding } from 'src/services/breakdowns'
+import { computeBidding } from 'src/services/bidding'
 
 import { CalcCard } from './card'
 import { docsPath } from './docs-path'

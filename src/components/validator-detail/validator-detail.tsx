@@ -23,12 +23,10 @@ import {
   CSS_MUTED_FG,
 } from 'src/css'
 import { pay, payCta, stake } from 'src/format'
-import {
-  bondHealthFromAuction,
-  computeBondCoverage,
-  computeBidding,
-  computeBidPenalty,
-} from 'src/services/breakdowns'
+import { computeBidPenalty } from 'src/services/bid-penalty'
+import { computeBidding } from 'src/services/bidding'
+import { computeBondCoverage } from 'src/services/bond-coverage'
+import { bondHealthFromAuction } from 'src/services/bond-health'
 import { HELP_TEXT } from 'src/services/help-text'
 import { fetchPsrEstimatesForValidator } from 'src/services/protected-events-estimator'
 import {
@@ -45,7 +43,7 @@ import {
 
 import type { AuctionResult, DsSamConfig } from '@marinade.finance/ds-sam-sdk'
 import type { UserLevel } from 'src/components/navigation/navigation'
-import type { BondCoverage } from 'src/services/breakdowns'
+import type { BondCoverage } from 'src/services/bond-coverage'
 import type { NotificationSummary } from 'src/services/notifications'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
 

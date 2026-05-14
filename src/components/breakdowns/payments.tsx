@@ -1,10 +1,8 @@
 import React from 'react'
 
 import { pay } from 'src/format'
-import {
-  computeBidPenalty,
-  computeBidding,
-} from 'src/services/breakdowns'
+import { computeBidPenalty } from 'src/services/bid-penalty'
+import { computeBidding } from 'src/services/bidding'
 import {
   isProtectedEvent,
   selectAmount,

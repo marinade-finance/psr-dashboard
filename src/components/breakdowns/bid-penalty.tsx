@@ -1,7 +1,7 @@
 import React from 'react'
 
 import { pct, pay, pmpe, stake } from 'src/format'
-import { computeBidPenalty } from 'src/services/breakdowns'
+import { computeBidPenalty } from 'src/services/bid-penalty'
 
 import { CalcCard } from './card'
 import { docsPath } from './docs-path'
