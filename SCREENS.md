@@ -76,10 +76,12 @@ Tooltips via `HelpTip` on each tile.
 
 Two-column grid below the stats bar (`grid-cols-1 sm:grid-cols-2 gap-3`).
 Two `<ConcentrationMetric>` cards: **Top Countries** and **Top ASOs**.
-Each shows up to 3 stacked bar rows (top entries), filled against the
-per-country / per-ASO cap; a row tinted `bg-destructive` means that
-entity was capped (`atCap`). Hover expands a tooltip showing up to 15
-entries plus a remaining-count line.
+The inline (non-hover) view shows only what matters at a glance: every
+over-cap entry if any are capped (rank order, tinted `bg-destructive`
+with a `(capped)` tag), otherwise just the single #1 entry. Each row is
+a stacked bar filled against the per-country / per-ASO cap. Hover
+expands a tooltip showing the full ranked list (up to 15 entries) plus a
+remaining-count line.
 
 ### Jump-to-validator search
 

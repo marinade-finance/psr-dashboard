@@ -15,7 +15,6 @@ type Props = {
   guideTo?: string
 }
 
-const TOP_N = 3
 const TOOLTIP_N = 15
 
 const BAR_TONE_DEFAULT = 'bg-chart-1'
@@ -57,7 +56,11 @@ export const ConcentrationMetric: React.FC<Props> = ({
   guideTo,
 }) => {
   const [open, setOpen] = useState(false)
-  const top = rows.slice(0, TOP_N)
+  // Inline view shows only what matters at a glance: every over-cap entry
+  // if any are capped, otherwise just the #1. The full ranked list lives in
+  // the hover popover. rows is sorted by stake desc, so capped stays ranked.
+  const capped = rows.filter(r => r.atCap)
+  const inline = capped.length > 0 ? capped : rows.slice(0, 1)
   const tipRows = rows.slice(0, TOOLTIP_N)
   const remaining = rows.length - tipRows.length
 
@@ -72,7 +75,7 @@ export const ConcentrationMetric: React.FC<Props> = ({
         {help && <HelpTip text={help} guideTo={guideTo} />}
       </div>
       <div className="flex flex-col gap-0.5">
-        {top.map((r, i) => {
+        {inline.map((r, i) => {
           const fill = capPct > 0 ? Math.min(r.pctOfTotal / capPct, 1) * 100 : 0
           const barClass = r.atCap
             ? 'bg-destructive'
