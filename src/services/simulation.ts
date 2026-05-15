@@ -43,7 +43,7 @@ export function buildOverrideValues(
   }
 }
 
-export type DisplayValidator<T> = { validator: T; isGhost: boolean }
+type DisplayValidator<T> = { validator: T; isGhost: boolean }
 
 export type PositionChange = {
   direction: 'improved' | 'worsened' | 'unchanged'
@@ -166,12 +166,7 @@ export function mergeOverrides(
     bidPmpe: number | null
   },
 ): SourceDataOverrides {
-  const merged: SourceDataOverrides = {
-    inflationCommissionsDec: new Map(existing?.inflationCommissionsDec),
-    mevCommissionsDec: new Map(existing?.mevCommissionsDec),
-    blockRewardsCommissionsDec: new Map(existing?.blockRewardsCommissionsDec),
-    cpmpesDec: new Map(existing?.cpmpesDec),
-  }
+  const merged = cloneOverrides(existing)
   if (values.inflationCommissionDec !== null)
     merged.inflationCommissionsDec.set(
       voteAccount,
@@ -192,15 +187,21 @@ export function removeFromOverrides(
   existing: SourceDataOverrides | null,
   voteAccount: string,
 ): SourceDataOverrides {
-  const result: SourceDataOverrides = {
-    inflationCommissionsDec: new Map(existing?.inflationCommissionsDec),
-    mevCommissionsDec: new Map(existing?.mevCommissionsDec),
-    blockRewardsCommissionsDec: new Map(existing?.blockRewardsCommissionsDec),
-    cpmpesDec: new Map(existing?.cpmpesDec),
-  }
+  const result = cloneOverrides(existing)
   result.inflationCommissionsDec.delete(voteAccount)
   result.mevCommissionsDec.delete(voteAccount)
   result.blockRewardsCommissionsDec.delete(voteAccount)
   result.cpmpesDec.delete(voteAccount)
   return result
+}
+
+function cloneOverrides(
+  existing: SourceDataOverrides | null,
+): SourceDataOverrides {
+  return {
+    inflationCommissionsDec: new Map(existing?.inflationCommissionsDec),
+    mevCommissionsDec: new Map(existing?.mevCommissionsDec),
+    blockRewardsCommissionsDec: new Map(existing?.blockRewardsCommissionsDec),
+    cpmpesDec: new Map(existing?.cpmpesDec),
+  }
 }
