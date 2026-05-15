@@ -331,7 +331,10 @@ export const ValidatorDetail = ({
       <SheetContent
         side="right"
         title="Validator detail"
-        className="w-full max-w-4xl overflow-y-auto p-0"
+        className={cn(
+          'w-full max-w-4xl overflow-y-auto p-0',
+          isSimulated && 'border-t-4 border-t-status-yellow',
+        )}
       >
         <div className="flex items-start justify-between px-4 sm:px-6 py-4 border-b border-border sticky top-0 z-10 gap-2 bg-background">
           <div className="flex flex-col gap-1 min-w-0">
