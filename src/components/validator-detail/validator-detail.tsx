@@ -665,7 +665,7 @@ export const ValidatorDetail = ({
                 />
                 <MetricRow
                   label="Expected change next epoch"
-                  help="Stake you'll gain or lose next epoch. Losses mostly come from falling out of the auction (your bid was too low or the bond was thin). A small share comes from people pulling SOL out of Marinade — that comes out of every validator proportionally."
+                  help="Stake you'll gain or lose next epoch. Losses mostly come from falling out of the auction — your bid was too low or the bond was thin. A small share comes from people pulling SOL out of Marinade, taken from every validator proportionally."
                   value={
                     expectedStakeDelta > 0
                       ? `+${stake(expectedStakeDelta)}`
