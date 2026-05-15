@@ -219,7 +219,7 @@ const PenaltyBadges: React.FC<{ validator: AuctionValidator }> = ({
     badges.push({ label: 'BondRiskFee', sol: bondRiskSol, kind: 'risk' })
   if (badges.length === 0) return null
   const tip = badges
-    .map(b => `${b.label}: ${sol(b.sol, 3)} SOL (estimate)`)
+    .map(b => `${b.label}: ~${sol(b.sol, 3)} SOL estimated`)
     .join('\n')
   return (
     <Tooltip content={<span className="whitespace-pre-line">{tip}</span>}>

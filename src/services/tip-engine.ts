@@ -122,7 +122,7 @@ function outOfSetTip(
   const bondBalance = validator.bondBalanceSol ?? 0
   if (bondBalance < dsSamConfig.minBondBalanceSol) {
     return {
-      text: `Bond below minimum (${stake(dsSamConfig.minBondBalanceSol)} required). Top up to qualify.`,
+      text: `Bond below minimum — ${stake(dsSamConfig.minBondBalanceSol)} required. Top up to qualify.`,
       urgency: 'warning',
       constraint: 'bond',
     }
