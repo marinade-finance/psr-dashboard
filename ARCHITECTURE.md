@@ -124,8 +124,10 @@ include the local `RankCell`, `PenaltyBadges`. Tests in
 ### `components/validator-detail/` — detail sheet
 
 `validator-detail.tsx` — Right-side `Sheet` (`max-w-4xl`) with tabs
-(Overview, Notifications, Payments, Bidding, Bond, Bid Penalty). The
-internal `Tab` union uses `'revenue'` as the value for the Bidding tab.
+(Overview, Notifications, Payments, Bond, Bid Penalty). The Bidding
+breakdown is stacked under the Payments breakdown in the Payments tab,
+not its own tab. The internal `Tab` union is `'overview' |
+'notifications' | 'bond' | 'penalty' | 'payments'`.
 Local `MetricRow` and `PenaltyRow` components are file-private (not
 exported). Auto-recalcs the what-if simulation via a 400ms debounce
 that funnels through a `useRef` to avoid the `onSimulate` callback

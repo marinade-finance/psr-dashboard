@@ -69,13 +69,7 @@ interface ValidatorDetailProps {
   level?: UserLevel
 }
 
-type Tab =
-  | 'overview'
-  | 'notifications'
-  | 'bond'
-  | 'revenue'
-  | 'penalty'
-  | 'payments'
+type Tab = 'overview' | 'notifications' | 'bond' | 'penalty' | 'payments'
 
 export type BondHealth = 'healthy' | 'soft' | 'watch' | 'critical'
 
@@ -487,7 +481,6 @@ export const ValidatorDetail = ({
             { id: 'overview', label: 'Overview' },
             { id: 'notifications', label: 'Notifications' },
             { id: 'payments', label: 'Payments' },
-            { id: 'revenue', label: 'Bidding' },
             { id: 'bond', label: 'Bond' },
             { id: 'penalty', label: 'Bid Penalty' },
           ]
@@ -544,10 +537,6 @@ export const ValidatorDetail = ({
                     onGoToSim={goToSim}
                     onGoToPenalty={() => setTab('penalty')}
                   />
-                </div>
-              )}
-              {tab === 'revenue' && (
-                <div className="p-4 sm:p-6">
                   <BiddingBreakdown
                     title="Bidding calculation"
                     guideTo={`${docsPath(level)}#cpmpe`}

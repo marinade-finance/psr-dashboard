@@ -171,15 +171,16 @@ When the auction grows your target stake above what's currently
 delegated, the gap doesn't appear instantly — it warms up. SAM still
 charges your bid against that incoming stake at a separate rate called
 the activating-stake PMPE, billed only on `max(0, target − active)`.
-The Bidding tab shows it on its own row inside the **Cost** section.
-If your target is at or below your active stake, this cost is zero.
+The Bidding breakdown shows it on its own row inside the **Cost**
+section. If your target is at or below your active stake, this cost
+is zero.
 
 #### Where to read it on the dashboard
 
-The validator detail panel's **Bidding tab** is the per-validator
-breakdown in PMPE — Stake (active vs target), commissions split by
-stream, the static-vs-effective bid gap, and the resulting cost in
-SOL. See the [Bidding tab subsection](#detail-panel) for what each
+The validator detail panel's **Payments tab** carries the per-validator
+Bidding breakdown in PMPE — Stake (active vs target), commissions split
+by stream, the static-vs-effective bid gap, and the resulting cost in
+SOL. See the [Payments tab subsection](#detail-panel) for what each
 row means.
 
 _See [Last-Price Auction — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market#last-price-auction) for how PMPE feeds the clearing price._
@@ -500,11 +501,13 @@ _See [Eligibility Criteria — Marinade Docs](https://docs.marinade.finance/mari
 <a id="detail-panel"></a>
 ## Validator Detail Panel
 
-Clicking a row opens the side panel. The four calculation tabs
-(Payments, Bidding, Bond, Bid Penalty) **mirror the same math the
-SAM auction runs server-side** — they recompute the SDK's formulas
+Clicking a row opens the side panel. The calculation tabs
+— Payments, Bond, Bid Penalty — **mirror the same math the
+SAM auction runs server-side**: they recompute the SDK's formulas
 locally so you can see each input and intermediate value. Numbers
-match the protocol's settlement decisions to the SOL.
+match the protocol's settlement decisions to the SOL. The Bidding
+breakdown lives under the Payments tab, stacked below the payments
+table.
 
 ### Overview tab
 
@@ -613,9 +616,10 @@ relevant tab: "See bid-too-low penalty calculation →" appears only
 when the bid-too-low penalty is active, and "Simulate commission or
 bid changes →" turns on simulation mode.
 
-### Bidding tab
+#### Bidding breakdown
 
-Why the validator pays what they pay. Tracks the bid construction
+Stacked directly below the payments table on the same tab. Shows why
+the validator pays what they pay, tracking the bid construction
 side-by-side with the cost.
 
 - **Stake** — Active / Target Marinade stake and the projected

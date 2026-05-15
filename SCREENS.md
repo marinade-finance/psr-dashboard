@@ -154,9 +154,11 @@ Four tiers, `BOND_CHIP` record in `sam-table.tsx`:
 when a row is clicked. URL synced via `?v=<voteAccount>`; browser-back
 closes the sheet.
 
-**Tabs:** Overview · Notifications (when present) · Payments · Bidding ·
-Bond · Bid Penalty. The internal `Tab` union uses `'revenue'` as the
-value for the Bidding tab.
+**Tabs:** Overview · Notifications (when present) · Payments · Bond ·
+Bid Penalty. The Bidding breakdown is no longer its own tab — it is
+stacked under the Payments breakdown inside the Payments tab. The
+internal `Tab` union is `'overview' | 'notifications' | 'bond' |
+'penalty' | 'payments'`.
 
 **Overview** — 2-col grid (`lg:grid-cols-2`, `gap-6`):
 
