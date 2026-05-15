@@ -17,8 +17,9 @@ const CardHeader: React.FC<{
   title: string
   guideTo?: string
   isSimulated?: boolean
+  onTitleClick?: () => void
   className?: string
-}> = ({ title, guideTo, isSimulated, className }) => (
+}> = ({ title, guideTo, isSimulated, onTitleClick, className }) => (
   <h3
     className={cn(
       'text-base font-semibold text-foreground flex items-center gap-2',
@@ -26,7 +27,17 @@ const CardHeader: React.FC<{
     )}
   >
     {isSimulated && <span className="text-status-yellow">Simulated ·</span>}
-    {title}
+    {onTitleClick ? (
+      <button
+        type="button"
+        onClick={onTitleClick}
+        className="hover:underline hover:text-primary transition-colors cursor-pointer"
+      >
+        {title}
+      </button>
+    ) : (
+      title
+    )}
     {guideTo && (
       <Link
         to={guideTo}
@@ -42,15 +53,17 @@ export const CalcCard: React.FC<{
   title: string
   guideTo?: string
   isSimulated?: boolean
+  onTitleClick?: () => void
   status?: { label: string; tone: 'red' | 'yellow' | 'green' }
   tip?: React.ReactNode
   children: React.ReactNode
-}> = ({ title, guideTo, isSimulated, status, tip, children }) => (
+}> = ({ title, guideTo, isSimulated, onTitleClick, status, tip, children }) => (
   <div className="bg-card rounded-xl border border-border p-5">
     <CardHeader
       title={title}
       guideTo={guideTo}
       isSimulated={isSimulated}
+      onTitleClick={onTitleClick}
       className="mb-3"
     />
     {status && (

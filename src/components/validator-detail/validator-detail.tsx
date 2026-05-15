@@ -682,14 +682,7 @@ export const ValidatorDetail = ({
               title="Bond"
               guideTo={`${docsPath(level)}#bond`}
               isSimulated={isSimulated}
-              tip={
-                <button
-                  className="text-xs text-primary hover:underline"
-                  onClick={() => setTab('bond')}
-                >
-                  See full bond coverage breakdown →
-                </button>
-              }
+              onTitleClick={() => setTab('bond')}
             >
               <div className="space-y-3">
                 <MetricRow
@@ -718,17 +711,16 @@ export const ValidatorDetail = ({
               title="Expected Payment This Epoch"
               guideTo={`${docsPath(level)}#detail-panel`}
               isSimulated={isSimulated}
+              onTitleClick={() => setTab('payments')}
             >
               <div className="space-y-3">
                 <MetricRow
                   label="Active Stake Cost"
                   value={cost(paymentMetrics.cost)}
-                  onSeeBreakdown={() => setTab('payments')}
                 />
                 <MetricRow
                   label="Activating Stake Cost"
                   value={cost(paymentMetrics.activatingCost)}
-                  onSeeBreakdown={() => setTab('payments')}
                 />
                 {(() => {
                   const penaltyTotal =
@@ -776,6 +768,7 @@ export const ValidatorDetail = ({
                       blacklistPenaltySol +
                       bondRiskFeeSol,
                   )}
+                  onSeeBreakdown={() => setTab('payments')}
                   separator
                 />
               </div>
