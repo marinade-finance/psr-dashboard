@@ -240,8 +240,16 @@ the `SectionHeader` `unit` slot, stated once per section instead of
 suffixed on every row label. `CalcRow` and `RevRow` derive paddings,
 dividers and weight from one shared `rowStyle()` helper.
 
-**Tip banner** — sticky strip below the header. Click target opens the
-relevant tab (`Bond tab →`, `Simulate →`).
+**Tip banner** — strip below the header. For non-bond tips it is the
+tinted advisory box coloured by tip urgency, with a `Simulate →` chip
+when the constraint is `bid`. For `constraint === 'bond'` tips it is
+NOT a tinted box: the Bond tab's `CalcCard` status banner is the single
+authoritative source for bond advice (bond-health / yellow axis, exact
+top-up figure), so the header is a plain text link "Bond needs
+attention — see the Bond tab →" that routes there instead of repeating
+the sentence in a second colour family. This makes it structurally
+impossible for the header and the Bond banner to disagree about one
+state.
 
 `MetricRow` and `PenaltyRow` are file-private helpers in
 `validator-detail.tsx`; they are not exported as shared primitives.

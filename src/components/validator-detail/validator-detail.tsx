@@ -438,42 +438,55 @@ export const ValidatorDetail = ({
           </div>
         </div>
 
-        {(() => {
-          const tipTarget: Tab | null =
-            tip.constraint === 'bond'
-              ? 'bond'
-              : tip.constraint === 'bid'
-                ? 'overview'
-                : null
-          return (
-            <div
-              className={cn(
-                'px-4 sm:px-6 py-3 flex items-center gap-3',
-                tipTarget && 'cursor-pointer select-none',
-              )}
-              style={{ background: tipStyle.bg }}
-              onClick={tipTarget ? () => setTab(tipTarget) : undefined}
+        {tip.constraint === 'bond' ? (
+          // The Bond tab's status banner is the single authoritative source
+          // for bond advice (bond-health / yellow axis, exact top-up figure).
+          // The header must not repeat that sentence in a second tinted box
+          // with its own severity colour — that produced one state shown as
+          // both indigo and yellow. Here it is a plain text link to where the
+          // one banner lives; the figure and colour live there, once.
+          <div className="px-4 sm:px-6 py-3 border-b border-border">
+            <button
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => setTab('bond')}
             >
-              <span
-                className="text-sm font-medium flex-1"
-                style={{ color: tipStyle.color }}
+              Bond needs attention — see the Bond tab →
+            </button>
+          </div>
+        ) : (
+          (() => {
+            const tipTarget: Tab | null =
+              tip.constraint === 'bid' ? 'overview' : null
+            return (
+              <div
+                className={cn(
+                  'px-4 sm:px-6 py-3 flex items-center gap-3',
+                  tipTarget && 'cursor-pointer select-none',
+                )}
+                style={{ background: tipStyle.bg }}
+                onClick={tipTarget ? () => setTab(tipTarget) : undefined}
               >
-                {tip.text}
-              </span>
-              {tipTarget && (
                 <span
-                  className="text-xs font-medium shrink-0 px-2 py-0.5 rounded border whitespace-nowrap bg-card/55"
-                  style={{
-                    color: tipStyle.color,
-                    borderColor: tipStyle.color,
-                  }}
+                  className="text-sm font-medium flex-1"
+                  style={{ color: tipStyle.color }}
                 >
-                  {tip.constraint === 'bond' ? 'Bond tab →' : 'Simulate →'}
+                  {tip.text}
                 </span>
-              )}
-            </div>
-          )
-        })()}
+                {tipTarget && (
+                  <span
+                    className="text-xs font-medium shrink-0 px-2 py-0.5 rounded border whitespace-nowrap bg-card/55"
+                    style={{
+                      color: tipStyle.color,
+                      borderColor: tipStyle.color,
+                    }}
+                  >
+                    Simulate →
+                  </span>
+                )}
+              </div>
+            )
+          })()
+        )}
 
         {(() => {
           const goToSim = () => {
