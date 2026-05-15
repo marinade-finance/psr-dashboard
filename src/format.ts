@@ -4,11 +4,18 @@
 // zero, which is what we want for monetary display (matches what lodash.round
 // used to do, without the dependency).
 
-export const sol = (amount: number, digits = 0) =>
-  amount.toLocaleString(undefined, {
+// digits=0 means whole-SOL display. In that case sub-1 amounts round to "0"
+// or "1" and read as misleading — surface as "<1" / ">-1" instead.
+export const sol = (amount: number, digits = 0): string => {
+  if (digits === 0) {
+    if (amount > 0 && amount < 1) return '<1'
+    if (amount < 0 && amount > -1) return '>-1'
+  }
+  return amount.toLocaleString(undefined, {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   })
+}
 
 const pctString = (amount: number, fractionDigits: number = 2): string =>
   `${(100 * amount).toFixed(fractionDigits)}%`
@@ -31,12 +38,7 @@ export const finite = (x: number | null | undefined): number =>
 
 export const pmpe = (x: number) => x.toFixed(5)
 export const stake = (n: number) => `${sol(n, 0)} SOL`
-// Never round a non-zero payment down to "0 SOL" — surfaces sub-1 as "<1 SOL".
-export const pay = (n: number): string => {
-  if (n > 0 && n < 1) return '<1 SOL'
-  if (n < 0 && n > -1) return '>-1 SOL'
-  return `${sol(n, 0)} SOL`
-}
+export const pay = (n: number) => `${sol(n, 0)} SOL`
 export const penalty = (n: number) => `${sol(n, 3)} SOL`
 
 // Top-up CTAs: never claim "Top up 0 SOL". Sub-1-SOL values show "<1 SOL".
