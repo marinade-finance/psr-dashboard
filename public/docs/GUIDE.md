@@ -504,13 +504,27 @@ is set — the displayed bid is a manual override, not the on-chain value.
 
 ### Bond tab
 
-The full bond-coverage calculation in three sections.
+The full bond-coverage calculation in up to four sections. Each row in
+the table is one input or one intermediate value; the section ends in
+either a "Top up X" call to action or a green tick reading "Bond meets
+ideal coverage" / "Bond above the penalty threshold".
+
+The two reasons a bond exists — paying bid costs every epoch and
+backing PSR payouts when something goes wrong — show up directly as
+two line items inside each coverage section: **Held for bid payments**
+covers the bid burn over the coverage window, and **Held for reward
+payouts** covers the rewards a staker is guaranteed under PSR. Their
+sum is the row labelled "Minimum required" or "Ideal required"; that's
+the floor the bond has to clear.
 
 **Rates** — `expectedMaxEffBidPmpe` and `onchainDistributedPmpe`, the
-two PMPE rates that scale the coverage requirements.
+two PMPE rates that scale the bid-payment and reward-payout
+requirements respectively.
 
-**Minimum Coverage** (uses *current* exposed stake) — answers "what
-bond do I need to keep my current stake?":
+**Minimum bond to keep stake** (uses *current* exposed stake) —
+answers "what bond do I need to keep my current stake?". Falling
+below this floor triggers a bond risk fee and starts forced
+undelegation:
 
 ```
 currentExposedStake     = activatedStake − unprotectedStake
@@ -519,9 +533,10 @@ floorBaseKeep           = minUnprotectedReserve
 topUpToKeepStake        = max(0, floorBaseKeep − claimableBondBalance)
 ```
 
-**Ideal Coverage** (uses *current* exposed stake too, but with
-`idealBondPmpe` and `idealUnprotectedReserve`) — answers "what bond
-unlocks more stake?":
+**Ideal bond to grow stake** (uses *current* exposed stake too, but
+with `idealBondPmpe` and `idealUnprotectedReserve`) — answers "what
+bond unlocks more stake?". Below this line the validator stays in the
+auction but the pool won't award additional stake:
 
 ```
 requiredIdealKeep       = idealUnprotectedReserve
@@ -529,16 +544,18 @@ requiredIdealKeep       = idealUnprotectedReserve
 topUpToIdealKeep        = max(0, requiredIdealKeep − bondBalance)
 ```
 
-**Bond Risk** (conditional — only when `bondRiskFeeSol > 0`,
-`topUpToAvoidFee > 0`, or there is carried paid undelegation): uses
-`projectedExposedStake = activatedStake − carriedPaidUndelegation −
-unprotectedStake` (always ≤ current). The penalty trigger threshold is
-`floorBaseProjected`; falling below it fires the SDK's
-`calcBondRiskFee`. See [Bond Risk Fee](#bond-risk-fee).
+**Bond risk fee** (conditional — only when `bondRiskFeeSol > 0`,
+`topUpToAvoidFee > 0`, or there is carried paid undelegation, so the
+section vanishes for healthy bonds): uses `projectedExposedStake =
+activatedStake − carriedPaidUndelegation − unprotectedStake` — always
+≤ current, because stake already on its way out shouldn't inflate the
+fee. The penalty trigger threshold is `floorBaseProjected`; falling
+below it fires the SDK's `calcBondRiskFee`. See
+[Bond Risk Fee](#bond-risk-fee).
 
-Status colour: critical (red) when top-up-to-avoid-fee > 0; watch
-(yellow) when top-up-to-keep-stake > 0; soft (muted) when only
-top-up-to-ideal > 0; healthy (green) otherwise.
+Status colour at the top of the card: critical (red) when
+top-up-to-avoid-fee > 0; watch (yellow) when top-up-to-keep-stake > 0;
+soft (muted) when only top-up-to-ideal > 0; healthy (green) otherwise.
 
 ### Bid Penalty tab
 
