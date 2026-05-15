@@ -6,7 +6,6 @@ import { Card } from 'src/components/ui/card'
 type Props = {
   label: string
   value: React.ReactNode
-  topline?: React.ReactNode
   subline?: React.ReactNode
   extra?: React.ReactNode
   tooltipHtml?: string
@@ -15,7 +14,6 @@ type Props = {
 export const Metric: React.FC<Props> = ({
   label,
   value,
-  topline,
   subline,
   extra,
   tooltipHtml,
@@ -25,11 +23,6 @@ export const Metric: React.FC<Props> = ({
       {label}
       {tooltipHtml && <HelpTip html={tooltipHtml} />}
     </div>
-    {topline && (
-      <div className="text-xs text-muted-foreground font-mono mb-0.5">
-        {topline}
-      </div>
-    )}
     <div className="metricValue text-xl sm:text-2xl font-semibold font-mono truncate">
       {value}
     </div>
