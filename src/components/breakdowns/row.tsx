@@ -1,6 +1,7 @@
 import React from 'react'
 
 import { cn } from 'src/class_utils'
+import { HelpTip } from 'src/components/help-tip/help-tip'
 
 export const SEPARATOR_DIV_CLASS = 'border-t border-border-grid pt-2 mt-1'
 // Cell padding for table rows above/below the separator border. The extra
@@ -11,16 +12,20 @@ export const SEPARATOR_CELL_PAD = 'pt-3 pb-1.5'
 export const TOTAL_CELL_PAD = 'pt-4 pb-2'
 export const NORMAL_CELL_PAD = 'py-1.5'
 
-export const SectionHeader: React.FC<{ title: string; colSpan?: number }> = ({
-  title,
-  colSpan = 3,
-}) => (
+export const SectionHeader: React.FC<{
+  title: string
+  colSpan?: number
+  help?: string
+}> = ({ title, colSpan = 3, help }) => (
   <tr>
     <td
       colSpan={colSpan}
       className="pt-4 pb-1 text-xs uppercase tracking-wider text-muted-foreground border-b border-dashed border-border"
     >
-      {title}
+      <span className="inline-flex items-center gap-1.5">
+        {title}
+        {help && <HelpTip text={help} />}
+      </span>
     </td>
   </tr>
 )

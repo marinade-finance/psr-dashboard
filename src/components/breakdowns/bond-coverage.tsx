@@ -127,7 +127,10 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
             secondary={pmpe(coverage.onchainDistributedPmpe)}
           />
 
-          <SectionHeader title={`Bond Coverage — ${coverage.minEp} epochs`} />
+          <SectionHeader
+            title={`Bond Coverage — ${coverage.minEp} epochs`}
+            help={`Whether the bond covers the next ${coverage.minEp} epochs. Fall short → bond-risk fee, then losing stake.`}
+          />
           <CalcRow
             label="Claimable bond balance"
             value={pay(coverage.claimableBondBalanceSol)}
@@ -167,6 +170,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
 
           <SectionHeader
             title={`Ideal Coverage — ${coverage.idealEp} epochs`}
+            help={`Whether the bond covers the next ${coverage.idealEp} epochs at the ideal threshold. Fall short → can keep current stake but won't be given more.`}
           />
           <CalcRow
             label="Bond balance"
@@ -203,7 +207,10 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
 
           {showRiskSection && (
             <>
-              <SectionHeader title="Bond Risk" />
+              <SectionHeader
+                title="Bond Risk"
+                help="How much bond-risk fee gets charged this epoch, and the top-up needed to avoid it."
+              />
               {coverage.carriedPaidUndelegationSol > 0 && (
                 <>
                   <CalcRow
