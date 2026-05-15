@@ -128,7 +128,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           />
 
           <SectionHeader
-            title={`Bond to keep stake — ${coverage.minEp} epochs`}
+            title={`Minimum bond to keep stake — ${coverage.minEp} epochs`}
             help={`What the bond needs to keep your stake for the next ${coverage.minEp} epochs. Fall short — you pay a bond risk fee AND are scheduled to lose stake immediately.`}
           />
           <CalcRow
@@ -170,7 +170,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           )}
 
           <SectionHeader
-            title={`Bond to grow stake — ${coverage.idealEp} epochs`}
+            title={`Ideal bond to grow stake — ${coverage.idealEp} epochs`}
             help={
               'What the bond needs for the pool to feel comfortable giving you more stake.'
             }
@@ -212,7 +212,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           {showRiskSection && (
             <>
               <SectionHeader
-                title="Bond Risk"
+                title="Bond risk"
                 help="How much bond-risk fee gets charged this epoch, and the top-up needed to avoid it."
               />
               {coverage.carriedPaidUndelegationSol > 0 && (
@@ -222,7 +222,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
                     secondary={stake(coverage.carriedPaidUndelegationSol)}
                   />
                   <CalcRow
-                    label="Projected exposed stake (after undelegation)"
+                    label="Projected exposed stake — after undelegation"
                     secondary={stake(coverage.projectedExposedStakeSol)}
                   />
                 </>

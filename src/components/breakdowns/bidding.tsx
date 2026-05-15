@@ -214,9 +214,9 @@ export const BiddingBreakdown: React.FC<Props> = ({
           <RevRow label="Resulting bid gap" pmpe={pmpe(metrics.bidGap)} bold />
 
           <SectionHeader title="Cost" colSpan={4} />
-          <RevRow label="Active Stake Cost" value={cost(metrics.cost)} />
+          <RevRow label="Active stake cost" value={cost(metrics.cost)} />
           <RevRow
-            label="Activating Stake Cost"
+            label="Activating stake cost"
             pmpe={pmpe(metrics.activatingStakePmpe)}
             value={cost(metrics.activatingCost)}
           />
