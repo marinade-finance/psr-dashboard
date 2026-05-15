@@ -19,6 +19,10 @@ export type BondCoverage = {
   carriedPaidUndelegationSol: number
   minUnprotectedReserveSol: number
   idealUnprotectedReserveSol: number
+  // One-epoch rewards-delivery insurance baked into both floors. Doesn't
+  // scale with the epoch horizon — it's the same piece in min/ideal.
+  rewardsGuaranteeKeep: number
+  rewardsGuaranteeIdeal: number
   // Coverage section (current basis): "keep your stake"
   minCoverageBidKeep: number
   floorBaseKeep: number
@@ -90,12 +94,15 @@ export function computeBondCoverage(
   )
   const minCoverageBidKeep =
     ((minEp * expectedMaxEffBidPmpe) / 1000) * currentExposedStakeSol
+  const rewardsGuaranteeKeep =
+    (onchainDistributedPmpe / 1000) * currentExposedStakeSol
   const floorBaseKeep =
     minUnprotectedReserveSol + (minBondPmpe / 1000) * currentExposedStakeSol
   const topUpToKeepStake = Math.max(0, floorBaseKeep - claimableBondBalanceSol)
 
   const idealCoverageBidKeep =
     ((idealEp * expectedMaxEffBidPmpe) / 1000) * currentExposedStakeSol
+  const rewardsGuaranteeIdeal = rewardsGuaranteeKeep
   const requiredIdealKeep =
     idealUnprotectedReserveSol + (idealBondPmpe / 1000) * currentExposedStakeSol
   const topUpToIdealKeep = Math.max(0, requiredIdealKeep - bondBalanceSol)
@@ -123,6 +130,8 @@ export function computeBondCoverage(
     carriedPaidUndelegationSol,
     minUnprotectedReserveSol,
     idealUnprotectedReserveSol,
+    rewardsGuaranteeKeep,
+    rewardsGuaranteeIdeal,
     minCoverageBidKeep,
     floorBaseKeep,
     topUpToKeepStake,

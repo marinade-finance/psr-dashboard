@@ -149,6 +149,10 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
             value={pay(coverage.minUnprotectedReserveSol)}
           />
           <CalcRow
+            label="Rewards delivery guarantee"
+            value={pay(coverage.rewardsGuaranteeKeep)}
+          />
+          <CalcRow
             label="Minimum bid coverage"
             value={pay(coverage.minCoverageBidKeep)}
           />
@@ -184,6 +188,10 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           <CalcRow
             label="Ideal unprotected reserve"
             value={pay(coverage.idealUnprotectedReserveSol)}
+          />
+          <CalcRow
+            label="Rewards delivery guarantee"
+            value={pay(coverage.rewardsGuaranteeIdeal)}
           />
           <CalcRow
             label="Ideal bid coverage"

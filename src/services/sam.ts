@@ -91,6 +91,36 @@ export const selectWinningAPY = (
   epochsPerYear: number,
 ) => Math.pow(1 + auctionResult.winningTotalPmpe / 1e3, epochsPerYear) - 1
 
+// Rebuild the winning APY at THIS validator's commission profile: take the
+// marginal winner's bid component and add it to the validator's own
+// inflation/MEV/block revenue. Answers "would I clear at the auction-
+// clearing bid?" — apples-to-apples for the APY pill in validator-detail.
+export function selectWinningApyForValidator(
+  v: AuctionValidator,
+  auctionResult: AuctionResult,
+  epochsPerYear: number,
+): number {
+  const { winningTotalPmpe } = auctionResult
+  let marginal: AuctionValidator | null = null
+  for (const w of auctionResult.auctionData.validators) {
+    if (w.auctionStake.marinadeSamTargetSol <= 0) continue
+    if (!marginal || w.revShare.totalPmpe < marginal.revShare.totalPmpe)
+      marginal = w
+  }
+  const m = marginal?.revShare
+  const winningBidPmpe = m
+    ? Math.max(
+        0,
+        winningTotalPmpe - m.inflationPmpe - m.mevPmpe - (m.blockPmpe ?? 0),
+      )
+    : 0
+  const r = v.revShare
+  return compoundApy(
+    r.inflationPmpe + r.mevPmpe + (r.blockPmpe ?? 0) + winningBidPmpe,
+    epochsPerYear,
+  )
+}
+
 const totalProfitPmpe = (v: AuctionValidator) =>
   v.revShare.auctionEffectiveBidPmpe +
   v.revShare.inflationPmpe +

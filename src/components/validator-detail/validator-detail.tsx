@@ -36,7 +36,7 @@ import {
   selectExpectedStakeChange,
   selectMaxAPY,
   selectVoteAccount,
-  selectWinningAPY,
+  selectWinningApyForValidator,
 } from 'src/services/sam'
 import {
   getApyBreakdown,
@@ -202,7 +202,11 @@ export const ValidatorDetail = ({
   const voteAccount = selectVoteAccount(validator)
   const validatorName = nameMap?.get(voteAccount)?.name
   const notificationSummary = notificationsMap?.[voteAccount]
-  const winningApy = selectWinningAPY(auctionResult, epochsPerYear)
+  const winningApy = selectWinningApyForValidator(
+    validator,
+    auctionResult,
+    epochsPerYear,
+  )
   const winningTotalPmpe = auctionResult.winningTotalPmpe
   const apyBreakdown = getApyBreakdown(validator, epochsPerYear)
   const bondRunway = validator.bondGoodForNEpochs ?? 0
