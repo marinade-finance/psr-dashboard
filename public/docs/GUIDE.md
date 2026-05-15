@@ -372,6 +372,36 @@ which were paid by the validator's bond vs Marinade's backstop.
 
 _See [How Protected Staking Rewards work — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/protected-staking-rewards#how-protected-staking-rewards-work) for the protection guarantee, settlement flow, and bond requirements._
 
+<a id="sfdp"></a>
+### SFDP — Solana Foundation Delegation Programme
+
+SFDP is the Solana Foundation's own delegation programme. Meeting its criteria earns a validator a small stake boost inside Marinade's auction — the foundation's tick of approval acts as a quality signal the auction weights slightly higher.
+
+Requirements are maintained by the foundation and include uptime thresholds, commission limits, and identity verification. Whether a validator meets the criteria is shown in the SAM table as a small tag on their row.
+
+_See [Solana Foundation Delegation Programme](https://solana.org/delegation-program) for the official eligibility requirements._
+
+<a id="stake-wanted"></a>
+### Max Stake Wanted
+
+Each validator sets a self-imposed cap on how much Marinade stake they will accept. The auction will never award stake beyond that cap — even if the validator's bid and bond would otherwise qualify for more.
+
+Setting this too low leaves stake on the table. If the cap is the binding constraint rather than bid or bond, the Next Step tip in the table will say so, and topping up your bond or raising your bid would not help until the cap is raised.
+
+<a id="bid-distribution"></a>
+### Bid Distribution
+
+The bid-distribution chart shows where a validator's static bid PMPE sits relative to everyone else currently bidding. It answers "am I well above the pack, roughly in the middle, or barely over the clearing price?"
+
+A large gap between your bid and the clearing price means you have auction headroom — you could lower your bid and still win stake. A gap close to zero means one new entrant with a higher bid could push you out of the winning set.
+
+<a id="concentration"></a>
+### Concentration Limits (Countries and ASOs)
+
+Marinade caps the fraction of auction stake that can go to validators in a single country or from a single Autonomous System Operator (ASO — the hosting provider or network operator). These caps protect the pool against correlated failures: if one cloud provider or jurisdiction has an outage, the impact on Marinade's stake is bounded.
+
+When a country or ASO hits its cap, validators there are cut — even if their bid is high enough to win. The "Top Countries" and "Top ASOs" tiles on the SAM page show the current fill level for each group and mark capped entries in red.
+
 ---
 
 <a id="auction-table"></a>

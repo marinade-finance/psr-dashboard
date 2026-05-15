@@ -48,6 +48,30 @@ One extra metric tile at the top of the Protected Events page:
 
 ---
 
+## Additional Concepts
+
+<a id="sfdp"></a>
+### SFDP — Solana Foundation Delegation Programme
+
+Validators meeting the foundation's uptime, commission, and identity criteria receive a minor stake-weight uplift in the SAM auction. The boolean is read from the validators API and treated as a static score component — it does not interact with the bid or bond math.
+
+<a id="stake-wanted"></a>
+### Max Stake Wanted
+
+Validator-set upper bound on Marinade delegation. The SDK caps `marinadeSamTargetSol` at `wantedSol`; the constraint shows up in the Next Step tip as "Raise your max-stake-wanted". Bond and bid improvements are inert while `wantedSol` is binding.
+
+<a id="bid-distribution"></a>
+### Bid Distribution
+
+The bid-distribution histogram plots each validator's static CPMPE bid in quantile buckets. Useful for gauging whether a given bid is at the top, middle, or tail of the current field. The clearing price (`winningTotalPmpe − onchainDistributedPmpe`) sets the practical floor; bids below it lose stake regardless of absolute size.
+
+<a id="concentration"></a>
+### Concentration Limits
+
+Per-country and per-ASO stake caps are enforced as a post-ranking filter: the SDK iterates winners in APY order and skips any validator whose group is already at the cap (`countryCapPct`, `asoCapPct` in `DsSamConfig`). Capped validators show in the Top Countries / Top ASOs tiles with a red marker. In expert mode, capped validators that would otherwise win appear below the cutoff line because the cap, not their bid, is the binding constraint.
+
+---
+
 ## Notes
 
 - The `expert-` URL prefix persists across navigation: clicking between SAM,
