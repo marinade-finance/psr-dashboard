@@ -88,6 +88,8 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
               />
             )
           })()}
+
+          <SectionHeader title="Historical baseline" />
           <CalcRow
             label="History window"
             secondary={`${metrics.historyEpochs} epochs`}
@@ -114,7 +116,17 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
             label="Bond obligation PMPE"
             value={pmpe(metrics.bondObligationPmpe)}
           />
-          <CalcRow label="Shortfall" value={pmpe(metrics.shortfall)} bold />
+          <CalcRow
+            label="Shortfall"
+            value={pmpe(metrics.shortfall)}
+            severity={
+              metrics.shortfall === 0
+                ? 'ok'
+                : metrics.isNegativeBiddingChange
+                  ? 'error'
+                  : undefined
+            }
+          />
 
           <SectionHeader title="Penalty" />
           <CalcRow
