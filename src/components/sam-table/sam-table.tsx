@@ -280,23 +280,18 @@ const RankCell: React.FC<{
 }) => {
   // Primary: absolute 1-based stake-priority rank from the top.
   const rankLabel = `#${rank}`
-  // Sub: cutoff-relative position — cutoffRank 0 is the marginal winner,
-  // +N above the cutoff, -N below.
-  const cutoffLabel =
-    cutoffRank === 0
-      ? '#0'
-      : cutoffRank < 0
-        ? `-#${-cutoffRank}`
-        : `#${cutoffRank}`
+  // Sub: cutoff-relative position. No # prefix here — the # lives only on
+  // the primary rank. NBSP binds the count to the word so it never wraps.
   const cutoffWord = cutoffRank === 0 ? 'at cutoff' : inSet ? 'above' : 'below'
-  const rankSubLabel = `${cutoffLabel} ${cutoffWord}`
+  const rankSubLabel =
+    cutoffRank === 0 ? 'at cutoff' : `${Math.abs(cutoffRank)} ${cutoffWord}`
   if (isGhost)
     return (
       <span
         className={`text-muted-foreground ${RANK_MONO} flex flex-col items-center gap-0`}
       >
-        <span>{rankLabel}</span>
-        <span className="text-xs opacity-60 font-normal leading-tight">
+        <span className="text-sm">{rankLabel}</span>
+        <span className="text-[10px] opacity-60 font-normal leading-tight">
           {rankSubLabel}
         </span>
       </span>
@@ -305,7 +300,7 @@ const RankCell: React.FC<{
     return (
       <div className="flex flex-col items-center gap-0.5">
         <span
-          className={`font-medium ${RANK_MONO}`}
+          className="font-medium font-mono text-sm"
           style={{ color: posColor ?? 'var(--muted-foreground)' }}
         >
           {rankLabel}
@@ -328,8 +323,8 @@ const RankCell: React.FC<{
       className={`font-medium ${RANK_MONO} flex flex-col items-center gap-0`}
       style={{ color: tipColor }}
     >
-      <span>{rankLabel}</span>
-      <span className="text-xs opacity-60 font-normal text-muted-foreground leading-tight">
+      <span className="text-sm">{rankLabel}</span>
+      <span className="text-[10px] opacity-60 font-normal text-muted-foreground leading-tight">
         {rankSubLabel}
       </span>
     </span>
