@@ -177,7 +177,7 @@ export const BiddingBreakdown: React.FC<Props> = ({
             severity={deltaSeverity}
           />
 
-          <SectionHeader title="Total cost PMPE" colSpan={4} />
+          <SectionHeader title="Active stake cost PMPE" colSpan={4} />
           <RevRow
             label="Inflation"
             pct={metrics.inflPct}
@@ -212,8 +212,9 @@ export const BiddingBreakdown: React.FC<Props> = ({
             pmpe={pmpe(metrics.effBid)}
           />
           <RevRow
-            label="Total bid gap"
+            label="Resulting bid gap"
             pmpe={pmpe(metrics.bidGap)}
+            bold
             severity={
               metrics.bidGap > 2
                 ? 'warning'
