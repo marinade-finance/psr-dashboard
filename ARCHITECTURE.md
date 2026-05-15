@@ -221,11 +221,16 @@ where applicable.
   (`selectSamDistributedStake`, `selectWinningAPY`, `selectProjectedAPY`,
   `selectMaxAPY`, `selectBid`, `selectEffectiveBid`, `selectEffectiveCost`,
   `selectBondSize`, `selectVoteAccount`, `selectExpectedStakeChange`,
-  `buildConcentrationBreakdown`, …). `augmentAuctionResult` walks the
-  validators once to attach `expectedStakeChangeSol` (re-delegation
-  budget allocation + paid-undelegation outflow + 0.7%/epoch natural
-  withdrawal pro-rata from over-target validators); `selectExpectedStakeChange`
-  reads it. `EPOCHS_PER_YEAR = 365.25 × 24 × 3600 / 172800`.
+  `selectRedelegationBudget`, `selectRedelegationPriorityFrontierPmpe`,
+  `buildConcentrationBreakdown`, …). The greedy redelegation allocation
+  lives in one private `allocateRedelegation` pass that both
+  `computeExpectedStakeChanges` and `selectRedelegationPriorityFrontierPmpe`
+  read, so per-validator inflow and the auction-wide priority frontier
+  never drift. `augmentAuctionResult` walks the validators once to attach
+  `expectedStakeChangeSol` (re-delegation budget allocation +
+  paid-undelegation outflow + 0.7%/epoch natural withdrawal pro-rata from
+  over-target validators); `selectExpectedStakeChange` reads it.
+  `EPOCHS_PER_YEAR = 365.25 × 24 × 3600 / 172800`.
 - **`simulation.ts`** — `buildOverrideValues`, `mergeOverrides`,
   `removeFromOverrides` produce SDK `SourceDataOverrides` from form
   edits. `buildOriginalPositionsMap`, `getPositionChange`,
@@ -246,6 +251,14 @@ where applicable.
   (`'healthy'|'soft'|'watch'|'critical'`).
 - **`bid-penalty.ts`** — `computeBidPenalty`; local `TOL_COEF`/`SCALE_COEF`
   mirror SDK `calcBidTooLowPenalty`.
+- **`in-auction-target.ts`** — `computeInAuctionTarget` (Table A). Closed-
+  form static-bid PMPE needed to clear the winning total, plus the bond
+  floor and top-up read from the memoised `BondCoverage` (reconciles with
+  the Bond tab). Last-price-coupling caveat — verify exact in Simulate.
+- **`next-epoch-stake.ts`** — `computeNextEpochStake` (Table B). Heuristic
+  bid increase to clear the redelegation priority frontier; reads
+  `selectRedelegationPriorityFrontierPmpe` / `selectRedelegationBudget`.
+  Greedy reorders, so it is an estimate — verify in Simulate.
 
 ### Validator data
 

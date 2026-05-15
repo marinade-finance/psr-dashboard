@@ -281,6 +281,62 @@ function computeNaturalWithdrawal(
   return out
 }
 
+type RedelegationAllocation = {
+  // Greedy inflow awarded to each below-target winner, keyed by vote account.
+  inflowByVote: Map<string, number>
+  // Lowest revShare.totalPmpe among winners that received their FULL
+  // below-target delta this run. A validator must clear this to be sure of
+  // full priority allocation. null when the budget covered everyone (or
+  // there was no budget / no below-target winner) — no binding frontier.
+  priorityFrontierPmpe: number | null
+}
+
+// Shared greedy redelegation allocation. Both the per-validator expected
+// stake change and the auction-wide priority frontier read from this one
+// pass so the two never drift apart. Validators are filled in descending
+// revShare.totalPmpe order until the budget runs out; a validator is
+// "fully satisfied" when its entire below-target delta fit before the
+// budget was exhausted.
+function allocateRedelegation(
+  auctionResult: AuctionResult,
+): RedelegationAllocation {
+  const validators = auctionResult.auctionData.validators
+  const paidOf = (v: AuctionValidator) => v.values?.paidUndelegationSol ?? 0
+  const totalPaid = validators.reduce(
+    (sum, validator) => sum + paidOf(validator),
+    0,
+  )
+  const budget = selectRedelegationBudget(auctionResult) + totalPaid
+  const effectiveActive = (v: AuctionValidator) =>
+    v.marinadeActivatedStakeSol - paidOf(v)
+  const rawDelta = (v: AuctionValidator) =>
+    v.auctionStake.marinadeSamTargetSol - effectiveActive(v)
+
+  const inflowByVote = new Map<string, number>()
+  let priorityFrontierPmpe: number | null = null
+  if (budget > 0) {
+    const sorted = [...validators].sort(
+      (va, vb) => (vb.revShare.totalPmpe ?? 0) - (va.revShare.totalPmpe ?? 0),
+    )
+    let remaining = budget
+    for (const validator of sorted) {
+      const delta = rawDelta(validator)
+      if (delta > 0 && remaining > 0) {
+        const alloc = Math.min(delta, remaining)
+        inflowByVote.set(
+          validator.voteAccount,
+          (inflowByVote.get(validator.voteAccount) ?? 0) + alloc,
+        )
+        remaining -= alloc
+        if (alloc >= delta) {
+          priorityFrontierPmpe = validator.revShare.totalPmpe ?? 0
+        }
+      }
+    }
+  }
+  return { inflowByVote, priorityFrontierPmpe }
+}
+
 // Paid undelegation is a one-time outflow whose freed capacity returns to
 // the redelegation budget the same epoch (TVL − Σactive grows by exactly
 // Σpaid). Effective post-undelegation active = active − paid; below-target
@@ -294,15 +350,6 @@ function computeExpectedStakeChanges(
   const validators = auctionResult.auctionData.validators
   const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
   const paidOf = (v: AuctionValidator) => v.values?.paidUndelegationSol ?? 0
-  const totalPaid = validators.reduce(
-    (sum, validator) => sum + paidOf(validator),
-    0,
-  )
-  const budget = selectRedelegationBudget(auctionResult) + totalPaid
-  const effectiveActive = (v: AuctionValidator) =>
-    v.marinadeActivatedStakeSol - paidOf(v)
-  const rawDelta = (v: AuctionValidator) =>
-    v.auctionStake.marinadeSamTargetSol - effectiveActive(v)
   const result = new Map<string, ExpectedStakeChange>()
   const get = (va: string): ExpectedStakeChange => {
     let entry = result.get(va)
@@ -327,21 +374,11 @@ function computeExpectedStakeChanges(
     }
   }
 
-  if (budget > 0) {
-    const sorted = [...validators].sort(
-      (va, vb) => (vb.revShare.totalPmpe ?? 0) - (va.revShare.totalPmpe ?? 0),
-    )
-    let remaining = budget
-    for (const validator of sorted) {
-      const delta = rawDelta(validator)
-      if (delta > 0 && remaining > 0) {
-        const alloc = Math.min(delta, remaining)
-        const entry = get(validator.voteAccount)
-        entry.redelegationInflow += alloc
-        entry.total += alloc
-        remaining -= alloc
-      }
-    }
+  const { inflowByVote } = allocateRedelegation(auctionResult)
+  for (const [va, alloc] of inflowByVote) {
+    const entry = get(va)
+    entry.redelegationInflow += alloc
+    entry.total += alloc
   }
 
   const withdrawals = computeNaturalWithdrawal(validators, tvl)
@@ -497,4 +534,15 @@ export function selectRedelegationBudget(auctionResult: AuctionResult): number {
     0,
   )
   return Math.max(0, tvl - activeTotal)
+}
+
+// Lowest revShare.totalPmpe among winners that got their full below-target
+// delta from this run's greedy redelegation. A validator wanting guaranteed
+// priority inflow next epoch must clear this. Returns 0 when the budget
+// reached everyone (or there was none / no below-target winner) — there is
+// no binding frontier, any in-set validator is already served.
+export function selectRedelegationPriorityFrontierPmpe(
+  auctionResult: AuctionResult,
+): number {
+  return allocateRedelegation(auctionResult).priorityFrontierPmpe ?? 0
 }

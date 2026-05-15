@@ -81,14 +81,22 @@ test pages; they exist only to feed fixtures.
 
 ### Key Files
 
-- `src/services/sam.ts` — auction data loading, metric selectors, sensitivity
-  analysis (`runAlt` pattern: mutate aggregated data, re-run auction)
+- `src/services/sam.ts` — auction data loading, metric selectors,
+  `selectRedelegationBudget` / `selectRedelegationPriorityFrontierPmpe`
+  (shared greedy `allocateRedelegation` pass — no SDK `runAlt`; the only
+  rerun path is the async `loadSam(overrides)` simulation flow)
 - `src/services/bidding.ts` — `computeBidding` (per-validator stake/bid/cost row)
 - `src/services/bond-coverage.ts` — `computeBondCoverage` (keep-stake and
   avoid-fee top-ups)
 - `src/services/bond-health.ts` — `bondHealthFromAuction` (returns
   `'healthy'|'soft'|'watch'|'critical'`)
 - `src/services/bid-penalty.ts` — `computeBidPenalty`
+- `src/services/in-auction-target.ts` — `computeInAuctionTarget` (Table A:
+  closed-form bid to clear the winning total + bond floor from memoised
+  `BondCoverage`; last-price-coupling caveat, verify in Simulate)
+- `src/services/next-epoch-stake.ts` — `computeNextEpochStake` (Table B:
+  heuristic bid to clear the redelegation priority frontier; estimate,
+  verify in Simulate)
 - `src/services/tip-engine.ts` — `getValidatorTip` (urgency + text + constraint),
   `getTipStyle` (color/bg/icon per urgency), `getBondHealthStyle`
 - `src/components/sam-table/sam-table.tsx` — main auction table with

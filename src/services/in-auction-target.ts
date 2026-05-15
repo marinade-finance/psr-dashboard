@@ -1,0 +1,66 @@
+// Table A — "Get into the auction". Closed-form estimate of the static
+// bid PMPE a validator needs so its total clears the winning total PMPE,
+// plus the bond it must hold behind the resulting stake.
+//
+// CAVEAT (last-price coupling): this is the bid that clears the CURRENT
+// winning total. Adding (or growing) this winner shifts the clearing
+// price, so the real answer is approximate — treat it as "at least this
+// much" and verify the exact figure with the Simulate flow, which does a
+// real auction rerun (runFinalOnly). There is no synchronous rerun here.
+//
+// Bid basis is revShare.bidPmpe — the STATIC bid, the same value the
+// simulation input shows — not auctionEffectiveBidPmpe.
+//
+// Bond figures are read from the already-memoised BondCoverage so the
+// numbers reconcile exactly with the Bond tab (no recompute, no drift).
+import type { BondCoverage } from 'src/services/bond-coverage'
+import type { AugmentedAuctionValidator } from 'src/services/sam'
+
+export type InAuctionTarget = {
+  inSet: boolean
+  winningTotalPmpe: number
+  inflationPmpe: number
+  mevPmpe: number
+  blockPmpe: number
+  nonBidPmpe: number
+  currentBidPmpe: number
+  targetBidPmpe: number
+  bidIncrease: number
+  // = coverage.floorBaseKeep — minimum bond required behind current stake.
+  bondFloorToBack: number
+  // = coverage.topUpToKeepStake — bond top-up to keep that stake.
+  bondTopUp: number
+  // True when a cap (country/ASO/etc) is the binding constraint, so
+  // clearing the bid alone will NOT get the validator in.
+  capConstrained: boolean
+  capConstraintName: string | null
+}
+
+export const computeInAuctionTarget = (
+  v: AugmentedAuctionValidator,
+  winningTotalPmpe: number,
+  coverage: BondCoverage,
+): InAuctionTarget => {
+  const inflationPmpe = v.revShare.inflationPmpe
+  const mevPmpe = v.revShare.mevPmpe
+  const blockPmpe = v.revShare.blockPmpe ?? 0
+  const nonBidPmpe = inflationPmpe + mevPmpe + blockPmpe
+  const currentBidPmpe = v.revShare.bidPmpe
+  const targetBidPmpe = Math.max(0, winningTotalPmpe - nonBidPmpe)
+  const bidIncrease = Math.max(0, targetBidPmpe - currentBidPmpe)
+  return {
+    inSet: v.auctionStake.marinadeSamTargetSol > 0,
+    winningTotalPmpe,
+    inflationPmpe,
+    mevPmpe,
+    blockPmpe,
+    nonBidPmpe,
+    currentBidPmpe,
+    targetBidPmpe,
+    bidIncrease,
+    bondFloorToBack: coverage.floorBaseKeep,
+    bondTopUp: coverage.topUpToKeepStake,
+    capConstrained: v.lastCapConstraint != null,
+    capConstraintName: v.lastCapConstraint?.constraintName ?? null,
+  }
+}
