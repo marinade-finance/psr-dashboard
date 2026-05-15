@@ -596,10 +596,14 @@ export const SamTable: React.FC<Props> = ({
 
   const dp = docsPath(level)
 
+  const samTvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
+  const redelegationTvlShare = samTvl > 0 ? totalRedelegation / samTvl : 0
+
   const stats: {
     label: string
     value: string
     unit: string
+    subline?: string
     help: string | undefined
     guideTo: string
   }[] = [
@@ -614,15 +618,9 @@ export const SamTable: React.FC<Props> = ({
       label: 'Winning APY',
       value: pct(winningAPY, 2),
       unit: '',
+      subline: `projected ${pct(projectedApy, 2)}`,
       help: HELP_TEXT.winningApy,
       guideTo: `${dp}#last-price`,
-    },
-    {
-      label: 'Projected APY',
-      value: pct(projectedApy, 2),
-      unit: '',
-      help: HELP_TEXT.projectedApy,
-      guideTo: `${dp}#sam`,
     },
     {
       label: 'Winning Validators',
@@ -635,6 +633,7 @@ export const SamTable: React.FC<Props> = ({
       label: 'Re-delegation',
       value: sol(totalRedelegation, 0),
       unit: 'SOL',
+      subline: `${pct(redelegationTvlShare, 1)} of SAM TVL`,
       help: 'Roughly how much SOL Marinade will redelegate into under-stake validators next epoch, pushing them toward their target allocation.',
       guideTo: `${dp}#redelegation`,
     },
@@ -951,6 +950,11 @@ export const SamTable: React.FC<Props> = ({
                   </span>
                 )}
               </div>
+              {stat.subline && (
+                <div className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                  {stat.subline}
+                </div>
+              )}
             </Card>
           ))}
         </div>

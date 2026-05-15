@@ -74,17 +74,22 @@ from the full auction set.
 
 ### Stats bar
 
-Five `Card` tiles, `flex flex-wrap`. When ≥1 simulation is active the
+Four `Card` tiles, `flex flex-wrap`. When ≥1 simulation is active the
 whole table is wrapped in a yellow inset ring with a "Simulation Mode"
 header strip carrying a **"Reset Simulation"** button.
 
-| Tile                | Source                                                                         |
-| ------------------- | ------------------------------------------------------------------------------ |
-| Total Auction Stake | `selectSamDistributedStake(validators)` (SOL)                                  |
-| Winning APY         | `selectWinningAPY(auctionResult, epochsPerYear)`                               |
-| Projected APY       | `selectProjectedAPY(auctionResult, epochsPerYear)`                             |
-| Winning Validators  | `winningCount / totalValidators`                                               |
-| Re-delegation       | sum of positive `selectExpectedStakeChange` across the filtered set (SOL)      |
+Each tile shares one visual: a big primary value, optionally followed
+by a small muted context line (same treatment as `Metric.subline` —
+`text-[10px] text-muted-foreground font-mono`). The APY and
+Re-delegation tiles use the context line to fold a second number into
+the same card.
+
+| Tile                | Primary value                                                                  | Context line                                                            |
+| ------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| Total Auction Stake | `selectSamDistributedStake(validators)` (SOL)                                  | —                                                                       |
+| Winning APY         | `selectWinningAPY(auctionResult, epochsPerYear)`                               | `projected <selectProjectedAPY(...)>`                                    |
+| Winning Validators  | `winningCount / totalValidators`                                               | —                                                                       |
+| Re-delegation       | sum of positive `selectExpectedStakeChange` across the filtered set (SOL)      | `<redelegation / stakeAmounts.marinadeSamTvlSol> of SAM TVL` (0 if TVL≤0) |
 
 Tooltips via `HelpTip` on each tile.
 
