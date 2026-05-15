@@ -376,9 +376,9 @@ export const ValidatorDetail = ({
                 <span className="text-xs font-mono text-muted-foreground">
                   {inSet
                     ? posVsWinning === 0
-                      ? 'at cutoff'
-                      : `${posVsWinning} above cutoff`
-                    : `${Math.abs(posVsWinning)} below cutoff`}
+                      ? 'at winning edge'
+                      : `${posVsWinning} above winning`
+                    : `${Math.abs(posVsWinning)} below winning`}
                 </span>
               </span>
               {validatorName && (
