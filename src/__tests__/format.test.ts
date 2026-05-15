@@ -21,13 +21,15 @@ describe('sol', () => {
 })
 
 describe('pay / stake', () => {
-  it('pay formats whole-SOL with SOL suffix', () => {
-    expect(pay(0.17)).toBe('0 SOL')
-    expect(pay(1.7)).toBe('2 SOL')
+  // NBSP ( ) between number and unit so "1,234 SOL" never wraps across
+  // a line break — see comment in format.ts.
+  it('pay formats whole-SOL with NBSP + SOL suffix', () => {
+    expect(pay(0.17)).toBe('0 SOL')
+    expect(pay(1.7)).toBe('2 SOL')
   })
 
-  it('stake formats integer-only with SOL suffix', () => {
-    expect(stake(0.4)).toBe('0 SOL')
+  it('stake formats integer-only with NBSP + SOL suffix', () => {
+    expect(stake(0.4)).toBe('0 SOL')
   })
 })
 
