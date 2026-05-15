@@ -208,7 +208,17 @@ export const getValidatorTip = (
       }
     }
 
-    if (coverage.topUpToIdealKeep > 0) {
+    // Soft is advisory only (lowest urgency, not a present danger). "Top up
+    // to grow stake" would directly contradict a genuine positive delta —
+    // stake is already arriving. The bond-coverage top-up sizes the bond vs
+    // *current* exposed stake and is independent of the auction's
+    // redelegation allocation that drives delta, so the two can disagree.
+    // When stake is genuinely growing, the positive "arriving next epoch"
+    // message wins; the Soft bond chip still surfaces independently.
+    // (critical fee + watch keep-stake stay ahead of delta: the inflow does
+    // not pay a fee nor refill the bond, so that advice is truthful even
+    // while gaining.)
+    if (coverage.topUpToIdealKeep > 0 && delta <= 0) {
       return {
         text: `Top up ${topUp(coverage.topUpToIdealKeep)} to grow stake.`,
         urgency: 'info',

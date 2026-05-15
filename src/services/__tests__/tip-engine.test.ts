@@ -251,10 +251,14 @@ describe('getValidatorTip', () => {
   })
 
   it('soft health (bond covers stake but not ideal) → info/bond top-up', () => {
+    // delta must be <= 0 to isolate the soft branch: a positive delta makes
+    // "top up to grow stake" contradictory, so it correctly defers to the
+    // positive "arriving next epoch" message (see contradiction test below).
     const validator = makeValidator({
       bondBalanceSol: 50,
       claimableBondBalanceSol: 50,
       marinadeActivatedStakeSol: 10000,
+      values: { expectedStakeChangeSol: 0 },
     })
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('info')
@@ -322,6 +326,75 @@ describe('getValidatorTip soft health', () => {
     expect(tip.constraint).toBe('bond')
     expect(tip.urgency).toBe('info')
     expect(tip.text).toContain('SOL')
+  })
+})
+
+// --- positive-delta must not be contradicted by a bond top-up CTA ---
+// Bond-coverage top-ups size the bond vs *current* exposed stake; delta is
+// the auction's next-epoch redelegation allocation. They're independent, so
+// "soft bond + gaining stake" is a common, real state. The non-urgent
+// "grow stake" advisory must defer to "+N arriving"; the genuine critical
+// fee and the watch keep-stake shortfall stay ahead (the inflow neither
+// pays a fee nor refills the bond, so that advice is truthful when gaining).
+
+describe('getValidatorTip — positive delta vs bond top-up precedence', () => {
+  it('soft bond + topUpToIdealKeep>0 + delta>0 → NOT the "grow stake" top-up', () => {
+    // Same soft-bond shape as B8 (topUpToIdealKeep=10) but delta>0. The
+    // advisory "Top up N to grow stake" would directly contradict the
+    // arriving stake, so it must defer to the positive message.
+    const validator = makeValidator({
+      bondBalanceSol: 50,
+      claimableBondBalanceSol: 50,
+      marinadeActivatedStakeSol: 10000,
+      values: { expectedStakeChangeSol: 7500 },
+    })
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
+    expect(tip.text).not.toContain('Top up')
+    expect(tip.text).not.toContain('grow stake')
+    expect(tip.urgency).toBe('positive')
+    expect(tip.constraint).toBe('none')
+    expect(tip.text).toContain('arriving next epoch')
+  })
+
+  it('watch bond (topUpToKeepStake>0) + delta>0 → keeps keep-stake CTA (truthful when gaining: inflow does not refill the bond)', () => {
+    // Isolate watch from critical: paidUndelegationSol shrinks the *projected*
+    // exposed stake (avoid-fee basis) below what claimable covers, while the
+    // *current* exposed stake (keep basis) still isn't covered.
+    //   current exposed = 10000 → floorBaseKeep = (1/1000)*10000 = 10
+    //   projected exposed = 10000 - 8000 = 2000 → floorBaseProj = 2
+    //   claimable = 5 → topUpToAvoidFee = max(0, 2-5) = 0 (no fee)
+    //                   topUpToKeepStake = max(0, 10-5) = 5 > 0 → 'watch'
+    //   bondBalanceSol = 100 → topUpToIdealKeep = 0 (irrelevant)
+    const validator = makeValidator({
+      bondBalanceSol: 100,
+      claimableBondBalanceSol: 5,
+      marinadeActivatedStakeSol: 10000,
+      values: {
+        expectedStakeChangeSol: 7500,
+        paidUndelegationSol: 8000,
+        bondRiskFeeSol: 0,
+      },
+    })
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
+    expect(tip.urgency).toBe('warning')
+    expect(tip.constraint).toBe('bond')
+    expect(tip.text).toContain('keep your stake')
+    expect(tip.delta).toBe(7500)
+  })
+
+  it('critical bond (fee) + delta>0 → keeps the critical fee CTA (inflow does not pay the fee)', () => {
+    const validator = makeValidator({
+      bondGoodForNEpochs: 4,
+      bondBalanceSol: 0.001,
+      claimableBondBalanceSol: 0,
+      marinadeActivatedStakeSol: 100000,
+      values: { expectedStakeChangeSol: 7500 },
+    })
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
+    expect(tip.urgency).toBe('critical')
+    expect(tip.constraint).toBe('bond')
+    expect(tip.text).toContain('Top up')
+    expect(tip.delta).toBe(7500)
   })
 })
 
