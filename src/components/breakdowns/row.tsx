@@ -113,8 +113,10 @@ export const CalcRow: React.FC<{
         )}
       >
         {tone && !total && <Marker tone={tone} />}
-        {label}
-        {help && <HelpTip text={help} />}
+        <span className="inline-flex items-center gap-1.5">
+          {label}
+          {help && <HelpTip text={help} />}
+        </span>
       </td>
       <td
         className={cn(
