@@ -25,13 +25,15 @@ const BAR_TONES = [BAR_TONE_DEFAULT, 'bg-chart-2', 'bg-chart-3']
 // are a single fading tail: alternate the two "next" palette hues and decay
 // opacity every two rows so a long list trails off instead of repeating one
 // flat colour. Floor keeps the longest tails faintly visible.
-const BAR_OPACITY_BASE = 'opacity-25'
+// Bars sit ~30% lighter than the text so the value stays the focus; no
+// Tailwind step lands on 0.175, so the arbitrary value is intentional.
+const BAR_OPACITY_BASE = 'opacity-[0.175]'
 const TAIL_TONES = ['bg-chart-4', 'bg-chart-5']
 const TAIL_OPACITY = [
   BAR_OPACITY_BASE,
-  'opacity-20',
-  'opacity-15',
-  'opacity-10',
+  'opacity-[0.14]',
+  'opacity-[0.105]',
+  'opacity-[0.07]',
 ]
 
 const barTone = (i: number): { tone: string; opacity: string } => {
@@ -85,7 +87,8 @@ export const ConcentrationMetric: React.FC<Props> = ({
             >
               <span
                 className={cn(
-                  'absolute inset-y-0 left-0 rounded-sm opacity-25',
+                  'absolute inset-y-0 left-0 rounded-sm',
+                  BAR_OPACITY_BASE,
                   barClass,
                 )}
                 style={{ width: `${fill}%` }}
