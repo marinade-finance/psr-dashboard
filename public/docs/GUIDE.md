@@ -520,17 +520,38 @@ alert to jump to the relevant tab.
 
 ### Payments tab
 
-Sum of every SOL outflow from this validator this epoch.
+Sum of every SOL outflow from this validator this epoch. The card
+header carries a one-line status banner — green "You will pay X in
+total this epoch — no penalties" or red "You will pay X in total this
+epoch — including Y in penalties" — so you can read the bottom line
+without scanning the rows.
 
 | Section | Row | Source |
 |---|---|---|
-| Bid costs | Active Stake Cost | `effectiveCost = marinadeActivatedStakeSol × auctionEffectiveBidPmpe / 1000` |
-| Bid costs | Activating Stake Cost | `activatingStakePmpe × max(0, expectedDelta) / 1000` |
+| Bid costs | Active stake cost | `effectiveCost = marinadeActivatedStakeSol × auctionEffectiveBidPmpe / 1000` |
+| Bid costs | Activating stake cost | `activatingStakePmpe × max(0, expectedDelta) / 1000` |
 | Penalties | Bid-too-low penalty | conditional — see Bid Penalty tab |
 | Penalties | Blacklist penalty | `blacklistPenaltyPmpe × activatedStake / 1000` |
 | Penalties | Bond risk fee | conditional — computed in the Bond tab |
-| PSR Settlements | per-event row | `fetchPsrEstimatesForValidator(vote)` — funded "from bond" or "from Marinade" |
-| Total | sum of the above | red-accented when any penalty or PSR row is present, green otherwise |
+| PSR settlements — estimated | per-event row | `fetchPsrEstimatesForValidator(vote)` — secondary text reads "from bond" or "from Marinade" |
+| Total per epoch | sum of the above | red-accented when any penalty or PSR row is present, green otherwise |
+
+Reading the table:
+
+- A penalty row showing `—` means that penalty isn't being charged
+  this epoch. The row is always rendered so the layout stays stable
+  across validators.
+- The **PSR settlements — estimated** section only appears when the
+  PSR estimator API has projected at least one settlement for this
+  validator. No section means no expected payouts.
+- The funder line under each PSR row says **from bond** when the
+  validator's own bond will fund the payout, or **from Marinade** when
+  Marinade's backstop kicks in because the bond can't cover it.
+
+Two action links at the bottom of the card jump straight to the
+relevant tab: "See bid-too-low penalty calculation →" appears only
+when the bid-too-low penalty is active, and "Simulate commission or
+bid changes →" turns on simulation mode.
 
 ### Bidding tab
 
