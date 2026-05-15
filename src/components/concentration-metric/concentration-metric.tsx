@@ -101,6 +101,8 @@ export const ConcentrationMetric: React.FC<Props> = ({
             </thead>
             <tbody>
               {tipRows.map((r, i) => {
+                const fill =
+                  capPct > 0 ? Math.min(r.pctOfTotal / capPct, 1) * 100 : 0
                 const swatch = r.atCap
                   ? 'bg-destructive'
                   : (BAR_TONES[i] ?? BAR_TONE_DEFAULT)
@@ -109,16 +111,26 @@ export const ConcentrationMetric: React.FC<Props> = ({
                     key={r.key}
                     className={r.atCap ? 'text-destructive font-semibold' : ''}
                   >
-                    <td className="py-0.5 flex items-center gap-1.5">
+                    <td className="relative py-0.5 pr-2">
                       <span
                         className={cn(
-                          'inline-block w-[3px] h-3 rounded-sm shrink-0',
+                          'absolute inset-y-0 left-0 rounded-sm opacity-25',
                           swatch,
                         )}
+                        style={{ width: `${fill}%` }}
+                        aria-hidden
                       />
-                      <span className="truncate">{r.key}</span>
-                      <span className="text-muted-foreground/60 ml-1">
-                        ({r.validatorCount})
+                      <span className="relative flex items-center gap-1.5">
+                        <span
+                          className={cn(
+                            'inline-block w-[3px] h-3 rounded-sm shrink-0',
+                            swatch,
+                          )}
+                        />
+                        <span className="truncate">{r.key}</span>
+                        <span className="text-muted-foreground/60 ml-1">
+                          ({r.validatorCount})
+                        </span>
                       </span>
                     </td>
                     <td className="text-right font-mono py-0.5">
