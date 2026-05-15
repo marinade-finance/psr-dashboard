@@ -1,15 +1,15 @@
 import React from 'react'
 
-import { cost, pmpe, stake, topUp } from 'src/format'
+import { cost, pmpe, signedStake, stake, topUp } from 'src/format'
 import { computeBidding } from 'src/services/bidding'
 import { computeInAuctionTarget } from 'src/services/in-auction-target'
 import { computeNextEpochStake } from 'src/services/next-epoch-stake'
 import { selectExpectedStakeChange } from 'src/services/sam'
 
-import { CalcCard } from './card'
+import { CalcCard, type CardStatus } from './card'
 import { OkRow, RevRow, SectionHeader } from './row'
 
-import type { AuctionResult, DsSamConfig } from '@marinade.finance/ds-sam-sdk'
+import type { AuctionResult } from '@marinade.finance/ds-sam-sdk'
 import type { BondCoverage } from 'src/services/bond-coverage'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
 
@@ -18,7 +18,6 @@ type Props = {
   guideTo?: string
   validator: AugmentedAuctionValidator
   auctionResult: AuctionResult
-  dsSamConfig: DsSamConfig
   winningTotalPmpe: number
   coverage: BondCoverage
   isSimulated?: boolean
@@ -57,12 +56,11 @@ export const BiddingBreakdown: React.FC<Props> = ({
 
   const delta = selectExpectedStakeChange(validator)
   const deltaSeverity = delta > 0 ? 'ok' : delta < 0 ? 'error' : undefined
-  const deltaText =
-    delta === 0 ? '0 SOL' : `${delta > 0 ? '+' : ''}${stake(delta)}`
+  const deltaText = signedStake(delta)
 
   const inSet = inAuction.inSet
   const clears = inAuction.bidIncrease <= 0 && !inAuction.capConstrained
-  const status: { label: string; tone: 'red' | 'green' | 'yellow' } =
+  const status: CardStatus =
     inSet && clears
       ? {
           label: `Your bid clears the winning bar — you are in the auction. Bid ${pmpe(inAuction.targetBidPmpe)} PMPE or more to stay in.`,
@@ -203,7 +201,7 @@ export const BiddingBreakdown: React.FC<Props> = ({
             pmpe={
               nextEpoch.expectedDeltaSol === 0
                 ? '—'
-                : `${nextEpoch.expectedDeltaSol > 0 ? '+' : ''}${stake(nextEpoch.expectedDeltaSol)}`
+                : signedStake(nextEpoch.expectedDeltaSol)
             }
           />
           <RevRow

@@ -2,7 +2,10 @@ import React from 'react'
 
 import { cn } from 'src/class_utils'
 
-const STATUS_CLASSES: Record<'red' | 'yellow' | 'green', string> = {
+export type CardStatusTone = 'red' | 'yellow' | 'green'
+export type CardStatus = { label: string; tone: CardStatusTone }
+
+const STATUS_CLASSES: Record<CardStatusTone, string> = {
   red: 'bg-destructive-light text-destructive',
   yellow: 'bg-status-yellow-light text-status-yellow',
   green: 'bg-primary-light text-primary',
@@ -55,7 +58,7 @@ export const CalcCard: React.FC<{
   guideTo?: string
   isSimulated?: boolean
   onTitleClick?: () => void
-  status?: { label: string; tone: 'red' | 'yellow' | 'green' }
+  status?: CardStatus
   tip?: React.ReactNode
   children: React.ReactNode
 }> = ({ title, guideTo, isSimulated, onTitleClick, status, tip, children }) => (

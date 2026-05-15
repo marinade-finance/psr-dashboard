@@ -1,7 +1,6 @@
 import React from 'react'
 
 import { cost, pmpe } from 'src/format'
-import { computeBidPenalty } from 'src/services/bid-penalty'
 import { computeBidding } from 'src/services/bidding'
 import {
   isProtectedEvent,
@@ -9,10 +8,9 @@ import {
   selectProtectedStakeReason,
 } from 'src/services/protected-events'
 
-import { CalcCard } from './card'
+import { CalcCard, type CardStatus } from './card'
 import { RevRow, SectionHeader } from './row'
 
-import type { DsSamConfig } from '@marinade.finance/ds-sam-sdk'
 import type { ProtectedEvent } from 'src/services/protected-events'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
 
@@ -20,8 +18,6 @@ type Props = {
   title: string
   guideTo?: string
   validator: AugmentedAuctionValidator
-  dsSamConfig: DsSamConfig
-  winningTotalPmpe: number
   bondRiskFeeSol: number
   blacklistPenaltySol: number
   bidTooLowPenaltySol: number
@@ -40,8 +36,6 @@ export const PaymentsBreakdown: React.FC<Props> = ({
   title,
   guideTo,
   validator,
-  dsSamConfig,
-  winningTotalPmpe,
   bondRiskFeeSol,
   blacklistPenaltySol,
   bidTooLowPenaltySol,
@@ -51,11 +45,6 @@ export const PaymentsBreakdown: React.FC<Props> = ({
   onGoToPenalty,
 }) => {
   const m = computeBidding(validator)
-  const penaltyMetrics = computeBidPenalty(
-    validator,
-    dsSamConfig,
-    winningTotalPmpe,
-  )
 
   const psrTotal = psrEstimates.reduce(
     (sum, estimate) => sum + selectAmount(estimate),
@@ -66,7 +55,7 @@ export const PaymentsBreakdown: React.FC<Props> = ({
   const total = m.total + penaltyTotal
   const hasPenalty = penaltyTotal > 0
 
-  const status: { label: string; tone: 'red' | 'green' | 'yellow' } = {
+  const status: CardStatus = {
     label: hasPenalty
       ? `You will pay ${cost(total)} in total this epoch — including ${cost(penaltyTotal)} in penalties.`
       : `You will pay ${cost(total)} in total this epoch — no penalties.`,
@@ -75,7 +64,7 @@ export const PaymentsBreakdown: React.FC<Props> = ({
 
   const tip = (
     <div className="flex flex-col gap-2">
-      {penaltyMetrics.penaltySol > 0 && onGoToPenalty && (
+      {bidTooLowPenaltySol > 0 && onGoToPenalty && (
         <button
           className="text-xs text-destructive hover:underline text-left"
           onClick={onGoToPenalty}

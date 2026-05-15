@@ -3,7 +3,7 @@ import React from 'react'
 import { pct, pay, pmpe, stake } from 'src/format'
 import { computeBidPenalty } from 'src/services/bid-penalty'
 
-import { CalcCard } from './card'
+import { CalcCard, type CardStatus } from './card'
 import { CalcRow, OkRow, SectionHeader } from './row'
 
 import type {
@@ -32,7 +32,7 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
 }) => {
   const metrics = computeBidPenalty(validator, dsSamConfig, winningTotalPmpe)
 
-  const status: { label: string; tone: 'red' | 'green' | 'yellow' } = {
+  const status: CardStatus = {
     label:
       metrics.penaltyPmpe > 0
         ? `Penalty active: ${pmpe(metrics.penaltyPmpe)} PMPE this epoch.`

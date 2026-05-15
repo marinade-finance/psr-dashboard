@@ -1,23 +1,17 @@
 import React from 'react'
 
 import { cost, topUp, pay, pmpe, stake } from 'src/format'
-import { computeBondCoverage } from 'src/services/bond-coverage'
 
-import { CalcCard } from './card'
+import { CalcCard, type CardStatus } from './card'
 import { CalcRow, OkRow, SectionHeader } from './row'
 
-import type {
-  AuctionValidator,
-  DsSamConfig,
-} from '@marinade.finance/ds-sam-sdk'
+import type { BondCoverage } from 'src/services/bond-coverage'
 import type { BondHealthState } from 'src/services/bond-health'
 
 type Props = {
   title: string
   guideTo?: string
-  validator: AuctionValidator
-  dsSamConfig: DsSamConfig
-  winningTotalPmpe: number
+  coverage: BondCoverage
   bondState: BondHealthState
   bondRiskFeeSol: number
   isSimulated?: boolean
@@ -30,7 +24,7 @@ const statusLine = (
   topUpToKeepStake: number,
   topUpToIdealKeep: number,
   bondRiskFeeSol: number,
-): { label: string; tone: 'red' | 'yellow' | 'green' } => {
+): CardStatus => {
   if (state === 'critical') {
     const feeStr =
       bondRiskFeeSol > 0
@@ -68,21 +62,12 @@ const statusLine = (
 export const BondCoverageBreakdown: React.FC<Props> = ({
   title,
   guideTo,
-  validator,
-  dsSamConfig,
-  winningTotalPmpe,
+  coverage,
   bondState,
   bondRiskFeeSol,
   isSimulated,
   onGoToSim,
 }) => {
-  const coverage = computeBondCoverage(
-    validator,
-    dsSamConfig.minBondEpochs,
-    dsSamConfig.idealBondEpochs,
-    winningTotalPmpe,
-    dsSamConfig.bondRiskFeeMult,
-  )
   const status = statusLine(
     bondState,
     coverage.topUpToAvoidFee,

@@ -39,6 +39,12 @@ export const penalty = (n: number) => `${sol(n, 3)} SOL`
 // sub-1 SOL and rounding them to "0" or "1" reads as wrong.
 export const cost = (n: number) => `${sol(n, 3)} SOL`
 
+// Signed stake delta — "+1,234 SOL" / "−1,234 SOL" / "0 SOL". Uses the
+// minus-sign unicode (−) for the negative case so the typography matches
+// "+" in width; zero falls through to stake() with no sign.
+export const signedStake = (n: number) =>
+  n === 0 ? stake(0) : `${n > 0 ? '+' : '−'}${stake(Math.abs(n))}`
+
 // Top-up advice — SOL the user is told to deposit into their bond.
 // ALWAYS rounds UP (ceil): advising a rounded-down top-up would leave the
 // bond short, so the validator stays under-collateralised and the advice
