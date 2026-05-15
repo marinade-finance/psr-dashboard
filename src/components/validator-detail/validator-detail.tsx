@@ -513,7 +513,7 @@ export const ValidatorDetail = ({
               {tab === 'bond' && (
                 <div className="p-4 sm:p-6">
                   <BondCoverageBreakdown
-                    title="Bond Calculation"
+                    title="Bond calculation"
                     guideTo={`${docsPath(level)}#bond`}
                     validator={validator}
                     dsSamConfig={dsSamConfig}
@@ -528,7 +528,7 @@ export const ValidatorDetail = ({
               {tab === 'payments' && (
                 <div className="p-4 sm:p-6 space-y-6">
                   <PaymentsBreakdown
-                    title="Payments Calculation"
+                    title="Payments calculation"
                     guideTo={`${docsPath(level)}#detail-panel`}
                     validator={validator}
                     dsSamConfig={dsSamConfig}
@@ -546,7 +546,7 @@ export const ValidatorDetail = ({
               {tab === 'revenue' && (
                 <div className="p-4 sm:p-6">
                   <BiddingBreakdown
-                    title="Bidding Calculation"
+                    title="Bidding calculation"
                     guideTo={`${docsPath(level)}#cpmpe`}
                     validator={validator}
                     isSimulated={isSimulated}
@@ -557,7 +557,7 @@ export const ValidatorDetail = ({
               {tab === 'penalty' && (
                 <div className="p-4 sm:p-6">
                   <BidPenaltyBreakdown
-                    title="Bid Penalty Calculation"
+                    title="Bid penalty calculation"
                     guideTo={`${docsPath(level)}#bid-penalty`}
                     validator={validator}
                     dsSamConfig={dsSamConfig}
@@ -696,18 +696,18 @@ export const ValidatorDetail = ({
             </CalcCard>
 
             <CalcCard
-              title="Expected Payment This Epoch"
+              title="Expected payment this epoch"
               guideTo={`${docsPath(level)}#detail-panel`}
               isSimulated={isSimulated}
               onTitleClick={() => setTab('payments')}
             >
               <div className="space-y-3">
                 <MetricRow
-                  label="Active Stake Cost"
+                  label="Active stake cost"
                   value={cost(paymentMetrics.cost)}
                 />
                 <MetricRow
-                  label="Activating Stake Cost"
+                  label="Activating stake cost"
                   value={cost(paymentMetrics.activatingCost)}
                 />
                 {(() => {
