@@ -185,16 +185,23 @@ internal `Tab` union is `'overview' | 'notifications' | 'bond' |
   through a `useRef` so callback identity churn does not restart the
   timer. Card has yellow border + `bg-status-yellow-light`.
 
-**Payments tab** — four breakdown cards stacked in a `space-y-6`
-column: `PaymentsBreakdown` (bid costs + penalties + PSR + total),
-`BiddingBreakdown` (commissions, bid gap, cost), `InAuctionBreakdown`
-("Get into the auction" — closed-form bid to clear the winning bar +
-bond floor/top-up from the memoised `BondCoverage`, cap-constraint
-caveat row), and `NextEpochStakeBreakdown` ("Get stake next epoch" —
-heuristic bid to clear the redelegation priority bar). The last two
-are advisory estimates: copy says "approximately / verify in
-Simulate", each card's status banner carries the caveat and a
-"Simulate the exact bid →" tip.
+**Payments tab** — one `PaymentsBreakdown` card
+(`breakdowns/payments-merged.tsx`), a SINGLE continuous `<table>`, no
+stacked cards. `SectionHeader`-delimited sections run in one narrative:
+Stake → Active stake cost PMPE → Bid gap → Cost → Penalties → PSR
+settlements (conditional) → Total per epoch → Get into the auction →
+Get stake next epoch. One status banner summarises the combined state
+(green "no penalties" / red "including Y in penalties"), one tip footer
+carries "See bid-too-low penalty calculation →" (when active) and
+"Simulate commission or bid changes →". Bidding metrics, the in-auction
+estimate and the next-epoch estimate are merged into this one table —
+they no longer have their own cards. The last two sections are advisory
+estimates: the `SectionHeader` `help` tooltips carry the closed-form /
+greedy-heuristic and verify-in-Simulate caveats. The "Total per epoch"
+row is black (`text-foreground`, no severity) — it is a conclusion, not
+a warning. All rows use the shared 3-column `CalcRow`; the old
+4-column `RevRow` is gone — commission rows put the retained-commission
+% in the `secondary` slot and the PMPE in `value`.
 
 **Tip banner** — sticky strip below the header. Click target opens the
 relevant tab (`Bond tab →`, `Simulate →`).

@@ -179,11 +179,11 @@ test.describe('detail sheet — tab switching', () => {
 
     await clickTab(page, 'Payments')
     await expect(
-      page.locator(SHEET).getByText(/Payments Calculation|Bid costs/),
+      page.locator(SHEET).getByText(/Active stake cost PMPE/),
     ).toBeVisible()
-    // Bidding breakdown is stacked under the Payments tab now, not its
-    // own tab — the auction-effective-bid row is visible without a
-    // separate tab click.
+    // Bidding is now merged into the single Payments table — the
+    // auction-effective-bid row sits inside the same table, no separate
+    // tab or stacked card.
     await expect(
       page.locator(SHEET).getByText('Auction effective bid PMPE'),
     ).toBeVisible()
@@ -235,41 +235,52 @@ test.describe('detail sheet — Payments tab', () => {
     await expect(sheet.getByText('Bond risk fee')).toBeVisible()
   })
 
-  test('stacked Bidding breakdown shows commission rows and the Auction effective bid PMPE', async ({
+  test('merged Bidding rows: commission section and the Auction effective bid PMPE', async ({
     page,
   }) => {
     await openSheet(page, V01)
     await clickTab(page, 'Payments')
     const sheet = page.locator(SHEET)
+    await expect(sheet.getByText('Active stake cost PMPE')).toBeVisible()
     await expect(sheet.getByText('Inflation', { exact: true })).toBeVisible()
     await expect(sheet.getByText('MEV', { exact: true })).toBeVisible()
     await expect(sheet.getByText('Auction effective bid PMPE')).toBeVisible()
     await expect(sheet.getByText('Bid gap')).toBeVisible()
   })
 
-  test('Get-into-auction advisory card shows its sections and Simulate CTA', async ({
+  test('Get-into-auction section and rows are part of the same table', async ({
     page,
   }) => {
     await openSheet(page, V01)
     await clickTab(page, 'Payments')
     const sheet = page.locator(SHEET)
     await expect(sheet.getByText('Get into the auction')).toBeVisible()
-    await expect(sheet.getByText('Bid to clear the winning bar')).toBeVisible()
-    await expect(sheet.getByText('Bond to back the stake')).toBeVisible()
-    await expect(
-      sheet.getByText('Simulate the exact bid and bond →'),
-    ).toBeVisible()
+    await expect(sheet.getByText('Winning total PMPE')).toBeVisible()
+    await expect(sheet.getByText('Minimum bond required')).toBeVisible()
   })
 
-  test('Get-stake-next-epoch advisory card shows its sections and Simulate CTA', async ({
+  test('Get-stake-next-epoch section and rows are part of the same table', async ({
     page,
   }) => {
     await openSheet(page, V01)
     await clickTab(page, 'Payments')
     const sheet = page.locator(SHEET)
     await expect(sheet.getByText('Get stake next epoch')).toBeVisible()
-    await expect(sheet.getByText('Next-epoch stake flow')).toBeVisible()
-    await expect(sheet.getByText('Simulate the exact bid →')).toBeVisible()
+    await expect(sheet.getByText('Redelegation budget this run')).toBeVisible()
+  })
+
+  test('single card carries both the Simulate and bid-penalty action links', async ({
+    page,
+  }) => {
+    await openSheet(page, V06)
+    await clickTab(page, 'Payments')
+    const sheet = page.locator(SHEET)
+    await expect(
+      sheet.getByText('Simulate commission or bid changes →'),
+    ).toBeVisible()
+    await expect(
+      sheet.getByText('See bid-too-low penalty calculation →'),
+    ).toBeVisible()
   })
 })
 

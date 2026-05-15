@@ -3,13 +3,10 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 
 import { cn } from 'src/class_utils'
 import { BidPenaltyBreakdown } from 'src/components/breakdowns/bid-penalty'
-import { BiddingBreakdown } from 'src/components/breakdowns/bidding'
 import { BondCoverageBreakdown } from 'src/components/breakdowns/bond-coverage'
 import { CalcCard } from 'src/components/breakdowns/card'
 import { docsPath } from 'src/components/breakdowns/docs-path'
-import { InAuctionBreakdown } from 'src/components/breakdowns/in-auction'
-import { NextEpochStakeBreakdown } from 'src/components/breakdowns/next-epoch-stake'
-import { PaymentsBreakdown } from 'src/components/breakdowns/payments'
+import { PaymentsBreakdown } from 'src/components/breakdowns/payments-merged'
 import { SEPARATOR_DIV_CLASS } from 'src/components/breakdowns/row'
 import { HelpTip } from 'src/components/help-tip/help-tip'
 import { Button } from 'src/components/ui/button'
@@ -89,7 +86,7 @@ export function bondCoverageLabel(
       : 'Watch'
   if (health === 'soft')
     return coverage.topUpToIdealKeep > 0
-      ? `Top up ${topUp(coverage.topUpToIdealKeep)} to qualify for more`
+      ? `Top up ${topUp(coverage.topUpToIdealKeep)} to grow stake`
       : 'Adequate'
   return 'Fully covered'
 }
@@ -524,13 +521,15 @@ export const ValidatorDetail = ({
                 </div>
               )}
               {tab === 'payments' && (
-                <div className="p-4 sm:p-6 space-y-6">
+                <div className="p-4 sm:p-6">
                   <PaymentsBreakdown
-                    title="Payments calculation"
+                    title="Payments"
                     guideTo={`${docsPath(level)}#detail-panel`}
                     validator={validator}
+                    auctionResult={auctionResult}
                     dsSamConfig={dsSamConfig}
                     winningTotalPmpe={winningTotalPmpe}
+                    coverage={bondCoverage}
                     bondRiskFeeSol={bondRiskFeeSol}
                     blacklistPenaltySol={blacklistPenaltySol}
                     bidTooLowPenaltySol={bidTooLowPenaltySol}
@@ -538,30 +537,6 @@ export const ValidatorDetail = ({
                     isSimulated={isSimulated}
                     onGoToSim={goToSim}
                     onGoToPenalty={() => setTab('penalty')}
-                  />
-                  <BiddingBreakdown
-                    title="Bidding calculation"
-                    guideTo={`${docsPath(level)}#cpmpe`}
-                    validator={validator}
-                    isSimulated={isSimulated}
-                    onGoToSim={goToSim}
-                  />
-                  <InAuctionBreakdown
-                    title="Get into the auction"
-                    guideTo={`${docsPath(level)}#in-auction`}
-                    validator={validator}
-                    winningTotalPmpe={winningTotalPmpe}
-                    coverage={bondCoverage}
-                    isSimulated={isSimulated}
-                    onGoToSim={goToSim}
-                  />
-                  <NextEpochStakeBreakdown
-                    title="Get stake next epoch"
-                    guideTo={`${docsPath(level)}#next-epoch-stake`}
-                    validator={validator}
-                    auctionResult={auctionResult}
-                    isSimulated={isSimulated}
-                    onGoToSim={goToSim}
                   />
                 </div>
               )}

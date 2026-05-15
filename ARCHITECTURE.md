@@ -124,9 +124,10 @@ include the local `RankCell`, `PenaltyBadges`. Tests in
 ### `components/validator-detail/` — detail sheet
 
 `validator-detail.tsx` — Right-side `Sheet` (`max-w-4xl`) with tabs
-(Overview, Notifications, Payments, Bond, Bid Penalty). The Bidding
-breakdown is stacked under the Payments breakdown in the Payments tab,
-not its own tab. The internal `Tab` union is `'overview' |
+(Overview, Notifications, Payments, Bond, Bid Penalty). The Payments
+tab is ONE unified `PaymentsBreakdown` table — bidding, penalties, PSR,
+the in-auction and next-epoch estimates all merged into a single card.
+The internal `Tab` union is `'overview' |
 'notifications' | 'bond' | 'penalty' | 'payments'`.
 Local `MetricRow` and `PenaltyRow` components are file-private (not
 exported). Auto-recalcs the what-if simulation via a 400ms debounce
@@ -147,15 +148,17 @@ new validator gets a fresh component (no mirror-prop-into-state needed).
   / `NORMAL_CELL_PAD` constants. `CalcRow` accepts `total` to imply
   `separator + bold + large` in one prop; `value` defaults to `''`.
 - `docs-path.ts` — `docsPath(level)` returns `/docs` or `/expert-docs`.
-- `bid-penalty.tsx`, `bidding.tsx`, `bond-coverage.tsx`, `payments.tsx`
-  — one card per breakdown. `RevRow` is a 4-column row local to
-  `bidding.tsx` (not exported).
-- `in-auction.tsx`, `next-epoch-stake.tsx` — the two advisory cards
-  stacked under Payments. `InAuctionBreakdown` renders
-  `computeInAuctionTarget`; `NextEpochStakeBreakdown` renders
-  `computeNextEpochStake`. Both surface the closed-form / heuristic
-  caveat in the status banner and an `onGoToSim` "verify in Simulate"
-  tip.
+- `bid-penalty.tsx`, `bond-coverage.tsx` — one card per breakdown,
+  each a `CalcCard` of `CalcRow`/`SectionHeader`/`OkRow`.
+- `payments-merged.tsx` — `PaymentsBreakdown`. The whole Payments tab
+  in ONE `CalcCard` / ONE `<table>`: bidding (`computeBidding`),
+  penalties + PSR estimates, the in-auction estimate
+  (`computeInAuctionTarget`) and the next-epoch estimate
+  (`computeNextEpochStake`) merged into a single continuous narrative.
+  One status pill, one tip footer (`onGoToSim` + `onGoToPenalty`). All
+  rows are the shared 3-column `CalcRow` — no 4-column `RevRow` (the
+  former `bidding.tsx`/`in-auction.tsx`/`next-epoch-stake.tsx`/
+  `payments.tsx` cards are deleted; this file replaces all four).
 
 ### `components/validator-bonds-table/`
 

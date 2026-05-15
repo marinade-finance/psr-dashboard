@@ -171,17 +171,16 @@ When the auction grows your target stake above what's currently
 delegated, the gap doesn't appear instantly — it warms up. SAM still
 charges your bid against that incoming stake at a separate rate called
 the activating-stake PMPE, billed only on `max(0, target − active)`.
-The Bidding breakdown shows it on its own row inside the **Cost**
-section. If your target is at or below your active stake, this cost
-is zero.
+The Payments tab shows it on its own row inside the **Cost** section.
+If your target is at or below your active stake, this cost is zero.
 
 #### Where to read it on the dashboard
 
-The validator detail panel's **Payments tab** carries the per-validator
-Bidding breakdown in PMPE — Stake (active vs target), commissions split
-by stream, the static-vs-effective bid gap, and the resulting cost in
-SOL. See the [Payments tab subsection](#detail-panel) for what each
-row means.
+The validator detail panel's **Payments tab** is one unified table that
+includes the bid construction in PMPE — Stake (active vs target),
+commissions split by stream, the static-vs-effective bid gap, and the
+resulting cost in SOL. See the [Payments tab subsection](#detail-panel)
+for what each row means.
 
 _See [Last-Price Auction — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market#last-price-auction) for how PMPE feeds the clearing price._
 
@@ -362,7 +361,7 @@ _See [Stake Matching — Marinade Docs](https://docs.marinade.finance/marinade-p
 <a id="in-auction"></a>
 ### Getting into the auction
 
-The "Get into the auction" card on the Payments tab works out the
+The "Get into the auction" section of the Payments table works out the
 static bid that would lift your total to the winning bar, and the bond
 you need to back the stake that follows. The math is simple:
 
@@ -381,7 +380,7 @@ This is a closed-form **estimate**. Adding or growing a winner shifts
 the clearing price itself, so the real answer is approximately this
 much, often a touch more. Treat the figure as a floor and confirm the
 exact bid with **Simulate**, which re-runs the real auction. If a
-country or ASO concentration cap is the binding limit, the card says
+country or ASO concentration cap is the binding limit, the section says
 so plainly — raising the bid alone will not get you in until that cap
 frees up.
 
@@ -392,7 +391,7 @@ Being in the auction set is not the same as receiving stake. The
 re-delegation budget is handed out greedily by total PMPE, highest
 first, until it runs out. The lowest total PMPE among validators that
 got their full below-target top-up this run is the **priority bar**.
-The "Get stake next epoch" card estimates the bid that would put you
+The "Get stake next epoch" section estimates the bid that would put you
 at or above that bar:
 
 ```
@@ -404,8 +403,8 @@ bidIncrease     = max(0, targetBidPmpe − currentStaticBidPmpe)
 This is a **heuristic**, not a guarantee. Raising your bid reorders
 the queue and moves the bar itself, so the number is an estimate —
 always verify it in **Simulate**. When the budget is large enough to
-reach every below-target winner, there is no binding bar and the card
-says so.
+reach every below-target winner, there is no binding bar and the
+section says so.
 
 <a id="psr"></a>
 ### Protected Staking Rewards (PSR)
@@ -553,9 +552,9 @@ Clicking a row opens the side panel. The calculation tabs
 — Payments, Bond, Bid Penalty — **mirror the same math the
 SAM auction runs server-side**: they recompute the SDK's formulas
 locally so you can see each input and intermediate value. Numbers
-match the protocol's settlement decisions to the SOL. The Bidding
-breakdown lives under the Payments tab, stacked below the payments
-table.
+match the protocol's settlement decisions to the SOL. The bid
+construction is part of the single Payments table — there is no
+separate Bidding tab.
 
 ### Overview tab
 
@@ -631,79 +630,66 @@ tab manually.
 
 ### Payments tab
 
-Sum of every SOL outflow from this validator this epoch. The card
-header carries a one-line status banner — green "You will pay X in
-total this epoch — no penalties" or red "You will pay X in total this
-epoch — including Y in penalties" — so you can read the bottom line
-without scanning the rows.
-
-| Section | Row | Source |
-|---|---|---|
-| Bid costs | Active stake cost | `effectiveCost = marinadeActivatedStakeSol × auctionEffectiveBidPmpe / 1000` |
-| Bid costs | Activating stake cost | `activatingStakePmpe × max(0, expectedDelta) / 1000` |
-| Penalties | Bid-too-low penalty | conditional — see Bid Penalty tab |
-| Penalties | Blacklist penalty | `blacklistPenaltyPmpe × activatedStake / 1000` |
-| Penalties | Bond risk fee | conditional — computed in the Bond tab |
-| PSR settlements — estimated | per-event row | `fetchPsrEstimatesForValidator(vote)` — secondary text reads "from bond" or "from Marinade" |
-| Total per epoch | sum of the above | red-accented when any penalty or PSR row is present, green otherwise |
-
-Reading the table:
-
-- A penalty row showing `—` means that penalty isn't being charged
-  this epoch. The row is always rendered so the layout stays stable
-  across validators.
-- The **PSR settlements — estimated** section only appears when the
-  PSR estimator API has projected at least one settlement for this
-  validator. No section means no expected payouts.
-- The funder line under each PSR row says **from bond** when the
-  validator's own bond will fund the payout, or **from Marinade** when
-  Marinade's backstop kicks in because the bond can't cover it.
-
-Two action links at the bottom of the card jump straight to the
-relevant tab: "See bid-too-low penalty calculation →" appears only
-when the bid-too-low penalty is active, and "Simulate commission or
-bid changes →" turns on simulation mode.
-
-#### Bidding breakdown
-
-Stacked directly below the payments table on the same tab. Shows why
-the validator pays what they pay, tracking the bid construction
-side-by-side with the cost.
+One card, one table. It tells the whole money story for this validator
+this epoch — what you pay, why, plus two estimates of the bid that
+would get you in and keep stake coming. The card header carries a
+one-line status banner — green "You will pay X in total this epoch —
+no penalties" or red "You will pay X in total this epoch — including Y
+in penalties" — so you can read the bottom line without scanning the
+rows. There is no separate Bidding tab and no stacked sub-cards;
+everything below runs as `SectionHeader`-delimited sections of the same
+table, top to bottom.
 
 - **Stake** — Active / Target Marinade stake and the projected
-  next-epoch delta (`selectExpectedStakeChange`).
-- **Commissions** — Inflation, MEV, Block rewards. The percent column
-  is the validator's retained commission; the PMPE column is what flows
-  into the bid (`revShare.inflationPmpe`, `revShare.mevPmpe`,
-  `revShare.blockPmpe`).
-- **Bid** — Static bid PMPE (`revShare.bidPmpe`), auction effective bid
-  PMPE (`revShare.auctionEffectiveBidPmpe` — the clearing price), and
-  the **bid gap** = `max(0, staticBid − effectiveBid)`. A non-zero gap
-  means you bid above clearing and pay an activating-stake fee.
-- **Cost** — Active Stake Cost, Activating Stake Cost, Total (same
-  formulas as the Payments tab Bid Costs section).
+  next-epoch delta (`selectExpectedStakeChange`), signed and coloured.
+- **Active stake cost PMPE** — Inflation, MEV, Block rewards (the
+  number on the left of each row is the commission you retain; the
+  number on the right is the PMPE that flows into the bid —
+  `revShare.inflationPmpe`, `revShare.mevPmpe`, `revShare.blockPmpe`),
+  the static bid PMPE (`revShare.bidPmpe`), and their **Total**.
+- **Bid gap** — Static bid PMPE vs auction effective bid PMPE (the
+  clearing price, `revShare.auctionEffectiveBidPmpe`) and the resulting
+  gap = `max(0, staticBid − effectiveBid)`. A non-zero gap means you
+  bid above clearing and pay an activating-stake fee.
+- **Cost** — Active stake cost
+  (`marinadeActivatedStakeSol × auctionEffectiveBidPmpe / 1000`) and
+  Activating stake cost
+  (`activatingStakePmpe × max(0, expectedDelta) / 1000`).
+- **Penalties** — Bid-too-low penalty (conditional — see Bid Penalty
+  tab), Blacklist penalty (`blacklistPenaltyPmpe × activatedStake /
+  1000`), Bond risk fee (conditional — computed in the Bond tab). A
+  row showing `—` means that penalty isn't charged this epoch; the row
+  is always rendered so the layout stays stable across validators.
+- **PSR settlements — estimated** — only appears when the PSR estimator
+  API has projected at least one settlement
+  (`fetchPsrEstimatesForValidator(vote)`). Each row's secondary text
+  reads **from bond** when the validator's own bond funds the payout,
+  or **from Marinade** when Marinade's backstop covers it.
+- **Total per epoch** — the sum of everything above. Rendered black as
+  a conclusion, not a warning — the status banner already tells you if
+  penalties are in it.
+- **Get into the auction** — the static bid that would lift your total
+  to the winning bar, plus the bond needed to back the resulting
+  stake. The bond rows come straight from the Bond tab's keep-stake
+  math, so the numbers reconcile. Closed-form estimate with a
+  last-price caveat in the section tooltip — see
+  [Getting into the auction](#in-auction) for the formula and why you
+  should confirm in Simulate.
+- **Get stake next epoch** — the bid that would put you at or above the
+  re-delegation priority bar, since being in the set is not the same as
+  receiving stake. Heuristic — the queue reorders as bids change — so
+  the figure is an estimate. See
+  [Getting stake next epoch](#next-epoch-stake) for the formula and the
+  verify-in-Simulate caveat.
 
-An "**Overrides CPMPE**" notice appears if `values.commissions.bidCpmpeOverrideDec`
-is set — the displayed bid is a manual override, not the on-chain value.
+An "**Overrides CPMPE**" notice appears above the table if
+`values.commissions.bidCpmpeOverrideDec` is set — the displayed bid is
+a manual override, not the on-chain value.
 
-#### Get into the auction
-
-Stacked below the Bidding breakdown. The static bid that would lift
-your total to the winning bar, plus the bond needed to back the
-resulting stake. The bond rows come straight from the Bond tab's
-keep-stake math, so the numbers reconcile. It is a closed-form
-estimate with a last-price caveat — see
-[Getting into the auction](#in-auction) for the formula and why you
-should confirm in Simulate.
-
-#### Get stake next epoch
-
-The last card on the tab. Estimates the bid that would put you at or
-above the re-delegation priority bar, since being in the set is not
-the same as receiving stake. This is a heuristic — the queue reorders
-as bids change — so the figure is an estimate. See
-[Getting stake next epoch](#next-epoch-stake) for the formula and the
-verify-in-Simulate caveat.
+Two action links in the card footer jump straight to the relevant tab:
+"See bid-too-low penalty calculation →" appears only when the
+bid-too-low penalty is active, and "Simulate commission or bid changes
+→" turns on simulation mode.
 
 ### Bond tab
 
