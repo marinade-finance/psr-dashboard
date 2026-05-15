@@ -109,11 +109,11 @@ export const PaymentsBreakdown: React.FC<Props> = ({
         <tbody>
           <SectionHeader title="Bid costs" />
           <CalcRow
-            label="Active Stake Cost"
+            label="Active stake cost"
             value={cost(paymentMetrics.cost)}
           />
           <CalcRow
-            label="Activating Stake Cost"
+            label="Activating stake cost"
             value={cost(paymentMetrics.activatingCost)}
           />
           <SectionHeader title="Penalties" />

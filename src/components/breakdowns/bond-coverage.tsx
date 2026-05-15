@@ -212,7 +212,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           {showRiskSection && (
             <>
               <SectionHeader
-                title="Bond risk"
+                title="Bond risk fee"
                 help="How much bond-risk fee gets charged this epoch, and the top-up needed to avoid it."
               />
               {coverage.carriedPaidUndelegationSol > 0 && (
