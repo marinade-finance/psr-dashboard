@@ -64,6 +64,7 @@ const SEVERITY_TONE: Record<Severity, 'green' | 'yellow' | 'red'> = {
 //   - Total: `total` (implies separator + bold + large + divider above).
 export const CalcRow: React.FC<{
   label: string
+  help?: string
   secondary?: string
   value?: string
   bold?: boolean
@@ -73,6 +74,7 @@ export const CalcRow: React.FC<{
   severity?: Severity
 }> = ({
   label,
+  help,
   secondary,
   value = '',
   bold,
@@ -112,6 +114,7 @@ export const CalcRow: React.FC<{
       >
         {tone && !total && <Marker tone={tone} />}
         {label}
+        {help && <HelpTip text={help} />}
       </td>
       <td
         className={cn(

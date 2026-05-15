@@ -133,6 +133,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           />
           <CalcRow
             label="Claimable bond balance"
+            help="The bond SOL the protocol can draw against right now to cover fees or shortfalls. Excludes amounts locked in pending operations."
             value={pay(coverage.claimableBondBalanceSol)}
             bold
           />
@@ -176,6 +177,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           />
           <CalcRow
             label="Bond balance"
+            help="Total SOL you've deposited as bond — gross, before subtracting amounts locked in pending operations."
             value={pay(coverage.bondBalanceSol)}
             bold
           />
