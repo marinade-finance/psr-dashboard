@@ -259,6 +259,7 @@ const SortIndicator: React.FC<{
 
 const RankCell: React.FC<{
   rank: number
+  cutoffRank: number
   inSet: boolean
   isGhost: boolean
   isSimulated: boolean
@@ -268,6 +269,7 @@ const RankCell: React.FC<{
   onClearValidator?: (voteAccount: string) => void
 }> = ({
   rank,
+  cutoffRank,
   inSet,
   isGhost,
   isSimulated,
@@ -276,9 +278,18 @@ const RankCell: React.FC<{
   voteAccount,
   onClearValidator,
 }) => {
-  // rank 0 is the marginal winner at the cutoff; +N above, -N below.
-  const rankLabel = rank === 0 ? '#0' : rank < 0 ? `-#${-rank}` : `#${rank}`
-  const rankSubLabel = rank === 0 ? 'at cutoff' : inSet ? 'above' : 'below'
+  // Primary: absolute 1-based stake-priority rank from the top.
+  const rankLabel = `#${rank}`
+  // Sub: cutoff-relative position — cutoffRank 0 is the marginal winner,
+  // +N above the cutoff, -N below.
+  const cutoffLabel =
+    cutoffRank === 0
+      ? '#0'
+      : cutoffRank < 0
+        ? `-#${-cutoffRank}`
+        : `#${cutoffRank}`
+  const cutoffWord = cutoffRank === 0 ? 'at cutoff' : inSet ? 'above' : 'below'
+  const rankSubLabel = `${cutoffLabel} ${cutoffWord}`
   if (isGhost)
     return (
       <span
@@ -319,7 +330,7 @@ const RankCell: React.FC<{
     >
       <span>{rankLabel}</span>
       <span className="text-xs opacity-60 font-normal text-muted-foreground leading-tight">
-        {inSet ? 'above' : 'below'}
+        {rankSubLabel}
       </span>
     </span>
   )
@@ -696,7 +707,8 @@ export const SamTable: React.FC<Props> = ({
         {/* Rank / ✕ */}
         <TableCell className="px-3.5 py-3 text-center w-10">
           <RankCell
-            rank={cutoffRank}
+            rank={rank}
+            cutoffRank={cutoffRank}
             inSet={inSet}
             isGhost={isGhost}
             isSimulated={isSimulated}
@@ -767,7 +779,8 @@ export const SamTable: React.FC<Props> = ({
                 bondRunway <= 10 ? bondChip.shortText : TEXT_MUTED,
               )}
             >
-              ({Math.round(bondRunway)}ep)
+              ({Math.round(bondRunway) >= 100 ? '>100' : Math.round(bondRunway)}
+              ep)
             </span>
           </div>
         </TableCell>
