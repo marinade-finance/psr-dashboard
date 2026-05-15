@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import TagManager from 'react-gtm-module'
@@ -102,23 +102,33 @@ const router = createBrowserRouter([
 
 const queryClient = new QueryClient()
 
-// Prefetch all tab data in background so navigation is instant
-void queryClient.prefetchQuery(['sam', 0], () => loadSam(null))
-void queryClient.prefetchQuery('bonds', fetchValidatorsWithBonds)
-void queryClient.prefetchQuery(
-  'protected-events',
-  fetchProtectedEventsWithValidator,
-)
+const Root = () => {
+  // Prefetch all tab data so navigation is instant. Running here (not at
+  // module top-level) means a rejection bubbles to the route's error
+  // boundary instead of being silently swallowed before React mounts.
+  useEffect(() => {
+    void queryClient.prefetchQuery(['sam', 0], () => loadSam(null))
+    void queryClient.prefetchQuery('bonds', fetchValidatorsWithBonds)
+    void queryClient.prefetchQuery(
+      'protected-events',
+      fetchProtectedEventsWithValidator,
+    )
+  }, [])
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <RouterProvider router={router} />
+      </TooltipProvider>
+    </QueryClientProvider>
+  )
+}
 
 const rootElement = document.getElementById('root')
 if (!rootElement) throw new Error('Root element #root not found')
 
 createRoot(rootElement).render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <RouterProvider router={router} />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <Root />
   </React.StrictMode>,
 )
