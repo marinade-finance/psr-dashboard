@@ -212,7 +212,7 @@ export const BiddingBreakdown: React.FC<Props> = ({
             pmpe={pmpe(metrics.effBid)}
           />
           <RevRow
-            label="Bid gap"
+            label="Resulting bid gap"
             pmpe={pmpe(metrics.bidGap)}
             severity={
               metrics.bidGap > 2

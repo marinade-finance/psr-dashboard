@@ -128,7 +128,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           />
 
           <SectionHeader
-            title={`Keep stake (${coverage.minEp} epochs)`}
+            title={`Keep stake — ${coverage.minEp} epochs`}
             help={`What the bond needs to keep your stake for the next ${coverage.minEp} epochs. Fall short — you pay a bond risk fee AND are scheduled to lose stake immediately.`}
           />
           <CalcRow
@@ -169,7 +169,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           )}
 
           <SectionHeader
-            title={`Grow stake (${coverage.idealEp} epochs)`}
+            title={`Grow stake — ${coverage.idealEp} epochs`}
             help={
               'What the bond needs for the pool to feel comfortable giving you more stake.'
             }
