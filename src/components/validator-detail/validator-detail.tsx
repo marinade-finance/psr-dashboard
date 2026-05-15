@@ -788,7 +788,7 @@ export const ValidatorDetail = ({
               apyBreakdown={apyBreakdown}
               winningApy={winningApy}
               validator={validator}
-              guideTo={`${docsPath(level)}#detail-panel`}
+              guideTo={`${docsPath(level)}#cpmpe`}
               isSimulated={isSimulated}
             />
 

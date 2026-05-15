@@ -629,7 +629,7 @@ export const SamTable: React.FC<Props> = ({
       value: `${eligibleWinningCount} / ${eligibleCount}`,
       unit: '',
       help: HELP_TEXT.winningValidators,
-      guideTo: `${dp}#auction-table`,
+      guideTo: `${dp}#sam`,
     },
     {
       label: 'Re-delegation',
