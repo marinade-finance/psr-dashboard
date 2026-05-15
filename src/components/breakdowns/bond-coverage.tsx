@@ -161,7 +161,9 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
               total
               severity="warning"
             />
-          ) : null}
+          ) : (
+            <OkRow message="Bond meets minimum — keeps your stake." />
+          )}
 
           <SectionHeader
             title={`Ideal Coverage — ${coverage.idealEp} epochs`}
