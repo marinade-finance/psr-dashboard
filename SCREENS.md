@@ -33,61 +33,77 @@ Protected Stake Rewards" wordmark (wordmark hidden below `sm`).
 `bg-primary text-primary-foreground`. Hovering Events / Bonds prefetches the
 respective query (`staleTime: 5min`).
 
-**Right** — Docs link (→ `/docs` or `/expert-docs` per `level`),
-`ThemeToggle`.
+**Right** — Docs link (→ `/docs` or `/expert-docs` per `level`, hidden
+below `sm`), `ThemeToggle`.
 
 ---
 
 ## SAM Page (`/`, `/expert-`)
 
-`src/pages/sam.tsx` · `src/components/sam-table/sam-table.tsx`
+`src/pages/stake-auction-marketplace.tsx` ·
+`src/components/sam-table/sam-table.tsx`
 
-### Jump-to-validator search
-
-Above the stats bar, a `max-w-md` text input
-(`src/components/validator-jump/validator-jump.tsx`).
-Accepts a vote account (exact / prefix) or a validator name (prefix /
-substring). Up to 8 ranked matches in a dropdown; click or `Enter` opens
-the detail sheet for that validator — even if the validator is hidden by
-the Basic-mode bond filter, because the detail reads from the full
-auction set, not from the visible table rows.
+Auction data refetches every hour. Auction result is augmented in-place
+with `expectedStakeChangeSol`; the table re-runs the auction whenever
+`simulationOverrides` mutates (bumped via a monotonic `simulationRunId`).
 
 ### Basic vs Expert filter
 
-Basic mode hides validators whose bond runway (`bondGoodForNEpochs`) is
-below `dsSamConfig.minBondEpochs`, on top of the existing "must have
-some marinade stake" rule. Expert mode shows the long tail. The
-jump-to-validator search bypasses the filter, so a deep link still
-works.
+`passesTableFilter`. Both modes require `bondBalanceSol > 0`. Basic mode
+additionally requires the validator to be currently staked or
+target-allocated **and** to have `bondGoodForNEpochs ≥
+dsSamConfig.minBondEpochs`. Expert mode shows the long tail. The
+jump-to-validator search bypasses the filter because the sheet reads
+from the full auction set.
 
 ### Stats bar
 
-Five `Card` tiles, `flex flex-wrap`. When ≥1 simulation is active a sixth
-tile is the destructive **"Reset Simulation (N)"** chip-button.
+Five `Card` tiles, `flex flex-wrap`. When ≥1 simulation is active the
+whole table is wrapped in a yellow inset ring with a "Simulation Mode"
+header strip carrying a **"Reset Simulation"** button.
 
-| Tile                | Source                                                      |
-| ------------------- | ----------------------------------------------------------- |
-| Total Auction Stake | `selectSamDistributedStake(validators)`                     |
-| Winning APY         | `selectWinningAPY(auctionResult, epochsPerYear)`            |
-| Projected APY       | `selectProjectedAPY(auctionResult, epochsPerYear)`          |
-| Winning Validators  | `winningCount / totalValidators`                            |
-| Re-delegation       | sum of positive `expectedStakeChangeSol` (capped per epoch) |
+| Tile                | Source                                                                         |
+| ------------------- | ------------------------------------------------------------------------------ |
+| Total Auction Stake | `selectSamDistributedStake(validators)` (SOL)                                  |
+| Winning APY         | `selectWinningAPY(auctionResult, epochsPerYear)`                               |
+| Projected APY       | `selectProjectedAPY(auctionResult, epochsPerYear)`                             |
+| Winning Validators  | `winningCount / totalValidators`                                               |
+| Re-delegation       | sum of positive `selectExpectedStakeChange` across the filtered set (SOL)      |
 
-Tooltips via `HelpTip` on Winning APY, Re-delegation, and Max APY column
-header.
+Tooltips via `HelpTip` on each tile.
+
+### Concentration metrics
+
+Two-column grid below the stats bar (`grid-cols-1 sm:grid-cols-2 gap-3`).
+Two `<ConcentrationMetric>` cards: **Top Countries** and **Top ASOs**.
+Each shows up to 3 stacked bar rows (top entries), filled against the
+per-country / per-ASO cap; a row tinted `bg-destructive` means that
+entity was capped (`atCap`). Hover expands a tooltip showing up to 15
+entries plus a remaining-count line.
+
+### Jump-to-validator search
+
+`src/components/validator-search/validator-search.tsx`. `max-w-sm` text
+input below the concentration grid, aligned with the table left edge.
+Accepts a vote account (exact / prefix) or a validator name (prefix /
+substring) via `findMatches`. Up to 8 ranked matches in a dropdown;
+click or `Enter` opens the detail sheet for that validator — even if
+the validator is hidden by the Basic-mode filter, because the detail
+reads from the full auction set, not from the visible table rows.
 
 ### Auction table
 
-7 columns, sortable. **Default sort: Max APY descending.** Sort indicator
-`↑`/`↓` next to active header.
+7 columns, sortable. **Default sort: Max APY descending.** Sort
+indicator `↑`/`↓` next to active header. Table sits in a scroll-x card
+(`bg-card rounded-xl border border-border shadow-card overflow-x-auto`).
 
 | Column         | Sort key     | What's there                                                                                                                                                                |
 | -------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `#`            | `rank`       | `{tipIcon}#N` coloured by tip urgency. Ghost rows: muted `#N`. Simulated rows: posColor-tinted `#N` + `✕` clear button. Keyboard-activatable (`role="button"`, `tabIndex`). |
-| Validator      | `validator`  | `<ValidatorIdentity>` — name + responsive vote account. Trailing red pulsing dot when validator has a notification (`hasAlert`).                                            |
-| Max APY        | `maxApy`     | `selectMaxAPY` pill. Primary tone if in winning set, destructive if not.                                                                                                    |
-| Bond           | `bond`       | `<BondChip>` (Healthy / Adequate / Watch / Critical, see § Bond chip below) + balance + utilization bar + `(Nep)` runway suffix.                                            |
-| Stake / Next Δ | `stakeDelta` | Active SAM stake on top, expected next-epoch change underneath. `0 SOL` (muted) when delta is zero, otherwise tinted +/− SOL.                                               |
+| `#`            | `rank`       | Cutoff-relative rank (`validator.values.cutoffRank`) coloured by tip urgency. Ghost rows: muted `#N`. Simulated rows: posColor-tinted `#N` + `✕` clear button. Keyboard-activatable (`role="button"`, `tabIndex`). |
+| Validator      | `validator`  | `<ValidatorIdentity>` — name + responsive vote account. Trailing red pulsing dot when validator has an alert (`bondRunway ≤ 5` or `bondUtilPct ≥ 85`). `PenaltyBadges` slot for the active penalty icons. |
+| Max APY        | `maxApy`     | `selectMaxAPY` pill. Primary tone if in winning set, destructive-light otherwise.                                                                                           |
+| Bond           | `bond`       | Bond chip (Healthy / Adequate / Watch / Critical — see § Bond chip) + dot + balance + utilization bar + `(Nep)` runway suffix.                                              |
+| Stake / Next Δ | `stakeDelta` | Active SAM stake on top, expected next-epoch change underneath. Muted `0 SOL` when delta is zero, otherwise tinted `+/−` SOL coloured `var(--status-green)` / `var(--destructive)`. |
 | Next Step      | `nextStep`   | One-line tip from `getValidatorTip`. Background tinted by urgency.                                                                                                          |
 | (chevron)      | —            | Drill-in cue, recolours on row hover.                                                                                                                                       |
 
@@ -100,20 +116,24 @@ validators stay above the line because they'd win on yield. Label reads
 
 ### Row tints
 
-| State                       | Background                                                                  |
-| --------------------------- | --------------------------------------------------------------------------- |
-| In set                      | `bg-card`, hover `bg-primary-light`                                         |
-| Out of set (bid-too-low)    | `bg-destructive/[0.02]`, hover `bg-destructive/[0.05]`                      |
-| Ghost (simulation original) | `opacity-40 line-through bg-muted/30 cursor-default`                        |
-| Simulated (post-edit)       | `ring-1 ring-current/20`, `borderLeftColor` = posColor (green up, red down) |
+| State                       | Background                                                                                  |
+| --------------------------- | ------------------------------------------------------------------------------------------- |
+| In set                      | `bg-card`, hover `bg-primary-light`                                                         |
+| Out of set (bid-too-low)    | `bg-destructive/[0.02]`, hover `bg-destructive/[0.05]`                                      |
+| Ghost (simulation original) | `opacity-40 line-through bg-muted/30` — `cursor-pointer` if the simulated target row exists, otherwise `cursor-default` |
+| Simulated (post-edit)       | `ring-2 ring-inset ring-status-yellow`, `borderLeftColor` = posColor (green up, red down)   |
+| Scroll-flash                | `bg-status-yellow-light` for 800ms after clicking a ghost row to jump to its new position   |
 
 ### Simulation mode
 
-Tracked in `SamPage`: `simulationModeActive`, `simulationOverrides`,
-`simulatedValidators`, `pendingEdits`, `originalAuctionResult`. Edits route
-through `mergeOverrides` → `useQuery(['sam', simulationRunId], () => loadSam(overrides))`.
-After a re-run, `insertGhostRows` injects ghost entries at original
-positions of changed validators.
+Tracked in `SamPage`: `simulationRunId`, `simulationOverrides`,
+`simulatedValidators`, `originalAuctionResult`. Edits flow through
+`mergeOverrides` → bump `simulationRunId` → `useQuery({ queryKey:
+['sam', simulationRunId], queryFn: () => loadSam(overrides),
+placeholderData: keepPreviousData })`. After a re-run, `insertGhostRows`
+injects ghost entries at original positions of changed validators.
+Detection of refetch completion watches `fetchStatus === 'idle'`
+(v5 dropped `onSettled`).
 
 ### Bond chip
 
@@ -128,42 +148,56 @@ Four tiers, `BOND_CHIP` record in `sam-table.tsx`:
 
 ### Validator detail sheet
 
-Right-side `Sheet`, `max-w-4xl`. Opens when a row is clicked. URL synced
-via `?v=<voteAccount>`; browser-back closes the sheet.
+`src/components/validator-detail/validator-detail.tsx`. Right-side
+`Sheet`, `max-w-4xl`, mounted by `SamPage` with `key={selectedValidator
+?? 'detail'}` so switching validators remounts the component. Opens
+when a row is clicked. URL synced via `?v=<voteAccount>`; browser-back
+closes the sheet.
 
 **Tabs:** Overview · Notifications (when present) · Payments · Bidding ·
-Bond · Bid Penalty.
+Bond · Bid Penalty. The internal `Tab` union uses `'revenue'` as the
+value for the Bidding tab.
 
 **Overview** — 2-col grid (`lg:grid-cols-2`, `gap-6`):
 
-- **Stake** — Active, Target, Next epoch (each row a `MetricRow` with
-  `HelpTip`).
-- **Bond** — Balance, Reserve / "Top up X" CTA, Bid runway, "See full bond
-  coverage breakdown →" link.
+- **Stake** — Active, Target, Next epoch (each row a local `MetricRow`
+  with `HelpTip`).
+- **Bond** — Balance, Reserve / "Top up X" CTA, Bid runway, "See full
+  bond coverage breakdown →" link.
 - **Expected Payment This Epoch** — Active stake cost, Activating stake
-  cost, optional `↳ bid gap` sub-row, Penalty group (single `Penalty: No
-penalties` line OR an itemised list of `↳ bid-too-low / blacklist / bond
-risk fee` `PenaltyRow`s, each clickable to its own breakdown tab),
-  Total (separated by horizontal line via `SEPARATOR_DIV_CLASS`).
-- **APY Composition** (right column) — segmented bar showing inflation /
-  MEV / block rewards / stake bid. Bar widths use raw PMPE proportions
-  (so they sum to total); the displayed % is each component's compounded
-  APY. Threshold marker line + label at the winning-APY position.
+  cost, optional `↳ bid gap` sub-row, Penalty group (single `Penalty:
+  No penalties` line OR an itemised list of `↳ bid-too-low / blacklist /
+  bond risk fee` `PenaltyRow`s, each clickable to its own breakdown
+  tab), Total (separated by horizontal line via `SEPARATOR_DIV_CLASS`
+  from `breakdowns/row.tsx`).
+- **APY Composition** (right column) — `ApyCompositionCard`. Segmented
+  bar showing inflation / MEV / block rewards / stake bid. Bar widths
+  use raw PMPE proportions (so they sum to total); the displayed % is
+  each component's compounded APY. Threshold marker line + label at the
+  winning-APY position.
 - **What-If Simulation** (right column, when toggled on) — four numeric
   inputs (Stake bid PMPE, Inflation, MEV, Block rewards). Auto-recalcs
-  with 400ms debounce. Card has yellow border + `bg-status-yellow-light`.
+  with 400ms debounce. The `onSimulate` parent callback is routed
+  through a `useRef` so callback identity churn does not restart the
+  timer. Card has yellow border + `bg-status-yellow-light`.
 
-**Tip banner** — sticky strip below the header. Click target opens
-the relevant tab (`Bond tab →`, `Simulate →`).
+**Tip banner** — sticky strip below the header. Click target opens the
+relevant tab (`Bond tab →`, `Simulate →`).
+
+`MetricRow` and `PenaltyRow` are file-private helpers in
+`validator-detail.tsx`; they are not exported as shared primitives.
 
 ---
 
 ## Validator Bonds Page (`/bonds`, `/expert-bonds`)
 
-`src/pages/validator-bonds.tsx` · `src/components/validator-bonds-table/validator-bonds-table.tsx`
+`src/pages/validator-bonds.tsx` ·
+`src/components/validator-bonds-table/validator-bonds-table.tsx`
 
-Data: `fetchValidatorsWithBonds()` → `ValidatorWithBond[]`. Filtered to
-rows where `totalMarinadeStake > 0` or `bond.effective_amount > 0`.
+Data: `fetchValidatorsWithBonds()` → `ValidatorWithBond[]`. Refetch
+every hour. Filtered at the page level to rows where
+`selectTotalMarinadeStake(validator) > 0` or
+`Number(bond?.effective_amount) > 0`.
 
 ### Coverage hero
 
@@ -176,8 +210,8 @@ Full-width card.
 
 ### Tile map
 
-`<ValidatorBondsTileMap>` inside the bonds table component. 4 tier rows by
-total Marinade stake:
+`<ValidatorBondsTileMap>` inside the bonds table component. 4 tier rows
+by total Marinade stake:
 
 | Row        | Range                |
 | ---------- | -------------------- |
@@ -202,12 +236,13 @@ coverage % (`size ≥ 76`).
 | ≥ 95%    | `var(--bond-full)` |
 
 Coverage bar fixed at the tile's bottom edge, gradient-filled to
-`coveragePct%`. Hover tooltip via `tooltipAttributes`. Legend below.
+`coveragePct%`. Hover tooltip via Radix `Tooltip`. Legend below.
 
 ### Bonds table
 
-Generic `<Table>` with `showRowNumber`. **Default sort: Marinade Stake
-DESC.**
+Generic `<Table>` inside the shared `<TableShell>` with
+`TABLE_SHELL_HOVER` for the muted row-hover. `showRowNumber`. **Default
+sort: Marinade Stake DESC.**
 
 | Column                | Notes                                                                                      | Expert only |
 | --------------------- | ------------------------------------------------------------------------------------------ | ----------- |
@@ -222,11 +257,12 @@ DESC.**
 
 ## Protected Events Page (`/protected-events`, `/expert-protected-events`)
 
-`src/pages/protected-events.tsx` · `src/components/protected-events-table/protected-events-table.tsx`
+`src/pages/protected-events.tsx` ·
+`src/components/protected-events-table/protected-events-table.tsx`
 
-Data: `fetchProtectedEventsWithValidator()`. Rows where
-`reason === 'Bidding'` are excluded from the table but contribute to
-`Last Epoch Bids` (Expert metric).
+Data: `fetchProtectedEventsWithValidator()`. Refetch every hour. Rows
+where `reason === 'Bidding'` are excluded from the table but contribute
+to `Last Epoch Bids` (Expert metric).
 
 ### Top tiles
 
@@ -245,13 +281,14 @@ Strip above the table.
 
 - **Validator filter** — `<Input>`, case-insensitive substring match
   against `vote_account` and `validator.info_name`.
-- **Epoch range** — `<EpochRangePicker>`. Initial bounds seeded from data
-  on first non-empty load; user-narrowed selections survive subsequent
-  refetches (bounds are not auto-widened).
+- **Epoch range** — `<EpochRangePicker>`. Initial bounds seeded from
+  data on first non-empty load; user-narrowed selections survive
+  subsequent refetches (bounds are not auto-widened).
 
 ### Events table
 
-Generic `<Table>`, `showRowNumber`. **Default sort: Epoch DESC.**
+Generic `<Table>` inside `<TableShell>` with `TABLE_SHELL_HOVER`,
+`showRowNumber`. **Default sort: Epoch DESC.**
 
 | Column    | Notes                                                   |
 | --------- | ------------------------------------------------------- |
@@ -278,17 +315,42 @@ Generic `<Table>`, `showRowNumber`. **Default sort: Epoch DESC.**
 `src/pages/docs.tsx`
 
 Centered `max-w-3xl` column. Renders `public/docs/GUIDE.md` (Basic) or
-`public/docs/GUIDE-EXPERT.md` (Expert).
+`public/docs/GUIDE-EXPERT.md` (Expert) through `react-markdown` with
+`remark-gfm` + `rehype-raw`. Fetched as plain text via `useQuery({
+queryKey: ['doc', activeDoc], staleTime: Infinity })`.
 
 - Expert mode shows a tab strip ("Guide" / "Expert Guide") to switch
-  between the two.
-- Hash anchors work: `<a id="...">` markers in the markdown are honoured
-  (via `rehype-raw`) and `useEffect` scrolls to `window.location.hash`
-  on load and on tab switch.
+  between the two. When entering the route via a hash (e.g. from a
+  breakdown "Guide →" link), the Expert page still defaults to `GUIDE`
+  so the section anchor exists.
+- Hash anchors work: `<a id="...">` markers in the markdown are
+  honoured (via `rehype-raw`) and a `useEffect` scrolls to
+  `window.location.hash` after the markdown DOM mounts (deferred one
+  frame via `requestAnimationFrame`). Re-runs on tab switch.
 - Links beginning with `#GUIDE` / `#GUIDE-EXPERT` switch the active doc
-  instead of scrolling. All other links open in a new tab.
-- Card "Guide →" links from breakdown cards point at section anchors
-  (`/docs#bid-penalty`, `/docs#bond`, `/docs#cpmpe`, `/docs#detail-panel`).
+  instead of scrolling. All other external `a` elements open in a new
+  tab.
+- Card "Guide →" links from breakdown cards use
+  `docsPath(level)` to pick `/docs` vs `/expert-docs`, then append a
+  section anchor.
+
+---
+
+## Internal sandbox routes
+
+Hidden from navigation. Each is served by a `*Page` wrapper that
+injects fixture data into the corresponding production page, keeping
+the full UI and interaction surface but bypassing live APIs.
+
+| Route                    | Component                                                          | Wraps                |
+| ------------------------ | ------------------------------------------------------------------ | -------------------- |
+| `/test-`                 | `TestSamPage` (`src/pages/test-stake-auction-marketplace.tsx`)     | `SamPage`            |
+| `/test-bonds`            | `TestBondsPage` (`src/pages/test-bonds.tsx`)                       | `ValidatorBondsPage` |
+| `/test-protected-events` | `TestProtectedEventsPage` (`src/pages/test-protected-events.tsx`)  | `ProtectedEventsPage` |
+
+Fixtures: `src/fixtures/`, `src/test-validators.ts`, `src/test-bonds.ts`,
+`src/test-protected-events.ts`. Test pages set `refetchInterval: false`
+on the wrapped `QueryClient` queries.
 
 ---
 
@@ -297,13 +359,13 @@ Centered `max-w-3xl` column. Renders `public/docs/GUIDE.md` (Basic) or
 Pointer list — for the full design language see CLAUDE.md.
 
 - **`<Card>`** (`src/components/ui/card.tsx`) — `rounded-xl border border-border bg-card shadow-card`.
-- **`<TableShell>`** (`src/components/table/table.tsx`) — canonical outer card chrome for any page that drops a generic `<Table>` into a content section. Wraps the table in `bg-card rounded-xl border border-border shadow-card overflow-hidden overflow-x-auto`. Both the bonds and protected-events tables sit inside one. Pair with `TABLE_SHELL_HOVER` on the `<Table>`'s `className` to get the muted `bg-secondary` row-hover (the default `<Table>` hover, `bg-primary-light`, is reserved for SAM, which has its own bespoke wrapper).
+- **`<TableShell>` + `TABLE_SHELL_HOVER`** (`src/components/table/table.tsx`) — canonical outer card chrome for any page that drops a generic `<Table>` into a content section. Wraps the table in `bg-card rounded-xl border border-border shadow-card overflow-hidden overflow-x-auto`. Both the bonds and protected-events tables sit inside one. Pair with `TABLE_SHELL_HOVER` on the `<Table>`'s `className` to get the muted `bg-secondary` row-hover (the default `<Table>` hover, `bg-primary-light`, is reserved for SAM, which has its own bespoke wrapper).
 - **`<Metric>`** (`src/components/metric/metric.tsx`) — KPI tile with optional `subline` + `extra` slots.
 - **`<ValidatorIdentity>`** (`src/components/validator-identity/validator-identity.tsx`) — canonical "name + truncated vote account" cell.
-- **`<CalcCard>` / `<CalcRow>` / `<OkRow>` / `<SectionHeader>` / `<Marker>`** (`src/components/breakdowns/shared.tsx`) — calculation breakdown primitives. Pass `total` on the conclusion row to get `separator + bold + large` in one prop; `value` defaults to `''`. The separator border is exposed for flex layouts via `SEPARATOR_DIV_CLASS`.
-- **`<MetricRow>` / `<PenaltyRow>`** (`src/components/validator-detail/validator-detail.tsx`) — overview-card row primitives. `MetricRow` accepts `onSeeBreakdown` to make the whole label clickable with a `→` cue.
+- **`<CalcCard>`** (`src/components/breakdowns/card.tsx`) — breakdown panel chrome with optional `guideTo` link, `status` pill, and `tip` footer. Pair with `CalcRow` / `OkRow` / `SectionHeader` / `Marker` from `src/components/breakdowns/row.tsx`. Pass `total` on the conclusion row to get `separator + bold + large` in one prop; `value` defaults to `''`. The separator border is exposed for flex layouts via `SEPARATOR_DIV_CLASS`.
 - **`<HelpTip>`** (`src/components/help-tip/help-tip.tsx`) — small `?` icon, Radix-based tooltip.
 - **`<Banner>`** (`src/components/banner/banner.tsx`) — dismissible announcement, persistence in `localStorage`.
+- **`<ConcentrationMetric>`** (`src/components/concentration-metric/concentration-metric.tsx`) — top-N stacked-bar concentration card with hover-expanded tooltip table.
 
 ---
 
