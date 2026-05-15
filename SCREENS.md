@@ -34,7 +34,23 @@ Protected Stake Rewards" wordmark (wordmark hidden below `sm`).
 respective query (`staleTime: 5min`).
 
 **Right** — Docs link (→ `/docs` or `/expert-docs` per `level`, hidden
-below `sm`), `ThemeToggle`.
+below `sm`), **Epoch meter**, `ThemeToggle`.
+
+### Epoch meter
+
+`src/components/epoch-meter/epoch-meter.tsx`. Replaces the bare
+`Epoch {N}` chip. Chip shows `Epoch {auctionEpoch}` (the common case,
+`auctionEpoch === networkEpoch`); only when they differ it shows
+`{networkEpoch} → {auctionEpoch}`, tinted `text-warning` iff
+`auctionEpoch < networkEpoch` (view is stale). A shared `HelpTip`
+exposes up to three sentence-case lines: (1) the epoch the auction
+allocates for, (2) the live Solana epoch + whether the view is live /
+next epoch / behind the chain (omitted until the protected-events query
+resolves), (3) latest protected-events settlement status — "on-chain"
+(FACT) or "estimated, not yet on-chain" (ESTIMATE). Auction epoch
+renders immediately from the prefetched `['sam', 0]` query; the meter
+force-populates the `['protected-events']` query (`staleTime: 5 min`) so
+lines 2-3 fill in without hovering the Events tab. Never blocks the nav.
 
 ---
 

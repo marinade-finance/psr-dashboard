@@ -183,9 +183,19 @@ border-border shadow-card overflow-hidden overflow-x-auto`), and the
 ### `components/navigation/`
 
 `navigation.tsx` — top bar, tab switcher, mobile labels, Docs link,
-`ThemeToggle`. Exports `UserLevel` enum and `UserLevelProps`. Hover-
-prefetches `bonds` and `protected-events` queries with a 5-min
-`staleTime` override.
+`<EpochMeter />`, `ThemeToggle`. Exports `UserLevel` enum and
+`UserLevelProps`. Hover-prefetches `bonds` and `protected-events`
+queries with a 5-min `staleTime` override.
+
+### `components/epoch-meter/`
+
+`epoch-meter.tsx` — the top-nav epoch chip + `HelpTip`. Subscribes to
+`['sam', 0]` (auction epoch, renders immediately) and force-populates
+`['protected-events']` (`staleTime: 5 min`, same key + `queryFn` the app
+already registers — no new query key) so the network-epoch and
+settlement tooltip lines fill in without hovering the Events tab. All
+branching and copy lives in `services/epoch.ts`; the component is dumb
+render.
 
 ### `components/banner/`
 
@@ -300,6 +310,13 @@ where applicable.
   using `fetchRewards` + per-validator stake tables.
   `fetchPsrEstimatesForValidator(voteAccount)` filters down to one
   validator (used by the detail panel).
+- **`epoch.ts`** — pure epoch-meter logic, no React.
+  `selectNetworkEpoch(validators)` (max `epoch_stats[].epoch`, null if
+  none), `selectLatestSettlement(protectedEvents)` (highest-epoch event
+  + FACT⇒on-chain), `epochMeterModel({ auctionEpoch, networkEpoch,
+  settlement })` returning `{ label, arrow, stale, lines }`. All chip /
+  tooltip copy and branching lives here. Tested in
+  `src/__tests__/epoch.test.ts`.
 
 ### Notifications
 
@@ -341,12 +358,12 @@ components.
 | Key                                    | Owner                                                | Notes                                                                                                                  |
 | -------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `['sam', simulationRunId]`             | `SamPage`                                            | `simulationRunId` increments on every simulate/reset → re-runs with `simulationOverrides`. `placeholderData: keepPreviousData`. Refetch every hour. |
-| `['sam', 0]`                           | `index.tsx` prefetch                                 | Warms the cache on cold load.                                                                                          |
+| `['sam', 0]`                           | `index.tsx` prefetch + `EpochMeter`                  | Warms the cache on cold load; `EpochMeter` subscribes for the auction epoch.                                            |
 | `['validator-names']`                  | `SamPage`                                            | `staleTime: Infinity`.                                                                                                 |
 | `['notifications-all', 'sam_auction']` | `SamPage`, `ValidatorBondsPage`                      | Refetch every 5 min.                                                                                                   |
 | `['notifications-broadcast']`          | All three top pages                                  | Refetch every 5 min.                                                                                                   |
 | `['bonds']`                            | `ValidatorBondsPage` + `Navigation` hover-prefetch + `index.tsx` prefetch | Refetch every hour; nav-hover uses `staleTime: 5 min`.                          |
-| `['protected-events']`                 | `ProtectedEventsPage` + `Navigation` hover-prefetch + `index.tsx` prefetch | Refetch every hour; nav-hover uses `staleTime: 5 min`.                         |
+| `['protected-events']`                 | `ProtectedEventsPage` + `Navigation` hover-prefetch + `index.tsx` prefetch + `EpochMeter` | Refetch every hour; nav-hover and `EpochMeter` use `staleTime: 5 min` (meter force-populates it on every page for the epoch tooltip). |
 | `['psrEstimates', voteAccount]`        | `ValidatorDetail`                                    | `staleTime: 5 min`, per-validator.                                                                                     |
 | `['doc', activeDoc]`                   | `DocsPage`                                           | `staleTime: Infinity`.                                                                                                 |
 

@@ -1,11 +1,11 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import React, { useCallback } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 
 import { cn } from 'src/class_utils'
+import { EpochMeter } from 'src/components/epoch-meter/epoch-meter'
 import { MarinadeLogo } from 'src/components/icons/marinade-logo'
 import { ThemeToggle } from 'src/components/theme-toggle/theme-toggle'
-import { loadSam } from 'src/services/sam'
 import { fetchValidatorsWithBonds } from 'src/services/validator-with-bond'
 import { fetchProtectedEventsWithValidator } from 'src/services/validator-with-protected_event'
 
@@ -33,13 +33,6 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
   const isExpert = level === UserLevel.Expert
   const prefix = isExpert ? 'expert-' : ''
   const queryClient = useQueryClient()
-  // Subscribe to the same ['sam', 0] query the app already prefetches; this
-  // stays live with the auto-refetch so the epoch ticks when SAM reruns.
-  const { data: sam } = useQuery({
-    queryKey: ['sam', 0],
-    queryFn: () => loadSam(null),
-  })
-  const epoch = sam?.auctionResult.auctionData.epoch
 
   const prefetch = useCallback(
     (route: string) => {
@@ -145,11 +138,7 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
           </svg>
           Docs
         </a>
-        {epoch !== undefined && (
-          <span className="text-xs font-mono text-muted-foreground px-2 py-1 rounded-md bg-muted whitespace-nowrap">
-            Epoch {epoch}
-          </span>
-        )}
+        <EpochMeter />
         {children}
         <ThemeToggle />
       </div>
