@@ -74,7 +74,7 @@ const renderFunderBadge = (protectedEvent: ProtectedEvent) => {
 
 type Props = {
   data: ProtectedEventWithValidator[]
-  level: UserLevel
+  level?: UserLevel
 }
 
 export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
@@ -307,7 +307,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
                 headerHelp:
                   "Who actually paid: Validator Bond means the validator's own deposit covered it; Marinade means our reserve fund had to step in because the bond came up short.",
                 render: ({ protectedEvent }) =>
-                  renderFunderBadge(protectedEvent),
+                  renderFunderBadge(protectedEvent) ?? <></>,
                 compare: (a, b) =>
                   a.protectedEvent.meta.funder.localeCompare(
                     b.protectedEvent.meta.funder,

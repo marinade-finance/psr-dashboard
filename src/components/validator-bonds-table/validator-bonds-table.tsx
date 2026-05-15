@@ -33,7 +33,7 @@ import type { ValidatorWithBond } from 'src/services/validator-with-bond'
 
 type Props = {
   data: ValidatorWithBond[]
-  level: UserLevel
+  level?: UserLevel
   notificationsMap?: Record<string, NotificationSummary>
 }
 

@@ -37,7 +37,7 @@ export type SamDataSources = {
 }
 
 type Props = {
-  level: UserLevel
+  level?: UserLevel
   dataSources?: SamDataSources
 }
 
@@ -207,7 +207,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
     if (!selectedValidator || !displayAuctionResult || !data) return null
     const augmented = augmentAuctionResult(displayAuctionResult)
     const validators = augmented
-      .filter(validator => selectBondSize(validator) > 0)
+      .filter(validator => (selectBondSize(validator) ?? 0) > 0)
       .sort(
         (a, b) =>
           selectMaxAPY(b, data.epochsPerYear) -

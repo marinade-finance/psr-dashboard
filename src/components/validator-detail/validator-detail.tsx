@@ -683,7 +683,7 @@ export const ValidatorDetail = ({
               <div className="mt-3 space-y-3">
                 <MetricRow
                   label="Balance"
-                  value={stake(validator.bondBalanceSol)}
+                  value={stake(validator.bondBalanceSol ?? 0)}
                 />
                 <MetricRow
                   label="Reserve"

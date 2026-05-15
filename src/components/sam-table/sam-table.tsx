@@ -176,7 +176,7 @@ type Props = {
   originalAuctionResult: AuctionResult | null
   epochsPerYear: number
   dsSamConfig: DsSamConfig
-  level: UserLevel
+  level?: UserLevel
   simulatedValidators?: Set<string>
   isCalculating: boolean
   validatorMeta?: Map<string, ValidatorMeta>
@@ -386,7 +386,11 @@ export const SamTable: React.FC<Props> = ({
     () =>
       augmentAuctionResult(auctionResult)
         .filter(validator =>
-          passesTableFilter(validator, level, dsSamConfig.minBondEpochs),
+          passesTableFilter(
+            validator,
+            level ?? UserLevel.Basic,
+            dsSamConfig.minBondEpochs,
+          ),
         )
         .map(validator => ({
           ...validator,
@@ -723,7 +727,7 @@ export const SamTable: React.FC<Props> = ({
               {bondChip.label}
             </span>
             <span className="text-muted-foreground text-xs font-mono">
-              {stake(selectBondSize(validator))}
+              {stake(selectBondSize(validator) ?? 0)}
             </span>
           </div>
           <div className="flex items-center gap-1.5">
