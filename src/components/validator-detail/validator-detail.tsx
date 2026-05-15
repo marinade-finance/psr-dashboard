@@ -630,7 +630,7 @@ export const ValidatorDetail = ({
 
         <div
           className={cn(
-            'grid grid-cols-1 lg:grid-cols-2 gap-6 px-4 sm:px-6 pb-6',
+            'grid grid-cols-1 lg:grid-cols-2 gap-6 px-4 sm:px-6 py-6',
             tab !== 'overview' && 'hidden',
           )}
         >
