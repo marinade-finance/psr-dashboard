@@ -112,7 +112,7 @@ export const ConcentrationMetric: React.FC<Props> = ({
       </div>
 
       {open && rows.length > 0 && (
-        <div className="absolute z-30 top-full left-0 mt-1 w-[min(520px,90vw)] max-h-[60vh] overflow-y-auto bg-card border border-border rounded-md shadow-xl p-3 text-xs">
+        <div className="absolute z-30 top-full inset-x-0 mt-1 max-h-[60vh] overflow-y-auto bg-card border border-border rounded-md shadow-xl p-3 text-xs">
           <div className="text-muted-foreground mb-2 leading-snug">
             Cap: {pct(capPct)} of network stake. Bar fills against the cap.
           </div>
