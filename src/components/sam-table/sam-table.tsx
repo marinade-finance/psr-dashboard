@@ -160,7 +160,7 @@ export function makeCompareFn(
         cmp = selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
         break
       case 'bond':
-        cmp = a.bondBalanceSol - b.bondBalanceSol
+        cmp = (a.bondBalanceSol ?? 0) - (b.bondBalanceSol ?? 0)
         break
       default:
         cmp =

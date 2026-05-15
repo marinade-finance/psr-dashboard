@@ -1,5 +1,5 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React, { useState } from 'react'
-import { QueryClient, QueryClientProvider } from 'react-query'
 
 import { TEST_BONDS_DATA } from 'src/fixtures/test-bonds'
 import { ValidatorBondsPage } from 'src/pages/validator-bonds'
@@ -20,8 +20,8 @@ export const TestBondsPage: React.FC<UserLevelProps> = ({ level }) => {
         },
       },
     })
-    queryClient.setQueryData('bonds', TEST_BONDS_DATA)
-    queryClient.setQueryData('notifications-broadcast', null)
+    queryClient.setQueryData(['bonds'], TEST_BONDS_DATA)
+    queryClient.setQueryData(['notifications-broadcast'], null)
     queryClient.setQueryData(['notifications-all', 'sam_auction'], undefined)
     return queryClient
   })

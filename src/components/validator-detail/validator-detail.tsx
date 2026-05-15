@@ -1,5 +1,5 @@
+import { useQuery } from '@tanstack/react-query'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { useQuery } from 'react-query'
 
 import { cn } from 'src/class_utils'
 import { BidPenaltyBreakdown } from 'src/components/breakdowns/bid-penalty'

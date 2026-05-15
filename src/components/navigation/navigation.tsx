@@ -1,5 +1,5 @@
+import { useQueryClient } from '@tanstack/react-query'
 import React, { useCallback } from 'react'
-import { useQueryClient } from 'react-query'
 import { Link, NavLink } from 'react-router-dom'
 
 import { cn } from 'src/class_utils'
@@ -36,13 +36,15 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
   const prefetch = useCallback(
     (route: string) => {
       if (route === PROTECTED_EVENTS) {
-        void queryClient.prefetchQuery(
-          PROTECTED_EVENTS,
-          fetchProtectedEventsWithValidator,
-          { staleTime: 5 * 60 * 1000 },
-        )
+        void queryClient.prefetchQuery({
+          queryKey: [PROTECTED_EVENTS],
+          queryFn: fetchProtectedEventsWithValidator,
+          staleTime: 5 * 60 * 1000,
+        })
       } else if (route === BONDS) {
-        void queryClient.prefetchQuery(BONDS, fetchValidatorsWithBonds, {
+        void queryClient.prefetchQuery({
+          queryKey: [BONDS],
+          queryFn: fetchValidatorsWithBonds,
           staleTime: 5 * 60 * 1000,
         })
       }

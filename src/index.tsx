@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import TagManager from 'react-gtm-module'
-import { QueryClient, QueryClientProvider } from 'react-query'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import {
   createBrowserRouter,
   RouterProvider,
@@ -107,12 +107,18 @@ const Root = () => {
   // module top-level) means a rejection bubbles to the route's error
   // boundary instead of being silently swallowed before React mounts.
   useEffect(() => {
-    void queryClient.prefetchQuery(['sam', 0], () => loadSam(null))
-    void queryClient.prefetchQuery('bonds', fetchValidatorsWithBonds)
-    void queryClient.prefetchQuery(
-      'protected-events',
-      fetchProtectedEventsWithValidator,
-    )
+    void queryClient.prefetchQuery({
+      queryKey: ['sam', 0],
+      queryFn: () => loadSam(null),
+    })
+    void queryClient.prefetchQuery({
+      queryKey: ['bonds'],
+      queryFn: fetchValidatorsWithBonds,
+    })
+    void queryClient.prefetchQuery({
+      queryKey: ['protected-events'],
+      queryFn: fetchProtectedEventsWithValidator,
+    })
   }, [])
 
   return (

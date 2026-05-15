@@ -1,5 +1,5 @@
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import React, { useState, useCallback, useEffect, useMemo } from 'react'
-import { useQuery } from 'react-query'
 
 import { Banner } from 'src/components/banner/banner'
 import { Loader } from 'src/components/loader/loader'
@@ -65,41 +65,38 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
   const [originalAuctionResult, setOriginalAuctionResult] =
     useState<AuctionResult | null>(null)
 
-  const { data, status } = useQuery(
-    ['sam', simulationRunId],
-    () => loadAuction(simulationOverrides),
-    {
-      keepPreviousData: true,
-      refetchInterval: 60 * 60 * 1000,
-      onSettled: () => {
-        setIsCalculating(false)
-      },
-    },
-  )
+  const { data, status, fetchStatus } = useQuery({
+    queryKey: ['sam', simulationRunId],
+    queryFn: () => loadAuction(simulationOverrides),
+    placeholderData: keepPreviousData,
+    refetchInterval: 60 * 60 * 1000,
+  })
 
-  const { data: validatorNames } = useQuery(
-    ['validator-names'],
-    loadValidatorNames,
-    { staleTime: Infinity },
-  )
+  // v5 removed onSettled from useQuery; replicate by watching the fetch
+  // settle (fetchStatus returning to 'idle' after a run).
+  useEffect(() => {
+    if (fetchStatus === 'idle') setIsCalculating(false)
+  }, [fetchStatus])
 
-  const { data: notificationsMap } = useQuery(
-    ['notifications-all', 'sam_auction'],
-    () => fetchAllNotifications('sam_auction'),
-    {
-      refetchInterval: 5 * 60 * 1000,
-      keepPreviousData: true,
-    },
-  )
+  const { data: validatorNames } = useQuery({
+    queryKey: ['validator-names'],
+    queryFn: loadValidatorNames,
+    staleTime: Infinity,
+  })
 
-  const { data: latestBroadcastNotification } = useQuery(
-    'notifications-broadcast',
-    fetchLatestSamAuctionBroadcastNotification,
-    {
-      refetchInterval: 5 * 60 * 1000,
-      keepPreviousData: true,
-    },
-  )
+  const { data: notificationsMap } = useQuery({
+    queryKey: ['notifications-all', 'sam_auction'],
+    queryFn: () => fetchAllNotifications('sam_auction'),
+    refetchInterval: 5 * 60 * 1000,
+    placeholderData: keepPreviousData,
+  })
+
+  const { data: latestBroadcastNotification } = useQuery({
+    queryKey: ['notifications-broadcast'],
+    queryFn: fetchLatestSamAuctionBroadcastNotification,
+    refetchInterval: 5 * 60 * 1000,
+    placeholderData: keepPreviousData,
+  })
 
   const nameMap = useMemo(() => {
     const map = new Map<string, { name?: string; countryIso?: string | null }>()
@@ -240,7 +237,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
         </div>
       )}
       {status === 'error' && <p>Error fetching data</p>}
-      {status === 'loading' && <Loader />}
+      {status === 'pending' && <Loader />}
       {status === 'success' && displayAuctionResult && (
         <SamTable
           auctionResult={displayAuctionResult}

@@ -1,5 +1,5 @@
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import React from 'react'
-import { useQuery } from 'react-query'
 
 import { Banner } from 'src/components/banner/banner'
 import { Loader } from 'src/components/loader/loader'
@@ -15,27 +15,25 @@ import { selectTotalMarinadeStake } from 'src/services/validators'
 import type { UserLevelProps } from 'src/components/navigation/navigation'
 
 export const ValidatorBondsPage: React.FC<UserLevelProps> = ({ level }) => {
-  const { data, status } = useQuery('bonds', fetchValidatorsWithBonds, {
+  const { data, status } = useQuery({
+    queryKey: ['bonds'],
+    queryFn: fetchValidatorsWithBonds,
     staleTime: 5 * 60 * 1000,
     refetchInterval: 60 * 60 * 1000,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   })
-  const { data: latestBroadcastNotification } = useQuery(
-    'notifications-broadcast',
-    fetchLatestSamAuctionBroadcastNotification,
-    {
-      refetchInterval: 5 * 60 * 1000,
-      keepPreviousData: true,
-    },
-  )
-  const { data: notificationsMap } = useQuery(
-    ['notifications-all', 'sam_auction'],
-    () => fetchAllNotifications('sam_auction'),
-    {
-      refetchInterval: 5 * 60 * 1000,
-      keepPreviousData: true,
-    },
-  )
+  const { data: latestBroadcastNotification } = useQuery({
+    queryKey: ['notifications-broadcast'],
+    queryFn: fetchLatestSamAuctionBroadcastNotification,
+    refetchInterval: 5 * 60 * 1000,
+    placeholderData: keepPreviousData,
+  })
+  const { data: notificationsMap } = useQuery({
+    queryKey: ['notifications-all', 'sam_auction'],
+    queryFn: () => fetchAllNotifications('sam_auction'),
+    refetchInterval: 5 * 60 * 1000,
+    placeholderData: keepPreviousData,
+  })
 
   return (
     <div className="bg-background-page">
@@ -50,7 +48,7 @@ export const ValidatorBondsPage: React.FC<UserLevelProps> = ({ level }) => {
         )}
       </div>
       {status === 'error' && <p>Error fetching data</p>}
-      {status === 'loading' && <Loader />}
+      {status === 'pending' && <Loader />}
       {status === 'success' && (
         <ValidatorBondsTable
           data={data.filter(

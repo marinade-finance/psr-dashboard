@@ -26,7 +26,7 @@ export function bondUtilizationPct(
   validator: AuctionValidator,
   minBondEpochs: number,
 ): number {
-  if (validator.bondBalanceSol <= 0) return 100
+  if ((validator.bondBalanceSol ?? 0) <= 0) return 100
   const runway = validator.bondGoodForNEpochs ?? 0
   if (minBondEpochs <= 0) return 0
   const used = 1 - runway / minBondEpochs

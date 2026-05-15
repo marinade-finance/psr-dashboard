@@ -1,5 +1,5 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React, { useState } from 'react'
-import { QueryClient, QueryClientProvider } from 'react-query'
 
 import { TEST_PROTECTED_EVENTS } from 'src/fixtures/test-protected-events'
 import { ProtectedEventsPage } from 'src/pages/protected-events'
@@ -22,8 +22,8 @@ export const TestProtectedEventsPage: React.FC<UserLevelProps> = ({
         },
       },
     })
-    queryClient.setQueryData('protected-events', TEST_PROTECTED_EVENTS)
-    queryClient.setQueryData('notifications-broadcast', null)
+    queryClient.setQueryData(['protected-events'], TEST_PROTECTED_EVENTS)
+    queryClient.setQueryData(['notifications-broadcast'], null)
     return queryClient
   })
   return (

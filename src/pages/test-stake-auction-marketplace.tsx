@@ -1,5 +1,5 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React, { useMemo, useState } from 'react'
-import { QueryClient, QueryClientProvider } from 'react-query'
 
 import {
   TEST_AUCTION_RESULT,
@@ -33,8 +33,10 @@ export const TestSamPage: React.FC<UserLevelProps> = ({ level }) => {
       },
     })
     // Suppress notification fetchers; the page checks falsy.
-    queryClient.setQueryDefaults('notifications-broadcast', { enabled: false })
-    queryClient.setQueryData('notifications-broadcast', null)
+    queryClient.setQueryDefaults(['notifications-broadcast'], {
+      enabled: false,
+    })
+    queryClient.setQueryData(['notifications-broadcast'], null)
     queryClient.setQueryDefaults(['notifications-all'], { enabled: false })
     return queryClient
   })

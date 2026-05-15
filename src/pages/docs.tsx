@@ -1,6 +1,6 @@
+import { useQuery } from '@tanstack/react-query'
 import React, { useEffect, useMemo, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
-import { useQuery } from 'react-query'
 import rehypeRaw from 'rehype-raw'
 import remarkGfm from 'remark-gfm'
 
@@ -144,11 +144,11 @@ export const DocsPage: React.FC<Props> = ({ level }) => {
     isExpert && !window.location.hash ? 'GUIDE-EXPERT' : 'GUIDE',
   )
 
-  const { data, status } = useQuery(
-    ['doc', activeDoc],
-    () => fetchDoc(activeDoc),
-    { staleTime: Infinity },
-  )
+  const { data, status } = useQuery({
+    queryKey: ['doc', activeDoc],
+    queryFn: () => fetchDoc(activeDoc),
+    staleTime: Infinity,
+  })
 
   const components = useMemo(() => makeComponents(setActiveDoc), [])
 
@@ -190,7 +190,7 @@ export const DocsPage: React.FC<Props> = ({ level }) => {
             </div>
           )}
           <div className="py-10">
-            {status === 'loading' && <Loader />}
+            {status === 'pending' && <Loader />}
             {status === 'error' && (
               <p className="text-sm text-destructive">Failed to load docs.</p>
             )}
