@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { pay } from 'src/format'
+import { cost } from 'src/format'
 import { computeBidPenalty } from 'src/services/bid-penalty'
 import { computeBidding } from 'src/services/bidding'
 import {
@@ -71,8 +71,8 @@ export const PaymentsBreakdown: React.FC<Props> = ({
     bidTooLowPenaltySol + blacklistPenaltySol + bondRiskFeeSol + psrTotal
   const status: { label: string; tone: 'red' | 'green' | 'yellow' } = {
     label: hasPenalty
-      ? `You will pay ${pay(total)} in total this epoch — including ${pay(penaltyTotal)} in penalties.`
-      : `You will pay ${pay(total)} in total this epoch — no penalties.`,
+      ? `You will pay ${cost(total)} in total this epoch — including ${cost(penaltyTotal)} in penalties.`
+      : `You will pay ${cost(total)} in total this epoch — no penalties.`,
     tone: hasPenalty ? 'red' : 'green',
   }
 
@@ -108,23 +108,26 @@ export const PaymentsBreakdown: React.FC<Props> = ({
       <table className="w-full">
         <tbody>
           <SectionHeader title="Bid costs" />
-          <CalcRow label="Active Stake Cost" value={pay(paymentMetrics.cost)} />
+          <CalcRow
+            label="Active Stake Cost"
+            value={cost(paymentMetrics.cost)}
+          />
           <CalcRow
             label="Activating Stake Cost"
-            value={pay(paymentMetrics.activatingCost)}
+            value={cost(paymentMetrics.activatingCost)}
           />
           <SectionHeader title="Penalties" />
           <CalcRow
             label="Bid-too-low penalty"
-            value={bidTooLowPenaltySol > 0 ? pay(bidTooLowPenaltySol) : '—'}
+            value={bidTooLowPenaltySol > 0 ? cost(bidTooLowPenaltySol) : '—'}
           />
           <CalcRow
             label="Blacklist penalty"
-            value={blacklistPenaltySol > 0 ? pay(blacklistPenaltySol) : '—'}
+            value={blacklistPenaltySol > 0 ? cost(blacklistPenaltySol) : '—'}
           />
           <CalcRow
             label="Bond risk fee"
-            value={bondRiskFeeSol > 0 ? pay(bondRiskFeeSol) : '—'}
+            value={bondRiskFeeSol > 0 ? cost(bondRiskFeeSol) : '—'}
           />
           {psrEstimates.length > 0 && (
             <>
@@ -142,7 +145,7 @@ export const PaymentsBreakdown: React.FC<Props> = ({
                         ? 'from bond'
                         : 'from Marinade'
                     }
-                    value={pay(selectAmount(estimate))}
+                    value={cost(selectAmount(estimate))}
                   />
                 )
               })}
@@ -150,7 +153,7 @@ export const PaymentsBreakdown: React.FC<Props> = ({
           )}
           <CalcRow
             label="Total per epoch"
-            value={pay(total)}
+            value={cost(total)}
             total
             severity={hasPenalty ? 'error' : 'ok'}
           />

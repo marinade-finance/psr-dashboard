@@ -1,7 +1,7 @@
 import React from 'react'
 
 import { cn } from 'src/class_utils'
-import { pay, pmpe, stake } from 'src/format'
+import { cost, pmpe, stake } from 'src/format'
 import { computeBidding } from 'src/services/bidding'
 
 import { CalcCard } from './card'
@@ -135,7 +135,7 @@ export const BiddingBreakdown: React.FC<Props> = ({
   const status = {
     label:
       metrics.total > 0
-        ? `Estimated ${pay(metrics.total)} payment to Marinade this epoch.`
+        ? `Estimated ${cost(metrics.total)} payment to Marinade this epoch.`
         : 'No bid cost this epoch.',
     tone: 'green' as const,
   }
@@ -214,15 +214,15 @@ export const BiddingBreakdown: React.FC<Props> = ({
           />
 
           <SectionHeader title="Cost" colSpan={4} />
-          <RevRow label="Active Stake Cost" value={pay(metrics.cost)} />
+          <RevRow label="Active Stake Cost" value={cost(metrics.cost)} />
           <RevRow
             label="Activating Stake Cost"
             pmpe={pmpe(metrics.activatingStakePmpe)}
-            value={pay(metrics.activatingCost)}
+            value={cost(metrics.activatingCost)}
           />
           <RevRow
-            label="Total per epoch"
-            value={pay(metrics.total)}
+            label="Total"
+            value={cost(metrics.total)}
             total
             severity="ok"
           />
