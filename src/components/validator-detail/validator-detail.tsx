@@ -3,9 +3,9 @@ import { useQuery } from 'react-query'
 
 import { cn } from 'src/class_utils'
 import { BidPenaltyBreakdown } from 'src/components/breakdowns/bid-penalty'
+import { BiddingBreakdown } from 'src/components/breakdowns/bidding'
 import { BondCoverageBreakdown } from 'src/components/breakdowns/bond-coverage'
 import { PaymentsBreakdown } from 'src/components/breakdowns/payments'
-import { BiddingBreakdown } from 'src/components/breakdowns/bidding'
 import { SEPARATOR_DIV_CLASS } from 'src/components/breakdowns/row'
 import { HelpTip } from 'src/components/help-tip/help-tip'
 import { Button } from 'src/components/ui/button'
@@ -244,10 +244,7 @@ export const ValidatorDetail = ({
       winningTotalPmpe,
     ],
   )
-  const paymentMetrics = useMemo(
-    () => computeBidding(validator),
-    [validator],
-  )
+  const paymentMetrics = useMemo(() => computeBidding(validator), [validator])
   const penaltyMetrics = useMemo(
     () => computeBidPenalty(validator, dsSamConfig, winningTotalPmpe),
     [
@@ -283,13 +280,10 @@ export const ValidatorDetail = ({
       ? (validator.blockRewardsCommissionDec * 100).toString()
       : '',
   )
+  // Caller passes a `key` keyed on the selected validator's vote account, so
+  // each new validator mounts a fresh ValidatorDetail and this initialiser
+  // re-runs. No mirror-prop-into-state useEffect needed.
   const [simEnabled, setSimEnabled] = useState(isSimulated)
-
-  // Mirror the parent simulation state in both directions so the toggle
-  // doesn't desync when the user clears simulations from outside the panel.
-  useEffect(() => {
-    setSimEnabled(isSimulated)
-  }, [isSimulated])
 
   // Debounced auto-recalc whenever inputs change while simulation is enabled.
   // 400ms covers fast number-input arrow clicking without thrashing the SDK.

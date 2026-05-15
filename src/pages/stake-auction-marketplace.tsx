@@ -262,6 +262,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
         sheetValidatorData &&
         data && (
           <ValidatorDetail
+            key={selectedValidator ?? 'detail'}
             validator={sheetValidatorData.validator}
             auctionResult={displayAuctionResult}
             dsSamConfig={data.dcSamConfig}
