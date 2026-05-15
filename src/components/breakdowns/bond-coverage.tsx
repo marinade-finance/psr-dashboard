@@ -162,7 +162,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
               severity="warning"
             />
           ) : (
-            <OkRow message="Bond meets minimum — keeps your stake." />
+            <OkRow message="Bond covers current stake." />
           )}
 
           <SectionHeader
@@ -197,10 +197,8 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
               total
               severity="warning"
             />
-          ) : coverage.topUpToKeepStake > 0 ? (
-            <OkRow message="Bond meets ideal coverage — eligible for more stake." />
           ) : (
-            <OkRow message="Bond covers current stake and meets ideal coverage." />
+            <OkRow message="Bond meets ideal coverage." />
           )}
 
           {showRiskSection && (
