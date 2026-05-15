@@ -165,6 +165,23 @@ PMPE measures revenue per 1000 SOL per epoch. The unit the auction speaks in.
 A validator's **max APY** in the table is the sum of all PMPE streams converted
 to APY, with the static CPMPE bid mixed in.
 
+#### Activating-stake PMPE
+
+When the auction grows your target stake above what's currently
+delegated, the gap doesn't appear instantly — it warms up. SAM still
+charges your bid against that incoming stake at a separate rate called
+the activating-stake PMPE, billed only on `max(0, target − active)`.
+The Bidding tab shows it on its own row inside the **Cost** section.
+If your target is at or below your active stake, this cost is zero.
+
+#### Where to read it on the dashboard
+
+The validator detail panel's **Bidding tab** is the per-validator
+breakdown in PMPE — Stake (active vs target), commissions split by
+stream, the static-vs-effective bid gap, and the resulting cost in
+SOL. See the [Bidding tab subsection](#detail-panel) for what each
+row means.
+
 _See [Last-Price Auction — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market#last-price-auction) for how PMPE feeds the clearing price._
 
 <a id="last-price"></a>
