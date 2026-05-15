@@ -177,7 +177,7 @@ export const BiddingBreakdown: React.FC<Props> = ({
             severity={deltaSeverity}
           />
 
-          <SectionHeader title="Commissions" colSpan={4} />
+          <SectionHeader title="Total cost PMPE" colSpan={4} />
           <RevRow
             label="Inflation"
             pct={metrics.inflPct}
