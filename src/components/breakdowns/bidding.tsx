@@ -5,7 +5,6 @@ import { pay, pmpe, stake } from 'src/format'
 import { computeBidding } from 'src/services/bidding'
 
 import { CalcCard } from './card'
-import { docsPath } from './docs-path'
 import {
   Marker,
   NORMAL_CELL_PAD,
@@ -15,14 +14,14 @@ import {
   TOTAL_CELL_PAD,
 } from './row'
 
-import type { UserLevel } from 'src/components/navigation/navigation'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
 
 type Props = {
+  title: string
+  guideTo?: string
   validator: AugmentedAuctionValidator
   isSimulated?: boolean
   onGoToSim?: () => void
-  level?: UserLevel
 }
 
 const SEVERITY_TONE: Record<Severity, 'green' | 'yellow' | 'red'> = {
@@ -119,10 +118,11 @@ const RevRow: React.FC<{
 }
 
 export const BiddingBreakdown: React.FC<Props> = ({
+  title,
+  guideTo,
   validator,
   isSimulated,
   onGoToSim,
-  level,
 }) => {
   const metrics = computeBidding(validator)
   const deltaSeverity: Severity | undefined =
@@ -151,8 +151,8 @@ export const BiddingBreakdown: React.FC<Props> = ({
 
   return (
     <CalcCard
-      title="Bidding Calculation"
-      guideTo={`${docsPath(level)}#cpmpe`}
+      title={title}
+      guideTo={guideTo}
       isSimulated={isSimulated}
       status={status}
       tip={tip}

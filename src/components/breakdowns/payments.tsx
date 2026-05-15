@@ -10,15 +10,15 @@ import {
 } from 'src/services/protected-events'
 
 import { CalcCard } from './card'
-import { docsPath } from './docs-path'
 import { CalcRow, SectionHeader } from './row'
 
 import type { DsSamConfig } from '@marinade.finance/ds-sam-sdk'
-import type { UserLevel } from 'src/components/navigation/navigation'
 import type { ProtectedEvent } from 'src/services/protected-events'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
 
 type Props = {
+  title: string
+  guideTo?: string
   validator: AugmentedAuctionValidator
   dsSamConfig: DsSamConfig
   winningTotalPmpe: number
@@ -29,10 +29,11 @@ type Props = {
   isSimulated?: boolean
   onGoToSim?: () => void
   onGoToPenalty?: () => void
-  level?: UserLevel
 }
 
 export const PaymentsBreakdown: React.FC<Props> = ({
+  title,
+  guideTo,
   validator,
   dsSamConfig,
   winningTotalPmpe,
@@ -43,7 +44,6 @@ export const PaymentsBreakdown: React.FC<Props> = ({
   isSimulated,
   onGoToSim,
   onGoToPenalty,
-  level,
 }) => {
   const paymentMetrics = computeBidding(validator)
   const penaltyMetrics = computeBidPenalty(
@@ -99,8 +99,8 @@ export const PaymentsBreakdown: React.FC<Props> = ({
 
   return (
     <CalcCard
-      title="Payments Calculation"
-      guideTo={`${docsPath(level)}#detail-panel`}
+      title={title}
+      guideTo={guideTo}
       isSimulated={isSimulated}
       status={status}
       tip={tip}

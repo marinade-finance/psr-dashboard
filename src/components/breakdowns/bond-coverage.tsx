@@ -4,17 +4,17 @@ import { pay, payCta, pmpe, stake } from 'src/format'
 import { computeBondCoverage } from 'src/services/bond-coverage'
 
 import { CalcCard } from './card'
-import { docsPath } from './docs-path'
 import { CalcRow, OkRow, SectionHeader } from './row'
 
 import type {
   AuctionValidator,
   DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
-import type { UserLevel } from 'src/components/navigation/navigation'
 import type { BondHealthState } from 'src/services/bond-health'
 
 type Props = {
+  title: string
+  guideTo?: string
   validator: AuctionValidator
   dsSamConfig: DsSamConfig
   winningTotalPmpe: number
@@ -22,7 +22,6 @@ type Props = {
   bondRiskFeeSol: number
   isSimulated?: boolean
   onGoToSim?: () => void
-  level?: UserLevel
 }
 
 const statusLine = (
@@ -67,6 +66,8 @@ const statusLine = (
 }
 
 export const BondCoverageBreakdown: React.FC<Props> = ({
+  title,
+  guideTo,
   validator,
   dsSamConfig,
   winningTotalPmpe,
@@ -74,7 +75,6 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
   bondRiskFeeSol,
   isSimulated,
   onGoToSim,
-  level,
 }) => {
   const coverage = computeBondCoverage(
     validator,
@@ -109,8 +109,8 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
 
   return (
     <CalcCard
-      title="Bond Calculation"
-      guideTo={`${docsPath(level)}#bond`}
+      title={title}
+      guideTo={guideTo}
       isSimulated={isSimulated}
       status={status}
       tip={tip}

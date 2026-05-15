@@ -5,6 +5,8 @@ import { cn } from 'src/class_utils'
 import { BidPenaltyBreakdown } from 'src/components/breakdowns/bid-penalty'
 import { BiddingBreakdown } from 'src/components/breakdowns/bidding'
 import { BondCoverageBreakdown } from 'src/components/breakdowns/bond-coverage'
+import { TabHeader, CalcCard } from 'src/components/breakdowns/card'
+import { docsPath } from 'src/components/breakdowns/docs-path'
 import { PaymentsBreakdown } from 'src/components/breakdowns/payments'
 import { SEPARATOR_DIV_CLASS } from 'src/components/breakdowns/row'
 import { HelpTip } from 'src/components/help-tip/help-tip'
@@ -478,162 +480,227 @@ export const ValidatorDetail = ({
           )
         })()}
 
-        <div className="border-b border-border bg-background sticky top-[96px] z-[5]">
-          <div className="flex gap-1 px-4 sm:px-6 overflow-x-auto">
-            {(
-              [
-                ['overview', 'Overview'],
-                ['notifications', 'Notifications'],
-                ['payments', 'Payments'],
-                ['revenue', 'Bidding'],
-                ['bond', 'Bond'],
-                ['penalty', 'Bid Penalty'],
-              ] satisfies [Tab, string][]
-            ).map(([id, label]) => (
-              <button
-                key={id}
-                onClick={() => setTab(id)}
-                className={cn(
-                  'px-3 py-2.5 text-[13px] font-medium border-b-2 transition-colors whitespace-nowrap',
-                  tab === id
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
+        {(() => {
+          const goToSim = () => {
+            setSimEnabled(true)
+            setTab('overview')
+          }
+          // Single source of truth for tab id, strip label, body header
+          // title, and Guide anchor. Every tab — including the multi-card
+          // Overview view and the standalone Notifications card — pulls
+          // its header (title + Guide link) from this array via TabHeader
+          // (Overview) or CalcCard (the rest), so the chrome cannot
+          // drift across tabs.
+          const TAB_DEFS: ReadonlyArray<{
+            id: Tab
+            label: string
+            title: string
+            guideTo: string
+          }> = [
+            {
+              id: 'overview',
+              label: 'Overview',
+              title: 'Validator Overview',
+              guideTo: `${docsPath(level)}#detail-panel`,
+            },
+            {
+              id: 'notifications',
+              label: 'Notifications',
+              title: 'Notifications',
+              guideTo: `${docsPath(level)}#detail-panel`,
+            },
+            {
+              id: 'payments',
+              label: 'Payments',
+              title: 'Payments Calculation',
+              guideTo: `${docsPath(level)}#detail-panel`,
+            },
+            {
+              id: 'revenue',
+              label: 'Bidding',
+              title: 'Bidding Calculation',
+              guideTo: `${docsPath(level)}#cpmpe`,
+            },
+            {
+              id: 'bond',
+              label: 'Bond',
+              title: 'Bond Calculation',
+              guideTo: `${docsPath(level)}#bond`,
+            },
+            {
+              id: 'penalty',
+              label: 'Bid Penalty',
+              title: 'Bid Penalty Calculation',
+              guideTo: `${docsPath(level)}#bid-penalty`,
+            },
+          ]
+          const active = TAB_DEFS.find(t => t.id === tab) ?? TAB_DEFS[0]
 
-        {tab === 'notifications' && (
-          <div className="p-4 sm:p-6 space-y-6">
-            <div className="bg-card rounded-xl border border-border p-5">
-              <h3 className="text-base font-semibold text-foreground mb-3">
-                Notifications
-              </h3>
-              {notificationSummary?.notifications?.length ? (
-                <div className="space-y-4">
-                  {notificationSummary.notifications.map(notification => {
-                    const tone =
-                      notification.priority === 'critical'
-                        ? 'bg-destructive-light text-destructive'
-                        : notification.priority === 'warning'
-                          ? 'bg-warning-light text-warning'
-                          : 'bg-info-light text-info'
-                    return (
-                      <div
-                        key={notification.id}
-                        className="border-t border-border first:border-t-0 first:pt-0 pt-3"
-                      >
-                        <div className="flex items-center gap-2 mb-1">
-                          <span
-                            className={cn(
-                              'px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wide',
-                              tone,
-                            )}
-                          >
-                            {notification.priority}
-                          </span>
-                          {notification.title && (
-                            <span className="text-sm font-semibold text-foreground">
-                              {notification.title}
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-xs text-muted-foreground whitespace-pre-line">
-                          {notification.body}
-                        </div>
-                        {notification.footer && (
-                          <div className="text-[10px] text-muted-foreground italic mt-1.5">
-                            {notification.footer}
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })}
+          return (
+            <>
+              <div className="border-b border-border bg-background sticky top-[96px] z-[5]">
+                <div className="flex gap-1 px-4 sm:px-6 overflow-x-auto">
+                  {TAB_DEFS.map(t => (
+                    <button
+                      key={t.id}
+                      onClick={() => setTab(t.id)}
+                      className={cn(
+                        'px-3 py-2.5 text-[13px] font-medium border-b-2 transition-colors whitespace-nowrap',
+                        tab === t.id
+                          ? 'border-primary text-primary'
+                          : 'border-transparent text-muted-foreground hover:text-foreground',
+                      )}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
                 </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No notifications for this validator.
-                </p>
+              </div>
+
+              {/* Breakdown tabs render their own CalcCard internally
+                  (it carries status + tip alongside the table). They
+                  receive title + guideTo from TAB_DEFS — never hardcoded
+                  inside the component — which is what makes the chrome
+                  impossible to drift. */}
+              {active.id === 'bond' && (
+                <div className="p-4 sm:p-6">
+                  <BondCoverageBreakdown
+                    title={active.title}
+                    guideTo={active.guideTo}
+                    validator={validator}
+                    dsSamConfig={dsSamConfig}
+                    winningTotalPmpe={winningTotalPmpe}
+                    bondState={bondHealth}
+                    bondRiskFeeSol={bondRiskFeeSol}
+                    isSimulated={isSimulated}
+                    onGoToSim={goToSim}
+                  />
+                </div>
               )}
-            </div>
-          </div>
-        )}
+              {active.id === 'payments' && (
+                <div className="p-4 sm:p-6 space-y-6">
+                  <PaymentsBreakdown
+                    title={active.title}
+                    guideTo={active.guideTo}
+                    validator={validator}
+                    dsSamConfig={dsSamConfig}
+                    winningTotalPmpe={winningTotalPmpe}
+                    bondRiskFeeSol={bondRiskFeeSol}
+                    blacklistPenaltySol={blacklistPenaltySol}
+                    bidTooLowPenaltySol={bidTooLowPenaltySol}
+                    psrEstimates={psrEstimates}
+                    isSimulated={isSimulated}
+                    onGoToSim={goToSim}
+                    onGoToPenalty={() => setTab('penalty')}
+                  />
+                </div>
+              )}
+              {active.id === 'revenue' && (
+                <div className="p-4 sm:p-6">
+                  <BiddingBreakdown
+                    title={active.title}
+                    guideTo={active.guideTo}
+                    validator={validator}
+                    isSimulated={isSimulated}
+                    onGoToSim={goToSim}
+                  />
+                </div>
+              )}
+              {active.id === 'penalty' && (
+                <div className="p-4 sm:p-6">
+                  <BidPenaltyBreakdown
+                    title={active.title}
+                    guideTo={active.guideTo}
+                    validator={validator}
+                    dsSamConfig={dsSamConfig}
+                    winningTotalPmpe={winningTotalPmpe}
+                    isSimulated={isSimulated}
+                    onGoToSim={goToSim}
+                  />
+                </div>
+              )}
 
-        {tab === 'bond' && (
-          <div className="p-4 sm:p-6">
-            <BondCoverageBreakdown
-              validator={validator}
-              dsSamConfig={dsSamConfig}
-              winningTotalPmpe={winningTotalPmpe}
-              bondState={bondHealth}
-              bondRiskFeeSol={bondRiskFeeSol}
-              isSimulated={isSimulated}
-              onGoToSim={() => {
-                setSimEnabled(true)
-                setTab('overview')
-              }}
-              level={level}
-            />
-          </div>
-        )}
+              {/* Notifications: wrap in CalcCard so it shares the same
+                  title + Guide link header as the breakdown tabs. */}
+              {active.id === 'notifications' && (
+                <div className="p-4 sm:p-6">
+                  <CalcCard
+                    title={active.title}
+                    guideTo={active.guideTo}
+                    isSimulated={isSimulated}
+                  >
+                    {notificationSummary?.notifications?.length ? (
+                      <div className="space-y-4">
+                        {notificationSummary.notifications.map(notification => {
+                          const tone =
+                            notification.priority === 'critical'
+                              ? 'bg-destructive-light text-destructive'
+                              : notification.priority === 'warning'
+                                ? 'bg-warning-light text-warning'
+                                : 'bg-info-light text-info'
+                          return (
+                            <div
+                              key={notification.id}
+                              className="border-t border-border first:border-t-0 first:pt-0 pt-3"
+                            >
+                              <div className="flex items-center gap-2 mb-1">
+                                <span
+                                  className={cn(
+                                    'px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wide',
+                                    tone,
+                                  )}
+                                >
+                                  {notification.priority}
+                                </span>
+                                {notification.title && (
+                                  <span className="text-sm font-semibold text-foreground">
+                                    {notification.title}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-xs text-muted-foreground whitespace-pre-line">
+                                {notification.body}
+                              </div>
+                              {notification.footer && (
+                                <div className="text-[10px] text-muted-foreground italic mt-1.5">
+                                  {notification.footer}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        No notifications for this validator.
+                      </p>
+                    )}
+                  </CalcCard>
+                </div>
+              )}
 
-        {tab === 'payments' && (
-          <div className="p-4 sm:p-6 space-y-6">
-            <PaymentsBreakdown
-              validator={validator}
-              dsSamConfig={dsSamConfig}
-              winningTotalPmpe={winningTotalPmpe}
-              bondRiskFeeSol={bondRiskFeeSol}
-              blacklistPenaltySol={blacklistPenaltySol}
-              bidTooLowPenaltySol={bidTooLowPenaltySol}
-              psrEstimates={psrEstimates}
-              isSimulated={isSimulated}
-              onGoToSim={() => {
-                setSimEnabled(true)
-                setTab('overview')
-              }}
-              onGoToPenalty={() => setTab('penalty')}
-              level={level}
-            />
-          </div>
-        )}
-
-        {tab === 'revenue' && (
-          <div className="p-4 sm:p-6">
-            <BiddingBreakdown
-              validator={validator}
-              isSimulated={isSimulated}
-              onGoToSim={() => {
-                setSimEnabled(true)
-                setTab('overview')
-              }}
-              level={level}
-            />
-          </div>
-        )}
-
-        {tab === 'penalty' && (
-          <div className="p-4 sm:p-6">
-            <BidPenaltyBreakdown
-              validator={validator}
-              dsSamConfig={dsSamConfig}
-              winningTotalPmpe={winningTotalPmpe}
-              isSimulated={isSimulated}
-              onGoToSim={() => {
-                setSimEnabled(true)
-                setTab('overview')
-              }}
-              level={level}
-            />
-          </div>
-        )}
+              {/* Overview is a 2-column grid of separate sub-cards (Stake,
+                  Bond, Expected Payment, APY composition, Simulation).
+                  It can't sit inside a single CalcCard, but its header
+                  goes through the same TabHeader primitive that CalcCard
+                  uses — so the title + Guide link match exactly. */}
+              {active.id === 'overview' && (
+                <div className="p-4 sm:p-6">
+                  <TabHeader
+                    title={active.title}
+                    guideTo={active.guideTo}
+                    isSimulated={isSimulated}
+                    className="mb-4"
+                  />
+                </div>
+              )}
+            </>
+          )
+        })()}
 
         <div
           className={cn(
-            'grid grid-cols-1 lg:grid-cols-2 gap-6 p-6',
+            'grid grid-cols-1 lg:grid-cols-2 gap-6 px-4 sm:px-6 pb-6',
             tab !== 'overview' && 'hidden',
           )}
         >
