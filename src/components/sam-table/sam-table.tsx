@@ -15,6 +15,7 @@ import {
   TableHead,
   TableCell,
 } from 'src/components/ui/table'
+import { Tooltip } from 'src/components/ui/tooltip'
 import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
 import { ValidatorSearch } from 'src/components/validator-search/validator-search'
 import { pct, sol, stake } from 'src/format'
@@ -221,20 +222,22 @@ const PenaltyBadges: React.FC<{ validator: AuctionValidator }> = ({
     .map(b => `${b.label}: ${sol(b.sol, 3)} SOL (estimate)`)
     .join('\n')
   return (
-    <span className="inline-flex items-center gap-0.5 shrink-0" title={tip}>
-      {badges.map(b => (
-        <span
-          key={b.label}
-          aria-label={b.label}
-          className={cn(
-            'inline-flex items-center justify-center w-[18px] h-[18px] rounded cursor-help select-none',
-            PENALTY_CLASSES[b.kind],
-          )}
-        >
-          {PENALTY_ICONS[b.kind]}
-        </span>
-      ))}
-    </span>
+    <Tooltip content={<span className="whitespace-pre-line">{tip}</span>}>
+      <span className="inline-flex items-center gap-0.5 shrink-0">
+        {badges.map(b => (
+          <span
+            key={b.label}
+            aria-label={b.label}
+            className={cn(
+              'inline-flex items-center justify-center w-[18px] h-[18px] rounded cursor-help select-none',
+              PENALTY_CLASSES[b.kind],
+            )}
+          >
+            {PENALTY_ICONS[b.kind]}
+          </span>
+        ))}
+      </span>
+    </Tooltip>
   )
 }
 
@@ -293,16 +296,17 @@ const RankCell: React.FC<{
         >
           {rankLabel}
         </span>
-        <button
-          className="text-xs text-muted-foreground hover:text-destructive leading-none"
-          onClick={e => {
-            e.stopPropagation()
-            onClearValidator(voteAccount)
-          }}
-          title="Remove from simulation"
-        >
-          ✕
-        </button>
+        <Tooltip content="Remove from simulation">
+          <button
+            className="text-xs text-muted-foreground hover:text-destructive leading-none"
+            onClick={e => {
+              e.stopPropagation()
+              onClearValidator(voteAccount)
+            }}
+          >
+            ✕
+          </button>
+        </Tooltip>
       </div>
     )
   return (
