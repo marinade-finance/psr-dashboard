@@ -145,16 +145,12 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
             secondary={stake(coverage.currentExposedStakeSol)}
           />
           <CalcRow
-            label="Minimum unprotected reserve"
-            value={pay(coverage.minUnprotectedReserveSol)}
+            label="Held for bid payments"
+            value={pay(coverage.heldForBidKeep)}
           />
           <CalcRow
-            label="Rewards delivery guarantee"
+            label="Held for reward payouts"
             value={pay(coverage.rewardsGuaranteeKeep)}
-          />
-          <CalcRow
-            label="Minimum bid coverage"
-            value={pay(coverage.minCoverageBidKeep)}
           />
           <CalcRow
             label="Minimum required"
@@ -186,16 +182,12 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
             secondary={stake(coverage.currentExposedStakeSol)}
           />
           <CalcRow
-            label="Ideal unprotected reserve"
-            value={pay(coverage.idealUnprotectedReserveSol)}
+            label="Held for bid payments"
+            value={pay(coverage.heldForBidIdeal)}
           />
           <CalcRow
-            label="Rewards delivery guarantee"
+            label="Held for reward payouts"
             value={pay(coverage.rewardsGuaranteeIdeal)}
-          />
-          <CalcRow
-            label="Ideal bid coverage"
-            value={pay(coverage.idealCoverageBidKeep)}
           />
           <CalcRow
             label="Ideal required"

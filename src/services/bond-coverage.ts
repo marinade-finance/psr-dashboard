@@ -25,6 +25,10 @@ export type BondCoverage = {
   rewardsGuaranteeIdeal: number
   // Coverage section (current basis): "keep your stake"
   minCoverageBidKeep: number
+  // Bid coverage summed across exposed + unprotected stake — the single
+  // "Held for bid payments" row that the UI surfaces.
+  heldForBidKeep: number
+  heldForBidIdeal: number
   floorBaseKeep: number
   topUpToKeepStake: number
   idealCoverageBidKeep: number
@@ -96,6 +100,10 @@ export function computeBondCoverage(
     ((minEp * expectedMaxEffBidPmpe) / 1000) * currentExposedStakeSol
   const rewardsGuaranteeKeep =
     (onchainDistributedPmpe / 1000) * currentExposedStakeSol
+  // "Held for bid payments" — bid coverage across both exposed and unprotected
+  // stake portions. Hides the unprotected-vs-exposed split which is 0 for most
+  // SAM-delegated validators anyway.
+  const heldForBidKeep = minCoverageBidKeep + minUnprotectedReserveSol
   const floorBaseKeep =
     minUnprotectedReserveSol + (minBondPmpe / 1000) * currentExposedStakeSol
   const topUpToKeepStake = Math.max(0, floorBaseKeep - claimableBondBalanceSol)
@@ -103,6 +111,7 @@ export function computeBondCoverage(
   const idealCoverageBidKeep =
     ((idealEp * expectedMaxEffBidPmpe) / 1000) * currentExposedStakeSol
   const rewardsGuaranteeIdeal = rewardsGuaranteeKeep
+  const heldForBidIdeal = idealCoverageBidKeep + idealUnprotectedReserveSol
   const requiredIdealKeep =
     idealUnprotectedReserveSol + (idealBondPmpe / 1000) * currentExposedStakeSol
   const topUpToIdealKeep = Math.max(0, requiredIdealKeep - bondBalanceSol)
@@ -133,6 +142,8 @@ export function computeBondCoverage(
     rewardsGuaranteeKeep,
     rewardsGuaranteeIdeal,
     minCoverageBidKeep,
+    heldForBidKeep,
+    heldForBidIdeal,
     floorBaseKeep,
     topUpToKeepStake,
     idealCoverageBidKeep,
