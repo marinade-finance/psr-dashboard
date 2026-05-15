@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import React, { useEffect, useState } from 'react'
 
 import { cn } from 'src/class_utils'
+import { Gauge } from 'src/components/gauge/gauge'
 import { Tooltip } from 'src/components/ui/tooltip'
 import {
   epochMeterModel,
@@ -165,10 +166,15 @@ function TimelineCard({
           </React.Fragment>
         ))}
       </div>
-      {hours !== null && (
-        <span className="text-[10px] text-muted-foreground">
-          ~{Math.round(hours)}h remaining
-        </span>
+      {progress !== null && (
+        <div className="w-full flex flex-col items-stretch gap-1 mt-1 px-1">
+          <Gauge value={percent} scaleMax={100} tone="bg-primary" size="lg" />
+          {hours !== null && (
+            <span className="text-[10px] text-muted-foreground text-center">
+              ~{Math.round(hours)}h remaining
+            </span>
+          )}
+        </div>
       )}
     </div>
   )
