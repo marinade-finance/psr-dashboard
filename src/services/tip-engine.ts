@@ -128,7 +128,7 @@ function outOfSetTip(
         : coverage.topUpToKeepStake
     if (topUpSol > 0) {
       return {
-        text: `Bond too small for stake. Top up ${topUp(topUpSol)} to grow stake.`,
+        text: `Top up ${topUp(topUpSol)} to grow stake.`,
         urgency: 'warning',
         constraint: 'bond',
         delta,
