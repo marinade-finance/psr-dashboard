@@ -20,6 +20,6 @@
     "jsx": "react-jsx",
     "lib": ["esnext", "dom", "dom.iterable"]
   },
-  "include": ["src/**/*"],
-  "exclude": ["vite.config.ts", "tests"]
+  "include": ["src/**/*", "tests/**/*"],
+  "exclude": ["vite.config.ts"]
 }
