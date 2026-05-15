@@ -44,10 +44,10 @@ export const EpochMeter: React.FC = () => {
     : []
   const networkEpoch = validators.length ? selectNetworkEpoch(validators) : null
   const paymentSettled = protectedEvents
-    ? selectLatestPaymentSettled(protectedEvents)
+    ? selectLatestPaymentSettled(protectedEvents, networkEpoch)
     : null
   const auctionSettled = protectedEvents
-    ? selectLatestAuctionSettled(protectedEvents)
+    ? selectLatestAuctionSettled(protectedEvents, networkEpoch)
     : null
   const progress = validators.length
     ? selectCurrentEpochProgress(validators, now)

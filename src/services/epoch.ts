@@ -65,12 +65,17 @@ export const selectCurrentEpochProgress = (
   return { epoch: best.epoch, percent, hoursRemaining }
 }
 
-// Latest FACT (on-chain) PE epoch — the payments-settled checkpoint.
+// Latest past FACT (on-chain) PE epoch — the payments-settled checkpoint.
+// Filters out anything on/after the live epoch: an epoch only counts as
+// "payments settled" once it has ended.
 export const selectLatestPaymentSettled = (
   protectedEvents: ProtectedEventWithValidator[],
+  networkEpoch: number | null,
 ): number | null => {
   let max = -Infinity
   for (const e of protectedEvents) {
+    if (networkEpoch !== null && e.protectedEvent.epoch >= networkEpoch)
+      continue
     if (
       e.status === ProtectedEventStatus.FACT &&
       e.protectedEvent.epoch > max
@@ -81,13 +86,18 @@ export const selectLatestPaymentSettled = (
   return max === -Infinity ? null : max
 }
 
-// Latest PE epoch of any status (FACT/ESTIMATE/DRYRUN) — the auction has
-// been decided for this epoch even if payments aren't on-chain yet.
+// Latest past PE epoch of any status (FACT/ESTIMATE/DRYRUN) — the auction
+// has been decided for this epoch even if payments aren't on-chain yet.
+// Live epoch is excluded: the auction-of-the-live-epoch is shown by the
+// 'live' node, not double-counted as "auction settled".
 export const selectLatestAuctionSettled = (
   protectedEvents: ProtectedEventWithValidator[],
+  networkEpoch: number | null,
 ): number | null => {
   let max = -Infinity
   for (const e of protectedEvents) {
+    if (networkEpoch !== null && e.protectedEvent.epoch >= networkEpoch)
+      continue
     if (e.protectedEvent.epoch > max) max = e.protectedEvent.epoch
   }
   return max === -Infinity ? null : max

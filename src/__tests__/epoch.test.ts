@@ -111,36 +111,67 @@ describe('selectCurrentEpochProgress', () => {
 })
 
 describe('selectLatestPaymentSettled', () => {
-  it('returns the max FACT epoch, ignoring ESTIMATE and DRYRUN', () => {
+  it('returns the max past FACT epoch, ignoring ESTIMATE and DRYRUN', () => {
     expect(
-      selectLatestPaymentSettled([
-        pe(610, ProtectedEventStatus.FACT),
-        pe(611, ProtectedEventStatus.ESTIMATE),
-        pe(612, ProtectedEventStatus.DRYRUN),
-      ]),
+      selectLatestPaymentSettled(
+        [
+          pe(610, ProtectedEventStatus.FACT),
+          pe(611, ProtectedEventStatus.ESTIMATE),
+          pe(612, ProtectedEventStatus.DRYRUN),
+        ],
+        972,
+      ),
     ).toBe(610)
+  })
+
+  it('excludes FACT entries on/after the live epoch', () => {
+    expect(
+      selectLatestPaymentSettled(
+        [
+          pe(971, ProtectedEventStatus.FACT),
+          pe(972, ProtectedEventStatus.FACT),
+        ],
+        972,
+      ),
+    ).toBe(971)
   })
 
   it('returns null when no FACT event exists', () => {
     expect(
-      selectLatestPaymentSettled([pe(612, ProtectedEventStatus.ESTIMATE)]),
+      selectLatestPaymentSettled([pe(612, ProtectedEventStatus.ESTIMATE)], 972),
     ).toBe(null)
-    expect(selectLatestPaymentSettled([])).toBe(null)
+    expect(selectLatestPaymentSettled([], 972)).toBe(null)
   })
 })
 
 describe('selectLatestAuctionSettled', () => {
-  it('returns the max epoch across any PE status', () => {
+  it('returns the max past epoch across any PE status', () => {
     expect(
-      selectLatestAuctionSettled([
-        pe(610, ProtectedEventStatus.FACT),
-        pe(612, ProtectedEventStatus.ESTIMATE),
-      ]),
+      selectLatestAuctionSettled(
+        [
+          pe(610, ProtectedEventStatus.FACT),
+          pe(612, ProtectedEventStatus.ESTIMATE),
+        ],
+        972,
+      ),
     ).toBe(612)
   })
 
+  it('excludes the live epoch (auction-for-live-epoch ≠ settled)', () => {
+    // Estimator pushes ESTIMATE for in-progress epoch 972; expect 971.
+    expect(
+      selectLatestAuctionSettled(
+        [
+          pe(971, ProtectedEventStatus.ESTIMATE),
+          pe(972, ProtectedEventStatus.ESTIMATE),
+        ],
+        972,
+      ),
+    ).toBe(971)
+  })
+
   it('returns null on empty input', () => {
-    expect(selectLatestAuctionSettled([])).toBe(null)
+    expect(selectLatestAuctionSettled([], 972)).toBe(null)
   })
 })
 
