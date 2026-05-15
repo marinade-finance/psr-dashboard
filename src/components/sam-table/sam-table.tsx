@@ -28,6 +28,7 @@ import {
 } from 'src/css'
 import { pct, penalty, sol, stake } from 'src/format'
 import { bondHealthFromAuction } from 'src/services/bond-health'
+import { bondUtilizationPct } from 'src/services/calculations'
 import { HELP_TEXT } from 'src/services/help-text'
 import {
   augmentAuctionResult,
@@ -50,7 +51,6 @@ import {
   getValidatorTip,
   getTipStyle,
   getTipIcon,
-  calculateBondUtilization,
   nextStakeDeltaCell,
 } from 'src/services/tip-engine'
 
@@ -664,10 +664,7 @@ export const SamTable: React.FC<Props> = ({
           : undefined
 
     // Bond health
-    const bondUtilPct = calculateBondUtilization(
-      validator,
-      dsSamConfig.minBondEpochs,
-    )
+    const bondUtilPct = bondUtilizationPct(validator, dsSamConfig.minBondEpochs)
     const bondRunway = validator.bondGoodForNEpochs ?? 0
     const bondHealth = validator.bondHealth
     const bondChip = BOND_CHIP[bondHealth]

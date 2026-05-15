@@ -22,7 +22,7 @@ import { pay, stake, topUp } from 'src/format'
 
 import { computeBondCoverage } from './bond-coverage'
 import { bondHealthFromAuction } from './bond-health'
-import { bondUtilizationPct, apyBreakdown } from './calculations'
+import { apyBreakdown } from './calculations'
 
 import type { BondCoverage } from './bond-coverage'
 import type { BondHealthState } from './bond-health'
@@ -53,32 +53,6 @@ export interface ValidatorTip {
 export interface TipStyle {
   color: string
   bg: string
-}
-
-export const getBondHealthStyle = (
-  health: BondHealthState,
-): { color: string; bg: string; label: string } => {
-  if (health === 'no-bond') {
-    return {
-      color: CSS_DESTRUCTIVE,
-      bg: CSS_DESTRUCTIVE_LIGHT,
-      label: 'No bond',
-    }
-  }
-  if (health === 'critical') {
-    return {
-      color: CSS_DESTRUCTIVE,
-      bg: CSS_DESTRUCTIVE_LIGHT,
-      label: 'Critical',
-    }
-  }
-  if (health === 'watch') {
-    return { color: CSS_WARNING, bg: CSS_WARNING_LIGHT, label: 'Watch' }
-  }
-  if (health === 'soft') {
-    return { color: CSS_INFO, bg: CSS_INFO_LIGHT, label: 'Soft' }
-  }
-  return { color: CSS_PRIMARY, bg: CSS_PRIMARY_LIGHT_10, label: 'Healthy' }
 }
 
 // Single severity source for bond advice. The header bond tip and the Bond
@@ -355,11 +329,6 @@ export const getValidatorTip = (
     delta,
   }
 }
-
-export const calculateBondUtilization = (
-  validator: AuctionValidator,
-  minBondEpochs: number,
-): number => bondUtilizationPct(validator, minBondEpochs)
 
 export type ApyBreakdownValue = {
   inflation: number

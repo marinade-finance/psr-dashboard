@@ -9,15 +9,14 @@ import { ICON_UP } from 'src/components/icons/icon-up'
 
 import { computeBondCoverage } from '../bond-coverage'
 import { bondHealthFromAuction } from '../bond-health'
+import { bondUtilizationPct } from '../calculations'
 import { selectProtectedStakeReason } from '../protected-events'
 import {
   getValidatorTip,
   bondAdvice,
   getApyBreakdown,
-  getBondHealthStyle,
   getTipStyle,
   getTipIcon,
-  calculateBondUtilization,
   nextStakeDeltaCell,
 } from '../tip-engine'
 
@@ -68,20 +67,20 @@ const DS_SAM_CONFIG = {
   minBondBalanceSol: 0.0001,
 } as unknown as DsSamConfig
 
-// --- calculateBondUtilization ---
+// --- bondUtilizationPct ---
 
-describe('calculateBondUtilization', () => {
+describe('bondUtilizationPct', () => {
   it('3 of 4 epochs covered → 25% utilization', () => {
     const validator = makeValidator({
       bondGoodForNEpochs: 3,
       bondBalanceSol: 100,
     })
-    expect(calculateBondUtilization(validator, 4)).toBe(25)
+    expect(bondUtilizationPct(validator, 4)).toBe(25)
   })
 
   it('zero bond → 100', () => {
     const validator = makeValidator({ bondBalanceSol: 0 })
-    expect(calculateBondUtilization(validator, 5)).toBe(100)
+    expect(bondUtilizationPct(validator, 5)).toBe(100)
   })
 })
 
@@ -110,28 +109,6 @@ describe('getApyBreakdown', () => {
     const bd = getApyBreakdown(validator, EPOCHS_PER_YEAR)
     const expected = Math.pow(1 + 28 / 1e3, EPOCHS_PER_YEAR) - 1
     expect(bd.total).toBeCloseTo(expected, 10)
-  })
-})
-
-// --- getBondHealthStyle ---
-
-describe('getBondHealthStyle', () => {
-  it('critical → destructive color', () => {
-    const s = getBondHealthStyle('critical')
-    expect(s.color).toContain('destructive')
-    expect(s.label).toBe('Critical')
-  })
-
-  it('watch → warning color', () => {
-    const s = getBondHealthStyle('watch')
-    expect(s.color).toContain('warning')
-    expect(s.label).toBe('Watch')
-  })
-
-  it('healthy → primary color', () => {
-    const s = getBondHealthStyle('healthy')
-    expect(s.color).toContain('primary')
-    expect(s.label).toBe('Healthy')
   })
 })
 
@@ -301,18 +278,6 @@ describe('getValidatorTip', () => {
     expect(tip.urgency).toBe('warning')
     expect(tip.constraint).toBe('none')
     expect(tip.text).toContain('Losing')
-  })
-})
-
-// --- B7: getBondHealthStyle 'soft' ---
-
-describe("getBondHealthStyle 'soft'", () => {
-  it("returns info style with label 'Soft'", () => {
-    const s = getBondHealthStyle('soft')
-    expect(s.label).toBe('Soft')
-    // color should NOT be the primary/green color
-    expect(s.color).not.toBe('var(--primary)')
-    expect(s.color).toContain('info')
   })
 })
 
