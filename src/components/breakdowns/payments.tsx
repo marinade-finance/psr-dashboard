@@ -131,7 +131,7 @@ export const PaymentsBreakdown: React.FC<Props> = ({
           />
           {psrEstimates.length > 0 && (
             <>
-              <SectionHeader title="PSR Settlements (estimated)" />
+              <SectionHeader title="PSR settlements — estimated" />
               {psrEstimates.map((estimate, i) => {
                 const label = isProtectedEvent(estimate.reason)
                   ? selectProtectedStakeReason(estimate)
