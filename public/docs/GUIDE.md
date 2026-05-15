@@ -427,18 +427,39 @@ match the protocol's settlement decisions to the SOL.
 
 ### Overview tab
 
-Five cards:
+A two-column dashboard summarising the validator's situation. The cards
+that have a deeper companion tab — Bond, Expected Payment, APY
+Composition — let you click their title to jump there.
 
-- **Stake** — Active SOL, target SOL, projected next-epoch delta.
-- **Bond** — Balance, coverage status, bid runway in epochs, deep-link
-  to the full Bond tab.
-- **Expected Payment This Epoch** — active-stake bid cost, activating
-  stake cost, and any active penalties (each with a "see breakdown"
-  jump to its tab).
-- **APY Composition** — bar chart of max APY broken into
-  inflation / MEV / block / stake-bid PMPE; Winning APY drawn across.
-- **What-If Simulation** — toggle on, edit commissions or bid; auction
-  re-runs (see [Simulation Mode](#simulation)).
+- **Stake** — three rows: Active Marinade stake (SOL delegated right
+  now), Target Marinade stake (what the auction wants you to have), and
+  Expected change next epoch (signed delta — green for gains, red for
+  losses). Losses come mostly from falling out of the auction; a small
+  share is the natural-turnover share spread pro-rata across all
+  validators.
+- **Bond** — Balance (raw bond SOL), Reserve (a coverage status label
+  like "Fully covered", "Top up X to keep your stake", or "Top up X to
+  avoid the fee" — coloured by health), and Bid runway in epochs
+  ("N epochs" or "Depleted"). Click the card title to open the full
+  Bond tab and see the underlying numbers.
+- **Expected payment this epoch** — Active stake cost, Activating stake
+  cost, then a **Penalty** row that totals every penalty, with each
+  contributing penalty broken out below it as a `↳` sub-row
+  (`↳ bid-too-low penalty`, `↳ blacklist penalty`, `↳ bond risk fee`).
+  Click any sub-row label to jump straight to the tab that explains it.
+  The Total at the bottom reconciles with the Payments tab.
+- **Max APY composition** — a stacked bar showing how the validator's
+  total APY splits across Inflation, MEV, Block rewards, and the Stake
+  bid contribution. Each row has its own bar segment, the segment colour
+  matches a tiny swatch on the row, and the rightmost number is that
+  component's APY. The Total bar at the bottom carries a vertical tick
+  at the **Winning APY** so you can see how far above or below the
+  cutoff the validator sits; the pill in the top-right corner restates
+  the gap as `+X%` (above) or `−X%` (below).
+- **What-If Simulation** — only visible when you toggle "Simulate" on
+  in the panel header. Edit the validator's bid PMPE or any of the three
+  commissions; the auction recalculates after a brief debounce and the
+  table reshuffles. See [Simulation Mode](#simulation) for details.
 
 ### Notifications tab
 
