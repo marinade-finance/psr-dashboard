@@ -13,6 +13,8 @@
 //
 // Bond figures are read from the already-memoised BondCoverage so the
 // numbers reconcile exactly with the Bond tab (no recompute, no drift).
+import { selectInSet, selectNonBidPmpe } from 'src/services/sam'
+
 import type { BondCoverage } from 'src/services/bond-coverage'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
 
@@ -44,12 +46,12 @@ export const computeInAuctionTarget = (
   const inflationPmpe = v.revShare.inflationPmpe
   const mevPmpe = v.revShare.mevPmpe
   const blockPmpe = v.revShare.blockPmpe ?? 0
-  const nonBidPmpe = inflationPmpe + mevPmpe + blockPmpe
+  const nonBidPmpe = selectNonBidPmpe(v)
   const currentBidPmpe = v.revShare.bidPmpe
   const targetBidPmpe = Math.max(0, winningTotalPmpe - nonBidPmpe)
   const bidIncrease = Math.max(0, targetBidPmpe - currentBidPmpe)
   return {
-    inSet: v.auctionStake.marinadeSamTargetSol > 0,
+    inSet: selectInSet(v),
     winningTotalPmpe,
     inflationPmpe,
     mevPmpe,

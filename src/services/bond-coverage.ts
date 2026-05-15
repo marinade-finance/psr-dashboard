@@ -1,4 +1,5 @@
 import { finite } from 'src/format'
+import { selectPaidUndelegationSol } from 'src/services/sam'
 
 import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
 
@@ -49,7 +50,7 @@ export function computeBondCoverage(
   const bondBalanceSol = v.bondBalanceSol ?? 0
   const claimableBondBalanceSol = v.claimableBondBalanceSol ?? 0
   const marinadeActivatedStakeSol = v.marinadeActivatedStakeSol
-  const paidUndelegationSol = v.values?.paidUndelegationSol ?? 0
+  const paidUndelegationSol = selectPaidUndelegationSol(v)
   const expectedMaxEffBidPmpe = finite(v.revShare?.expectedMaxEffBidPmpe)
   const onchainDistributedPmpe = finite(v.revShare?.onchainDistributedPmpe)
   const unprotectedStakeSol = v.unprotectedStakeSol ?? 0

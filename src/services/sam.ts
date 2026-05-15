@@ -8,7 +8,7 @@ import {
 
 import { pct } from 'src/format'
 
-import { bondRunwayEpochs, compoundApy } from './calculations'
+import { compoundApy } from './calculations'
 import { fetchValidatorsWithEpochs } from './validators'
 
 import type {
@@ -71,7 +71,7 @@ export type AugmentedAuctionValidator = Omit<AuctionValidator, 'values'> & {
   }
 }
 
-export type ExpectedStakeChange = {
+type ExpectedStakeChange = {
   total: number
   paidUndelegation: number
   redelegationInflow: number
@@ -186,39 +186,23 @@ export const selectCommission = (validator: AuctionValidator): number =>
 export const selectCommissionPmpe = (validator: AuctionValidator) =>
   validator.revShare.inflationPmpe
 
-export const selectMevCommission = (
-  validator: AuctionValidator,
-): number | null => validator.mevCommissionDec
-
 export const formattedMevCommission = (validator: AuctionValidator): string => {
-  const dec = selectMevCommission(validator)
+  const dec = validator.mevCommissionDec
   return dec == null ? '-' : pct(dec, 0)
 }
 
 export const selectMevCommissionPmpe = (validator: AuctionValidator) =>
   validator.revShare.mevPmpe
 
-export const selectBlockRewardsCommission = (
-  validator: AuctionValidator,
-): number | null => validator.blockRewardsCommissionDec
-
 export const formattedBlockRewardsCommission = (
   validator: AuctionValidator,
-): string => {
-  const v = selectBlockRewardsCommission(validator)
-  return pct(v ?? 1, 0)
-}
+): string => pct(validator.blockRewardsCommissionDec ?? 1, 0)
 
 export const selectBlockRewardsCommissionPmpe = (validator: AuctionValidator) =>
   validator.revShare.blockPmpe
 
 export const selectBondSize = (validator: AuctionValidator) =>
   validator.bondBalanceSol
-
-export const selectBondHealth = (
-  validator: AuctionValidator,
-  minBondEpochs: number,
-) => bondRunwayEpochs(validator, minBondEpochs)
 
 export const selectMaxAPY = (
   validator: AuctionValidator,
@@ -227,6 +211,15 @@ export const selectMaxAPY = (
 
 export const selectEffectiveBid = (validator: AuctionValidator) =>
   validator.revShare.auctionEffectiveBidPmpe
+
+export const selectInSet = (v: AuctionValidator): boolean =>
+  v.auctionStake.marinadeSamTargetSol > 0
+
+export const selectPaidUndelegationSol = (v: AuctionValidator): number =>
+  v.values?.paidUndelegationSol ?? 0
+
+export const selectNonBidPmpe = (v: AuctionValidator): number =>
+  v.revShare.inflationPmpe + v.revShare.mevPmpe + (v.revShare.blockPmpe ?? 0)
 
 export const selectEffectiveCost = (validator: AuctionValidator) =>
   (validator.marinadeActivatedStakeSol / 1000) *
@@ -301,14 +294,13 @@ function allocateRedelegation(
   auctionResult: AuctionResult,
 ): RedelegationAllocation {
   const validators = auctionResult.auctionData.validators
-  const paidOf = (v: AuctionValidator) => v.values?.paidUndelegationSol ?? 0
   const totalPaid = validators.reduce(
-    (sum, validator) => sum + paidOf(validator),
+    (sum, validator) => sum + selectPaidUndelegationSol(validator),
     0,
   )
   const budget = selectRedelegationBudget(auctionResult) + totalPaid
   const effectiveActive = (v: AuctionValidator) =>
-    v.marinadeActivatedStakeSol - paidOf(v)
+    v.marinadeActivatedStakeSol - selectPaidUndelegationSol(v)
   const rawDelta = (v: AuctionValidator) =>
     v.auctionStake.marinadeSamTargetSol - effectiveActive(v)
 
@@ -356,7 +348,6 @@ function computeExpectedStakeChanges(
 ): Map<string, ExpectedStakeChange> {
   const validators = auctionResult.auctionData.validators
   const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
-  const paidOf = (v: AuctionValidator) => v.values?.paidUndelegationSol ?? 0
   const bondBelowMin = (v: AuctionValidator) =>
     (v.bondBalanceSol ?? 0) < minBondBalanceSol
   const result = new Map<string, ExpectedStakeChange>()
@@ -381,7 +372,7 @@ function computeExpectedStakeChanges(
       entry.total = -validator.marinadeActivatedStakeSol
       continue
     }
-    const paid = paidOf(validator)
+    const paid = selectPaidUndelegationSol(validator)
     if (paid > 0) {
       const entry = get(validator.voteAccount)
       entry.paidUndelegation = -paid
@@ -461,11 +452,7 @@ export const selectExpectedStakeChange = (
   v: AugmentedAuctionValidator,
 ): number => v.values.expectedStakeChangeSol ?? 0
 
-export type ExpectedStakeChangeBreakdown = {
-  paidUndelegation: number
-  redelegationInflow: number
-  naturalWithdrawal: number
-}
+export type ExpectedStakeChangeBreakdown = Omit<ExpectedStakeChange, 'total'>
 
 export const selectExpectedStakeChangeBreakdown = (
   v: AugmentedAuctionValidator,

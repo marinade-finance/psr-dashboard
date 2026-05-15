@@ -18,10 +18,12 @@
 // (static bid over the clearing price) does not move that order, and the
 // rank is a monotonic restatement of totalPmpe — surfacing both lets the
 // user see the real inputs without re-deriving the target off them.
-import { selectEffectiveBid } from 'src/services/sam'
 import {
+  selectEffectiveBid,
   selectExpectedStakeChange,
   selectExpectedStakeChangeBreakdown,
+  selectInSet,
+  selectNonBidPmpe,
   selectRedelegationBudget,
   selectRedelegationPriorityFrontierPmpe,
   selectRedelegationPriorityRank,
@@ -55,12 +57,11 @@ export const computeNextEpochStake = (
   v: AugmentedAuctionValidator,
   auctionResult: AuctionResult,
 ): NextEpochStake => {
-  const inSet = v.auctionStake.marinadeSamTargetSol > 0
+  const inSet = selectInSet(v)
   const currentTotalPmpe = v.revShare.totalPmpe
   const priorityFrontierPmpe =
     selectRedelegationPriorityFrontierPmpe(auctionResult)
-  const nonBidPmpe =
-    v.revShare.inflationPmpe + v.revShare.mevPmpe + (v.revShare.blockPmpe ?? 0)
+  const nonBidPmpe = selectNonBidPmpe(v)
   const targetTotalPmpePriority = Math.max(
     currentTotalPmpe,
     priorityFrontierPmpe,
