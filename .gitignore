@@ -52,6 +52,9 @@ lerna-debug.log*
 # Shipping artifacts (ephemeral)
 /.ship
 
+# Diary — local only, not committed
+/.diary
+
 # Package manager cache
 /.pnpm-store
 
