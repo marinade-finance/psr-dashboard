@@ -117,8 +117,20 @@ test.describe('SAM table — rank cell', () => {
   test('Winning Set Cutoff divider sits between in-set and out-of-set rows', async ({
     page,
   }) => {
-    await gotoSam(page)
-    await expect(page.getByText(/Winning Set Cutoff|bid-eligible/i).first()).toBeVisible()
+    // The cutoff divider only renders when at least one validator has a
+    // max APY strictly below the winning APY. The /test- fixture's
+    // out-of-set validators are bond-blocked rather than bid-too-low, so
+    // they sit ABOVE the cutoff line. Use the live HAR fixture and expert
+    // mode to surface a real below-cutoff partition.
+    await page.routeFromHAR('tests/fixtures/api.har', {
+      url: /marinade\.finance/,
+      notFound: 'fallback',
+    })
+    await page.goto('/expert-')
+    await page.waitForSelector('tbody tr', { timeout: 30000 })
+    await expect(
+      page.getByText(/Winning Set Cutoff|bid-eligible/i).first(),
+    ).toBeVisible({ timeout: 10000 })
   })
 
   test('rank cell shows a tip-urgency icon for non-ghost rows', async ({

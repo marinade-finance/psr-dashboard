@@ -25,12 +25,17 @@ function truncated8(va: string) {
 
 async function readVoteCells(scope: Locator): Promise<string[]> {
   // Each ValidatorIdentity renders an internal "font-mono" element for the
-  // truncated vote account. We pull all of them inside `scope`.
+  // truncated vote account. The responsive variant renders BOTH a desktop
+  // and a mobile node and toggles them with CSS `hidden`. We pull every
+  // font-mono node, then filter to the ones that are actually visible.
   const cells = scope.locator('.font-mono')
   const n = await cells.count()
   const out: string[] = []
   for (let i = 0; i < n; i++) {
-    const t = (await cells.nth(i).innerText()).trim()
+    const node = cells.nth(i)
+    const visible = await node.isVisible().catch(() => false)
+    if (!visible) continue
+    const t = (await node.innerText()).trim()
     if (t.includes('…')) out.push(t)
   }
   return out
@@ -105,27 +110,39 @@ test.describe('ValidatorIdentity — full vote account on hover', () => {
   test('hovering an identity cell exposes the full vote account', async ({
     page,
   }) => {
+    test.setTimeout(20_000)
     await page.goto('/test-')
     await rowsLoaded(page)
+    const row = page.locator('tbody tr[role="button"]').first()
+    const fullVote = await row.getAttribute('data-vote-account')
+    expect(fullVote).toBeTruthy()
+
     // First identity cell on the SAM table.
-    const idCell = page.locator('tbody tr td:nth-child(2)').first()
+    const idCell = row.locator('td').nth(1)
     await idCell.hover()
+
     // The full vote account should surface via title attribute or a Radix
     // tooltip (role="tooltip"). At least one must be present.
-    const fullVote = await page
-      .locator('tbody tr[role="button"]')
+    let surfaced = false
+    try {
+      const tooltipText = await page
+        .getByRole('tooltip')
+        .first()
+        .textContent({ timeout: 1500 })
+      if (tooltipText && fullVote && tooltipText.includes(fullVote)) {
+        surfaced = true
+      }
+    } catch {
+      /* no tooltip rendered */
+    }
+    const titleAttr = await idCell
+      .locator('[title]')
       .first()
-      .getAttribute('data-vote-account')
-    expect(fullVote).toBeTruthy()
-    const tooltipText = await page
-      .getByRole('tooltip')
-      .first()
-      .textContent()
+      .getAttribute('title')
       .catch(() => null)
-    const titleAttr = await idCell.locator('[title]').first().getAttribute('title').catch(() => null)
-    const surfaced =
-      (tooltipText && fullVote && tooltipText.includes(fullVote)) ||
-      (titleAttr && fullVote && titleAttr.includes(fullVote))
+    if (titleAttr && fullVote && titleAttr.includes(fullVote)) {
+      surfaced = true
+    }
     expect(
       surfaced,
       'hover should reveal the full vote account (tooltip or title attr)',
@@ -134,29 +151,34 @@ test.describe('ValidatorIdentity — full vote account on hover', () => {
 })
 
 test.describe('ValidatorIdentity — consistency across pages', () => {
-  test('a validator that appears on both SAM and Bonds has the same identity format', async ({
+  test('SAM, Bonds and Events tables all use the same chars-left/chars-right truncation shape', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1280, height: 900 })
 
-    // Collect truncated vote accounts from SAM.
-    await page.goto('/test-')
-    await rowsLoaded(page)
-    const samTruncs = new Set(await readVoteCells(page.locator('tbody').first()))
+    async function segmentLengths(url: string, selector: string) {
+      await page.goto(url)
+      await page.waitForSelector(selector, { timeout: 30000 })
+      const truncs = await readVoteCells(page.locator(selector).first())
+      expect(truncs.length, `${url} should expose truncated vote accounts`).toBeGreaterThan(0)
+      return truncs.map(t => {
+        const [l, r] = t.split('…')
+        return { left: l.length, right: r.length }
+      })
+    }
 
-    // And from Bonds.
-    await page.goto('/test-bonds')
-    await page.waitForSelector('table', { timeout: 30000 })
-    const bondsTruncs = await readVoteCells(
-      page.locator('table tbody').first(),
+    const sam = await segmentLengths('/test-', 'tbody')
+    const bonds = await segmentLengths('/test-bonds', 'table tbody')
+    const events = await segmentLengths('/test-protected-events', 'table tbody')
+
+    // Every page must use the SAME (left, right) shape across all rows on
+    // that page AND the same shape between pages.
+    const allShapes = new Set(
+      [...sam, ...bonds, ...events].map(s => `${s.left}/${s.right}`),
     )
-
-    // At least one vote account should appear on both pages, in the same
-    // truncation format.
-    const overlap = bondsTruncs.filter(t => samTruncs.has(t))
     expect(
-      overlap.length,
-      'expected at least one validator listed in both SAM and Bonds with identical truncation',
-    ).toBeGreaterThan(0)
+      allShapes.size,
+      `expected one consistent truncation shape; got ${[...allShapes].join(', ')}`,
+    ).toBe(1)
   })
 })

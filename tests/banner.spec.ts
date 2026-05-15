@@ -55,19 +55,12 @@ async function mockBroadcast(page: Page, title: string, body: string) {
   })
 }
 
-async function clearBannerStorage(page: Page) {
-  await page.addInitScript(() => {
-    try {
-      localStorage.removeItem('banner')
-    } catch {
-      /* ignore */
-    }
-  })
-}
+// Playwright spawns a fresh browser context per test → localStorage starts
+// empty, so we don't need to clear it before each test. We rely on that
+// default for the "stays dismissed across reload" test.
 
 test.describe('banner — first visit shows seeded announcement', () => {
   test('banner title and body are visible on first visit', async ({ page }) => {
-    await clearBannerStorage(page)
     await mockBroadcast(
       page,
       'Test Banner Title',
@@ -85,7 +78,6 @@ test.describe('banner — first visit shows seeded announcement', () => {
 
 test.describe('banner — dismiss flow', () => {
   test('clicking the × dismiss button hides the banner', async ({ page }) => {
-    await clearBannerStorage(page)
     await mockBroadcast(page, 'Banner A', 'Body for banner A.')
     await page.goto('/')
     const title = page.getByText('Banner A', { exact: true })
@@ -95,7 +87,6 @@ test.describe('banner — dismiss flow', () => {
   })
 
   test('dismissed banner stays hidden after reload', async ({ page }) => {
-    await clearBannerStorage(page)
     await mockBroadcast(page, 'Banner Persist', 'Body for persistence test.')
     await page.goto('/')
     await expect(
@@ -115,7 +106,6 @@ test.describe('banner — dismiss flow', () => {
 
   test('a different title re-shows the banner', async ({ page }) => {
     // First visit dismisses Title A.
-    await clearBannerStorage(page)
     await mockBroadcast(page, 'Banner Title A', 'Body A.')
     await page.goto('/')
     await expect(
@@ -139,7 +129,6 @@ test.describe('banner — dismiss flow', () => {
 
 test.describe('banner — Marinade-mark a11y', () => {
   test('dismiss button has an accessible name "Dismiss"', async ({ page }) => {
-    await clearBannerStorage(page)
     await mockBroadcast(page, 'A11y Banner', 'Body for a11y check.')
     await page.goto('/')
     const dismiss = page.getByRole('button', { name: 'Dismiss' })
