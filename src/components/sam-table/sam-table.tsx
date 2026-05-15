@@ -767,10 +767,24 @@ export const SamTable: React.FC<Props> = ({
             </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="h-[3px] bg-secondary rounded-sm w-14 shrink-0">
+            <div className="relative h-1 bg-secondary rounded-sm w-14 shrink-0">
               <div
-                className={cn('h-full rounded-sm', bondChip.bar)}
-                style={{ width: `${Math.max(100 - bondUtilPct, 0)}%` }}
+                className={cn(
+                  'absolute inset-y-0 left-0 rounded-sm',
+                  bondChip.bar,
+                )}
+                style={{
+                  width: `${Math.max(Math.min(bondRunway, 100), 4)}%`,
+                }}
+              />
+              <div
+                className="absolute inset-y-[-2px] w-0.5 rounded-full bg-destructive"
+                style={{
+                  left: `${Math.max(
+                    (dsSamConfig.minBondEpochs / 100) * 100,
+                    2,
+                  )}%`,
+                }}
               />
             </div>
             <span
