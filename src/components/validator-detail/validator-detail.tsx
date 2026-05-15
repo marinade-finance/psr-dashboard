@@ -12,6 +12,7 @@ import { Button } from 'src/components/ui/button'
 import { Input } from 'src/components/ui/input'
 import { Sheet, SheetContent } from 'src/components/ui/sheet'
 import { Switch } from 'src/components/ui/switch'
+import { Tooltip } from 'src/components/ui/tooltip'
 import { ApyCompositionCard } from 'src/components/validator-detail/apy-composition-card'
 import {
   CSS_PRIMARY,
@@ -127,13 +128,14 @@ const MetricRow = ({
   >
     <span className="text-xs text-muted-foreground flex items-center gap-1">
       {onSeeBreakdown ? (
-        <button
-          className="text-xs text-muted-foreground hover:text-primary hover:underline"
-          onClick={onSeeBreakdown}
-          title="See calculation"
-        >
-          {label} →
-        </button>
+        <Tooltip content="See calculation">
+          <button
+            className="text-xs text-muted-foreground hover:text-primary hover:underline"
+            onClick={onSeeBreakdown}
+          >
+            {label} →
+          </button>
+        </Tooltip>
       ) : (
         label
       )}
@@ -157,19 +159,20 @@ const PenaltyRow = ({
   sub?: boolean
 }) => (
   <div className="flex items-center justify-between gap-2">
-    <button
-      className={cn(
-        'text-left flex-1',
-        sub
-          ? 'text-[10px] text-muted-foreground'
-          : 'text-xs text-muted-foreground',
-        'hover:text-foreground hover:underline',
-      )}
-      onClick={onSeeBreakdown}
-      title="See calculation"
-    >
-      {label} →
-    </button>
+    <Tooltip content="See calculation">
+      <button
+        className={cn(
+          'text-left flex-1',
+          sub
+            ? 'text-[10px] text-muted-foreground'
+            : 'text-xs text-muted-foreground',
+          'hover:text-foreground hover:underline',
+        )}
+        onClick={onSeeBreakdown}
+      >
+        {label} →
+      </button>
+    </Tooltip>
     <span
       className={cn('font-mono', sub ? 'text-[10px]' : 'text-sm font-semibold')}
       style={{ color: sub ? CSS_MUTED_FG : CSS_DESTRUCTIVE }}
@@ -393,12 +396,11 @@ export const ValidatorDetail = ({
                 {inSet ? 'In Set' : 'Out of Set'}
               </span>
               {isSimulated && (
-                <span
-                  className="px-2 py-0.5 rounded-md text-xs font-semibold shrink-0 uppercase tracking-wide bg-status-yellow-light text-status-yellow"
-                  title="Numbers shown here use your what-if commission and bid, not the live values."
-                >
-                  Simulated
-                </span>
+                <Tooltip content="Numbers shown here use your what-if commission and bid, not the live values.">
+                  <span className="px-2 py-0.5 rounded-md text-xs font-semibold shrink-0 uppercase tracking-wide bg-status-yellow-light text-status-yellow">
+                    Simulated
+                  </span>
+                </Tooltip>
               )}
             </div>
             <span className="text-xs font-mono text-muted-foreground break-all leading-tight">
@@ -406,17 +408,16 @@ export const ValidatorDetail = ({
             </span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <label
-              className="flex items-center gap-2 text-xs font-medium cursor-pointer select-none"
-              title="Turn this on to see how changing your commission or bid would shift your rank — updates as you type."
-            >
-              <span className="text-muted-foreground">Simulate</span>
-              <Switch
-                checked={simEnabled}
-                onCheckedChange={handleSimToggle}
-                aria-label="Toggle simulation mode"
-              />
-            </label>
+            <Tooltip content="Turn this on to see how changing your commission or bid would shift your rank — updates as you type.">
+              <label className="flex items-center gap-2 text-xs font-medium cursor-pointer select-none">
+                <span className="text-muted-foreground">Simulate</span>
+                <Switch
+                  checked={simEnabled}
+                  onCheckedChange={handleSimToggle}
+                  aria-label="Toggle simulation mode"
+                />
+              </label>
+            </Tooltip>
             {isSimulated && onClearSimulation && (
               <Button
                 variant="ghost"
