@@ -72,16 +72,22 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
             label="This epoch bid PMPE"
             value={pmpe(metrics.thisEpochBidPmpe)}
           />
-          <CalcRow
-            label="Bid change this epoch"
-            value={pmpe(metrics.thisEpochBidPmpe - metrics.lastEpochBidPmpe)}
-            secondary={
-              metrics.isNegativeBiddingChange
-                ? 'reduced — penalty gate open'
-                : 'held — no penalty'
-            }
-            severity={metrics.isNegativeBiddingChange ? 'error' : 'ok'}
-          />
+          {(() => {
+            const d = metrics.thisEpochBidPmpe - metrics.lastEpochBidPmpe
+            return (
+              <CalcRow
+                label="Bid change this epoch"
+                value={`${d > 0 ? '+' : d < 0 ? '−' : ''}${pmpe(Math.abs(d))}`}
+                severity={
+                  metrics.isNegativeBiddingChange
+                    ? 'error'
+                    : d > 0
+                      ? 'ok'
+                      : undefined
+                }
+              />
+            )
+          })()}
           <CalcRow
             label="History window"
             secondary={`${metrics.historyEpochs} epochs`}
