@@ -13,6 +13,8 @@ import {
   CSS_MUTED_FG,
   CSS_PRIMARY,
   CSS_PRIMARY_LIGHT_10,
+  CSS_STATUS_YELLOW,
+  CSS_STATUS_YELLOW_LIGHT,
   CSS_WARNING,
   CSS_WARNING_LIGHT,
 } from 'src/css'
@@ -76,6 +78,21 @@ export const getBondHealthStyle = (
     return { color: CSS_INFO, bg: CSS_INFO_LIGHT, label: 'Soft' }
   }
   return { color: CSS_PRIMARY, bg: CSS_PRIMARY_LIGHT_10, label: 'Healthy' }
+}
+
+// Single severity source for bond advice. The header bond tip and the Bond
+// tab status banner must agree on tone; the banner colours off bond-health
+// (red/yellow/green axis via card.tsx STATUS_CLASSES), so the header does
+// too — never off tip.urgency, whose `info` indigo for soft bond is exactly
+// the conflicting second colour c4fe245a removed the duplicate to avoid.
+export const getBondAdviceStyle = (health: BondHealthState): TipStyle => {
+  if (health === 'no-bond' || health === 'critical') {
+    return { color: CSS_DESTRUCTIVE, bg: CSS_DESTRUCTIVE_LIGHT }
+  }
+  if (health === 'watch' || health === 'soft') {
+    return { color: CSS_STATUS_YELLOW, bg: CSS_STATUS_YELLOW_LIGHT }
+  }
+  return { color: CSS_PRIMARY, bg: CSS_PRIMARY_LIGHT_10 }
 }
 
 // Color carries severity ONLY. Glyph never does — see getTipIcon.
@@ -197,7 +214,7 @@ export const getValidatorTip = (
       const feeStr =
         bondRiskFeeSol > 0
           ? `Estimated bond risk fee: ${pay(bondRiskFeeSol)}.`
-          : 'Bond below penalty threshold.'
+          : 'Your bond is too thin to back your stake, so a bond risk fee can be charged and stake will be undelegated.'
       const topUpStr =
         coverage.topUpToAvoidFee > 0
           ? ` Top up ${topUp(coverage.topUpToAvoidFee)} to avoid the fee.`

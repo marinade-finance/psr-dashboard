@@ -38,6 +38,7 @@ import {
 } from 'src/services/sam'
 import {
   getApyBreakdown,
+  getBondAdviceStyle,
   getValidatorTip,
   getTipStyle,
   getTipIcon,
@@ -211,12 +212,19 @@ export const ValidatorDetail = ({
   )
   const winningTotalPmpe = auctionResult.winningTotalPmpe
   const apyBreakdown = getApyBreakdown(validator, epochsPerYear)
-  const bondRunway = validator.bondGoodForNEpochs ?? 0
   const bondHealth = bondHealthFromAuction(
     validator,
     dsSamConfig,
     winningTotalPmpe,
   )
+  // A no-bond or below-minimum bond sustains zero stake regardless of the
+  // SDK's raw bondGoodForNEpochs, which ignores the below-min gate. Force
+  // the runway to Depleted so Balance, Reserve and Bid runway tell one
+  // coherent story instead of "0 SOL / Critical / 6 epochs".
+  const bondRunway =
+    bondHealth === 'no-bond' || bondHealth === 'critical'
+      ? 0
+      : (validator.bondGoodForNEpochs ?? 0)
   const tip = getValidatorTip(validator, dsSamConfig, winningTotalPmpe)
   const tipStyle = getTipStyle(tip.urgency)
   const expectedStakeDelta = selectExpectedStakeChange(validator)
@@ -440,55 +448,49 @@ export const ValidatorDetail = ({
           </div>
         </div>
 
-        {tip.constraint === 'bond' ? (
-          // The Bond tab's status banner is the single authoritative source
-          // for bond advice (bond-health / yellow axis, exact top-up figure).
-          // The header must not repeat that sentence in a second tinted box
-          // with its own severity colour — that produced one state shown as
-          // both indigo and yellow. Here it is a plain text link to where the
-          // one banner lives; the figure and colour live there, once.
-          <div className="px-4 sm:px-6 py-3 border-b border-border">
-            <button
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-              onClick={() => setTab('bond')}
+        {(() => {
+          // Bond tips show the real advisory text (the "Top up N to …" /
+          // fee figure from getValidatorTip), routing to the Bond tab.
+          // Colour comes from getBondAdviceStyle(bondHealth) — the SAME
+          // severity axis the Bond tab status banner uses — so the header
+          // and the banner can never disagree on tone (the indigo/yellow
+          // split c4fe245a removed the duplicate to avoid stays gone).
+          const isBond = tip.constraint === 'bond'
+          const bannerStyle = isBond ? getBondAdviceStyle(bondHealth) : tipStyle
+          const tipTarget: Tab | null = isBond
+            ? 'bond'
+            : tip.constraint === 'bid'
+              ? 'overview'
+              : null
+          return (
+            <div
+              className={cn(
+                'px-4 sm:px-6 py-3 flex items-center gap-3',
+                tipTarget && 'cursor-pointer select-none',
+              )}
+              style={{ background: bannerStyle.bg }}
+              onClick={tipTarget ? () => setTab(tipTarget) : undefined}
             >
-              Bond needs attention — see the Bond tab →
-            </button>
-          </div>
-        ) : (
-          (() => {
-            const tipTarget: Tab | null =
-              tip.constraint === 'bid' ? 'overview' : null
-            return (
-              <div
-                className={cn(
-                  'px-4 sm:px-6 py-3 flex items-center gap-3',
-                  tipTarget && 'cursor-pointer select-none',
-                )}
-                style={{ background: tipStyle.bg }}
-                onClick={tipTarget ? () => setTab(tipTarget) : undefined}
+              <span
+                className="text-sm font-medium flex-1"
+                style={{ color: bannerStyle.color }}
               >
+                {tip.text}
+              </span>
+              {tipTarget && (
                 <span
-                  className="text-sm font-medium flex-1"
-                  style={{ color: tipStyle.color }}
+                  className="text-xs font-medium shrink-0 px-2 py-0.5 rounded border whitespace-nowrap bg-card/55"
+                  style={{
+                    color: bannerStyle.color,
+                    borderColor: bannerStyle.color,
+                  }}
                 >
-                  {tip.text}
+                  {isBond ? 'Bond tab →' : 'Simulate →'}
                 </span>
-                {tipTarget && (
-                  <span
-                    className="text-xs font-medium shrink-0 px-2 py-0.5 rounded border whitespace-nowrap bg-card/55"
-                    style={{
-                      color: tipStyle.color,
-                      borderColor: tipStyle.color,
-                    }}
-                  >
-                    Simulate →
-                  </span>
-                )}
-              </div>
-            )
-          })()
-        )}
+              )}
+            </div>
+          )
+        })()}
 
         {(() => {
           const goToSim = () => {
@@ -691,10 +693,19 @@ export const ValidatorDetail = ({
               onTitleClick={() => setTab('bond')}
             >
               <div className="space-y-3">
-                <MetricRow
-                  label="Balance"
-                  value={stake(validator.bondBalanceSol ?? 0)}
-                />
+                {(() => {
+                  const bal = validator.bondBalanceSol ?? 0
+                  // A tiny positive bond drives Critical but rounds to
+                  // "0 SOL" under whole-SOL stake() — reads as no bond and
+                  // contradicts the Critical reserve. Show 3-decimal cost()
+                  // precision for sub-1 SOL balances so the row is honest.
+                  return (
+                    <MetricRow
+                      label="Balance"
+                      value={bal > 0 && bal < 1 ? cost(bal) : stake(bal)}
+                    />
+                  )
+                })()}
                 <MetricRow
                   label="Reserve"
                   help={HELP_TEXT.bondCoverage}

@@ -223,7 +223,7 @@ describe('getValidatorTip', () => {
     expect(tip.text).toContain('Bid too low')
   })
 
-  it('critical health (near-zero bond) → critical/bond penalty threshold message', () => {
+  it('critical health (near-zero bond) → critical/bond risk fee message', () => {
     const validator = makeValidator({
       bondGoodForNEpochs: 4,
       bondBalanceSol: 0.001,
@@ -233,11 +233,11 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
-    expect(tip.text).toContain('Bond below penalty threshold')
+    expect(tip.text).toContain('bond risk fee')
     expect(tip.text).toContain('Top up')
   })
 
-  it('critical health (epochs > 5) → critical/bond penalty message', () => {
+  it('critical health (epochs > 5) → critical/bond risk fee message', () => {
     const validator = makeValidator({
       bondGoodForNEpochs: 8,
       bondBalanceSol: 0.001,
@@ -247,7 +247,7 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
-    expect(tip.text).toContain('penalty')
+    expect(tip.text).toContain('bond risk fee')
   })
 
   it('soft health (bond covers stake but not ideal) → info/bond top-up', () => {

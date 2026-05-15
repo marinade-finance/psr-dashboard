@@ -32,7 +32,7 @@ const statusLine = (
     const feeStr =
       bondRiskFeeSol > 0
         ? `Estimated bond risk fee: ${pay(bondRiskFeeSol)}.`
-        : 'Bond below penalty threshold.'
+        : 'Your bond is too thin to back your stake, so a bond risk fee can be charged and stake will be undelegated.'
     const topUpStr =
       topUpToAvoidFee > 0
         ? ` Top up ${topUp(topUpToAvoidFee)} to avoid the fee.`
@@ -79,9 +79,14 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
     bondRiskFeeSol,
   )
 
-  // Risk section is informational; show only when the projected basis matters
-  // (some undelegation already queued) or a fee/top-up is actually outstanding.
+  // Show the penalty math whenever the bond is at risk (critical/watch) so
+  // the user can SEE the threshold, how the fee is computed and the top-up
+  // to avoid it — not only once a fee is already outstanding. Also keep it
+  // visible if a fee/top-up is live or the projected basis matters
+  // (undelegation already queued).
   const showRiskSection =
+    bondState === 'critical' ||
+    bondState === 'watch' ||
     bondRiskFeeSol > 0 ||
     coverage.topUpToAvoidFee > 0 ||
     coverage.carriedPaidUndelegationSol > 0

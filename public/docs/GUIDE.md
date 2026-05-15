@@ -576,11 +576,15 @@ Composition — let you click their title to jump there.
   losses). Losses come mostly from falling out of the auction; a small
   share is the natural-turnover share spread pro-rata across all
   validators.
-- **Bond** — Balance (raw bond SOL), Reserve (a coverage status label
-  like "Fully covered", "Top up X to keep your stake", or "Top up X to
-  avoid the fee" — coloured by health), and Bid runway in epochs
-  ("N epochs" or "Depleted"). Click the card title to open the full
-  Bond tab and see the underlying numbers.
+- **Bond** — Balance (raw bond SOL; a sub-1 SOL positive bond is shown
+  to 3 decimals so a tiny bond that drives a Critical reserve never
+  reads as "0 SOL"), Reserve (a coverage status label like "Fully
+  covered", "Top up X to keep your stake", or "Top up X to avoid the
+  fee" — coloured by health), and Bid runway in epochs ("N epochs" or
+  "Depleted"; shown as "Depleted" whenever the bond is missing or below
+  the minimum, so it agrees with a Critical reserve instead of
+  contradicting it). Click the card title to open the full Bond tab and
+  see the underlying numbers.
 - **Expected payment this epoch** — Active stake cost, Activating stake
   cost, then a **Penalty** row that totals every penalty, with each
   contributing penalty broken out below it as a `↳` sub-row
@@ -766,9 +770,11 @@ requiredIdealKeep       = idealUnprotectedReserve
 topUpToIdealKeep        = max(0, requiredIdealKeep − bondBalance)
 ```
 
-**Bond risk fee** (conditional — only when `bondRiskFeeSol > 0`,
-`topUpToAvoidFee > 0`, or there is carried paid undelegation, so the
-section vanishes for healthy bonds): uses `projectedExposedStake =
+**Bond risk fee** (shown whenever the bond is at risk — bond-health
+critical or watch — or a fee or top-up is already outstanding, or
+there is carried paid undelegation, so you can see the threshold and
+the penalty math before a fee is ever charged; the section still
+vanishes for healthy bonds): uses `projectedExposedStake =
 activatedStake − carriedPaidUndelegation − unprotectedStake` — always
 ≤ current, because stake already on its way out shouldn't inflate the
 fee. The penalty trigger threshold is `floorBaseProjected`; falling

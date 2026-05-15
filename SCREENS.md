@@ -194,7 +194,13 @@ cost. The internal `Tab` union is `'overview' | 'notifications' |
   with `HelpTip`). The Next-epoch `HelpTip` notes the delta can be
   `0 SOL` even when target > active stake.
 - **Bond** — Balance, Reserve / "Top up X" CTA, Bid runway, "See full
-  bond coverage breakdown →" link.
+  bond coverage breakdown →" link. Balance renders 3-decimal `cost()`
+  precision for a sub-1 SOL positive bond so a tiny Critical-driving
+  bond never reads as "0 SOL". Bid runway is forced to "Depleted" when
+  bond-health is `no-bond` or `critical` (the raw SDK
+  `bondGoodForNEpochs` ignores the below-minimum gate, so it would
+  otherwise contradict a Critical Reserve) — Balance, Reserve and Bid
+  runway always tell one coherent story.
 - **Expected Payment This Epoch** — Active stake cost, Activating stake
   cost, optional `↳ bid gap` sub-row, Penalty group (single `Penalty:
   No penalties` line OR an itemised list of `↳ bid-too-low / blacklist /
@@ -246,16 +252,17 @@ the `SectionHeader` `unit` slot, stated once per section instead of
 suffixed on every row label. `CalcRow` and `RevRow` derive paddings,
 dividers and weight from one shared `rowStyle()` helper.
 
-**Tip banner** — strip below the header. For non-bond tips it is the
-tinted advisory box coloured by tip urgency, with a `Simulate →` chip
-when the constraint is `bid`. For `constraint === 'bond'` tips it is
-NOT a tinted box: the Bond tab's `CalcCard` status banner is the single
-authoritative source for bond advice (bond-health / yellow axis, exact
-top-up figure), so the header is a plain text link "Bond needs
-attention — see the Bond tab →" that routes there instead of repeating
-the sentence in a second colour family. This makes it structurally
-impossible for the header and the Bond banner to disagree about one
-state.
+**Tip banner** — tinted advisory strip below the header carrying the
+real `getValidatorTip` text. Non-bond tips are coloured by tip urgency,
+with a `Simulate →` chip when the constraint is `bid`. For
+`constraint === 'bond'` tips the strip shows the full bond advisory
+sentence (the exact "Top up N to …" / risk-fee figure) with a `Bond
+tab →` chip routing to the Bond tab. Its colour comes from
+`getBondAdviceStyle(bondHealth)` — the same red / status-yellow / green
+axis the Bond tab's `CalcCard` status banner uses, never from
+`tip.urgency` — so the header and the Bond banner can never disagree on
+tone for one state. The header rank glyph keeps its own urgency colour
+(it tracks overall standing, not bond health).
 
 `MetricRow` and `PenaltyRow` are file-private helpers in
 `validator-detail.tsx`; they are not exported as shared primitives.
