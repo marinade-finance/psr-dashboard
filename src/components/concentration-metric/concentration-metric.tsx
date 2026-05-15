@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 
 import { cn } from 'src/class_utils'
+import { Gauge } from 'src/components/gauge/gauge'
 import { HelpTip } from 'src/components/help-tip/help-tip'
 import { Card } from 'src/components/ui/card'
 import { pct, sol } from 'src/format'
@@ -85,61 +86,50 @@ export const ConcentrationMetric: React.FC<Props> = ({
         {label}
         {help && <HelpTip text={help} guideTo={guideTo} />}
       </div>
-      <div className="relative flex flex-col gap-0.5 mt-4">
+      <div className="flex flex-col gap-3 mt-2">
         {inline.map((r, i) => {
-          const fill = barPct(r.pctOfTotal)
-          const barClass = r.atCap
+          const tone = r.atCap
             ? 'bg-destructive'
             : (BAR_TONES[i] ?? BAR_TONE_DEFAULT)
           const textClass = r.atCap
             ? 'text-destructive font-semibold'
             : 'text-foreground'
           return (
-            <div
-              key={r.key}
-              className="relative h-5 flex items-center text-[13px]"
-            >
-              <span
-                className={cn(
-                  'absolute inset-y-0 left-0 rounded-sm',
-                  BAR_OPACITY_BASE,
-                  barClass,
-                )}
-                style={{ width: `${fill}%` }}
-                aria-hidden
+            <div key={r.key} className="flex flex-col gap-1">
+              <div className="flex items-baseline text-[13px]">
+                <span
+                  className={cn('truncate pr-2 flex-1', textClass)}
+                  title={r.key}
+                >
+                  {r.key}
+                  {r.atCap && (
+                    <span className="ml-1.5 font-bold">(capped)</span>
+                  )}
+                </span>
+                <span
+                  className={cn(
+                    'font-mono text-xs',
+                    r.atCap ? 'text-destructive' : 'text-muted-foreground',
+                  )}
+                >
+                  {pct(r.pctOfTotal)}
+                </span>
+              </div>
+              <Gauge
+                size="lg"
+                value={r.pctOfTotal}
+                scaleMax={scale}
+                marker={capPct > 0 ? capPct / scale : undefined}
+                tone={tone}
+                markerTone="bg-foreground/50"
               />
-              <span
-                className={cn('relative truncate pl-1 pr-2 flex-1', textClass)}
-                title={r.key}
-              >
-                {r.key}
-                {r.atCap && <span className="ml-1.5 font-bold">(capped)</span>}
-              </span>
-              <span
-                className={cn(
-                  'relative font-mono text-xs pr-1',
-                  r.atCap ? 'text-destructive' : 'text-muted-foreground',
-                )}
-              >
-                {pct(r.pctOfTotal)}
-              </span>
             </div>
           )
         })}
         {capLeft > 0 && capLeft <= 100 && (
-          <>
-            <span
-              className="absolute top-0 bottom-0 w-0.5 rounded-full bg-foreground/50 pointer-events-none"
-              style={{ left: `${capLeft}%` }}
-              aria-hidden
-            />
-            <span
-              className="absolute top-[-16px] pr-1 text-[10px] font-mono text-muted-foreground whitespace-nowrap pointer-events-none"
-              style={{ left: `${capLeft}%`, transform: 'translateX(-100%)' }}
-            >
-              {pct(capPct)} cap
-            </span>
-          </>
+          <div className="text-[10px] font-mono text-muted-foreground -mt-1">
+            {pct(capPct)} cap
+          </div>
         )}
       </div>
 

@@ -93,13 +93,16 @@ Tooltips via `HelpTip` on each tile.
 Two-column grid below the stats bar (`grid-cols-1 sm:grid-cols-2 gap-3`).
 Two `<ConcentrationMetric>` cards: **Top Countries** and **Top ASOs**.
 The inline (non-hover) view shows only what matters at a glance: every
-over-cap entry if any are capped (rank order, tinted `bg-destructive`
-with a `(capped)` tag), otherwise just the single #1 entry. Each row is
-a bar drawn on an absolute network-share scale (0 .. max of the largest
-entry or the cap, plus headroom), with a labeled vertical marker at the
-per-country / per-ASO cap so an over-cap entry visibly extends past it.
-Hover expands a tooltip showing the full ranked list (up to 15 entries)
-plus a remaining-count line.
+over-cap entry if any are capped (rank order, `text-destructive` with a
+`(capped)` tag), otherwise just the single #1 entry. Each entry is a name
++ share line over a `<Gauge size="lg">` — the same shared track-and-fill
+graphic the sam-table Bond column uses, larger. The fill scales the
+entry's share against an absolute network-share scale (0 .. max of the
+largest entry or the cap, plus headroom); a `bg-foreground/50` marker
+tick sits at the per-country / per-ASO cap so an over-cap entry visibly
+extends past it, with a `N% cap` label below. Hover expands a tooltip
+showing the full ranked list (up to 15 entries, the fading-tail tint
+palette) plus a remaining-count line.
 
 ### Jump-to-validator search
 
@@ -122,7 +125,7 @@ indicator `↑`/`↓` next to active header. Table sits in a scroll-x card
 | `#`            | `rank`       | Primary: absolute 1-based stake-priority rank from the top of the sorted auction (`#N`, `text-sm`), coloured by tip urgency, no trend arrow — the `#` appears only here. Sub-label underneath (`text-[10px]`, ~40% smaller): cutoff-relative position from `validator.values.cutoffRank` — `at cutoff`, `N above`, or `N below`; no `#` prefix, NBSP binds count to word. Ghost rows: muted same layout. Simulated rows: posColor-tinted `#N` (no sub) + `✕` clear button. Keyboard-activatable (`role="button"`, `tabIndex`). |
 | Validator      | `validator`  | `<ValidatorIdentity>` — name + responsive vote account. Trailing red pulsing dot when validator has an alert (`bondRunway ≤ 5` or `bondUtilPct ≥ 85`). `PenaltyBadges` slot for the active penalty icons. |
 | Max APY        | `maxApy`     | `selectMaxAPY` pill. Primary tone if in winning set, destructive-light otherwise.                                                                                           |
-| Bond           | `bond`       | Bond chip (Healthy / Adequate / Watch / Critical — see § Bond chip) + dot + balance, then a compact runway gauge + `(Nep)` runway suffix. The gauge fills proportionally to `bondGoodForNEpochs` against a fixed 100-epoch scale (so a 5ep bond reads short and a 90ep bond nearly full; runway over the cap renders a full bar — the old `100 − utilization` encoding was discarded because utilization is ≈0 for almost every validator and rendered every bar full). Fill colour follows the existing bond-health tier (`BOND_CHIP[...].bar`: primary / muted / warning / destructive) so a near-critical bond reads red even when its runway is only a few epochs. A thin `bg-destructive` tick at the danger (left) end marks the `dsSamConfig.minBondEpochs` critical floor (no number label — the `w-14` cell can't fit one without crowding the `(Nep)` token). Track height and fill are a uniform 4px across every row variant (normal, out-of-set, ghost, simulated, alert). The runway number is display-capped: `≥ 100` epochs renders `(>100ep)`, below that the exact rounded value (e.g. `(37ep)`). |
+| Bond           | `bond`       | Bond chip (Healthy / Adequate / Watch / Critical — see § Bond chip) + dot + balance, then a compact `<Gauge size="sm">` (the shared track-and-fill component, also used larger by the Concentration metrics) + `(Nep)` runway suffix. The gauge fills proportionally to `bondGoodForNEpochs` against a fixed 100-epoch scale (so a 5ep bond reads short and a 90ep bond nearly full; runway over the cap renders a full bar — the old `100 − utilization` encoding was discarded because utilization is ≈0 for almost every validator and rendered every bar full). Fill colour follows the existing bond-health tier (`BOND_CHIP[...].bar`: primary / muted / warning / destructive) so a near-critical bond reads red even when its runway is only a few epochs. A thin `bg-destructive` tick at the danger (left) end marks the `dsSamConfig.minBondEpochs` critical floor (no number label — the `w-14` cell can't fit one without crowding the `(Nep)` token). Track height and fill are a uniform 4px across every row variant (normal, out-of-set, ghost, simulated, alert). The runway number is display-capped: `≥ 100` epochs renders `(>100ep)`, below that the exact rounded value (e.g. `(37ep)`). |
 | Stake / Next Δ | `stakeDelta` | Active SAM stake on top, expected next-epoch change underneath. Muted `0 SOL` when delta is zero, otherwise tinted `+/−` SOL coloured `var(--status-green)` / `var(--destructive)`. |
 | Next Step      | `nextStep`   | One-line tip from `getValidatorTip`, pill capped at `max-w-[260px]` so the column stays rhythmic. **Colour = severity** (urgency tint). **Icon = constraint/direction** via `getTipIcon`: bond → shield glyph, bid → bars glyph, rank → list glyph (all non-directional, severity-agnostic); only the in-set `none` case is directional and keyed off the real signed delta (↗ gain, ↘ loss, → at target) so an up-arrow can never appear on a losing/blocked row. The contiguous out-of-set "bid too low" block (`constraint:'rank'`) is an expected state, not an alarm: rendered muted with a 2-word "Bid too low" label (full sentence only in the detail panel). |
 | (chevron)      | —            | Drill-in cue, recolours on row hover.                                                                                                                                       |
@@ -431,8 +434,9 @@ Pointer list — for the full design language see CLAUDE.md.
 - **`<ValidatorIdentity>`** (`src/components/validator-identity/validator-identity.tsx`) — canonical "name + truncated vote account" cell.
 - **`<CalcCard>`** (`src/components/breakdowns/card.tsx`) — breakdown panel chrome with optional `guideTo` link, `status` pill, and `tip` footer. Pair with `CalcRow` / `OkRow` / `SectionHeader` / `Marker` from `src/components/breakdowns/row.tsx`. Pass `total` on the conclusion row to get `separator + bold + large` in one prop; `value` defaults to `''`. The separator border is exposed for flex layouts via `SEPARATOR_DIV_CLASS`.
 - **`<HelpTip>`** (`src/components/help-tip/help-tip.tsx`) — small `?` icon, Radix-based tooltip.
+- **`<Gauge>`** (`src/components/gauge/gauge.tsx`) — shared track-and-fill bar: `value`/`scaleMax` fill, optional `marker` tick (0..1), semantic `tone`/`markerTone`, `size` `sm` (Bond column) / `lg` (Concentration metrics). Dumb/presentational.
 - **`<Banner>`** (`src/components/banner/banner.tsx`) — dismissible announcement, persistence in `localStorage`.
-- **`<ConcentrationMetric>`** (`src/components/concentration-metric/concentration-metric.tsx`) — top-N stacked-bar concentration card with hover-expanded tooltip table.
+- **`<ConcentrationMetric>`** (`src/components/concentration-metric/concentration-metric.tsx`) — top-N concentration card; inline name+share over a `lg` `<Gauge>` with cap marker, hover-expanded tooltip table.
 
 ---
 
