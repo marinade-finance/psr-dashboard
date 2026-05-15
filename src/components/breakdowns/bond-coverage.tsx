@@ -132,7 +132,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
             help={`What the bond needs to keep your stake for the next ${coverage.minEp} epochs. Fall short — you pay a bond risk fee AND are scheduled to lose stake immediately.`}
           />
           <CalcRow
-            label="Coverage window"
+            label="Minimum bond epochs"
             secondary={`${coverage.minEp} epochs`}
           />
           <CalcRow
@@ -180,7 +180,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
             }
           />
           <CalcRow
-            label="Coverage window"
+            label="Ideal bond epochs"
             secondary={`${coverage.idealEp} epochs`}
           />
           <CalcRow
