@@ -108,6 +108,7 @@ function bondCoverageColor(health: BondHealth): string {
 const MetricRow = ({
   label,
   help,
+  helpGuideTo,
   value,
   valueStyle,
   onSeeBreakdown,
@@ -115,6 +116,7 @@ const MetricRow = ({
 }: {
   label: string
   help?: string
+  helpGuideTo?: string
   value: React.ReactNode
   valueStyle?: React.CSSProperties
   onSeeBreakdown?: () => void
@@ -139,7 +141,7 @@ const MetricRow = ({
       ) : (
         label
       )}
-      {help && <HelpTip text={help} />}
+      {help && <HelpTip text={help} guideTo={helpGuideTo} />}
     </span>
     <span className="text-sm font-semibold font-mono" style={valueStyle}>
       {value}
@@ -681,12 +683,14 @@ export const ValidatorDetail = ({
                 <MetricRow
                   label="Reserve"
                   help={HELP_TEXT.bondCoverage}
+                  helpGuideTo={`${docsPath(level)}#bond`}
                   value={bondCoverageLabel(bondHealth, bondCoverage)}
                   valueStyle={{ color: bondCoverageColor(bondHealth) }}
                 />
                 <MetricRow
                   label="Bid runway"
                   help={HELP_TEXT.bondRunway}
+                  helpGuideTo={`${docsPath(level)}#bond-risk-fee`}
                   value={
                     bondRunway <= 0
                       ? 'Depleted'
@@ -777,7 +781,10 @@ export const ValidatorDetail = ({
               <div className="rounded-xl border border-status-yellow p-5 bg-status-yellow-light">
                 <h3 className="text-base font-semibold flex items-center gap-2 text-status-yellow">
                   What-If Simulation
-                  <HelpTip text={HELP_TEXT.simulation} />
+                  <HelpTip
+                    text={HELP_TEXT.simulation}
+                    guideTo={`${docsPath(level)}#simulation`}
+                  />
                 </h3>
                 <fieldset className="space-y-3 mt-3">
                   <div className="space-y-1">
