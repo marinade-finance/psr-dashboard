@@ -257,6 +257,7 @@ export const ValidatorDetail = ({
     queryKey: ['psrEstimates', voteAccount],
     queryFn: () => fetchPsrEstimatesForValidator(voteAccount),
     staleTime: 5 * 60 * 1000,
+    enabled: tab === 'payments',
   })
 
   const bondRiskFeeSol = validator.values.bondRiskFeeSol ?? 0

@@ -3,6 +3,7 @@ import React, { useMemo, useRef, useState } from 'react'
 import { cn } from 'src/class_utils'
 import { docsPath } from 'src/components/breakdowns/docs-path'
 import { ConcentrationMetric } from 'src/components/concentration-metric/concentration-metric'
+import { Gauge } from 'src/components/gauge/gauge'
 import { HelpTip } from 'src/components/help-tip/help-tip'
 import { PENALTY_BID_LOW } from 'src/components/icons/penalty-bid-low'
 import { PENALTY_BLACKLIST } from 'src/components/icons/penalty-blacklist'
@@ -19,8 +20,13 @@ import {
 import { Tooltip } from 'src/components/ui/tooltip'
 import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
 import { ValidatorSearch } from 'src/components/validator-search/validator-search'
-import { CSS_MUTED, CSS_MUTED_FG } from 'src/css'
-import { pct, sol, stake } from 'src/format'
+import {
+  CSS_DESTRUCTIVE,
+  CSS_MUTED,
+  CSS_MUTED_FG,
+  CSS_STATUS_GREEN,
+} from 'src/css'
+import { pct, penalty, sol, stake } from 'src/format'
 import { bondHealthFromAuction } from 'src/services/bond-health'
 import { HELP_TEXT } from 'src/services/help-text'
 import {
@@ -191,6 +197,21 @@ type Props = {
 
 const RANK_MONO = 'font-mono text-xs'
 
+// Module-level singleton so the `simulatedValidators = new Set()` default
+// argument doesn't churn its identity on every render and invalidate
+// downstream memos.
+const EMPTY_SIMULATED_SET: Set<string> = new Set()
+
+// Trim 3+ decimal places in tip text to 2 — keeps the Next Step cell readable
+// without losing the "~" prefix the tip engine uses for estimates.
+const TIP_DECIMAL_RE = /~?\d+\.\d{3,}/g
+const trimTipDecimals = (text: string) =>
+  text.replace(TIP_DECIMAL_RE, numStr => {
+    const num = parseFloat(numStr.replace(/^~/, ''))
+    const prefix = numStr.startsWith('~') ? '~' : ''
+    return `${prefix}${Math.round(num * 100) / 100}`
+  })
+
 type PenaltyKind = 'bidLow' | 'blacklist' | 'risk'
 
 const PENALTY_CLASSES: Record<PenaltyKind, string> = {
@@ -222,7 +243,7 @@ const PenaltyBadges: React.FC<{ validator: AuctionValidator }> = ({
     badges.push({ label: 'BondRiskFee', sol: bondRiskSol, kind: 'risk' })
   if (badges.length === 0) return null
   const tip = badges
-    .map(b => `${b.label}: ~${sol(b.sol, 3)} SOL estimated`)
+    .map(b => `${b.label}: ~${penalty(b.sol)} estimated`)
     .join('\n')
   return (
     <Tooltip content={<span className="whitespace-pre-line">{tip}</span>}>
@@ -337,7 +358,7 @@ export const SamTable: React.FC<Props> = ({
   epochsPerYear,
   dsSamConfig,
   level,
-  simulatedValidators = new Set(),
+  simulatedValidators = EMPTY_SIMULATED_SET,
   isCalculating,
   validatorMeta,
   onValidatorClick,
@@ -507,21 +528,34 @@ export const SamTable: React.FC<Props> = ({
     originalPositionsMap,
   ])
 
-  const winningValidators = allDisplayValidators.filter(
-    row => !row.isGhost && row.validator.auctionStake.marinadeSamTargetSol > 0,
-  )
   // Cutoff partition: who would clear the bid threshold by yield, regardless
   // of whether the auction actually allocated them target stake. Bid-eligible
   // bond-blocked validators belong above the line; only validators whose max
   // APY is below the winning APY belong below.
-  const bidQualifies = (v: AuctionValidator) =>
-    selectMaxAPY(v, epochsPerYear) >= winningAPY
-  const aboveCutoff = allDisplayValidators.filter(
-    row => row.isGhost || bidQualifies(row.validator),
-  )
-  const belowCutoff = allDisplayValidators.filter(
-    row => !row.isGhost && !bidQualifies(row.validator),
-  )
+  const { winningValidators, aboveCutoff, belowCutoff } = useMemo(() => {
+    const winning: typeof allDisplayValidators = []
+    const above: typeof allDisplayValidators = []
+    const below: typeof allDisplayValidators = []
+    for (const row of allDisplayValidators) {
+      if (row.isGhost) {
+        above.push(row)
+        continue
+      }
+      if (row.validator.auctionStake.marinadeSamTargetSol > 0) {
+        winning.push(row)
+      }
+      if (selectMaxAPY(row.validator, epochsPerYear) >= winningAPY) {
+        above.push(row)
+      } else {
+        below.push(row)
+      }
+    }
+    return {
+      winningValidators: winning,
+      aboveCutoff: above,
+      belowCutoff: below,
+    }
+  }, [allDisplayValidators, epochsPerYear, winningAPY])
   const aboveCount = aboveCutoff.filter(row => !row.isGhost).length
   const totalRedelegation = useMemo(
     () =>
@@ -618,9 +652,9 @@ export const SamTable: React.FC<Props> = ({
       isSimulated && !isGhost ? getPositionChange(origAuctionRank, rank) : null
     const posColor =
       posChange?.direction === 'improved'
-        ? 'var(--status-green)'
+        ? CSS_STATUS_GREEN
         : posChange?.direction === 'worsened'
-          ? 'var(--destructive)'
+          ? CSS_DESTRUCTIVE
           : undefined
 
     // Bond health
@@ -762,26 +796,13 @@ export const SamTable: React.FC<Props> = ({
             </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="relative h-1 bg-secondary rounded-sm w-14 shrink-0">
-              <div
-                className={cn(
-                  'absolute inset-y-0 left-0 rounded-sm',
-                  bondChip.bar,
-                )}
-                style={{
-                  width: `${Math.max(Math.min(bondRunway, 100), 4)}%`,
-                }}
-              />
-              <div
-                className="absolute inset-y-[-2px] w-0.5 rounded-full bg-destructive"
-                style={{
-                  left: `${Math.max(
-                    (dsSamConfig.minBondEpochs / 100) * 100,
-                    2,
-                  )}%`,
-                }}
-              />
-            </div>
+            <Gauge
+              size="sm"
+              value={bondRunway}
+              scaleMax={100}
+              marker={dsSamConfig.minBondEpochs / 100}
+              tone={bondChip.bar}
+            />
             <span
               className={cn(
                 'text-xs opacity-60 font-mono whitespace-nowrap',
@@ -816,8 +837,8 @@ export const SamTable: React.FC<Props> = ({
                       : {
                           color:
                             cell.tone === 'positive'
-                              ? 'var(--status-green)'
-                              : 'var(--destructive)',
+                              ? CSS_STATUS_GREEN
+                              : CSS_DESTRUCTIVE,
                         }
                   }
                 >
@@ -837,13 +858,7 @@ export const SamTable: React.FC<Props> = ({
           const bidTooLow = tip.constraint === 'rank'
           const stepColor = bidTooLow ? CSS_MUTED_FG : tipStyle.color
           const stepBg = bidTooLow ? CSS_MUTED : tipStyle.bg
-          const stepText = bidTooLow
-            ? 'Bid too low'
-            : tip.text.replace(/~?\d+\.\d{3,}/g, numStr => {
-                const num = parseFloat(numStr.replace(/^~/, ''))
-                const prefix = numStr.startsWith('~') ? '~' : ''
-                return `${prefix}${Math.round(num * 100) / 100}`
-              })
+          const stepText = bidTooLow ? 'Bid too low' : trimTipDecimals(tip.text)
           return (
             <TableCell className="px-3.5 py-3">
               <div
