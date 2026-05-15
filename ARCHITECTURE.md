@@ -148,8 +148,14 @@ new validator gets a fresh component (no mirror-prop-into-state needed).
   `separator + bold + large` in one prop; `value` defaults to `''`.
 - `docs-path.ts` — `docsPath(level)` returns `/docs` or `/expert-docs`.
 - `bid-penalty.tsx`, `bidding.tsx`, `bond-coverage.tsx`, `payments.tsx`
-  — one card per breakdown tab. `RevRow` is a 4-column row local to
+  — one card per breakdown. `RevRow` is a 4-column row local to
   `bidding.tsx` (not exported).
+- `in-auction.tsx`, `next-epoch-stake.tsx` — the two advisory cards
+  stacked under Payments. `InAuctionBreakdown` renders
+  `computeInAuctionTarget`; `NextEpochStakeBreakdown` renders
+  `computeNextEpochStake`. Both surface the closed-form / heuristic
+  caveat in the status banner and an `onGoToSim` "verify in Simulate"
+  tip.
 
 ### `components/validator-bonds-table/`
 

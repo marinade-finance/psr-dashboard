@@ -7,6 +7,8 @@ import { BiddingBreakdown } from 'src/components/breakdowns/bidding'
 import { BondCoverageBreakdown } from 'src/components/breakdowns/bond-coverage'
 import { CalcCard } from 'src/components/breakdowns/card'
 import { docsPath } from 'src/components/breakdowns/docs-path'
+import { InAuctionBreakdown } from 'src/components/breakdowns/in-auction'
+import { NextEpochStakeBreakdown } from 'src/components/breakdowns/next-epoch-stake'
 import { PaymentsBreakdown } from 'src/components/breakdowns/payments'
 import { SEPARATOR_DIV_CLASS } from 'src/components/breakdowns/row'
 import { HelpTip } from 'src/components/help-tip/help-tip'
@@ -541,6 +543,23 @@ export const ValidatorDetail = ({
                     title="Bidding calculation"
                     guideTo={`${docsPath(level)}#cpmpe`}
                     validator={validator}
+                    isSimulated={isSimulated}
+                    onGoToSim={goToSim}
+                  />
+                  <InAuctionBreakdown
+                    title="Get into the auction"
+                    guideTo={`${docsPath(level)}#in-auction`}
+                    validator={validator}
+                    winningTotalPmpe={winningTotalPmpe}
+                    coverage={bondCoverage}
+                    isSimulated={isSimulated}
+                    onGoToSim={goToSim}
+                  />
+                  <NextEpochStakeBreakdown
+                    title="Get stake next epoch"
+                    guideTo={`${docsPath(level)}#next-epoch-stake`}
+                    validator={validator}
+                    auctionResult={auctionResult}
                     isSimulated={isSimulated}
                     onGoToSim={goToSim}
                   />

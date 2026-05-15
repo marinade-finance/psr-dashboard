@@ -185,6 +185,17 @@ internal `Tab` union is `'overview' | 'notifications' | 'bond' |
   through a `useRef` so callback identity churn does not restart the
   timer. Card has yellow border + `bg-status-yellow-light`.
 
+**Payments tab** — four breakdown cards stacked in a `space-y-6`
+column: `PaymentsBreakdown` (bid costs + penalties + PSR + total),
+`BiddingBreakdown` (commissions, bid gap, cost), `InAuctionBreakdown`
+("Get into the auction" — closed-form bid to clear the winning bar +
+bond floor/top-up from the memoised `BondCoverage`, cap-constraint
+caveat row), and `NextEpochStakeBreakdown` ("Get stake next epoch" —
+heuristic bid to clear the redelegation priority bar). The last two
+are advisory estimates: copy says "approximately / verify in
+Simulate", each card's status banner carries the caveat and a
+"Simulate the exact bid →" tip.
+
 **Tip banner** — sticky strip below the header. Click target opens the
 relevant tab (`Bond tab →`, `Simulate →`).
 

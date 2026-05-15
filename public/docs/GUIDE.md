@@ -359,6 +359,54 @@ bounded amount of SOL:
 
 _See [Stake Matching — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market#stake-matching) for the rebalancing algorithm._
 
+<a id="in-auction"></a>
+### Getting into the auction
+
+The "Get into the auction" card on the Payments tab works out the
+static bid that would lift your total to the winning bar, and the bond
+you need to back the stake that follows. The math is simple:
+
+```
+nonBidPmpe    = inflationPmpe + mevPmpe + blockPmpe
+targetBidPmpe = max(0, winningTotalPmpe − nonBidPmpe)
+bidIncrease   = max(0, targetBidPmpe − currentStaticBidPmpe)
+```
+
+It reasons in your **static bid** — the same number the simulation
+input shows — not the effective clearing bid. The bond rows are read
+straight from the Bond tab's keep-stake calculation, so the two always
+agree.
+
+This is a closed-form **estimate**. Adding or growing a winner shifts
+the clearing price itself, so the real answer is approximately this
+much, often a touch more. Treat the figure as a floor and confirm the
+exact bid with **Simulate**, which re-runs the real auction. If a
+country or ASO concentration cap is the binding limit, the card says
+so plainly — raising the bid alone will not get you in until that cap
+frees up.
+
+<a id="next-epoch-stake"></a>
+### Getting stake next epoch
+
+Being in the auction set is not the same as receiving stake. The
+re-delegation budget is handed out greedily by total PMPE, highest
+first, until it runs out. The lowest total PMPE among validators that
+got their full below-target top-up this run is the **priority bar**.
+The "Get stake next epoch" card estimates the bid that would put you
+at or above that bar:
+
+```
+targetTotalPmpe = max(currentTotalPmpe, priorityBarPmpe)
+targetBidPmpe   = max(0, targetTotalPmpe − nonBidPmpe)
+bidIncrease     = max(0, targetBidPmpe − currentStaticBidPmpe)
+```
+
+This is a **heuristic**, not a guarantee. Raising your bid reorders
+the queue and moves the bar itself, so the number is an estimate —
+always verify it in **Simulate**. When the budget is large enough to
+reach every below-target winner, there is no binding bar and the card
+says so.
+
 <a id="psr"></a>
 ### Protected Staking Rewards (PSR)
 
@@ -637,6 +685,25 @@ side-by-side with the cost.
 
 An "**Overrides CPMPE**" notice appears if `values.commissions.bidCpmpeOverrideDec`
 is set — the displayed bid is a manual override, not the on-chain value.
+
+#### Get into the auction
+
+Stacked below the Bidding breakdown. The static bid that would lift
+your total to the winning bar, plus the bond needed to back the
+resulting stake. The bond rows come straight from the Bond tab's
+keep-stake math, so the numbers reconcile. It is a closed-form
+estimate with a last-price caveat — see
+[Getting into the auction](#in-auction) for the formula and why you
+should confirm in Simulate.
+
+#### Get stake next epoch
+
+The last card on the tab. Estimates the bid that would put you at or
+above the re-delegation priority bar, since being in the set is not
+the same as receiving stake. This is a heuristic — the queue reorders
+as bids change — so the figure is an estimate. See
+[Getting stake next epoch](#next-epoch-stake) for the formula and the
+verify-in-Simulate caveat.
 
 ### Bond tab
 
