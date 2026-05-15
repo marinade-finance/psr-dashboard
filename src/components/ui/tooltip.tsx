@@ -28,11 +28,24 @@ type TooltipProps = {
   content: React.ReactNode
   children: React.ReactNode
   delayDuration?: number
+  // Optional controlled open. Omit both for the default hover behaviour.
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-function Tooltip({ content, children, delayDuration = 300 }: TooltipProps) {
+function Tooltip({
+  content,
+  children,
+  delayDuration = 300,
+  open,
+  onOpenChange,
+}: TooltipProps) {
   return (
-    <TooltipPrimitive.Root delayDuration={delayDuration}>
+    <TooltipPrimitive.Root
+      delayDuration={delayDuration}
+      open={open}
+      onOpenChange={onOpenChange}
+    >
       <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
       <TooltipContent>{content}</TooltipContent>
     </TooltipPrimitive.Root>
