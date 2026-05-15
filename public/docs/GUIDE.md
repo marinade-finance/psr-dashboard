@@ -514,9 +514,29 @@ Composition — let you click their title to jump there.
 
 ### Notifications tab
 
-Active alerts for this validator from the notifications API: depleted
-bond warnings, blacklist flags, recent protected events. Click an
-alert to jump to the relevant tab.
+Active alerts for this validator pulled from Marinade's notifications
+API — typical examples are depleted bond warnings, blacklist flags,
+and recent protected events.
+
+Each notification is a passive card with three pieces:
+
+- A coloured **priority pill** in the top-left — red for `critical`,
+  orange-yellow for `warning`, blue for `info`. The pill text is the
+  literal priority name in caps.
+- A **title** next to the pill in stronger text.
+- A **body** below the title with the message itself; line breaks in
+  the source message are preserved.
+- An optional **footer** in small italic underneath, used for
+  timestamps or source references.
+
+Notifications stack vertically; older entries don't disappear
+automatically — they fall off when the API marks them as no longer
+relevant. If the validator has none, the tab reads "No notifications
+for this validator."
+
+The cards themselves don't link anywhere — to act on a depleted-bond
+or bid-too-low warning, switch to the Bond, Bid Penalty, or Payments
+tab manually.
 
 ### Payments tab
 
