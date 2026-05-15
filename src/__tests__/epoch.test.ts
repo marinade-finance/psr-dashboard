@@ -4,7 +4,8 @@ import {
   EPOCH_DURATION_MS,
   epochMeterModel,
   selectCurrentEpochProgress,
-  selectLatestSettlement,
+  selectLatestAuctionSettled,
+  selectLatestPaymentSettled,
   selectNetworkEpoch,
 } from '../services/epoch'
 import {
@@ -109,84 +110,121 @@ describe('selectCurrentEpochProgress', () => {
   })
 })
 
-describe('selectLatestSettlement', () => {
-  it('picks the highest-epoch event and maps FACT to on-chain', () => {
+describe('selectLatestPaymentSettled', () => {
+  it('returns the max FACT epoch, ignoring ESTIMATE and DRYRUN', () => {
     expect(
-      selectLatestSettlement([
+      selectLatestPaymentSettled([
         pe(610, ProtectedEventStatus.FACT),
-        pe(611, ProtectedEventStatus.FACT),
+        pe(611, ProtectedEventStatus.ESTIMATE),
+        pe(612, ProtectedEventStatus.DRYRUN),
       ]),
-    ).toEqual({ epoch: 611, onChain: true })
+    ).toBe(610)
   })
 
-  it('maps ESTIMATE and DRYRUN to not-on-chain', () => {
+  it('returns null when no FACT event exists', () => {
     expect(
-      selectLatestSettlement([pe(612, ProtectedEventStatus.ESTIMATE)]),
-    ).toEqual({ epoch: 612, onChain: false })
+      selectLatestPaymentSettled([pe(612, ProtectedEventStatus.ESTIMATE)]),
+    ).toBe(null)
+    expect(selectLatestPaymentSettled([])).toBe(null)
+  })
+})
+
+describe('selectLatestAuctionSettled', () => {
+  it('returns the max epoch across any PE status', () => {
     expect(
-      selectLatestSettlement([pe(607, ProtectedEventStatus.DRYRUN)]),
-    ).toEqual({ epoch: 607, onChain: false })
+      selectLatestAuctionSettled([
+        pe(610, ProtectedEventStatus.FACT),
+        pe(612, ProtectedEventStatus.ESTIMATE),
+      ]),
+    ).toBe(612)
   })
 
   it('returns null on empty input', () => {
-    expect(selectLatestSettlement([])).toBe(null)
+    expect(selectLatestAuctionSettled([])).toBe(null)
   })
 })
 
 describe('epochMeterModel', () => {
-  it('equal epochs: single number, no arrow, not stale, timeline with live=target', () => {
+  it('all collapse to one live node when payment, auction, live, and target match', () => {
     const m = epochMeterModel({
       auctionEpoch: 612,
       networkEpoch: 612,
-      settlement: null,
+      paymentSettled: 612,
+      auctionSettled: 612,
     })
     expect(m.label).toBe('Epoch 612')
-    expect(m.arrow).toBe(false)
     expect(m.stale).toBe(false)
-    expect(m.timeline).toEqual({ settled: null, live: 612, target: 612 })
+    expect(m.timeline).toEqual([{ epoch: 612, stages: ['payment', 'live'] }])
   })
 
-  it('auction = network + 1: arrow, future target, not stale', () => {
+  it('payment + auction split: two stages on adjacent epochs', () => {
+    const m = epochMeterModel({
+      auctionEpoch: 612,
+      networkEpoch: 612,
+      paymentSettled: 610,
+      auctionSettled: 611,
+    })
+    expect(m.timeline).toEqual([
+      { epoch: 610, stages: ['payment'] },
+      { epoch: 611, stages: ['auction'] },
+      { epoch: 612, stages: ['live'] },
+    ])
+  })
+
+  it('next-auction node appears when auction target > network', () => {
     const m = epochMeterModel({
       auctionEpoch: 613,
       networkEpoch: 612,
-      settlement: null,
+      paymentSettled: 611,
+      auctionSettled: 611,
     })
     expect(m.label).toBe('612 → 613')
-    expect(m.arrow).toBe(true)
     expect(m.stale).toBe(false)
-    expect(m.timeline.target).toBe(613)
-    expect(m.timeline.live).toBe(612)
+    expect(m.timeline).toEqual([
+      { epoch: 611, stages: ['payment'] },
+      { epoch: 612, stages: ['live'] },
+      { epoch: 613, stages: ['next'] },
+    ])
   })
 
-  it('stale (auction < network): warning flag set', () => {
+  it('stale (auction < network): no next node', () => {
     const m = epochMeterModel({
       auctionEpoch: 610,
       networkEpoch: 612,
-      settlement: null,
+      paymentSettled: 610,
+      auctionSettled: 611,
     })
+    expect(m.label).toBe('612 → 610')
     expect(m.stale).toBe(true)
-    expect(m.timeline).toEqual({ settled: null, live: 612, target: 610 })
+    expect(m.timeline).toEqual([
+      { epoch: 610, stages: ['payment'] },
+      { epoch: 611, stages: ['auction'] },
+      { epoch: 612, stages: ['live'] },
+    ])
   })
 
-  it('null network epoch: live missing, no arrow', () => {
+  it('null network: no live node, target shown as next when explicit', () => {
     const m = epochMeterModel({
       auctionEpoch: 612,
       networkEpoch: null,
-      settlement: null,
+      paymentSettled: null,
+      auctionSettled: null,
     })
     expect(m.label).toBe('Epoch 612')
-    expect(m.arrow).toBe(false)
     expect(m.stale).toBe(false)
-    expect(m.timeline).toEqual({ settled: null, live: null, target: 612 })
+    expect(m.timeline).toEqual([{ epoch: 612, stages: ['next'] }])
   })
 
-  it('settlement populates timeline.settled', () => {
+  it('auction-settled coincides with live: merged stages', () => {
     const m = epochMeterModel({
       auctionEpoch: 612,
       networkEpoch: 612,
-      settlement: { epoch: 611, onChain: true },
+      paymentSettled: 611,
+      auctionSettled: 612,
     })
-    expect(m.timeline.settled).toBe(611)
+    expect(m.timeline).toEqual([
+      { epoch: 611, stages: ['payment'] },
+      { epoch: 612, stages: ['auction', 'live'] },
+    ])
   })
 })

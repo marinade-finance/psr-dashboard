@@ -9,23 +9,23 @@ import type { Validator } from 'src/services/validators'
 
 export const EPOCH_DURATION_MS = 48 * 60 * 60 * 1000
 
-export type Settlement = { epoch: number; onChain: boolean }
-
 export type EpochProgress = {
   epoch: number
   percent: number
   hoursRemaining: number
 }
 
+export type TimelineStage = 'payment' | 'auction' | 'live' | 'next'
+
+export type TimelineNode = {
+  epoch: number
+  stages: TimelineStage[]
+}
+
 export type EpochMeterModel = {
   label: string
-  arrow: boolean
   stale: boolean
-  timeline: {
-    settled: number | null
-    live: number | null
-    target: number
-  }
+  timeline: TimelineNode[]
 }
 
 // Network epoch = newest epoch any validator has stats for. The in-progress
@@ -65,49 +65,66 @@ export const selectCurrentEpochProgress = (
   return { epoch: best.epoch, percent, hoursRemaining }
 }
 
-// Latest protected-events epoch and whether it is on-chain (FACT) vs an
-// estimate (ESTIMATE / DRYRUN — not yet settled on-chain).
-export const selectLatestSettlement = (
+// Latest FACT (on-chain) PE epoch — the payments-settled checkpoint.
+export const selectLatestPaymentSettled = (
   protectedEvents: ProtectedEventWithValidator[],
-): Settlement | null => {
-  let latest: ProtectedEventWithValidator | null = null
+): number | null => {
+  let max = -Infinity
   for (const e of protectedEvents) {
     if (
-      latest === null ||
-      e.protectedEvent.epoch > latest.protectedEvent.epoch
+      e.status === ProtectedEventStatus.FACT &&
+      e.protectedEvent.epoch > max
     ) {
-      latest = e
+      max = e.protectedEvent.epoch
     }
   }
-  if (latest === null) return null
-  return {
-    epoch: latest.protectedEvent.epoch,
-    onChain: latest.status === ProtectedEventStatus.FACT,
+  return max === -Infinity ? null : max
+}
+
+// Latest PE epoch of any status (FACT/ESTIMATE/DRYRUN) — the auction has
+// been decided for this epoch even if payments aren't on-chain yet.
+export const selectLatestAuctionSettled = (
+  protectedEvents: ProtectedEventWithValidator[],
+): number | null => {
+  let max = -Infinity
+  for (const e of protectedEvents) {
+    if (e.protectedEvent.epoch > max) max = e.protectedEvent.epoch
   }
+  return max === -Infinity ? null : max
 }
 
 export const epochMeterModel = ({
   auctionEpoch,
   networkEpoch,
-  settlement,
+  paymentSettled,
+  auctionSettled,
 }: {
   auctionEpoch: number
   networkEpoch: number | null
-  settlement: Settlement | null
+  paymentSettled: number | null
+  auctionSettled: number | null
 }): EpochMeterModel => {
   const differ = networkEpoch !== null && networkEpoch !== auctionEpoch
   const stale = networkEpoch !== null && auctionEpoch < networkEpoch
   const label = differ
     ? `${networkEpoch} → ${auctionEpoch}`
     : `Epoch ${auctionEpoch}`
-  return {
-    label,
-    arrow: differ,
-    stale,
-    timeline: {
-      settled: settlement?.epoch ?? null,
-      live: networkEpoch,
-      target: auctionEpoch,
-    },
+
+  const map = new Map<number, TimelineStage[]>()
+  const add = (epoch: number | null, stage: TimelineStage) => {
+    if (epoch === null) return
+    const arr = map.get(epoch) ?? []
+    arr.push(stage)
+    map.set(epoch, arr)
   }
+  add(paymentSettled, 'payment')
+  if (auctionSettled !== paymentSettled) add(auctionSettled, 'auction')
+  add(networkEpoch, 'live')
+  if (auctionEpoch > (networkEpoch ?? -Infinity)) add(auctionEpoch, 'next')
+
+  const timeline: TimelineNode[] = [...map.entries()]
+    .sort(([a], [b]) => a - b)
+    .map(([epoch, stages]) => ({ epoch, stages }))
+
+  return { label, stale, timeline }
 }
