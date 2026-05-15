@@ -87,7 +87,7 @@ function makeComponents(
         )
       }
       return (
-        <code className="font-mono text-[0.82em] bg-muted text-foreground px-1 py-0.5 rounded border border-border">
+        <code className="font-mono text-[0.82em] bg-muted text-foreground px-1.5 py-0.5 rounded-sm box-decoration-clone break-all">
           {children}
         </code>
       )
