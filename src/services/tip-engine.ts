@@ -55,6 +55,13 @@ export interface TipStyle {
 export const getBondHealthStyle = (
   health: BondHealthState,
 ): { color: string; bg: string; label: string } => {
+  if (health === 'no-bond') {
+    return {
+      color: CSS_DESTRUCTIVE,
+      bg: CSS_DESTRUCTIVE_LIGHT,
+      label: 'No bond',
+    }
+  }
   if (health === 'critical') {
     return {
       color: CSS_DESTRUCTIVE,
@@ -136,14 +143,18 @@ function outOfSetTip(
     }
   }
   // Bond below SDK's `minBondBalanceSol`: clipBondStakeCap returns 0 so the
-  // validator can't win any stake regardless of bid. bond-health reports
-  // 'healthy' here because runway against tiny stake is huge — that's a gap
-  // in the runway-based diagnosis, surfaced here in the tip cascade.
+  // validator can't win any stake regardless of bid — a hard block, hence
+  // critical (red). bond-health also reports 'no-bond'/'critical' here, so
+  // chip and tip agree on tone.
   const bondBalance = validator.bondBalanceSol ?? 0
   if (bondBalance < dsSamConfig.minBondBalanceSol) {
+    const text =
+      bondBalance <= 0
+        ? `No bond posted — ${stake(dsSamConfig.minBondBalanceSol)} required. Post a bond to qualify.`
+        : `Bond below minimum — ${stake(dsSamConfig.minBondBalanceSol)} required. Top up to qualify.`
     return {
-      text: `Bond below minimum — ${stake(dsSamConfig.minBondBalanceSol)} required. Top up to qualify.`,
-      urgency: 'warning',
+      text,
+      urgency: 'critical',
       constraint: 'bond',
       delta,
     }

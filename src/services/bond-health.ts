@@ -5,18 +5,30 @@ import type {
   DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
 
-// Four tiers so the bond chip and the page-level CTA agree on tone:
-//   critical → fee being charged or about to (red)
+// Five tiers so the bond chip and the page-level CTA agree on tone:
+//   no-bond  → no bond posted at all (red, "missing")
+//   critical → fee being charged, about to, or bond below the SDK minimum (red)
 //   watch    → bond too thin to keep current stake (orange)
 //   soft     → bond covers current stake but not ideal (indigo, info)
 //   healthy  → bond covers ideal target (green)
-export type BondHealthState = 'healthy' | 'soft' | 'watch' | 'critical'
+export type BondHealthState =
+  | 'no-bond'
+  | 'critical'
+  | 'watch'
+  | 'soft'
+  | 'healthy'
 
 export function bondHealthFromAuction(
   v: AuctionValidator,
   config: DsSamConfig,
   winningTotalPmpe: number,
 ): BondHealthState {
+  const bondBalance = v.bondBalanceSol ?? 0
+  if (bondBalance <= 0) return 'no-bond'
+  // Below the SDK minimum the validator can win no stake regardless of bid
+  // (clipBondStakeCap → 0). Runway-vs-tiny-stake looks huge, so the
+  // coverage-based diagnosis below would mislabel it healthy — gate it red here.
+  if (bondBalance < config.minBondBalanceSol) return 'critical'
   if (!v.auctionStake.marinadeSamTargetSol && !v.marinadeActivatedStakeSol) {
     return 'healthy'
   }

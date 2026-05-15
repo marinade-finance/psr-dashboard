@@ -25,6 +25,9 @@ const statusLine = (
   topUpToIdealKeep: number,
   bondRiskFeeSol: number,
 ): CardStatus => {
+  if (state === 'no-bond') {
+    return { label: 'No bond posted. Post a bond to qualify.', tone: 'red' }
+  }
   if (state === 'critical') {
     const feeStr =
       bondRiskFeeSol > 0

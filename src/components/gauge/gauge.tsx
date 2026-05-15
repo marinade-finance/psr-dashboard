@@ -15,6 +15,10 @@ type Props = {
   scaleMax: number
   // Optional thin tick at this fraction of the track (0..1).
   marker?: number
+  // Opt-in faint-red zone over the leftmost fraction of the track (0..1),
+  // drawn behind the value fill. Omitted = no band. The bond pill uses this
+  // to mark the critical-runway region; the concentration bar does not.
+  criticalBand?: number
   // Semantic colour class for the fill (e.g. BOND_CHIP[tier].bar).
   tone: string
   // Semantic colour class for the marker tick (default destructive).
@@ -37,6 +41,7 @@ export const Gauge: React.FC<Props> = ({
   value,
   scaleMax,
   marker,
+  criticalBand,
   tone,
   markerTone = 'bg-destructive',
   size = 'sm',
@@ -46,6 +51,8 @@ export const Gauge: React.FC<Props> = ({
     scaleMax > 0 ? Math.max(Math.min((value / scaleMax) * 100, 100), 4) : 4
   const markerLeft =
     marker === undefined ? null : Math.max(Math.min(marker * 100, 100), 2)
+  const bandWidth =
+    criticalBand === undefined ? null : Math.min(criticalBand * 100, 100)
   return (
     <div
       className={cn(
@@ -54,6 +61,12 @@ export const Gauge: React.FC<Props> = ({
         className,
       )}
     >
+      {bandWidth !== null && (
+        <div
+          className="absolute inset-y-0 left-0 rounded-sm bg-destructive/15"
+          style={{ width: `${bandWidth}%` }}
+        />
+      )}
       <div
         className={cn('absolute inset-y-0 left-0 rounded-sm', tone)}
         style={{ width: `${fill}%` }}

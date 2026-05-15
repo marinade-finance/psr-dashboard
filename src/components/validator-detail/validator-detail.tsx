@@ -46,6 +46,7 @@ import {
 import type { AuctionResult, DsSamConfig } from '@marinade.finance/ds-sam-sdk'
 import type { UserLevel } from 'src/components/navigation/navigation'
 import type { BondCoverage } from 'src/services/bond-coverage'
+import type { BondHealthState } from 'src/services/bond-health'
 import type { NotificationSummary } from 'src/services/notifications'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
 
@@ -78,12 +79,11 @@ type Tab =
   | 'bond'
   | 'penalty'
 
-export type BondHealth = 'healthy' | 'soft' | 'watch' | 'critical'
-
 export function bondCoverageLabel(
-  health: BondHealth,
+  health: BondHealthState,
   coverage: BondCoverage,
 ): string {
+  if (health === 'no-bond') return 'No bond'
   if (health === 'critical')
     return coverage.topUpToAvoidFee > 0
       ? `Top up ${topUp(coverage.topUpToAvoidFee)} to avoid the fee`
@@ -99,7 +99,8 @@ export function bondCoverageLabel(
   return 'Fully covered'
 }
 
-function bondCoverageColor(health: BondHealth): string {
+function bondCoverageColor(health: BondHealthState): string {
+  if (health === 'no-bond') return CSS_DESTRUCTIVE
   if (health === 'critical') return CSS_DESTRUCTIVE
   if (health === 'watch') return CSS_WARNING
   if (health === 'soft') return CSS_MUTED_FG

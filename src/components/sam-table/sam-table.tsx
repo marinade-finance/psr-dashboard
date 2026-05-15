@@ -61,6 +61,7 @@ import type {
   AuctionValidator,
   DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
+import type { BondHealthState } from 'src/services/bond-health'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
 
 export type ValidatorMeta = {
@@ -69,21 +70,30 @@ export type ValidatorMeta = {
   rank?: number
 }
 
-type BondHealthTier = 'healthy' | 'soft' | 'watch' | 'critical'
-
 // Validator with computed bond state
 type ValidatorWithBondState = AugmentedAuctionValidator & {
-  bondHealth: BondHealthTier
+  bondHealth: BondHealthState
 }
 
 const TEXT_MUTED = 'text-muted-foreground'
 const BG_MUTED = 'bg-muted-foreground'
 const DESTRUCTIVE_LIGHT_CHIP = 'bg-destructive-light text-destructive'
+// no-bond and critical share the red chip — they differ only by label.
+const DESTRUCTIVE_CHIP = {
+  chip: DESTRUCTIVE_LIGHT_CHIP,
+  dot: 'bg-destructive',
+  bar: 'bg-destructive',
+  shortText: 'text-destructive',
+}
 
 export const BOND_CHIP: Record<
-  BondHealthTier,
+  BondHealthState,
   { chip: string; dot: string; bar: string; shortText: string; label: string }
 > = {
+  'no-bond': {
+    ...DESTRUCTIVE_CHIP,
+    label: 'No bond',
+  },
   healthy: {
     chip: 'bg-primary-light-10 text-primary',
     dot: 'bg-primary',
@@ -106,10 +116,7 @@ export const BOND_CHIP: Record<
     label: 'Watch',
   },
   critical: {
-    chip: DESTRUCTIVE_LIGHT_CHIP,
-    dot: 'bg-destructive',
-    bar: 'bg-destructive',
-    shortText: 'text-destructive',
+    ...DESTRUCTIVE_CHIP,
     label: 'Critical',
   },
 }
@@ -801,6 +808,7 @@ export const SamTable: React.FC<Props> = ({
               value={bondRunway}
               scaleMax={100}
               marker={dsSamConfig.minBondEpochs / 100}
+              criticalBand={0.25}
               tone={bondChip.bar}
             />
             <span
