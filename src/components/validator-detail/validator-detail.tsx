@@ -80,6 +80,15 @@ type Tab =
   | 'bond'
   | 'penalty'
 
+const TAB_DEFS: ReadonlyArray<{ id: Tab; label: string }> = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'notifications', label: 'Notifications' },
+  { id: 'payments', label: 'Payments' },
+  { id: 'bidding', label: 'Bidding' },
+  { id: 'bond', label: 'Bond' },
+  { id: 'penalty', label: 'Bid Penalty' },
+]
+
 // Secondary attention cue on an inactive tab whose content needs a look.
 // One tone axis, shared with the status/intent families — never a new colour.
 type AttentionTone = 'critical' | 'warning' | 'info'
@@ -94,6 +103,54 @@ const ATTENTION_TEXT: Record<AttentionTone, string> = {
   critical: 'text-destructive',
   warning: 'text-warning',
   info: 'text-info',
+}
+
+function TabStrip({
+  tab,
+  setTab,
+  attention,
+}: {
+  tab: Tab
+  setTab: (t: Tab) => void
+  attention: Partial<Record<Tab, AttentionTone>>
+}) {
+  return (
+    <div className="border-b border-border bg-background sticky top-[68px] z-[5]">
+      <div className="flex gap-1 px-4 sm:px-6 overflow-x-auto">
+        {TAB_DEFS.map(t => {
+          const tone = tab === t.id ? undefined : attention[t.id]
+          return (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={cn(
+                'px-3 py-2.5 text-[13px] font-medium border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5',
+                tab === t.id
+                  ? 'border-primary text-primary'
+                  : tone
+                    ? cn(
+                        'border-transparent hover:text-foreground',
+                        ATTENTION_TEXT[tone],
+                      )
+                    : 'border-transparent text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {tone && (
+                <span
+                  aria-hidden
+                  className={cn(
+                    'w-1.5 h-1.5 rounded-full shrink-0',
+                    ATTENTION_DOT[tone],
+                  )}
+                />
+              )}
+              {t.label}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 // Per-tab attention tones. Each trigger reuses an existing severity source —
@@ -390,6 +447,37 @@ export const ValidatorDetail = ({
     if (!enabled && onClearSimulation) onClearSimulation()
   }
 
+  const goToSim = () => {
+    setSimEnabled(true)
+    setTab('overview')
+  }
+
+  // Banner — see the bond-tip / tip-style discussion below.
+  const isBondTip = tip.constraint === 'bond'
+  const bannerStyle = isBondTip ? getBondAdviceStyle(bondHealth) : tipStyle
+  const tipTarget: Tab | null = isBondTip
+    ? 'bond'
+    : tip.constraint === 'bid'
+      ? 'overview'
+      : null
+
+  const attention = tabAttention({
+    bondHealth,
+    bidPenaltySol: bidTooLowPenaltySol,
+    notes: notificationSummary?.notifications ?? [],
+    tipConstraint: tip.constraint,
+  })
+
+  const penaltyTotal =
+    bidTooLowPenaltySol + blacklistPenaltySol + bondRiskFeeSol
+  const bondBalance = validator.bondBalanceSol ?? 0
+  // A tiny positive bond drives Critical but rounds to "0 SOL" under
+  // whole-SOL stake() — reads as no bond and contradicts the Critical
+  // reserve. Show 3-decimal cost() precision for sub-1 SOL balances so
+  // the row is honest.
+  const bondBalanceDisplay =
+    bondBalance > 0 && bondBalance < 1 ? cost(bondBalance) : stake(bondBalance)
+
   return (
     <Sheet
       open={true}
@@ -504,231 +592,158 @@ export const ValidatorDetail = ({
           </div>
         </div>
 
-        {(() => {
-          // Bond tips show the real advisory text (the "Top up N to …" /
-          // fee figure from getValidatorTip), routing to the Bond tab.
-          // Colour comes from getBondAdviceStyle(bondHealth) — the SAME
-          // severity axis the Bond tab status banner uses — so the header
-          // and the banner can never disagree on tone (the indigo/yellow
-          // split c4fe245a removed the duplicate to avoid stays gone).
-          const isBond = tip.constraint === 'bond'
-          const bannerStyle = isBond ? getBondAdviceStyle(bondHealth) : tipStyle
-          const tipTarget: Tab | null = isBond
-            ? 'bond'
-            : tip.constraint === 'bid'
-              ? 'overview'
-              : null
-          return (
-            <div
-              className={cn(
-                'px-4 sm:px-6 py-3 flex items-center gap-3',
-                tipTarget && 'cursor-pointer select-none',
-              )}
-              style={{ background: bannerStyle.bg }}
-              onClick={tipTarget ? () => setTab(tipTarget) : undefined}
+        <div
+          className={cn(
+            'px-4 sm:px-6 py-3 flex items-center gap-3',
+            tipTarget && 'cursor-pointer select-none',
+          )}
+          style={{ background: bannerStyle.bg }}
+          onClick={tipTarget ? () => setTab(tipTarget) : undefined}
+        >
+          <span
+            className="text-sm font-medium flex-1"
+            style={{ color: bannerStyle.color }}
+          >
+            {tip.text}
+          </span>
+          {tipTarget && (
+            <span
+              className="text-xs font-medium shrink-0 px-2 py-0.5 rounded border whitespace-nowrap bg-card/55"
+              style={{
+                color: bannerStyle.color,
+                borderColor: bannerStyle.color,
+              }}
             >
-              <span
-                className="text-sm font-medium flex-1"
-                style={{ color: bannerStyle.color }}
-              >
-                {tip.text}
-              </span>
-              {tipTarget && (
-                <span
-                  className="text-xs font-medium shrink-0 px-2 py-0.5 rounded border whitespace-nowrap bg-card/55"
-                  style={{
-                    color: bannerStyle.color,
-                    borderColor: bannerStyle.color,
-                  }}
-                >
-                  {isBond ? 'Bond tab →' : 'Simulate →'}
-                </span>
-              )}
+              {isBondTip ? 'Bond tab →' : 'Simulate →'}
+            </span>
+          )}
+        </div>
+
+        {/*
+          Tabs no longer render a tab-level title or Guide link.
+          Uniformity is at the card level: each card inside the body
+          owns its own title + Guide chrome via CalcCard. The Overview
+          tab is a multi-card grid where every sub-card uses CalcCard.
+        */}
+        <>
+          <TabStrip tab={tab} setTab={setTab} attention={attention} />
+
+          {tab === 'bond' && (
+            <div className="p-4 sm:p-6">
+              <BondCoverageBreakdown
+                title="Bond calculation"
+                guideTo={`${docsPath(level)}#bond`}
+                coverage={bondCoverage}
+                bondState={bondHealth}
+                bondRiskFeeSol={bondRiskFeeSol}
+                bondBalanceSol={validator.bondBalanceSol ?? 0}
+                minBondBalanceSol={dsSamConfig.minBondBalanceSol}
+                isSimulated={isSimulated}
+                onGoToSim={goToSim}
+              />
             </div>
-          )
-        })()}
+          )}
+          {tab === 'bidding' && (
+            <div className="p-4 sm:p-6">
+              <BiddingBreakdown
+                title="Bidding"
+                guideTo={`${docsPath(level)}#bidding`}
+                validator={validator}
+                auctionResult={auctionResult}
+                winningTotalPmpe={winningTotalPmpe}
+                coverage={bondCoverage}
+                isSimulated={isSimulated}
+                onGoToSim={goToSim}
+              />
+            </div>
+          )}
+          {tab === 'payments' && (
+            <div className="p-4 sm:p-6">
+              <PaymentsBreakdown
+                title="Payments"
+                guideTo={`${docsPath(level)}#payments`}
+                validator={validator}
+                bondRiskFeeSol={bondRiskFeeSol}
+                blacklistPenaltySol={blacklistPenaltySol}
+                bidTooLowPenaltySol={bidTooLowPenaltySol}
+                psrEstimates={psrEstimates}
+                isSimulated={isSimulated}
+                onGoToSim={goToSim}
+                onGoToPenalty={() => setTab('penalty')}
+              />
+            </div>
+          )}
+          {tab === 'penalty' && (
+            <div className="p-4 sm:p-6">
+              <BidPenaltyBreakdown
+                title="Bid penalty calculation"
+                guideTo={`${docsPath(level)}#bid-penalty`}
+                validator={validator}
+                dsSamConfig={dsSamConfig}
+                winningTotalPmpe={winningTotalPmpe}
+                isSimulated={isSimulated}
+                onGoToSim={goToSim}
+              />
+            </div>
+          )}
 
-        {(() => {
-          const goToSim = () => {
-            setSimEnabled(true)
-            setTab('overview')
-          }
-          // Tabs no longer render a tab-level title or Guide link.
-          // Uniformity is at the card level: each card inside the body
-          // owns its own title + Guide chrome via CalcCard. The Overview
-          // tab is a multi-card grid where every sub-card uses CalcCard.
-          const TAB_DEFS: ReadonlyArray<{ id: Tab; label: string }> = [
-            { id: 'overview', label: 'Overview' },
-            { id: 'notifications', label: 'Notifications' },
-            { id: 'payments', label: 'Payments' },
-            { id: 'bidding', label: 'Bidding' },
-            { id: 'bond', label: 'Bond' },
-            { id: 'penalty', label: 'Bid Penalty' },
-          ]
-
-          const attention = tabAttention({
-            bondHealth,
-            bidPenaltySol: bidTooLowPenaltySol,
-            notes: notificationSummary?.notifications ?? [],
-            tipConstraint: tip.constraint,
-          })
-
-          return (
-            <>
-              <div className="border-b border-border bg-background sticky top-[68px] z-[5]">
-                <div className="flex gap-1 px-4 sm:px-6 overflow-x-auto">
-                  {TAB_DEFS.map(t => {
-                    const tone = tab === t.id ? undefined : attention[t.id]
-                    return (
-                      <button
-                        key={t.id}
-                        onClick={() => setTab(t.id)}
-                        className={cn(
-                          'px-3 py-2.5 text-[13px] font-medium border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5',
-                          tab === t.id
-                            ? 'border-primary text-primary'
-                            : tone
-                              ? cn(
-                                  'border-transparent hover:text-foreground',
-                                  ATTENTION_TEXT[tone],
-                                )
-                              : 'border-transparent text-muted-foreground hover:text-foreground',
-                        )}
-                      >
-                        {tone && (
-                          <span
-                            aria-hidden
-                            className={cn(
-                              'w-1.5 h-1.5 rounded-full shrink-0',
-                              ATTENTION_DOT[tone],
-                            )}
-                          />
-                        )}
-                        {t.label}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {tab === 'bond' && (
-                <div className="p-4 sm:p-6">
-                  <BondCoverageBreakdown
-                    title="Bond calculation"
-                    guideTo={`${docsPath(level)}#bond`}
-                    coverage={bondCoverage}
-                    bondState={bondHealth}
-                    bondRiskFeeSol={bondRiskFeeSol}
-                    bondBalanceSol={validator.bondBalanceSol ?? 0}
-                    minBondBalanceSol={dsSamConfig.minBondBalanceSol}
-                    isSimulated={isSimulated}
-                    onGoToSim={goToSim}
-                  />
-                </div>
-              )}
-              {tab === 'bidding' && (
-                <div className="p-4 sm:p-6">
-                  <BiddingBreakdown
-                    title="Bidding"
-                    guideTo={`${docsPath(level)}#bidding`}
-                    validator={validator}
-                    auctionResult={auctionResult}
-                    winningTotalPmpe={winningTotalPmpe}
-                    coverage={bondCoverage}
-                    isSimulated={isSimulated}
-                    onGoToSim={goToSim}
-                  />
-                </div>
-              )}
-              {tab === 'payments' && (
-                <div className="p-4 sm:p-6">
-                  <PaymentsBreakdown
-                    title="Payments"
-                    guideTo={`${docsPath(level)}#payments`}
-                    validator={validator}
-                    bondRiskFeeSol={bondRiskFeeSol}
-                    blacklistPenaltySol={blacklistPenaltySol}
-                    bidTooLowPenaltySol={bidTooLowPenaltySol}
-                    psrEstimates={psrEstimates}
-                    isSimulated={isSimulated}
-                    onGoToSim={goToSim}
-                    onGoToPenalty={() => setTab('penalty')}
-                  />
-                </div>
-              )}
-              {tab === 'penalty' && (
-                <div className="p-4 sm:p-6">
-                  <BidPenaltyBreakdown
-                    title="Bid penalty calculation"
-                    guideTo={`${docsPath(level)}#bid-penalty`}
-                    validator={validator}
-                    dsSamConfig={dsSamConfig}
-                    winningTotalPmpe={winningTotalPmpe}
-                    isSimulated={isSimulated}
-                    onGoToSim={goToSim}
-                  />
-                </div>
-              )}
-
-              {tab === 'notifications' && (
-                <div className="p-4 sm:p-6">
-                  <CalcCard
-                    title="Notifications"
-                    guideTo={`${docsPath(level)}#detail-panel`}
-                    isSimulated={isSimulated}
-                  >
-                    {notificationSummary?.notifications?.length ? (
-                      <div className="space-y-4">
-                        {notificationSummary.notifications.map(notification => {
-                          const tone =
-                            notification.priority === 'critical'
-                              ? 'bg-destructive-light text-destructive'
-                              : notification.priority === 'warning'
-                                ? 'bg-warning-light text-warning'
-                                : 'bg-info-light text-info'
-                          return (
-                            <div
-                              key={notification.id}
-                              className="border-t border-border first:border-t-0 first:pt-0 pt-3"
-                            >
-                              <div className="flex items-center gap-2 mb-1">
-                                <span
-                                  className={cn(
-                                    'px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wide',
-                                    tone,
-                                  )}
-                                >
-                                  {notification.priority}
-                                </span>
-                                {notification.title && (
-                                  <span className="text-sm font-semibold text-foreground">
-                                    {notification.title}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="text-xs text-muted-foreground whitespace-pre-line">
-                                {notification.body}
-                              </div>
-                              {notification.footer && (
-                                <div className="text-[10px] text-muted-foreground italic mt-1.5">
-                                  {notification.footer}
-                                </div>
+          {tab === 'notifications' && (
+            <div className="p-4 sm:p-6">
+              <CalcCard
+                title="Notifications"
+                guideTo={`${docsPath(level)}#detail-panel`}
+                isSimulated={isSimulated}
+              >
+                {notificationSummary?.notifications?.length ? (
+                  <div className="space-y-4">
+                    {notificationSummary.notifications.map(notification => {
+                      const tone =
+                        notification.priority === 'critical'
+                          ? 'bg-destructive-light text-destructive'
+                          : notification.priority === 'warning'
+                            ? 'bg-warning-light text-warning'
+                            : 'bg-info-light text-info'
+                      return (
+                        <div
+                          key={notification.id}
+                          className="border-t border-border first:border-t-0 first:pt-0 pt-3"
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            <span
+                              className={cn(
+                                'px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wide',
+                                tone,
                               )}
+                            >
+                              {notification.priority}
+                            </span>
+                            {notification.title && (
+                              <span className="text-sm font-semibold text-foreground">
+                                {notification.title}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs text-muted-foreground whitespace-pre-line">
+                            {notification.body}
+                          </div>
+                          {notification.footer && (
+                            <div className="text-[10px] text-muted-foreground italic mt-1.5">
+                              {notification.footer}
                             </div>
-                          )
-                        })}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        No notifications for this validator.
-                      </p>
-                    )}
-                  </CalcCard>
-                </div>
-              )}
-            </>
-          )
-        })()}
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No notifications for this validator.
+                  </p>
+                )}
+              </CalcCard>
+            </div>
+          )}
+        </>
 
         <div
           className={cn(
@@ -775,19 +790,7 @@ export const ValidatorDetail = ({
               onTitleClick={() => setTab('bond')}
             >
               <div className="space-y-3">
-                {(() => {
-                  const bal = validator.bondBalanceSol ?? 0
-                  // A tiny positive bond drives Critical but rounds to
-                  // "0 SOL" under whole-SOL stake() — reads as no bond and
-                  // contradicts the Critical reserve. Show 3-decimal cost()
-                  // precision for sub-1 SOL balances so the row is honest.
-                  return (
-                    <MetricRow
-                      label="Balance"
-                      value={bal > 0 && bal < 1 ? cost(bal) : stake(bal)}
-                    />
-                  )
-                })()}
+                <MetricRow label="Balance" value={bondBalanceDisplay} />
                 <MetricRow
                   label="Reserve"
                   help={HELP_TEXT.bondCoverage}
@@ -823,20 +826,15 @@ export const ValidatorDetail = ({
                   label="Activating stake cost"
                   value={cost(paymentMetrics.activatingCost)}
                 />
-                {(() => {
-                  const penaltyTotal =
-                    bidTooLowPenaltySol + blacklistPenaltySol + bondRiskFeeSol
-                  if (penaltyTotal === 0) {
-                    return <MetricRow label="Penalty" value="No penalties" />
-                  }
-                  return (
-                    <MetricRow
-                      label="Penalty"
-                      value={cost(penaltyTotal)}
-                      valueStyle={{ color: CSS_DESTRUCTIVE }}
-                    />
-                  )
-                })()}
+                {penaltyTotal === 0 ? (
+                  <MetricRow label="Penalty" value="No penalties" />
+                ) : (
+                  <MetricRow
+                    label="Penalty"
+                    value={cost(penaltyTotal)}
+                    valueStyle={{ color: CSS_DESTRUCTIVE }}
+                  />
+                )}
                 {bidTooLowPenaltySol > 0 && (
                   <PenaltyRow
                     label="↳ bid-too-low penalty"
