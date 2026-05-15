@@ -7,19 +7,18 @@ validator bonds, and protected events. Auction computation comes from
 
 ## Local development
 
-Start the development server:
-
 ```sh
 pnpm install
-pnpm start:dev          # Vite dev server (HMR)
+pnpm start:dev          # Vite dev server (HMR), port 3000
 pnpm build              # production build → build/
-pnpm preview            # serve build/ on :8080
+pnpm preview            # serve build/ on :8080 (used by Playwright)
 
 pnpm lint               # eslint
 pnpm format:check       # prettier check
 pnpm check              # lint + format:check
 pnpm test               # vitest unit
-pnpm test:e2e           # playwright e2e (uses preview server)
+pnpm test:e2e           # playwright e2e (auto-starts preview)
+pnpm test:e2e:update    # refresh visual-regression baselines
 npx tsc --noEmit        # type check
 ```
 
@@ -29,7 +28,7 @@ once if it fails.
 
 ## Routes
 
-Each route has a Basic and an Expert variant; Expert exposes additional
+Each page has a Basic and an Expert variant; Expert exposes additional
 metrics, columns, and the simulation panel.
 
 | Basic | Expert | Page |
@@ -38,6 +37,12 @@ metrics, columns, and the simulation panel.
 | `/bonds` | `/expert-bonds` | Validator bonds |
 | `/protected-events` | `/expert-protected-events` | Protected events |
 | `/docs` | `/expert-docs` | In-app guide |
+
+Three additional routes (`/test-`, `/test-bonds`, `/test-protected-events`)
+mount the same pages with fixture data instead of live APIs; Playwright
+uses these for deterministic visual snapshots.
+
+The main data query on every page auto-refreshes once an hour.
 
 ## Documentation
 
