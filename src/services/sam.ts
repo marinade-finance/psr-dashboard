@@ -54,8 +54,9 @@ const FETCHED_EPOCHS = 11
 
 // AugmentedAuctionValidator: AuctionValidator with derived per-validator fields
 // pre-computed. expectedStakeChangeSol drives the next-epoch delta display.
-// cutoffRank is the position relative to the auction cutoff: positive = above
-// (1 = closest to cutoff), negative = below (-1 = closest to cutoff).
+// cutoffRank is the dense position relative to the auction cutoff: 0 = at the
+// winning total PMPE, +1 = closest distinct tier above (ties share a rank),
+// -1 = closest distinct tier below.
 export type AugmentedAuctionValidator = Omit<AuctionValidator, 'values'> & {
   values: NonNullable<AuctionValidator['values']> & {
     expectedStakeChangeSol: number
@@ -326,15 +327,30 @@ export function augmentAuctionResult(
 ): AugmentedAuctionValidator[] {
   const validators = auctionResult.auctionData.validators
   const changes = computeExpectedStakeChanges(auctionResult)
+  // Dense rank around the winning total PMPE: ties share a position, the
+  // marginal winner sits at 0. Above-cutoff is +1 (closest tier above), below
+  // is -1 (closest tier below). Ranking by totalPmpe (not maxApy) avoids the
+  // epochs-per-year wobble — the auction clears on totalPmpe directly.
+  const eps = 1e-9
+  const win = auctionResult.winningTotalPmpe
+  const pmpes = validators.map(v => v.revShare.totalPmpe)
+  const above = [...new Set(pmpes.filter(p => p > win + eps))].sort(
+    (a, b) => a - b,
+  )
+  const below = [...new Set(pmpes.filter(p => p < win - eps))].sort(
+    (a, b) => b - a,
+  )
   const cutoffRanks = new Map<string, number>()
-  const inSetByApyAsc = validators
-    .filter(v => v.auctionStake.marinadeSamTargetSol > 0)
-    .sort((a, b) => (a.revShare?.totalPmpe ?? 0) - (b.revShare?.totalPmpe ?? 0))
-  inSetByApyAsc.forEach((v, i) => cutoffRanks.set(v.voteAccount, i + 1))
-  const outOfSetByApyDesc = validators
-    .filter(v => v.auctionStake.marinadeSamTargetSol <= 0)
-    .sort((a, b) => (b.revShare?.totalPmpe ?? 0) - (a.revShare?.totalPmpe ?? 0))
-  outOfSetByApyDesc.forEach((v, i) => cutoffRanks.set(v.voteAccount, -(i + 1)))
+  for (const v of validators) {
+    const p = v.revShare.totalPmpe
+    const rank =
+      Math.abs(p - win) < eps
+        ? 0
+        : p > win
+          ? 1 + above.indexOf(p)
+          : -1 - below.indexOf(p)
+    cutoffRanks.set(v.voteAccount, rank)
+  }
 
   return validators.map(validator => ({
     ...validator,

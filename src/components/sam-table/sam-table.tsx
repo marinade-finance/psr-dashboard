@@ -275,7 +275,9 @@ const RankCell: React.FC<{
   voteAccount,
   onClearValidator,
 }) => {
-  const rankLabel = rank < 0 ? `-#${-rank}` : `#${rank}`
+  // rank 0 is the marginal winner at the cutoff; +N above, -N below.
+  const rankLabel = rank === 0 ? '#0' : rank < 0 ? `-#${-rank}` : `#${rank}`
+  const rankSubLabel = rank === 0 ? 'at cutoff' : inSet ? 'above' : 'below'
   if (isGhost)
     return (
       <span
@@ -283,7 +285,7 @@ const RankCell: React.FC<{
       >
         <span>{rankLabel}</span>
         <span className="text-xs opacity-60 font-normal leading-tight">
-          {inSet ? 'above' : 'below'}
+          {rankSubLabel}
         </span>
       </span>
     )
