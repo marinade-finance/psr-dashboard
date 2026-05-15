@@ -1,5 +1,4 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
 
 import { Tooltip } from 'src/components/ui/tooltip'
 
@@ -22,13 +21,15 @@ export const HelpTip: React.FC<Props> = ({ html, text, guideTo }) => {
   const tooltipContent = guideTo ? (
     <span className="flex flex-col gap-1">
       {content}
-      <Link
-        to={guideTo}
+      <a
+        href={guideTo}
+        target="_blank"
+        rel="noopener noreferrer"
         className="text-primary hover:underline text-[10px] font-medium mt-0.5"
         onClick={e => e.stopPropagation()}
       >
-        Learn more →
-      </Link>
+        Learn more ↗
+      </a>
     </span>
   ) : (
     content
@@ -37,15 +38,17 @@ export const HelpTip: React.FC<Props> = ({ html, text, guideTo }) => {
   if (guideTo) {
     return (
       <Tooltip content={tooltipContent}>
-        <Link
-          to={guideTo}
+        <a
+          href={guideTo}
+          target="_blank"
+          rel="noopener noreferrer"
           className={ICON_CLASSES}
           aria-label="Learn more in the guide"
           onClick={e => e.stopPropagation()}
           tabIndex={0}
         >
           ?
-        </Link>
+        </a>
       </Tooltip>
     )
   }

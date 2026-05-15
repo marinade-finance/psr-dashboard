@@ -1,5 +1,4 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
 
 import { cn } from 'src/class_utils'
 
@@ -39,12 +38,14 @@ const CardHeader: React.FC<{
       title
     )}
     {guideTo && (
-      <Link
-        to={guideTo}
+      <a
+        href={guideTo}
+        target="_blank"
+        rel="noopener noreferrer"
         className="text-xs font-normal text-muted-foreground hover:text-primary transition-colors"
       >
-        Guide →
-      </Link>
+        Guide ↗
+      </a>
     )}
   </h3>
 )
