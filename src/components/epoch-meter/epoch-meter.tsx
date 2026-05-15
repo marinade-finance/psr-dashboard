@@ -149,22 +149,44 @@ function TimelineCard({
   return (
     <div className="flex flex-col items-center gap-2 py-1 px-1">
       <div className="flex items-stretch">
-        {timeline.map((n, i) => (
-          <React.Fragment key={n.epoch}>
-            {i > 0 && (
-              <span className="self-center w-5 h-px bg-border -mx-0.5" />
-            )}
-            <div className="flex flex-col items-center gap-1 min-w-[60px] px-1">
-              <TimelineDot stages={n.stages} percent={percent} />
-              <span className="text-[11px] font-mono leading-none">
-                {n.epoch}
-              </span>
-              <span className="text-[10px] text-muted-foreground leading-tight text-center">
-                {nodeLabel(n.stages)}
-              </span>
-            </div>
-          </React.Fragment>
-        ))}
+        {timeline.map((n, i) => {
+          const isLive = n.stages.includes('live')
+          return (
+            <React.Fragment key={n.epoch}>
+              {i > 0 && (
+                <span className="self-center w-5 h-px bg-border -mx-0.5" />
+              )}
+              <div
+                className={cn(
+                  'flex flex-col items-center px-1',
+                  isLive ? 'gap-1.5 min-w-[80px]' : 'gap-1 min-w-[60px]',
+                )}
+              >
+                <TimelineDot stages={n.stages} percent={percent} />
+                <span
+                  className={cn(
+                    'font-mono leading-none',
+                    isLive
+                      ? 'text-sm font-semibold text-foreground'
+                      : 'text-[11px] text-muted-foreground',
+                  )}
+                >
+                  {n.epoch}
+                </span>
+                <span
+                  className={cn(
+                    'leading-tight text-center',
+                    isLive
+                      ? 'text-[11px] font-medium text-foreground'
+                      : 'text-[10px] text-muted-foreground',
+                  )}
+                >
+                  {nodeLabel(n.stages)}
+                </span>
+              </div>
+            </React.Fragment>
+          )
+        })}
       </div>
       {progress !== null && (
         <div className="w-full flex flex-col items-stretch gap-1 mt-1 px-1">
@@ -188,7 +210,7 @@ function TimelineDot({
   percent: number
 }) {
   if (stages.includes('live')) {
-    return <ProgressRing percent={percent} size={14} />
+    return <ProgressRing percent={percent} size={22} />
   }
   if (stages.includes('payment')) {
     return <span className="w-3 h-3 rounded-full bg-foreground inline-block" />
