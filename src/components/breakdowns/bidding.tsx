@@ -62,20 +62,19 @@ const RevRow: React.FC<{
     : sep
       ? SEPARATOR_CELL_PAD
       : NORMAL_CELL_PAD
-  const sepBorder = sep && 'border-t-2 border-border'
+  const sepBorder = total
+    ? 'border-t border-border'
+    : sep && 'border-t-2 border-border'
+  const labelColor = total ? 'text-foreground' : 'text-muted-foreground'
   return (
-    <tr
-      className={cn(
-        'border-b border-border-grid/50 last:border-b-0',
-        total && 'bg-muted/40',
-      )}
-    >
+    <tr className="border-b border-border-grid/50 last:border-b-0">
       <td
         className={cn(
           'pr-2',
           lg ? 'text-base' : 'text-xs',
           cellPad,
           bld && 'font-semibold',
+          labelColor,
           sepBorder,
         )}
       >
@@ -106,6 +105,7 @@ const RevRow: React.FC<{
           lg ? 'text-base' : 'text-xs',
           cellPad,
           bld && 'font-semibold',
+          total ? 'tabular-nums text-foreground' : 'text-muted-foreground',
           sepBorder,
           tone === 'green' && 'text-status-green',
           tone === 'yellow' && 'text-status-yellow',
