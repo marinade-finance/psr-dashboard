@@ -10,10 +10,8 @@ export const sol = (amount: number, digits = 0) =>
     maximumFractionDigits: digits,
   })
 
-const pctString = (
-  amount: number,
-  fractionDigits: number = 2,
-): string => `${(100 * amount).toFixed(fractionDigits)}%`
+const pctString = (amount: number, fractionDigits: number = 2): string =>
+  `${(100 * amount).toFixed(fractionDigits)}%`
 
 export const pct = (
   amount: number,
@@ -33,7 +31,12 @@ export const finite = (x: number | null | undefined): number =>
 
 export const pmpe = (x: number) => x.toFixed(5)
 export const stake = (n: number) => `${sol(n, 0)} SOL`
-export const pay = (n: number) => `${sol(n, 0)} SOL`
+// Never round a non-zero payment down to "0 SOL" — surfaces sub-1 as "<1 SOL".
+export const pay = (n: number): string => {
+  if (n > 0 && n < 1) return '<1 SOL'
+  if (n < 0 && n > -1) return '>-1 SOL'
+  return `${sol(n, 0)} SOL`
+}
 export const penalty = (n: number) => `${sol(n, 3)} SOL`
 
 // Top-up CTAs: never claim "Top up 0 SOL". Sub-1-SOL values show "<1 SOL".
