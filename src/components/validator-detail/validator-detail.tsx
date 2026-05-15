@@ -5,7 +5,7 @@ import { cn } from 'src/class_utils'
 import { BidPenaltyBreakdown } from 'src/components/breakdowns/bid-penalty'
 import { BiddingBreakdown } from 'src/components/breakdowns/bidding'
 import { BondCoverageBreakdown } from 'src/components/breakdowns/bond-coverage'
-import { TabHeader, CalcCard } from 'src/components/breakdowns/card'
+import { CalcCard } from 'src/components/breakdowns/card'
 import { docsPath } from 'src/components/breakdowns/docs-path'
 import { PaymentsBreakdown } from 'src/components/breakdowns/payments'
 import { SEPARATOR_DIV_CLASS } from 'src/components/breakdowns/row'
@@ -485,56 +485,18 @@ export const ValidatorDetail = ({
             setSimEnabled(true)
             setTab('overview')
           }
-          // Single source of truth for tab id, strip label, body header
-          // title, and Guide anchor. Every tab — including the multi-card
-          // Overview view and the standalone Notifications card — pulls
-          // its header (title + Guide link) from this array via TabHeader
-          // (Overview) or CalcCard (the rest), so the chrome cannot
-          // drift across tabs.
-          const TAB_DEFS: ReadonlyArray<{
-            id: Tab
-            label: string
-            title: string
-            guideTo: string
-          }> = [
-            {
-              id: 'overview',
-              label: 'Overview',
-              title: 'Validator Overview',
-              guideTo: `${docsPath(level)}#detail-panel`,
-            },
-            {
-              id: 'notifications',
-              label: 'Notifications',
-              title: 'Notifications',
-              guideTo: `${docsPath(level)}#detail-panel`,
-            },
-            {
-              id: 'payments',
-              label: 'Payments',
-              title: 'Payments Calculation',
-              guideTo: `${docsPath(level)}#detail-panel`,
-            },
-            {
-              id: 'revenue',
-              label: 'Bidding',
-              title: 'Bidding Calculation',
-              guideTo: `${docsPath(level)}#cpmpe`,
-            },
-            {
-              id: 'bond',
-              label: 'Bond',
-              title: 'Bond Calculation',
-              guideTo: `${docsPath(level)}#bond`,
-            },
-            {
-              id: 'penalty',
-              label: 'Bid Penalty',
-              title: 'Bid Penalty Calculation',
-              guideTo: `${docsPath(level)}#bid-penalty`,
-            },
+          // Tabs no longer render a tab-level title or Guide link.
+          // Uniformity is at the card level: each card inside the body
+          // owns its own title + Guide chrome via CalcCard. The Overview
+          // tab is a multi-card grid where every sub-card uses CalcCard.
+          const TAB_DEFS: ReadonlyArray<{ id: Tab; label: string }> = [
+            { id: 'overview', label: 'Overview' },
+            { id: 'notifications', label: 'Notifications' },
+            { id: 'payments', label: 'Payments' },
+            { id: 'revenue', label: 'Bidding' },
+            { id: 'bond', label: 'Bond' },
+            { id: 'penalty', label: 'Bid Penalty' },
           ]
-          const active = TAB_DEFS.find(t => t.id === tab) ?? TAB_DEFS[0]
 
           return (
             <>
@@ -557,16 +519,11 @@ export const ValidatorDetail = ({
                 </div>
               </div>
 
-              {/* Breakdown tabs render their own CalcCard internally
-                  (it carries status + tip alongside the table). They
-                  receive title + guideTo from TAB_DEFS — never hardcoded
-                  inside the component — which is what makes the chrome
-                  impossible to drift. */}
-              {active.id === 'bond' && (
+              {tab === 'bond' && (
                 <div className="p-4 sm:p-6">
                   <BondCoverageBreakdown
-                    title={active.title}
-                    guideTo={active.guideTo}
+                    title="Bond Calculation"
+                    guideTo={`${docsPath(level)}#bond`}
                     validator={validator}
                     dsSamConfig={dsSamConfig}
                     winningTotalPmpe={winningTotalPmpe}
@@ -577,11 +534,11 @@ export const ValidatorDetail = ({
                   />
                 </div>
               )}
-              {active.id === 'payments' && (
+              {tab === 'payments' && (
                 <div className="p-4 sm:p-6 space-y-6">
                   <PaymentsBreakdown
-                    title={active.title}
-                    guideTo={active.guideTo}
+                    title="Payments Calculation"
+                    guideTo={`${docsPath(level)}#detail-panel`}
                     validator={validator}
                     dsSamConfig={dsSamConfig}
                     winningTotalPmpe={winningTotalPmpe}
@@ -595,22 +552,22 @@ export const ValidatorDetail = ({
                   />
                 </div>
               )}
-              {active.id === 'revenue' && (
+              {tab === 'revenue' && (
                 <div className="p-4 sm:p-6">
                   <BiddingBreakdown
-                    title={active.title}
-                    guideTo={active.guideTo}
+                    title="Bidding Calculation"
+                    guideTo={`${docsPath(level)}#cpmpe`}
                     validator={validator}
                     isSimulated={isSimulated}
                     onGoToSim={goToSim}
                   />
                 </div>
               )}
-              {active.id === 'penalty' && (
+              {tab === 'penalty' && (
                 <div className="p-4 sm:p-6">
                   <BidPenaltyBreakdown
-                    title={active.title}
-                    guideTo={active.guideTo}
+                    title="Bid Penalty Calculation"
+                    guideTo={`${docsPath(level)}#bid-penalty`}
                     validator={validator}
                     dsSamConfig={dsSamConfig}
                     winningTotalPmpe={winningTotalPmpe}
@@ -620,13 +577,11 @@ export const ValidatorDetail = ({
                 </div>
               )}
 
-              {/* Notifications: wrap in CalcCard so it shares the same
-                  title + Guide link header as the breakdown tabs. */}
-              {active.id === 'notifications' && (
+              {tab === 'notifications' && (
                 <div className="p-4 sm:p-6">
                   <CalcCard
-                    title={active.title}
-                    guideTo={active.guideTo}
+                    title="Notifications"
+                    guideTo={`${docsPath(level)}#detail-panel`}
                     isSimulated={isSimulated}
                   >
                     {notificationSummary?.notifications?.length ? (
@@ -678,22 +633,6 @@ export const ValidatorDetail = ({
                   </CalcCard>
                 </div>
               )}
-
-              {/* Overview is a 2-column grid of separate sub-cards (Stake,
-                  Bond, Expected Payment, APY composition, Simulation).
-                  It can't sit inside a single CalcCard, but its header
-                  goes through the same TabHeader primitive that CalcCard
-                  uses — so the title + Guide link match exactly. */}
-              {active.id === 'overview' && (
-                <div className="p-4 sm:p-6">
-                  <TabHeader
-                    title={active.title}
-                    guideTo={active.guideTo}
-                    isSimulated={isSimulated}
-                    className="mb-4"
-                  />
-                </div>
-              )}
             </>
           )
         })()}
@@ -705,11 +644,12 @@ export const ValidatorDetail = ({
           )}
         >
           <div className="space-y-6">
-            <div className="bg-card rounded-xl border border-border p-5">
-              <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
-                Stake
-              </h3>
-              <div className="space-y-3 mt-3">
+            <CalcCard
+              title="Stake"
+              guideTo={`${docsPath(level)}#detail-panel`}
+              isSimulated={isSimulated}
+            >
+              <div className="space-y-3">
                 <MetricRow
                   label="Active Marinade stake"
                   help="How much SOL Marinade has staked with you right now."
@@ -740,14 +680,22 @@ export const ValidatorDetail = ({
                   }}
                 />
               </div>
-            </div>
+            </CalcCard>
 
-            <div className="bg-card rounded-xl border border-border p-5">
-              <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
-                Bond
-                <HelpTip text="SOL you've locked up as a deposit. It pays your bid each epoch and reimburses stakers if you misbehave. Coverage tells you whether it's thick enough; runway tells you how many epochs it'll last." />
-              </h3>
-              <div className="mt-3 space-y-3">
+            <CalcCard
+              title="Bond"
+              guideTo={`${docsPath(level)}#bond`}
+              isSimulated={isSimulated}
+              tip={
+                <button
+                  className="text-xs text-primary hover:underline"
+                  onClick={() => setTab('bond')}
+                >
+                  See full bond coverage breakdown →
+                </button>
+              }
+            >
+              <div className="space-y-3">
                 <MetricRow
                   label="Balance"
                   value={stake(validator.bondBalanceSol ?? 0)}
@@ -767,20 +715,14 @@ export const ValidatorDetail = ({
                       : `${Math.round(bondRunway)} epochs`
                   }
                 />
-                <button
-                  className="text-xs text-primary hover:underline"
-                  onClick={() => setTab('bond')}
-                >
-                  See full bond coverage breakdown →
-                </button>
               </div>
-            </div>
+            </CalcCard>
 
-            <div className="bg-card rounded-xl border border-border p-5">
-              <h3 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
-                Expected Payment This Epoch
-                <HelpTip text="What you'll owe Marinade this epoch. Includes your bid on stake you already hold, your bid on stake that's still warming up, and any penalties for cutting your bid mid-epoch." />
-              </h3>
+            <CalcCard
+              title="Expected Payment This Epoch"
+              guideTo={`${docsPath(level)}#detail-panel`}
+              isSimulated={isSimulated}
+            >
               <div className="space-y-3">
                 <MetricRow
                   label="Active Stake Cost"
@@ -841,7 +783,7 @@ export const ValidatorDetail = ({
                   separator
                 />
               </div>
-            </div>
+            </CalcCard>
           </div>
 
           <div className="space-y-6">
@@ -849,6 +791,8 @@ export const ValidatorDetail = ({
               apyBreakdown={apyBreakdown}
               winningApy={winningApy}
               validator={validator}
+              guideTo={`${docsPath(level)}#detail-panel`}
+              isSimulated={isSimulated}
             />
 
             {simEnabled && (

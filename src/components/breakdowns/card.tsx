@@ -9,11 +9,11 @@ const STATUS_CLASSES: Record<'red' | 'yellow' | 'green', string> = {
   green: 'bg-primary-light text-primary',
 }
 
-// Single source of truth for tab body header rendering. Both CalcCard
-// (used by the 4 breakdown tabs) and validator-detail's Overview tab
-// (a multi-card grid that owns its own outer chrome) route their title
-// + Guide link through this primitive, so the chrome cannot drift.
-export const TabHeader: React.FC<{
+// Internal header for CalcCard — title + optional Guide link, with a
+// "Simulated · " prefix when the card is showing what-if numbers.
+// Uniformity lives at the card level (every detail-panel card uses
+// CalcCard), so this helper has no callers outside this file.
+const CardHeader: React.FC<{
   title: string
   guideTo?: string
   isSimulated?: boolean
@@ -47,7 +47,7 @@ export const CalcCard: React.FC<{
   children: React.ReactNode
 }> = ({ title, guideTo, isSimulated, status, tip, children }) => (
   <div className="bg-card rounded-xl border border-border p-5">
-    <TabHeader
+    <CardHeader
       title={title}
       guideTo={guideTo}
       isSimulated={isSimulated}

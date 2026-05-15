@@ -1,9 +1,8 @@
 import React from 'react'
 
 import { cn } from 'src/class_utils'
-import { HelpTip } from 'src/components/help-tip/help-tip'
+import { CalcCard } from 'src/components/breakdowns/card'
 import { pct } from 'src/format'
-import { HELP_TEXT } from 'src/services/help-text'
 
 import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
 import type { ApyBreakdownValue } from 'src/services/tip-engine'
@@ -12,6 +11,8 @@ interface ApyCompositionCardProps {
   apyBreakdown: ApyBreakdownValue
   winningApy: number
   validator: AuctionValidator
+  guideTo?: string
+  isSimulated?: boolean
 }
 
 type Row = {
@@ -26,6 +27,8 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
   apyBreakdown,
   winningApy,
   validator,
+  guideTo,
+  isSimulated,
 }) => {
   const inflComm = validator.inflationCommissionDec
   const mevComm = validator.mevCommissionDec ?? 0
@@ -74,17 +77,15 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
   const above = delta >= 0
 
   return (
-    <div className="bg-card rounded-xl border border-border p-5">
+    <CalcCard
+      title="Max APY Composition"
+      guideTo={guideTo}
+      isSimulated={isSimulated}
+    >
       <div className="flex items-center justify-between mb-3">
-        <div>
-          <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
-            Max APY Composition
-            <HelpTip text={HELP_TEXT.maxApy} />
-          </h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Winning threshold {pct(winningApy, 2)}
-          </p>
-        </div>
+        <p className="text-xs text-muted-foreground">
+          Winning threshold {pct(winningApy, 2)}
+        </p>
         <span
           className={cn(
             'text-xs font-mono font-semibold px-2 py-0.5 rounded-md',
@@ -167,6 +168,6 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
           </span>
         </div>
       </div>
-    </div>
+    </CalcCard>
   )
 }
