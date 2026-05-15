@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 
+import { docsPath } from 'src/components/breakdowns/docs-path'
 import { Badge } from 'src/components/ui/badge'
 import { EpochRangePicker } from 'src/components/ui/epoch-range-picker'
 import { Input } from 'src/components/ui/input'
@@ -182,6 +183,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
             filtered ? `of ${totalEvents.toLocaleString()} total` : undefined
           }
           tooltipHtml="Number of times stakers got reimbursed because a validator under-delivered. Shows the filtered count when filters are on."
+          guideTo={`${docsPath(level)}#psr`}
         />
         <Metric
           label="Amount"
@@ -212,6 +214,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
             ) : null
           }
           tooltipHtml="Total SOL stakers received as reimbursement when validators under-delivered. Shows the filtered total when filters are on."
+          guideTo={`${docsPath(level)}#psr`}
         />
         <Metric
           label="Last settled epoch"
@@ -222,6 +225,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
               : undefined
           }
           tooltipHtml="The most recent epoch where reimbursements have been fully paid out and locked in."
+          guideTo={`${docsPath(level)}#psr`}
         />
       </div>
       <div className="flex flex-col sm:flex-row flex-wrap gap-4 px-4 mb-4">
@@ -270,6 +274,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
                 header: 'Epoch',
                 headerHelp:
                   'Which Solana epoch this happened in — each epoch is about two days long.',
+                headerGuideTo: `${docsPath(level)}#psr`,
                 render: ({ protectedEvent }) => <>{protectedEvent.epoch}</>,
                 compare: (a, b) =>
                   a.protectedEvent.epoch - b.protectedEvent.epoch,
@@ -279,6 +284,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
                 header: 'Reason',
                 headerHelp:
                   'Why stakers needed reimbursing — the validator hiked its commission, missed too many slots, or went down entirely.',
+                headerGuideTo: `${docsPath(level)}#psr`,
                 render: ({ protectedEvent }) => (
                   <>{selectProtectedStakeReason(protectedEvent)}</>
                 ),
@@ -291,6 +297,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
                 header: 'Paid Out',
                 headerHelp:
                   "How much SOL stakers received for this event. 'Estimate' means the epoch is still live and the number may shift.",
+                headerGuideTo: `${docsPath(level)}#psr`,
                 render: ({ protectedEvent, status }) => (
                   <>
                     {renderProtectedEventStatus(status)}{' '}
@@ -306,6 +313,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
                 header: 'Funded by',
                 headerHelp:
                   "Who actually paid: Validator Bond means the validator's own deposit covered it; Marinade means our reserve fund had to step in because the bond came up short.",
+                headerGuideTo: `${docsPath(level)}#psr`,
                 render: ({ protectedEvent }) =>
                   renderFunderBadge(protectedEvent) ?? <></>,
                 compare: (a, b) =>
