@@ -281,9 +281,43 @@ _See [Stronger Bond Signals and a New Risk Fee in SAM — Marinade Blog](https:/
 
 Charged at auction time when a validator's bid drops between epochs
 and their bond obligation no longer services what their historical
-bid implied. The dashboard's **Bid Penalty** tab on the validator
-detail panel shows the live trigger thresholds, the shortfall, and
-the per-component breakdown.
+bid implied.
+
+#### When it fires
+
+Two conditions both have to hold:
+
+1. **Bid dropped this epoch.** The validator's effective participating
+   bid PMPE is lower than it was the previous epoch.
+2. **Bond obligation fell below the historical floor.** The lower of
+   the current effective participating bid and the worst bid seen
+   across the recent history window — minus a small permitted
+   deviation — is the **adjusted limit**. The bond obligation PMPE has
+   to drop below that limit for the penalty to engage.
+
+If only one of those is true the dashboard shows a green status
+("Bid dropped but bond obligation covers it — no penalty" or "Bid did
+not decrease — no penalty").
+
+#### How big it gets
+
+The shortfall — how far the bond obligation sits under the adjusted
+limit — gets normalised by the limit, square-rooted, and capped at 1
+to produce a coefficient. That coefficient is multiplied by a base of
+`winning total PMPE + effective participating bid PMPE`, then turned
+into SOL by multiplying by activated stake / 1000.
+
+In practice this means a small dip below the limit costs a relatively
+small fraction of one epoch's revenue; a large dip can wipe out the
+whole epoch's revenue from that validator.
+
+#### Where to read it on the dashboard
+
+The validator detail panel's **Bid Penalty tab** walks you through
+every input — bid history, historical baseline, threshold inputs, the
+shortfall, the coefficient, and the final SOL charge. See the
+[Bid Penalty tab subsection](#detail-panel) for the row-by-row
+formula.
 
 _See [Bid Reduction Penalty — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market#bid-reduction-penalty)._
 
