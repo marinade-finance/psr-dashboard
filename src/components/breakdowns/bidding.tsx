@@ -162,7 +162,7 @@ export const BiddingBreakdown: React.FC<Props> = ({
           {metrics.overrideMsg}
         </div>
       )}
-      <table className="w-full max-w-lg">
+      <table className="w-full max-w-xs">
         <tbody>
           <SectionHeader title="Stake" colSpan={4} />
           <RevRow
