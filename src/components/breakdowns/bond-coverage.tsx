@@ -115,7 +115,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
       status={status}
       tip={tip}
     >
-      <table className="w-full max-w-xs">
+      <table className="w-full max-w-[34rem]">
         <tbody>
           <SectionHeader title="Rates" />
           <CalcRow

@@ -105,7 +105,7 @@ export const PaymentsBreakdown: React.FC<Props> = ({
       status={status}
       tip={tip}
     >
-      <table className="w-full max-w-xs">
+      <table className="w-full max-w-[34rem]">
         <tbody>
           <SectionHeader title="Bid costs" />
           <CalcRow

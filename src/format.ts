@@ -30,20 +30,22 @@ export const finite = (x: number | null | undefined): number =>
   typeof x === 'number' && Number.isFinite(x) ? x : 0
 
 export const pmpe = (x: number) => x.toFixed(5)
-export const stake = (n: number) => `${sol(n, 0)} SOL`
-export const pay = (n: number) => `${sol(n, 0)} SOL`
-export const penalty = (n: number) => `${sol(n, 3)} SOL`
+// NBSP ( ) between number and unit so "19,866 SOL" never wraps across
+// a line break. Applies to every "<n> SOL" output below.
+export const stake = (n: number) => `${sol(n, 0)} SOL`
+export const pay = (n: number) => `${sol(n, 0)} SOL`
+export const penalty = (n: number) => `${sol(n, 3)} SOL`
 // Cost rows need 3-decimal precision — per-epoch bid costs are often
 // sub-1 SOL and rounding them to "0" or "1" reads as wrong.
-export const cost = (n: number) => `${sol(n, 3)} SOL`
+export const cost = (n: number) => `${sol(n, 3)} SOL`
 
 // Top-up CTAs: never claim "Top up 0 SOL". Sub-1-SOL values show "<1 SOL".
 export const stakeCta = (n: number): string => {
-  if (n > 0 && n < 0.5) return '<1 SOL'
+  if (n > 0 && n < 0.5) return '<1 SOL'
   return stake(n)
 }
 export const payCta = (n: number): string => {
-  if (n > 0 && n < 0.5) return '<1 SOL'
+  if (n > 0 && n < 0.5) return '<1 SOL'
   return pay(n)
 }
 
