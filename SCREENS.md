@@ -95,9 +95,11 @@ Two `<ConcentrationMetric>` cards: **Top Countries** and **Top ASOs**.
 The inline (non-hover) view shows only what matters at a glance: every
 over-cap entry if any are capped (rank order, tinted `bg-destructive`
 with a `(capped)` tag), otherwise just the single #1 entry. Each row is
-a stacked bar filled against the per-country / per-ASO cap. Hover
-expands a tooltip showing the full ranked list (up to 15 entries) plus a
-remaining-count line.
+a bar drawn on an absolute network-share scale (0 .. max of the largest
+entry or the cap, plus headroom), with a labeled vertical marker at the
+per-country / per-ASO cap so an over-cap entry visibly extends past it.
+Hover expands a tooltip showing the full ranked list (up to 15 entries)
+plus a remaining-count line.
 
 ### Jump-to-validator search
 

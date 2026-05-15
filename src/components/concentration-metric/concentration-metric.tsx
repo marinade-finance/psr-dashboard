@@ -64,6 +64,17 @@ export const ConcentrationMetric: React.FC<Props> = ({
   const tipRows = rows.slice(0, TOOLTIP_N)
   const remaining = rows.length - tipRows.length
 
+  // Absolute share scale (not cap-relative): the track runs 0..scale where
+  // scale leaves headroom past whichever is larger, the cap or the biggest
+  // entry. This puts the cap marker at a real interior position and lets an
+  // over-cap entry visibly extend PAST it (cap-relative scaling would pin
+  // the marker to the right edge and clamp overflow). rows[0] is the max
+  // (sorted by stake desc). Same scale drives inline and popover bars.
+  const maxShare = rows.length > 0 ? rows[0].pctOfTotal : 0
+  const scale = Math.max(maxShare, capPct) * 1.12
+  const barPct = (v: number) => (scale > 0 ? (v / scale) * 100 : 0)
+  const capLeft = barPct(capPct)
+
   return (
     <Card
       className="relative flex flex-col px-3 py-3 sm:px-5 sm:py-4 overflow-visible"
@@ -74,9 +85,9 @@ export const ConcentrationMetric: React.FC<Props> = ({
         {label}
         {help && <HelpTip text={help} guideTo={guideTo} />}
       </div>
-      <div className="flex flex-col gap-0.5">
+      <div className="relative flex flex-col gap-0.5 mt-4">
         {inline.map((r, i) => {
-          const fill = capPct > 0 ? Math.min(r.pctOfTotal / capPct, 1) * 100 : 0
+          const fill = barPct(r.pctOfTotal)
           const barClass = r.atCap
             ? 'bg-destructive'
             : (BAR_TONES[i] ?? BAR_TONE_DEFAULT)
@@ -115,12 +126,28 @@ export const ConcentrationMetric: React.FC<Props> = ({
             </div>
           )
         })}
+        {capLeft > 0 && capLeft <= 100 && (
+          <>
+            <span
+              className="absolute top-0 bottom-0 w-0.5 rounded-full bg-foreground/50 pointer-events-none"
+              style={{ left: `${capLeft}%` }}
+              aria-hidden
+            />
+            <span
+              className="absolute top-[-16px] pr-1 text-[10px] font-mono text-muted-foreground whitespace-nowrap pointer-events-none"
+              style={{ left: `${capLeft}%`, transform: 'translateX(-100%)' }}
+            >
+              {pct(capPct)} cap
+            </span>
+          </>
+        )}
       </div>
 
       {open && rows.length > 0 && (
         <div className="absolute z-30 top-full inset-x-0 mt-1 max-h-[60vh] overflow-y-auto bg-card border border-border rounded-md shadow-xl p-3 text-xs">
           <div className="text-muted-foreground mb-2 leading-snug">
-            Cap: {pct(capPct)} of network stake. Bar fills against the cap.
+            Cap: {pct(capPct)} of network stake. The marker shows the cap; bars
+            past it are over.
           </div>
           <table className="w-full">
             <thead className="text-muted-foreground/70 uppercase tracking-wide text-[10px]">
@@ -133,8 +160,7 @@ export const ConcentrationMetric: React.FC<Props> = ({
             </thead>
             <tbody>
               {tipRows.map((r, i) => {
-                const fill =
-                  capPct > 0 ? Math.min(r.pctOfTotal / capPct, 1) * 100 : 0
+                const fill = barPct(r.pctOfTotal)
                 const { tone, opacity } = barTone(i)
                 const swatch = r.atCap ? 'bg-destructive' : tone
                 const barOpacity = r.atCap ? BAR_OPACITY_BASE : opacity
@@ -153,6 +179,26 @@ export const ConcentrationMetric: React.FC<Props> = ({
                         style={{ width: `${fill}%` }}
                         aria-hidden
                       />
+                      {capLeft > 0 && capLeft <= 100 && (
+                        <>
+                          <span
+                            className="absolute inset-y-0 w-0.5 rounded-full bg-foreground/50 pointer-events-none"
+                            style={{ left: `${capLeft}%` }}
+                            aria-hidden
+                          />
+                          {i === 0 && (
+                            <span
+                              className="absolute top-[-13px] text-[10px] font-mono text-muted-foreground pointer-events-none"
+                              style={{
+                                left: `${capLeft}%`,
+                                transform: 'translateX(-50%)',
+                              }}
+                            >
+                              {pct(capPct)}
+                            </span>
+                          )}
+                        </>
+                      )}
                       <span className="relative flex items-center gap-1.5">
                         <span
                           className={cn(
