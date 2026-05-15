@@ -382,7 +382,7 @@ export const SamTable: React.FC<Props> = ({
   // Current validators with bond health and expected stake change computed
   const validatorsWithBond: ValidatorWithBondState[] = useMemo(
     () =>
-      augmentAuctionResult(auctionResult)
+      augmentAuctionResult(auctionResult, dsSamConfig.minBondBalanceSol)
         .filter(validator =>
           passesTableFilter(
             validator,

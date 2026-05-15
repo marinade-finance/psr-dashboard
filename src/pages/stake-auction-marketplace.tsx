@@ -205,7 +205,10 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
 
   const sheetValidatorData = useMemo(() => {
     if (!selectedValidator || !displayAuctionResult || !data) return null
-    const augmented = augmentAuctionResult(displayAuctionResult)
+    const augmented = augmentAuctionResult(
+      displayAuctionResult,
+      data.dcSamConfig.minBondBalanceSol,
+    )
     const validators = augmented
       .filter(validator => (selectBondSize(validator) ?? 0) > 0)
       .sort(

@@ -344,12 +344,21 @@ function allocateRedelegation(
 // totalPmpe. Natural withdrawal (~0.7% TVL) is the only true outflow.
 // SDK truth: calcBondRiskFee uses projectedActivatedStakeSol = max(0, active
 // − paidUndelegationSol) as the post-undelegation baseline; we mirror that.
+// Bond below SDK's minBondBalanceSol: clipBondStakeCap returns 0, so the
+// validator loses ALL current stake regardless of bid (mirrors the
+// tip-engine cascade). The full outflow is attributed to paid undelegation
+// (forced removal), redelegation inflow is zeroed (a sub-min-bond validator
+// cannot receive budget), natural withdrawal is suppressed so the three
+// signed components still sum exactly to expectedStakeChangeSol.
 function computeExpectedStakeChanges(
   auctionResult: AuctionResult,
+  minBondBalanceSol: number,
 ): Map<string, ExpectedStakeChange> {
   const validators = auctionResult.auctionData.validators
   const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
   const paidOf = (v: AuctionValidator) => v.values?.paidUndelegationSol ?? 0
+  const bondBelowMin = (v: AuctionValidator) =>
+    (v.bondBalanceSol ?? 0) < minBondBalanceSol
   const result = new Map<string, ExpectedStakeChange>()
   const get = (va: string): ExpectedStakeChange => {
     let entry = result.get(va)
@@ -366,6 +375,12 @@ function computeExpectedStakeChanges(
   }
 
   for (const validator of validators) {
+    if (bondBelowMin(validator)) {
+      const entry = get(validator.voteAccount)
+      entry.paidUndelegation = -validator.marinadeActivatedStakeSol
+      entry.total = -validator.marinadeActivatedStakeSol
+      continue
+    }
     const paid = paidOf(validator)
     if (paid > 0) {
       const entry = get(validator.voteAccount)
@@ -376,6 +391,8 @@ function computeExpectedStakeChanges(
 
   const { inflowByVote } = allocateRedelegation(auctionResult)
   for (const [va, alloc] of inflowByVote) {
+    const validator = validators.find(v => v.voteAccount === va)
+    if (validator && bondBelowMin(validator)) continue
     const entry = get(va)
     entry.redelegationInflow += alloc
     entry.total += alloc
@@ -383,6 +400,8 @@ function computeExpectedStakeChanges(
 
   const withdrawals = computeNaturalWithdrawal(validators, tvl)
   for (const [va, w] of withdrawals) {
+    const validator = validators.find(v => v.voteAccount === va)
+    if (validator && bondBelowMin(validator)) continue
     const entry = get(va)
     entry.naturalWithdrawal -= w
     entry.total -= w
@@ -393,9 +412,10 @@ function computeExpectedStakeChanges(
 
 export function augmentAuctionResult(
   auctionResult: AuctionResult,
+  minBondBalanceSol: number,
 ): AugmentedAuctionValidator[] {
   const validators = auctionResult.auctionData.validators
-  const changes = computeExpectedStakeChanges(auctionResult)
+  const changes = computeExpectedStakeChanges(auctionResult, minBondBalanceSol)
   // Dense rank around the winning total PMPE: ties share a position, the
   // marginal winner sits at 0. Above-cutoff is +1 (closest tier above), below
   // is -1 (closest tier below). Ranking by totalPmpe (not maxApy) avoids the
