@@ -1,6 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react'
 
 import { cn } from 'src/class_utils'
+import { docsPath } from 'src/components/breakdowns/docs-path'
 import { ConcentrationMetric } from 'src/components/concentration-metric/concentration-metric'
 import { HelpTip } from 'src/components/help-tip/help-tip'
 import { PENALTY_BID_LOW } from 'src/components/icons/penalty-bid-low'
@@ -544,41 +545,49 @@ export const SamTable: React.FC<Props> = ({
     v => v.auctionStake.marinadeSamTargetSol > 0,
   ).length
 
+  const dp = docsPath(level)
+
   const stats: {
     label: string
     value: string
     unit: string
     help: string | undefined
+    guideTo: string
   }[] = [
     {
       label: 'Total Auction Stake',
       value: sol(samDistributedStake, 0),
       unit: 'SOL',
       help: HELP_TEXT.totalAuctionStake,
+      guideTo: `${dp}#sam`,
     },
     {
       label: 'Winning APY',
       value: pct(winningAPY, 2),
       unit: '',
       help: HELP_TEXT.winningApy,
+      guideTo: `${dp}#last-price`,
     },
     {
       label: 'Projected APY',
       value: pct(projectedApy, 2),
       unit: '',
       help: HELP_TEXT.projectedApy,
+      guideTo: `${dp}#sam`,
     },
     {
       label: 'Winning Validators',
       value: `${eligibleWinningCount} / ${eligibleCount}`,
       unit: '',
       help: HELP_TEXT.winningValidators,
+      guideTo: `${dp}#auction-table`,
     },
     {
       label: 'Re-delegation',
       value: sol(totalRedelegation, 0),
       unit: 'SOL',
       help: 'Roughly how much SOL Marinade will redelegate into under-stake validators next epoch, pushing them toward their target allocation.',
+      guideTo: `${dp}#redelegation`,
     },
   ]
 
@@ -870,7 +879,9 @@ export const SamTable: React.FC<Props> = ({
             >
               <div className="text-xs uppercase tracking-wider font-medium text-muted-foreground mb-1 flex items-center gap-1">
                 {stat.label}
-                {stat.help && <HelpTip text={stat.help} />}
+                {stat.help && (
+                  <HelpTip text={stat.help} guideTo={stat.guideTo} />
+                )}
               </div>
               <div className="flex items-baseline gap-0.5 min-w-0 overflow-hidden">
                 <span className="text-xl sm:text-2xl font-semibold text-foreground font-mono truncate">
@@ -893,12 +904,14 @@ export const SamTable: React.FC<Props> = ({
             rows={concentration.countries}
             capPct={concentration.countryCapPct}
             help="Share of auction-distributed stake by validator country. Bar fills against the per-country cap. A 'capped' tag means at least one validator was cut by the cap."
+            guideTo={`${dp}#concentration`}
           />
           <ConcentrationMetric
             label="Top ASOs"
             rows={concentration.asos}
             capPct={concentration.asoCapPct}
             help="Share of auction-distributed stake by ASO — the Autonomous System Operator hosting the validator. Bar fills against the per-ASO cap. A 'capped' tag means at least one validator was cut by the cap."
+            guideTo={`${dp}#concentration`}
           />
         </div>
 
@@ -955,7 +968,7 @@ export const SamTable: React.FC<Props> = ({
                       sortColumn={sortColumn}
                       sortDirection={sortDirection}
                     />
-                    <HelpTip text={HELP_TEXT.maxApy} />
+                    <HelpTip text={HELP_TEXT.maxApy} guideTo={`${dp}#cpmpe`} />
                   </div>
                 </TableHead>
                 <TableHead
@@ -969,7 +982,10 @@ export const SamTable: React.FC<Props> = ({
                       sortColumn={sortColumn}
                       sortDirection={sortDirection}
                     />
-                    <HelpTip text={HELP_TEXT.bondHealth} />
+                    <HelpTip
+                      text={HELP_TEXT.bondHealth}
+                      guideTo={`${dp}#bond`}
+                    />
                   </div>
                 </TableHead>
                 <TableHead
@@ -983,7 +999,10 @@ export const SamTable: React.FC<Props> = ({
                       sortColumn={sortColumn}
                       sortDirection={sortDirection}
                     />
-                    <HelpTip text="How much stake you have right now, and how much it'll change next epoch. Gains depend on fresh deposits coming in; losses come from regular withdrawals, which Marinade pulls from the most over-stake validators first." />
+                    <HelpTip
+                      text="How much stake you have right now, and how much it'll change next epoch. Gains depend on fresh deposits coming in; losses come from regular withdrawals, which Marinade pulls from the most over-stake validators first."
+                      guideTo={`${dp}#redelegation`}
+                    />
                   </div>
                 </TableHead>
                 <TableHead

@@ -12,6 +12,7 @@ type Props = {
   rows: ConcentrationRow[]
   capPct: number
   help?: string
+  guideTo?: string
 }
 
 const TOP_N = 3
@@ -25,6 +26,7 @@ export const ConcentrationMetric: React.FC<Props> = ({
   rows,
   capPct,
   help,
+  guideTo,
 }) => {
   const [open, setOpen] = useState(false)
   const top = rows.slice(0, TOP_N)
@@ -39,7 +41,7 @@ export const ConcentrationMetric: React.FC<Props> = ({
     >
       <div className="text-xs uppercase tracking-wider font-medium text-muted-foreground mb-1 flex items-center gap-1">
         {label}
-        {help && <HelpTip text={help} />}
+        {help && <HelpTip text={help} guideTo={guideTo} />}
       </div>
       <div className="flex flex-col gap-0.5">
         {top.map((r, i) => {
