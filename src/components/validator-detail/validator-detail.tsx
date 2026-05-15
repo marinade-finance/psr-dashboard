@@ -24,7 +24,7 @@ import {
   CSS_WARNING,
   CSS_MUTED_FG,
 } from 'src/css'
-import { pay, payCta, stake } from 'src/format'
+import { cost, payCta, stake } from 'src/format'
 import { computeBidPenalty } from 'src/services/bid-penalty'
 import { computeBidding } from 'src/services/bidding'
 import { computeBondCoverage } from 'src/services/bond-coverage'
@@ -753,12 +753,12 @@ export const ValidatorDetail = ({
               <div className="space-y-3">
                 <MetricRow
                   label="Active Stake Cost"
-                  value={pay(paymentMetrics.cost)}
+                  value={cost(paymentMetrics.cost)}
                   onSeeBreakdown={() => setTab('payments')}
                 />
                 <MetricRow
                   label="Activating Stake Cost"
-                  value={pay(paymentMetrics.activatingCost)}
+                  value={cost(paymentMetrics.activatingCost)}
                   onSeeBreakdown={() => setTab('payments')}
                 />
                 {(() => {
@@ -770,7 +770,7 @@ export const ValidatorDetail = ({
                   return (
                     <MetricRow
                       label="Penalty"
-                      value={pay(penaltyTotal)}
+                      value={cost(penaltyTotal)}
                       valueStyle={{ color: CSS_DESTRUCTIVE }}
                     />
                   )
@@ -778,7 +778,7 @@ export const ValidatorDetail = ({
                 {bidTooLowPenaltySol > 0 && (
                   <PenaltyRow
                     label="↳ bid-too-low penalty"
-                    value={pay(bidTooLowPenaltySol)}
+                    value={cost(bidTooLowPenaltySol)}
                     onSeeBreakdown={() => setTab('penalty')}
                     sub
                   />
@@ -786,7 +786,7 @@ export const ValidatorDetail = ({
                 {blacklistPenaltySol > 0 && (
                   <PenaltyRow
                     label="↳ blacklist penalty"
-                    value={pay(blacklistPenaltySol)}
+                    value={cost(blacklistPenaltySol)}
                     onSeeBreakdown={() => setTab('payments')}
                     sub
                   />
@@ -794,14 +794,14 @@ export const ValidatorDetail = ({
                 {bondRiskFeeSol > 0 && (
                   <PenaltyRow
                     label="↳ bond risk fee"
-                    value={pay(bondRiskFeeSol)}
+                    value={cost(bondRiskFeeSol)}
                     onSeeBreakdown={() => setTab('bond')}
                     sub
                   />
                 )}
                 <MetricRow
                   label="Total"
-                  value={pay(
+                  value={cost(
                     paymentMetrics.total +
                       bidTooLowPenaltySol +
                       blacklistPenaltySol +
