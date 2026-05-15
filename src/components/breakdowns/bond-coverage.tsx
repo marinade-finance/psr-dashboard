@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { cost, payCta, pay, pmpe, stake } from 'src/format'
+import { cost, topUp, pay, pmpe, stake } from 'src/format'
 import { computeBondCoverage } from 'src/services/bond-coverage'
 
 import { CalcCard } from './card'
@@ -38,22 +38,22 @@ const statusLine = (
         : 'Bond below penalty threshold.'
     const topUpStr =
       topUpToAvoidFee > 0
-        ? ` Top up ${payCta(topUpToAvoidFee)} to avoid the fee.`
+        ? ` Top up ${topUp(topUpToAvoidFee)} to avoid the fee.`
         : ''
     return { label: `${feeStr}${topUpStr}`, tone: 'red' }
   } else if (state === 'watch') {
     const text =
       topUpToKeepStake > 0
-        ? `Top up ${payCta(topUpToKeepStake)} to keep your stake.`
+        ? `Top up ${topUp(topUpToKeepStake)} to keep your stake.`
         : topUpToIdealKeep > 0
-          ? `Top up ${payCta(topUpToIdealKeep)} for more stake.`
+          ? `Top up ${topUp(topUpToIdealKeep)} for more stake.`
           : ''
     if (text) return { label: text, tone: 'yellow' }
     return { label: 'Bond covers current stake.', tone: 'yellow' }
   } else if (state === 'soft') {
     if (topUpToIdealKeep > 0)
       return {
-        label: `Bond covers current stake. Top up ${payCta(topUpToIdealKeep)} for more.`,
+        label: `Bond covers current stake. Top up ${topUp(topUpToIdealKeep)} for more.`,
         tone: 'yellow',
       }
     return { label: 'Bond meets ideal coverage.', tone: 'green' }
@@ -165,7 +165,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           {coverage.topUpToKeepStake > 0 ? (
             <CalcRow
               label="Top up to keep your stake"
-              value={payCta(coverage.topUpToKeepStake)}
+              value={topUp(coverage.topUpToKeepStake)}
               total
               severity="warning"
             />
@@ -209,7 +209,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           {coverage.topUpToIdealKeep > 0 ? (
             <CalcRow
               label="Top up for more stake"
-              value={payCta(coverage.topUpToIdealKeep)}
+              value={topUp(coverage.topUpToIdealKeep)}
               total
               severity="warning"
             />
@@ -244,7 +244,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
               {coverage.topUpToAvoidFee > 0 && (
                 <CalcRow
                   label="Top up to avoid the fee"
-                  value={payCta(coverage.topUpToAvoidFee)}
+                  value={topUp(coverage.topUpToAvoidFee)}
                   total
                   severity="error"
                 />

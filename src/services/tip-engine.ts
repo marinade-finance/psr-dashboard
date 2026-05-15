@@ -16,7 +16,7 @@ import {
   CSS_WARNING,
   CSS_WARNING_LIGHT,
 } from 'src/css'
-import { pay, payCta, stake, stakeCta } from 'src/format'
+import { pay, stake, topUp } from 'src/format'
 
 import { computeBondCoverage } from './bond-coverage'
 import { bondHealthFromAuction } from './bond-health'
@@ -103,13 +103,13 @@ function outOfSetTip(
       winningTotalPmpe,
       dsSamConfig.bondRiskFeeMult,
     )
-    const topUp =
+    const topUpSol =
       coverage.topUpToIdealKeep > 0
         ? coverage.topUpToIdealKeep
         : coverage.topUpToKeepStake
-    if (topUp > 0) {
+    if (topUpSol > 0) {
       return {
-        text: `Bond too small for stake. Top up ${stakeCta(topUp)} to qualify for more.`,
+        text: `Bond too small for stake. Top up ${topUp(topUpSol)} to qualify for more.`,
         urgency: 'warning',
         constraint: 'bond',
       }
@@ -167,7 +167,7 @@ export const getValidatorTip = (
           : 'Bond below penalty threshold.'
       const topUpStr =
         coverage.topUpToAvoidFee > 0
-          ? ` Top up ${payCta(coverage.topUpToAvoidFee)} to avoid the fee.`
+          ? ` Top up ${topUp(coverage.topUpToAvoidFee)} to avoid the fee.`
           : ''
       return {
         text: `${feeStr}${topUpStr}`,
@@ -178,7 +178,7 @@ export const getValidatorTip = (
 
     if (coverage.topUpToKeepStake > 0) {
       return {
-        text: `Top up ${payCta(coverage.topUpToKeepStake)} to keep your stake.`,
+        text: `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake.`,
         urgency: 'warning',
         constraint: 'bond',
       }
@@ -186,7 +186,7 @@ export const getValidatorTip = (
 
     if (coverage.topUpToIdealKeep > 0) {
       return {
-        text: `Top up ${payCta(coverage.topUpToIdealKeep)} for more stake.`,
+        text: `Top up ${topUp(coverage.topUpToIdealKeep)} for more stake.`,
         urgency: 'info',
         constraint: 'bond',
       }

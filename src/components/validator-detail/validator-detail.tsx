@@ -24,7 +24,7 @@ import {
   CSS_WARNING,
   CSS_MUTED_FG,
 } from 'src/css'
-import { cost, payCta, stake } from 'src/format'
+import { cost, topUp, stake } from 'src/format'
 import { computeBidPenalty } from 'src/services/bid-penalty'
 import { computeBidding } from 'src/services/bidding'
 import { computeBondCoverage } from 'src/services/bond-coverage'
@@ -85,15 +85,15 @@ export function bondCoverageLabel(
 ): string {
   if (health === 'critical')
     return coverage.topUpToAvoidFee > 0
-      ? `Top up ${payCta(coverage.topUpToAvoidFee)} to avoid the fee`
+      ? `Top up ${topUp(coverage.topUpToAvoidFee)} to avoid the fee`
       : 'Critical'
   if (health === 'watch')
     return coverage.topUpToKeepStake > 0
-      ? `Top up ${payCta(coverage.topUpToKeepStake)} to keep your stake`
+      ? `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake`
       : 'Watch'
   if (health === 'soft')
     return coverage.topUpToIdealKeep > 0
-      ? `Top up ${payCta(coverage.topUpToIdealKeep)} to qualify for more`
+      ? `Top up ${topUp(coverage.topUpToIdealKeep)} to qualify for more`
       : 'Adequate'
   return 'Fully covered'
 }

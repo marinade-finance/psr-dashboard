@@ -1,14 +1,6 @@
 import { describe, it, expect } from 'vitest'
 
-import {
-  sol,
-  pct,
-  pay,
-  payCta,
-  pmpe,
-  stake,
-  stakeCta,
-} from '../format'
+import { sol, pct, pay, pmpe, stake, topUp } from '../format'
 
 describe('sol', () => {
   it('keeps two decimals for sub-unit amounts', () => {
@@ -45,36 +37,22 @@ describe('pmpe', () => {
   })
 })
 
-// Regression: top-up CTAs that round to "0 SOL" — the bug was
-// "Top up 0 SOL to win more". CTAs floor sub-1 values to "<1" so they stay actionable.
-describe('payCta', () => {
-  it('positive sub-1 value displays as "<1 SOL", not "0 SOL"', () => {
-    expect(payCta(0.003)).toBe('<1 SOL')
-    expect(payCta(0.4)).toBe('<1 SOL')
+// Top-up advice ALWAYS rounds UP (ceil) and never shows "0 SOL" or
+// "<1 SOL": advising a rounded-down top-up leaves the bond short.
+describe('topUp', () => {
+  it('any positive value yields at least "1 SOL" (never "0" / "<1")', () => {
+    expect(topUp(0.0001)).toBe('1 SOL')
+    expect(topUp(0.4)).toBe('1 SOL')
   })
 
-  it('zero stays "0 SOL" (no false CTA)', () => {
-    expect(payCta(0)).toBe('0 SOL')
+  it('rounds up to the next whole SOL (ceil), never down', () => {
+    expect(topUp(1.2)).toBe('2 SOL')
+    expect(topUp(0.5)).toBe('1 SOL')
   })
 
-  it('values >= 0.5 round normally', () => {
-    expect(payCta(0.5)).toBe('1 SOL')
-    expect(payCta(42)).toBe('42 SOL')
-  })
-})
-
-describe('stakeCta', () => {
-  it('positive sub-1 value displays as "<1 SOL", not "0 SOL"', () => {
-    expect(stakeCta(0.4)).toBe('<1 SOL')
-  })
-
-  it('zero stays "0 SOL"', () => {
-    expect(stakeCta(0)).toBe('0 SOL')
-  })
-
-  it('values >= 0.5 round normally', () => {
-    expect(stakeCta(0.5)).toBe('1 SOL')
-    expect(stakeCta(42)).toBe('42 SOL')
+  it('whole values are unchanged', () => {
+    expect(topUp(3)).toBe('3 SOL')
+    expect(topUp(42)).toBe('42 SOL')
   })
 })
 

@@ -39,15 +39,12 @@ export const penalty = (n: number) => `${sol(n, 3)} SOL`
 // sub-1 SOL and rounding them to "0" or "1" reads as wrong.
 export const cost = (n: number) => `${sol(n, 3)} SOL`
 
-// Top-up CTAs: never claim "Top up 0 SOL". Sub-1-SOL values show "<1 SOL".
-export const stakeCta = (n: number): string => {
-  if (n > 0 && n < 0.5) return '<1 SOL'
-  return stake(n)
-}
-export const payCta = (n: number): string => {
-  if (n > 0 && n < 0.5) return '<1 SOL'
-  return pay(n)
-}
+// Top-up advice — SOL the user is told to deposit into their bond.
+// ALWAYS rounds UP (ceil): advising a rounded-down top-up would leave the
+// bond short, so the validator stays under-collateralised and the advice
+// is wrong. Any n > 0 yields at least "1 SOL" (never "0 SOL" / "<1 SOL").
+// Callers guard with `> 0`; n <= 0 is never displayed.
+export const topUp = (n: number) => `${Math.ceil(n)} SOL`
 
 export const lamportsToSol = (lamports: string) =>
   lamports.padStart(10, '0').replace(/(.{9})$/, '.$1')

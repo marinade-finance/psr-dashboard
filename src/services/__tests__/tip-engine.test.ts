@@ -271,10 +271,11 @@ describe('getValidatorTip soft health', () => {
   })
 })
 
-describe('getValidatorTip out-of-set bond top-up flooring', () => {
-  it('sub-1 SOL bond top-up renders as "<1 SOL", not "0 SOL"', () => {
-    // out-of-set (target=0) + unhealthy bond → "Bond too small for stake"
-    // The formatter previously emitted "Top up 0 SOL to win more".
+describe('getValidatorTip out-of-set bond top-up rounding', () => {
+  it('sub-1 SOL bond top-up rounds up to "1 SOL", never "0 SOL"', () => {
+    // out-of-set (target=0) + unhealthy bond → "Bond too small for stake".
+    // topUp ceils, so a tiny shortfall advises at least 1 SOL — advising a
+    // rounded-down (0 SOL) top-up would leave the bond short.
     const validator = makeValidator({
       auctionStake: { marinadeSamTargetSol: 0 },
       marinadeActivatedStakeSol: 100,
