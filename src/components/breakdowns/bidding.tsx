@@ -1,10 +1,9 @@
 import React from 'react'
 
-import { cost, pmpe, signedStake, stake, topUp } from 'src/format'
+import { cost, pmpe, topUp } from 'src/format'
 import { computeBidding } from 'src/services/bidding'
 import { computeInAuctionTarget } from 'src/services/in-auction-target'
 import { computeNextEpochStake } from 'src/services/next-epoch-stake'
-import { selectExpectedStakeChange } from 'src/services/sam'
 
 import { CalcCard, type CardStatus } from './card'
 import { OkRow, RevRow, SectionHeader } from './row'
@@ -24,17 +23,42 @@ type Props = {
   onGoToSim?: () => void
 }
 
-const EXPECTED_CHANGE_HELP =
-  'This can be 0 even when your target stake is above your active ' +
-  'stake. The redelegation budget is handed out to higher-priority ' +
-  'validators first, or you are cap or bond constrained, so no net ' +
-  'inflow is expected next epoch.'
+const STATIC_BID_HELP =
+  'The fixed CPMPE you configure on-chain — the same number the Simulate ' +
+  'input shows. Different from the auction effective bid, which is the ' +
+  'clearing price every winner actually pays.'
+
+const NON_BID_HELP =
+  'Your inflation + MEV + block-rewards PMPE — the revenue you bring ' +
+  'before any bid. The target bid below is the winning bar minus this.'
+
+const IN_AUCTION_HELP =
+  'Closed-form estimate. Adding or growing this winner shifts the clearing ' +
+  'price, so treat it as a floor and confirm in Simulate.'
+
+const NEXT_EPOCH_HELP =
+  'Being in the set is not the same as receiving stake. The redelegation ' +
+  'budget is handed out greedily by total PMPE, highest first, until it ' +
+  'runs out. Raising your bid reorders the queue and moves the bar — this ' +
+  'is a heuristic, verify in Simulate.'
+
+const PRIORITY_RANK_HELP =
+  'Where you sit when the budget is handed out: validators are served in ' +
+  'total PMPE order, highest first. A smaller number means the budget ' +
+  'reaches you sooner.'
+
+const BID_GAP_HELP =
+  'Static bid minus the auction clearing price. A gap above 0 means you ' +
+  'are bidding more than you need to clear today — it does not raise ' +
+  'your priority rank, since the queue is ordered on total PMPE, not bid.'
 
 // "What should I bid to get into the auction and win stake?" — the
-// actionable story. The two advisory tables are the centerpiece; the
-// stake position, current-vs-winning bid gap and cost-PMPE composition
-// are supporting context framed toward that question. Math comes verbatim
-// from the existing selectors — this component only arranges the rows.
+// actionable story, two parallel goals: get IN, get STAKE. Both sections
+// share the same row shape (bar → your total → target total → target
+// bid → bid increase) so the user reads them as parallel math. Stake
+// position and the bid-cost story live in the Payments tab; this tab is
+// purely about what to bid. Math comes verbatim from the existing
+// selectors — this component only arranges the rows.
 export const BiddingBreakdown: React.FC<Props> = ({
   title,
   guideTo,
@@ -54,28 +78,21 @@ export const BiddingBreakdown: React.FC<Props> = ({
   const nextEpoch = computeNextEpochStake(validator, auctionResult)
   const noFrontier = nextEpoch.priorityFrontierPmpe <= 0
 
-  const delta = selectExpectedStakeChange(validator)
-  const deltaSeverity = delta > 0 ? 'ok' : delta < 0 ? 'error' : undefined
-  const deltaText = signedStake(delta)
-
-  const inSet = inAuction.inSet
   const clears = inAuction.bidIncrease <= 0 && !inAuction.capConstrained
-  const status: CardStatus =
-    inSet && clears
+  const status: CardStatus = inAuction.capConstrained
+    ? {
+        label: `A concentration cap is full — raising your bid alone will not get you in. See ${inAuction.capConstraintName ?? 'the cap'} below.`,
+        tone: 'yellow',
+      }
+    : clears
       ? {
-          label: `Your bid clears the winning bar — you are in the auction. Bid ${pmpe(inAuction.targetBidPmpe)} PMPE or more to stay in.`,
+          label: `Already clears — keep your static bid at or above ${pmpe(inAuction.targetBidPmpe)} PMPE.`,
           tone: 'green',
         }
-      : inAuction.capConstrained
-        ? {
-            label:
-              'A concentration cap is full, so raising your bid alone will not get you in — see the Get into the auction section.',
-            tone: 'yellow',
-          }
-        : {
-            label: `Raise your static bid to ${pmpe(inAuction.targetBidPmpe)} PMPE to clear the winning bar and get into the auction.`,
-            tone: 'red',
-          }
+      : {
+          label: `Bid ${pmpe(inAuction.currentBidPmpe)} → ${pmpe(inAuction.targetBidPmpe)} PMPE to clear the winning bar.`,
+          tone: 'red',
+        }
 
   const tip = onGoToSim ? (
     <button
@@ -101,59 +118,60 @@ export const BiddingBreakdown: React.FC<Props> = ({
       )}
       <table className="w-full max-w-[34rem]">
         <tbody>
-          <SectionHeader title="Stake position" unit="SOL" colSpan={4} />
-          <RevRow label="Active Marinade stake" value={stake(m.active)} />
-          <RevRow label="Target Marinade stake" value={stake(m.target)} />
-          <RevRow
-            label="Expected change next epoch"
-            help={EXPECTED_CHANGE_HELP}
-            value={deltaText}
-            severity={deltaSeverity}
-          />
-
           <SectionHeader
-            title="Cost-PMPE composition"
-            help="Your non-bid revenue plus your static bid. This is the input to the target-bid math below — the bid you need is the winning bar minus your non-bid revenue."
+            title="Your cost-PMPE today"
+            help="What you bring to the auction this epoch: non-bid revenue (the commission you keep) plus your static bid. The two target sections below subtract your non-bid revenue from each bar to size the bid."
             unit="PMPE"
             colSpan={4}
           />
           <RevRow label="Inflation" pct={m.inflPct} pmpe={pmpe(m.inflPmpe)} />
           <RevRow label="MEV" pct={m.mevPct} pmpe={pmpe(m.mevPmpe)} />
           <RevRow label="Block rewards" pct={m.blkPct} pmpe={pmpe(m.blkPmpe)} />
-          <RevRow label="Static bid" pmpe={pmpe(m.bid)} />
+          <RevRow
+            label="Non-bid revenue"
+            help={NON_BID_HELP}
+            pmpe={pmpe(inAuction.nonBidPmpe)}
+            bold
+          />
+          <RevRow
+            label="Static bid"
+            help={STATIC_BID_HELP}
+            pmpe={pmpe(inAuction.currentBidPmpe)}
+          />
           <RevRow
             label="Total"
-            pmpe={pmpe(m.inflPmpe + m.mevPmpe + m.blkPmpe + m.bid)}
+            pmpe={pmpe(inAuction.nonBidPmpe + inAuction.currentBidPmpe)}
             bold
             separator
           />
 
-          <SectionHeader title="Bid gap" unit="PMPE" colSpan={4} />
-          <RevRow label="Static bid" pmpe={pmpe(m.bid)} />
-          <RevRow label="Auction effective bid" pmpe={pmpe(m.effBid)} />
-          <RevRow label="Resulting bid gap" pmpe={pmpe(m.bidGap)} bold />
-
           <SectionHeader
-            title="Get into the auction"
-            help="Closed-form estimate. Adding or growing this winner shifts the clearing price, so treat it as a floor and confirm in Simulate."
+            title="Goal A — get into the auction"
+            help={IN_AUCTION_HELP}
             unit="PMPE"
             colSpan={4}
           />
           <RevRow
-            label="Winning total"
+            label="Winning bar PMPE"
             pmpe={pmpe(inAuction.winningTotalPmpe)}
           />
-          <RevRow label="Non-bid revenue" pmpe={pmpe(inAuction.nonBidPmpe)} />
           <RevRow
-            label="Current static bid"
-            pmpe={pmpe(inAuction.currentBidPmpe)}
+            label="Your current total"
+            pmpe={pmpe(inAuction.nonBidPmpe + inAuction.currentBidPmpe)}
           />
           <RevRow
             label="Target static bid"
             pmpe={pmpe(inAuction.targetBidPmpe)}
             bold
           />
-          {inAuction.bidIncrease > 0 ? (
+          {inAuction.capConstrained ? (
+            <RevRow
+              label={`Binding cap — ${inAuction.capConstraintName ?? 'concentration'} is full`}
+              value="blocked"
+              severity="error"
+              bold
+            />
+          ) : inAuction.bidIncrease > 0 ? (
             <RevRow
               label="Bid increase needed"
               pmpe={pmpe(inAuction.bidIncrease)}
@@ -169,7 +187,6 @@ export const BiddingBreakdown: React.FC<Props> = ({
           <RevRow
             label="Minimum bond required"
             value={cost(inAuction.bondFloorToBack)}
-            bold
           />
           {inAuction.bondTopUp > 0 ? (
             <RevRow
@@ -181,64 +198,27 @@ export const BiddingBreakdown: React.FC<Props> = ({
           ) : (
             <OkRow message="Bond covers the stake." colSpan={3} />
           )}
-          {inAuction.capConstrained && (
-            <RevRow
-              label={`Binding cap — ${inAuction.capConstraintName ?? 'concentration'} is full`}
-              value="blocked"
-              severity="error"
-              bold
-            />
-          )}
 
           <SectionHeader
-            title="Get stake next epoch"
-            help="Being in the set is not the same as getting stake. Redelegation budget is handed out greedily by total PMPE, highest first, until it runs out — this estimate moves as bids change, so confirm in Simulate."
+            title="Goal B — get stake next epoch"
+            help={NEXT_EPOCH_HELP}
             unit="PMPE"
             colSpan={4}
           />
-          <RevRow
-            label="Expected stake change"
-            pmpe={
-              nextEpoch.expectedDeltaSol === 0
-                ? '—'
-                : signedStake(nextEpoch.expectedDeltaSol)
-            }
-          />
-          <RevRow
-            label="Stake the budget pushes to you"
-            help="SOL the redelegation budget is expected to send into this validator next epoch. The budget is handed out greedily, highest total PMPE first, to validators below their target — this is what reaches you before the budget runs dry."
-            pmpe={stake(nextEpoch.redelegationInflowSol)}
-          />
-          <RevRow
-            label="Redelegation budget this run"
-            pmpe={stake(nextEpoch.redelegationBudgetSol)}
-          />
-          <RevRow
-            label="Your priority rank"
-            help="Where you sit when the budget is handed out: validators are served in total PMPE order, highest first. A smaller number means the budget reaches you sooner."
-            value={`#${nextEpoch.priorityRank}`}
-          />
-          <RevRow
-            label="Your bid gap"
-            help="Your static bid minus the auction clearing price. A gap above 0 means you are bidding more than you need to clear today — it does not raise your priority rank, since the budget is ordered on total PMPE, not bid."
-            pmpe={pmpe(nextEpoch.bidGapPmpe)}
-          />
           {noFrontier ? (
-            <OkRow message="No binding priority bar this run." colSpan={3} />
+            <OkRow
+              message="No binding priority bar this run — every winner gets served."
+              colSpan={3}
+            />
           ) : (
             <>
               <RevRow
-                label="Priority bar total"
+                label="Priority bar PMPE"
                 pmpe={pmpe(nextEpoch.priorityFrontierPmpe)}
               />
               <RevRow
                 label="Your current total"
                 pmpe={pmpe(nextEpoch.currentTotalPmpe)}
-              />
-              <RevRow
-                label="Target total"
-                pmpe={pmpe(nextEpoch.targetTotalPmpePriority)}
-                bold
               />
               <RevRow
                 label="Target static bid"
@@ -247,7 +227,7 @@ export const BiddingBreakdown: React.FC<Props> = ({
               />
               {nextEpoch.bidIncreaseForPriority > 0 ? (
                 <RevRow
-                  label="Bid increase for priority"
+                  label="Bid increase needed"
                   pmpe={pmpe(nextEpoch.bidIncreaseForPriority)}
                   severity="warning"
                   bold
@@ -258,6 +238,16 @@ export const BiddingBreakdown: React.FC<Props> = ({
                   colSpan={3}
                 />
               )}
+              <RevRow
+                label="Your priority rank"
+                help={PRIORITY_RANK_HELP}
+                value={`#${nextEpoch.priorityRank}`}
+              />
+              <RevRow
+                label="Your bid gap"
+                help={BID_GAP_HELP}
+                pmpe={pmpe(nextEpoch.bidGapPmpe)}
+              />
             </>
           )}
         </tbody>
