@@ -887,16 +887,6 @@ export const SamTable: React.FC<Props> = ({
             capPct={concentration.asoCapPct}
             help="Share of auction-distributed stake by ASO (Autonomous System Operator). Bar fills against the per-ASO cap. (capped) means at least one validator was cut by the cap."
           />
-          <ConcentrationMetric
-            label="Top Countries"
-            rows={concentration.countries}
-            capPct={concentration.countryCapPct}
-          />
-          <ConcentrationMetric
-            label="Top ASOs"
-            rows={concentration.asos}
-            capPct={concentration.asoCapPct}
-          />
         </div>
 
         {/* Search row — sits above the table, aligned with validator column */}
