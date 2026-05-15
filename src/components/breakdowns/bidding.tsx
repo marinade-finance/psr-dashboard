@@ -205,7 +205,7 @@ export const BiddingBreakdown: React.FC<Props> = ({
             severity="ok"
           />
 
-          <SectionHeader title="Bid" colSpan={4} />
+          <SectionHeader title="Bid gap" colSpan={4} />
           <RevRow label="Static bid PMPE" pmpe={pmpe(metrics.bid)} />
           <RevRow
             label="Auction effective bid PMPE"
