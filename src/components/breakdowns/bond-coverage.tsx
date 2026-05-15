@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { pay, payCta, pmpe, stake } from 'src/format'
+import { cost, payCta, pay, pmpe, stake } from 'src/format'
 import { computeBondCoverage } from 'src/services/bond-coverage'
 
 import { CalcCard } from './card'
@@ -138,7 +138,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           <CalcRow
             label="Claimable bond balance"
             help="The bond SOL the protocol can draw against right now to cover fees or shortfalls. Excludes amounts locked in pending operations."
-            value={pay(coverage.claimableBondBalanceSol)}
+            value={cost(coverage.claimableBondBalanceSol)}
             bold
           />
           <CalcRow
@@ -186,7 +186,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           <CalcRow
             label="Bond balance"
             help="Total SOL you've deposited as bond — gross, before subtracting amounts locked in pending operations."
-            value={pay(coverage.bondBalanceSol)}
+            value={cost(coverage.bondBalanceSol)}
             bold
           />
           <CalcRow
@@ -230,7 +230,8 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
                     secondary={stake(coverage.carriedPaidUndelegationSol)}
                   />
                   <CalcRow
-                    label="Projected exposed stake — after undelegation"
+                    label="Projected exposed stake"
+                    help="Your current exposed stake minus the paid undelegation already scheduled. This is the basis the penalty threshold uses, not today's stake."
                     secondary={stake(coverage.projectedExposedStakeSol)}
                   />
                 </>

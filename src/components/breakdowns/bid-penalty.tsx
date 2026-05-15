@@ -95,7 +95,8 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
             secondary={`${metrics.historyEpochs} epochs`}
           />
           <CalcRow
-            label="Worst historical effective participating bid PMPE"
+            label="Historical bid limit"
+            help="The lowest effective participating bid PMPE seen across the recent history window. Defines a floor — your bid can't drop below it without triggering the penalty."
             value={pmpe(metrics.worstHistoricalPmpe)}
           />
 
@@ -109,7 +110,8 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
             value={pmpe(metrics.effParticipatingBidPmpe)}
           />
           <CalcRow
-            label="Limit — min(effective, worst historical)"
+            label="Effective limit"
+            help="The lower of your current effective participating bid PMPE and the historical bid limit. Whichever is smaller becomes the threshold the penalty checks against."
             value={pmpe(metrics.limit)}
           />
           <CalcRow
@@ -138,7 +140,8 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
             secondary={pct(metrics.penaltyCoef, 2)}
           />
           <CalcRow
-            label="Base — winning PMPE + effective participating bid PMPE"
+            label="Penalty base"
+            help="Winning PMPE plus your effective participating bid PMPE. The penalty coefficient is applied to this sum to size the per-PMPE charge."
             value={pmpe(metrics.base)}
           />
           <CalcRow
