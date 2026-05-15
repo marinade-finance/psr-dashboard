@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 
 import { cn } from 'src/class_utils'
+import { HelpTip } from 'src/components/help-tip/help-tip'
+import { Card } from 'src/components/ui/card'
 import { pct, sol } from 'src/format'
 
 import type { ConcentrationRow } from 'src/services/sam'
@@ -15,7 +17,8 @@ type Props = {
 const TOP_N = 3
 const TOOLTIP_N = 15
 
-const BAR_TONES = ['bg-chart-1', 'bg-chart-2', 'bg-chart-3']
+const BAR_TONE_DEFAULT = 'bg-chart-1'
+const BAR_TONES = [BAR_TONE_DEFAULT, 'bg-chart-2', 'bg-chart-3']
 
 export const ConcentrationMetric: React.FC<Props> = ({
   label,
@@ -29,25 +32,21 @@ export const ConcentrationMetric: React.FC<Props> = ({
   const remaining = rows.length - tipRows.length
 
   return (
-    <div
-      className="relative flex flex-col gap-1.5 px-3 py-2 bg-card rounded-md border border-border-grid"
+    <Card
+      className="relative flex flex-col px-3 py-3 sm:px-5 sm:py-4 overflow-visible"
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
     >
-      <div className="flex items-center justify-between gap-1">
-        <span className="text-xs text-muted-foreground">{label}</span>
-        {help && (
-          <span className="text-[10px] text-muted-foreground/60" title={help}>
-            ?
-          </span>
-        )}
+      <div className="text-xs uppercase tracking-wider font-medium text-muted-foreground mb-1 flex items-center gap-1">
+        {label}
+        {help && <HelpTip text={help} />}
       </div>
       <div className="flex flex-col gap-0.5">
         {top.map((r, i) => {
           const fill = capPct > 0 ? Math.min(r.pctOfTotal / capPct, 1) * 100 : 0
           const barClass = r.atCap
             ? 'bg-destructive'
-            : (BAR_TONES[i] ?? 'bg-chart-1')
+            : (BAR_TONES[i] ?? BAR_TONE_DEFAULT)
           const textClass = r.atCap
             ? 'text-destructive font-semibold'
             : 'text-foreground'
@@ -102,7 +101,7 @@ export const ConcentrationMetric: React.FC<Props> = ({
               {tipRows.map((r, i) => {
                 const swatch = r.atCap
                   ? 'bg-destructive'
-                  : (BAR_TONES[i] ?? 'bg-chart-1')
+                  : (BAR_TONES[i] ?? BAR_TONE_DEFAULT)
                 return (
                   <tr
                     key={r.key}
@@ -147,6 +146,6 @@ export const ConcentrationMetric: React.FC<Props> = ({
           )}
         </div>
       )}
-    </div>
+    </Card>
   )
 }
