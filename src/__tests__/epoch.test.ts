@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest'
 
 import {
+  EPOCH_DURATION_MS,
   epochMeterModel,
+  selectCurrentEpochProgress,
   selectLatestSettlement,
   selectNetworkEpoch,
 } from '../services/epoch'
@@ -10,7 +12,20 @@ import {
   type ProtectedEventWithValidator,
 } from '../services/validator-with-protected_event'
 
-import type { Validator } from '../services/validators'
+import type { Validator, ValidatorEpoch } from '../services/validators'
+
+const stat = (
+  over: Partial<ValidatorEpoch> & { epoch: number },
+): ValidatorEpoch => ({
+  credits: 0,
+  marinade_stake: '0',
+  marinade_native_stake: '0',
+  activated_stake: '0',
+  commission_advertised: 0,
+  epoch_start_at: null,
+  epoch_end_at: null,
+  ...over,
+})
 
 const validator = (epochs: number[]): Validator => ({
   vote_account: 'v',
@@ -19,16 +34,7 @@ const validator = (epochs: number[]): Validator => ({
   marinade_stake: '0',
   marinade_native_stake: '0',
   activated_stake: '0',
-  epoch_stats: epochs.map(epoch => ({
-    epoch,
-    credits: 0,
-    marinade_stake: '0',
-    marinade_native_stake: '0',
-    activated_stake: '0',
-    commission_advertised: 0,
-    epoch_start_at: null,
-    epoch_end_at: null,
-  })),
+  epoch_stats: epochs.map(epoch => stat({ epoch })),
 })
 
 const pe = (
@@ -59,6 +65,50 @@ describe('selectNetworkEpoch', () => {
   })
 })
 
+describe('selectCurrentEpochProgress', () => {
+  const start = Date.parse('2026-05-14T00:00:00Z')
+
+  it('returns null when no stats have a start time', () => {
+    expect(selectCurrentEpochProgress([validator([612])], start)).toBe(null)
+  })
+
+  it('uses the in-progress stat (epoch_end_at === null) with a start time', () => {
+    const v: Validator = {
+      ...validator([]),
+      epoch_stats: [
+        stat({
+          epoch: 611,
+          epoch_start_at: '2026-05-12T00:00:00Z',
+          epoch_end_at: '2026-05-14T00:00:00Z',
+        }),
+        stat({
+          epoch: 612,
+          epoch_start_at: '2026-05-14T00:00:00Z',
+          epoch_end_at: null,
+        }),
+      ],
+    }
+    const half = start + EPOCH_DURATION_MS / 2
+    const result = selectCurrentEpochProgress([v], half)
+    expect(result?.epoch).toBe(612)
+    expect(result?.percent).toBeCloseTo(50, 5)
+    expect(result?.hoursRemaining).toBeCloseTo(24, 5)
+  })
+
+  it('clamps percent at 100 past the 48h mark', () => {
+    const v: Validator = {
+      ...validator([]),
+      epoch_stats: [
+        stat({ epoch: 612, epoch_start_at: '2026-05-14T00:00:00Z' }),
+      ],
+    }
+    const over = start + EPOCH_DURATION_MS * 2
+    const result = selectCurrentEpochProgress([v], over)
+    expect(result?.percent).toBe(100)
+    expect(result?.hoursRemaining).toBe(0)
+  })
+})
+
 describe('selectLatestSettlement', () => {
   it('picks the highest-epoch event and maps FACT to on-chain', () => {
     expect(
@@ -84,7 +134,7 @@ describe('selectLatestSettlement', () => {
 })
 
 describe('epochMeterModel', () => {
-  it('equal epochs: single number, no arrow, not stale, live copy', () => {
+  it('equal epochs: single number, no arrow, not stale, timeline with live=target', () => {
     const m = epochMeterModel({
       auctionEpoch: 612,
       networkEpoch: 612,
@@ -93,13 +143,10 @@ describe('epochMeterModel', () => {
     expect(m.label).toBe('Epoch 612')
     expect(m.arrow).toBe(false)
     expect(m.stale).toBe(false)
-    expect(m.lines).toEqual([
-      'Auction allocates stake for epoch 612.',
-      'Solana is in epoch 612 now — this is the live allocation.',
-    ])
+    expect(m.timeline).toEqual({ settled: null, live: 612, target: 612 })
   })
 
-  it('auction = network + 1: arrow, next-epoch copy, not stale', () => {
+  it('auction = network + 1: arrow, future target, not stale', () => {
     const m = epochMeterModel({
       auctionEpoch: 613,
       networkEpoch: 612,
@@ -108,37 +155,21 @@ describe('epochMeterModel', () => {
     expect(m.label).toBe('612 → 613')
     expect(m.arrow).toBe(true)
     expect(m.stale).toBe(false)
-    expect(m.lines[1]).toBe(
-      "Solana is in epoch 612 now — this is next epoch's allocation.",
-    )
+    expect(m.timeline.target).toBe(613)
+    expect(m.timeline.live).toBe(612)
   })
 
-  it('stale (auction < network): warning, behind-the-chain copy', () => {
+  it('stale (auction < network): warning flag set', () => {
     const m = epochMeterModel({
       auctionEpoch: 610,
       networkEpoch: 612,
       settlement: null,
     })
-    expect(m.label).toBe('612 → 610')
-    expect(m.arrow).toBe(true)
     expect(m.stale).toBe(true)
-    expect(m.lines[1]).toBe(
-      'Solana is in epoch 612 now — the view is 2 epochs behind the chain.',
-    )
+    expect(m.timeline).toEqual({ settled: null, live: 612, target: 610 })
   })
 
-  it('one epoch behind uses singular "epoch"', () => {
-    const m = epochMeterModel({
-      auctionEpoch: 611,
-      networkEpoch: 612,
-      settlement: null,
-    })
-    expect(m.lines[1]).toBe(
-      'Solana is in epoch 612 now — the view is 1 epoch behind the chain.',
-    )
-  })
-
-  it('null network epoch: line 2 omitted, no arrow, single number', () => {
+  it('null network epoch: live missing, no arrow', () => {
     const m = epochMeterModel({
       auctionEpoch: 612,
       networkEpoch: null,
@@ -147,26 +178,15 @@ describe('epochMeterModel', () => {
     expect(m.label).toBe('Epoch 612')
     expect(m.arrow).toBe(false)
     expect(m.stale).toBe(false)
-    expect(m.lines).toEqual(['Auction allocates stake for epoch 612.'])
+    expect(m.timeline).toEqual({ settled: null, live: null, target: 612 })
   })
 
-  it('FACT settlement: on-chain wording', () => {
+  it('settlement populates timeline.settled', () => {
     const m = epochMeterModel({
       auctionEpoch: 612,
       networkEpoch: 612,
       settlement: { epoch: 611, onChain: true },
     })
-    expect(m.lines[2]).toBe('Epoch 611 settlements: on-chain.')
-  })
-
-  it('ESTIMATE settlement: not-yet-on-chain wording', () => {
-    const m = epochMeterModel({
-      auctionEpoch: 612,
-      networkEpoch: 612,
-      settlement: { epoch: 612, onChain: false },
-    })
-    expect(m.lines[2]).toBe(
-      'Epoch 612 settlements: estimated, not yet on-chain.',
-    )
+    expect(m.timeline.settled).toBe(611)
   })
 })
