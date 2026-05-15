@@ -22,18 +22,21 @@ const BAR_TONE_DEFAULT = 'bg-chart-1'
 const BAR_TONES = [BAR_TONE_DEFAULT, 'bg-chart-2', 'bg-chart-3']
 
 // Rows 0-2 keep their identity hue (matches the top-3 mini view). Rows 3+
-// are a single fading tail: alternate the two "next" palette hues and decay
-// opacity every two rows so a long list trails off instead of repeating one
-// flat colour. Floor keeps the longest tails faintly visible.
+// are a single fading tail: one hue not used by the top-3 (chart-5), with
+// opacity decaying every row so a long list trails off into the background.
+// A floor keeps the longest tails faintly visible.
 // Bars sit ~30% lighter than the text so the value stays the focus; no
 // Tailwind step lands on 0.175, so the arbitrary value is intentional.
 const BAR_OPACITY_BASE = 'opacity-[0.175]'
-const TAIL_TONES = ['bg-chart-4', 'bg-chart-5']
+const TAIL_TONE = 'bg-chart-5'
 const TAIL_OPACITY = [
-  BAR_OPACITY_BASE,
-  'opacity-[0.14]',
-  'opacity-[0.105]',
+  'opacity-[0.155]',
+  'opacity-[0.135]',
+  'opacity-[0.115]',
+  'opacity-[0.1]',
+  'opacity-[0.085]',
   'opacity-[0.07]',
+  'opacity-[0.055]',
 ]
 
 const barTone = (i: number): { tone: string; opacity: string } => {
@@ -41,11 +44,8 @@ const barTone = (i: number): { tone: string; opacity: string } => {
     return { tone: BAR_TONES[i], opacity: BAR_OPACITY_BASE }
   const t = i - BAR_TONES.length
   return {
-    tone: TAIL_TONES[t % TAIL_TONES.length],
-    opacity:
-      TAIL_OPACITY[
-        Math.min(Math.floor(t / TAIL_TONES.length), TAIL_OPACITY.length - 1)
-      ],
+    tone: TAIL_TONE,
+    opacity: TAIL_OPACITY[Math.min(t, TAIL_OPACITY.length - 1)],
   }
 }
 
