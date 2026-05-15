@@ -33,7 +33,6 @@ import { HELP_TEXT } from 'src/services/help-text'
 import { fetchPsrEstimatesForValidator } from 'src/services/protected-events-estimator'
 import {
   selectExpectedStakeChange,
-  selectMaxAPY,
   selectVoteAccount,
   selectWinningApyForValidator,
 } from 'src/services/sam'
@@ -220,21 +219,10 @@ export const ValidatorDetail = ({
   const [tab, setTab] = useState<Tab>('overview')
 
   const inSet = validator.auctionStake.marinadeSamTargetSol > 0
-  // In-set/out-of-set validators are interleaved by maxApy when the auction
-  // skips high-yield validators (constraints, blacklist) for lower-yield ones,
-  // so the cutoff distance must be counted, not derived from rank − inSetCount.
-  const posVsWinning = useMemo(() => {
-    const ourApy = selectMaxAPY(validator, epochsPerYear)
-    let count = 0
-    for (const other of auctionResult.auctionData.validators) {
-      if (selectVoteAccount(other) === voteAccount) continue
-      const otherInSet = other.auctionStake.marinadeSamTargetSol > 0
-      const otherApy = selectMaxAPY(other, epochsPerYear)
-      if (inSet && otherInSet && otherApy < ourApy) count++
-      else if (!inSet && !otherInSet && otherApy > ourApy) count++
-    }
-    return inSet ? count : -count
-  }, [auctionResult, validator, voteAccount, inSet, epochsPerYear])
+  // Dense rank around the winning cutoff: 0 at cutoff, +N at the Nth distinct
+  // APY tier above, −N below. Computed once in sam.ts; consistent with the
+  // rank cell in sam-table.
+  const posVsWinning = validator.values.cutoffRank ?? 0
   const bondCoverage = useMemo(
     () =>
       computeBondCoverage(
