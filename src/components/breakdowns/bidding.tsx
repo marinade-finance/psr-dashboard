@@ -220,12 +220,7 @@ export const BiddingBreakdown: React.FC<Props> = ({
             pmpe={pmpe(metrics.activatingStakePmpe)}
             value={cost(metrics.activatingCost)}
           />
-          <RevRow
-            label="Total"
-            value={cost(metrics.total)}
-            total
-            severity="ok"
-          />
+          <RevRow label="Total" value={cost(metrics.total)} total />
         </tbody>
       </table>
     </CalcCard>
