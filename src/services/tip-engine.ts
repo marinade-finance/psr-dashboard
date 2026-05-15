@@ -24,6 +24,7 @@ import { computeBondCoverage } from './bond-coverage'
 import { bondHealthFromAuction } from './bond-health'
 import { bondUtilizationPct, apyBreakdown } from './calculations'
 
+import type { BondCoverage } from './bond-coverage'
 import type { BondHealthState } from './bond-health'
 import type { AugmentedAuctionValidator } from './sam'
 import type {
@@ -131,6 +132,76 @@ export const getTipIcon = (tip: ValidatorTip): React.ReactNode => {
   }
 }
 
+// SINGLE canonical source for every bond-state CTA string. The sam-table
+// Next Step pill, the validator-detail header tip and the Bond breakdown
+// status banner all surface THIS text byte-for-byte for a given state —
+// never an independent re-wording. Each line is one short clause, sentence
+// case, no parentheses, and carries the decisive value (the SOL top-up /
+// minimum, or the fee figure when no top-up applies). `tone` is the
+// red/yellow/green severity axis the breakdown banner uses; `urgency` is
+// the tip-pill axis. They agree by construction.
+export type BondAdvice = {
+  text: string
+  urgency: TipUrgency
+  tone: 'red' | 'yellow' | 'green'
+}
+
+export function bondAdvice(
+  coverage: BondCoverage,
+  health: BondHealthState,
+  bondRiskFeeSol: number,
+  minBondBalanceSol: number,
+  bondBalanceSol: number,
+): BondAdvice {
+  if (health === 'no-bond') {
+    return {
+      text: `Post a bond — ${stake(minBondBalanceSol)} required.`,
+      urgency: 'critical',
+      tone: 'red',
+    }
+  }
+  // Below the SDK minimum: clipBondStakeCap → 0, a hard block. The minimum
+  // is the decisive value.
+  if (bondBalanceSol < minBondBalanceSol) {
+    return {
+      text: `Bond below minimum — ${stake(minBondBalanceSol)} required.`,
+      urgency: 'critical',
+      tone: 'red',
+    }
+  }
+  if (health === 'critical') {
+    // A fee is charged / imminent. The top-up that clears it is the
+    // decisive value; only when no top-up is computable do we fall back
+    // to the fee figure.
+    const text =
+      coverage.topUpToAvoidFee > 0
+        ? `Top up ${topUp(coverage.topUpToAvoidFee)} to avoid the bond risk fee.`
+        : bondRiskFeeSol > 0
+          ? `Bond risk fee ${pay(bondRiskFeeSol)} this epoch.`
+          : 'Bond too thin — a bond risk fee can be charged.'
+    return { text, urgency: 'critical', tone: 'red' }
+  }
+  if (health === 'watch') {
+    const text =
+      coverage.topUpToKeepStake > 0
+        ? `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake.`
+        : 'Bond covers current stake.'
+    return { text, urgency: 'warning', tone: 'yellow' }
+  }
+  if (health === 'soft') {
+    const text =
+      coverage.topUpToIdealKeep > 0
+        ? `Top up ${topUp(coverage.topUpToIdealKeep)} to grow stake.`
+        : 'Bond meets ideal coverage.'
+    return { text, urgency: 'info', tone: 'yellow' }
+  }
+  return {
+    text: 'Bond has enough coverage.',
+    urgency: 'positive',
+    tone: 'green',
+  }
+}
+
 function outOfSetTip(
   validator: AugmentedAuctionValidator,
   dsSamConfig: DsSamConfig,
@@ -138,6 +209,7 @@ function outOfSetTip(
   health: BondHealthState,
   delta: number,
 ): ValidatorTip {
+  const bondBalance = validator.bondBalanceSol ?? 0
   if (health !== 'healthy') {
     const coverage = computeBondCoverage(
       validator,
@@ -146,16 +218,20 @@ function outOfSetTip(
       winningTotalPmpe,
       dsSamConfig.bondRiskFeeMult,
     )
-    const topUpSol =
-      coverage.topUpToIdealKeep > 0
-        ? coverage.topUpToIdealKeep
-        : coverage.topUpToKeepStake
-    if (topUpSol > 0) {
-      return {
-        text: `Top up ${topUp(topUpSol)} to grow stake.`,
-        urgency: 'warning',
-        constraint: 'bond',
-        delta,
+    // Below-min stays a hard critical block; otherwise the canonical bond
+    // advice (top-up to grow / keep) — same string the breakdown shows.
+    if (bondBalance >= dsSamConfig.minBondBalanceSol) {
+      const topUpSol =
+        coverage.topUpToIdealKeep > 0
+          ? coverage.topUpToIdealKeep
+          : coverage.topUpToKeepStake
+      if (topUpSol > 0) {
+        return {
+          text: `Top up ${topUp(topUpSol)} to grow stake.`,
+          urgency: 'warning',
+          constraint: 'bond',
+          delta,
+        }
       }
     }
   }
@@ -163,12 +239,11 @@ function outOfSetTip(
   // validator can't win any stake regardless of bid — a hard block, hence
   // critical (red). bond-health also reports 'no-bond'/'critical' here, so
   // chip and tip agree on tone.
-  const bondBalance = validator.bondBalanceSol ?? 0
   if (bondBalance < dsSamConfig.minBondBalanceSol) {
     const text =
       bondBalance <= 0
-        ? `No bond posted — ${stake(dsSamConfig.minBondBalanceSol)} required. Post a bond to qualify.`
-        : `Bond below minimum — ${stake(dsSamConfig.minBondBalanceSol)} required. Top up to qualify.`
+        ? `Post a bond — ${stake(dsSamConfig.minBondBalanceSol)} required.`
+        : `Bond below minimum — ${stake(dsSamConfig.minBondBalanceSol)} required.`
     return {
       text,
       urgency: 'critical',
@@ -199,7 +274,9 @@ export const getValidatorTip = (
   if (!inSet)
     return outOfSetTip(validator, dsSamConfig, winningTotalPmpe, health, delta)
 
-  // Bond CTA cascade — priority: avoid fee > keep stake > ideal.
+  // Bond CTA cascade — priority: avoid fee > keep stake > ideal. All three
+  // strings come from the canonical bondAdvice() so the breakdown banner
+  // and the header/pill never diverge.
   if (health === 'critical' || health === 'watch' || health === 'soft') {
     const coverage = computeBondCoverage(
       validator,
@@ -209,27 +286,29 @@ export const getValidatorTip = (
       dsSamConfig.bondRiskFeeMult,
     )
     const bondRiskFeeSol = validator.values?.bondRiskFeeSol ?? 0
+    const advice = bondAdvice(
+      coverage,
+      health,
+      bondRiskFeeSol,
+      dsSamConfig.minBondBalanceSol,
+      validator.bondBalanceSol ?? 0,
+    )
 
-    if (bondRiskFeeSol > 0 || coverage.topUpToAvoidFee > 0) {
-      const feeStr =
-        bondRiskFeeSol > 0
-          ? `Estimated bond risk fee: ${pay(bondRiskFeeSol)}.`
-          : 'Your bond is too thin to back your stake, so a bond risk fee can be charged and stake will be undelegated.'
-      const topUpStr =
-        coverage.topUpToAvoidFee > 0
-          ? ` Top up ${topUp(coverage.topUpToAvoidFee)} to avoid the fee.`
-          : ''
+    if (
+      health === 'critical' &&
+      (bondRiskFeeSol > 0 || coverage.topUpToAvoidFee > 0)
+    ) {
       return {
-        text: `${feeStr}${topUpStr}`,
+        text: advice.text,
         urgency: 'critical',
         constraint: 'bond',
         delta,
       }
     }
 
-    if (coverage.topUpToKeepStake > 0) {
+    if (health === 'watch' && coverage.topUpToKeepStake > 0) {
       return {
-        text: `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake.`,
+        text: advice.text,
         urgency: 'warning',
         constraint: 'bond',
         delta,
@@ -246,13 +325,8 @@ export const getValidatorTip = (
     // (critical fee + watch keep-stake stay ahead of delta: the inflow does
     // not pay a fee nor refill the bond, so that advice is truthful even
     // while gaining.)
-    if (coverage.topUpToIdealKeep > 0 && delta <= 0) {
-      return {
-        text: `Top up ${topUp(coverage.topUpToIdealKeep)} to grow stake.`,
-        urgency: 'info',
-        constraint: 'bond',
-        delta,
-      }
+    if (health === 'soft' && coverage.topUpToIdealKeep > 0 && delta <= 0) {
+      return { text: advice.text, urgency: 'info', constraint: 'bond', delta }
     }
   }
 

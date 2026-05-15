@@ -7,9 +7,12 @@ import { ICON_RANK } from 'src/components/icons/icon-rank'
 import { ICON_RIGHT } from 'src/components/icons/icon-right'
 import { ICON_UP } from 'src/components/icons/icon-up'
 
+import { computeBondCoverage } from '../bond-coverage'
+import { bondHealthFromAuction } from '../bond-health'
 import { selectProtectedStakeReason } from '../protected-events'
 import {
   getValidatorTip,
+  bondAdvice,
   getApyBreakdown,
   getBondHealthStyle,
   getTipStyle,
@@ -59,6 +62,10 @@ const DS_SAM_CONFIG = {
   minBondEpochs: 0,
   idealBondEpochs: 10,
   bondRiskFeeMult: 1,
+  // Tiny so the existing 0.001-SOL "critical fee" fixtures stay ABOVE the
+  // SDK minimum (they pin the fee branch, not the below-min branch); large
+  // enough that stake(minBondBalanceSol) renders for the no-bond message.
+  minBondBalanceSol: 0.0001,
 } as unknown as DsSamConfig
 
 // --- calculateBondUtilization ---
@@ -395,6 +402,127 @@ describe('getValidatorTip — positive delta vs bond top-up precedence', () => {
     expect(tip.constraint).toBe('bond')
     expect(tip.text).toContain('Top up')
     expect(tip.delta).toBe(7500)
+  })
+})
+
+// --- canonical CTA source: one string, three surfaces ---------------------
+// bondAdvice() is the SINGLE source. getValidatorTip's bond branch and the
+// bond-coverage breakdown statusLine BOTH derive their text from it, so for a
+// given validator state the sam-table pill, the detail header and the bond
+// banner show byte-identical text. We assert that boundary here, plus the
+// owner's wording contract: no parentheses, carries the decisive value.
+
+describe('bondAdvice — canonical CTA contract', () => {
+  const adviceFor = (over: Record<string, unknown>) => {
+    const v = makeValidator(over)
+    const health = bondHealthFromAuction(v, DS_SAM_CONFIG, 100)
+    const coverage = computeBondCoverage(
+      v,
+      DS_SAM_CONFIG.minBondEpochs,
+      DS_SAM_CONFIG.idealBondEpochs,
+      100,
+      DS_SAM_CONFIG.bondRiskFeeMult,
+    )
+    return bondAdvice(
+      coverage,
+      health,
+      (v.values as { bondRiskFeeSol?: number }).bondRiskFeeSol ?? 0,
+      (DS_SAM_CONFIG as unknown as { minBondBalanceSol: number })
+        .minBondBalanceSol ?? 0,
+      v.bondBalanceSol ?? 0,
+    )
+  }
+
+  const states: Record<string, unknown>[] = [
+    { bondBalanceSol: 0, claimableBondBalanceSol: 0 }, // no-bond
+    {
+      bondGoodForNEpochs: 4,
+      bondBalanceSol: 0.001,
+      claimableBondBalanceSol: 0,
+      marinadeActivatedStakeSol: 100000,
+    }, // critical (fee)
+    {
+      bondBalanceSol: 100,
+      claimableBondBalanceSol: 5,
+      marinadeActivatedStakeSol: 10000,
+      values: { paidUndelegationSol: 8000, bondRiskFeeSol: 0 },
+    }, // watch (keep stake)
+    {
+      bondBalanceSol: 50,
+      claimableBondBalanceSol: 50,
+      marinadeActivatedStakeSol: 10000,
+    }, // soft (grow)
+    {
+      bondBalanceSol: 400,
+      claimableBondBalanceSol: 400,
+      marinadeActivatedStakeSol: 10000,
+    }, // healthy
+  ]
+
+  it('every CTA is paren-free, sentence-case, ends with a period', () => {
+    for (const s of states) {
+      const { text } = adviceFor(s)
+      expect(text).not.toMatch(/[()]/)
+      expect(text[0]).toBe(text[0].toUpperCase())
+      expect(text.endsWith('.')).toBe(true)
+      expect(text.length).toBeLessThanOrEqual(60)
+    }
+  })
+
+  it('value-bearing CTAs carry their decisive SOL figure', () => {
+    // top-up / minimum CTAs must contain a number + SOL.
+    for (const s of states) {
+      const { text } = adviceFor(s)
+      if (
+        text.startsWith('Top up') ||
+        text.includes('required') ||
+        text.includes('bond risk fee ')
+      ) {
+        expect(text).toMatch(/\d[\d,]*\s*SOL/)
+      }
+    }
+  })
+
+  it('no CTA is the long a3f39201 sentence', () => {
+    for (const s of states) {
+      const { text } = adviceFor(s)
+      expect(text).not.toContain('too thin to back your stake, so')
+      expect(text).not.toContain('will be undelegated')
+    }
+  })
+
+  it('shared boundary: getValidatorTip bond text === bondAdvice text', () => {
+    // A validator whose state resolves to a bond-constraint tip. The pill /
+    // header render tip.text; the breakdown banner renders bondAdvice().text.
+    // They must be the SAME string for the SAME state.
+    const v = makeValidator({
+      bondBalanceSol: 50,
+      claimableBondBalanceSol: 50,
+      marinadeActivatedStakeSol: 10000,
+      values: { expectedStakeChangeSol: 0 },
+    })
+    const tip = getValidatorTip(v, DS_SAM_CONFIG, 100)
+    expect(tip.constraint).toBe('bond')
+    const { text } = adviceFor({
+      bondBalanceSol: 50,
+      claimableBondBalanceSol: 50,
+      marinadeActivatedStakeSol: 10000,
+      values: { expectedStakeChangeSol: 0 },
+    })
+    expect(tip.text).toBe(text)
+  })
+
+  it('shared boundary: critical fee tip text === bondAdvice text', () => {
+    const over = {
+      bondGoodForNEpochs: 4,
+      bondBalanceSol: 0.001,
+      claimableBondBalanceSol: 0,
+      marinadeActivatedStakeSol: 100000,
+      values: { expectedStakeChangeSol: -10 },
+    }
+    const tip = getValidatorTip(makeValidator(over), DS_SAM_CONFIG, 100)
+    expect(tip.constraint).toBe('bond')
+    expect(tip.text).toBe(adviceFor(over).text)
   })
 })
 

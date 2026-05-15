@@ -536,13 +536,19 @@ gap to target.
 What's currently the binding constraint on this validator and the single
 action that would help most:
 
-- "Top up bond by N SOL to reach ideal coverage" (bond constraint)
+- "Top up 12 SOL to avoid the bond risk fee" (bond constraint)
+- "Bond below minimum — 18 SOL required" (bond constraint)
+- "Top up 3 SOL to grow stake" (bond constraint)
 - "Lower commission by X% to clear winning APY" (rank constraint)
 - "Raise stake bid to Y PMPE" (bid constraint)
 - "Raise your max-stake-wanted to qualify for more" (want constraint —
   the validator's own self-imposed cap is the binding limit; topping
   up bond or raising bid would not help)
 - "Nothing — you're winning comfortably" (no constraint)
+
+Every bond tip is one short clause carrying the decisive SOL figure.
+The same string appears on the table pill, the validator-detail header
+and the Bond breakdown status banner — they never word it differently.
 
 Tip colour matches the rank cell's severity icon.
 
@@ -580,7 +586,8 @@ Composition — let you click their title to jump there.
   to 3 decimals so a tiny bond that drives a Critical reserve never
   reads as "0 SOL"), Reserve (a coverage status label like "Fully
   covered", "Top up X to keep your stake", or "Top up X to avoid the
-  fee" — coloured by health), and Bid runway in epochs ("N epochs" or
+  bond risk fee" — the same canonical CTA shown on the table pill, never
+  re-worded — coloured by health), and Bid runway in epochs ("N epochs" or
   "Depleted"; shown as "Depleted" whenever the bond is missing or below
   the minimum, so it agrees with a Critical reserve instead of
   contradicting it). Click the card title to open the full Bond tab and

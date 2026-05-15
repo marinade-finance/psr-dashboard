@@ -1,6 +1,7 @@
 import React from 'react'
 
 import { cost, topUp, pay, pmpe, stake } from 'src/format'
+import { bondAdvice } from 'src/services/tip-engine'
 
 import { CalcCard, type CardStatus } from './card'
 import { CalcRow, OkRow, SectionHeader } from './row'
@@ -14,52 +15,30 @@ type Props = {
   coverage: BondCoverage
   bondState: BondHealthState
   bondRiskFeeSol: number
+  bondBalanceSol: number
+  minBondBalanceSol: number
   isSimulated?: boolean
   onGoToSim?: () => void
 }
 
+// Banner text is NOT re-worded here — it is the canonical bondAdvice()
+// string, byte-identical to the sam-table Next Step pill and the
+// validator-detail header for the same validator state.
 const statusLine = (
   state: BondHealthState,
-  topUpToAvoidFee: number,
-  topUpToKeepStake: number,
-  topUpToIdealKeep: number,
+  coverage: BondCoverage,
   bondRiskFeeSol: number,
+  minBondBalanceSol: number,
+  bondBalanceSol: number,
 ): CardStatus => {
-  if (state === 'no-bond') {
-    return { label: 'No bond posted. Post a bond to qualify.', tone: 'red' }
-  }
-  if (state === 'critical') {
-    const feeStr =
-      bondRiskFeeSol > 0
-        ? `Estimated bond risk fee: ${pay(bondRiskFeeSol)}.`
-        : 'Your bond is too thin to back your stake, so a bond risk fee can be charged and stake will be undelegated.'
-    const topUpStr =
-      topUpToAvoidFee > 0
-        ? ` Top up ${topUp(topUpToAvoidFee)} to avoid the fee.`
-        : ''
-    return { label: `${feeStr}${topUpStr}`, tone: 'red' }
-  } else if (state === 'watch') {
-    const text =
-      topUpToKeepStake > 0
-        ? `Top up ${topUp(topUpToKeepStake)} to keep your stake.`
-        : topUpToIdealKeep > 0
-          ? `Top up ${topUp(topUpToIdealKeep)} to grow stake.`
-          : ''
-    if (text) return { label: text, tone: 'yellow' }
-    return { label: 'Bond covers current stake.', tone: 'yellow' }
-  } else if (state === 'soft') {
-    if (topUpToIdealKeep > 0)
-      return {
-        label: `Bond covers current stake. Top up ${topUp(topUpToIdealKeep)} to grow stake.`,
-        tone: 'yellow',
-      }
-    return { label: 'Bond meets ideal coverage.', tone: 'green' }
-  } else {
-    return {
-      label: 'Bond has enough coverage. Keep it topped up.',
-      tone: 'green',
-    }
-  }
+  const advice = bondAdvice(
+    coverage,
+    state,
+    bondRiskFeeSol,
+    minBondBalanceSol,
+    bondBalanceSol,
+  )
+  return { label: advice.text, tone: advice.tone }
 }
 
 export const BondCoverageBreakdown: React.FC<Props> = ({
@@ -68,15 +47,17 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
   coverage,
   bondState,
   bondRiskFeeSol,
+  bondBalanceSol,
+  minBondBalanceSol,
   isSimulated,
   onGoToSim,
 }) => {
   const status = statusLine(
     bondState,
-    coverage.topUpToAvoidFee,
-    coverage.topUpToKeepStake,
-    coverage.topUpToIdealKeep,
+    coverage,
     bondRiskFeeSol,
+    minBondBalanceSol,
+    bondBalanceSol,
   )
 
   // Show the penalty math whenever the bond is at risk (critical/watch) so

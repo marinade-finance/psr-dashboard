@@ -539,6 +539,8 @@ export const ValidatorDetail = ({
                     coverage={bondCoverage}
                     bondState={bondHealth}
                     bondRiskFeeSol={bondRiskFeeSol}
+                    bondBalanceSol={validator.bondBalanceSol ?? 0}
+                    minBondBalanceSol={dsSamConfig.minBondBalanceSol}
                     isSimulated={isSimulated}
                     onGoToSim={goToSim}
                   />

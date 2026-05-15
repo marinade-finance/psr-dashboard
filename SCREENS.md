@@ -255,14 +255,16 @@ dividers and weight from one shared `rowStyle()` helper.
 **Tip banner** — tinted advisory strip below the header carrying the
 real `getValidatorTip` text. Non-bond tips are coloured by tip urgency,
 with a `Simulate →` chip when the constraint is `bid`. For
-`constraint === 'bond'` tips the strip shows the full bond advisory
-sentence (the exact "Top up N to …" / risk-fee figure) with a `Bond
-tab →` chip routing to the Bond tab. Its colour comes from
+`constraint === 'bond'` tips the strip shows the short canonical bond
+CTA — the byte-identical string `bondAdvice()` feeds the sam-table Next
+Step pill and the Bond tab status banner (e.g. `Top up 12 SOL to avoid
+the bond risk fee.`, `Bond below minimum — 18 SOL required.`) — with a
+`Bond tab →` chip routing to the Bond tab. Its colour comes from
 `getBondAdviceStyle(bondHealth)` — the same red / status-yellow / green
 axis the Bond tab's `CalcCard` status banner uses, never from
 `tip.urgency` — so the header and the Bond banner can never disagree on
-tone for one state. The header rank glyph keeps its own urgency colour
-(it tracks overall standing, not bond health).
+tone or wording for one state. The header rank glyph keeps its own
+urgency colour (it tracks overall standing, not bond health).
 
 `MetricRow` and `PenaltyRow` are file-private helpers in
 `validator-detail.tsx`; they are not exported as shared primitives.
