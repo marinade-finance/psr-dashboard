@@ -140,7 +140,6 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
           <CalcRow
             label="Penalty PMPE"
             value={pmpe(metrics.penaltyPmpe)}
-            bold
             severity={metrics.penaltyPmpe > 0 ? 'error' : undefined}
           />
           {metrics.penaltySol > 0 ? (

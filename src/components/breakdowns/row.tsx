@@ -50,6 +50,13 @@ const SEVERITY_TONE: Record<Severity, 'green' | 'yellow' | 'red'> = {
   error: 'red',
 }
 
+// Row visual conventions:
+//   - Plain row: raw input / step. No flags.
+//   - Sub-total / calculated intermediate: pass `severity` only — the dot
+//     carries the signal. Never combine with `bold`; bold is reserved for
+//     section conclusions / totals.
+//   - Section conclusion: `separator` + `bold` + `large`.
+//   - Total: `total` (implies separator + bold + large + divider above).
 export const CalcRow: React.FC<{
   label: string
   secondary?: string
