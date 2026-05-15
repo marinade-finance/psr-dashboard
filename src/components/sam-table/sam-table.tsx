@@ -527,8 +527,25 @@ export const SamTable: React.FC<Props> = ({
   )
 
   // Stats for the stats bar
-  const totalValidators = sortedValidators.length
   const winningCount = winningValidators.length
+
+  // SAM-eligible universe for the "Winning Validators" stat: any validator
+  // whose bond meets the SDK's minBondBalanceSol threshold. Independent of
+  // the Basic-mode table filter, so "X / Y" reads as the auction outcome
+  // rather than "X of Y rows we chose to render".
+  const bondEligibleValidators = useMemo(
+    () =>
+      auctionResult.auctionData.validators.filter(
+        v =>
+          (v.bondBalanceSol ?? 0) > 0 &&
+          (v.bondBalanceSol ?? 0) >= dsSamConfig.minBondBalanceSol,
+      ),
+    [auctionResult, dsSamConfig.minBondBalanceSol],
+  )
+  const eligibleCount = bondEligibleValidators.length
+  const eligibleWinningCount = bondEligibleValidators.filter(
+    v => v.auctionStake.marinadeSamTargetSol > 0,
+  ).length
 
   const stats: {
     label: string
@@ -556,7 +573,7 @@ export const SamTable: React.FC<Props> = ({
     },
     {
       label: 'Winning Validators',
-      value: `${winningCount} / ${totalValidators}`,
+      value: `${eligibleWinningCount} / ${eligibleCount}`,
       unit: '',
       help: HELP_TEXT.winningValidators,
     },
