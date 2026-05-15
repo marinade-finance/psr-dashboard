@@ -10,7 +10,7 @@ export const HELP_TEXT = {
     'The lowest yearly return that still won stake this epoch. Your Max APY has to clear this bar — beat it and you receive stake, fall short and you don’t.',
   want: 'The cap you set on how much stake you’ll take. Set it too low and you miss out on stake you could have earned.',
   bondHealth:
-    "How well your bond covers the upcoming bid costs. Critical — too thin, fee penalties already kicking in. Watch — covers the minimum, but too low to qualify for more stake. Soft — covers current stake but not the ideal buffer; no fee risk yet, though topping up opens room for more stake. Healthy — comfortably covers what you’ll owe.",
+    'How well your bond covers the upcoming bid costs. Critical — too thin, fee penalties already kicking in. Watch — covers the minimum, but too low to qualify for more stake. Soft — covers current stake but not the ideal buffer; no fee risk yet, though topping up opens room for more stake. Healthy — comfortably covers what you’ll owe.',
   sfdp: 'Whether you meet Solana Foundation’s SFDP criteria — the foundation’s own delegation programme. Meeting it gives you a small boost in Marinade’s auction too.',
   penalty:
     "Charged when your bid drops from the previous epoch and your bond obligation doesn't cover what you previously committed to pay. The shortfall is collected as forced stake undelegation — Marinade withdraws stake proportional to how much you under-delivered on your prior bid.",
@@ -23,9 +23,9 @@ export const HELP_TEXT = {
   bondRunway:
     'How many epochs your bond can keep paying your bid before it runs dry. Once it slips below the penalty threshold, Marinade both charges a bond risk fee from your bond and pulls stake back.',
   totalAuctionStake:
-    'Total SOL Marinade plans to spread across the winners of this epoch’s auction — the goal allocation, which the network will move toward over the next few epochs.',
+    "Total SOL Marinade aims to allocate across this epoch's winners — the target distribution Marinade's stake bot will work toward over the next few epochs, limited by Solana's cooldown and reactivation rules.",
   projectedApy:
-    'What stakers should expect to earn in a year if every winning validator delivers what they promised this epoch.',
+    "Projected annualized SAM yield using each validator's total PMPE (inflation + MEV + clearing bid), weighted by Marinade's current active stake and divided by total SAM TVL. Uses today's deployed stake mix, not the next-epoch target allocation or the marginal Winning APY.",
   winningValidators:
     'How many validators won at least some stake this epoch. The rest bid too low to make the cut.',
   bondCoverage:

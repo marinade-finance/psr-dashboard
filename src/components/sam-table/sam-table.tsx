@@ -581,7 +581,7 @@ export const SamTable: React.FC<Props> = ({
       label: 'Re-delegation',
       value: sol(totalRedelegation, 0),
       unit: 'SOL',
-      help: 'Roughly how much SOL Marinade will move into under-stake validators next epoch to push them toward their goal allocation.',
+      help: 'Roughly how much SOL Marinade will redelegate into under-stake validators next epoch, pushing them toward their target allocation.',
     },
   ]
 
