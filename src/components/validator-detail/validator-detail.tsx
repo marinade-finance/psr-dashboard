@@ -3,10 +3,11 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 
 import { cn } from 'src/class_utils'
 import { BidPenaltyBreakdown } from 'src/components/breakdowns/bid-penalty'
+import { BiddingBreakdown } from 'src/components/breakdowns/bidding'
 import { BondCoverageBreakdown } from 'src/components/breakdowns/bond-coverage'
 import { CalcCard } from 'src/components/breakdowns/card'
 import { docsPath } from 'src/components/breakdowns/docs-path'
-import { PaymentsBreakdown } from 'src/components/breakdowns/payments-merged'
+import { PaymentsBreakdown } from 'src/components/breakdowns/payments'
 import { SEPARATOR_DIV_CLASS } from 'src/components/breakdowns/row'
 import { HelpTip } from 'src/components/help-tip/help-tip'
 import { Button } from 'src/components/ui/button'
@@ -69,7 +70,13 @@ interface ValidatorDetailProps {
   level?: UserLevel
 }
 
-type Tab = 'overview' | 'notifications' | 'bond' | 'penalty' | 'payments'
+type Tab =
+  | 'overview'
+  | 'notifications'
+  | 'bidding'
+  | 'payments'
+  | 'bond'
+  | 'penalty'
 
 export type BondHealth = 'healthy' | 'soft' | 'watch' | 'critical'
 
@@ -480,6 +487,7 @@ export const ValidatorDetail = ({
           const TAB_DEFS: ReadonlyArray<{ id: Tab; label: string }> = [
             { id: 'overview', label: 'Overview' },
             { id: 'notifications', label: 'Notifications' },
+            { id: 'bidding', label: 'Bidding' },
             { id: 'payments', label: 'Payments' },
             { id: 'bond', label: 'Bond' },
             { id: 'penalty', label: 'Bid Penalty' },
@@ -521,16 +529,29 @@ export const ValidatorDetail = ({
                   />
                 </div>
               )}
-              {tab === 'payments' && (
+              {tab === 'bidding' && (
                 <div className="p-4 sm:p-6">
-                  <PaymentsBreakdown
-                    title="Payments"
-                    guideTo={`${docsPath(level)}#detail-panel`}
+                  <BiddingBreakdown
+                    title="Bidding"
+                    guideTo={`${docsPath(level)}#bidding`}
                     validator={validator}
                     auctionResult={auctionResult}
                     dsSamConfig={dsSamConfig}
                     winningTotalPmpe={winningTotalPmpe}
                     coverage={bondCoverage}
+                    isSimulated={isSimulated}
+                    onGoToSim={goToSim}
+                  />
+                </div>
+              )}
+              {tab === 'payments' && (
+                <div className="p-4 sm:p-6">
+                  <PaymentsBreakdown
+                    title="Payments"
+                    guideTo={`${docsPath(level)}#payments`}
+                    validator={validator}
+                    dsSamConfig={dsSamConfig}
+                    winningTotalPmpe={winningTotalPmpe}
                     bondRiskFeeSol={bondRiskFeeSol}
                     blacklistPenaltySol={blacklistPenaltySol}
                     bidTooLowPenaltySol={bidTooLowPenaltySol}
@@ -640,7 +661,7 @@ export const ValidatorDetail = ({
                 />
                 <MetricRow
                   label="Expected change next epoch"
-                  help="Stake you'll gain or lose next epoch. Losses mostly come from falling out of the auction — your bid was too low or the bond was thin. A small share comes from people pulling SOL out of Marinade, taken from every validator proportionally."
+                  help="Stake you'll gain or lose next epoch. Losses mostly come from falling out of the auction — your bid was too low or the bond was thin. A small share comes from people pulling SOL out of Marinade, taken from every validator proportionally. It can read 0 SOL even when your target stake is above your active stake — the redelegation budget went to higher-priority validators first, or you are cap or bond constrained, so no net inflow is expected."
                   value={
                     expectedStakeDelta > 0
                       ? `+${stake(expectedStakeDelta)}`
