@@ -75,10 +75,66 @@ interface ValidatorDetailProps {
 type Tab =
   | 'overview'
   | 'notifications'
-  | 'bidding'
   | 'payments'
+  | 'bidding'
   | 'bond'
   | 'penalty'
+
+// Secondary attention cue on an inactive tab whose content needs a look.
+// One tone axis, shared with the status/intent families — never a new colour.
+type AttentionTone = 'critical' | 'warning' | 'info'
+
+const ATTENTION_DOT: Record<AttentionTone, string> = {
+  critical: 'bg-destructive',
+  warning: 'bg-warning',
+  info: 'bg-info',
+}
+
+const ATTENTION_TEXT: Record<AttentionTone, string> = {
+  critical: 'text-destructive',
+  warning: 'text-warning',
+  info: 'text-info',
+}
+
+// Per-tab attention tones. Each trigger reuses an existing severity source —
+// bond from bondHealthFromAuction, penalty from the breakdown's penaltySol,
+// notifications from the summary the panel already receives — plus a subtle
+// info hint on the tab the header tip points at. No new colour or fetch.
+function tabAttention(args: {
+  bondHealth: BondHealthState
+  bidPenaltySol: number
+  notes: ReadonlyArray<{ priority: 'critical' | 'warning' | 'info' }>
+  tipConstraint: string
+}): Partial<Record<Tab, AttentionTone>> {
+  const { bondHealth, bidPenaltySol, notes, tipConstraint } = args
+  const notifTone: AttentionTone | undefined = notes.some(
+    n => n.priority === 'critical',
+  )
+    ? 'critical'
+    : notes.some(n => n.priority === 'warning')
+      ? 'warning'
+      : notes.length > 0
+        ? 'info'
+        : undefined
+  const attention: Partial<Record<Tab, AttentionTone>> = {}
+  if (
+    bondHealth === 'critical' ||
+    bondHealth === 'no-bond' ||
+    bondHealth === 'watch'
+  ) {
+    attention.bond = bondHealth === 'watch' ? 'warning' : 'critical'
+  }
+  if (bidPenaltySol > 0) attention.penalty = 'critical'
+  if (notifTone) attention.notifications = notifTone
+  const tipTab: Tab | null =
+    tipConstraint === 'bond'
+      ? 'bond'
+      : tipConstraint === 'bid'
+        ? 'bidding'
+        : null
+  if (tipTab && !attention[tipTab]) attention[tipTab] = 'info'
+  return attention
+}
 
 export function bondCoverageLabel(
   health: BondHealthState,
@@ -504,30 +560,54 @@ export const ValidatorDetail = ({
           const TAB_DEFS: ReadonlyArray<{ id: Tab; label: string }> = [
             { id: 'overview', label: 'Overview' },
             { id: 'notifications', label: 'Notifications' },
-            { id: 'bidding', label: 'Bidding' },
             { id: 'payments', label: 'Payments' },
+            { id: 'bidding', label: 'Bidding' },
             { id: 'bond', label: 'Bond' },
             { id: 'penalty', label: 'Bid Penalty' },
           ]
+
+          const attention = tabAttention({
+            bondHealth,
+            bidPenaltySol: bidTooLowPenaltySol,
+            notes: notificationSummary?.notifications ?? [],
+            tipConstraint: tip.constraint,
+          })
 
           return (
             <>
               <div className="border-b border-border bg-background sticky top-[68px] z-[5]">
                 <div className="flex gap-1 px-4 sm:px-6 overflow-x-auto">
-                  {TAB_DEFS.map(t => (
-                    <button
-                      key={t.id}
-                      onClick={() => setTab(t.id)}
-                      className={cn(
-                        'px-3 py-2.5 text-[13px] font-medium border-b-2 transition-colors whitespace-nowrap',
-                        tab === t.id
-                          ? 'border-primary text-primary'
-                          : 'border-transparent text-muted-foreground hover:text-foreground',
-                      )}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
+                  {TAB_DEFS.map(t => {
+                    const tone = tab === t.id ? undefined : attention[t.id]
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => setTab(t.id)}
+                        className={cn(
+                          'px-3 py-2.5 text-[13px] font-medium border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5',
+                          tab === t.id
+                            ? 'border-primary text-primary'
+                            : tone
+                              ? cn(
+                                  'border-transparent hover:text-foreground',
+                                  ATTENTION_TEXT[tone],
+                                )
+                              : 'border-transparent text-muted-foreground hover:text-foreground',
+                        )}
+                      >
+                        {tone && (
+                          <span
+                            aria-hidden
+                            className={cn(
+                              'w-1.5 h-1.5 rounded-full shrink-0',
+                              ATTENTION_DOT[tone],
+                            )}
+                          />
+                        )}
+                        {t.label}
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
 
@@ -803,6 +883,7 @@ export const ValidatorDetail = ({
               validator={validator}
               guideTo={`${docsPath(level)}#cpmpe`}
               isSimulated={isSimulated}
+              onGoToBidding={() => setTab('bidding')}
             />
 
             {simEnabled && (

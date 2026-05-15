@@ -185,13 +185,21 @@ Below-minimum bond reads red, not warning-yellow: `bondHealthFromAuction` return
 when a row is clicked. URL synced via `?v=<voteAccount>`; browser-back
 closes the sheet.
 
-**Tabs:** Overview · Notifications (when present) · Bidding · Payments ·
-Bond · Bid Penalty. Bidding and Payments are purpose-built: Bidding
-answers "what should I bid to get in and win stake?" (prescriptive),
-Payments answers "how much will I pay this epoch?" (explanatory).
-Bidding sits before Payments — you decide the bid before reading the
-cost. The internal `Tab` union is `'overview' | 'notifications' |
-'bidding' | 'payments' | 'bond' | 'penalty'`.
+**Tabs:** Overview · Notifications (when present) · Payments · Bidding ·
+Bond · Bid Penalty. Bidding and Payments are purpose-built: Payments
+answers "how much will I pay this epoch?" (explanatory), Bidding
+answers "what should I bid to get in and win stake?" (prescriptive).
+Payments sits before Bidding — you read the cost first, then act on it.
+The internal `Tab` union is `'overview' | 'notifications' | 'payments' |
+'bidding' | 'bond' | 'penalty'`. An inactive tab whose content needs a
+look carries a small severity-toned dot and tinted label: Bond when
+bond-health is critical, no-bond or watch; Bid Penalty when a bid-too-low
+penalty is active; Notifications when the validator has notifications
+toned to the highest priority; plus a subtle info hint on the tab the
+header tip points at. Tone reuses `bondHealthFromAuction`, the penalty
+breakdown's `penaltySol` and the existing notifications summary — one
+shared severity axis, never a new colour or fetch. The active marker
+stays visually dominant.
 
 **Overview** — 2-col grid (`lg:grid-cols-2`, `gap-6`):
 
@@ -216,7 +224,10 @@ cost. The internal `Tab` union is `'overview' | 'notifications' |
   bar showing inflation / MEV / block rewards / stake bid. Bar widths
   use raw PMPE proportions (so they sum to total); the displayed % is
   each component's compounded APY. Threshold marker line + label at the
-  winning-APY position.
+  winning-APY position. The `±X% vs winning` pill is green above the
+  winning threshold; below it the pill becomes a button reading
+  `-X% vs winning → Bidding` that switches the panel to the Bidding tab
+  so the validator sees the concrete target bid.
 - **What-If Simulation** (right column, when toggled on) — four numeric
   inputs (Stake bid PMPE, Inflation, MEV, Block rewards). Auto-recalcs
   with 400ms debounce. The `onSimulate` parent callback is routed

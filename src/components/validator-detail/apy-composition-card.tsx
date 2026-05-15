@@ -13,6 +13,7 @@ interface ApyCompositionCardProps {
   validator: AuctionValidator
   guideTo?: string
   isSimulated?: boolean
+  onGoToBidding?: () => void
 }
 
 type Row = {
@@ -29,6 +30,7 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
   validator,
   guideTo,
   isSimulated,
+  onGoToBidding,
 }) => {
   const inflComm = validator.inflationCommissionDec
   const mevComm = validator.mevCommissionDec ?? 0
@@ -87,17 +89,31 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
         <p className="text-xs text-muted-foreground">
           Winning APY threshold {pct(winningApy, 2)}
         </p>
-        <span
-          className={cn(
-            'text-xs font-mono font-semibold px-2 py-0.5 rounded-md',
-            above
-              ? 'bg-primary-light text-primary'
-              : 'bg-destructive-light text-destructive',
-          )}
-        >
-          {above ? '+' : ''}
-          {pct(delta, 2)} vs winning
-        </span>
+        {above || !onGoToBidding ? (
+          <span
+            className={cn(
+              'text-xs font-mono font-semibold px-2 py-0.5 rounded-md',
+              above
+                ? 'bg-primary-light text-primary'
+                : 'bg-destructive-light text-destructive',
+            )}
+          >
+            {above ? '+' : ''}
+            {pct(delta, 2)} vs winning
+          </span>
+        ) : (
+          <button
+            type="button"
+            onClick={onGoToBidding}
+            className="text-xs font-mono font-semibold px-2 py-0.5 rounded-md bg-destructive-light text-destructive hover:underline cursor-pointer flex items-center gap-1"
+          >
+            {pct(delta, 2)} vs winning
+            <span aria-hidden>→ Bidding</span>
+            <span className="sr-only">
+              see the target bid on the Bidding tab
+            </span>
+          </button>
+        )}
       </div>
       <div className="space-y-2">
         {rows.map(({ label, apy, pmpe, swatch, context }) => (

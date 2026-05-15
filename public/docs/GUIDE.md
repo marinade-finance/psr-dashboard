@@ -562,7 +562,7 @@ _See [Eligibility Criteria — Marinade Docs](https://docs.marinade.finance/mari
 ## Validator Detail Panel
 
 Clicking a row opens the side panel. The calculation tabs
-— Bidding, Payments, Bond, Bid Penalty — **mirror the same math the
+— Payments, Bidding, Bond, Bid Penalty — **mirror the same math the
 SAM auction runs server-side**: they recompute the SDK's formulas
 locally so you can see each input and intermediate value. Numbers
 match the protocol's settlement decisions to the SOL. Two of the tabs
