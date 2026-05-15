@@ -84,7 +84,7 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
     >
       <div className="flex items-center justify-between mb-3">
         <p className="text-xs text-muted-foreground">
-          Winning threshold {pct(winningApy, 2)}
+          Winning APY threshold {pct(winningApy, 2)}
         </p>
         <span
           className={cn(

@@ -503,10 +503,20 @@ Composition — let you click their title to jump there.
   total APY splits across Inflation, MEV, Block rewards, and the Stake
   bid contribution. Each row has its own bar segment, the segment colour
   matches a tiny swatch on the row, and the rightmost number is that
-  component's APY. The Total bar at the bottom carries a vertical tick
-  at the **Winning APY** so you can see how far above or below the
-  cutoff the validator sits; the pill in the top-right corner restates
-  the gap as `+X%` (above) or `−X%` (below).
+  component's APY. The grey line under each label is the commission the
+  validator takes on that source — `0% commission`, `your bid`.
+  - **Winning APY threshold** — the headline figure top-left. This is
+    the minimum total APY the validator must offer to win stake, and it
+    is **rebuilt at this validator's own commission profile** — not a
+    single global number. That makes it an apples-to-apples bar this
+    specific validator has to clear. It is *not* the 7% SAM commission
+    cap; different number, easy to confuse.
+  - **The pill** top-right restates the gap between the validator's
+    total APY and that threshold. Green and `+X%` means above the bar
+    and winning; red and `−X%` means below it — the validator is short
+    and losing stake, so the Total figure also turns red.
+  - The Total bar at the bottom carries a vertical tick at the winning
+    APY threshold, so the shortfall or headroom is visible at a glance.
 - **What-If Simulation** — only visible when you toggle "Simulate" on
   in the panel header. Edit the validator's bid PMPE or any of the three
   commissions; the auction recalculates after a brief debounce and the
