@@ -898,13 +898,13 @@ export const SamTable: React.FC<Props> = ({
             label="Top Countries"
             rows={concentration.countries}
             capPct={concentration.countryCapPct}
-            help="Share of auction-distributed stake by validator country. Bar fills against the per-country cap. (capped) means at least one validator was cut by the cap."
+            help="Share of auction-distributed stake by validator country. Bar fills against the per-country cap. A 'capped' tag means at least one validator was cut by the cap."
           />
           <ConcentrationMetric
             label="Top ASOs"
             rows={concentration.asos}
             capPct={concentration.asoCapPct}
-            help="Share of auction-distributed stake by ASO (Autonomous System Operator). Bar fills against the per-ASO cap. (capped) means at least one validator was cut by the cap."
+            help="Share of auction-distributed stake by ASO — the Autonomous System Operator hosting the validator. Bar fills against the per-ASO cap. A 'capped' tag means at least one validator was cut by the cap."
           />
         </div>
 
