@@ -21,6 +21,32 @@ const TOOLTIP_N = 15
 const BAR_TONE_DEFAULT = 'bg-chart-1'
 const BAR_TONES = [BAR_TONE_DEFAULT, 'bg-chart-2', 'bg-chart-3']
 
+// Rows 0-2 keep their identity hue (matches the top-3 mini view). Rows 3+
+// are a single fading tail: alternate the two "next" palette hues and decay
+// opacity every two rows so a long list trails off instead of repeating one
+// flat colour. Floor keeps the longest tails faintly visible.
+const BAR_OPACITY_BASE = 'opacity-25'
+const TAIL_TONES = ['bg-chart-4', 'bg-chart-5']
+const TAIL_OPACITY = [
+  BAR_OPACITY_BASE,
+  'opacity-20',
+  'opacity-15',
+  'opacity-10',
+]
+
+const barTone = (i: number): { tone: string; opacity: string } => {
+  if (i < BAR_TONES.length)
+    return { tone: BAR_TONES[i], opacity: BAR_OPACITY_BASE }
+  const t = i - BAR_TONES.length
+  return {
+    tone: TAIL_TONES[t % TAIL_TONES.length],
+    opacity:
+      TAIL_OPACITY[
+        Math.min(Math.floor(t / TAIL_TONES.length), TAIL_OPACITY.length - 1)
+      ],
+  }
+}
+
 export const ConcentrationMetric: React.FC<Props> = ({
   label,
   rows,
@@ -103,9 +129,9 @@ export const ConcentrationMetric: React.FC<Props> = ({
               {tipRows.map((r, i) => {
                 const fill =
                   capPct > 0 ? Math.min(r.pctOfTotal / capPct, 1) * 100 : 0
-                const swatch = r.atCap
-                  ? 'bg-destructive'
-                  : (BAR_TONES[i] ?? BAR_TONE_DEFAULT)
+                const { tone, opacity } = barTone(i)
+                const swatch = r.atCap ? 'bg-destructive' : tone
+                const barOpacity = r.atCap ? BAR_OPACITY_BASE : opacity
                 return (
                   <tr
                     key={r.key}
@@ -114,7 +140,8 @@ export const ConcentrationMetric: React.FC<Props> = ({
                     <td className="relative py-0.5 pr-2">
                       <span
                         className={cn(
-                          'absolute inset-y-0 left-0 rounded-sm opacity-25',
+                          'absolute inset-y-0 left-0 rounded-sm',
+                          barOpacity,
                           swatch,
                         )}
                         style={{ width: `${fill}%` }}
