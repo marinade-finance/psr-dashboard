@@ -12,6 +12,7 @@ import {
   SectionHeader,
   SEPARATOR_CELL_PAD,
   type Severity,
+  TOTAL_CELL_PAD,
 } from './row'
 
 import type { UserLevel } from 'src/components/navigation/navigation'
@@ -56,23 +57,36 @@ const RevRow: React.FC<{
   const sep = total || separator
   const bld = total || bold
   const lg = total || large
+  const cellPad = total
+    ? TOTAL_CELL_PAD
+    : sep
+      ? SEPARATOR_CELL_PAD
+      : NORMAL_CELL_PAD
+  const sepBorder = sep && 'border-t-2 border-border'
   return (
-    <tr className={'border-b border-border-grid/50 last:border-b-0'}>
+    <tr
+      className={cn(
+        'border-b border-border-grid/50 last:border-b-0',
+        total && 'bg-muted/40',
+      )}
+    >
       <td
         className={cn(
           'pr-2',
           lg ? 'text-base' : 'text-xs',
-          sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD,
+          cellPad,
           bld && 'font-semibold',
+          sepBorder,
         )}
       >
-        {tone && <Marker tone={tone} />}
+        {tone && !total && <Marker tone={tone} />}
         {label}
       </td>
       <td
         className={cn(
           'px-2 text-right font-mono text-xs text-muted-foreground',
-          sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD,
+          cellPad,
+          sepBorder,
         )}
       >
         {pct ?? ''}
@@ -80,7 +94,8 @@ const RevRow: React.FC<{
       <td
         className={cn(
           'px-2 text-right font-mono text-xs text-muted-foreground',
-          sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD,
+          cellPad,
+          sepBorder,
         )}
       >
         {pmpeStr ?? ''}
@@ -89,9 +104,9 @@ const RevRow: React.FC<{
         className={cn(
           'pl-2 text-right font-mono',
           lg ? 'text-base' : 'text-xs',
-          sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD,
+          cellPad,
           bld && 'font-semibold',
-          sep && 'border-t-2 border-border',
+          sepBorder,
           tone === 'green' && 'text-status-green',
           tone === 'yellow' && 'text-status-yellow',
           tone === 'red' && 'text-destructive',
