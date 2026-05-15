@@ -101,11 +101,15 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
 
           <SectionHeader title="Threshold" />
           <CalcRow
+            label="Winning PMPE"
+            value={pmpe(metrics.winningTotalPmpe)}
+          />
+          <CalcRow
             label="Effective participating bid PMPE"
             value={pmpe(metrics.effParticipatingBidPmpe)}
           />
           <CalcRow
-            label="Limit — minimum of the above"
+            label="Limit — min(effective, worst historical)"
             value={pmpe(metrics.limit)}
           />
           <CalcRow
