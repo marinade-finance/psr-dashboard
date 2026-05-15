@@ -207,12 +207,23 @@ export const BiddingBreakdown: React.FC<Props> = ({
             }
           />
           <RevRow
-            label="Redelegation inflow"
+            label="Stake the budget pushes to you"
+            help="SOL the redelegation budget is expected to send into this validator next epoch. The budget is handed out greedily, highest total PMPE first, to validators below their target — this is what reaches you before the budget runs dry."
             pmpe={stake(nextEpoch.redelegationInflowSol)}
           />
           <RevRow
             label="Redelegation budget this run"
             pmpe={stake(nextEpoch.redelegationBudgetSol)}
+          />
+          <RevRow
+            label="Your priority rank"
+            help="Where you sit when the budget is handed out: validators are served in total PMPE order, highest first. A smaller number means the budget reaches you sooner."
+            value={`#${nextEpoch.priorityRank}`}
+          />
+          <RevRow
+            label="Your bid gap"
+            help="Your static bid minus the auction clearing price. A gap above 0 means you are bidding more than you need to clear today — it does not raise your priority rank, since the budget is ordered on total PMPE, not bid."
+            pmpe={pmpe(nextEpoch.bidGapPmpe)}
           />
           {noFrontier ? (
             <OkRow message="No binding priority bar this run." colSpan={3} />

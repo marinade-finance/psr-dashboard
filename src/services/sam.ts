@@ -566,3 +566,21 @@ export function selectRedelegationPriorityFrontierPmpe(
 ): number {
   return allocateRedelegation(auctionResult).priorityFrontierPmpe ?? 0
 }
+
+// 1-based position of this validator in the exact order the redelegation
+// budget is handed out: revShare.totalPmpe descending — the same sort key
+// the greedy pass uses. Ties share the lower position. This is the true
+// delegation-priority rank, not the maxApy-derived sam-table rank; the
+// greedy pass orders strictly on totalPmpe, so this is the rank that
+// decides whether the budget reaches you before it runs dry.
+export function selectRedelegationPriorityRank(
+  v: AuctionValidator,
+  auctionResult: AuctionResult,
+): number {
+  const mine = v.revShare.totalPmpe ?? 0
+  let ahead = 0
+  for (const w of auctionResult.auctionData.validators) {
+    if ((w.revShare.totalPmpe ?? 0) > mine) ahead += 1
+  }
+  return ahead + 1
+}

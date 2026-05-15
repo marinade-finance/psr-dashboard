@@ -406,6 +406,13 @@ always verify it in **Simulate**. When the budget is large enough to
 reach every below-target winner, there is no binding bar and the
 section says so.
 
+The section also shows the two inputs the queue order is read from:
+your **priority rank** — your position when the budget is handed out,
+total PMPE highest first — and your **bid gap**, your static bid minus
+the auction clearing price. The bid gap is context only: bidding over
+the clearing price does not improve your rank, because the queue is
+ordered on total PMPE, not on bid.
+
 <a id="psr"></a>
 ### Protected Staking Rewards (PSR)
 

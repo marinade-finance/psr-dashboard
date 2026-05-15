@@ -11,11 +11,20 @@
 // Simulate". The Simulate flow does a real auction rerun.
 //
 // Bid basis is revShare.bidPmpe (the static bid the sim input shows).
+//
+// Bid gap and priority rank are CONTEXT, not target inputs. The greedy
+// pass orders recipients strictly by revShare.totalPmpe descending, so
+// the target bid is derived from the frontier totalPmpe alone. Bid gap
+// (static bid over the clearing price) does not move that order, and the
+// rank is a monotonic restatement of totalPmpe — surfacing both lets the
+// user see the real inputs without re-deriving the target off them.
+import { selectEffectiveBid } from 'src/services/sam'
 import {
   selectExpectedStakeChange,
   selectExpectedStakeChangeBreakdown,
   selectRedelegationBudget,
   selectRedelegationPriorityFrontierPmpe,
+  selectRedelegationPriorityRank,
 } from 'src/services/sam'
 
 import type { AuctionResult } from '@marinade.finance/ds-sam-sdk'
@@ -34,6 +43,12 @@ export type NextEpochStake = {
   // static bid PMPE that would produce that total (non-bid components held).
   targetBidPmpePriority: number
   bidIncreaseForPriority: number
+  // Context only — inputs the greedy order is read from, not target maths.
+  // Static bid minus the auction clearing price, clamped at 0.
+  bidGapPmpe: number
+  // 1-based position in revShare.totalPmpe descending — the exact order
+  // the budget is handed out in.
+  priorityRank: number
 }
 
 export const computeNextEpochStake = (
@@ -69,5 +84,7 @@ export const computeNextEpochStake = (
     targetTotalPmpePriority,
     targetBidPmpePriority,
     bidIncreaseForPriority,
+    bidGapPmpe: Math.max(0, v.revShare.bidPmpe - selectEffectiveBid(v)),
+    priorityRank: selectRedelegationPriorityRank(v, auctionResult),
   }
 }
