@@ -290,9 +290,17 @@ type RedelegationAllocation = {
 // revShare.totalPmpe order until the budget runs out; a validator is
 // "fully satisfied" when its entire below-target delta fit before the
 // budget was exhausted.
+//
+// Memoised per AuctionResult identity: called by computeExpectedStakeChanges,
+// selectRedelegationPriorityFrontierPmpe, and computeNextEpochStake — same
+// auction would otherwise run the greedy pass 3× per validator-detail open.
+const allocationCache = new WeakMap<AuctionResult, RedelegationAllocation>()
+
 function allocateRedelegation(
   auctionResult: AuctionResult,
 ): RedelegationAllocation {
+  const cached = allocationCache.get(auctionResult)
+  if (cached) return cached
   const validators = auctionResult.auctionData.validators
   const totalPaid = validators.reduce(
     (sum, validator) => sum + selectPaidUndelegationSol(validator),
@@ -326,7 +334,9 @@ function allocateRedelegation(
       }
     }
   }
-  return { inflowByVote, priorityFrontierPmpe }
+  const result = { inflowByVote, priorityFrontierPmpe }
+  allocationCache.set(auctionResult, result)
+  return result
 }
 
 // Paid undelegation is a one-time outflow whose freed capacity returns to
@@ -380,9 +390,11 @@ function computeExpectedStakeChanges(
     }
   }
 
+  const byVote = new Map(validators.map(v => [v.voteAccount, v] as const))
+
   const { inflowByVote } = allocateRedelegation(auctionResult)
   for (const [va, alloc] of inflowByVote) {
-    const validator = validators.find(v => v.voteAccount === va)
+    const validator = byVote.get(va)
     if (validator && bondBelowMin(validator)) continue
     const entry = get(va)
     entry.redelegationInflow += alloc
@@ -391,7 +403,7 @@ function computeExpectedStakeChanges(
 
   const withdrawals = computeNaturalWithdrawal(validators, tvl)
   for (const [va, w] of withdrawals) {
-    const validator = validators.find(v => v.voteAccount === va)
+    const validator = byVote.get(va)
     if (validator && bondBelowMin(validator)) continue
     const entry = get(va)
     entry.naturalWithdrawal -= w
@@ -560,14 +572,35 @@ export function selectRedelegationPriorityFrontierPmpe(
 // delegation-priority rank, not the maxApy-derived sam-table rank; the
 // greedy pass orders strictly on totalPmpe, so this is the rank that
 // decides whether the budget reaches you before it runs dry.
+//
+// Memoised per AuctionResult: the table-B advisory calls this per detail
+// open; the lookup map is built once and shared across calls.
+const priorityRankCache = new WeakMap<AuctionResult, Map<string, number>>()
+
+function getPriorityRanks(auctionResult: AuctionResult): Map<string, number> {
+  const cached = priorityRankCache.get(auctionResult)
+  if (cached) return cached
+  const sorted = [...auctionResult.auctionData.validators].sort(
+    (a, b) => (b.revShare.totalPmpe ?? 0) - (a.revShare.totalPmpe ?? 0),
+  )
+  const ranks = new Map<string, number>()
+  let prevPmpe: number | null = null
+  let groupRank = 0
+  sorted.forEach((v, i) => {
+    const pmpe = v.revShare.totalPmpe ?? 0
+    if (pmpe !== prevPmpe) {
+      groupRank = i + 1
+      prevPmpe = pmpe
+    }
+    ranks.set(v.voteAccount, groupRank)
+  })
+  priorityRankCache.set(auctionResult, ranks)
+  return ranks
+}
+
 export function selectRedelegationPriorityRank(
   v: AuctionValidator,
   auctionResult: AuctionResult,
 ): number {
-  const mine = v.revShare.totalPmpe ?? 0
-  let ahead = 0
-  for (const w of auctionResult.auctionData.validators) {
-    if ((w.revShare.totalPmpe ?? 0) > mine) ahead += 1
-  }
-  return ahead + 1
+  return getPriorityRanks(auctionResult).get(v.voteAccount) ?? 1
 }
