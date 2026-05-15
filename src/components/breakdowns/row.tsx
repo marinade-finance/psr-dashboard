@@ -12,6 +12,8 @@ export const SEPARATOR_DIV_CLASS = 'border-t border-border-grid pt-2 mt-1'
 // top space is what makes the total row breathe — a thin border alone reads
 // as "more rows below" without it.
 export const SEPARATOR_CELL_PAD = 'pt-3 pb-1.5'
+// Total rows get a bit more room above the divider to read as a conclusion.
+export const TOTAL_CELL_PAD = 'pt-4 pb-2'
 export const NORMAL_CELL_PAD = 'py-1.5'
 
 export const SectionHeader: React.FC<{ title: string; colSpan?: number }> = ({
@@ -76,23 +78,40 @@ export const CalcRow: React.FC<{
   const sep = total || separator
   const bld = total || bold
   const lg = total || large
+  // The total/separator divider used to live only on the value <td>, which
+  // rendered as a half-width line. Apply the border + padding to all three
+  // cells so it spans the full row width, and tint the row so the section
+  // conclusion is visually anchored.
+  const cellPad = total
+    ? TOTAL_CELL_PAD
+    : sep
+      ? SEPARATOR_CELL_PAD
+      : NORMAL_CELL_PAD
+  const sepBorder = sep && 'border-t-2 border-border'
   return (
-    <tr className={'border-b border-border-grid/50 last:border-b-0'}>
+    <tr
+      className={cn(
+        'border-b border-border-grid/50 last:border-b-0',
+        total && 'bg-muted/40',
+      )}
+    >
       <td
         className={cn(
           'pr-2',
           lg ? 'text-base' : 'text-xs',
-          sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD,
+          cellPad,
           bld && 'font-semibold',
+          sepBorder,
         )}
       >
-        {tone && <Marker tone={tone} />}
+        {tone && !total && <Marker tone={tone} />}
         {label}
       </td>
       <td
         className={cn(
           'px-2 text-right font-mono text-xs text-muted-foreground',
-          sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD,
+          cellPad,
+          sepBorder,
         )}
       >
         {secondary ?? ''}
@@ -100,10 +119,10 @@ export const CalcRow: React.FC<{
       <td
         className={cn(
           'pl-2 text-right font-mono',
-          sep ? SEPARATOR_CELL_PAD : NORMAL_CELL_PAD,
+          cellPad,
           lg ? 'text-base' : 'text-xs',
           bld && 'font-semibold',
-          sep && 'border-t-2 border-border',
+          sepBorder,
           tone === 'red' && 'text-destructive',
           tone === 'yellow' && 'text-status-yellow',
           tone === 'green' && 'text-status-green',
