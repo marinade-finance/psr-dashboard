@@ -109,7 +109,7 @@ function outOfSetTip(
         : coverage.topUpToKeepStake
     if (topUpSol > 0) {
       return {
-        text: `Bond too small for stake. Top up ${topUp(topUpSol)} to qualify for more.`,
+        text: `Bond too small for stake. Top up ${topUp(topUpSol)} to grow stake.`,
         urgency: 'warning',
         constraint: 'bond',
       }
@@ -186,7 +186,7 @@ export const getValidatorTip = (
 
     if (coverage.topUpToIdealKeep > 0) {
       return {
-        text: `Top up ${topUp(coverage.topUpToIdealKeep)} for more stake.`,
+        text: `Top up ${topUp(coverage.topUpToIdealKeep)} to grow stake.`,
         urgency: 'info',
         constraint: 'bond',
       }

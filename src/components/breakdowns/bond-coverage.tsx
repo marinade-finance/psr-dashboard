@@ -46,14 +46,14 @@ const statusLine = (
       topUpToKeepStake > 0
         ? `Top up ${topUp(topUpToKeepStake)} to keep your stake.`
         : topUpToIdealKeep > 0
-          ? `Top up ${topUp(topUpToIdealKeep)} for more stake.`
+          ? `Top up ${topUp(topUpToIdealKeep)} to grow stake.`
           : ''
     if (text) return { label: text, tone: 'yellow' }
     return { label: 'Bond covers current stake.', tone: 'yellow' }
   } else if (state === 'soft') {
     if (topUpToIdealKeep > 0)
       return {
-        label: `Bond covers current stake. Top up ${topUp(topUpToIdealKeep)} for more.`,
+        label: `Bond covers current stake. Top up ${topUp(topUpToIdealKeep)} to grow stake.`,
         tone: 'yellow',
       }
     return { label: 'Bond meets ideal coverage.', tone: 'green' }
@@ -208,7 +208,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           />
           {coverage.topUpToIdealKeep > 0 ? (
             <CalcRow
-              label="Top up for more stake"
+              label="Top up to grow stake"
               value={topUp(coverage.topUpToIdealKeep)}
               total
               severity="warning"
