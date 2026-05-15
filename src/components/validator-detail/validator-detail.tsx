@@ -331,10 +331,7 @@ export const ValidatorDetail = ({
       <SheetContent
         side="right"
         title="Validator detail"
-        className={cn(
-          'w-full max-w-4xl overflow-y-auto p-0',
-          isSimulated && 'border-t-4 border-t-status-yellow',
-        )}
+        className="w-full max-w-4xl overflow-y-auto p-0"
       >
         <div className="flex items-start justify-between px-4 sm:px-6 py-4 border-b border-border sticky top-0 z-10 gap-2 bg-background">
           <div className="flex flex-col gap-1 min-w-0">
@@ -414,8 +411,7 @@ export const ValidatorDetail = ({
             {isSimulated && onClearSimulation && (
               <Button
                 variant="ghost"
-                size="sm"
-                className="text-destructive hover:bg-destructive/5 h-7 px-2 text-xs"
+                className="text-destructive hover:bg-destructive/5"
                 onClick={onClearSimulation}
                 disabled={isCalculating}
               >
@@ -773,7 +769,7 @@ export const ValidatorDetail = ({
             />
 
             {simEnabled && (
-              <div className="rounded-xl border-2 p-5 border-status-yellow bg-status-yellow-light">
+              <div className="rounded-xl border border-status-yellow p-5 bg-status-yellow-light">
                 <h3 className="text-base font-semibold flex items-center gap-2 text-status-yellow">
                   What-If Simulation
                   <HelpTip text={HELP_TEXT.simulation} />
