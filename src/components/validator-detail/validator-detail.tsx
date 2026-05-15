@@ -409,14 +409,16 @@ export const ValidatorDetail = ({
               </label>
             </Tooltip>
             {isSimulated && onClearSimulation && (
-              <Button
-                variant="ghost"
-                className="text-destructive hover:bg-destructive/5"
-                onClick={onClearSimulation}
-                disabled={isCalculating}
-              >
-                Reset
-              </Button>
+              <Tooltip content="Removes only this validator from simulation. To clear every simulated validator, use Reset Simulation on the main table.">
+                <Button
+                  variant="ghost"
+                  className="text-destructive hover:bg-destructive/5"
+                  onClick={onClearSimulation}
+                  disabled={isCalculating}
+                >
+                  Remove from simulation
+                </Button>
+              </Tooltip>
             )}
             <Button
               variant="ghost"
