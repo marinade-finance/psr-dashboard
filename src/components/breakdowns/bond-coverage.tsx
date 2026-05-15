@@ -129,7 +129,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
 
           <SectionHeader
             title={`Bond Coverage — ${coverage.minEp} epochs`}
-            help={`Whether the bond covers the next ${coverage.minEp} epochs. Fall short → bond-risk fee, then losing stake.`}
+            help={`Whether the bond covers the next ${coverage.minEp} epochs. Fall short → you pay a bond risk fee AND are scheduled to lose stake immediately.`}
           />
           <CalcRow
             label="Claimable bond balance"
