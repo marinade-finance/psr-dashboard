@@ -51,3 +51,12 @@ lerna-debug.log*
 
 # Shipping artifacts (ephemeral)
 /.ship
+
+# Package manager cache
+/.pnpm-store
+
+# Tmp directories at any depth
+tmp/
+
+# Session / task locks
+*scheduled_tasks.lock
