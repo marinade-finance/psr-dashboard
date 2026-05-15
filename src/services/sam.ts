@@ -53,15 +53,29 @@ export type { SourceDataOverrides }
 const FETCHED_EPOCHS = 11
 
 // AugmentedAuctionValidator: AuctionValidator with derived per-validator fields
-// pre-computed. expectedStakeChangeSol drives the next-epoch delta display.
+// pre-computed. expectedStakeChangeSol drives the next-epoch delta display and
+// decomposes into three signed components that always sum to it:
+//   paidUndelegationSol (≤0)      outflow paid this epoch
+//   redelegationInflowSol (≥0)    inflow from budget into below-target winners
+//   naturalWithdrawalSol (≤0)     pro-rata redeemer outflow
 // cutoffRank is the dense position relative to the auction cutoff: 0 = at the
 // winning total PMPE, +1 = closest distinct tier above (ties share a rank),
 // -1 = closest distinct tier below.
 export type AugmentedAuctionValidator = Omit<AuctionValidator, 'values'> & {
   values: NonNullable<AuctionValidator['values']> & {
     expectedStakeChangeSol: number
+    expectedStakePaidUndelegationSol: number
+    expectedStakeRedelegationInflowSol: number
+    expectedStakeNaturalWithdrawalSol: number
     cutoffRank: number
   }
+}
+
+export type ExpectedStakeChange = {
+  total: number
+  paidUndelegation: number
+  redelegationInflow: number
+  naturalWithdrawal: number
 }
 
 export const fetchValidatorNames = async (): Promise<Map<string, string>> => {
@@ -276,7 +290,7 @@ function computeNaturalWithdrawal(
 // − paidUndelegationSol) as the post-undelegation baseline; we mirror that.
 function computeExpectedStakeChanges(
   auctionResult: AuctionResult,
-): Map<string, number> {
+): Map<string, ExpectedStakeChange> {
   const validators = auctionResult.auctionData.validators
   const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
   const paidOf = (v: AuctionValidator) => v.values?.paidUndelegationSol ?? 0
@@ -289,11 +303,28 @@ function computeExpectedStakeChanges(
     v.marinadeActivatedStakeSol - paidOf(v)
   const rawDelta = (v: AuctionValidator) =>
     v.auctionStake.marinadeSamTargetSol - effectiveActive(v)
-  const result = new Map<string, number>()
+  const result = new Map<string, ExpectedStakeChange>()
+  const get = (va: string): ExpectedStakeChange => {
+    let entry = result.get(va)
+    if (!entry) {
+      entry = {
+        total: 0,
+        paidUndelegation: 0,
+        redelegationInflow: 0,
+        naturalWithdrawal: 0,
+      }
+      result.set(va, entry)
+    }
+    return entry
+  }
 
   for (const validator of validators) {
     const paid = paidOf(validator)
-    if (paid > 0) result.set(validator.voteAccount, -paid)
+    if (paid > 0) {
+      const entry = get(validator.voteAccount)
+      entry.paidUndelegation = -paid
+      entry.total += -paid
+    }
   }
 
   if (budget > 0) {
@@ -305,10 +336,9 @@ function computeExpectedStakeChanges(
       const delta = rawDelta(validator)
       if (delta > 0 && remaining > 0) {
         const alloc = Math.min(delta, remaining)
-        result.set(
-          validator.voteAccount,
-          (result.get(validator.voteAccount) ?? 0) + alloc,
-        )
+        const entry = get(validator.voteAccount)
+        entry.redelegationInflow += alloc
+        entry.total += alloc
         remaining -= alloc
       }
     }
@@ -316,7 +346,9 @@ function computeExpectedStakeChanges(
 
   const withdrawals = computeNaturalWithdrawal(validators, tvl)
   for (const [va, w] of withdrawals) {
-    result.set(va, (result.get(va) ?? 0) - w)
+    const entry = get(va)
+    entry.naturalWithdrawal -= w
+    entry.total -= w
   }
 
   return result
@@ -352,19 +384,39 @@ export function augmentAuctionResult(
     cutoffRanks.set(v.voteAccount, rank)
   }
 
-  return validators.map(validator => ({
-    ...validator,
-    values: {
-      ...validator.values,
-      expectedStakeChangeSol: changes.get(validator.voteAccount) ?? 0,
-      cutoffRank: cutoffRanks.get(validator.voteAccount) ?? 0,
-    } as AugmentedAuctionValidator['values'],
-  }))
+  return validators.map(validator => {
+    const change = changes.get(validator.voteAccount)
+    return {
+      ...validator,
+      values: {
+        ...validator.values,
+        expectedStakeChangeSol: change?.total ?? 0,
+        expectedStakePaidUndelegationSol: change?.paidUndelegation ?? 0,
+        expectedStakeRedelegationInflowSol: change?.redelegationInflow ?? 0,
+        expectedStakeNaturalWithdrawalSol: change?.naturalWithdrawal ?? 0,
+        cutoffRank: cutoffRanks.get(validator.voteAccount) ?? 0,
+      } as AugmentedAuctionValidator['values'],
+    }
+  })
 }
 
 export const selectExpectedStakeChange = (
   v: AugmentedAuctionValidator,
 ): number => v.values.expectedStakeChangeSol ?? 0
+
+export type ExpectedStakeChangeBreakdown = {
+  paidUndelegation: number
+  redelegationInflow: number
+  naturalWithdrawal: number
+}
+
+export const selectExpectedStakeChangeBreakdown = (
+  v: AugmentedAuctionValidator,
+): ExpectedStakeChangeBreakdown => ({
+  paidUndelegation: v.values.expectedStakePaidUndelegationSol ?? 0,
+  redelegationInflow: v.values.expectedStakeRedelegationInflowSol ?? 0,
+  naturalWithdrawal: v.values.expectedStakeNaturalWithdrawalSol ?? 0,
+})
 
 export const selectCutoffRank = (v: AugmentedAuctionValidator): number =>
   v.values.cutoffRank ?? 0

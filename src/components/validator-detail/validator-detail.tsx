@@ -21,7 +21,6 @@ import {
   CSS_DESTRUCTIVE,
   CSS_PRIMARY_LIGHT,
   CSS_DESTRUCTIVE_LIGHT,
-  CSS_STATUS_GREEN,
   CSS_WARNING,
   CSS_MUTED_FG,
 } from 'src/css'
@@ -34,6 +33,7 @@ import { HELP_TEXT } from 'src/services/help-text'
 import { fetchPsrEstimatesForValidator } from 'src/services/protected-events-estimator'
 import {
   selectExpectedStakeChange,
+  selectExpectedStakeChangeBreakdown,
   selectMaxAPY,
   selectVoteAccount,
   selectWinningApyForValidator,
@@ -218,6 +218,7 @@ export const ValidatorDetail = ({
   const tip = getValidatorTip(validator, dsSamConfig, winningTotalPmpe)
   const tipStyle = getTipStyle(tip.urgency)
   const expectedStakeDelta = selectExpectedStakeChange(validator)
+  const expectedStakeBreakdown = selectExpectedStakeChangeBreakdown(validator)
   const [tab, setTab] = useState<Tab>('overview')
 
   const inSet = validator.auctionStake.marinadeSamTargetSol > 0
@@ -674,15 +675,37 @@ export const ValidatorDetail = ({
                         ? stake(expectedStakeDelta)
                         : stake(0)
                   }
-                  valueStyle={{
-                    color:
-                      expectedStakeDelta > 0
-                        ? CSS_STATUS_GREEN
-                        : expectedStakeDelta < 0
-                          ? CSS_DESTRUCTIVE
-                          : CSS_MUTED_FG,
-                  }}
                 />
+                {expectedStakeBreakdown.paidUndelegation !== 0 && (
+                  <div className="flex items-center justify-between pl-3">
+                    <span className="text-[11px] text-muted-foreground">
+                      ↳ Paid undelegation (this epoch)
+                    </span>
+                    <span className="text-[11px] font-mono text-muted-foreground">
+                      {stake(expectedStakeBreakdown.paidUndelegation)}
+                    </span>
+                  </div>
+                )}
+                {expectedStakeBreakdown.redelegationInflow !== 0 && (
+                  <div className="flex items-center justify-between pl-3">
+                    <span className="text-[11px] text-muted-foreground">
+                      ↳ Redelegation inflow (next epoch)
+                    </span>
+                    <span className="text-[11px] font-mono text-muted-foreground">
+                      +{stake(expectedStakeBreakdown.redelegationInflow)}
+                    </span>
+                  </div>
+                )}
+                {expectedStakeBreakdown.naturalWithdrawal !== 0 && (
+                  <div className="flex items-center justify-between pl-3">
+                    <span className="text-[11px] text-muted-foreground">
+                      ↳ Natural withdrawal share
+                    </span>
+                    <span className="text-[11px] font-mono text-muted-foreground">
+                      {stake(expectedStakeBreakdown.naturalWithdrawal)}
+                    </span>
+                  </div>
+                )}
               </div>
             </CalcCard>
 
