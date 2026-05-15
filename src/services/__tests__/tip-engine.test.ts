@@ -1,17 +1,26 @@
 import { describe, it, expect } from 'vitest'
 
+import { ICON_BID } from 'src/components/icons/icon-bid'
+import { ICON_BOND } from 'src/components/icons/icon-bond'
+import { ICON_DOWN } from 'src/components/icons/icon-down'
+import { ICON_RANK } from 'src/components/icons/icon-rank'
+import { ICON_RIGHT } from 'src/components/icons/icon-right'
+import { ICON_UP } from 'src/components/icons/icon-up'
+
 import { selectProtectedStakeReason } from '../protected-events'
 import {
   getValidatorTip,
   getApyBreakdown,
   getBondHealthStyle,
   getTipStyle,
+  getTipIcon,
   calculateBondUtilization,
   nextStakeDeltaCell,
 } from '../tip-engine'
 
 import type { ProtectedEvent } from '../protected-events'
 import type { AugmentedAuctionValidator } from '../sam'
+import type { ValidatorTip } from '../tip-engine'
 import type { DsSamConfig } from '@marinade.finance/ds-sam-sdk'
 
 function makeValidator(
@@ -142,7 +151,7 @@ describe('getTipStyle', () => {
     expect(getTipStyle('neutral').color).toContain('muted')
   })
 
-  it('each urgency has non-empty icon', () => {
+  it('no longer carries an icon (color = severity only)', () => {
     const urgencies = [
       'critical',
       'warning',
@@ -151,8 +160,53 @@ describe('getTipStyle', () => {
       'neutral',
     ] as const
     for (const u of urgencies) {
-      expect(getTipStyle(u).icon).toBeTruthy()
+      expect('icon' in getTipStyle(u)).toBe(false)
     }
+  })
+})
+
+// --- getTipIcon — glyph = constraint/direction, never severity ---
+
+describe('getTipIcon', () => {
+  const tip = (over: Partial<ValidatorTip>): ValidatorTip => ({
+    text: '',
+    urgency: 'warning',
+    constraint: 'none',
+    delta: 0,
+    ...over,
+  })
+
+  it('constraint:bond → fixed non-directional bond glyph', () => {
+    expect(getTipIcon(tip({ constraint: 'bond' }))).toBe(ICON_BOND)
+  })
+
+  it('constraint:bid → fixed non-directional bid glyph', () => {
+    expect(getTipIcon(tip({ constraint: 'bid' }))).toBe(ICON_BID)
+  })
+
+  it('constraint:rank → fixed non-directional rank glyph', () => {
+    expect(getTipIcon(tip({ constraint: 'rank' }))).toBe(ICON_RANK)
+  })
+
+  it('constraint:none — delta>0 → up, delta<0 → down, delta=0 → right', () => {
+    expect(getTipIcon(tip({ constraint: 'none', delta: 100 }))).toBe(ICON_UP)
+    expect(getTipIcon(tip({ constraint: 'none', delta: -100 }))).toBe(ICON_DOWN)
+    expect(getTipIcon(tip({ constraint: 'none', delta: 0 }))).toBe(ICON_RIGHT)
+  })
+
+  it('regression: a constraint glyph is NEVER the up arrow', () => {
+    // The bug: warning-urgency bond/bid/rank tips rendered ICON_UP via the
+    // old urgency→icon map, putting a "gain" arrow on blocked/losing rows.
+    for (const c of ['bond', 'bid', 'rank'] as const) {
+      const losing = tip({ constraint: c, urgency: 'warning', delta: -5000 })
+      expect(getTipIcon(losing)).not.toBe(ICON_UP)
+    }
+  })
+
+  it('regression: a losing in-set tip is the down arrow, never up', () => {
+    const losing = tip({ constraint: 'none', urgency: 'warning', delta: -5000 })
+    expect(getTipIcon(losing)).toBe(ICON_DOWN)
+    expect(getTipIcon(losing)).not.toBe(ICON_UP)
   })
 })
 

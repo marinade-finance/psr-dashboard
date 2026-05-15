@@ -1,7 +1,7 @@
-import { ICON_CHECK } from 'src/components/icons/icon-check'
-import { ICON_CRITICAL } from 'src/components/icons/icon-critical'
+import { ICON_BID } from 'src/components/icons/icon-bid'
+import { ICON_BOND } from 'src/components/icons/icon-bond'
 import { ICON_DOWN } from 'src/components/icons/icon-down'
-import { ICON_INFO } from 'src/components/icons/icon-info'
+import { ICON_RANK } from 'src/components/icons/icon-rank'
 import { ICON_RIGHT } from 'src/components/icons/icon-right'
 import { ICON_UP } from 'src/components/icons/icon-up'
 import {
@@ -42,13 +42,14 @@ export interface ValidatorTip {
   text: string
   urgency: TipUrgency
   constraint: TipConstraint
-  icon?: React.ReactNode
+  // Signed next-epoch stake delta. Only meaningful when constraint === 'none';
+  // that's the sole case whose glyph is allowed to be directional.
+  delta: number
 }
 
 export interface TipStyle {
   color: string
   bg: string
-  icon: React.ReactNode
 }
 
 export const getBondHealthStyle = (
@@ -70,22 +71,39 @@ export const getBondHealthStyle = (
   return { color: CSS_PRIMARY, bg: CSS_PRIMARY_LIGHT_10, label: 'Healthy' }
 }
 
+// Color carries severity ONLY. Glyph never does — see getTipIcon.
 export const getTipStyle = (urgency: TipUrgency): TipStyle => {
   switch (urgency) {
     case 'critical':
-      return {
-        color: CSS_DESTRUCTIVE,
-        bg: CSS_DESTRUCTIVE_LIGHT,
-        icon: ICON_CRITICAL,
-      }
+      return { color: CSS_DESTRUCTIVE, bg: CSS_DESTRUCTIVE_LIGHT }
     case 'warning':
-      return { color: CSS_WARNING, bg: CSS_WARNING_LIGHT, icon: ICON_UP }
+      return { color: CSS_WARNING, bg: CSS_WARNING_LIGHT }
     case 'info':
-      return { color: CSS_INFO, bg: CSS_INFO_LIGHT, icon: ICON_INFO }
+      return { color: CSS_INFO, bg: CSS_INFO_LIGHT }
     case 'positive':
-      return { color: CSS_PRIMARY, bg: CSS_PRIMARY_LIGHT_10, icon: ICON_CHECK }
+      return { color: CSS_PRIMARY, bg: CSS_PRIMARY_LIGHT_10 }
     default:
-      return { color: CSS_MUTED_FG, bg: CSS_MUTED, icon: ICON_RIGHT }
+      return { color: CSS_MUTED_FG, bg: CSS_MUTED }
+  }
+}
+
+// Glyph carries the tip's MEANING (which lever to pull), never its severity.
+// A constraint maps to one fixed non-directional glyph. Only constraint:'none'
+// (the validator is in-set, the only lever left is the stake trajectory) gets
+// a directional arrow, and it is keyed off the real signed delta so it can
+// never lie — an up arrow appears iff stake is genuinely growing.
+export const getTipIcon = (tip: ValidatorTip): React.ReactNode => {
+  switch (tip.constraint) {
+    case 'bond':
+      return ICON_BOND
+    case 'bid':
+      return ICON_BID
+    case 'rank':
+      return ICON_RANK
+    default:
+      if (tip.delta > 0) return ICON_UP
+      if (tip.delta < 0) return ICON_DOWN
+      return ICON_RIGHT
   }
 }
 
@@ -94,6 +112,7 @@ function outOfSetTip(
   dsSamConfig: DsSamConfig,
   winningTotalPmpe: number,
   health: BondHealthState,
+  delta: number,
 ): ValidatorTip {
   if (health !== 'healthy') {
     const coverage = computeBondCoverage(
@@ -112,6 +131,7 @@ function outOfSetTip(
         text: `Bond too small for stake. Top up ${topUp(topUpSol)} to grow stake.`,
         urgency: 'warning',
         constraint: 'bond',
+        delta,
       }
     }
   }
@@ -125,12 +145,14 @@ function outOfSetTip(
       text: `Bond below minimum — ${stake(dsSamConfig.minBondBalanceSol)} required. Top up to qualify.`,
       urgency: 'warning',
       constraint: 'bond',
+      delta,
     }
   }
   return {
     text: 'Bid too low. Raise it to qualify for stake.',
     urgency: 'warning',
     constraint: 'rank',
+    delta,
   }
 }
 
@@ -147,7 +169,7 @@ export const getValidatorTip = (
   // A would-be winner whose bid clears the threshold but whose bond can't
   // back more stake gets the bond CTA, not the rank CTA.
   if (!inSet)
-    return outOfSetTip(validator, dsSamConfig, winningTotalPmpe, health)
+    return outOfSetTip(validator, dsSamConfig, winningTotalPmpe, health, delta)
 
   // Bond CTA cascade — priority: avoid fee > keep stake > ideal.
   if (health === 'critical' || health === 'watch' || health === 'soft') {
@@ -173,6 +195,7 @@ export const getValidatorTip = (
         text: `${feeStr}${topUpStr}`,
         urgency: 'critical',
         constraint: 'bond',
+        delta,
       }
     }
 
@@ -181,6 +204,7 @@ export const getValidatorTip = (
         text: `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake.`,
         urgency: 'warning',
         constraint: 'bond',
+        delta,
       }
     }
 
@@ -189,6 +213,7 @@ export const getValidatorTip = (
         text: `Top up ${topUp(coverage.topUpToIdealKeep)} to grow stake.`,
         urgency: 'info',
         constraint: 'bond',
+        delta,
       }
     }
   }
@@ -198,7 +223,7 @@ export const getValidatorTip = (
       text: `${stake(delta)} arriving next epoch.`,
       urgency: 'positive',
       constraint: 'none',
-      icon: ICON_UP,
+      delta,
     }
   }
 
@@ -207,6 +232,7 @@ export const getValidatorTip = (
       text: 'At target stake.',
       urgency: 'neutral',
       constraint: 'none',
+      delta,
     }
   }
 
@@ -214,7 +240,7 @@ export const getValidatorTip = (
     text: `Losing ${stake(Math.abs(delta))} next epoch.`,
     urgency: 'warning',
     constraint: 'none',
-    icon: ICON_DOWN,
+    delta,
   }
 }
 

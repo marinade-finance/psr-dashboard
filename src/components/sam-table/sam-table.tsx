@@ -19,6 +19,7 @@ import {
 import { Tooltip } from 'src/components/ui/tooltip'
 import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
 import { ValidatorSearch } from 'src/components/validator-search/validator-search'
+import { CSS_MUTED, CSS_MUTED_FG } from 'src/css'
 import { pct, sol, stake } from 'src/format'
 import { bondHealthFromAuction } from 'src/services/bond-health'
 import { HELP_TEXT } from 'src/services/help-text'
@@ -42,6 +43,7 @@ import {
 import {
   getValidatorTip,
   getTipStyle,
+  getTipIcon,
   calculateBondUtilization,
   nextStakeDeltaCell,
 } from 'src/services/tip-engine'
@@ -805,22 +807,33 @@ export const SamTable: React.FC<Props> = ({
           </div>
         </TableCell>
 
-        {/* Next Step */}
-        <TableCell className="px-3.5 py-3 max-w-[350px]">
-          <div
-            className="inline-flex items-start gap-[5px] text-xs leading-[1.35] px-2.5 py-1 rounded-md"
-            style={{ background: tipStyle.bg, color: tipStyle.color }}
-          >
-            <span className="shrink-0">{tip.icon ?? tipStyle.icon}</span>
-            <span className="break-words">
-              {tip.text.replace(/~?\d+\.\d{3,}/g, numStr => {
+        {/* Next Step — icon = constraint/direction, color = severity.
+            The contiguous out-of-set "Bid too low" block is an EXPECTED
+            state, not an alarm: render it muted with a 2-word label;
+            the full sentence lives in the detail panel. */}
+        {(() => {
+          const bidTooLow = tip.constraint === 'rank'
+          const stepColor = bidTooLow ? CSS_MUTED_FG : tipStyle.color
+          const stepBg = bidTooLow ? CSS_MUTED : tipStyle.bg
+          const stepText = bidTooLow
+            ? 'Bid too low'
+            : tip.text.replace(/~?\d+\.\d{3,}/g, numStr => {
                 const num = parseFloat(numStr.replace(/^~/, ''))
                 const prefix = numStr.startsWith('~') ? '~' : ''
                 return `${prefix}${Math.round(num * 100) / 100}`
-              })}
-            </span>
-          </div>
-        </TableCell>
+              })
+          return (
+            <TableCell className="px-3.5 py-3">
+              <div
+                className="inline-flex items-start gap-[5px] text-xs leading-[1.35] px-2.5 py-1 rounded-md max-w-[260px]"
+                style={{ background: stepBg, color: stepColor }}
+              >
+                <span className="shrink-0 mt-px">{getTipIcon(tip)}</span>
+                <span className="break-words">{stepText}</span>
+              </div>
+            </TableCell>
+          )
+        })()}
 
         {/* Chevron */}
         <TableCell className="px-2.5 py-3 w-10">

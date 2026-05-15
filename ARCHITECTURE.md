@@ -259,10 +259,13 @@ where applicable.
 - **`calculations.ts`** — pure math: `compoundApy`, `bondRunwayEpochs`,
   `bondRunwayDays`, `bondUtilizationPct`, `stakeDelta`,
   `selectMaxWantedStake`, `apyBreakdown`, `isNonProductive`.
-- **`tip-engine.ts`** — `getValidatorTip` (urgency + text + constraint),
-  `getTipStyle`, `getBondHealthStyle`, `getApyBreakdown`,
-  `nextStakeDeltaCell`, `calculateBondUtilization`. Drives the rank-cell
-  icon and the Next Step column.
+- **`tip-engine.ts`** — `getValidatorTip` (urgency + text + constraint +
+  signed delta), `getTipStyle` (colour/bg = severity only, no icon),
+  `getTipIcon` (glyph = constraint/direction: one constraint→glyph map +
+  a single signed-delta arrow for the in-set `none` case),
+  `getBondHealthStyle`, `getApyBreakdown`, `nextStakeDeltaCell`,
+  `calculateBondUtilization`. Drives the rank-cell colour and the Next
+  Step column.
 - **`bidding.ts`** — `computeBidding` (per-validator stake/bid/cost row).
 - **`bond-coverage.ts`** — `computeBondCoverage` (keep-stake and avoid-fee
   top-ups on current vs projected exposed stake).

@@ -39,6 +39,7 @@ import {
   getApyBreakdown,
   getValidatorTip,
   getTipStyle,
+  getTipIcon,
 } from 'src/services/tip-engine'
 
 import type { AuctionResult, DsSamConfig } from '@marinade.finance/ds-sam-sdk'
@@ -355,7 +356,7 @@ export const ValidatorDetail = ({
                   style={{ color: tipStyle.color }}
                 >
                   <span className="text-sm leading-none">
-                    {tip.icon ?? tipStyle.icon}
+                    {getTipIcon(tip)}
                   </span>
                   {posVsWinning < 0
                     ? `-#${Math.abs(posVsWinning)}`
