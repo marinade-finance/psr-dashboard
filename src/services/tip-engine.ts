@@ -89,6 +89,51 @@ export const getTipStyle = (urgency: TipUrgency): TipStyle => {
   }
 }
 
+function outOfSetTip(
+  validator: AugmentedAuctionValidator,
+  dsSamConfig: DsSamConfig,
+  winningTotalPmpe: number,
+  health: BondHealthState,
+): ValidatorTip {
+  if (health !== 'healthy') {
+    const coverage = computeBondCoverage(
+      validator,
+      dsSamConfig.minBondEpochs,
+      dsSamConfig.idealBondEpochs,
+      winningTotalPmpe,
+      dsSamConfig.bondRiskFeeMult,
+    )
+    const topUp =
+      coverage.topUpToIdealKeep > 0
+        ? coverage.topUpToIdealKeep
+        : coverage.topUpToKeepStake
+    if (topUp > 0) {
+      return {
+        text: `Bond too small for stake. Top up ${stakeCta(topUp)} to qualify for more.`,
+        urgency: 'warning',
+        constraint: 'bond',
+      }
+    }
+  }
+  // Bond below SDK's `minBondBalanceSol`: clipBondStakeCap returns 0 so the
+  // validator can't win any stake regardless of bid. bond-health reports
+  // 'healthy' here because runway against tiny stake is huge — that's a gap
+  // in the runway-based diagnosis, surfaced here in the tip cascade.
+  const bondBalance = validator.bondBalanceSol ?? 0
+  if (bondBalance < dsSamConfig.minBondBalanceSol) {
+    return {
+      text: `Bond below minimum (${stake(dsSamConfig.minBondBalanceSol)} required). Top up to qualify.`,
+      urgency: 'warning',
+      constraint: 'bond',
+    }
+  }
+  return {
+    text: 'Bid too low. Raise it to qualify for stake.',
+    urgency: 'warning',
+    constraint: 'rank',
+  }
+}
+
 export const getValidatorTip = (
   validator: AugmentedAuctionValidator,
   dsSamConfig: DsSamConfig,
@@ -101,33 +146,8 @@ export const getValidatorTip = (
   // Out-of-set validators: distinguish bid-too-low from bond-blocked.
   // A would-be winner whose bid clears the threshold but whose bond can't
   // back more stake gets the bond CTA, not the rank CTA.
-  if (!inSet) {
-    if (health !== 'healthy') {
-      const coverage = computeBondCoverage(
-        validator,
-        dsSamConfig.minBondEpochs,
-        dsSamConfig.idealBondEpochs,
-        winningTotalPmpe,
-        dsSamConfig.bondRiskFeeMult,
-      )
-      const topUp =
-        coverage.topUpToIdealKeep > 0
-          ? coverage.topUpToIdealKeep
-          : coverage.topUpToKeepStake
-      if (topUp > 0) {
-        return {
-          text: `Bond too small for stake. Top up ${stakeCta(topUp)} to qualify for more.`,
-          urgency: 'warning',
-          constraint: 'bond',
-        }
-      }
-    }
-    return {
-      text: 'Bid too low. Raise it to qualify for stake.',
-      urgency: 'warning',
-      constraint: 'rank',
-    }
-  }
+  if (!inSet)
+    return outOfSetTip(validator, dsSamConfig, winningTotalPmpe, health)
 
   // Bond CTA cascade — priority: avoid fee > keep stake > ideal.
   if (health === 'critical' || health === 'watch' || health === 'soft') {
