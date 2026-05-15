@@ -13,7 +13,8 @@ validator bonds. Uses `@marinade.finance/ds-sam-sdk` for auction computation.
 ```bash
 pnpm install              # install deps
 pnpm start:dev            # dev server (vite, HMR)
-pnpm build                # production build → dist/
+pnpm build                # production build → build/
+pnpm preview              # serve build/ on :8080 (used by e2e)
 pnpm lint                 # eslint
 pnpm format:check         # prettier check
 pnpm check                # lint + format check
@@ -22,6 +23,7 @@ pnpm test:e2e             # playwright e2e (tests/)
 pnpm test:e2e:ui          # playwright UI mode
 pnpm test:e2e:update      # update playwright snapshots
 npx tsc --noEmit          # type check (no Makefile, run directly)
+pnpm vitest run path/to/file.test.ts    # run a single test file
 ```
 
 Pre-commit hooks run lint-staged (eslint --fix + prettier) via husky.
@@ -54,16 +56,28 @@ section — patches sentence-by-sentence age badly.
 
 ## Architecture
 
-Vite + TypeScript 4.9 + React 18 SPA. Tailwind CSS v4 (`@tailwindcss/vite`,
-no CSS Modules). react-query v3 for data fetching. react-router-dom v6 for
-routing. Unit tests with vitest, e2e + visual regression with Playwright.
+Vite + TypeScript 5 + React 18 SPA. Tailwind CSS v4 (`@tailwindcss/vite`,
+no CSS Modules). `@tanstack/react-query` v5 for data fetching (object-form
+API everywhere — `useQuery({ queryKey, queryFn })`, never the v3 positional
+form). react-router-dom v6 for routing (`createBrowserRouter` in
+`src/index.tsx`, with a `spaFallback` Vite middleware so dotless paths
+resolve to `/index.html`). Unit tests with vitest, e2e + visual regression
+with Playwright (which runs against `pnpm preview`, not the dev server).
 
 ### Routes
 
-Each route has Basic and Expert variants (Expert shows extra metrics/columns):
-- `/` and `/expert-` → SAM auction page (`src/pages/sam.tsx`)
+Each user-facing route has Basic and Expert variants (Expert shows extra
+metrics/columns and the simulation panel):
+- `/` and `/expert-` → SAM auction (`src/pages/stake-auction-marketplace.tsx`)
 - `/bonds` and `/expert-bonds` → Validator bonds (`src/pages/validator-bonds.tsx`)
 - `/protected-events` and `/expert-protected-events` → Protected events
+- `/docs` and `/expert-docs` → In-app guide rendered from
+  `public/docs/GUIDE.md` / `GUIDE-EXPERT.md` (`src/pages/docs.tsx`)
+
+There are also `/test-`, `/test-bonds`, `/test-protected-events` routes —
+thin wrappers around the real page components that swap in fixture data
+so Playwright snapshots stay deterministic. Don't add prod logic to the
+test pages; they exist only to feed fixtures.
 
 ### Key Files
 
@@ -81,6 +95,9 @@ Each route has Basic and Expert variants (Expert shows extra metrics/columns):
   simulation mode (ghost rows, position change grading); rank cell shows
   cutoff-relative rank (+N/-N), severity icon colored by tip urgency;
   bond runway displayed as `(Nep)` with parentheses; horizontally scrollable
+- `src/components/validator-detail/` — slide-over panel opened from a
+  table row; mounted with `key={voteAccount}` so each opened validator
+  remounts fresh (no prop-mirror useEffect — see commit 102a99d9)
 - `src/components/validator-identity/validator-identity.tsx` — canonical
   "validator name + truncated vote account" cell. Use this in every table
   that lists validators (sam, bonds, protected-events) — don't reinvent
