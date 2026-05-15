@@ -88,11 +88,11 @@ export const CalcRow: React.FC<{
       ? SEPARATOR_CELL_PAD
       : NORMAL_CELL_PAD
   const sepBorder = total
-    ? 'border-t border-border'
+    ? 'border-t border-muted-foreground/30'
     : sep && 'border-t-2 border-border'
   const labelColor = total ? 'text-foreground' : 'text-muted-foreground'
   return (
-    <tr className="border-b border-border-grid/50 last:border-b-0">
+    <tr className="border-b border-border-grid/65 last:border-b-0">
       <td
         className={cn(
           'pr-2',
