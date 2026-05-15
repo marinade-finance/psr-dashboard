@@ -35,6 +35,7 @@
     "@types/node": "20.19.41",
     "@types/react": "18.3.0",
     "@types/react-dom": "18.3.0",
+    "@types/react-gtm-module": "2.0.4",
     "@vitejs/plugin-react": "5.2.0",
     "eslint": "9.39.4",
     "husky": "9.1.7",
@@ -49,11 +50,9 @@
   "dependencies": {
     "@marinade.finance/ds-sam-sdk": "0.0.48",
     "@radix-ui/react-dialog": "1.1.15",
-    "@radix-ui/react-slot": "1.2.4",
     "@radix-ui/react-switch": "1.2.6",
     "@radix-ui/react-tooltip": "1.2.8",
-    "@tanstack/react-query": "5",
-    "@types/react-gtm-module": "2.0.4",
+    "@tanstack/react-query": "5.100.10",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "react": "18.3.1",
@@ -70,9 +69,6 @@
     "./src/**/*.{ts,tsx,js,jsx}": [
       "eslint --fix",
       "prettier --write"
-    ],
-    "*.rs": [
-      "cargo fmt --"
     ]
   },
   "pnpm": {
