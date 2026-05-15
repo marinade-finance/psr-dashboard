@@ -254,11 +254,11 @@ export const ValidatorDetail = ({
       winningTotalPmpe,
     ],
   )
-  const { data: psrEstimates = [] } = useQuery(
-    ['psrEstimates', voteAccount],
-    () => fetchPsrEstimatesForValidator(voteAccount),
-    { staleTime: 5 * 60 * 1000 },
-  )
+  const { data: psrEstimates = [] } = useQuery({
+    queryKey: ['psrEstimates', voteAccount],
+    queryFn: () => fetchPsrEstimatesForValidator(voteAccount),
+    staleTime: 5 * 60 * 1000,
+  })
 
   const bondRiskFeeSol = validator.values.bondRiskFeeSol ?? 0
   const blacklistPenaltySol =
