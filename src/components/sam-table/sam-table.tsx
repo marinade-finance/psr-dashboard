@@ -261,7 +261,6 @@ const RankCell: React.FC<{
   isSimulated: boolean
   posColor: string | undefined
   tipColor: string
-  tipIcon: React.ReactNode
   voteAccount: string
   onClearValidator?: (voteAccount: string) => void
 }> = ({
@@ -271,7 +270,6 @@ const RankCell: React.FC<{
   isSimulated,
   posColor,
   tipColor,
-  tipIcon,
   voteAccount,
   onClearValidator,
 }) => {
@@ -316,10 +314,7 @@ const RankCell: React.FC<{
       className={`font-medium ${RANK_MONO} flex flex-col items-center gap-0`}
       style={{ color: tipColor }}
     >
-      <span className="flex items-center gap-0.5">
-        <span className="leading-none">{tipIcon}</span>
-        {rankLabel}
-      </span>
+      <span>{rankLabel}</span>
       <span className="text-xs opacity-60 font-normal text-muted-foreground leading-tight">
         {inSet ? 'above' : 'below'}
       </span>
@@ -696,7 +691,6 @@ export const SamTable: React.FC<Props> = ({
             isSimulated={isSimulated}
             posColor={posColor}
             tipColor={tipStyle.color}
-            tipIcon={tip.icon ?? tipStyle.icon}
             voteAccount={voteAccount}
             onClearValidator={onClearValidator}
           />
