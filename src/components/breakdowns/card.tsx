@@ -58,7 +58,7 @@ export const CalcCard: React.FC<{
   tip?: React.ReactNode
   children: React.ReactNode
 }> = ({ title, guideTo, isSimulated, onTitleClick, status, tip, children }) => (
-  <div className="bg-card rounded-xl border border-border p-5">
+  <div className="bg-card rounded-xl border border-border p-4">
     <CardHeader
       title={title}
       guideTo={guideTo}

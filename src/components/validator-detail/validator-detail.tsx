@@ -697,7 +697,7 @@ export const ValidatorDetail = ({
             </CalcCard>
 
             <CalcCard
-              title="Expected payment this epoch"
+              title="Payments"
               guideTo={`${docsPath(level)}#detail-panel`}
               isSimulated={isSimulated}
               onTitleClick={() => setTab('payments')}
@@ -750,7 +750,7 @@ export const ValidatorDetail = ({
                   />
                 )}
                 <MetricRow
-                  label="Total"
+                  label="Expected payment this epoch"
                   value={cost(
                     paymentMetrics.total +
                       bidTooLowPenaltySol +
