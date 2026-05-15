@@ -284,6 +284,23 @@
       transform: rotate(360deg);
     }
   }
+
+  @keyframes anchor-flash {
+    0% {
+      background-color: var(--warning-light);
+    }
+    60% {
+      background-color: var(--warning-light);
+    }
+    100% {
+      background-color: transparent;
+    }
+  }
+
+  .anchor-highlight {
+    animation: anchor-flash 2s ease-out forwards;
+    border-radius: 4px;
+  }
 }
 
 /* Tooltip: solid dark background at 90% alpha, full-content coverage, crisp text */

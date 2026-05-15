@@ -152,8 +152,13 @@ export const DocsPage: React.FC<Props> = ({ level }) => {
 
   const components = useMemo(() => makeComponents(setActiveDoc), [])
 
-  // Scroll to the URL hash anchor once the doc has rendered. Re-runs on
-  // doc-tab switch and on browser hash changes (back/forward navigation).
+  // Scroll to the URL hash anchor once the doc has rendered, and flash a
+  // brief highlight on the targeted section. Re-runs on doc-tab switch and
+  // on browser hash changes (back/forward navigation).
+  //
+  // Guide anchors are <a id="..."> elements placed just before a heading.
+  // We highlight both the anchor element and its next sibling (the heading)
+  // so the flash covers something the eye can actually land on.
   useEffect(() => {
     if (status !== 'success') return undefined
     const hash = window.location.hash.slice(1)
@@ -161,9 +166,20 @@ export const DocsPage: React.FC<Props> = ({ level }) => {
     // Defer one frame so the markdown DOM is mounted before we look up the id.
     const id = requestAnimationFrame(() => {
       const el = document.getElementById(hash)
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      if (!el) return
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      // Apply highlight to the anchor and its next sibling heading, if any.
+      const targets: Element[] = [el]
+      const next = el.nextElementSibling
+      if (next && /^H[1-6]$/.test(next.tagName)) targets.push(next)
+      for (const t of targets) {
+        t.classList.add('anchor-highlight')
+        setTimeout(() => t.classList.remove('anchor-highlight'), 2200)
+      }
     })
-    return () => cancelAnimationFrame(id)
+    return () => {
+      cancelAnimationFrame(id)
+    }
   }, [status, activeDoc])
 
   return (
