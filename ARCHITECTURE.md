@@ -124,11 +124,13 @@ include the local `RankCell`, `PenaltyBadges`. Tests in
 ### `components/validator-detail/` — detail sheet
 
 `validator-detail.tsx` — Right-side `Sheet` (`max-w-4xl`) with tabs
-(Overview, Notifications, Payments, Bond, Bid Penalty). The Payments
-tab is ONE unified `PaymentsBreakdown` table — bidding, penalties, PSR,
-the in-auction and next-epoch estimates all merged into a single card.
-The internal `Tab` union is `'overview' |
-'notifications' | 'bond' | 'penalty' | 'payments'`.
+(Overview, Notifications, Bidding, Payments, Bond, Bid Penalty). The
+Bidding and Payments tabs are purpose-built and split: `BiddingBreakdown`
+answers "what should I bid?" (stake position, cost-PMPE composition,
+bid gap, the two advisory estimates), `PaymentsBreakdown` answers "how
+much will I pay?" (bid cost, penalties, PSR, total). The internal `Tab`
+union is `'overview' | 'notifications' | 'bidding' | 'payments' |
+'bond' | 'penalty'`.
 Local `MetricRow` and `PenaltyRow` components are file-private (not
 exported). Auto-recalcs the what-if simulation via a 400ms debounce
 that funnels through a `useRef` to avoid the `onSimulate` callback
@@ -143,22 +145,28 @@ new validator gets a fresh component (no mirror-prop-into-state needed).
 
 - `card.tsx` — `CalcCard` (title + optional guide link + optional
   status pill + optional tip footer).
-- `row.tsx` — `CalcRow`, `OkRow`, `SectionHeader`, `Marker`, plus the
-  `SEPARATOR_TR_CLASS` / `SEPARATOR_DIV_CLASS` / `SEPARATOR_CELL_PAD`
-  / `NORMAL_CELL_PAD` constants. `CalcRow` accepts `total` to imply
-  `separator + bold + large` in one prop; `value` defaults to `''`.
+- `row.tsx` — `CalcRow` (3-col), `RevRow` (4-col: `label | pct | pmpe
+  | value`), `OkRow`, `SectionHeader` (with a `unit` slot for the
+  shared column unit), `Marker`, plus the `SEPARATOR_DIV_CLASS` /
+  `SEPARATOR_CELL_PAD` / `NORMAL_CELL_PAD` constants. Both rows derive
+  padding / divider / weight from one shared `rowStyle()` helper.
+  `CalcRow`/`RevRow` accept `total` to imply `separator + bold + large`
+  in one prop; `value` defaults to `''`.
 - `docs-path.ts` — `docsPath(level)` returns `/docs` or `/expert-docs`.
 - `bid-penalty.tsx`, `bond-coverage.tsx` — one card per breakdown,
   each a `CalcCard` of `CalcRow`/`SectionHeader`/`OkRow`.
-- `payments-merged.tsx` — `PaymentsBreakdown`. The whole Payments tab
-  in ONE `CalcCard` / ONE `<table>`: bidding (`computeBidding`),
-  penalties + PSR estimates, the in-auction estimate
-  (`computeInAuctionTarget`) and the next-epoch estimate
-  (`computeNextEpochStake`) merged into a single continuous narrative.
-  One status pill, one tip footer (`onGoToSim` + `onGoToPenalty`). All
-  rows are the shared 3-column `CalcRow` — no 4-column `RevRow` (the
-  former `bidding.tsx`/`in-auction.tsx`/`next-epoch-stake.tsx`/
-  `payments.tsx` cards are deleted; this file replaces all four).
+- `bidding.tsx` — `BiddingBreakdown`, the "what should I bid?" tab. ONE
+  `CalcCard` / ONE 4-column `RevRow` `<table>`: stake position +
+  cost-PMPE composition + bid gap (`computeBidding`) feeding the two
+  advisory estimates — the in-auction target (`computeInAuctionTarget`)
+  and the next-epoch priority bar (`computeNextEpochStake`). Verdict
+  status pill, `onGoToSim` tip footer.
+- `payments.tsx` — `PaymentsBreakdown`, the "how much will I pay?" tab.
+  ONE `CalcCard` / ONE 4-column `RevRow` `<table>`: bid cost
+  (`computeBidding`), penalties + PSR estimates, **Total payment**. One
+  status pill, one tip footer (`onGoToSim` + `onGoToPenalty`). (Replaces
+  the deleted `payments-merged.tsx`, which had merged both questions
+  into one table.)
 
 ### `components/validator-bonds-table/`
 

@@ -177,16 +177,19 @@ test.describe('detail sheet — tab switching', () => {
   }) => {
     await openSheet(page, V01)
 
+    // Bidding and Payments are two purpose-built tabs. Bidding owns the
+    // cost-PMPE composition + bid gap + the two advisory estimates.
+    await clickTab(page, 'Bidding')
+    await expect(
+      page.locator(SHEET).getByText('Cost-PMPE composition'),
+    ).toBeVisible()
+    await expect(
+      page.locator(SHEET).getByText('Auction effective bid'),
+    ).toBeVisible()
+
     await clickTab(page, 'Payments')
-    await expect(
-      page.locator(SHEET).getByText(/Active stake cost PMPE/),
-    ).toBeVisible()
-    // Bidding is now merged into the single Payments table — the
-    // auction-effective-bid row sits inside the same table, no separate
-    // tab or stacked card.
-    await expect(
-      page.locator(SHEET).getByText('Auction effective bid PMPE'),
-    ).toBeVisible()
+    await expect(page.locator(SHEET).getByText('Bid cost')).toBeVisible()
+    await expect(page.locator(SHEET).getByText('Total payment')).toBeVisible()
 
     await clickTab(page, 'Bond')
     await expect(
@@ -212,16 +215,54 @@ test.describe('detail sheet — tab switching', () => {
   })
 })
 
+test.describe('detail sheet — Bidding tab', () => {
+  test('shows the stake-position, cost-PMPE and bid-gap supporting sections', async ({
+    page,
+  }) => {
+    await openSheet(page, V01)
+    await clickTab(page, 'Bidding')
+    const sheet = page.locator(SHEET)
+    await expect(sheet.getByText('Stake position')).toBeVisible()
+    await expect(sheet.getByText('Cost-PMPE composition')).toBeVisible()
+    await expect(sheet.getByText('Inflation', { exact: true })).toBeVisible()
+    await expect(sheet.getByText('MEV', { exact: true })).toBeVisible()
+    await expect(sheet.getByText('Bid gap')).toBeVisible()
+    await expect(sheet.getByText('Auction effective bid')).toBeVisible()
+  })
+
+  test('the two advisory estimates are the centerpiece', async ({ page }) => {
+    await openSheet(page, V01)
+    await clickTab(page, 'Bidding')
+    const sheet = page.locator(SHEET)
+    await expect(sheet.getByText('Get into the auction')).toBeVisible()
+    await expect(sheet.getByText('Winning total')).toBeVisible()
+    await expect(sheet.getByText('Minimum bond required')).toBeVisible()
+    await expect(sheet.getByText('Get stake next epoch')).toBeVisible()
+    await expect(sheet.getByText('Redelegation budget this run')).toBeVisible()
+  })
+
+  test('carries the Simulate-to-confirm action link', async ({ page }) => {
+    await openSheet(page, V01)
+    await clickTab(page, 'Bidding')
+    await expect(
+      page
+        .locator(SHEET)
+        .getByText('Simulate this bid to confirm the exact figure →'),
+    ).toBeVisible()
+  })
+})
+
 test.describe('detail sheet — Payments tab', () => {
-  test('lists Active Stake Cost, Activating Stake Cost, and Total per epoch', async ({
+  test('lists the Bid cost section and the black Total payment row', async ({
     page,
   }) => {
     await openSheet(page, V01)
     await clickTab(page, 'Payments')
     const sheet = page.locator(SHEET)
-    await expect(sheet.getByText('Active Stake Cost').first()).toBeVisible()
-    await expect(sheet.getByText('Activating Stake Cost').first()).toBeVisible()
-    await expect(sheet.getByText('Total per epoch')).toBeVisible()
+    await expect(sheet.getByText('Bid cost').first()).toBeVisible()
+    await expect(sheet.getByText('Active stake cost')).toBeVisible()
+    await expect(sheet.getByText('Activating stake cost')).toBeVisible()
+    await expect(sheet.getByText('Total payment')).toBeVisible()
   })
 
   test('shows penalty rows (Bid-too-low / Blacklist / Bond risk fee)', async ({
@@ -235,41 +276,7 @@ test.describe('detail sheet — Payments tab', () => {
     await expect(sheet.getByText('Bond risk fee')).toBeVisible()
   })
 
-  test('merged Bidding rows: commission section and the Auction effective bid PMPE', async ({
-    page,
-  }) => {
-    await openSheet(page, V01)
-    await clickTab(page, 'Payments')
-    const sheet = page.locator(SHEET)
-    await expect(sheet.getByText('Active stake cost PMPE')).toBeVisible()
-    await expect(sheet.getByText('Inflation', { exact: true })).toBeVisible()
-    await expect(sheet.getByText('MEV', { exact: true })).toBeVisible()
-    await expect(sheet.getByText('Auction effective bid PMPE')).toBeVisible()
-    await expect(sheet.getByText('Bid gap')).toBeVisible()
-  })
-
-  test('Get-into-auction section and rows are part of the same table', async ({
-    page,
-  }) => {
-    await openSheet(page, V01)
-    await clickTab(page, 'Payments')
-    const sheet = page.locator(SHEET)
-    await expect(sheet.getByText('Get into the auction')).toBeVisible()
-    await expect(sheet.getByText('Winning total PMPE')).toBeVisible()
-    await expect(sheet.getByText('Minimum bond required')).toBeVisible()
-  })
-
-  test('Get-stake-next-epoch section and rows are part of the same table', async ({
-    page,
-  }) => {
-    await openSheet(page, V01)
-    await clickTab(page, 'Payments')
-    const sheet = page.locator(SHEET)
-    await expect(sheet.getByText('Get stake next epoch')).toBeVisible()
-    await expect(sheet.getByText('Redelegation budget this run')).toBeVisible()
-  })
-
-  test('single card carries both the Simulate and bid-penalty action links', async ({
+  test('carries both the Simulate and bid-penalty action links', async ({
     page,
   }) => {
     await openSheet(page, V06)

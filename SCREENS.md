@@ -172,16 +172,19 @@ Four tiers, `BOND_CHIP` record in `sam-table.tsx`:
 when a row is clicked. URL synced via `?v=<voteAccount>`; browser-back
 closes the sheet.
 
-**Tabs:** Overview · Notifications (when present) · Payments · Bond ·
-Bid Penalty. The Bidding breakdown is no longer its own tab — it is
-stacked under the Payments breakdown inside the Payments tab. The
-internal `Tab` union is `'overview' | 'notifications' | 'bond' |
-'penalty' | 'payments'`.
+**Tabs:** Overview · Notifications (when present) · Bidding · Payments ·
+Bond · Bid Penalty. Bidding and Payments are purpose-built: Bidding
+answers "what should I bid to get in and win stake?" (prescriptive),
+Payments answers "how much will I pay this epoch?" (explanatory).
+Bidding sits before Payments — you decide the bid before reading the
+cost. The internal `Tab` union is `'overview' | 'notifications' |
+'bidding' | 'payments' | 'bond' | 'penalty'`.
 
 **Overview** — 2-col grid (`lg:grid-cols-2`, `gap-6`):
 
 - **Stake** — Active, Target, Next epoch (each row a local `MetricRow`
-  with `HelpTip`).
+  with `HelpTip`). The Next-epoch `HelpTip` notes the delta can be
+  `0 SOL` even when target > active stake.
 - **Bond** — Balance, Reserve / "Top up X" CTA, Bid runway, "See full
   bond coverage breakdown →" link.
 - **Expected Payment This Epoch** — Active stake cost, Activating stake
@@ -201,23 +204,39 @@ internal `Tab` union is `'overview' | 'notifications' | 'bond' |
   through a `useRef` so callback identity churn does not restart the
   timer. Card has yellow border + `bg-status-yellow-light`.
 
+**Bidding tab** — one `BiddingBreakdown` card
+(`breakdowns/bidding.tsx`), a SINGLE continuous 4-column `<table>`. The
+two advisory estimates are the centerpiece; the sections above feed the
+target-bid math. `SectionHeader`-delimited sections, top to bottom:
+Stake position → Cost-PMPE composition → Bid gap → Get into the auction
+→ Get stake next epoch. The status banner is a verdict — green "Your
+bid clears the winning bar — you are in the auction", red "Raise your
+static bid to X PMPE …", yellow when a concentration cap is binding.
+Tip footer carries "Simulate this bid to confirm the exact figure →".
+The two estimate sections' `SectionHeader` `help` tooltips carry the
+closed-form last-price / greedy-heuristic and verify-in-Simulate
+caveats. The "Expected change next epoch" row renders `0 SOL` (never a
+dash) on a real zero and carries a `HelpTip` explaining why it can be
+zero even when target > active.
+
 **Payments tab** — one `PaymentsBreakdown` card
-(`breakdowns/payments-merged.tsx`), a SINGLE continuous `<table>`, no
-stacked cards. `SectionHeader`-delimited sections run in one narrative:
-Stake → Active stake cost PMPE → Bid gap → Cost → Penalties → PSR
-settlements (conditional) → Total per epoch → Get into the auction →
-Get stake next epoch. One status banner summarises the combined state
-(green "no penalties" / red "including Y in penalties"), one tip footer
-carries "See bid-too-low penalty calculation →" (when active) and
-"Simulate commission or bid changes →". Bidding metrics, the in-auction
-estimate and the next-epoch estimate are merged into this one table —
-they no longer have their own cards. The last two sections are advisory
-estimates: the `SectionHeader` `help` tooltips carry the closed-form /
-greedy-heuristic and verify-in-Simulate caveats. The "Total per epoch"
-row is black (`text-foreground`, no severity) — it is a conclusion, not
-a warning. All rows use the shared 3-column `CalcRow`; the old
-4-column `RevRow` is gone — commission rows put the retained-commission
-% in the `secondary` slot and the PMPE in `value`.
+(`breakdowns/payments.tsx`), a SINGLE continuous 4-column `<table>`,
+purely the cost story. `SectionHeader`-delimited sections: Bid cost
+(Active stake cost, Activating stake cost, Bid cost subtotal) →
+Penalties → PSR settlements (conditional) → **Total payment**. One
+status banner summarises the combined state (green "no penalties" / red
+"including Y in penalties"), one tip footer carries "See bid-too-low
+penalty calculation →" (when active) and "Simulate commission or bid
+changes →". The "Total payment" row is black (`text-foreground`, no
+severity) — it is a conclusion, not a warning.
+
+**Shared row model** — both Bidding and Payments use the shared
+4-column `RevRow` from `breakdowns/row.tsx` (`label | pct | pmpe |
+value`); rows that don't use a column leave it blank, never mixed with
+`CalcRow` in the same table. The column unit (`PMPE` / `SOL`) lives in
+the `SectionHeader` `unit` slot, stated once per section instead of
+suffixed on every row label. `CalcRow` and `RevRow` derive paddings,
+dividers and weight from one shared `rowStyle()` helper.
 
 **Tip banner** — sticky strip below the header. Click target opens the
 relevant tab (`Bond tab →`, `Simulate →`).

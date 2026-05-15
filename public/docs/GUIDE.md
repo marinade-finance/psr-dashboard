@@ -171,16 +171,16 @@ When the auction grows your target stake above what's currently
 delegated, the gap doesn't appear instantly — it warms up. SAM still
 charges your bid against that incoming stake at a separate rate called
 the activating-stake PMPE, billed only on `max(0, target − active)`.
-The Payments tab shows it on its own row inside the **Cost** section.
-If your target is at or below your active stake, this cost is zero.
+The Payments tab shows it on its own row inside the **Bid cost**
+section. If your target is at or below your active stake, this cost is
+zero.
 
 #### Where to read it on the dashboard
 
-The validator detail panel's **Payments tab** is one unified table that
-includes the bid construction in PMPE — Stake (active vs target),
-commissions split by stream, the static-vs-effective bid gap, and the
-resulting cost in SOL. See the [Payments tab subsection](#detail-panel)
-for what each row means.
+The bid construction in PMPE — stake position, commissions split by
+stream, the static-vs-effective bid gap, and the target-bid math —
+lives on the validator detail panel's **[Bidding tab](#bidding)**. The
+**[Payments tab](#payments)** then shows the resulting cost in SOL.
 
 _See [Last-Price Auction — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market#last-price-auction) for how PMPE feeds the clearing price._
 
@@ -549,12 +549,13 @@ _See [Eligibility Criteria — Marinade Docs](https://docs.marinade.finance/mari
 ## Validator Detail Panel
 
 Clicking a row opens the side panel. The calculation tabs
-— Payments, Bond, Bid Penalty — **mirror the same math the
+— Bidding, Payments, Bond, Bid Penalty — **mirror the same math the
 SAM auction runs server-side**: they recompute the SDK's formulas
 locally so you can see each input and intermediate value. Numbers
-match the protocol's settlement decisions to the SOL. The bid
-construction is part of the single Payments table — there is no
-separate Bidding tab.
+match the protocol's settlement decisions to the SOL. Two of the tabs
+answer two different questions: the **Bidding tab** answers "what
+should I bid to get into the auction and win stake?", the **Payments
+tab** answers "how much will I pay this epoch?".
 
 ### Overview tab
 
@@ -628,46 +629,38 @@ The cards themselves don't link anywhere — to act on a depleted-bond
 or bid-too-low warning, switch to the Bond, Bid Penalty, or Payments
 tab manually.
 
-### Payments tab
+<a id="bidding"></a>
+### Bidding tab
 
-One card, one table. It tells the whole money story for this validator
-this epoch — what you pay, why, plus two estimates of the bid that
-would get you in and keep stake coming. The card header carries a
-one-line status banner — green "You will pay X in total this epoch —
-no penalties" or red "You will pay X in total this epoch — including Y
-in penalties" — so you can read the bottom line without scanning the
-rows. There is no separate Bidding tab and no stacked sub-cards;
-everything below runs as `SectionHeader`-delimited sections of the same
-table, top to bottom.
+Answers one question: **what should I bid to get into the auction and
+win stake?** One card, one table. The status banner at the top is the
+verdict — green "Your bid clears the winning bar — you are in the
+auction", red "Raise your static bid to X PMPE to clear the winning bar
+and get into the auction", or yellow when a concentration cap is the
+binding limit so raising the bid alone will not get you in. Every
+column carries its unit once in the section header — `PMPE` or `SOL` —
+so the row labels stay short.
 
-- **Stake** — Active / Target Marinade stake and the projected
+The two advisory estimates are the centerpiece; the sections above them
+are the supporting context that feeds the target-bid math.
+
+- **Stake position** — Active / Target Marinade stake and the projected
   next-epoch delta (`selectExpectedStakeChange`), signed and coloured.
-- **Active stake cost PMPE** — Inflation, MEV, Block rewards (the
-  number on the left of each row is the commission you retain; the
-  number on the right is the PMPE that flows into the bid —
-  `revShare.inflationPmpe`, `revShare.mevPmpe`, `revShare.blockPmpe`),
-  the static bid PMPE (`revShare.bidPmpe`), and their **Total**.
-- **Bid gap** — Static bid PMPE vs auction effective bid PMPE (the
-  clearing price, `revShare.auctionEffectiveBidPmpe`) and the resulting
-  gap = `max(0, staticBid − effectiveBid)`. A non-zero gap means you
-  bid above clearing and pay an activating-stake fee.
-- **Cost** — Active stake cost
-  (`marinadeActivatedStakeSol × auctionEffectiveBidPmpe / 1000`) and
-  Activating stake cost
-  (`activatingStakePmpe × max(0, expectedDelta) / 1000`).
-- **Penalties** — Bid-too-low penalty (conditional — see Bid Penalty
-  tab), Blacklist penalty (`blacklistPenaltyPmpe × activatedStake /
-  1000`), Bond risk fee (conditional — computed in the Bond tab). A
-  row showing `—` means that penalty isn't charged this epoch; the row
-  is always rendered so the layout stays stable across validators.
-- **PSR settlements — estimated** — only appears when the PSR estimator
-  API has projected at least one settlement
-  (`fetchPsrEstimatesForValidator(vote)`). Each row's secondary text
-  reads **from bond** when the validator's own bond funds the payout,
-  or **from Marinade** when Marinade's backstop covers it.
-- **Total per epoch** — the sum of everything above. Rendered black as
-  a conclusion, not a warning — the status banner already tells you if
-  penalties are in it.
+  The delta reads `0 SOL` (not a dash) when it is a real, known zero;
+  it can be zero even when target stake is above active stake, because
+  the redelegation budget went to higher-priority validators or you are
+  cap or bond constrained — the row tooltip says so.
+- **Cost-PMPE composition** — Inflation, MEV, Block rewards (the number
+  on the left of each row is the commission you retain; the number on
+  the right is the PMPE that flows into the bid — `revShare.inflationPmpe`,
+  `revShare.mevPmpe`, `revShare.blockPmpe`), the static bid
+  (`revShare.bidPmpe`), and their **Total**. This is the input to the
+  target-bid math: the bid you need is the winning bar minus your
+  non-bid revenue.
+- **Bid gap** — Static bid vs auction effective bid (the clearing
+  price, `revShare.auctionEffectiveBidPmpe`) and the resulting gap =
+  `max(0, staticBid − effectiveBid)`. A non-zero gap means you bid
+  above clearing and pay an activating-stake fee.
 - **Get into the auction** — the static bid that would lift your total
   to the winning bar, plus the bond needed to back the resulting
   stake. The bond rows come straight from the Bond tab's keep-stake
@@ -682,9 +675,42 @@ table, top to bottom.
   [Getting stake next epoch](#next-epoch-stake) for the formula and the
   verify-in-Simulate caveat.
 
-An "**Overrides CPMPE**" notice appears above the table if
-`values.commissions.bidCpmpeOverrideDec` is set — the displayed bid is
-a manual override, not the on-chain value.
+The PMPE and CPMPE units are explained under
+[PMPE / CPMPE](#cpmpe). An "**Overrides CPMPE**" notice appears above
+the table if `values.commissions.bidCpmpeOverrideDec` is set — the
+displayed bid is a manual override, not the on-chain value. One action
+link in the card footer, "Simulate this bid to confirm the exact figure
+→", turns on simulation mode so you can verify the estimate.
+
+<a id="payments"></a>
+### Payments tab
+
+Answers the other question: **how much will I pay this epoch?** One
+card, one table, purely explanatory — the forward-looking "what should
+I bid" lives in the Bidding tab. The card header carries a one-line
+status banner — green "You will pay X in total this epoch — no
+penalties" or red "You will pay X in total this epoch — including Y in
+penalties" — so you can read the bottom line without scanning the rows.
+Every column carries its `SOL` unit once in the section header.
+
+- **Bid cost** — Active stake cost
+  (`marinadeActivatedStakeSol × auctionEffectiveBidPmpe / 1000`) and
+  Activating stake cost
+  (`activatingStakePmpe × max(0, expectedDelta) / 1000`), then their
+  subtotal **Bid cost**.
+- **Penalties** — Bid-too-low penalty (conditional — see Bid Penalty
+  tab), Blacklist penalty (`blacklistPenaltyPmpe × activatedStake /
+  1000`), Bond risk fee (conditional — computed in the Bond tab). A
+  row showing `—` means that penalty isn't charged this epoch; the row
+  is always rendered so the layout stays stable across validators.
+- **PSR settlements — estimated** — only appears when the PSR estimator
+  API has projected at least one settlement
+  (`fetchPsrEstimatesForValidator(vote)`). Each row reads **from bond**
+  when the validator's own bond funds the payout, or **from Marinade**
+  when Marinade's backstop covers it.
+- **Total payment** — the sum of everything above. Rendered black as a
+  conclusion, not a warning — the status banner already tells you if
+  penalties are in it.
 
 Two action links in the card footer jump straight to the relevant tab:
 "See bid-too-low penalty calculation →" appears only when the
