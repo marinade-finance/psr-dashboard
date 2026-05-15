@@ -76,7 +76,7 @@ export const CalcRow: React.FC<{
   label,
   help,
   secondary,
-  value = '',
+  value,
   bold,
   large,
   separator,
@@ -100,6 +100,12 @@ export const CalcRow: React.FC<{
     ? 'border-t border-muted-foreground/30'
     : sep && 'border-t-2 border-border'
   const labelColor = total ? 'text-foreground' : 'text-muted-foreground'
+  // When a row has only `secondary` (informational metadata like an epoch
+  // count or a percentage) and no primary `value`, render the secondary in
+  // the rightmost column so every number in the table right-aligns to the
+  // same x-position. Without this, rows shimmy between two columns.
+  const showSecondary = secondary && value
+  const rightCell = value ?? secondary ?? ''
   return (
     <tr className="border-b border-border-grid/65 last:border-b-0">
       <td
@@ -125,7 +131,7 @@ export const CalcRow: React.FC<{
           sepBorder,
         )}
       >
-        {secondary ?? ''}
+        {showSecondary ? secondary : ''}
       </td>
       <td
         className={cn(
@@ -140,7 +146,7 @@ export const CalcRow: React.FC<{
           tone === 'green' && 'text-status-green',
         )}
       >
-        {value}
+        {rightCell}
       </td>
     </tr>
   )
