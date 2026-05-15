@@ -109,15 +109,14 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
         </NavLink>
       </div>
       <div className="ml-auto flex items-center gap-2 shrink-0">
-        <NavLink
-          to={isExpert ? '/expert-docs' : '/docs'}
-          className={({ isActive }) =>
-            cn(
-              tab,
-              'docsButton hidden sm:flex items-center gap-1.5 border border-transparent hover:border-border',
-              isActive && tabActive,
-            )
-          }
+        <a
+          href={isExpert ? '/expert-docs' : '/docs'}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cn(
+            tab,
+            'docsButton hidden sm:flex items-center gap-1.5 border border-transparent hover:border-border',
+          )}
         >
           <svg
             width="14"
@@ -145,7 +144,7 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
             />
           </svg>
           Docs
-        </NavLink>
+        </a>
         {epoch !== undefined && (
           <span className="text-xs font-mono text-muted-foreground px-2 py-1 rounded-md bg-muted whitespace-nowrap">
             Epoch {epoch}
