@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 
 import { cn } from 'src/class_utils'
-import { Gauge } from 'src/components/gauge/gauge'
 import { HelpTip } from 'src/components/help-tip/help-tip'
 import { Card } from 'src/components/ui/card'
 import { pct, sol } from 'src/format'
@@ -49,6 +48,10 @@ const barTone = (i: number): { tone: string; opacity: string } => {
   }
 }
 
+// Inline view matches the stat-tile chrome (label + big value + unit), so
+// the headline row reads as one consistent set of metrics. The full bar
+// list with cap marker lives only inside the hover popover, which keeps
+// its original wider layout regardless of the tile's collapsed width.
 export const ConcentrationMetric: React.FC<Props> = ({
   label,
   rows,
@@ -57,11 +60,8 @@ export const ConcentrationMetric: React.FC<Props> = ({
   guideTo,
 }) => {
   const [open, setOpen] = useState(false)
-  // Inline view shows only what matters at a glance: every over-cap entry
-  // if any are capped, otherwise just the #1. The full ranked list lives in
-  // the hover popover. rows is sorted by stake desc, so capped stays ranked.
-  const capped = rows.filter(r => r.atCap)
-  const inline = capped.length > 0 ? capped : rows.slice(0, 1)
+  const top = rows.length > 0 ? rows[0] : null
+  const anyCapped = rows.some(r => r.atCap)
   const tipRows = rows.slice(0, TOOLTIP_N)
   const remaining = rows.length - tipRows.length
 
@@ -69,16 +69,24 @@ export const ConcentrationMetric: React.FC<Props> = ({
   // scale leaves headroom past whichever is larger, the cap or the biggest
   // entry. This puts the cap marker at a real interior position and lets an
   // over-cap entry visibly extend PAST it (cap-relative scaling would pin
-  // the marker to the right edge and clamp overflow). rows[0] is the max
-  // (sorted by stake desc). Same scale drives inline and popover bars.
-  const maxShare = rows.length > 0 ? rows[0].pctOfTotal : 0
+  // the marker to the right edge and clamp overflow).
+  const maxShare = top?.pctOfTotal ?? 0
   const scale = Math.max(maxShare, capPct) * 1.12
   const barPct = (v: number) => (scale > 0 ? (v / scale) * 100 : 0)
   const capLeft = barPct(capPct)
 
+  const valueClass = cn(
+    'text-xl sm:text-2xl font-semibold font-mono truncate',
+    anyCapped ? 'text-destructive' : 'text-foreground',
+  )
+  const unitClass = cn(
+    'text-sm font-mono shrink-0',
+    anyCapped ? 'text-destructive' : 'text-muted-foreground',
+  )
+
   return (
     <Card
-      className="relative flex flex-col px-3 py-3 sm:px-5 sm:py-4 overflow-visible"
+      className="relative px-3 py-3 sm:px-5 sm:py-4 flex-1 min-w-[140px] sm:min-w-[160px] overflow-visible"
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
     >
@@ -86,55 +94,28 @@ export const ConcentrationMetric: React.FC<Props> = ({
         {label}
         {help && <HelpTip text={help} guideTo={guideTo} />}
       </div>
-      <div className="flex flex-col gap-3 mt-2">
-        {inline.map((r, i) => {
-          const tone = r.atCap
-            ? 'bg-destructive'
-            : (BAR_TONES[i] ?? BAR_TONE_DEFAULT)
-          const textClass = r.atCap
-            ? 'text-destructive font-semibold'
-            : 'text-foreground'
-          return (
-            <div key={r.key} className="flex flex-col gap-1">
-              <div className="flex items-baseline text-[13px]">
-                <span
-                  className={cn('truncate pr-2 flex-1', textClass)}
-                  title={r.key}
-                >
-                  {r.key}
-                  {r.atCap && (
-                    <span className="ml-1.5 font-bold">(capped)</span>
-                  )}
-                </span>
-                <span
-                  className={cn(
-                    'font-mono text-xs',
-                    r.atCap ? 'text-destructive' : 'text-muted-foreground',
-                  )}
-                >
-                  {pct(r.pctOfTotal)}
-                </span>
-              </div>
-              <Gauge
-                size="lg"
-                value={r.pctOfTotal}
-                scaleMax={scale}
-                marker={capPct > 0 ? capPct / scale : undefined}
-                tone={tone}
-                markerTone="bg-foreground/50"
-              />
-            </div>
-          )
-        })}
-        {capLeft > 0 && capLeft <= 100 && (
-          <div className="text-[10px] font-mono text-muted-foreground -mt-1">
-            {pct(capPct)} cap
-          </div>
+      <div className="flex items-baseline gap-1 min-w-0 overflow-hidden">
+        {top ? (
+          <>
+            <span className={valueClass} title={top.key}>
+              {top.key}
+            </span>
+            <span className={unitClass}>{pct(top.pctOfTotal)}</span>
+            {anyCapped && (
+              <span className="text-xs text-destructive font-bold shrink-0 ml-1">
+                (capped)
+              </span>
+            )}
+          </>
+        ) : (
+          <span className="text-xl sm:text-2xl font-semibold text-muted-foreground font-mono">
+            —
+          </span>
         )}
       </div>
 
       {open && rows.length > 0 && (
-        <div className="absolute z-30 top-full inset-x-0 mt-1 max-h-[60vh] overflow-y-auto bg-card border border-border rounded-md shadow-xl p-3 text-xs">
+        <div className="absolute z-30 top-full right-0 mt-1 w-[640px] max-w-[calc(100vw-3rem)] max-h-[60vh] overflow-y-auto bg-card border border-border rounded-md shadow-xl p-3 text-xs">
           <div className="text-muted-foreground mb-2 leading-snug">
             Cap: {pct(capPct)} of network stake. The marker shows the cap; bars
             past it are over.

@@ -956,24 +956,20 @@ export const SamTable: React.FC<Props> = ({
               </div>
             </Card>
           ))}
-          <div className="flex-1 min-w-[260px] flex">
-            <ConcentrationMetric
-              label="Top Countries"
-              rows={concentration.countries}
-              capPct={concentration.countryCapPct}
-              help="Share of auction-distributed stake by validator country. Bar fills against the per-country cap. A 'capped' tag means at least one validator was cut by the cap."
-              guideTo={`${dp}#concentration`}
-            />
-          </div>
-          <div className="flex-1 min-w-[260px] flex">
-            <ConcentrationMetric
-              label="Top ASOs"
-              rows={concentration.asos}
-              capPct={concentration.asoCapPct}
-              help="Share of auction-distributed stake by ASO — the Autonomous System Operator hosting the validator. Bar fills against the per-ASO cap. A 'capped' tag means at least one validator was cut by the cap."
-              guideTo={`${dp}#concentration`}
-            />
-          </div>
+          <ConcentrationMetric
+            label="Top Countries"
+            rows={concentration.countries}
+            capPct={concentration.countryCapPct}
+            help="Share of auction-distributed stake by validator country. Bar fills against the per-country cap. A 'capped' tag means at least one validator was cut by the cap."
+            guideTo={`${dp}#concentration`}
+          />
+          <ConcentrationMetric
+            label="Top ASOs"
+            rows={concentration.asos}
+            capPct={concentration.asoCapPct}
+            help="Share of auction-distributed stake by ASO — the Autonomous System Operator hosting the validator. Bar fills against the per-ASO cap. A 'capped' tag means at least one validator was cut by the cap."
+            guideTo={`${dp}#concentration`}
+          />
         </div>
 
         {/* Search row — sits above the table, aligned with validator column */}
