@@ -626,8 +626,8 @@ export const SamTable: React.FC<Props> = ({
     },
     {
       label: 'Winning Validators',
-      value: `${eligibleWinningCount} / ${eligibleCount}`,
-      unit: '',
+      value: `${eligibleWinningCount}`,
+      unit: `/ ${eligibleCount}`,
       help: HELP_TEXT.winningValidators,
       guideTo: `${dp}#sam`,
     },
@@ -957,14 +957,14 @@ export const SamTable: React.FC<Props> = ({
             </Card>
           ))}
           <ConcentrationMetric
-            label="Top Countries"
+            label="Top Country"
             rows={concentration.countries}
             capPct={concentration.countryCapPct}
             help="Share of auction-distributed stake by validator country. Bar fills against the per-country cap. A 'capped' tag means at least one validator was cut by the cap."
             guideTo={`${dp}#concentration`}
           />
           <ConcentrationMetric
-            label="Top ASOs"
+            label="Top ASO"
             rows={concentration.asos}
             capPct={concentration.asoCapPct}
             help="Share of auction-distributed stake by ASO — the Autonomous System Operator hosting the validator. Bar fills against the per-ASO cap. A 'capped' tag means at least one validator was cut by the cap."

@@ -92,10 +92,10 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
         {above || !onGoToBidding ? (
           <span
             className={cn(
-              'text-xs font-mono font-semibold px-2 py-0.5 rounded-md',
+              'text-xs font-mono font-semibold px-2 py-0.5 rounded-md border',
               above
-                ? 'bg-primary-light text-primary'
-                : 'bg-destructive-light text-destructive',
+                ? 'bg-primary-light text-primary border-primary'
+                : 'bg-destructive-light text-destructive border-destructive',
             )}
           >
             {above ? '+' : ''}
@@ -105,10 +105,15 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
           <button
             type="button"
             onClick={onGoToBidding}
-            className="text-xs font-mono font-semibold px-2 py-0.5 rounded-md bg-destructive-light text-destructive hover:underline cursor-pointer flex items-center gap-1"
+            className="group inline-flex items-center text-xs font-mono font-semibold rounded-md border border-destructive bg-destructive-light text-destructive cursor-pointer"
           >
-            {pct(delta, 2)} vs winning
-            <span aria-hidden>→ Bidding</span>
+            <span className="px-2 py-0.5">{pct(delta, 2)} vs winning</span>
+            <span
+              aria-hidden
+              className="border-l border-destructive/40 px-2 py-0.5 group-hover:underline"
+            >
+              Bidding →
+            </span>
             <span className="sr-only">
               see the target bid on the Bidding tab
             </span>

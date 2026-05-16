@@ -80,26 +80,27 @@ by the two concentration cards. Stat tiles take
 so the gauge has room. Narrow viewports wrap to multiple lines.
 
 Order (left to right): Re-delegation, Winning APY, Projected APY,
-Winning Validators, Total Auction Stake, Top Countries, Top ASOs.
+Winning Validators, Total Auction Stake, Top Country, Top ASO.
 
 When ≥1 simulation is active the whole table is wrapped in a yellow
 inset ring with a "Simulation Mode" header strip carrying a
 **"Reset Simulation"** button.
 
-| Tile                | Source                                                                    |
-| ------------------- | ------------------------------------------------------------------------- |
-| Re-delegation       | sum of positive `selectExpectedStakeChange` across the filtered set (SOL) |
-| Winning APY         | `selectWinningAPY(auctionResult, epochsPerYear)`                          |
-| Projected APY       | `selectProjectedAPY(auctionResult, epochsPerYear)`                        |
-| Winning Validators  | `winningCount / totalValidators`                                          |
-| Total Auction Stake | `selectSamDistributedStake(validators)` (SOL)                             |
-| Top Countries       | `<ConcentrationMetric>` — top entry + share + gauge vs country cap        |
-| Top ASOs            | `<ConcentrationMetric>` — top entry + share + gauge vs ASO cap            |
+| Tile                | Source                                                                                      |
+| ------------------- | ------------------------------------------------------------------------------------------- |
+| Re-delegation       | sum of positive `selectExpectedStakeChange` across the filtered set (SOL)                   |
+| Winning APY         | `selectWinningAPY(auctionResult, epochsPerYear)`                                            |
+| Projected APY       | `selectProjectedAPY(auctionResult, epochsPerYear)`                                          |
+| Winning Validators  | `winningCount / totalValidators`                                                            |
+| Total Auction Stake | `selectSamDistributedStake(validators)` (SOL)                                               |
+| Top Country         | `<ConcentrationMetric>` — top entry name (line 1) + `share% / cap%` (line 2, `/cap%` muted) |
+| Top ASO             | `<ConcentrationMetric>` — top entry name (line 1) + `share% / cap%` (line 2, `/cap%` muted) |
 
 Tooltips via `HelpTip` on each tile. Concentration cards expand a
 hover popover with the full ranked list.
 
 ### Concentration metrics (popover)
+
 Two `<ConcentrationMetric>` cards: **Top Countries** and **Top ASOs**.
 The inline (non-hover) view shows only what matters at a glance: every
 over-cap entry if any are capped (rank order, `text-destructive` with a

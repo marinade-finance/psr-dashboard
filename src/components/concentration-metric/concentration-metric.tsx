@@ -75,13 +75,13 @@ export const ConcentrationMetric: React.FC<Props> = ({
   const barPct = (v: number) => (scale > 0 ? (v / scale) * 100 : 0)
   const capLeft = barPct(capPct)
 
-  const valueClass = cn(
+  const nameClass = cn(
     'text-xl sm:text-2xl font-semibold font-mono truncate',
     anyCapped ? 'text-destructive' : 'text-foreground',
   )
-  const unitClass = cn(
+  const shareClass = cn(
     'text-sm font-mono shrink-0',
-    anyCapped ? 'text-destructive' : 'text-muted-foreground',
+    anyCapped ? 'text-destructive font-semibold' : 'text-foreground',
   )
 
   return (
@@ -94,25 +94,33 @@ export const ConcentrationMetric: React.FC<Props> = ({
         {label}
         {help && <HelpTip text={help} guideTo={guideTo} />}
       </div>
-      <div className="flex items-baseline gap-1 min-w-0 overflow-hidden">
-        {top ? (
-          <>
-            <span className={valueClass} title={top.key}>
+      {top ? (
+        <>
+          <div className="flex items-baseline gap-1 min-w-0 overflow-hidden">
+            <span className={nameClass} title={top.key}>
               {top.key}
             </span>
-            <span className={unitClass}>{pct(top.pctOfTotal)}</span>
             {anyCapped && (
               <span className="text-xs text-destructive font-bold shrink-0 ml-1">
                 (capped)
               </span>
             )}
-          </>
-        ) : (
+          </div>
+          <div className="flex items-baseline gap-0.5 mt-0.5 min-w-0">
+            <span className={shareClass}>{pct(top.pctOfTotal)}</span>
+            <span className="text-sm text-muted-foreground font-mono shrink-0">
+              {' '}
+              / {pct(capPct)}
+            </span>
+          </div>
+        </>
+      ) : (
+        <div className="flex items-baseline gap-1 min-w-0 overflow-hidden">
           <span className="text-xl sm:text-2xl font-semibold text-muted-foreground font-mono">
             —
           </span>
-        )}
-      </div>
+        </div>
+      )}
 
       {open && rows.length > 0 && (
         <div className="absolute z-30 top-full right-0 mt-1 w-[640px] max-w-[calc(100vw-3rem)] max-h-[60vh] overflow-y-auto bg-card border border-border rounded-md shadow-xl p-3 text-xs">
