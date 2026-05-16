@@ -1,7 +1,10 @@
 import { finite } from 'src/format'
 import { selectPaidUndelegationSol } from 'src/services/sam'
 
-import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
+import type {
+  AuctionValidator,
+  DsSamConfig,
+} from '@marinade.finance/ds-sam-sdk'
 
 export type BondCoverage = {
   minEp: number
@@ -42,10 +45,8 @@ export type BondCoverage = {
 
 export function computeBondCoverage(
   v: AuctionValidator,
-  minBondEpochs: number,
-  idealBondEpochs: number,
+  config: DsSamConfig,
   winningTotalPmpe: number,
-  bondRiskFeeMult: number,
 ): BondCoverage {
   const bondBalanceSol = v.bondBalanceSol ?? 0
   const claimableBondBalanceSol = v.claimableBondBalanceSol ?? 0
@@ -60,7 +61,7 @@ export function computeBondCoverage(
   // contribution to paidUndelegationSol is min(1, mult) * value (SDK
   // calculations.js:94).
   const freshBondRiskUndel =
-    (v.bondForcedUndelegation?.value ?? 0) * Math.min(1, bondRiskFeeMult)
+    (v.bondForcedUndelegation?.value ?? 0) * Math.min(1, config.bondRiskFeeMult)
   const freshBidTooLowUndel =
     winningTotalPmpe > 0
       ? ((v.revShare?.bidTooLowPenaltyPmpe ?? 0) * marinadeActivatedStakeSol) /
@@ -83,8 +84,8 @@ export function computeBondCoverage(
   const minUnprotectedReserveSol = finite(v.minUnprotectedReserve)
   const idealUnprotectedReserveSol = finite(v.idealUnprotectedReserve)
 
-  const minEp = 1 + minBondEpochs
-  const idealEp = 1 + idealBondEpochs
+  const minEp = 1 + config.minBondEpochs
+  const idealEp = 1 + config.idealBondEpochs
 
   const minBondPmpe = finite(v.minBondPmpe)
   const idealBondPmpe = finite(v.idealBondPmpe)

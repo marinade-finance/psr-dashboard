@@ -184,28 +184,24 @@ function outOfSetTip(
   delta: number,
 ): ValidatorTip {
   const bondBalance = validator.bondBalanceSol ?? 0
-  if (health !== 'healthy') {
+  // Below-min stays a hard critical block; otherwise the canonical bond
+  // advice (top-up to grow / keep) — same string the breakdown shows.
+  if (health !== 'healthy' && bondBalance >= dsSamConfig.minBondBalanceSol) {
     const coverage = computeBondCoverage(
       validator,
-      dsSamConfig.minBondEpochs,
-      dsSamConfig.idealBondEpochs,
+      dsSamConfig,
       winningTotalPmpe,
-      dsSamConfig.bondRiskFeeMult,
     )
-    // Below-min stays a hard critical block; otherwise the canonical bond
-    // advice (top-up to grow / keep) — same string the breakdown shows.
-    if (bondBalance >= dsSamConfig.minBondBalanceSol) {
-      const topUpSol =
-        coverage.topUpToIdealKeep > 0
-          ? coverage.topUpToIdealKeep
-          : coverage.topUpToKeepStake
-      if (topUpSol > 0) {
-        return {
-          text: `Top up ${topUp(topUpSol)} to grow stake.`,
-          urgency: 'warning',
-          constraint: 'bond',
-          delta,
-        }
+    const topUpSol =
+      coverage.topUpToIdealKeep > 0
+        ? coverage.topUpToIdealKeep
+        : coverage.topUpToKeepStake
+    if (topUpSol > 0) {
+      return {
+        text: `Top up ${topUp(topUpSol)} to grow stake.`,
+        urgency: 'warning',
+        constraint: 'bond',
+        delta,
       }
     }
   }
@@ -254,10 +250,8 @@ export const getValidatorTip = (
   if (health === 'critical' || health === 'watch' || health === 'soft') {
     const coverage = computeBondCoverage(
       validator,
-      dsSamConfig.minBondEpochs,
-      dsSamConfig.idealBondEpochs,
+      dsSamConfig,
       winningTotalPmpe,
-      dsSamConfig.bondRiskFeeMult,
     )
     const bondRiskFeeSol = validator.values?.bondRiskFeeSol ?? 0
     const advice = bondAdvice(

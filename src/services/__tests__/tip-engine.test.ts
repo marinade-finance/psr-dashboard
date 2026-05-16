@@ -381,13 +381,7 @@ describe('bondAdvice — canonical CTA contract', () => {
   const adviceFor = (over: Record<string, unknown>) => {
     const v = makeValidator(over)
     const health = bondHealthFromAuction(v, DS_SAM_CONFIG, 100)
-    const coverage = computeBondCoverage(
-      v,
-      DS_SAM_CONFIG.minBondEpochs,
-      DS_SAM_CONFIG.idealBondEpochs,
-      100,
-      DS_SAM_CONFIG.bondRiskFeeMult,
-    )
+    const coverage = computeBondCoverage(v, DS_SAM_CONFIG, 100)
     return bondAdvice(
       coverage,
       health,

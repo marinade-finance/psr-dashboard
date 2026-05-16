@@ -349,21 +349,8 @@ export const ValidatorDetail = ({
   // rank cell in sam-table.
   const posVsWinning = validator.values.cutoffRank ?? 0
   const bondCoverage = useMemo(
-    () =>
-      computeBondCoverage(
-        validator,
-        dsSamConfig.minBondEpochs,
-        dsSamConfig.idealBondEpochs,
-        winningTotalPmpe,
-        dsSamConfig.bondRiskFeeMult,
-      ),
-    [
-      validator,
-      dsSamConfig.minBondEpochs,
-      dsSamConfig.idealBondEpochs,
-      dsSamConfig.bondRiskFeeMult,
-      winningTotalPmpe,
-    ],
+    () => computeBondCoverage(validator, dsSamConfig, winningTotalPmpe),
+    [validator, dsSamConfig, winningTotalPmpe],
   )
   const paymentMetrics = useMemo(() => computeBidding(validator), [validator])
   const penaltyMetrics = useMemo(

@@ -32,13 +32,7 @@ export function bondHealthFromAuction(
   if (!v.auctionStake.marinadeSamTargetSol && !v.marinadeActivatedStakeSol) {
     return 'healthy'
   }
-  const coverage = computeBondCoverage(
-    v,
-    config.minBondEpochs,
-    config.idealBondEpochs,
-    winningTotalPmpe,
-    config.bondRiskFeeMult,
-  )
+  const coverage = computeBondCoverage(v, config, winningTotalPmpe)
   if (coverage.topUpToAvoidFee > 0) return 'critical'
   if (coverage.topUpToKeepStake > 0) return 'watch'
   if (coverage.topUpToIdealKeep > 0) return 'soft'
