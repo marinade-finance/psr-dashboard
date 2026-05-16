@@ -76,8 +76,8 @@ export const ConcentrationMetric: React.FC<Props> = ({
   const capLeft = barPct(capPct)
 
   const nameClass = cn(
-    'text-sm font-medium font-mono truncate min-w-0',
-    anyCapped ? 'text-destructive' : 'text-muted-foreground',
+    'text-xs font-mono truncate leading-tight mb-0.5',
+    anyCapped ? 'text-destructive font-semibold' : 'text-muted-foreground',
   )
   const shareClass = cn(
     'text-xl sm:text-2xl font-semibold font-mono shrink-0',
@@ -95,20 +95,20 @@ export const ConcentrationMetric: React.FC<Props> = ({
         {help && <HelpTip text={help} guideTo={guideTo} />}
       </div>
       {top ? (
-        <div className="flex items-baseline gap-2 min-w-0 overflow-hidden">
-          <span className={nameClass} title={top.key}>
+        <>
+          <div className={nameClass} title={top.key}>
             {top.key}
             {anyCapped && (
               <span className="ml-1 text-[10px] font-bold">(capped)</span>
             )}
-          </span>
-          <span className="flex items-baseline shrink-0 ml-auto">
+          </div>
+          <div className="flex items-baseline min-w-0 overflow-hidden">
             <span className={shareClass}>{pct(top.pctOfTotal)}</span>
             <span className="text-sm text-muted-foreground font-mono shrink-0">
               {' '}/{pct(capPct)}
             </span>
-          </span>
-        </div>
+          </div>
+        </>
       ) : (
         <div className="flex items-baseline gap-1 min-w-0 overflow-hidden">
           <span className="text-xl sm:text-2xl font-semibold text-muted-foreground font-mono">
