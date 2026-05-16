@@ -627,7 +627,7 @@ export const SamTable: React.FC<Props> = ({
     {
       label: 'Winning Validators',
       value: `${eligibleWinningCount}`,
-      unit: `/ ${eligibleCount}`,
+      unit: ` /${eligibleCount}`,
       help: HELP_TEXT.winningValidators,
       guideTo: `${dp}#sam`,
     },

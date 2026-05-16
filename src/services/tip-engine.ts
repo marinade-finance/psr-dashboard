@@ -129,7 +129,7 @@ export function bondAdvice(
 ): BondAdvice {
   if (health === 'no-bond') {
     return {
-      text: `Post a bond of ${stake(minBondBalanceSol)} to be in set.`,
+      text: `Post a bond of ${stake(minBondBalanceSol)} to win stake.`,
       urgency: 'critical',
       tone: 'red',
     }
@@ -138,7 +138,7 @@ export function bondAdvice(
   // validator what to do — top up the bond to the minimum.
   if (bondBalanceSol < minBondBalanceSol) {
     return {
-      text: `Top up bond to ${stake(minBondBalanceSol)} to be in set.`,
+      text: `Top up bond to ${stake(minBondBalanceSol)} to win stake.`,
       urgency: 'critical',
       tone: 'red',
     }

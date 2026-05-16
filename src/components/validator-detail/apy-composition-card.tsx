@@ -102,17 +102,19 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
             {pct(delta, 2)} vs winning
           </span>
         ) : (
+          // The pill IS the metric. The action label sits above as an
+          // auxiliary hint so the pill chrome stays clean. Whole stack is
+          // one click target.
           <button
             type="button"
             onClick={onGoToBidding}
-            className="group inline-flex items-center text-xs font-mono font-semibold rounded-md border border-destructive bg-destructive-light text-destructive cursor-pointer"
+            className="group flex flex-col items-end gap-0.5 cursor-pointer"
           >
-            <span className="px-2 py-0.5">{pct(delta, 2)} vs winning</span>
-            <span
-              aria-hidden
-              className="border-l border-destructive/40 px-2 py-0.5 group-hover:underline"
-            >
-              Bidding →
+            <span className="text-[10px] text-destructive font-medium leading-none group-hover:underline">
+              Fix in Bidding ↗
+            </span>
+            <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-md border bg-destructive-light text-destructive border-destructive">
+              {pct(delta, 2)} vs winning
             </span>
             <span className="sr-only">
               see the target bid on the Bidding tab

@@ -76,12 +76,12 @@ export const ConcentrationMetric: React.FC<Props> = ({
   const capLeft = barPct(capPct)
 
   const nameClass = cn(
-    'text-xl sm:text-2xl font-semibold font-mono truncate',
-    anyCapped ? 'text-destructive' : 'text-foreground',
+    'text-sm font-medium font-mono truncate min-w-0',
+    anyCapped ? 'text-destructive' : 'text-muted-foreground',
   )
   const shareClass = cn(
-    'text-sm font-mono shrink-0',
-    anyCapped ? 'text-destructive font-semibold' : 'text-foreground',
+    'text-xl sm:text-2xl font-semibold font-mono shrink-0',
+    anyCapped ? 'text-destructive' : 'text-foreground',
   )
 
   return (
@@ -95,25 +95,20 @@ export const ConcentrationMetric: React.FC<Props> = ({
         {help && <HelpTip text={help} guideTo={guideTo} />}
       </div>
       {top ? (
-        <>
-          <div className="flex items-baseline gap-1 min-w-0 overflow-hidden">
-            <span className={nameClass} title={top.key}>
-              {top.key}
-            </span>
+        <div className="flex items-baseline gap-2 min-w-0 overflow-hidden">
+          <span className={nameClass} title={top.key}>
+            {top.key}
             {anyCapped && (
-              <span className="text-xs text-destructive font-bold shrink-0 ml-1">
-                (capped)
-              </span>
+              <span className="ml-1 text-[10px] font-bold">(capped)</span>
             )}
-          </div>
-          <div className="flex items-baseline gap-0.5 mt-0.5 min-w-0">
+          </span>
+          <span className="flex items-baseline shrink-0 ml-auto">
             <span className={shareClass}>{pct(top.pctOfTotal)}</span>
             <span className="text-sm text-muted-foreground font-mono shrink-0">
-              {' '}
-              / {pct(capPct)}
+              {' '}/{pct(capPct)}
             </span>
-          </div>
-        </>
+          </span>
+        </div>
       ) : (
         <div className="flex items-baseline gap-1 min-w-0 overflow-hidden">
           <span className="text-xl sm:text-2xl font-semibold text-muted-foreground font-mono">
