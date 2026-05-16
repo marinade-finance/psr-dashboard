@@ -195,7 +195,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
             <>
               <SectionHeader
                 title="Bond risk fee"
-                help="How much bond-risk fee gets charged this epoch, and the top-up needed to avoid it."
+                help="The fee starts when your claimable bond falls below the trigger threshold. Below: the threshold and its parts, the bond it is measured against, and the top-up that clears it."
               />
               {coverage.carriedPaidUndelegationSol > 0 && (
                 <>
@@ -205,19 +205,39 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
                   />
                   <CalcRow
                     label="Projected exposed stake"
-                    help="Your current exposed stake minus the paid undelegation already scheduled. This is the basis the penalty threshold uses, not today's stake."
+                    help="Current exposed stake minus the paid undelegation already scheduled. The penalty threshold uses this projected stake, not today's stake."
                     secondary={stake(coverage.projectedExposedStakeSol)}
                   />
                 </>
               )}
               <CalcRow
+                label="Minimum unprotected reserve"
+                secondary={pay(coverage.minUnprotectedReserveSol)}
+              />
+              <CalcRow
+                label="Minimum bond on projected stake"
+                help="Projected exposed stake times the minimum bond rate — the stake-sized part of the threshold."
+                secondary={pay(
+                  coverage.floorBaseProjected -
+                    coverage.minUnprotectedReserveSol,
+                )}
+              />
+              <CalcRow
                 label="Penalty trigger threshold"
+                help="The bond risk fee starts when your claimable bond drops below this. The threshold is the minimum reserve plus the minimum bond for your projected stake."
                 value={pay(coverage.floorBaseProjected)}
+                bold
+              />
+              <CalcRow
+                label="Claimable bond balance"
+                help="The bond the protocol can draw against right now. The fee triggers when this falls below the threshold above."
+                value={cost(coverage.claimableBondBalanceSol)}
                 bold
               />
               {coverage.topUpToAvoidFee > 0 && (
                 <CalcRow
                   label="Top up to avoid the fee"
+                  help="How far the claimable bond is below the threshold. Add this much to clear the fee."
                   value={topUp(coverage.topUpToAvoidFee)}
                   total
                   severity="error"
@@ -226,13 +246,14 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
               {bondRiskFeeSol > 0 && (
                 <CalcRow
                   label="Estimated bond risk fee this epoch"
+                  help="Charged when the bond is below the threshold. The amount scales with the shortfall and the protocol's bond-risk rate, and some stake is undelegated alongside it."
                   value={pay(bondRiskFeeSol)}
                   bold
                   severity="error"
                 />
               )}
               {coverage.topUpToAvoidFee === 0 && bondRiskFeeSol === 0 && (
-                <OkRow message="Bond above the penalty threshold." />
+                <OkRow message="Claimable bond is above the penalty threshold." />
               )}
             </>
           )}

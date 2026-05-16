@@ -670,6 +670,10 @@ export const SamTable: React.FC<Props> = ({
     const bondHealth = validator.bondHealth
     const bondChip = BOND_CHIP[bondHealth]
     const hasAlert = bondRunway <= 5 || bondUtilPct >= 85
+    // Min-bond threshold sits at this fraction of the gauge: the red band
+    // and marker both land here, scaleMax is derived so runway == the SDK
+    // minimum maps exactly to this line. Left = danger, right = headroom.
+    const bondCriticalFrac = 0.2
 
     const expectedChange = selectExpectedStakeChange(validator)
 
@@ -803,9 +807,9 @@ export const SamTable: React.FC<Props> = ({
             <Gauge
               size="sm"
               value={bondRunway}
-              scaleMax={100}
-              marker={dsSamConfig.minBondEpochs / 100}
-              criticalBand={0.25}
+              scaleMax={dsSamConfig.minBondEpochs / bondCriticalFrac}
+              marker={bondCriticalFrac}
+              criticalBand={bondCriticalFrac}
               tone={bondChip.bar}
             />
             <span
@@ -867,14 +871,14 @@ export const SamTable: React.FC<Props> = ({
           return (
             <TableCell className="px-3.5 py-3">
               <div
-                className="inline-flex items-start gap-[5px] text-xs leading-[1.35] px-2.5 py-1 rounded-md max-w-[420px] border"
+                className="inline-flex items-center gap-[5px] text-xs leading-[1.35] px-2.5 py-1 rounded-md max-w-[420px] border"
                 style={{
                   background: stepBg,
                   color: stepColor,
                   borderColor: stepColor,
                 }}
               >
-                <span className="shrink-0 mt-px">{getTipIcon(tip)}</span>
+                <span className="shrink-0">{getTipIcon(tip)}</span>
                 <span className="break-words">{stepText}</span>
               </div>
             </TableCell>
