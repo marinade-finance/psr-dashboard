@@ -867,8 +867,12 @@ export const SamTable: React.FC<Props> = ({
           return (
             <TableCell className="px-3.5 py-3">
               <div
-                className="inline-flex items-start gap-[5px] text-xs leading-[1.35] px-2.5 py-1 rounded-md max-w-[260px]"
-                style={{ background: stepBg, color: stepColor }}
+                className="inline-flex items-start gap-[5px] text-xs leading-[1.35] px-2.5 py-1 rounded-md max-w-[260px] border"
+                style={{
+                  background: stepBg,
+                  color: stepColor,
+                  borderColor: stepColor,
+                }}
               >
                 <span className="shrink-0 mt-px">{getTipIcon(tip)}</span>
                 <span className="break-words">{stepText}</span>

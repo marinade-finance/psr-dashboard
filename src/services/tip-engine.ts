@@ -129,16 +129,16 @@ export function bondAdvice(
 ): BondAdvice {
   if (health === 'no-bond') {
     return {
-      text: `Post a bond — ${stake(minBondBalanceSol)} required.`,
+      text: `Post a bond of ${stake(minBondBalanceSol)} to qualify.`,
       urgency: 'critical',
       tone: 'red',
     }
   }
-  // Below the SDK minimum: clipBondStakeCap → 0, a hard block. The minimum
-  // is the decisive value.
+  // Below the SDK minimum: clipBondStakeCap → 0, a hard block. Tell the
+  // validator what to do — top up the bond to the minimum.
   if (bondBalanceSol < minBondBalanceSol) {
     return {
-      text: `Bond below minimum — ${stake(minBondBalanceSol)} required.`,
+      text: `Top up bond to ${stake(minBondBalanceSol)} to qualify.`,
       urgency: 'critical',
       tone: 'red',
     }
@@ -216,8 +216,8 @@ function outOfSetTip(
   if (bondBalance < dsSamConfig.minBondBalanceSol) {
     const text =
       bondBalance <= 0
-        ? `Post a bond — ${stake(dsSamConfig.minBondBalanceSol)} required.`
-        : `Bond below minimum — ${stake(dsSamConfig.minBondBalanceSol)} required.`
+        ? `Post a bond of ${stake(dsSamConfig.minBondBalanceSol)} to qualify.`
+        : `Top up bond to ${stake(dsSamConfig.minBondBalanceSol)} to qualify.`
     return {
       text,
       urgency: 'critical',
