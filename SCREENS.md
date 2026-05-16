@@ -74,22 +74,19 @@ from the full auction set.
 
 ### Stats bar
 
-Four `Card` tiles, `flex flex-wrap`. When ≥1 simulation is active the
-whole table is wrapped in a yellow inset ring with a "Simulation Mode"
-header strip carrying a **"Reset Simulation"** button.
+Five `Card` tiles, `flex flex-wrap`, in this order: Re-delegation,
+Winning APY, Projected APY, Winning Validators, Total Auction Stake.
+When ≥1 simulation is active the whole table is wrapped in a yellow
+inset ring with a "Simulation Mode" header strip carrying a
+**"Reset Simulation"** button.
 
-Each tile shares one visual: a big primary value, optionally followed
-by a small muted context line (same treatment as `Metric.subline` —
-`text-[10px] text-muted-foreground font-mono`). The APY and
-Re-delegation tiles use the context line to fold a second number into
-the same card.
-
-| Tile                | Primary value                                                                  | Context line                                                            |
-| ------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
-| Total Auction Stake | `selectSamDistributedStake(validators)` (SOL)                                  | —                                                                       |
-| Winning APY         | `selectWinningAPY(auctionResult, epochsPerYear)`                               | `projected <selectProjectedAPY(...)>`                                    |
-| Winning Validators  | `winningCount / totalValidators`                                               | —                                                                       |
-| Re-delegation       | sum of positive `selectExpectedStakeChange` across the filtered set (SOL)      | `<redelegation / stakeAmounts.marinadeSamTvlSol> of SAM TVL` (0 if TVL≤0) |
+| Tile                | Source                                                                    |
+| ------------------- | ------------------------------------------------------------------------- |
+| Re-delegation       | sum of positive `selectExpectedStakeChange` across the filtered set (SOL) |
+| Winning APY         | `selectWinningAPY(auctionResult, epochsPerYear)`                          |
+| Projected APY       | `selectProjectedAPY(auctionResult, epochsPerYear)`                        |
+| Winning Validators  | `winningCount / totalValidators`                                          |
+| Total Auction Stake | `selectSamDistributedStake(validators)` (SOL)                             |
 
 Tooltips via `HelpTip` on each tile.
 
@@ -100,14 +97,15 @@ Two `<ConcentrationMetric>` cards: **Top Countries** and **Top ASOs**.
 The inline (non-hover) view shows only what matters at a glance: every
 over-cap entry if any are capped (rank order, `text-destructive` with a
 `(capped)` tag), otherwise just the single #1 entry. Each entry is a name
-+ share line over a `<Gauge size="lg">` — the same shared track-and-fill
-graphic the sam-table Bond column uses, larger. The fill scales the
-entry's share against an absolute network-share scale (0 .. max of the
-largest entry or the cap, plus headroom); a `bg-foreground/50` marker
-tick sits at the per-country / per-ASO cap so an over-cap entry visibly
-extends past it, with a `N% cap` label below. Hover expands a tooltip
-showing the full ranked list (up to 15 entries, the fading-tail tint
-palette) plus a remaining-count line.
+
+- share line over a `<Gauge size="lg">` — the same shared track-and-fill
+  graphic the sam-table Bond column uses, larger. The fill scales the
+  entry's share against an absolute network-share scale (0 .. max of the
+  largest entry or the cap, plus headroom); a `bg-foreground/50` marker
+  tick sits at the per-country / per-ASO cap so an over-cap entry visibly
+  extends past it, with a `N% cap` label below. Hover expands a tooltip
+  showing the full ranked list (up to 15 entries, the fading-tail tint
+  palette) plus a remaining-count line.
 
 ### Jump-to-validator search
 
@@ -125,15 +123,15 @@ reads from the full auction set, not from the visible table rows.
 indicator `↑`/`↓` next to active header. Table sits in a scroll-x card
 (`bg-card rounded-xl border border-border shadow-card overflow-x-auto`).
 
-| Column         | Sort key     | What's there                                                                                                                                                                |
-| -------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `#`            | `rank`       | Primary: absolute 1-based stake-priority rank from the top of the sorted auction (`#N`, `text-sm`), coloured by tip urgency, no trend arrow — the `#` appears only here. Sub-label underneath (`text-[10px]`, ~40% smaller): cutoff-relative position from `validator.values.cutoffRank` — `at cutoff`, `N above`, or `N below`; no `#` prefix, NBSP binds count to word. Ghost rows: muted same layout. Simulated rows: posColor-tinted `#N` (no sub) + `✕` clear button. Keyboard-activatable (`role="button"`, `tabIndex`). |
-| Validator      | `validator`  | `<ValidatorIdentity>` — name + responsive vote account. Trailing red pulsing dot when validator has an alert (`bondRunway ≤ 5` or `bondUtilPct ≥ 85`). `PenaltyBadges` slot for the active penalty icons. |
-| Max APY        | `maxApy`     | `selectMaxAPY` pill. Primary tone if in winning set, destructive-light otherwise.                                                                                           |
+| Column         | Sort key     | What's there                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| -------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `#`            | `rank`       | Primary: absolute 1-based stake-priority rank from the top of the sorted auction (`#N`, `text-sm`), coloured by tip urgency, no trend arrow — the `#` appears only here. Sub-label underneath (`text-[10px]`, ~40% smaller): cutoff-relative position from `validator.values.cutoffRank` — `at cutoff`, `N above`, or `N below`; no `#` prefix, NBSP binds count to word. Ghost rows: muted same layout. Simulated rows: posColor-tinted `#N` (no sub) + `✕` clear button. Keyboard-activatable (`role="button"`, `tabIndex`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Validator      | `validator`  | `<ValidatorIdentity>` — name + responsive vote account. Trailing red pulsing dot when validator has an alert (`bondRunway ≤ 5` or `bondUtilPct ≥ 85`). `PenaltyBadges` slot for the active penalty icons.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| Max APY        | `maxApy`     | `selectMaxAPY` pill. Primary tone if in winning set, destructive-light otherwise.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | Bond           | `bond`       | Bond chip (No bond / Critical / Watch / Adequate / Healthy — see § Bond chip) + dot + balance, then a compact `<Gauge size="sm">` (the shared track-and-fill component, also used larger by the Concentration metrics) + `(Nep)` runway suffix. The gauge fills proportionally to `bondGoodForNEpochs` against a fixed 100-epoch scale (so a 5ep bond reads short and a 90ep bond nearly full; runway over the cap renders a full bar — the old `100 − utilization` encoding was discarded because utilization is ≈0 for almost every validator and rendered every bar full). Fill colour follows the existing bond-health tier (`BOND_CHIP[...].bar`: primary / muted / warning / destructive) so a near-critical bond reads red even when its runway is only a few epochs. A thin `bg-destructive` tick at the danger (left) end marks the `dsSamConfig.minBondEpochs` critical floor (no number label — the `w-14` cell can't fit one without crowding the `(Nep)` token). The bond pill passes `criticalBand={0.25}`, so the leftmost 25% of the track carries a faint `bg-destructive/15` zone drawn behind the value fill — the critical-runway region reads red at a glance. The band is bond-pill-only: the `size="lg"` Concentration gauge does not pass `criticalBand` (its marker is the cap, a different semantic). Track height and fill are a uniform 4px across every row variant (normal, out-of-set, ghost, simulated, alert). The runway number is display-capped: `≥ 100` epochs renders `(>100ep)`, below that the exact rounded value (e.g. `(37ep)`). |
-| Stake / Next Δ | `stakeDelta` | Active SAM stake on top, expected next-epoch change underneath. Muted `0 SOL` when delta is zero, otherwise tinted `+/−` SOL coloured `var(--status-green)` / `var(--destructive)`. |
-| Next Step      | `nextStep`   | One-line tip from `getValidatorTip`, pill capped at `max-w-[260px]` so the column stays rhythmic. **Colour = severity** (urgency tint). **Icon = constraint/direction** via `getTipIcon`: bond → shield glyph, bid → bars glyph, rank → list glyph (all non-directional, severity-agnostic); only the in-set `none` case is directional and keyed off the real signed delta (↗ gain, ↘ loss, → at target) so an up-arrow can never appear on a losing/blocked row. The contiguous out-of-set "bid too low" block (`constraint:'rank'`) is an expected state, not an alarm: rendered muted with a 2-word "Bid too low" label (full sentence only in the detail panel). |
-| (chevron)      | —            | Drill-in cue, recolours on row hover.                                                                                                                                       |
+| Stake / Next Δ | `stakeDelta` | Active SAM stake on top, expected next-epoch change underneath. Muted `0 SOL` when delta is zero, otherwise tinted `+/−` SOL coloured `var(--status-green)` / `var(--destructive)`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Next Step      | `nextStep`   | One-line tip from `getValidatorTip`, pill capped at `max-w-[260px]` so the column stays rhythmic. **Colour = severity** (urgency tint). **Icon = constraint/direction** via `getTipIcon`: bond → shield glyph, bid → bars glyph, rank → list glyph (all non-directional, severity-agnostic); only the in-set `none` case is directional and keyed off the real signed delta (↗ gain, ↘ loss, → at target) so an up-arrow can never appear on a losing/blocked row. The contiguous out-of-set "bid too low" block (`constraint:'rank'`) is an expected state, not an alarm: rendered muted with a 2-word "Bid too low" label (full sentence only in the detail panel).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| (chevron)      | —            | Drill-in cue, recolours on row hover.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
 ### Cutoff divider
 
@@ -144,13 +142,13 @@ validators stay above the line because they'd win on yield. Label reads
 
 ### Row tints
 
-| State                       | Background                                                                                  |
-| --------------------------- | ------------------------------------------------------------------------------------------- |
-| In set                      | `bg-card`, hover `bg-primary-light`                                                         |
-| Out of set (bid-too-low)    | `bg-destructive/[0.02]`, hover `bg-destructive/[0.05]`                                      |
+| State                       | Background                                                                                                              |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| In set                      | `bg-card`, hover `bg-primary-light`                                                                                     |
+| Out of set (bid-too-low)    | `bg-destructive/[0.02]`, hover `bg-destructive/[0.05]`                                                                  |
 | Ghost (simulation original) | `opacity-40 line-through bg-muted/30` — `cursor-pointer` if the simulated target row exists, otherwise `cursor-default` |
-| Simulated (post-edit)       | `ring-2 ring-inset ring-status-yellow`, `borderLeftColor` = posColor (green up, red down)   |
-| Scroll-flash                | `bg-status-yellow-light` for 800ms after clicking a ghost row to jump to its new position   |
+| Simulated (post-edit)       | `ring-2 ring-inset ring-status-yellow`, `borderLeftColor` = posColor (green up, red down)                               |
+| Scroll-flash                | `bg-status-yellow-light` for 800ms after clicking a ghost row to jump to its new position                               |
 
 ### Simulation mode
 
@@ -167,13 +165,13 @@ Detection of refetch completion watches `fetchStatus === 'idle'`
 
 Five tiers, `BOND_CHIP` record in `sam-table.tsx`, keyed by the shared `BondHealthState` union (`bond-health.ts` — no more local duplicate type):
 
-| Tier                | Style                                   | Meaning                                            |
-| ------------------- | --------------------------------------- | -------------------------------------------------- |
-| `no-bond`           | `bg-destructive-light text-destructive` | no bond posted at all (`bondBalanceSol ≤ 0`); red, label "No bond" |
+| Tier                | Style                                   | Meaning                                                                                                |
+| ------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `no-bond`           | `bg-destructive-light text-destructive` | no bond posted at all (`bondBalanceSol ≤ 0`); red, label "No bond"                                     |
 | `critical`          | `bg-destructive-light text-destructive` | below penalty threshold, bond risk fee charged, OR bond below the SDK `minBondBalanceSol` minimum; red |
-| `watch`             | `bg-warning-light text-warning`         | can't keep current stake; some will be undelegated |
-| `soft` ("Adequate") | `bg-secondary text-muted-foreground`    | covers current stake but not ideal target          |
-| `healthy`           | `bg-primary-light-10 text-primary`      | bond exceeds ideal coverage                        |
+| `watch`             | `bg-warning-light text-warning`         | can't keep current stake; some will be undelegated                                                     |
+| `soft` ("Adequate") | `bg-secondary text-muted-foreground`    | covers current stake but not ideal target                                                              |
+| `healthy`           | `bg-primary-light-10 text-primary`      | bond exceeds ideal coverage                                                                            |
 
 Below-minimum bond reads red, not warning-yellow: `bondHealthFromAuction` returns `critical` when `bondBalanceSol < minBondBalanceSol`, and the out-of-set tip's "Bond below minimum" branch is `urgency: 'critical'`, so chip and tip agree on tone. A validator with no bond at all is `no-bond` ("No bond") — distinct from `soft` ("Adequate"), which it was previously mislabelled as. Both `no-bond` and `critical` resolve to the same red chip via the shared `DESTRUCTIVE_CHIP` style; only the label differs.
 
@@ -216,8 +214,8 @@ stays visually dominant.
   runway always tell one coherent story.
 - **Expected Payment This Epoch** — Active stake cost, Activating stake
   cost, optional `↳ bid gap` sub-row, Penalty group (single `Penalty:
-  No penalties` line OR an itemised list of `↳ bid-too-low / blacklist /
-  bond risk fee` `PenaltyRow`s, each clickable to its own breakdown
+No penalties` line OR an itemised list of `↳ bid-too-low / blacklist /
+bond risk fee` `PenaltyRow`s, each clickable to its own breakdown
   tab), Total (separated by horizontal line via `SEPARATOR_DIV_CLASS`
   from `breakdowns/row.tsx`).
 - **APY Composition** (right column) — `ApyCompositionCard`. Segmented
@@ -440,11 +438,11 @@ Hidden from navigation. Each is served by a `*Page` wrapper that
 injects fixture data into the corresponding production page, keeping
 the full UI and interaction surface but bypassing live APIs.
 
-| Route                    | Component                                                          | Wraps                |
-| ------------------------ | ------------------------------------------------------------------ | -------------------- |
-| `/test-`                 | `TestSamPage` (`src/pages/test-stake-auction-marketplace.tsx`)     | `SamPage`            |
-| `/test-bonds`            | `TestBondsPage` (`src/pages/test-bonds.tsx`)                       | `ValidatorBondsPage` |
-| `/test-protected-events` | `TestProtectedEventsPage` (`src/pages/test-protected-events.tsx`)  | `ProtectedEventsPage` |
+| Route                    | Component                                                         | Wraps                 |
+| ------------------------ | ----------------------------------------------------------------- | --------------------- |
+| `/test-`                 | `TestSamPage` (`src/pages/test-stake-auction-marketplace.tsx`)    | `SamPage`             |
+| `/test-bonds`            | `TestBondsPage` (`src/pages/test-bonds.tsx`)                      | `ValidatorBondsPage`  |
+| `/test-protected-events` | `TestProtectedEventsPage` (`src/pages/test-protected-events.tsx`) | `ProtectedEventsPage` |
 
 Fixtures: `src/fixtures/`, `src/test-validators.ts`, `src/test-bonds.ts`,
 `src/test-protected-events.ts`. Test pages set `refetchInterval: false`
