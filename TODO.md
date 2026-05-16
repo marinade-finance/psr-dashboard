@@ -251,29 +251,122 @@ References:
 - `src/services/sam.ts:365` (we already read `lastCapConstraint` for
   the concentration cards)
 
-## UI: Bond health bar — clearer limit + dramatic "below-limit" state
+## Test fixtures: full /test- CTA + auction-state coverage
 
-The bond column's small progress bar today shows `100 − utilization%`
-(width = remaining capacity, colour = health tier). Two improvements:
+`/test-` runs the REAL `DsSamSDK` auction over
+`src/fixtures/test-validators.ts`, so many CTA states are EMERGENT from
+the auction (rank / "bid too low", "losing stake next epoch",
+gain-stake, country/ASO caps) — they cannot be set per-field. The
+fixture must be a coherent validator population, or a pruned frozen
+real snapshot, large and varied enough that the auction itself
+produces every region.
 
-1. **Show the limit.** The bar has no marker indicating where the
-   minimum-bond threshold sits — the user sees a stub and has to know
-   that "stub = past the limit". Render a small tick or notch at the
-   threshold position so the eye can read the bar against the
-   reference instantly.
-2. **Make below-limit really obvious.** When utilization ≥ 100% the
-   bar is empty and only the colour communicates the state, which is
-   easy to miss in a long table. Add a stronger visual: solid red
-   fill of a narrow "over-limit" strip, pulsing accent, or a tiny
-   icon next to the bar (matches the existing red dot for "alert").
-   Goal: a validator should see at a glance that the bond is past the
-   penalty line, not just realize it after reading the colour.
+Approach — pick the pragmatic one:
+- (A) Trace each CTA state to the auction outcome that produces it,
+  then construct a tuned population (dozens of rows) with realistic
+  PMPE / stake / country / ASO / bond distributions.
+- (B) Capture ONE real snapshot from the live data source
+  (`src/services/sam.ts` loadSam / `src/services/validators.ts`),
+  freeze it as a static fixture — NO runtime upstream, `/test-` is
+  sealed (commit 4ecee874) — prune to a representative subset, tune a
+  few edge rows. B-frozen is best: realistic + deterministic + offline.
+
+Must vary across rows: **bid (cpmpe), bond balance, active stake,
+paid undelegation, and claimable-bond vs gross-bond** (rows where
+claimable < gross).
+
+Must produce these auction CONDITIONS, not just per-field states:
+- Non-zero **redelegation budget** — `selectRedelegationBudget` =
+  max(0, TVL − Σactive) > 0. Without it NO stake activates, so
+  "raise bid to gain/keep stake", in-auction-target and
+  next-epoch-stake are completely untestable. Fixture total TVL must
+  exceed Σ active stake (supply side); paid-undelegation no longer
+  recycles into the budget under the current `sam.ts` model — verify
+  at implementation time.
+- A clearing cutoff with winners AND losers so rank ±N, the
+  contiguous out-of-set "bid too low" block, and "losing stake next
+  epoch" all arise.
+- Enough validators sharing one country / ASO to hit a concentration
+  cap.
+- Bond tiers: healthy / soft / watch / critical / no-bond; risk-fee
+  outstanding; top-up-to-avoid-fee pending; carried paid undelegation.
+
+Constraints: write only `src/fixtures/**` and the `/test-` wrapper if
+strictly needed; fixture objects must satisfy the existing
+AuctionValidator-derived types exactly. Verify with
+`pnpm build && pnpm preview` → open `/test-`, list which CTA /
+auction state each named row surfaces.
+
+## CTA family: action + quantified consequence
+
+Unify the whole bond/stake CTA family on one shape — **a plain action
+verb, an amount, and the real consequence with its number**. Replace the
+unquantified weak forms ("to qualify", "to win stake", bare "Losing N
+SOL next epoch.") everywhere they appear: the sam-table pill,
+validator-detail, and the breakdown banner must read identically for a
+given state, sourced from the canonical `bondAdvice()` in `tip-engine.ts`.
+
+The consequence half must match the state — it is **not** always "lose
+stake":
+
+| State | CTA shape | Number source |
+|---|---|---|
+| Holds stake, bond below min / Critical (clips to 0) | `Top up N SOL or lose {stake} SOL.` | top-up: `computeBondCoverage`; stake: row delta |
+| No stake yet, wants in (nothing to lose) | `Top up N SOL to win {stake} SOL.` | upside framing — carrot, no "or lose" |
+| Bond thin, risk fee imminent | `Top up N SOL or pay a ~{fee} SOL fee.` | fee: `computeBondCoverage` risk-fee |
+| Stake shrinks, cause = lost on price (bid) | `Raise bid or lose {stake} SOL.` (unquantified action) | see bid caveat below |
+
+Bond-side numbers all already exist (`computeBondCoverage` — same figures
+the Bond tab uses). The bid-side number does **not**:
+`computeInAuctionTarget` / `computeNextEpochStake` estimate bid-to-clear
+but are caveated — "estimate, verify in Simulate", last-price coupling.
+Until those are trusted for a headline CTA, the bid-cause row keeps the
+action unquantified (`Raise bid …`) while still naming the `{stake}`
+consequence — never a bare "Losing N" with no remedy. Wiring a quoted
+`Raise bid by N` is the deferred follow-up (confirm estimate reliability
+or gate it behind Simulate).
+
+Touches: `src/services/tip-engine.ts` (`bondAdvice()` and the `Losing`
+branch ~line 326 — route by cause), `computeBondCoverage` for top-up /
+fee numbers, `in-auction-target.ts` / `next-epoch-stake.ts` for the bid
+estimate once trusted.
+
+## UI: Bond health gauge — critical zone too small, decoupled from marker
+
+**Diagnosed root cause.** The bond gauge call site
+(`sam-table.tsx:803-810`) passes `scaleMax={100}`,
+`marker={minBondEpochs / 100}`, `criticalBand={0.25}`. With the SDK
+default `minBondEpochs = 1`, the threshold marker lands at
+`1/100 = 1%` (clamped to 2% by the Gauge's display floor) — a sliver
+nobody can read — while the faint-red `criticalBand` is a hardcoded
+**25%** that corresponds to nothing (25 epochs on a 0–100 scale). The
+band and the marker disagree, and the meaningful danger region is ~2%
+of the bar instead of a visible zone.
+
+**Required behaviour.** The critical zone should occupy **~20%** of
+the bar, the threshold marker should sit at that same 20% line, and
+the red band must equal the below-threshold region (band == marker, no
+hardcoded constant). Concretely: rescale so the threshold lands at the
+chosen visible fraction — `scaleMax = minBondEpochs / 0.20` (= 5 ×
+`minBondEpochs`), then `marker = minBondEpochs / scaleMax = 0.20` and
+`criticalBand = minBondEpochs / scaleMax = 0.20`. A validator at 1×
+`minBondEpochs` runway sits exactly on the line; the healthy range
+(1×–5×) spans 20%–100%. Band, marker, and fill all then derive from
+one scale and can never contradict.
+
+**Also (original asks, still valid):** keep the threshold tick visible,
+and make the below-limit state dramatic (empty bar + colour alone is
+missable in a long table) — a solid over-limit strip or alert icon.
 
 Touches:
-- `src/components/sam-table/sam-table.tsx` around line 731 (the bar).
-- Possibly `src/services/calculations.ts:bondUtilizationPct` if we
-  want to expose "% above the limit" separately so the over-limit
-  visual can scale with severity.
+- `src/components/sam-table/sam-table.tsx:803-810` (the Gauge call —
+  scaleMax / marker / criticalBand all become functions of
+  `minBondEpochs`).
+- `src/components/gauge/gauge.tsx` only if the over-limit dramatic
+  state needs a new rendering mode beyond the existing band/marker.
+
+Blocked: `sam-table.tsx` is under another agent's edit; do after it
+frees. Don't hardcode `0.25` again — derive everything from the scale.
 
 ## Feature: "My Validator" address pin + personal notification ribbon
 
