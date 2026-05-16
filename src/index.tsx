@@ -106,7 +106,11 @@ const Root = () => {
   // Prefetch all tab data so navigation is instant. Running here (not at
   // module top-level) means a rejection bubbles to the route's error
   // boundary instead of being silently swallowed before React mounts.
+  // Test routes bring their own QueryClient seeded with fixtures and must
+  // never touch the network — skip the prefetch so we don't fire upstream
+  // calls before the test wrapper mounts.
   useEffect(() => {
+    if (window.location.pathname.startsWith('/test-')) return
     void queryClient.prefetchQuery({
       queryKey: ['sam', 0],
       queryFn: () => loadSam(null),

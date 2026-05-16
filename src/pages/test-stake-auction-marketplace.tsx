@@ -1,6 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React, { useMemo, useState } from 'react'
 
+import { TEST_BONDS_DATA } from 'src/fixtures/test-bonds'
+import { TEST_PROTECTED_EVENTS } from 'src/fixtures/test-protected-events'
 import {
   TEST_AUCTION_RESULT,
   TEST_DS_SAM_CONFIG,
@@ -32,12 +34,20 @@ export const TestSamPage: React.FC<UserLevelProps> = ({ level }) => {
         },
       },
     })
-    // Suppress notification fetchers; the page checks falsy.
-    queryClient.setQueryDefaults(['notifications-broadcast'], {
-      enabled: false,
-    })
+    // EpochMeter inside the navigation reads ['sam', 0] and
+    // ['protected-events']; nav hover prefetches ['bonds']. Seed all three
+    // so the test page never reaches upstream APIs.
+    queryClient.setQueryData(['sam', 0], SAM_RESULT)
+    queryClient.setQueryData(['protected-events'], TEST_PROTECTED_EVENTS)
+    queryClient.setQueryData(['bonds'], TEST_BONDS_DATA)
+    queryClient.setQueryData(['validator-names'], TEST_VALIDATOR_NAMES)
     queryClient.setQueryData(['notifications-broadcast'], null)
-    queryClient.setQueryDefaults(['notifications-all'], { enabled: false })
+    queryClient.setQueryData(['notifications-all', 'sam_auction'], {})
+    // psrEstimates fires per-validator when the Payments tab opens. Seed an
+    // empty array for every fixture vote account; the tab still renders.
+    for (const voteAccount of TEST_VALIDATOR_NAMES.keys()) {
+      queryClient.setQueryData(['psrEstimates', voteAccount], [])
+    }
     return queryClient
   })
   const dataSources = useMemo<SamDataSources>(
