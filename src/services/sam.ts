@@ -302,11 +302,7 @@ function allocateRedelegation(
   const cached = allocationCache.get(auctionResult)
   if (cached) return cached
   const validators = auctionResult.auctionData.validators
-  const totalPaid = validators.reduce(
-    (sum, validator) => sum + selectPaidUndelegationSol(validator),
-    0,
-  )
-  const budget = selectRedelegationBudget(auctionResult) + totalPaid
+  const budget = selectRedelegationBudget(auctionResult)
   const effectiveActive = (v: AuctionValidator) =>
     v.marinadeActivatedStakeSol - selectPaidUndelegationSol(v)
   const rawDelta = (v: AuctionValidator) =>
@@ -339,13 +335,15 @@ function allocateRedelegation(
   return result
 }
 
-// Paid undelegation is a one-time outflow whose freed capacity returns to
-// the redelegation budget the same epoch (TVL − Σactive grows by exactly
-// Σpaid). Effective post-undelegation active = active − paid; below-target
-// winners (vs that effective active) absorb the augmented budget greedily by
-// totalPmpe. Natural withdrawal (~0.7% TVL) is the only true outflow.
-// SDK truth: calcBondRiskFee uses projectedActivatedStakeSol = max(0, active
-// − paidUndelegationSol) as the post-undelegation baseline; we mirror that.
+// Paid undelegation settles mSOL redemptions (and bond-funded payouts) —
+// the stake leaves the pool to redeemers, it does NOT recycle into the
+// next-epoch redelegation budget. TVL drops by Σpaid alongside Σactive,
+// so max(0, TVL − Σactive) is invariant across paid undeleg and IS the
+// true budget. Per-validator demand uses projectedActive = active − paid
+// (mirroring the SDK's calcBondRiskFee), so a validator losing P this
+// epoch shows a (target − active + paid) gap and competes for the budget
+// at its totalPmpe rank. Natural withdrawal (~0.7% TVL) is a separate
+// pro-rata outflow to redeemers.
 // Bond below SDK's minBondBalanceSol: clipBondStakeCap returns 0, so the
 // validator loses ALL current stake regardless of bid (mirrors the
 // tip-engine cascade). The full outflow is attributed to paid undelegation
