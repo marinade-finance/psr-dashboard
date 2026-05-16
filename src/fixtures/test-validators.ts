@@ -13,7 +13,11 @@ import type {
 // Realistic epoch / TVL constants
 const TVL = 1_200_000
 const EPOCH = 800
-const WINNING_PMPE = 2.8
+// Clearing price MUST sit inside the validator totalPmpe spread
+// (makeRevShare → 5.0 + bid, bids ~0–3.5 → totalPmpe ~5.0–8.8). Below this,
+// rows fall under the winning price (bid too low) and the auction awards
+// them zero — keep it consistent with each row's marinadeSamTargetSol.
+const WINNING_PMPE = 6.0
 
 // Shared history: 3 auction entries per validator so bid-penalty logic has data
 function makeAuctions(bidPmpe: number, winningPmpe: number) {
@@ -375,17 +379,17 @@ const v07: AuctionValidator = {
   values: makeValues({ bondBalanceSol: 18, marinadeActivatedStakeSol: 60_000 }),
 }
 
-// 8. Out of set (marinadeSamTargetSol = 0, not winning)
+// 8. Eligible but bid below the winning price → zero target, loses all stake
 const v08: AuctionValidator = {
   ...makeBase('FiXtUREv8888888888888888888888888888888888hh', {
     marinadeActivatedStakeSol: 10_000,
     bondBalanceSol: 12,
-    bidCpmpe: 0.8, // too low to win
+    bidCpmpe: 0.8, // totalPmpe 5.8 < winning 6.0 → below the line
   }),
   revShare: makeRevShare(0.8),
   bidTooLowPenalty: { coef: 0, base: 0 },
   bondForcedUndelegation: { coef: 0, base: 0, value: 0 },
-  samEligible: false,
+  samEligible: true,
   backstopEligible: false,
   samBlocked: false,
   auctionStake: { externalActivatedSol: 300_000, marinadeSamTargetSol: 0 },
@@ -554,6 +558,250 @@ const v12: AuctionValidator = {
   }),
 }
 
+// ───── CTA / Next-Step state-coverage fixtures ───────────────────────────────
+//
+// One row per distinct getValidatorTip / bondAdvice / bond-health outcome and
+// the combinations a real validator hits, so /test- renders the full CTA
+// surface for visual review. The bond-coverage math (config below:
+// minBondEpochs=1, idealBondEpochs=3, minBondBalanceSol=5, bondRiskFeeMult=1)
+// reduces — with unprotected reserves zeroed — to:
+//   floorBaseKeep      = (minBondPmpe   / 1000) * marinadeActivatedStakeSol
+//   requiredIdealKeep  = (idealBondPmpe / 1000) * marinadeActivatedStakeSol
+//   floorBaseProjected = (minBondPmpe   / 1000) * (active − paidUndelegationSol)
+//   topUpToKeepStake   = max(0, floorBaseKeep      − claimableBondBalanceSol)
+//   topUpToIdealKeep   = max(0, requiredIdealKeep  − bondBalanceSol)
+//   topUpToAvoidFee    = max(0, floorBaseProjected − claimableBondBalanceSol)
+// Health: bond≤0 → no-bond; bond<5 → critical; avoidFee>0 → critical;
+// keep>0 → watch; idealKeep>0 → soft; else healthy.
+// expectedStakeChangeSol is NOT set here — it is derived globally from the
+// greedy redelegation budget (= max(0, TVL − Σ active)). These rows keep a
+// small active base (10k) so Σ active stays well under TVL and the budget
+// can actually fund the "gaining" rows. Stake direction is then steered via
+// marinadeSamTargetSol vs marinadeActivatedStakeSol (and paidUndelegationSol):
+// target > active → inflow (gaining); target ≪ active → over-target, sheds
+// the pro-rata natural withdrawal (losing); target == active → flat.
+
+const STATE_ACTIVE = 10_000
+
+function stateValidator(
+  voteAccount: string,
+  opts: {
+    minBondPmpe: number
+    idealBondPmpe: number
+    bondBalanceSol: number
+    claimableBondBalanceSol: number
+    marinadeSamTargetSol: number
+    bondGoodForNEpochs: number
+    bidCpmpe?: number
+    paidUndelegationSol?: number
+    marinadeActivatedStakeSol?: number
+  },
+): AuctionValidator {
+  const active = opts.marinadeActivatedStakeSol ?? STATE_ACTIVE
+  const bid = opts.bidCpmpe ?? 2.5
+  return {
+    ...makeBase(voteAccount, {
+      marinadeActivatedStakeSol: active,
+      bondBalanceSol: opts.bondBalanceSol,
+      bidCpmpe: bid,
+    }),
+    claimableBondBalanceSol: opts.claimableBondBalanceSol,
+    revShare: makeRevShare(bid),
+    bidTooLowPenalty: { coef: 0, base: 0 },
+    bondForcedUndelegation: { coef: 0, base: 0, value: 0 },
+    // Eligible even when below the line — a validator can pass every gate
+    // and still lose the auction on price/bond. Eligibility is NOT winning.
+    samEligible: true,
+    backstopEligible: false,
+    samBlocked: false,
+    auctionStake: {
+      externalActivatedSol: 150_000,
+      marinadeSamTargetSol: opts.marinadeSamTargetSol,
+    },
+    lastCapConstraint: null,
+    stakePriority: 0,
+    unstakePriority: 0,
+    maxBondDelegation: 200_000,
+    bondSamStakeCapSol: 200_000,
+    unprotectedStakeCapSol: 0,
+    unprotectedStakeSol: 0,
+    minBondPmpe: opts.minBondPmpe,
+    idealBondPmpe: opts.idealBondPmpe,
+    minUnprotectedReserve: 0,
+    idealUnprotectedReserve: 0,
+    bondGoodForNEpochs: opts.bondGoodForNEpochs,
+    bondSamHealth: 1,
+    values: {
+      ...makeValues({
+        bondBalanceSol: opts.bondBalanceSol,
+        marinadeActivatedStakeSol: active,
+      }),
+      paidUndelegationSol: opts.paidUndelegationSol ?? 0,
+    },
+  }
+}
+
+// 13. Healthy bond + gaining stake (positive / none, up arrow).
+//   ideal floor = (2/1000)*10000 = 20; bond 30 ≥ 20 → healthy.
+//   target 14k > active 10k → +4k inflow next epoch.
+const s13 = stateValidator('FiXtUREvbHEALTHYgaining1111111111111111111aa', {
+  minBondPmpe: 1,
+  idealBondPmpe: 2,
+  bondBalanceSol: 30,
+  claimableBondBalanceSol: 30,
+  marinadeSamTargetSol: 14_000,
+  bondGoodForNEpochs: 60,
+  bidCpmpe: 3.4,
+})
+
+// 14. Healthy bond + losing stake (warning / none, down arrow).
+//   target 2k ≪ active 10k → big over-target excess; absorbs most of the
+//   pro-rata natural withdrawal → clearly negative Δ next epoch.
+const s14 = stateValidator('FiXtUREvbHEALTHYlosing22222222222222222222bb', {
+  minBondPmpe: 1,
+  idealBondPmpe: 2,
+  bondBalanceSol: 30,
+  claimableBondBalanceSol: 30,
+  marinadeSamTargetSol: 2_000,
+  bondGoodForNEpochs: 55,
+  bidCpmpe: 3.3,
+})
+
+// 15. Healthy bond + at target (neutral / none, → arrow, "At target stake.").
+//   target == active, no excess → no withdrawal, no inflow → Δ = 0.
+const s15 = stateValidator('FiXtUREvbHEALTHYattarget3333333333333333cc', {
+  minBondPmpe: 1,
+  idealBondPmpe: 2,
+  bondBalanceSol: 30,
+  claimableBondBalanceSol: 30,
+  marinadeSamTargetSol: STATE_ACTIVE,
+  bondGoodForNEpochs: 50,
+  bidCpmpe: 3.2,
+})
+
+// 16. Soft bond + losing stake (info / bond, "Top up N to grow stake.").
+//   ideal floor = (10/1000)*10000 = 100; bond 40 < 100 → idealKeep=60 → soft.
+//   keep floor = (1/1000)*10000 = 10 ≤ claimable 40 → not watch. Δ≤0 so the
+//   soft branch holds (not overridden by a positive delta).
+const s16 = stateValidator('FiXtUREvbSOFTlosing44444444444444444444444dd', {
+  minBondPmpe: 1,
+  idealBondPmpe: 10,
+  bondBalanceSol: 40,
+  claimableBondBalanceSol: 40,
+  marinadeSamTargetSol: 3_000,
+  bondGoodForNEpochs: 28,
+  bidCpmpe: 3.0,
+})
+
+// 17. Soft bond + gaining stake — the precedence rule: the advisory
+//   "grow stake" top-up DEFERS to the positive "arriving" message
+//   (positive / none). Same soft shape as 16 but target ≫ active.
+const s17 = stateValidator('FiXtUREvbSOFTgaining55555555555555555555555ee', {
+  minBondPmpe: 1,
+  idealBondPmpe: 10,
+  bondBalanceSol: 40,
+  claimableBondBalanceSol: 40,
+  marinadeSamTargetSol: 30_000,
+  bondGoodForNEpochs: 26,
+  bidCpmpe: 3.1,
+})
+
+// 18. Watch bond + losing stake (warning / bond, "Top up N to keep your
+//   stake."). minBondPmpe 2 → keep floor = 20. paid 6.5k shrinks projected
+//   exposed to 3.5k → floorProj = (2/1000)*3500 = 7 ≤ claimable 8 → fee=0;
+//   keep = 20 − 8 = 12 > 0 → watch. The paid undelegation also drives Δ < 0.
+const s18 = stateValidator('FiXtUREvbWATCHlosing66666666666666666666666ff', {
+  minBondPmpe: 2,
+  idealBondPmpe: 0.1,
+  bondBalanceSol: 8,
+  claimableBondBalanceSol: 8,
+  marinadeSamTargetSol: 6_000,
+  bondGoodForNEpochs: 12,
+  paidUndelegationSol: 6_500,
+  bidCpmpe: 2.7,
+})
+
+// 19. Watch bond + gaining stake — keep-stake CTA stays (truthful while
+//   gaining: the inflow does not refill the bond). Same watch shape as 18
+//   but target ≫ active so the inflow outweighs the 6.5k paid undelegation
+//   → net positive Δ, yet the bond CTA still wins by priority.
+const s19 = stateValidator('FiXtUREvbWATCHgaining77777777777777777777gg', {
+  minBondPmpe: 2,
+  idealBondPmpe: 0.1,
+  bondBalanceSol: 8,
+  claimableBondBalanceSol: 8,
+  marinadeSamTargetSol: 40_000,
+  bondGoodForNEpochs: 11,
+  paidUndelegationSol: 6_500,
+  bidCpmpe: 3.5,
+})
+
+// 20. Critical bond via avoid-fee (critical / bond, "Top up N to avoid the
+//   bond risk fee."). minBondPmpe 2, paid 0 → projected floor =
+//   (2/1000)*10000 = 20; claimable 4 → fee = 16 > 0 → critical.
+const s20 = stateValidator('FiXtUREvbCRITICALfee8888888888888888888888hh', {
+  minBondPmpe: 2,
+  idealBondPmpe: 4,
+  bondBalanceSol: 8,
+  claimableBondBalanceSol: 4,
+  marinadeSamTargetSol: 9_000,
+  bondGoodForNEpochs: 4,
+  bidCpmpe: 2.9,
+})
+
+// 21. Below-minimum bond, IN-SET (critical / bond, "Top up bond to 5 SOL to
+//   win stake."). bond 2 < minBondBalanceSol 5 → hard block; the sub-min
+//   force-removal makes the stake column show losing ALL active stake —
+//   the "critical bond + losing all stake" real combination.
+const s21 = stateValidator('FiXtUREvbBELOWMINinset9999999999999999999ii', {
+  minBondPmpe: 1,
+  idealBondPmpe: 2,
+  bondBalanceSol: 2,
+  claimableBondBalanceSol: 2,
+  marinadeSamTargetSol: 40_000,
+  bondGoodForNEpochs: 2,
+  bidCpmpe: 2.6,
+})
+
+// 22. Below-minimum bond, OUT-OF-SET (critical / bond, "Top up bond to 5 SOL
+//   to qualify."). target 0, bond 2 < 5, still has active stake so it
+//   survives the Basic table filter.
+const s22 = stateValidator('FiXtUREvbBELOWMINoutaaaaaaaaaaaaaaaaaaaaajj', {
+  minBondPmpe: 1,
+  idealBondPmpe: 2,
+  bondBalanceSol: 2,
+  claimableBondBalanceSol: 2,
+  marinadeSamTargetSol: 0,
+  bondGoodForNEpochs: 3,
+  bidCpmpe: 0.6,
+})
+
+// 23. Out-of-set, HEALTHY bond, bid too low (warning / rank). The pill
+//   renders the muted two-word "Bid too low" block; full sentence is in
+//   the detail panel. Healthy bond so no bond CTA shadows the rank one.
+const s23 = stateValidator('FiXtUREvbOUTbidlowbbbbbbbbbbbbbbbbbbbbbbbbkk', {
+  minBondPmpe: 1,
+  idealBondPmpe: 2,
+  bondBalanceSol: 150,
+  claimableBondBalanceSol: 150,
+  marinadeSamTargetSol: 0,
+  bondGoodForNEpochs: 45,
+  bidCpmpe: 0.5,
+})
+
+// 24. Out-of-set, SOFT bond, top-up to grow (warning / bond, "Top up N to
+//   grow stake."). ideal floor = (10/1000)*10000 = 100; bond 40 < 100 →
+//   soft. Out-of-set + unhealthy bond → bond CTA, not the rank CTA.
+const s24 = stateValidator('FiXtUREvbOUTsoftgrowccccccccccccccccccccccll', {
+  minBondPmpe: 1,
+  idealBondPmpe: 10,
+  bondBalanceSol: 40,
+  claimableBondBalanceSol: 40,
+  marinadeSamTargetSol: 0,
+  bondGoodForNEpochs: 22,
+  bidCpmpe: 0.7,
+})
+
 export const TEST_VALIDATORS: AuctionValidator[] = [
   v01,
   v02,
@@ -567,6 +815,18 @@ export const TEST_VALIDATORS: AuctionValidator[] = [
   v10,
   v11,
   v12,
+  s13,
+  s14,
+  s15,
+  s16,
+  s17,
+  s18,
+  s19,
+  s20,
+  s21,
+  s22,
+  s23,
+  s24,
 ]
 
 export const TEST_AUCTION_RESULT: AuctionResult = {
@@ -612,7 +872,10 @@ export const TEST_DS_SAM_CONFIG: DsSamConfig = {
   maxMarinadeTvlSharePerValidatorDec: 0.2,
   maxUnprotectedStakePerValidatorDec: 0.1,
   minUnprotectedStakeToDelegateSol: 1000,
-  minBondBalanceSol: 0.1,
+  // 5 SOL (not the network's 0.1) so the below-minimum bond CTA renders a
+  // readable "Top up bond to 5 SOL to win stake." All baseline fixture
+  // bonds are ≥ 6 SOL, so their health/coverage is unaffected.
+  minBondBalanceSol: 5,
   minBondEpochs: 1,
   idealBondEpochs: 3,
   bondRiskFeeMult: 1.0,
@@ -654,4 +917,28 @@ export const TEST_VALIDATOR_NAMES = new Map<string, string>([
   ],
   ['FiXtUREvaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAkk', 'Test: Zero Bid'],
   ['FiXtUREvaZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZll', 'Test: Max Stake'],
+  ['FiXtUREvbHEALTHYgaining1111111111111111111aa', 'CTA: Healthy + Gaining'],
+  ['FiXtUREvbHEALTHYlosing22222222222222222222bb', 'CTA: Healthy + Losing'],
+  ['FiXtUREvbHEALTHYattarget3333333333333333cc', 'CTA: Healthy + At-Target'],
+  ['FiXtUREvbSOFTlosing44444444444444444444444dd', 'CTA: Soft Bond + Losing'],
+  [
+    'FiXtUREvbSOFTgaining55555555555555555555555ee',
+    'CTA: Soft Bond + Gaining (defer)',
+  ],
+  ['FiXtUREvbWATCHlosing66666666666666666666666ff', 'CTA: Watch Bond + Losing'],
+  ['FiXtUREvbWATCHgaining77777777777777777777gg', 'CTA: Watch Bond + Gaining'],
+  ['FiXtUREvbCRITICALfee8888888888888888888888hh', 'CTA: Critical (Risk Fee)'],
+  [
+    'FiXtUREvbBELOWMINinset9999999999999999999ii',
+    'CTA: Below-Min Bond (In-Set)',
+  ],
+  [
+    'FiXtUREvbBELOWMINoutaaaaaaaaaaaaaaaaaaaaajj',
+    'CTA: Below-Min Bond (Out-of-Set)',
+  ],
+  [
+    'FiXtUREvbOUTbidlowbbbbbbbbbbbbbbbbbbbbbbbbkk',
+    'CTA: Out-of-Set Bid Too Low',
+  ],
+  ['FiXtUREvbOUTsoftgrowccccccccccccccccccccccll', 'CTA: Out-of-Set Soft Grow'],
 ])
