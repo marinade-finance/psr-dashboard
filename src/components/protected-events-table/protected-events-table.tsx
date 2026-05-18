@@ -117,7 +117,13 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
   })
   const filteredData = preFilteredData.filter(
     ({ protectedEvent, validator: _validator }) => {
-      return protectedEvent.reason !== 'Bidding'
+      if (protectedEvent.reason === 'Bidding') return false
+      if (
+        protectedEvent.reason === 'PriorityFee' &&
+        selectAmount(protectedEvent) < 0.1
+      )
+        return false
+      return true
     },
   )
   const lastSettledEpoch = data.reduce(
