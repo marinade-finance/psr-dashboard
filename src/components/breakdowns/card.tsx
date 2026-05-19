@@ -2,12 +2,15 @@ import React from 'react'
 
 import { cn } from 'src/class_utils'
 
-export type CardStatusTone = 'red' | 'yellow' | 'green'
+export type CardStatusTone = 'red' | 'yellow' | 'info' | 'green'
 export type CardStatus = { label: string; tone: CardStatusTone }
 
 const STATUS_CLASSES: Record<CardStatusTone, string> = {
   red: 'bg-destructive-light text-destructive',
   yellow: 'bg-status-yellow-light text-status-yellow',
+  // Soft-bond "grow stake" — must match the SAM pill's info/indigo so the
+  // same CTA reads the same colour on every surface (pill, header, banner).
+  info: 'bg-info-light text-info',
   green: 'bg-primary-light text-primary',
 }
 

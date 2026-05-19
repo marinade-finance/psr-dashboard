@@ -70,8 +70,14 @@ export const getBondAdviceStyle = (health: BondHealthState): TipStyle => {
   if (health === 'no-bond' || health === 'critical') {
     return { color: CSS_DESTRUCTIVE, bg: CSS_DESTRUCTIVE_LIGHT }
   }
-  if (health === 'watch' || health === 'soft') {
+  if (health === 'watch') {
     return { color: CSS_STATUS_YELLOW, bg: CSS_STATUS_YELLOW_LIGHT }
+  }
+  // Soft = info (indigo/blue). Must match SAM pill's getTipStyle('info')
+  // and the breakdown banner's `tone='info'` so "grow stake" reads the same
+  // colour on every surface.
+  if (health === 'soft') {
+    return { color: CSS_INFO, bg: CSS_INFO_LIGHT }
   }
   return { color: CSS_PRIMARY, bg: CSS_PRIMARY_LIGHT_10 }
 }
@@ -129,7 +135,7 @@ export const getTipIcon = (tip: ValidatorTip): React.ReactNode => {
 export type BondAdvice = {
   text: string
   urgency: TipUrgency
-  tone: 'red' | 'yellow' | 'green'
+  tone: 'red' | 'yellow' | 'info' | 'green'
 }
 
 export function bondAdvice(
@@ -183,7 +189,10 @@ export function bondAdvice(
       coverage.topUpToIdealKeep > 0
         ? `Top up ${topUp(coverage.topUpToIdealKeep)} to grow stake.`
         : 'Bond meets ideal coverage.'
-    return { text, urgency: 'info', tone: 'yellow' }
+    // info tone — same blue/indigo as the SAM pill (`urgency:'info'` →
+    // CSS_INFO) and the validator-detail header. Single color for "grow
+    // stake" across pill / header / banner.
+    return { text, urgency: 'info', tone: 'info' }
   }
   return {
     text: 'Bond has enough coverage.',
