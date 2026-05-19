@@ -243,11 +243,11 @@ const PenaltyBadges: React.FC<{ validator: AuctionValidator }> = ({
     (stakeSol * validator.revShare.blacklistPenaltyPmpe) / 1000
   const bondRiskSol = validator.values?.bondRiskFeeSol ?? 0
   if (bidLowSol > 0)
-    badges.push({ label: 'BidTooLow', sol: bidLowSol, kind: 'bidLow' })
+    badges.push({ label: 'Bid too low', sol: bidLowSol, kind: 'bidLow' })
   if (blacklistSol > 0)
-    badges.push({ label: 'Blacklist', sol: blacklistSol, kind: 'blacklist' })
+    badges.push({ label: 'Blacklisted', sol: blacklistSol, kind: 'blacklist' })
   if (bondRiskSol > 0)
-    badges.push({ label: 'BondRiskFee', sol: bondRiskSol, kind: 'risk' })
+    badges.push({ label: 'Bond risk fee', sol: bondRiskSol, kind: 'risk' })
   if (badges.length === 0) return null
   const tip = badges
     .map(b => `${b.label}: ~${penalty(b.sol)} estimated`)
@@ -666,14 +666,19 @@ export const SamTable: React.FC<Props> = ({
 
     // Bond health
     const bondUtilPct = bondUtilizationPct(validator, dsSamConfig.minBondEpochs)
-    const bondRunway = validator.bondGoodForNEpochs ?? 0
+    const rawRunway = validator.bondGoodForNEpochs ?? 0
     const bondHealth = validator.bondHealth
     const bondChip = BOND_CHIP[bondHealth]
+    // Single source: a no-bond / critical tier means the bond can't sustain
+    // stake, so runway reads 0 — chip and runway can never contradict (B1).
+    const bondRunway =
+      bondHealth === 'no-bond' || bondHealth === 'critical' ? 0 : rawRunway
     const hasAlert = bondRunway <= 5 || bondUtilPct >= 85
-    // Min-bond threshold sits at this fraction of the gauge: the red band
-    // and marker both land here, scaleMax is derived so runway == the SDK
-    // minimum maps exactly to this line. Left = danger, right = headroom.
-    const bondCriticalFrac = 0.2
+    // Gauge spans 0 .. 4× ideal bond epochs (full = comfortably above ideal).
+    // The SDK minimum sits at its true position; the red band is everything
+    // below it. No magic fraction — all derived from the live config.
+    const bondScaleMax = 4 * dsSamConfig.idealBondEpochs
+    const bondMinFrac = dsSamConfig.minBondEpochs / bondScaleMax
 
     const expectedChange = selectExpectedStakeChange(validator)
 
@@ -807,9 +812,9 @@ export const SamTable: React.FC<Props> = ({
             <Gauge
               size="sm"
               value={bondRunway}
-              scaleMax={dsSamConfig.minBondEpochs / bondCriticalFrac}
-              marker={bondCriticalFrac}
-              criticalBand={bondCriticalFrac}
+              scaleMax={bondScaleMax}
+              marker={bondMinFrac}
+              criticalBand={bondMinFrac}
               tone={bondChip.bar}
             />
             <span
@@ -867,7 +872,9 @@ export const SamTable: React.FC<Props> = ({
           const bidTooLow = tip.constraint === 'rank'
           const stepColor = bidTooLow ? CSS_MUTED_FG : tipStyle.color
           const stepBg = bidTooLow ? CSS_MUTED : tipStyle.bg
-          const stepText = bidTooLow ? 'Bid too low' : trimTipDecimals(tip.text)
+          const stepText = bidTooLow
+            ? 'Bid too low — raise it.'
+            : trimTipDecimals(tip.text)
           return (
             <TableCell className="px-3.5 py-3">
               <div
@@ -878,7 +885,9 @@ export const SamTable: React.FC<Props> = ({
                   borderColor: stepColor,
                 }}
               >
-                <span className="shrink-0">{getTipIcon(tip)}</span>
+                <span className="shrink-0 inline-flex items-center justify-center w-4 h-4">
+                  {getTipIcon(tip)}
+                </span>
                 <span className="break-words">{stepText}</span>
               </div>
             </TableCell>
@@ -920,7 +929,8 @@ export const SamTable: React.FC<Props> = ({
             <span className="inline-block w-2 h-2 rounded-full bg-background animate-pulse" />
             Simulation Mode — what-if numbers, not live (
             {simulatedValidators.size} validator
-            {simulatedValidators.size === 1 ? '' : 's'} modified)
+            {simulatedValidators.size === 1 ? '' : 's'} modified) ·
+            strikethrough = original position
           </span>
           {onResetSimulation && (
             <button
