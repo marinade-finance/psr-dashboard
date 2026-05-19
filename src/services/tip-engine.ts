@@ -70,14 +70,8 @@ export const getBondAdviceStyle = (health: BondHealthState): TipStyle => {
   if (health === 'no-bond' || health === 'critical') {
     return { color: CSS_DESTRUCTIVE, bg: CSS_DESTRUCTIVE_LIGHT }
   }
-  if (health === 'watch') {
+  if (health === 'watch' || health === 'soft') {
     return { color: CSS_STATUS_YELLOW, bg: CSS_STATUS_YELLOW_LIGHT }
-  }
-  // Soft = info (indigo/blue). Must match SAM pill's getTipStyle('info')
-  // and the breakdown banner's `tone='info'` so "grow stake" reads the same
-  // colour on every surface.
-  if (health === 'soft') {
-    return { color: CSS_INFO, bg: CSS_INFO_LIGHT }
   }
   return { color: CSS_PRIMARY, bg: CSS_PRIMARY_LIGHT_10 }
 }
@@ -135,7 +129,7 @@ export const getTipIcon = (tip: ValidatorTip): React.ReactNode => {
 export type BondAdvice = {
   text: string
   urgency: TipUrgency
-  tone: 'red' | 'yellow' | 'info' | 'green'
+  tone: 'red' | 'yellow' | 'green'
 }
 
 export function bondAdvice(
@@ -189,10 +183,11 @@ export function bondAdvice(
       coverage.topUpToIdealKeep > 0
         ? `Top up ${topUp(coverage.topUpToIdealKeep)} to grow stake.`
         : 'Bond meets ideal coverage.'
-    // info tone — same blue/indigo as the SAM pill (`urgency:'info'` →
-    // CSS_INFO) and the validator-detail header. Single color for "grow
-    // stake" across pill / header / banner.
-    return { text, urgency: 'info', tone: 'info' }
+    // Yellow tone (same family as watch) — chosen over info/indigo because
+    // users don't read purple as a meaningful severity. Severity tier
+    // still distinct from watch via BondHealthState ('soft' vs 'watch'),
+    // just rendered the same colour.
+    return { text, urgency: 'warning', tone: 'yellow' }
   }
   return {
     text: 'Bond has enough coverage.',
@@ -326,7 +321,12 @@ export const getValidatorTip = (
     // not pay a fee nor refill the bond, so that advice is truthful even
     // while gaining.)
     if (health === 'soft' && coverage.topUpToIdealKeep > 0 && delta <= 0) {
-      return { text: advice.text, urgency: 'info', constraint: 'bond', delta }
+      return {
+        text: advice.text,
+        urgency: 'warning',
+        constraint: 'bond',
+        delta,
+      }
     }
   }
 
