@@ -2,6 +2,15 @@
 
 ## Queued — fix on a clean tree, verify, then commit
 
+### "Binding cap — <voteAccount> is full" CTA is wrong + add to /test-
+
+The cap-constraint CTA reads "Binding cap — A11pG…tS5 is full" — wrong
+framing AND it should NOT include the vote account. Reword (no vote
+account; clearer than "is full"). This is the VALIDATOR/COUNTRY/ASO
+cap-constraint path of the "handle all 6 SDK constraint types" item.
+`/test-` exercises none of these cap states — add fixture rows
+(per-validator cap, country cap, ASO cap) so each renders.
+
 ### avoid-fee CTA fires when NO fee is charged (real bug)
 
 `bondAdvice` (`tip-engine.ts:161`) and `outOfSetTip` (`tip-engine.ts`
