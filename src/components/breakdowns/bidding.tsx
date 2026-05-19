@@ -30,7 +30,7 @@ const STATIC_BID_HELP =
 
 const NON_BID_HELP =
   'Your inflation + MEV + block-rewards PMPE — the revenue you bring ' +
-  'before any bid. The target bid below is the winning bar minus this.'
+  'before any bid. The target bid below is the winning total minus this.'
 
 const IN_AUCTION_HELP =
   'Closed-form estimate. Adding or growing this winner shifts the clearing ' +
@@ -39,7 +39,7 @@ const IN_AUCTION_HELP =
 const NEXT_EPOCH_HELP =
   'Being in the set is not the same as receiving stake. The redelegation ' +
   'budget is handed out greedily by total PMPE, highest first, until it ' +
-  'runs out. Raising your bid reorders the queue and moves the bar — this ' +
+  'runs out. Raising your bid reorders the queue and moves the level — this ' +
   'is a heuristic, verify in Simulate.'
 
 const PRIORITY_RANK_HELP =
@@ -103,7 +103,7 @@ export const BiddingBreakdown: React.FC<Props> = ({
           tone: 'green',
         }
       : {
-          label: `Bid ${pmpe(inAuction.currentBidPmpe)} → ${pmpe(inAuction.targetBidPmpe)} PMPE to clear the winning bar.`,
+          label: `Bid ${pmpe(inAuction.currentBidPmpe)} → ${pmpe(inAuction.targetBidPmpe)} PMPE to clear the winning total.`,
           tone: 'red',
         }
 
@@ -133,7 +133,7 @@ export const BiddingBreakdown: React.FC<Props> = ({
         <tbody>
           <SectionHeader
             title="Your bid today"
-            help="What you bring to the auction this epoch: non-bid revenue (the commission you keep) plus your static bid. The two target sections below subtract your non-bid revenue from each bar to size the bid."
+            help="What you bring to the auction this epoch: non-bid revenue (the commission you keep) plus your static bid. The two target sections below subtract your non-bid revenue from each level to size the bid."
             unit="PMPE"
           />
           <CalcRow
@@ -178,7 +178,7 @@ export const BiddingBreakdown: React.FC<Props> = ({
             unit="PMPE"
           />
           <CalcRow
-            label="Winning bar"
+            label="Winning total"
             help="The lowest total PMPE that still makes the winning set this epoch. Beat it and you are in, fall short and you are out."
             col2={pmpe(inAuction.winningTotalPmpe)}
           />
@@ -210,7 +210,7 @@ export const BiddingBreakdown: React.FC<Props> = ({
             />
           ) : (
             <OkRow
-              message="Your bid already clears the winning bar."
+              message="Your bid already clears the winning total."
               colSpan={2}
             />
           )}
@@ -222,13 +222,13 @@ export const BiddingBreakdown: React.FC<Props> = ({
           />
           {noFrontier ? (
             <OkRow
-              message="No binding priority bar this run — every winner gets served."
+              message="No binding priority total this run — every winner gets served."
               colSpan={2}
             />
           ) : (
             <>
               <CalcRow
-                label="Priority bar"
+                label="Priority total"
                 help="The total PMPE the last validator to receive new stake from the redelegation budget had. Clear this and the budget reaches you before it runs out."
                 col2={pmpe(nextEpoch.priorityFrontierPmpe)}
               />
@@ -252,7 +252,7 @@ export const BiddingBreakdown: React.FC<Props> = ({
                 />
               ) : (
                 <OkRow
-                  message="You already clear the priority bar."
+                  message="You already clear the priority total."
                   colSpan={2}
                 />
               )}

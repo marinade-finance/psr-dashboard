@@ -106,12 +106,12 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
 
           <SectionHeader
             title="Threshold"
-            help="The bar your bond has to clear this epoch. Built from the auction's winning total and your current participating bid — whichever is lower sets the bar."
+            help="The level your bond has to clear this epoch. Built from the auction's winning total and your current participating bid — whichever is lower sets the level."
             unit="PMPE"
           />
           <CalcRow
-            label="Winning bar"
-            help="The lowest total PMPE that still made the winning set this epoch — same metric as the Winning bar in the Bidding tab. One of the two inputs to the threshold."
+            label="Winning total"
+            help="The lowest total PMPE that still made the winning set this epoch — same metric as the winning total in the Bidding tab. One of the two inputs to the threshold."
             col2={pmpe(metrics.winningTotalPmpe)}
           />
           <CalcRow
@@ -126,7 +126,7 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
           />
           <CalcRow
             label="Adjusted limit after permitted deviation"
-            help="The effective limit with a small grace margin subtracted. Your bond obligation is allowed to land below the raw limit, but not below this adjusted bar."
+            help="The effective limit with a small grace margin subtracted. Your bond obligation is allowed to land below the raw limit, but not below this adjusted level."
             col2={pmpe(metrics.adjustedLimit)}
           />
           <CalcRow

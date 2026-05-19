@@ -84,6 +84,15 @@ thin wrappers around the real page components that swap in fixture data
 so Playwright snapshots stay deterministic. Don't add prod logic to the
 test pages; they exist only to feed fixtures.
 
+### Writing rules
+
+- **Never use "bar" as a UI metaphor** ("winning bar", "priority bar",
+  "the bar your bond has to clear"). The word is unknown jargon to
+  novice readers. The underlying field is `winningTotalPmpe` /
+  `priorityFrontierPmpe` — use "Winning total" / "Priority total" /
+  "the level …" / "the threshold …" instead. Applies to labels,
+  tooltips, banner copy, breakdown rows, and the GUIDE.md prose.
+
 ### Testing rules
 
 - **Use `/test-*` routes for every e2e test that doesn't specifically need

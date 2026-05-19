@@ -248,31 +248,25 @@ const MetricRow = ({
   onSeeBreakdown?: () => void
   separator?: boolean
 }) => (
-  <div
-    className={cn(
-      'flex items-center justify-between',
-      separator && SEPARATOR_DIV_CLASS,
+  <div className={cn('flex flex-col', separator && SEPARATOR_DIV_CLASS)}>
+    <div className="flex items-center justify-between">
+      <span className="text-xs text-muted-foreground flex items-center gap-1">
+        <span>{label}</span>
+        {help && <HelpTip text={help} guideTo={helpGuideTo} />}
+      </span>
+      <span className="text-sm font-semibold font-mono" style={valueStyle}>
+        {value}
+      </span>
+    </div>
+    {onSeeBreakdown && (
+      <button
+        type="button"
+        className="self-start text-[10px] text-primary hover:underline mt-0.5"
+        onClick={onSeeBreakdown}
+      >
+        Show calculation →
+      </button>
     )}
-  >
-    <span className="text-xs text-muted-foreground flex items-center gap-1">
-      {onSeeBreakdown ? (
-        <>
-          <span>{label}</span>
-          <button
-            className="text-xs text-primary hover:underline"
-            onClick={onSeeBreakdown}
-          >
-            Show calculation →
-          </button>
-        </>
-      ) : (
-        label
-      )}
-      {help && <HelpTip text={help} guideTo={helpGuideTo} />}
-    </span>
-    <span className="text-sm font-semibold font-mono" style={valueStyle}>
-      {value}
-    </span>
   </div>
 )
 
@@ -287,24 +281,33 @@ const PenaltyRow = ({
   onSeeBreakdown: () => void
   sub?: boolean
 }) => (
-  <div className="flex items-center justify-between gap-2">
-    <span
-      className={cn(
-        'text-left flex-1 flex items-center gap-2',
-        sub ? 'text-[10px]' : 'text-xs',
-      )}
+  <div className="flex flex-col">
+    <div className="flex items-center justify-between gap-2">
+      <span
+        className={cn(
+          'text-muted-foreground text-left',
+          sub ? 'text-[10px]' : 'text-xs',
+        )}
+      >
+        {label}
+      </span>
+      <span
+        className={cn(
+          'font-mono',
+          sub ? 'text-[10px]' : 'text-sm font-semibold',
+        )}
+        style={{ color: sub ? CSS_MUTED_FG : CSS_DESTRUCTIVE }}
+      >
+        {value}
+      </span>
+    </div>
+    <button
+      type="button"
+      className="self-start text-[10px] text-primary hover:underline mt-0.5"
+      onClick={onSeeBreakdown}
     >
-      <span className="text-muted-foreground">{label}</span>
-      <button className="text-primary hover:underline" onClick={onSeeBreakdown}>
-        Show calculation →
-      </button>
-    </span>
-    <span
-      className={cn('font-mono', sub ? 'text-[10px]' : 'text-sm font-semibold')}
-      style={{ color: sub ? CSS_MUTED_FG : CSS_DESTRUCTIVE }}
-    >
-      {value}
-    </span>
+      Show calculation →
+    </button>
   </div>
 )
 
