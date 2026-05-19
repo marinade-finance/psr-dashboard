@@ -77,10 +77,24 @@ export const BiddingBreakdown: React.FC<Props> = ({
   const nextEpoch = computeNextEpochStake(validator, auctionResult)
   const noFrontier = nextEpoch.priorityFrontierPmpe <= 0
 
+  // Cap label. Country/ASO names are meaningful — show them. VALIDATOR's
+  // "name" is the vote account → omit. WANT/other → generic.
+  const capName = inAuction.capConstraintName
+  const capLabel =
+    inAuction.capConstraintType === 'COUNTRY'
+      ? `Country cap is at the limit${capName ? ` — ${capName}` : ''}`
+      : inAuction.capConstraintType === 'ASO'
+        ? `ASO cap is at the limit${capName ? ` — ${capName}` : ''}`
+        : inAuction.capConstraintType === 'VALIDATOR'
+          ? 'Per-validator cap is at the limit'
+          : inAuction.capConstraintType === 'WANT'
+            ? 'At your max-stake-wanted setting'
+            : 'A concentration cap is at the limit'
+
   const clears = inAuction.bidIncrease <= 0 && !inAuction.capConstrained
   const status: CardStatus = inAuction.capConstrained
     ? {
-        label: `A concentration cap is full — raising your bid alone will not get you in. See ${inAuction.capConstraintName ?? 'the cap'} below.`,
+        label: `${capLabel} — raising your bid alone will not get you in.`,
         tone: 'yellow',
       }
     : clears
@@ -166,12 +180,7 @@ export const BiddingBreakdown: React.FC<Props> = ({
             bold
           />
           {inAuction.capConstrained ? (
-            <CalcRow
-              label={`Binding cap — ${inAuction.capConstraintName ?? 'concentration'} is full`}
-              col2="blocked"
-              severity="error"
-              bold
-            />
+            <CalcRow label={capLabel} col2="blocked" severity="error" bold />
           ) : inAuction.bidIncrease > 0 ? (
             <CalcRow
               label="Bid increase needed"

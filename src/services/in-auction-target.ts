@@ -36,6 +36,10 @@ export type InAuctionTarget = {
   // clearing the bid alone will NOT get the validator in.
   capConstrained: boolean
   capConstraintName: string | null
+  // The SDK's AuctionConstraintType ('COUNTRY'|'ASO'|'VALIDATOR'|'WANT'|'BOND'
+  // |'RISK'). VALIDATOR's `constraintName` is the vote account; UI must omit
+  // it. Country/ASO names are meaningful; show them.
+  capConstraintType: string | null
 }
 
 export const computeInAuctionTarget = (
@@ -64,5 +68,6 @@ export const computeInAuctionTarget = (
     bondTopUp: coverage.topUpToKeepStake,
     capConstrained: v.lastCapConstraint != null,
     capConstraintName: v.lastCapConstraint?.constraintName ?? null,
+    capConstraintType: v.lastCapConstraint?.constraintType ?? null,
   }
 }
