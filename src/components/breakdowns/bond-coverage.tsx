@@ -131,7 +131,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
               )}
               <CalcRow
                 label="Minimum unprotected reserve"
-                help="A fixed floor of bond the protocol always wants on top of stake-sized requirements. Falling below this alone triggers the bond risk fee."
+                help="A fixed reserve included in the trigger threshold on top of the stake-sized requirement. Below the threshold, the fee fires."
                 col2={bondSol(coverage.minUnprotectedReserveSol)}
               />
               <CalcRow
@@ -144,7 +144,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
               />
               <CalcRow
                 label="Penalty trigger threshold"
-                help="The least claimable bond you can hold before the fee fires. Drop under it and you pay the bond risk fee and lose stake. It is a fixed reserve plus the minimum bond your projected stake needs."
+                help="The least claimable bond you can hold before the fee fires. Drop under it and the protocol charges the bond risk fee. It is a fixed reserve plus the minimum bond your projected stake needs."
                 col2={bondSol(coverage.floorBaseProjected)}
                 bold
               />
@@ -166,7 +166,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
               {bondRiskFeeSol > 0 && (
                 <CalcRow
                   label="Estimated bond risk fee this epoch"
-                  help="Charged when the bond is below the threshold. The amount scales with the shortfall and the protocol's bond-risk rate, and some stake is undelegated alongside it."
+                  help="Charged when the bond is below the threshold. The amount scales with the shortfall and the protocol's bond-risk rate."
                   col2={bondSol(bondRiskFeeSol)}
                   bold
                   severity="error"
@@ -196,7 +196,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
 
           <SectionHeader
             title={`Minimum bond to keep stake — ${coverage.minEp} epochs`}
-            help={`What the bond needs to keep your stake for the next ${coverage.minEp} epochs. Fall short — you pay a bond risk fee AND are scheduled to lose stake immediately.`}
+            help={`What the bond needs to keep your stake for the next ${coverage.minEp} epochs. Fall short and the protocol pulls stake back to a size your bond can cover.`}
           />
           <CalcRow
             label="Claimable bond balance"
@@ -215,12 +215,12 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           />
           <CalcRow
             label="Bond held for bid payments"
-            help="The slice of the bond set aside to pay your bid this epoch. Bid times stake, over the covered window."
+            help="Bid times exposed stake over the covered window, plus a fixed reserve for the unprotected slice."
             col2={bondSol(coverage.heldForBidKeep)}
           />
           <CalcRow
             label="Bond held for reward payouts"
-            help="The slice of the bond set aside in case your validator misses a rewards payout to stakers. Sized so stakers can be reimbursed without touching the bid-payments slice."
+            help="One epoch of stakers' rewards, reserved so the bid-payments slice stays untouched if a payout is missed."
             col2={bondSol(coverage.rewardsGuaranteeKeep)}
           />
           <CalcRow
@@ -258,12 +258,12 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           />
           <CalcRow
             label="Bond held for bid payments"
-            help="The slice of the bond set aside to pay your bid over the longer ideal window. Bigger than the keep-stake version because it covers more epochs."
+            help="Bid times exposed stake over the longer ideal window, plus a fixed reserve for the unprotected slice."
             col2={bondSol(coverage.heldForBidIdeal)}
           />
           <CalcRow
             label="Bond held for reward payouts"
-            help="The slice of the bond set aside to reimburse stakers across the longer ideal window if your validator ever misses a payout."
+            help="One epoch of stakers' rewards — currently the same size as the keep-stake reserve (see bugs.md #1: the ideal reserve isn't yet scaled to the ideal window)."
             col2={bondSol(coverage.rewardsGuaranteeIdeal)}
           />
           <CalcRow

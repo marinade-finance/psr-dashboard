@@ -117,8 +117,8 @@ export const HelpTip: React.FC<Props> = ({ html, text, guideTo, children }) => {
         // inherit so the label text stays byte-identical to before.
         className={
           children
-            ? 'group inline-flex items-center gap-1.5 cursor-help text-left align-baseline [text-transform:inherit] [letter-spacing:inherit] [font:inherit] [color:inherit]'
-            : 'group cursor-help inline-flex shrink-0'
+            ? 'group inline-flex items-center gap-1.5 text-left align-baseline [text-transform:inherit] [letter-spacing:inherit] [font:inherit] [color:inherit]'
+            : 'group inline-flex shrink-0'
         }
         aria-label={children ? undefined : 'More info'}
         aria-pressed={pinned}

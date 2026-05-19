@@ -247,28 +247,47 @@ const MetricRow = ({
   valueStyle?: React.CSSProperties
   onSeeBreakdown?: () => void
   separator?: boolean
-}) => (
-  <div className={cn('flex flex-col', separator && SEPARATOR_DIV_CLASS)}>
-    <div className="flex items-center justify-between">
-      <span className="text-xs text-muted-foreground flex items-center gap-1">
-        <span>{label}</span>
+}) => {
+  const clickable = !!onSeeBreakdown
+  const handleRowClick: React.MouseEventHandler = e => {
+    if (!onSeeBreakdown) return
+    // Don't hijack a HelpTip click or a focused text selection.
+    if ((e.target as HTMLElement).closest('[role="tooltip"], button')) return
+    onSeeBreakdown()
+  }
+  return (
+    <div
+      className={cn(
+        'flex items-center justify-between rounded-md',
+        clickable && 'cursor-pointer hover:bg-muted/50 -mx-2 px-2 py-0.5',
+        separator && SEPARATOR_DIV_CLASS,
+      )}
+      onClick={handleRowClick}
+      role={clickable ? 'button' : undefined}
+      tabIndex={clickable ? 0 : undefined}
+    >
+      <span className="text-xs text-muted-foreground flex items-center gap-2 min-w-0">
+        <span className="truncate">{label}</span>
         {help && <HelpTip text={help} guideTo={helpGuideTo} />}
+        {clickable && (
+          <button
+            type="button"
+            className="text-[10px] text-primary hover:underline shrink-0"
+            onClick={e => {
+              e.stopPropagation()
+              onSeeBreakdown?.()
+            }}
+          >
+            Show calculation →
+          </button>
+        )}
       </span>
       <span className="text-sm font-semibold font-mono" style={valueStyle}>
         {value}
       </span>
     </div>
-    {onSeeBreakdown && (
-      <button
-        type="button"
-        className="self-start text-[10px] text-primary hover:underline mt-0.5"
-        onClick={onSeeBreakdown}
-      >
-        Show calculation →
-      </button>
-    )}
-  </div>
-)
+  )
+}
 
 const PenaltyRow = ({
   label,
@@ -281,33 +300,39 @@ const PenaltyRow = ({
   onSeeBreakdown: () => void
   sub?: boolean
 }) => (
-  <div className="flex flex-col">
-    <div className="flex items-center justify-between gap-2">
-      <span
-        className={cn(
-          'text-muted-foreground text-left',
-          sub ? 'text-[10px]' : 'text-xs',
-        )}
-      >
-        {label}
-      </span>
-      <span
-        className={cn(
-          'font-mono',
-          sub ? 'text-[10px]' : 'text-sm font-semibold',
-        )}
-        style={{ color: sub ? CSS_MUTED_FG : CSS_DESTRUCTIVE }}
-      >
-        {value}
-      </span>
-    </div>
-    <button
-      type="button"
-      className="self-start text-[10px] text-primary hover:underline mt-0.5"
-      onClick={onSeeBreakdown}
+  <div
+    className="flex items-center justify-between gap-2 rounded-md cursor-pointer hover:bg-muted/50 -mx-2 px-2 py-0.5"
+    role="button"
+    tabIndex={0}
+    onClick={e => {
+      if ((e.target as HTMLElement).closest('button')) return
+      onSeeBreakdown()
+    }}
+  >
+    <span
+      className={cn(
+        'text-muted-foreground text-left flex items-center gap-2 min-w-0',
+        sub ? 'text-[13px]' : 'text-xs',
+      )}
     >
-      Show calculation →
-    </button>
+      <span className="truncate">{label}</span>
+      <button
+        type="button"
+        className="text-[10px] text-primary hover:underline shrink-0"
+        onClick={e => {
+          e.stopPropagation()
+          onSeeBreakdown()
+        }}
+      >
+        Show calculation →
+      </button>
+    </span>
+    <span
+      className={cn('font-mono', sub ? 'text-[13px]' : 'text-sm font-semibold')}
+      style={{ color: sub ? CSS_MUTED_FG : CSS_DESTRUCTIVE }}
+    >
+      {value}
+    </span>
   </div>
 )
 
@@ -830,6 +855,9 @@ export const ValidatorDetail = ({
                     label="Penalty"
                     value={cost(penaltyTotal)}
                     valueStyle={{ color: CSS_DESTRUCTIVE }}
+                    onSeeBreakdown={() =>
+                      setTab(bidTooLowPenaltySol > 0 ? 'penalty' : 'payments')
+                    }
                   />
                 )}
                 {bidTooLowPenaltySol > 0 && (

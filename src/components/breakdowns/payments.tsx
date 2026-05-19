@@ -154,7 +154,7 @@ export const PaymentsBreakdown: React.FC<Props> = ({
           />
           <CalcRow
             label="Blacklist penalty"
-            help="Charged when your validator is on Marinade's blacklist but still holds Marinade stake."
+            help="Charged the first epoch your validator gets added to Marinade's blacklist."
             col2={blacklistPenaltySol > 0 ? cost(blacklistPenaltySol) : '—'}
           />
           <CalcRow
@@ -166,7 +166,7 @@ export const PaymentsBreakdown: React.FC<Props> = ({
             <>
               <SectionHeader
                 title="PSR settlements — estimated"
-                help="Payouts to stakers when something went wrong this epoch: missed votes, downtime, or bid shortfall. Each row says where the money comes from — your bond or Marinade's own pool."
+                help="Payouts to stakers when commission rose unexpectedly, uptime dropped, or rewards fell short of what was promised. Each row says where the money comes from — your bond or Marinade's own pool."
               />
               {psrEstimates.map((estimate, i) => {
                 const label = isProtectedEvent(estimate.reason)

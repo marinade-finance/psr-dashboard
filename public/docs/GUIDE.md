@@ -8,8 +8,10 @@ have bond coverage, and which past epochs triggered protected-event payouts.
 
 The auction itself is recomputed in your browser using the
 [`@marinade.finance/ds-sam-sdk`](https://github.com/marinade-finance/ds-sam/tree/main/packages/ds-sam-sdk)
-package — every number you see comes from the same algorithm Marinade uses on the
-backend.
+package — so most numbers come straight from the same algorithm Marinade runs
+on the backend. A few values (in-auction target bid, next-epoch stake estimate,
+bid-penalty projection) are forward-looking projections; each card that shows
+one labels it as an estimate.
 
 ---
 
@@ -33,13 +35,15 @@ set, and what each validator's situation looks like.
 
 **Top metric tiles**
 
-- **Total Auction Stake** — total SOL that SAM is distributing this epoch.
+Tile order (left → right) as rendered in `sam-table.tsx`:
+
+- **Re-delegation** — estimated SOL the protocol will move next epoch toward
+  validators that are below their auction target (capped by the rebalancing budget).
 - **Winning APY** — APY of the *last* validator to make the cut. The clearing
   price of the auction.
 - **Projected APY** — expected return for stakers across the whole winning set.
 - **Winning Validators** — count of validators receiving stake this epoch.
-- **Re-delegation** — estimated SOL the protocol will move next epoch toward
-  validators that are below their auction target (capped by the rebalancing budget).
+- **Total Auction Stake** — total SOL that SAM is distributing this epoch.
 
 The detailed column reference is in [Auction Table Columns](#auction-table) and
 the side panel in [Validator Detail Panel](#detail-panel).
@@ -71,17 +75,6 @@ backstop.
 - **DRYRUN** — test event from the pre-launch period; no real payout.
 - (No badge) — finalized on-chain settlement.
 
-**Table Columns:**
-
-| Column             | Description                          |
-| ------------------ | ------------------------------------ |
-| **Epoch**          | Epoch of the event                   |
-| **Validator**      | Vote account public key              |
-| **Name**           | Validator display name               |
-| **Settlement [☉]** | Settlement amount in SOL             |
-| **Reason**         | Reason for the protected event       |
-| **Funder**         | Who funded the settlement            |
-
 ### Validator Bonds
 
 How much of Marinade's stake is currently bond-protected.
@@ -94,19 +87,8 @@ total bond capacity.
 <40% / 40–70% / 70–95% / ≥95%). Tile size ∝ √stake. Hover for details.
 
 **Table columns**: Validator · Marinade Stake · Bond Balance · Protected Stake ·
-Coverage (bar + percentage).
-
-**Table Columns:**
-
-| Column                   | Description                                                          |
-| ------------------------ | -------------------------------------------------------------------- |
-| **Validator**            | Vote account public key                                              |
-| **Name**                 | Validator display name                                               |
-| **Bond balance [☉]**     | Total bond deposit in SOL                                            |
-| **Max Stake Wanted [☉]** | Maximum stake the validator wants from Marinade                      |
-| **Bond Comm.**           | Commission override configured via bond                              |
-| **Marinade stake [☉]**   | Currently delegated Marinade stake                                   |
-| **Eff. Cost [☉]**        | Effective cost                                                       |
+Coverage (bar + percentage). Expert mode adds **Max protectable [SOL]** —
+see the Expert Guide.
 
 ---
 
@@ -374,7 +356,7 @@ _See [Stake Matching — Marinade Docs](https://docs.marinade.finance/marinade-p
 ### Getting into the auction
 
 The "Get into the auction" section of the Payments table works out the
-static bid that would lift your total to the winning bar, and the bond
+static bid that would lift your total to the winning total PMPE, and the bond
 you need to back the stake that follows. The math is simple:
 
 ```
@@ -402,28 +384,28 @@ frees up.
 Being in the auction set is not the same as receiving stake. The
 re-delegation budget is handed out greedily by total PMPE, highest
 first, until it runs out. The lowest total PMPE among validators that
-got their full below-target top-up this run is the **priority bar**.
-The "Get stake next epoch" section estimates the bid that would put you
-at or above that bar:
+got their full below-target top-up this run is the **priority total PMPE**
+(`priorityFrontierPmpe`). The "Get stake delegated next epoch" section
+estimates the bid that would put you at or above that threshold:
 
 ```
-targetTotalPmpe = max(currentTotalPmpe, priorityBarPmpe)
-targetBidPmpe   = max(0, targetTotalPmpe − nonBidPmpe)
-bidIncrease     = max(0, targetBidPmpe − currentStaticBidPmpe)
+targetTotalPmpePriority = priorityFrontierPmpe
+targetBidPmpe           = max(0, targetTotalPmpePriority − nonBidPmpe)
+bidIncrease             = max(0, targetBidPmpe − currentStaticBidPmpe)
 ```
 
 This is a **heuristic**, not a guarantee. Raising your bid reorders
-the queue and moves the bar itself, so the number is an estimate —
+the queue and moves the threshold itself, so the number is an estimate —
 always verify it in **Simulate**. When the budget is large enough to
-reach every below-target winner, there is no binding bar and the
+reach every below-target winner, there is no binding priority total and the
 section says so.
 
 The section also shows the two inputs the queue order is read from:
 your **priority rank** — your position when the budget is handed out,
 total PMPE highest first — and your **bid gap**, your static bid minus
-the auction clearing price. The bid gap is context only: bidding over
-the clearing price does not improve your rank, because the queue is
-ordered on total PMPE, not on bid.
+the auction clearing price. The bid gap is context only at settlement
+— you only ever pay the clearing rate — but your full static bid does
+count toward your total PMPE, so a larger gap pushes you up the queue.
 
 <a id="psr"></a>
 ### Protected Staking Rewards (PSR)
@@ -491,9 +473,12 @@ The validator's position in the auction order, sorted by max APY by default.
 
 ### `Validator` — Identity
 
-Validator name, vote-account address (truncated, click to copy), and a small
-red dot if the validator currently has an active alert (depleted bond, blacklist
-flag, large bid drop, etc.).
+Validator name, vote-account address (truncated, click to copy), plus inline
+**penalty badges** that surface active settlement charges this epoch:
+**Bid-too-low**, **Blacklisted**, **Bond-risk-fee** (each appears only when
+the corresponding penalty fires). A small notification dot may also appear
+if the validator has an active operational alert (depleted bond, blacklist
+flag, etc.).
 
 ### `Max APY` — Maximum APY to stakers
 
@@ -511,9 +496,11 @@ bid and commissions. This is what the auction sorts by.
 A compact summary of the validator's bond:
 
 - **Health pill** — colour-coded status:
+  - **No bond** (red) — no bond posted at all; the validator cannot win
+    any stake until one is created and funded to the minimum.
+  - **Adequate** (muted) — bond covers current stake but not the ideal
+    target; validator is fine but not eligible for more stake.
   - **Healthy** (green) — bond comfortably above ideal coverage.
-  - **OK** (muted) — bond covers current stake but not the ideal target;
-    validator is fine but not eligible for more stake.
   - **Watch** (yellow) — bond can no longer back the validator's current
     stake; some stake will be undelegated unless the bond is topped up.
   - **Critical** (red) — bond is below the penalty threshold. The bond
@@ -528,7 +515,7 @@ A compact summary of the validator's bond:
   which the bond risk fee fires and forced undelegation begins. Bar
   colour matches the health pill.
 
-### `Stake / Next Δ` — Active and projected stake
+### `Stake / Next change` — Active and projected stake
 
 Two numbers stacked:
 
@@ -548,17 +535,19 @@ gap to target.
 ### `Next Step` — Plain-language tip
 
 What's currently the binding constraint on this validator and the single
-action that would help most:
+action that would help most. Strings come verbatim from
+`src/services/tip-engine.ts`. Examples:
 
-- "Top up 12 SOL to avoid the bond risk fee" (bond constraint)
-- "Bond below minimum — 18 SOL required" (bond constraint)
-- "Top up 3 SOL to grow stake" (bond constraint)
-- "Lower commission by X% to clear winning APY" (rank constraint)
-- "Raise stake bid to Y PMPE" (bid constraint)
-- "Raise your max-stake-wanted to qualify for more" (want constraint —
-  the validator's own self-imposed cap is the binding limit; topping
-  up bond or raising bid would not help)
-- "Nothing — you're winning comfortably" (no constraint)
+- "Top up X to avoid the bond risk fee." (bond constraint)
+- "Top up bond to X SOL to win stake." (bond below minimum)
+- "Top up X to grow stake." (soft bond — bond covers stake, not ideal)
+- "Top up X to keep your stake." (watch bond)
+- "Bid too low. Raise it to qualify for stake." (out of set, bond fine)
+- "Raise bid or pay a X penalty." (bid-too-low penalty active)
+- "X SOL arriving next epoch." (in-set, stake growing)
+- "Losing X next epoch." (in-set, stake leaking)
+- "At target stake." (in-set, no change)
+- Cap-binding two-liner: e.g. "Germany at country cap\nLosing X until cap frees."
 
 Every bond tip is one short clause carrying the decisive SOL figure.
 The same string appears on the table pill, the validator-detail header
@@ -578,11 +567,14 @@ _See [Eligibility Criteria — Marinade Docs](https://docs.marinade.finance/mari
 Clicking a row opens the side panel. The calculation tabs
 — Payments, Bidding, Bond, Bid Penalty — **mirror the same math the
 SAM auction runs server-side**: they recompute the SDK's formulas
-locally so you can see each input and intermediate value. Numbers
-match the protocol's settlement decisions to the SOL. Two of the tabs
-answer two different questions: the **Bidding tab** answers "what
-should I bid to get into the auction and win stake?", the **Payments
-tab** answers "how much will I pay this epoch?".
+locally so you can see each input and intermediate value. For settled
+quantities (active stake cost, this-epoch penalties, paid bond risk
+fee), numbers track the protocol's decisions exactly; forward-looking
+rows (target bid to clear next epoch, redelegation estimate) are
+projections and label themselves as such. Two of the tabs answer two
+different questions: the **Bidding tab** answers "what should I bid
+to get into the auction and win stake?", the **Payments tab** answers
+"how much will I pay this epoch?".
 
 ### Overview tab
 
@@ -666,8 +658,8 @@ tab manually.
 
 Answers one question: **what should I bid to get into the auction and
 win stake?** One card, one table. The status banner at the top is the
-verdict — green "Your bid clears the winning bar — you are in the
-auction", red "Raise your static bid to X PMPE to clear the winning bar
+verdict — green "Your bid clears the winning total PMPE — you are in the
+auction", red "Raise your static bid to X PMPE to clear the winning total PMPE
 and get into the auction", or yellow when a concentration cap is the
 binding limit so raising the bid alone will not get you in. Every
 column carries its unit once in the section header — `PMPE` or `SOL` —
@@ -682,30 +674,24 @@ are the supporting context that feeds the target-bid math.
   it can be zero even when target stake is above active stake, because
   the redelegation budget went to higher-priority validators or you are
   cap or bond constrained — the row tooltip says so.
-- **Cost-PMPE composition** — Inflation, MEV, Block rewards (the number
-  on the left of each row is the commission you retain; the number on
-  the right is the PMPE that flows into the bid — `revShare.inflationPmpe`,
-  `revShare.mevPmpe`, `revShare.blockPmpe`), the static bid
-  (`revShare.bidPmpe`), and their **Total**. This is the input to the
-  target-bid math: the bid you need is the winning bar minus your
-  non-bid revenue.
-- **Bid gap** — Static bid vs auction effective bid (the clearing
-  price, `revShare.auctionEffectiveBidPmpe`) and the resulting gap =
-  `max(0, staticBid − effectiveBid)`. A non-zero gap means you bid
-  above clearing and pay an activating-stake fee.
-- **Get into the auction** — the static bid that would lift your total
-  to the winning bar, plus the bond needed to back the resulting
-  stake. The bond rows come straight from the Bond tab's keep-stake
-  math, so the numbers reconcile. Closed-form estimate with a
-  last-price caveat in the section tooltip — see
-  [Getting into the auction](#in-auction) for the formula and why you
-  should confirm in Simulate.
-- **Get stake next epoch** — the bid that would put you at or above the
-  re-delegation priority bar, since being in the set is not the same as
-  receiving stake. Heuristic — the queue reorders as bids change — so
-  the figure is an estimate. See
-  [Getting stake next epoch](#next-epoch-stake) for the formula and the
-  verify-in-Simulate caveat.
+- **Your bid today** — Inflation, MEV, Block rewards (the number on the
+  left of each row is the commission you retain; the number on the right
+  is the PMPE that flows into the bid — `revShare.inflationPmpe`,
+  `revShare.mevPmpe`, `revShare.blockPmpe`), then **Non-bid revenue**
+  (their sum), the **Static bid** (`revShare.bidPmpe`), and a **Total**.
+  This is the build-up the two target sections below subtract from.
+- **Get into the auction** — receipt-slip math: `Winning total PMPE −
+  Non-bid revenue = Target static bid`, followed by `Your static bid`
+  and the **Bid increase needed**, or a green "already clears"
+  confirmation. Closed-form estimate with a last-price caveat in the
+  section tooltip — see [Getting into the auction](#in-auction).
+- **Get stake delegated next epoch** — same receipt-slip pattern with
+  the **Priority total PMPE** in place of the winning total: clearing
+  this puts you at or above the threshold where the redelegation budget
+  reaches you in full. Also lists **Your priority rank** and **Your bid
+  gap** (`max(0, staticBid − effectiveBid)`). Heuristic — the queue
+  reorders as bids change — so the figure is an estimate. See
+  [Getting stake next epoch](#next-epoch-stake).
 
 The PMPE and CPMPE units are explained under
 [PMPE / CPMPE](#cpmpe). An "**Overrides CPMPE**" notice appears above

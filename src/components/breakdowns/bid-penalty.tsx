@@ -106,12 +106,12 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
 
           <SectionHeader
             title="Threshold"
-            help="The level your bond has to clear this epoch. Built from the auction's winning total and your current participating bid — whichever is lower sets the level."
+            help="The level your bond has to clear this epoch. Built from the auction's winning total PMPE and your current participating bid — whichever is lower sets the level."
             unit="PMPE"
           />
           <CalcRow
             label="Winning total"
-            help="The lowest total PMPE that still made the winning set this epoch — same metric as the winning total in the Bidding tab. One of the two inputs to the threshold."
+            help="The lowest total PMPE that still made the winning set this epoch — same metric as the winning total PMPE in the Bidding tab. One of the two inputs to the threshold."
             col2={pmpe(metrics.winningTotalPmpe)}
           />
           <CalcRow
@@ -136,7 +136,7 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
           />
           <CalcRow
             label="Shortfall"
-            help="How far the bond obligation lands below the adjusted limit. Zero means no penalty. Positive means a penalty proportional to this gap."
+            help="How far the bond obligation lands below the adjusted limit. Positive only triggers a penalty if you also dropped your bid this epoch."
             col2={pmpe(metrics.shortfall)}
             bold
             separator
@@ -151,7 +151,7 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
 
           <SectionHeader
             title="Penalty coefficient"
-            help="The multiplier the protocol applies to the shortfall when sizing the per-PMPE penalty. Fixed by protocol config — you can't change it."
+            help="Computed from how far the bond obligation sits below the adjusted limit. Non-zero only when your bid also dropped this epoch."
           />
           <CalcRow
             label="Penalty coefficient"

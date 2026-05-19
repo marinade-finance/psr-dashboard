@@ -246,7 +246,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
           <div
             className={cn(
               'max-w-[1920px] mx-auto',
-              inSimulation ? 'px-4 pt-3 pb-0' : 'px-4 pt-3 pb-0',
+              inSimulation ? 'px-4 pt-3 pb-3' : 'px-4 pt-3 pb-0',
             )}
           >
             <Banner

@@ -34,8 +34,10 @@ Two extras appear on the Validator Bonds page:
   stake *could* be protected if every existing bond were fully utilized. This is
   always ≥ the currently-protected percentage; the gap shows headroom.
 - **Table column: "Max protectable [SOL]"** — per-validator maximum bond-only
-  protection capacity. Computed from bond effective amount and the validator's
-  configured `cpmpe` × the protection horizon.
+  protection capacity. Computed as `bondEffectiveAmount ÷ ((inflationPmpe +
+  mevPmpe + effParticipatingBidPmpe) ÷ 1000)` — bond divided by the
+  participating-total PMPE rate per 1000 SOL of stake, i.e. how much stake one
+  epoch's commitments would just cover. No horizon multiplier.
 
 These are useful for asking "how much more stake could this validator absorb
 before their bond becomes the binding constraint?".

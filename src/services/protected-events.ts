@@ -117,10 +117,10 @@ export const selectProtectedStakeReason = (protectedEvent: ProtectedEvent) => {
     }
   }
   if (protectedEvent.reason === 'Bidding') return 'Bidding'
-  if (protectedEvent.reason === 'BidTooLowPenalty') return 'BidTooLow'
-  if (protectedEvent.reason === 'BlacklistPenalty') return 'Blacklist'
-  if (protectedEvent.reason === 'BondRiskFee') return 'BondRiskFee'
-  if (protectedEvent.reason === 'PriorityFee') return 'PriorityFee'
+  if (protectedEvent.reason === 'BidTooLowPenalty') return 'Bid too low'
+  if (protectedEvent.reason === 'BlacklistPenalty') return 'Blacklisted'
+  if (protectedEvent.reason === 'BondRiskFee') return 'Bond risk fee'
+  if (protectedEvent.reason === 'PriorityFee') return 'Priority fee'
   console.log('unsupported event:', protectedEvent)
   return 'Unsupported'
 }
