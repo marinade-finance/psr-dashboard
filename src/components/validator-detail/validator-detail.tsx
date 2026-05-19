@@ -193,12 +193,20 @@ function tabAttention(args: {
   }
   if (bidPenaltySol > 0) attention.penalty = 'critical'
   if (notifTone) attention.notifications = notifTone
+  // 'bid' = in-set bid-too-low penalty → the math + remedy lives on the
+  // Bid Penalty tab (attention.penalty is already critical there). 'rank'
+  // = out-of-set bid-too-low → raise the static bid on the Bidding tab.
+  // Don't point 'bid' at Bidding: that panel reports current auction
+  // clearance ('Already clears'), so a purple dot there contradicts a
+  // red penalty dot two tabs over.
   const tipTab: Tab | null =
     tipConstraint === 'bond'
       ? 'bond'
       : tipConstraint === 'bid'
-        ? 'bidding'
-        : null
+        ? 'penalty'
+        : tipConstraint === 'rank'
+          ? 'bidding'
+          : null
   if (tipTab && !attention[tipTab]) attention[tipTab] = 'info'
   return attention
 }
