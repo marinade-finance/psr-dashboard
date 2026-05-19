@@ -5,7 +5,7 @@ import { computeBidding } from 'src/services/bidding'
 import { computeInAuctionTarget } from 'src/services/in-auction-target'
 import { computeNextEpochStake } from 'src/services/next-epoch-stake'
 
-import { CalcCard, SIM_JUMP_BUTTON_CLASS, type CardStatus } from './card'
+import { CalcCard, type CardStatus } from './card'
 import { CalcRow, OkRow, SectionHeader } from './row'
 
 import type { AuctionResult } from '@marinade.finance/ds-sam-sdk'
@@ -93,7 +93,7 @@ export const BiddingBreakdown: React.FC<Props> = ({
             : 'A concentration cap is at the limit'
 
   const clears = inAuction.bidIncrease <= 0 && !inAuction.capConstrained
-  const status: CardStatus = inAuction.capConstrained
+  const baseStatus: Omit<CardStatus, 'action'> = inAuction.capConstrained
     ? {
         label: `${capLabel} — raising your bid alone will not get you in.`,
         tone: 'yellow',
@@ -107,12 +107,12 @@ export const BiddingBreakdown: React.FC<Props> = ({
           label: `Bid ${pmpe(inAuction.currentBidPmpe)} → ${pmpe(inAuction.targetBidPmpe)} PMPE to clear the winning total PMPE.`,
           tone: 'red',
         }
-
-  const tip = onGoToSim ? (
-    <button className={SIM_JUMP_BUTTON_CLASS} onClick={onGoToSim}>
-      Simulate this bid to confirm the exact figure →
-    </button>
-  ) : null
+  const status: CardStatus = onGoToSim
+    ? {
+        ...baseStatus,
+        action: { label: 'Simulate →', tone: 'yellow', onClick: onGoToSim },
+      }
+    : baseStatus
 
   return (
     <CalcCard
@@ -120,7 +120,6 @@ export const BiddingBreakdown: React.FC<Props> = ({
       guideTo={guideTo}
       isSimulated={isSimulated}
       status={status}
-      tip={tip}
     >
       {m.overrideMsg && (
         <div className="rounded-lg px-3 py-2 text-xs mb-4 bg-secondary text-secondary-foreground">

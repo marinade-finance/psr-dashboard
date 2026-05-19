@@ -52,8 +52,17 @@ export const computeInAuctionTarget = (
   const blockPmpe = v.revShare.blockPmpe ?? 0
   const nonBidPmpe = selectNonBidPmpe(v)
   const currentBidPmpe = v.revShare.bidPmpe
-  const targetBidPmpe = Math.max(0, winningTotalPmpe - nonBidPmpe)
-  const bidIncrease = Math.max(0, targetBidPmpe - currentBidPmpe)
+  // Auction order is `revShare.totalPmpe` desc. To clear the winning total,
+  // the validator's total must reach it — no reconstructing the total from
+  // static bid + non-bid here, since `revShare.totalPmpe` is what the
+  // auction actually ranks against (and the static-bid sum can diverge,
+  // e.g. when auctionEffectiveBidPmpe clips below the static bid).
+  const currentTotalPmpe = v.revShare.totalPmpe
+  const totalGap = Math.max(0, winningTotalPmpe - currentTotalPmpe)
+  // Display as "what static bid would close the gap, holding non-bid
+  // revenue constant". When already clearing, target = current bid.
+  const targetBidPmpe = currentBidPmpe + totalGap
+  const bidIncrease = totalGap
   return {
     inSet: selectInSet(v),
     winningTotalPmpe,
