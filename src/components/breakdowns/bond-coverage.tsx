@@ -121,18 +121,19 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           />
           <CalcRow
             label="Current exposed stake"
+            help="The slice of your active Marinade stake the bond must back — active stake minus the unprotected portion."
             secondary={stake(coverage.currentExposedStakeSol)}
           />
           <CalcRow
-            label="Held for bid payments"
+            label="Bond held for bid payments"
             value={pay(coverage.heldForBidKeep)}
           />
           <CalcRow
-            label="Held for reward payouts"
+            label="Bond held for reward payouts"
             value={pay(coverage.rewardsGuaranteeKeep)}
           />
           <CalcRow
-            label="Minimum required"
+            label="Minimum bond required"
             value={pay(coverage.floorBaseKeep)}
             bold
           />
@@ -165,18 +166,19 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           />
           <CalcRow
             label="Current exposed stake"
+            help="The slice of your active Marinade stake the bond must back — active stake minus the unprotected portion."
             secondary={stake(coverage.currentExposedStakeSol)}
           />
           <CalcRow
-            label="Held for bid payments"
+            label="Bond held for bid payments"
             value={pay(coverage.heldForBidIdeal)}
           />
           <CalcRow
-            label="Held for reward payouts"
+            label="Bond held for reward payouts"
             value={pay(coverage.rewardsGuaranteeIdeal)}
           />
           <CalcRow
-            label="Ideal required"
+            label="Ideal bond required"
             value={pay(coverage.requiredIdealKeep)}
             bold
           />
@@ -224,7 +226,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
               />
               <CalcRow
                 label="Penalty trigger threshold"
-                help="The bond risk fee starts when your claimable bond drops below this. The threshold is the minimum reserve plus the minimum bond for your projected stake."
+                help="The least claimable bond you can hold before the fee fires. Drop under it and you pay the bond risk fee and lose stake. It is a fixed reserve plus the minimum bond your projected stake needs."
                 value={pay(coverage.floorBaseProjected)}
                 bold
               />
