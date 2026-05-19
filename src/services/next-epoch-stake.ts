@@ -20,10 +20,6 @@
 // user see the real inputs without re-deriving the target off them.
 import {
   selectEffectiveBid,
-  selectExpectedStakeChange,
-  selectExpectedStakeChangeBreakdown,
-  selectInSet,
-  selectRedelegationBudget,
   selectRedelegationPriorityFrontierPmpe,
   selectRedelegationPriorityRank,
 } from 'src/services/sam'
@@ -32,16 +28,9 @@ import type { AuctionResult } from '@marinade.finance/ds-sam-sdk'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
 
 export type NextEpochStake = {
-  inSet: boolean
-  expectedDeltaSol: number
-  redelegationInflowSol: number
-  redelegationBudgetSol: number
   // 0 when the budget reached everyone — no binding frontier this run.
   priorityFrontierPmpe: number
-  currentTotalPmpe: number
-  // totalPmpe needed to sit at/above the priority frontier.
-  targetTotalPmpePriority: number
-  // static bid PMPE that would produce that total (non-bid components held).
+  // static bid PMPE that would close the gap to the frontier.
   targetBidPmpePriority: number
   bidIncreaseForPriority: number
   // Context only — inputs the greedy order is read from, not target maths.
@@ -56,33 +45,21 @@ export const computeNextEpochStake = (
   v: AugmentedAuctionValidator,
   auctionResult: AuctionResult,
 ): NextEpochStake => {
-  const inSet = selectInSet(v)
-  const currentTotalPmpe = v.revShare.totalPmpe
   const priorityFrontierPmpe =
     selectRedelegationPriorityFrontierPmpe(auctionResult)
-  // Comparison against the priority frontier uses currentTotalPmpe (the
-  // SDK's authoritative ranking value) — mirrors in-auction-target.ts.
-  // Reconstructing total = nonBid + staticBid diverges when the SDK clips
-  // auctionEffectiveBidPmpe below the static bid. No binding frontier → 0.
+  // Comparison uses revShare.totalPmpe (the SDK's authoritative ranking
+  // value) — mirrors in-auction-target.ts. Reconstructing total from
+  // non-bid + static bid diverges when the SDK clips auctionEffectiveBidPmpe
+  // below the static bid. No binding frontier → 0.
   const totalGap =
     priorityFrontierPmpe > 0
-      ? Math.max(0, priorityFrontierPmpe - currentTotalPmpe)
+      ? Math.max(0, priorityFrontierPmpe - v.revShare.totalPmpe)
       : 0
-  const targetTotalPmpePriority = priorityFrontierPmpe
-  const targetBidPmpePriority =
-    priorityFrontierPmpe > 0 ? v.revShare.bidPmpe + totalGap : 0
-  const bidIncreaseForPriority = totalGap
   return {
-    inSet,
-    expectedDeltaSol: selectExpectedStakeChange(v),
-    redelegationInflowSol:
-      selectExpectedStakeChangeBreakdown(v).redelegationInflow,
-    redelegationBudgetSol: selectRedelegationBudget(auctionResult),
     priorityFrontierPmpe,
-    currentTotalPmpe,
-    targetTotalPmpePriority,
-    targetBidPmpePriority,
-    bidIncreaseForPriority,
+    targetBidPmpePriority:
+      priorityFrontierPmpe > 0 ? v.revShare.bidPmpe + totalGap : 0,
+    bidIncreaseForPriority: totalGap,
     bidGapPmpe: Math.max(0, v.revShare.bidPmpe - selectEffectiveBid(v)),
     priorityRank: selectRedelegationPriorityRank(v, auctionResult),
   }

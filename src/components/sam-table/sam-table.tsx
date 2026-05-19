@@ -46,6 +46,7 @@ import {
   selectBondSize,
   selectExpectedStakeChange,
   selectMaxAPY,
+  selectRedelegationBudget,
   selectSamDistributedStake,
   selectVoteAccount,
   selectWinningAPY,
@@ -326,7 +327,7 @@ const RankCell: React.FC<{
 }> = ({
   rank,
   cutoffRank,
-  inSet,
+  inSet: _inSet,
   isGhost,
   isSimulated,
   posColor,
@@ -338,7 +339,8 @@ const RankCell: React.FC<{
   const rankLabel = `#${rank}`
   // Sub: cutoff-relative position. No # prefix here — the # lives only on
   // the primary rank. NBSP binds the count to the word so it never wraps.
-  const cutoffWord = cutoffRank === 0 ? 'at cutoff' : inSet ? 'above' : 'below'
+  const cutoffWord =
+    cutoffRank === 0 ? 'at cutoff' : cutoffRank > 0 ? 'above' : 'below'
   const rankSubLabel =
     cutoffRank === 0 ? 'at cutoff' : `${Math.abs(cutoffRank)} ${cutoffWord}`
   if (isGhost)
@@ -609,13 +611,13 @@ export const SamTable: React.FC<Props> = ({
     }
   }, [allDisplayValidators, epochsPerYear, winningAPY])
   const aboveCount = aboveCutoff.filter(row => !row.isGhost).length
+  // Matches psr.marinade.finance: TVL − Σ active = liquid reserve free to
+  // redelegate next epoch (no Solana cooldown wait). Not the SDK's gross
+  // projected inflow — that can exceed the reserve via cooldown reactivation
+  // and would over-state what's actually deployable next epoch.
   const totalRedelegation = useMemo(
-    () =>
-      validatorsWithBond.reduce((sum, validator) => {
-        const change = selectExpectedStakeChange(validator)
-        return change > 0 ? sum + change : sum
-      }, 0),
-    [validatorsWithBond],
+    () => selectRedelegationBudget(auctionResult),
+    [auctionResult],
   )
 
   // Stats for the stats bar
