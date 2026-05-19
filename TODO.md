@@ -1,5 +1,30 @@
 # TODO
 
+## Queued — blocked behind the running HelpTip visual agent
+
+(It owns `row.tsx` + `sam-table.tsx` + the browser. Do these the moment it lands; verify in-browser; one shared change then per-table, never parallel subs on `row.tsx`.)
+
+### Breakdown tables — uniform 3-col model
+
+Every breakdown table (`bond-coverage`, `bidding`, `payments`, `bid-penalty`)
+must use ONE shared component (merge `CalcRow`+`RevRow`): `Label | Col1 | Col2`.
+- A column NEVER mixes value kinds (today they mix epochs/stake-SOL/bond-SOL/PMPE/rank/% in one column).
+- PMPE / epochs / other named units → declared as the column unit in `SectionHeader`; value carries no suffix.
+- SOL → inline `SOL` suffix on the value, NEVER a header.
+- % → inline annotation beside its value, NEVER a header.
+- So `SectionHeader` only ever declares non-SOL, non-% units.
+- Captions/labels: leave as-is (user reviews next). Do NOT invent values — map 1:1 to existing fields.
+- All tables share the SAME component + visual elements (uniform).
+
+### Bond pill gauge — critical band must be a FIXED 20%
+
+Regression: `marker`/`criticalBand` were derived as `minBondEpochs/scaleMax`;
+with `scaleMax = 4×idealBondEpochs` and the realistic `idealBondEpochs=13`,
+that is `1/52 ≈ 2%` — the danger zone collapsed to a sliver again.
+Fix: `marker = criticalBand = 0.2` (FIXED, decoupled from scale — it's a
+visual anchor, not a derived value). `scaleMax = 4×idealBondEpochs` and the
+runway fill stay as the independent axis. (`sam-table.tsx` ~bond Gauge call.)
+
 ## Features
 
 ### 1. Move calculations to ds-sam-sdk
