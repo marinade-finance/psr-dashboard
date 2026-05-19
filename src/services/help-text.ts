@@ -25,7 +25,7 @@ export const HELP_TEXT = {
   totalAuctionStake:
     "Total SOL Marinade aims to allocate across this epoch's winners — the target distribution Marinade's stake bot will work toward over the next few epochs, limited by Solana's cooldown and reactivation rules.",
   projectedApy:
-    "Projected annualized SAM yield using each validator's total PMPE — inflation, MEV and clearing bid combined — weighted by Marinade's current active stake and divided by total SAM TVL. Uses today's deployed stake mix, not the next-epoch target allocation or the marginal Winning APY.",
+    "Projected annualized SAM yield using each validator's total PMPE — inflation, MEV and clearing bid combined — weighted by Marinade's current active stake and divided by total SAM TVL. Based on how stake is spread across validators today, not next epoch's target split or the single marginal Winning APY.",
   winningValidators:
     'How many validators won at least some stake this epoch. The rest bid too low to make the cut.',
   bondCoverage:
