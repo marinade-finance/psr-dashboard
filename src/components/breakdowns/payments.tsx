@@ -100,16 +100,11 @@ export const PaymentsBreakdown: React.FC<Props> = ({
       )}
       <table className="w-full max-w-[34rem]">
         <tbody>
-          <SectionHeader title="Activating stake rate" unit="PMPE" />
-          <CalcRow
-            label="Activating stake PMPE"
-            col2={pmpe(m.activatingStakePmpe)}
-          />
-
           <SectionHeader title="Bid cost" />
           <CalcRow label="Active stake cost" col2={cost(m.cost)} />
           <CalcRow
             label="Activating stake cost"
+            col1={pmpe(m.activatingStakePmpe)}
             col2={cost(m.activatingCost)}
           />
           <CalcRow label="Bid cost" col2={cost(m.total)} bold separator />

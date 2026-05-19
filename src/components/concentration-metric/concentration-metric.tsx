@@ -86,7 +86,7 @@ export const ConcentrationMetric: React.FC<Props> = ({
 
   return (
     <Card
-      className="relative px-3 py-3 sm:px-5 sm:py-4 flex-1 min-w-[140px] sm:min-w-[160px] overflow-visible"
+      className="relative px-3 py-3 sm:px-5 sm:py-4 flex-1 min-w-[140px] sm:min-w-[160px] overflow-visible flex flex-col"
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
     >
@@ -100,7 +100,7 @@ export const ConcentrationMetric: React.FC<Props> = ({
         )}
       </div>
       {top ? (
-        <>
+        <div className="mt-auto min-w-0">
           <div className={nameClass} title={top.key}>
             {top.key}
             {anyCapped && (
@@ -113,9 +113,9 @@ export const ConcentrationMetric: React.FC<Props> = ({
               {' '}/{pct(capPct)}
             </span>
           </div>
-        </>
+        </div>
       ) : (
-        <div className="flex items-baseline gap-1 min-w-0 overflow-hidden">
+        <div className="mt-auto flex items-baseline gap-1 min-w-0 overflow-hidden">
           <span className="text-xl sm:text-2xl font-semibold text-muted-foreground font-mono">
             —
           </span>

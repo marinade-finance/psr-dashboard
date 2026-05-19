@@ -33,6 +33,12 @@ const WINNING_PMPE = 6.0
 // Real-sounding ASO names spread across the fixture so the ASO concentration
 // breakdown shows a realistic distribution. HETZNER is deliberately over the
 // 30% network cap (carried by v12 + v02); the rest sit comfortably under.
+const C_US = 'United States'
+const C_DE = 'Germany'
+const C_FR = 'France'
+const C_NL = 'Netherlands'
+const C_GB = 'United Kingdom'
+
 const ASO_HETZNER = 'Hetzner Online GmbH'
 const ASO_AWS = 'Amazon Web Services'
 const ASO_OVH = 'OVH SAS'
@@ -201,7 +207,7 @@ const v01: AuctionValidator = {
     marinadeActivatedStakeSol: 200_000,
     bondBalanceSol: 260,
     claimableBondBalanceSol: 260,
-    country: 'DE',
+    country: C_DE,
     aso: ASO_OVH,
   }),
   revShare: makeRevShare(2.5),
@@ -240,7 +246,7 @@ const v02: AuctionValidator = {
     bondBalanceSol: 420,
     claimableBondBalanceSol: 420,
     bidCpmpe: 2.3,
-    country: 'FR',
+    country: C_FR,
     aso: ASO_HETZNER,
   }),
   revShare: makeRevShare(2.3),
@@ -293,7 +299,7 @@ const v03: AuctionValidator = {
     bondBalanceSol: 200,
     claimableBondBalanceSol: 200,
     bidCpmpe: 2.4,
-    country: 'FI',
+    country: 'Finland',
     aso: ASO_GCP,
   }),
   revShare: makeRevShare(2.4),
@@ -338,7 +344,7 @@ const v04: AuctionValidator = {
     bondBalanceSol: 30,
     claimableBondBalanceSol: 12,
     bidCpmpe: 2.6,
-    country: 'CA',
+    country: 'Canada',
     aso: ASO_AWS,
   }),
   revShare: makeRevShare(2.6),
@@ -377,7 +383,7 @@ const v05: AuctionValidator = {
     bondBalanceSol: 40,
     claimableBondBalanceSol: 30, // ≪ projected floor (217.5k×1.3/1000 = 283)
     bidCpmpe: 2.5,
-    country: 'US',
+    country: C_US,
     aso: ASO_LATITUDE,
   }),
   revShare: makeRevShare(2.5),
@@ -417,7 +423,7 @@ const v06: AuctionValidator = {
     marinadeActivatedStakeSol: 175_000,
     bondBalanceSol: 200,
     bidCpmpe: 1.5,
-    country: 'JP',
+    country: 'Japan',
     aso: ASO_EQUINIX,
   }),
   claimableBondBalanceSol: 200,
@@ -460,7 +466,7 @@ const v07: AuctionValidator = {
     bondBalanceSol: 360,
     claimableBondBalanceSol: 360,
     bidCpmpe: 2.8,
-    country: 'US',
+    country: C_US,
     aso: ASO_AWS,
   }),
   revShare: makeRevShare(2.8),
@@ -501,7 +507,7 @@ const v08: AuctionValidator = {
     bondBalanceSol: 80,
     claimableBondBalanceSol: 80,
     bidCpmpe: 0.8, // totalPmpe 5.8 < winning 6.0 → below the line
-    country: 'US',
+    country: C_US,
     aso: ASO_AWS,
   }),
   revShare: makeRevShare(0.8),
@@ -538,7 +544,7 @@ const v09: AuctionValidator = {
     claimableBondBalanceSol: 160,
     mevCommissionDec: null,
     bidCpmpe: 2.1,
-    country: 'US',
+    country: C_US,
     aso: ASO_VULTR,
   }),
   revShare: { ...makeRevShare(2.1, 0, 4.1, 0), mevPmpe: 0, totalPmpe: 6.2 },
@@ -591,7 +597,7 @@ const v10: AuctionValidator = {
     claimableBondBalanceSol: 130,
     inflationCommissionDec: 0.1,
     bidCpmpe: 2.2,
-    country: 'SG',
+    country: 'Singapore',
     aso: ASO_CONTABO,
   }),
   revShare: { ...makeRevShare(2.2, 0, 3.5), totalPmpe: 3.5 + 0.9 + 2.2 },
@@ -632,7 +638,7 @@ const v11: AuctionValidator = {
     bondBalanceSol: 50,
     claimableBondBalanceSol: 50,
     bidCpmpe: 0,
-    country: 'DE',
+    country: C_DE,
     aso: ASO_HETZNER,
   }),
   revShare: { ...makeRevShare(0), bidPmpe: 0, auctionEffectiveBidPmpe: 0 },
@@ -669,7 +675,7 @@ const v12: AuctionValidator = {
     claimableBondBalanceSol: 1_300,
     bidCpmpe: 3.2,
     totalActivatedStakeSol: 4_000_000,
-    country: 'DE',
+    country: C_DE,
     aso: ASO_HETZNER,
   }),
   revShare: makeRevShare(3.2, 0, 4.5, 1.1),
@@ -687,7 +693,7 @@ const v12: AuctionValidator = {
   // concentration tile renders "(capped)".
   lastCapConstraint: {
     constraintType: AuctionConstraintType.COUNTRY,
-    constraintName: 'DE',
+    constraintName: C_DE,
     totalStakeSol: 1_475_000,
     totalLeftToCapSol: 0,
     marinadeStakeSol: 1_475_000,
@@ -727,7 +733,7 @@ const v13: AuctionValidator = {
     bondBalanceSol: 0,
     claimableBondBalanceSol: 0,
     bidCpmpe: 2.4,
-    country: 'US',
+    country: C_US,
     aso: ASO_AWS,
   }),
   revShare: makeRevShare(2.4),
@@ -860,7 +866,7 @@ const s13 = stateValidator('FiXtUREvbHEALTHYgaining1111111111111111111aa', {
   marinadeSamTargetSol: 70_000,
   bondGoodForNEpochs: 60,
   bidCpmpe: 3.4,
-  country: 'FI',
+  country: 'Finland',
   aso: ASO_GCP,
 })
 
@@ -875,7 +881,7 @@ const s14 = stateValidator('FiXtUREvbHEALTHYlosing22222222222222222222bb', {
   marinadeSamTargetSol: 10_000,
   bondGoodForNEpochs: 55,
   bidCpmpe: 3.3,
-  country: 'GB',
+  country: C_GB,
   aso: ASO_CHERRY,
 })
 
@@ -889,7 +895,7 @@ const s15 = stateValidator('FiXtUREvbHEALTHYattarget3333333333333333cc', {
   marinadeSamTargetSol: STATE_ACTIVE,
   bondGoodForNEpochs: 50,
   bidCpmpe: 3.2,
-  country: 'AU',
+  country: 'Australia',
   aso: ASO_CONTABO,
 })
 
@@ -905,7 +911,7 @@ const s16 = stateValidator('FiXtUREvbSOFTlosing44444444444444444444444dd', {
   marinadeSamTargetSol: 15_000,
   bondGoodForNEpochs: 28,
   bidCpmpe: 3.0,
-  country: 'JP',
+  country: 'Japan',
   aso: ASO_EQUINIX,
 })
 
@@ -920,7 +926,7 @@ const s17 = stateValidator('FiXtUREvbSOFTgaining55555555555555555555555ee', {
   marinadeSamTargetSol: 150_000,
   bondGoodForNEpochs: 26,
   bidCpmpe: 3.1,
-  country: 'FR',
+  country: C_FR,
   aso: ASO_OVH,
 })
 
@@ -938,7 +944,7 @@ const s18 = stateValidator('FiXtUREvbWATCHlosing66666666666666666666666ff', {
   bondGoodForNEpochs: 12,
   paidUndelegationSol: 32_500,
   bidCpmpe: 2.7,
-  country: 'NL',
+  country: C_NL,
   aso: ASO_LATITUDE,
 })
 
@@ -955,7 +961,7 @@ const s19 = stateValidator('FiXtUREvbWATCHgaining77777777777777777777gg', {
   bondGoodForNEpochs: 11,
   paidUndelegationSol: 32_500,
   bidCpmpe: 3.5,
-  country: 'NL',
+  country: C_NL,
   aso: ASO_TERASWITCH,
 })
 
@@ -970,7 +976,7 @@ const s20 = stateValidator('FiXtUREvbCRITICALfee8888888888888888888888hh', {
   marinadeSamTargetSol: 45_000,
   bondGoodForNEpochs: 4,
   bidCpmpe: 2.9,
-  country: 'SG',
+  country: 'Singapore',
   aso: ASO_VULTR,
 })
 
@@ -988,7 +994,7 @@ const s21 = stateValidator('FiXtUREvbBELOWMINinset9999999999999999999ii', {
   marinadeSamTargetSol: 200_000,
   bondGoodForNEpochs: 2,
   bidCpmpe: 2.6,
-  country: 'GB',
+  country: C_GB,
   aso: ASO_CHERRY,
 })
 
@@ -1004,7 +1010,7 @@ const s22 = stateValidator('FiXtUREvbBELOWMINoutaaaaaaaaaaaaaaaaaaaaajj', {
   marinadeSamTargetSol: 0,
   bondGoodForNEpochs: 3,
   bidCpmpe: 0.6,
-  country: 'FR',
+  country: C_FR,
   aso: ASO_OVH,
 })
 
@@ -1019,7 +1025,7 @@ const s23 = stateValidator('FiXtUREvbOUTbidlowbbbbbbbbbbbbbbbbbbbbbbbbkk', {
   marinadeSamTargetSol: 0,
   bondGoodForNEpochs: 45,
   bidCpmpe: 0.5,
-  country: 'GB',
+  country: C_GB,
   aso: ASO_CHERRY,
 })
 
@@ -1034,7 +1040,7 @@ const s24 = stateValidator('FiXtUREvbOUTsoftgrowccccccccccccccccccccccll', {
   marinadeSamTargetSol: 0,
   bondGoodForNEpochs: 22,
   bidCpmpe: 0.7,
-  country: 'NL',
+  country: C_NL,
   aso: ASO_TERASWITCH,
 })
 
