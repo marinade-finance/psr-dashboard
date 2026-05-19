@@ -31,7 +31,7 @@ First run may reformat — retry commit once if it fails.
 
 ## Live root docs
 
-Three repo-root files are live documentation. **Each must be updated in
+Four repo-root files are live documentation. **Each must be updated in
 the same commit as the change that affects it.** They are the contract
 between code and reviewers; if they drift, neither reviewer nor onboarding
 maintainer can trust them.
@@ -41,6 +41,11 @@ maintainer can trust them.
   on the validator detail panel, changing a default sort / tier threshold
   / status label / token, moving a route, replacing a badge style,
   adding a card.
+- **`visuals.md`** — the visual-language alphabet: surfaces, status
+  families, bond tiers, charts, simulation tokens, typography, component
+  primitives, inline-style escape hatch. Update when: adding / removing
+  / renaming a token, status family, or shared primitive; changing a
+  tier threshold; changing a typography or shadow scale.
 - **`ARCHITECTURE.md`** — top-level layout, routes, components, services,
   state and data flow, build/test, conventions. Update when: adding /
   removing a top-level dir, adding a service module or page route,
@@ -158,82 +163,16 @@ maps passed to `dsSam.runFinalOnly(overrides)`.
 
 ## Visual Language
 
-All colour and layout tokens live in `src/index.css` and are exposed to
-Tailwind via the `@theme` block. **Use the semantic class — never inline
-`var(...)`, never raw hex/rgb/hsl, never arbitrary `text-[var(--…)]`.**
-Adding a new colour means: define the CSS var in `:root`, override in
-`.dark` only if the dark value actually differs, then expose it as
-`--color-…` inside `@theme`. After that, Tailwind generates `bg-…`,
-`text-…`, `border-…` automatically. Don't duplicate byte-identical vars
-across `:root` and `.dark` — `.dark` inherits from `:root`.
+Visual tokens, status families, typography, and component primitives are
+documented in `visuals.md` (the canonical alphabet —
+surfaces, status & intent, bond tiers, charts, simulation tokens, inline
+escape hatches, components). Defer to that file. The screen-level
+inventory (pages, panels, columns, tabs, badges) lives in `SCREENS.md`.
 
-### Surfaces
-
-| Class                    | Use                                                  |
-|--------------------------|------------------------------------------------------|
-| `bg-background`          | App background                                       |
-| `bg-background-page`     | Outer page wrapper (slightly tinted)                 |
-| `bg-card`                | Card / panel surface                                 |
-| `bg-muted`               | Muted block (callouts, empty states)                 |
-| `bg-secondary` / `accent`| Hover & subtle surfaces                              |
-| `text-foreground`        | Primary text                                         |
-| `text-muted-foreground`  | Secondary / meta text                                |
-| `border-border`          | Standard divider                                     |
-| `border-border-grid`     | Internal table grid lines                            |
-
-### Status & intent
-
-Use **one** of these three families consistently. Don't mix `warning` and
-`status-yellow` in the same view — they're different shades.
-
-| Family       | Solid                | Tinted background          | Meaning                          |
-|--------------|----------------------|----------------------------|----------------------------------|
-| Primary      | `text-primary`       | `bg-primary-light(-10)`    | Brand / good / healthy           |
-| Destructive  | `text-destructive`   | `bg-destructive-light`     | Critical / error                 |
-| Warning      | `text-warning`       | `bg-warning-light`         | Watch / caution (orange-yellow)  |
-| Info         | `text-info`          | `bg-info-light`            | Neutral hint (indigo)            |
-| Status green | `text-status-green`  | `bg-status-green-light`    | Indicator dot / accent (true green) |
-| Status yellow| `text-status-yellow` | `bg-status-yellow-light`   | Indicator dot / "Simulated" pill |
-
-### Bond coverage tiers
-
-`bg-bond-{none,low,mid,high,full}` — used by the bonds heatmap tiles only.
-
-### Charts
-
-`bg-chart-1 … bg-chart-5` — fixed sequence for stacked bars / pie segments.
-
-### Inline style escape hatch
-
-Where colour is chosen at runtime from JS state and a Tailwind class
-won't reach, import a `CSS_*` constant from `src/lib/utils.ts`
-(`CSS_PRIMARY`, `CSS_DESTRUCTIVE`, `CSS_WARNING`, …). These resolve to
-`var(--…)` strings — they never carry a hex fallback.
-
-### Typography scale
-
-- `text-[10px]` — secondary info you don't need to read at a glance
-- `text-xs` (12px) — meta labels, table cells
-- `text-[13px]` — emphasised secondary
-- `text-sm` (14px) — primary body / row text
-- `text-base` and up — headings
-Avoid `text-[11px]` and other off-scale arbitrary sizes for primary or
-interactive content.
-
-### Components
-
-- `src/components/ui/*` — shadcn primitives (`Button`, `Card`, `Switch`,
-  `Sheet`, `Input`, `Label`, `Tooltip`, `Select`, `Badge`, `Table`,
-  `EpochRangePicker`). Customised primitives (e.g. `Switch` with the
-  Marinade yellow checked state) live here as standalone files so they're
-  testable in isolation. All primitives are plain `function` exports —
-  no `React.forwardRef` (refs aren't needed for the way we compose them).
-- `src/components/breakdowns/shared.tsx` — `CalcCard`, `CalcRow`, `OkRow`,
-  `SectionHeader`. The summary/total row of a breakdown gets `separator`
-  + `bold` + `large` to render as the section conclusion.
-- Inline `<button>` styled `text-xs text-primary hover:underline` is the
-  "see more →" link pattern — keep raw, don't reach for shadcn `Button`
-  for these.
-
-No CSS Modules. `src/index.css` only holds tokens, the global transition
-rule, and keyframe animations.
+The single rule worth restating here so any code-touching agent can't
+miss it: **use the semantic Tailwind class. Never inline `var(...)`,
+never raw hex/rgb/hsl, never arbitrary `text-[var(--…)]`.** New colours
+go through `src/index.css` (`:root` → `.dark` only if different → expose
+as `--color-…` in `@theme`) and Tailwind generates the rest. No CSS
+Modules; `src/index.css` only holds tokens, the global transition rule,
+and keyframe animations.
