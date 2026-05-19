@@ -21,9 +21,11 @@ import {
 } from 'src/css'
 import { pay, stake, topUp } from 'src/format'
 
+import { bidTooLowPenaltySol } from './bid-penalty'
 import { computeBondCoverage } from './bond-coverage'
 import { bondHealthFromAuction } from './bond-health'
 import { apyBreakdown } from './calculations'
+import { selectInSet } from './sam'
 
 import type { BondCoverage } from './bond-coverage'
 import type { BondHealthState } from './bond-health'
@@ -254,7 +256,7 @@ export const getValidatorTip = (
   dsSamConfig: DsSamConfig,
   winningTotalPmpe: number,
 ): ValidatorTip => {
-  const inSet = validator.auctionStake.marinadeSamTargetSol > 0
+  const inSet = selectInSet(validator)
   const delta = validator.values.expectedStakeChangeSol ?? 0
   const health = bondHealthFromAuction(validator, dsSamConfig, winningTotalPmpe)
 
@@ -325,8 +327,11 @@ export const getValidatorTip = (
   // cost avoided (action + quantified consequence, same family as bondAdvice).
   const penaltyPmpe = validator.revShare?.bidTooLowPenaltyPmpe ?? 0
   if (penaltyPmpe > 0) {
-    const penaltySol =
-      (penaltyPmpe / 1000) * validator.marinadeActivatedStakeSol
+    const penaltySol = bidTooLowPenaltySol(
+      validator,
+      dsSamConfig,
+      winningTotalPmpe,
+    )
     return {
       text: `Raise bid or pay a ${pay(penaltySol)} penalty.`,
       urgency: 'warning',

@@ -87,3 +87,29 @@ export function computeBidPenalty(
     winningTotalPmpe,
   }
 }
+
+// A pmpe penalty rate applied to a stake base: lamports-per-1000-stake → SOL.
+// Pure: stake basis is the caller's choice. validator-with-protected_event.ts
+// keeps its own API-epochStats base; the auction surfaces pass active stake.
+export function penaltyPmpeToSol(pmpe: number, stakeSol: number): number {
+  return (pmpe / 1000) * stakeSol
+}
+
+// Single home for the bid-too-low penalty in SOL. Thin re-projection of
+// computeBidPenalty().penaltySol so the CTA, the table badge and the detail
+// panel never recompute it inline.
+export function bidTooLowPenaltySol(
+  v: AuctionValidator,
+  dsSamConfig: DsSamConfig,
+  winningTotalPmpe: number,
+): number {
+  return computeBidPenalty(v, dsSamConfig, winningTotalPmpe).penaltySol
+}
+
+// Blacklist penalty in SOL against the validator's active Marinade stake.
+export function blacklistPenaltySol(v: AuctionValidator): number {
+  return penaltyPmpeToSol(
+    v.revShare.blacklistPenaltyPmpe,
+    v.marinadeActivatedStakeSol,
+  )
+}

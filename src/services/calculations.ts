@@ -1,4 +1,8 @@
-import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
+import type { BondHealthState } from './bond-health'
+import type {
+  AuctionValidator,
+  DsSamConfig,
+} from '@marinade.finance/ds-sam-sdk'
 
 export interface ApyBreakdown {
   inflation: number
@@ -8,8 +12,15 @@ export interface ApyBreakdown {
   total: number
 }
 
+// Compound a per-epoch rate over a year: (1 + rate)^epochs − 1. The single
+// place this exponentiation lives — compoundApy (pmpe basis) and
+// selectProjectedAPY (profit/tvl basis) both route through it.
+export function annualize(ratePerEpoch: number, epochsPerYear: number): number {
+  return Math.pow(1 + ratePerEpoch, epochsPerYear) - 1
+}
+
 export function compoundApy(pmpe: number, epochsPerYear: number): number {
-  return Math.pow(1 + pmpe / 1e3, epochsPerYear) - 1
+  return annualize(pmpe / 1e3, epochsPerYear)
 }
 
 export function bondRunwayEpochs(
@@ -17,6 +28,30 @@ export function bondRunwayEpochs(
   minBondEpochs: number,
 ): number {
   return validator.bondGoodForNEpochs - minBondEpochs
+}
+
+// The runway the UI surfaces. A no-bond or below-minimum bond (→ 'critical')
+// sustains zero stake regardless of the SDK's raw bondGoodForNEpochs, which
+// ignores the below-min gate — so it reads 0. Single source: the bond chip
+// and the runway display can never contradict. sam-table and validator-detail
+// both consume this instead of re-deriving the override.
+export function effectiveBondRunway(
+  validator: AuctionValidator,
+  bondHealth: BondHealthState,
+): number {
+  if (bondHealth === 'no-bond' || bondHealth === 'critical') return 0
+  return validator.bondGoodForNEpochs ?? 0
+}
+
+// Bond gauge geometry, shared so the sam-table and detail gauges share one
+// scale. The fill runs 0 .. 4× ideal bond epochs (full = comfortably above
+// ideal); the danger zone is a FIXED 20% of the track — a visual anchor, not
+// derived from the scale (deriving it collapsed the band to ~2% once
+// idealBondEpochs hit a realistic 13).
+export const BOND_CRITICAL_FRAC = 0.2
+
+export function bondGaugeScaleMax(config: DsSamConfig): number {
+  return 4 * config.idealBondEpochs
 }
 
 // Bond utilization 0..100. 0 = bond fully covers, 100 = depleted relative to

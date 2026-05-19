@@ -27,8 +27,17 @@ import {
   CSS_STATUS_GREEN,
 } from 'src/css'
 import { pct, penalty, sol, stake } from 'src/format'
+import {
+  bidTooLowPenaltySol,
+  blacklistPenaltySol,
+} from 'src/services/bid-penalty'
 import { bondHealthFromAuction } from 'src/services/bond-health'
-import { bondUtilizationPct } from 'src/services/calculations'
+import {
+  BOND_CRITICAL_FRAC,
+  bondGaugeScaleMax,
+  bondUtilizationPct,
+  effectiveBondRunway,
+} from 'src/services/calculations'
 import { HELP_TEXT } from 'src/services/help-text'
 import {
   augmentAuctionResult,
@@ -233,14 +242,18 @@ const PENALTY_ICONS: Record<PenaltyKind, React.ReactElement> = {
   risk: PENALTY_RISK,
 }
 
-const PenaltyBadges: React.FC<{ validator: AuctionValidator }> = ({
-  validator,
-}) => {
-  const stakeSol = validator.marinadeActivatedStakeSol
+const PenaltyBadges: React.FC<{
+  validator: AuctionValidator
+  dsSamConfig: DsSamConfig
+  winningTotalPmpe: number
+}> = ({ validator, dsSamConfig, winningTotalPmpe }) => {
   const badges: { label: string; sol: number; kind: PenaltyKind }[] = []
-  const bidLowSol = (stakeSol * validator.revShare.bidTooLowPenaltyPmpe) / 1000
-  const blacklistSol =
-    (stakeSol * validator.revShare.blacklistPenaltyPmpe) / 1000
+  const bidLowSol = bidTooLowPenaltySol(
+    validator,
+    dsSamConfig,
+    winningTotalPmpe,
+  )
+  const blacklistSol = blacklistPenaltySol(validator)
   const bondRiskSol = validator.values?.bondRiskFeeSol ?? 0
   if (bidLowSol > 0)
     badges.push({ label: 'Bid too low', sol: bidLowSol, kind: 'bidLow' })
@@ -666,20 +679,11 @@ export const SamTable: React.FC<Props> = ({
 
     // Bond health
     const bondUtilPct = bondUtilizationPct(validator, dsSamConfig.minBondEpochs)
-    const rawRunway = validator.bondGoodForNEpochs ?? 0
     const bondHealth = validator.bondHealth
     const bondChip = BOND_CHIP[bondHealth]
-    // Single source: a no-bond / critical tier means the bond can't sustain
-    // stake, so runway reads 0 — chip and runway can never contradict (B1).
-    const bondRunway =
-      bondHealth === 'no-bond' || bondHealth === 'critical' ? 0 : rawRunway
+    const bondRunway = effectiveBondRunway(validator, bondHealth)
     const hasAlert = bondRunway <= 5 || bondUtilPct >= 85
-    // Two independent axes: the fill runs 0 .. 4× ideal bond epochs (full =
-    // comfortably above ideal), while the danger zone is a FIXED 20% of the
-    // track — a visual anchor, not derived from the scale (deriving it made
-    // the band collapse to ~2% once idealBondEpochs hit a realistic 13).
-    const bondScaleMax = 4 * dsSamConfig.idealBondEpochs
-    const bondCriticalFrac = 0.2
+    const bondScaleMax = bondGaugeScaleMax(dsSamConfig)
 
     const expectedChange = selectExpectedStakeChange(validator)
 
@@ -773,7 +777,13 @@ export const SamTable: React.FC<Props> = ({
                 {hasAlert && (
                   <span className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0 animate-pulse" />
                 )}
-                {!isGhost && <PenaltyBadges validator={validator} />}
+                {!isGhost && (
+                  <PenaltyBadges
+                    validator={validator}
+                    dsSamConfig={dsSamConfig}
+                    winningTotalPmpe={winningTotalPmpe}
+                  />
+                )}
               </>
             }
           />
@@ -814,8 +824,8 @@ export const SamTable: React.FC<Props> = ({
               size="sm"
               value={bondRunway}
               scaleMax={bondScaleMax}
-              marker={bondCriticalFrac}
-              criticalBand={bondCriticalFrac}
+              marker={BOND_CRITICAL_FRAC}
+              criticalBand={BOND_CRITICAL_FRAC}
               tone={bondChip.bar}
             />
             <span

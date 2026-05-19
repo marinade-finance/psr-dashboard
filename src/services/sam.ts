@@ -8,7 +8,7 @@ import {
 
 import { pct } from 'src/format'
 
-import { compoundApy } from './calculations'
+import { annualize, compoundApy } from './calculations'
 import { fetchValidatorsWithEpochs } from './validators'
 
 import type {
@@ -104,7 +104,7 @@ export const selectSamDistributedStake = (validators: AuctionValidator[]) =>
 export const selectWinningAPY = (
   auctionResult: AuctionResult,
   epochsPerYear: number,
-) => Math.pow(1 + auctionResult.winningTotalPmpe / 1e3, epochsPerYear) - 1
+) => compoundApy(auctionResult.winningTotalPmpe, epochsPerYear)
 
 // Rebuild the winning APY at THIS validator's commission profile: take the
 // marginal winner's bid component and add it to the validator's own
@@ -143,7 +143,7 @@ export const selectProjectedAPY = (
   const profit = selectActiveProfit(auctionResult.auctionData.validators)
   const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
   if (tvl <= 0) return 0
-  return Math.pow(1 + profit / tvl, epochsPerYear) - 1
+  return annualize(profit / tvl, epochsPerYear)
 }
 
 function overridesMessage(

@@ -25,14 +25,19 @@ import {
   CSS_MUTED_FG,
 } from 'src/css'
 import { cost, topUp, stake } from 'src/format'
-import { computeBidPenalty } from 'src/services/bid-penalty'
+import {
+  computeBidPenalty,
+  blacklistPenaltySol as computeBlacklistPenaltySol,
+} from 'src/services/bid-penalty'
 import { computeBidding } from 'src/services/bidding'
 import { computeBondCoverage } from 'src/services/bond-coverage'
 import { bondHealthFromAuction } from 'src/services/bond-health'
+import { effectiveBondRunway } from 'src/services/calculations'
 import { HELP_TEXT } from 'src/services/help-text'
 import { fetchPsrEstimatesForValidator } from 'src/services/protected-events-estimator'
 import {
   selectExpectedStakeChange,
+  selectInSet,
   selectVoteAccount,
   selectWinningApyForValidator,
 } from 'src/services/sam'
@@ -338,16 +343,13 @@ export const ValidatorDetail = ({
   // SDK's raw bondGoodForNEpochs, which ignores the below-min gate. Force
   // the runway to Depleted so Balance, Reserve and Bid runway tell one
   // coherent story instead of "0 SOL / Critical / 6 epochs".
-  const bondRunway =
-    bondHealth === 'no-bond' || bondHealth === 'critical'
-      ? 0
-      : (validator.bondGoodForNEpochs ?? 0)
+  const bondRunway = effectiveBondRunway(validator, bondHealth)
   const tip = getValidatorTip(validator, dsSamConfig, winningTotalPmpe)
   const tipStyle = getTipStyle(tip.urgency)
   const expectedStakeDelta = selectExpectedStakeChange(validator)
   const [tab, setTab] = useState<Tab>('overview')
 
-  const inSet = validator.auctionStake.marinadeSamTargetSol > 0
+  const inSet = selectInSet(validator)
   // Dense rank around the winning cutoff: 0 at cutoff, +N at the Nth distinct
   // APY tier above, −N below. Computed once in sam.ts; consistent with the
   // rank cell in sam-table.
@@ -374,9 +376,7 @@ export const ValidatorDetail = ({
   })
 
   const bondRiskFeeSol = validator.values.bondRiskFeeSol ?? 0
-  const blacklistPenaltySol =
-    (validator.revShare.blacklistPenaltyPmpe / 1000) *
-    validator.marinadeActivatedStakeSol
+  const blacklistPenaltySol = computeBlacklistPenaltySol(validator)
   const bidTooLowPenaltySol = penaltyMetrics.penaltySol
 
   const [editBid, setEditBid] = useState(validator.revShare.bidPmpe.toString())
