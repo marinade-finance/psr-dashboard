@@ -1,6 +1,9 @@
+import { AuctionConstraintType } from '@marinade.finance/ds-sam-sdk'
+
 import { ICON_ALERT } from 'src/components/icons/icon-alert'
 import { ICON_BID } from 'src/components/icons/icon-bid'
 import { ICON_BOND } from 'src/components/icons/icon-bond'
+import { ICON_CAP } from 'src/components/icons/icon-cap'
 import { ICON_DOWN } from 'src/components/icons/icon-down'
 import { ICON_RIGHT } from 'src/components/icons/icon-right'
 import { ICON_UP } from 'src/components/icons/icon-up'
@@ -41,7 +44,7 @@ export type TipUrgency =
   | 'info'
   | 'positive'
   | 'neutral'
-export type TipConstraint = 'rank' | 'bond' | 'bid' | 'none'
+export type TipConstraint = 'rank' | 'bond' | 'bid' | 'cap' | 'none'
 
 export interface ValidatorTip {
   text: string
@@ -111,6 +114,8 @@ export const getTipIcon = (tip: ValidatorTip): React.ReactNode => {
     case 'bid':
     case 'rank':
       return ICON_BID
+    case 'cap':
+      return ICON_CAP
     default:
       if (tip.delta > 0) return ICON_UP
       if (tip.delta < 0) return ICON_DOWN
@@ -346,6 +351,29 @@ export const getValidatorTip = (
       constraint: 'bid',
       delta,
     }
+  }
+
+  // Cap-binding CTA. When the validator is in-set, bond and bid are fine
+  // (none of the cascades above fired), and stake is leaking out, the
+  // BINDING cause is the concentration cap (ASO or country) — not the bid
+  // and not the bond. Name it so the validator doesn't try to fix the
+  // wrong lever. Guard on totalLeftToCapSol === 0 to isolate the "actually
+  // at cap, zero headroom" case (the SDK populates lastCapConstraint with
+  // last-pass info even when there's room left). Urgency:info — there's
+  // nothing the validator can do via bond/bid; calling it warning would
+  // imply user error. Country reads cleaner with "at country cap" than
+  // "<country> country at cap".
+  const cap = validator.lastCapConstraint
+  if (delta < 0 && cap != null && cap.totalLeftToCapSol === 0) {
+    const losing = stake(Math.abs(delta))
+    // Two-line CTA: cause on line 1, consequence on line 2. The pill in
+    // sam-table.tsx renders with `whitespace-pre-line` so \n is honoured.
+    const cause =
+      cap.constraintType === AuctionConstraintType.COUNTRY
+        ? `${cap.constraintName} at country cap`
+        : `${cap.constraintName} ${cap.constraintType} at cap`
+    const text = `${cause}\nLosing ${losing} until cap frees.`
+    return { text, urgency: 'info', constraint: 'cap', delta }
   }
 
   if (delta > 0) {
