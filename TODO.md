@@ -2,6 +2,71 @@
 
 ## Queued — fix on a clean tree, verify, then commit
 
+### Rounding / decimal-places rule across breakdowns
+
+- **BOND balances → 1 decimal place** (currently 3-dp via `cost()`).
+- **Payments → 3 decimal places**.
+- **Stake → whole numbers**.
+- **Top-up suggestions → round UP** (never under-recommend).
+- **Balances rendered → round DOWN** (never over-state what you have).
+Implement as dedicated formatters in `src/format.ts` (e.g. `bondSol()`
+1-dp rounded-down, `topUpSol()` whole/1-dp rounded-up) and switch the
+breakdown call sites; do NOT just change `cost()` semantics — used
+elsewhere.
+
+### "Your cost-PMPE today" → rename in bidding breakdown
+
+The section header on the bidding breakdown reads "Your cost-PMPE today";
+user prefers "Your bid today" (or similar). Small copy edit in
+`bidding.tsx`'s first SectionHeader.
+
+### Total/SectionHeader margins — Total overshadows the next header
+
+`row.tsx`: `TOTAL_CELL_PAD = 'pt-4 pb-2'` competes with the next
+`SectionHeader` (`pt-4 pb-1`). Reduce Total's top padding and bump
+SectionHeader's top padding ~10% so the section break reads cleaner.
+
+### Gauge 20% marker ≠ the actual fee threshold (semantic gap)
+
+The current `bondCriticalFrac = 0.2` is a chosen **visual anchor**, NOT
+the SDK's fee-charged threshold. Real fee fires at runway <
+`minBondEpochs` (1 epoch). On `scaleMax = 4 × idealBondEpochs` (= 52),
+the true threshold sits at 1/52 ≈ **2 %** of the bar — the old sliver.
+The two requirements (full at 4×ideal AND marker at actual fee point)
+genuinely conflict; current code keeps the 20% for visibility at the
+cost of literal-truth. Decide: keep 20% (visual prominence, not
+literally where the fee fires) OR change `scaleMax = 5 ×
+minBondEpochs` (marker really IS at the fee threshold, full-scale
+becomes much smaller, healthy validators saturate fast).
+
+### Simulation-mode round band must wrap the broadcast banner too
+
+The yellow "SIMULATION MODE" frame currently surrounds the SAM table
+but not the announcement banner above it; if the banner is present, the
+frame should include it (it's part of the simulated view). Wherever the
+sim-mode wrapper lives, the banner must be inside it.
+
+### `/test-` has no working simulation (page wrapper limitation)
+
+`test-stake-auction-marketplace.tsx`'s `loadAuction` returns the frozen
+`SAM_RESULT` — no `runFinalOnly` is wired, so simulation edits don't
+recalculate. Minimal orthogonal fix: have the test page accept a
+`SourceDataOverrides` and apply a pure deterministic transform to the
+frozen fixture (no SDK rerun) — overrides modify `cpmpe` /
+commissions / `revShare` on the matching fixture validator, the rest
+of the page reads the modified copy. Captures every override-driven
+state visually without a live auction.
+
+### Tooltip — single sticky + click-anywhere dismiss; use a standard primitive
+
+Current `HelpTip` pin/hover is custom state with an `onPointerDown`
+blink-fix workaround. The user wants: only ONE tooltip pinned at a
+time globally; clicking anywhere outside dismisses the pinned one.
+Standard primitive: Radix `Popover` for the click-to-pin (built-in
+click-outside + Esc), Radix `Tooltip` for the hover preview, composed.
+Don't reinvent. Cross-component pin-singleton can be a module-level
+"currently pinned id" registry the HelpTip subscribes to.
+
 ### "Binding cap — <voteAccount> is full" CTA is wrong + add to /test-
 
 The cap-constraint CTA reads "Binding cap — A11pG…tS5 is full" — wrong
