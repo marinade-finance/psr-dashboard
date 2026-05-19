@@ -27,7 +27,7 @@ export const SectionHeader: React.FC<{
   col1Unit?: string
 }> = ({ title, colSpan = 3, help, unit, col1Unit }) => {
   const headerCellCls =
-    'pt-6 pb-1 text-xs uppercase tracking-wider text-muted-foreground border-t border-dashed border-border [tr:first-child>&]:pt-0 [tr:first-child>&]:border-t-0'
+    'pt-6 pb-1 text-xs uppercase tracking-wider text-muted-foreground [tr:first-child>&]:pt-0'
   if (col1Unit) {
     return (
       <tr>
