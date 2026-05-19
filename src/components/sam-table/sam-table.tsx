@@ -674,11 +674,12 @@ export const SamTable: React.FC<Props> = ({
     const bondRunway =
       bondHealth === 'no-bond' || bondHealth === 'critical' ? 0 : rawRunway
     const hasAlert = bondRunway <= 5 || bondUtilPct >= 85
-    // Gauge spans 0 .. 4× ideal bond epochs (full = comfortably above ideal).
-    // The SDK minimum sits at its true position; the red band is everything
-    // below it. No magic fraction — all derived from the live config.
+    // Two independent axes: the fill runs 0 .. 4× ideal bond epochs (full =
+    // comfortably above ideal), while the danger zone is a FIXED 20% of the
+    // track — a visual anchor, not derived from the scale (deriving it made
+    // the band collapse to ~2% once idealBondEpochs hit a realistic 13).
     const bondScaleMax = 4 * dsSamConfig.idealBondEpochs
-    const bondMinFrac = dsSamConfig.minBondEpochs / bondScaleMax
+    const bondCriticalFrac = 0.2
 
     const expectedChange = selectExpectedStakeChange(validator)
 
@@ -813,8 +814,8 @@ export const SamTable: React.FC<Props> = ({
               size="sm"
               value={bondRunway}
               scaleMax={bondScaleMax}
-              marker={bondMinFrac}
-              criticalBand={bondMinFrac}
+              marker={bondCriticalFrac}
+              criticalBand={bondCriticalFrac}
               tone={bondChip.bar}
             />
             <span
