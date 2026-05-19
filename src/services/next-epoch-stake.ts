@@ -23,7 +23,6 @@ import {
   selectExpectedStakeChange,
   selectExpectedStakeChangeBreakdown,
   selectInSet,
-  selectNonBidPmpe,
   selectRedelegationBudget,
   selectRedelegationPriorityFrontierPmpe,
   selectRedelegationPriorityRank,
@@ -61,22 +60,18 @@ export const computeNextEpochStake = (
   const currentTotalPmpe = v.revShare.totalPmpe
   const priorityFrontierPmpe =
     selectRedelegationPriorityFrontierPmpe(auctionResult)
-  const nonBidPmpe = selectNonBidPmpe(v)
-  // Target derives from the priority frontier alone (file-comment invariant)
-  // — NOT max-with-current. When you already clear, the minimum static bid
-  // that still clears is `frontier − nonBid`; reporting your current bid
-  // as the target was the old bug, and it also leaked float-residue past
-  // the `bidIncrease > 0` guard, so #1 rows wrongly rendered
-  // "Bid increase needed: 0.00000". No binding frontier → target 0.
+  // Comparison against the priority frontier uses currentTotalPmpe (the
+  // SDK's authoritative ranking value) — mirrors in-auction-target.ts.
+  // Reconstructing total = nonBid + staticBid diverges when the SDK clips
+  // auctionEffectiveBidPmpe below the static bid. No binding frontier → 0.
+  const totalGap =
+    priorityFrontierPmpe > 0
+      ? Math.max(0, priorityFrontierPmpe - currentTotalPmpe)
+      : 0
   const targetTotalPmpePriority = priorityFrontierPmpe
   const targetBidPmpePriority =
-    priorityFrontierPmpe > 0
-      ? Math.max(0, priorityFrontierPmpe - nonBidPmpe)
-      : 0
-  const bidIncreaseForPriority = Math.max(
-    0,
-    targetBidPmpePriority - v.revShare.bidPmpe,
-  )
+    priorityFrontierPmpe > 0 ? v.revShare.bidPmpe + totalGap : 0
+  const bidIncreaseForPriority = totalGap
   return {
     inSet,
     expectedDeltaSol: selectExpectedStakeChange(v),

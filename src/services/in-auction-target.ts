@@ -13,17 +13,16 @@
 //
 // Bond figures are read from the already-memoised BondCoverage so the
 // numbers reconcile exactly with the Bond tab (no recompute, no drift).
-import { selectInSet, selectNonBidPmpe } from 'src/services/sam'
+import { selectNonBidPmpe } from 'src/services/sam'
 
 import type { BondCoverage } from 'src/services/bond-coverage'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
 
 export type InAuctionTarget = {
-  inSet: boolean
   winningTotalPmpe: number
-  inflationPmpe: number
-  mevPmpe: number
-  blockPmpe: number
+  // The SDK's authoritative ranking value. Single source for "does this
+  // validator clear" — same value the auction itself ranks against.
+  currentTotalPmpe: number
   nonBidPmpe: number
   currentBidPmpe: number
   targetBidPmpe: number
@@ -47,28 +46,19 @@ export const computeInAuctionTarget = (
   winningTotalPmpe: number,
   coverage: BondCoverage,
 ): InAuctionTarget => {
-  const inflationPmpe = v.revShare.inflationPmpe
-  const mevPmpe = v.revShare.mevPmpe
-  const blockPmpe = v.revShare.blockPmpe ?? 0
   const nonBidPmpe = selectNonBidPmpe(v)
   const currentBidPmpe = v.revShare.bidPmpe
-  // Auction order is `revShare.totalPmpe` desc. To clear the winning total,
-  // the validator's total must reach it — no reconstructing the total from
-  // static bid + non-bid here, since `revShare.totalPmpe` is what the
-  // auction actually ranks against (and the static-bid sum can diverge,
-  // e.g. when auctionEffectiveBidPmpe clips below the static bid).
+  // Auction order is `revShare.totalPmpe` desc — `currentTotalPmpe` is what
+  // the auction itself ranks against. `targetBidPmpe` is the static bid
+  // that would close the gap holding everything else constant; it's a
+  // legible UI presentation, not the SDK's allocation logic.
   const currentTotalPmpe = v.revShare.totalPmpe
   const totalGap = Math.max(0, winningTotalPmpe - currentTotalPmpe)
-  // Display as "what static bid would close the gap, holding non-bid
-  // revenue constant". When already clearing, target = current bid.
   const targetBidPmpe = currentBidPmpe + totalGap
   const bidIncrease = totalGap
   return {
-    inSet: selectInSet(v),
     winningTotalPmpe,
-    inflationPmpe,
-    mevPmpe,
-    blockPmpe,
+    currentTotalPmpe,
     nonBidPmpe,
     currentBidPmpe,
     targetBidPmpe,
