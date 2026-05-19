@@ -33,6 +33,7 @@ import {
 import { computeBidding } from 'src/services/bidding'
 import { computeBondCoverage } from 'src/services/bond-coverage'
 import { bondHealthFromAuction } from 'src/services/bond-health'
+import { BondHealthState } from 'src/services/bond-health'
 import { effectiveBondRunway } from 'src/services/calculations'
 import { HELP_TEXT } from 'src/services/help-text'
 import { fetchPsrEstimatesForValidator } from 'src/services/protected-events-estimator'
@@ -49,13 +50,14 @@ import {
   getTipStyle,
   getTipIcon,
 } from 'src/services/tip-engine'
+import { assertNever } from 'src/utils/assert-never'
 
 import type { AuctionResult, DsSamConfig } from '@marinade.finance/ds-sam-sdk'
 import type { UserLevel } from 'src/components/navigation/navigation'
 import type { BondCoverage } from 'src/services/bond-coverage'
-import type { BondHealthState } from 'src/services/bond-health'
 import type { NotificationSummary } from 'src/services/notifications'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
+import type { TipConstraint } from 'src/services/tip-engine'
 
 interface ValidatorDetailProps {
   validator: AugmentedAuctionValidator
@@ -171,7 +173,7 @@ function tabAttention(args: {
   bondHealth: BondHealthState
   bidPenaltySol: number
   notes: ReadonlyArray<{ priority: 'critical' | 'warning' | 'info' }>
-  tipConstraint: string
+  tipConstraint: TipConstraint
 }): Partial<Record<Tab, AttentionTone>> {
   const { bondHealth, bidPenaltySol, notes, tipConstraint } = args
   const notifTone: AttentionTone | undefined = notes.some(
@@ -193,20 +195,20 @@ function tabAttention(args: {
   }
   if (bidPenaltySol > 0) attention.penalty = 'critical'
   if (notifTone) attention.notifications = notifTone
-  // 'bid' = in-set bid-too-low penalty → the math + remedy lives on the
-  // Bid Penalty tab (attention.penalty is already critical there). 'rank'
-  // = out-of-set bid-too-low → raise the static bid on the Bidding tab.
-  // Don't point 'bid' at Bidding: that panel reports current auction
-  // clearance ('Already clears'), so a purple dot there contradicts a
-  // red penalty dot two tabs over.
-  const tipTab: Tab | null =
-    tipConstraint === 'bond'
-      ? 'bond'
-      : tipConstraint === 'bid'
-        ? 'penalty'
-        : tipConstraint === 'rank'
-          ? 'bidding'
-          : null
+  // Exhaustive map TipConstraint → Tab. A new constraint added to the
+  // enum forces an update here at compile time (the Record type errors
+  // until every key is filled). 'bid' = in-set penalty → Penalty tab
+  // (where the math lives); 'rank' = out-of-set → Bidding tab (where
+  // raising the static bid is the lever); 'cap'/'none' have no
+  // dedicated tab (delta/cap explanations live in the header).
+  const TIP_TAB: Record<TipConstraint, Tab | null> = {
+    bond: 'bond',
+    bid: 'penalty',
+    rank: 'bidding',
+    cap: null,
+    none: null,
+  }
+  const tipTab = TIP_TAB[tipConstraint]
   if (tipTab && !attention[tipTab]) attention[tipTab] = 'info'
   return attention
 }
@@ -215,28 +217,42 @@ export function bondCoverageLabel(
   health: BondHealthState,
   coverage: BondCoverage,
 ): string {
-  if (health === 'no-bond') return 'No bond'
-  if (health === 'critical')
-    return coverage.topUpToAvoidFee > 0
-      ? `Top up ${topUp(coverage.topUpToAvoidFee)} to avoid the fee`
-      : 'Critical'
-  if (health === 'watch')
-    return coverage.topUpToKeepStake > 0
-      ? `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake`
-      : 'Watch'
-  if (health === 'soft')
-    return coverage.topUpToIdealKeep > 0
-      ? `Top up ${topUp(coverage.topUpToIdealKeep)} to grow stake`
-      : 'Adequate'
-  return 'Fully covered'
+  switch (health) {
+    case BondHealthState.NO_BOND:
+      return 'No bond'
+    case BondHealthState.CRITICAL:
+      return coverage.topUpToAvoidFee > 0
+        ? `Top up ${topUp(coverage.topUpToAvoidFee)} to avoid the fee`
+        : 'Critical'
+    case BondHealthState.WATCH:
+      return coverage.topUpToKeepStake > 0
+        ? `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake`
+        : 'Watch'
+    case BondHealthState.SOFT:
+      return coverage.topUpToIdealKeep > 0
+        ? `Top up ${topUp(coverage.topUpToIdealKeep)} to grow stake`
+        : 'Adequate'
+    case BondHealthState.HEALTHY:
+      return 'Fully covered'
+    default:
+      return assertNever(health)
+  }
 }
 
 function bondCoverageColor(health: BondHealthState): string {
-  if (health === 'no-bond') return CSS_DESTRUCTIVE
-  if (health === 'critical') return CSS_DESTRUCTIVE
-  if (health === 'watch') return CSS_WARNING
-  if (health === 'soft') return CSS_MUTED_FG
-  return CSS_PRIMARY
+  switch (health) {
+    case BondHealthState.NO_BOND:
+    case BondHealthState.CRITICAL:
+      return CSS_DESTRUCTIVE
+    case BondHealthState.WATCH:
+      return CSS_WARNING
+    case BondHealthState.SOFT:
+      return CSS_MUTED_FG
+    case BondHealthState.HEALTHY:
+      return CSS_PRIMARY
+    default:
+      return assertNever(health)
+  }
 }
 
 const MetricRow = ({

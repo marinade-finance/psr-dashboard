@@ -116,13 +116,24 @@ export const selectProtectedStakeReason = (protectedEvent: ProtectedEvent) => {
       return `Uptime ${pct(expected > 0 ? actual / expected : 0)}`
     }
   }
-  if (protectedEvent.reason === 'Bidding') return 'Bidding'
-  if (protectedEvent.reason === 'BidTooLowPenalty') return 'Bid too low'
-  if (protectedEvent.reason === 'BlacklistPenalty') return 'Blacklisted'
-  if (protectedEvent.reason === 'BondRiskFee') return 'Bond risk fee'
-  if (protectedEvent.reason === 'PriorityFee') return 'Priority fee'
-  console.log('unsupported event:', protectedEvent)
-  return 'Unsupported'
+  // After isProtectedEvent narrows the object case out, reason is the
+  // string-union. The switch is exhaustive — adding a new SDK reason
+  // forces a handler here.
+  switch (protectedEvent.reason) {
+    case 'Bidding':
+      return 'Bidding'
+    case 'BidTooLowPenalty':
+      return 'Bid too low'
+    case 'BlacklistPenalty':
+      return 'Blacklisted'
+    case 'BondRiskFee':
+      return 'Bond risk fee'
+    case 'PriorityFee':
+      return 'Priority fee'
+    default:
+      console.log('unsupported event:', protectedEvent)
+      return 'Unsupported'
+  }
 }
 
 export const selectAmount = (protectedEvent: ProtectedEvent) =>

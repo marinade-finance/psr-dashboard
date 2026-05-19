@@ -11,12 +11,15 @@ import type {
 //   watch    → bond too thin to keep current stake (orange)
 //   soft     → bond covers current stake but not ideal (indigo, info)
 //   healthy  → bond covers ideal target (green)
+export const BondHealthState = {
+  NO_BOND: 'no-bond',
+  CRITICAL: 'critical',
+  WATCH: 'watch',
+  SOFT: 'soft',
+  HEALTHY: 'healthy',
+} as const
 export type BondHealthState =
-  | 'no-bond'
-  | 'critical'
-  | 'watch'
-  | 'soft'
-  | 'healthy'
+  (typeof BondHealthState)[keyof typeof BondHealthState]
 
 export function bondHealthFromAuction(
   v: AuctionValidator,

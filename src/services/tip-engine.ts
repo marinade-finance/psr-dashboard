@@ -22,15 +22,15 @@ import {
   CSS_WARNING_LIGHT,
 } from 'src/css'
 import { pay, stake, topUp } from 'src/format'
+import { assertNever } from 'src/utils/assert-never'
 
 import { computeBidPenalty } from './bid-penalty'
 import { computeBondCoverage } from './bond-coverage'
-import { bondHealthFromAuction } from './bond-health'
+import { BondHealthState, bondHealthFromAuction } from './bond-health'
 import { apyBreakdown } from './calculations'
 import { selectInSet } from './sam'
 
 import type { BondCoverage } from './bond-coverage'
-import type { BondHealthState } from './bond-health'
 import type { AugmentedAuctionValidator } from './sam'
 import type {
   AuctionValidator,
@@ -38,13 +38,23 @@ import type {
 } from '@marinade.finance/ds-sam-sdk'
 import type React from 'react'
 
-export type TipUrgency =
-  | 'critical'
-  | 'warning'
-  | 'info'
-  | 'positive'
-  | 'neutral'
-export type TipConstraint = 'rank' | 'bond' | 'bid' | 'cap' | 'none'
+export const TipUrgency = {
+  CRITICAL: 'critical',
+  WARNING: 'warning',
+  INFO: 'info',
+  POSITIVE: 'positive',
+  NEUTRAL: 'neutral',
+} as const
+export type TipUrgency = (typeof TipUrgency)[keyof typeof TipUrgency]
+
+export const TipConstraint = {
+  RANK: 'rank',
+  BOND: 'bond',
+  BID: 'bid',
+  CAP: 'cap',
+  NONE: 'none',
+} as const
+export type TipConstraint = (typeof TipConstraint)[keyof typeof TipConstraint]
 
 export interface ValidatorTip {
   text: string
@@ -70,29 +80,36 @@ export interface TipStyle {
 // too — never off tip.urgency, whose `info` indigo for soft bond is exactly
 // the conflicting second colour c4fe245a removed the duplicate to avoid.
 export const getBondAdviceStyle = (health: BondHealthState): TipStyle => {
-  if (health === 'no-bond' || health === 'critical') {
-    return { color: CSS_DESTRUCTIVE, bg: CSS_DESTRUCTIVE_LIGHT }
+  switch (health) {
+    case BondHealthState.NO_BOND:
+    case BondHealthState.CRITICAL:
+      return { color: CSS_DESTRUCTIVE, bg: CSS_DESTRUCTIVE_LIGHT }
+    case BondHealthState.WATCH:
+    case BondHealthState.SOFT:
+      return { color: CSS_STATUS_YELLOW, bg: CSS_STATUS_YELLOW_LIGHT }
+    case BondHealthState.HEALTHY:
+      return { color: CSS_PRIMARY, bg: CSS_PRIMARY_LIGHT_10 }
+    default:
+      return assertNever(health)
   }
-  if (health === 'watch' || health === 'soft') {
-    return { color: CSS_STATUS_YELLOW, bg: CSS_STATUS_YELLOW_LIGHT }
-  }
-  return { color: CSS_PRIMARY, bg: CSS_PRIMARY_LIGHT_10 }
 }
 
 // Color carries severity. Glyph carries the lever — except a critical
 // alarm also swaps to the alert glyph; see getTipIcon.
 export const getTipStyle = (urgency: TipUrgency): TipStyle => {
   switch (urgency) {
-    case 'critical':
+    case TipUrgency.CRITICAL:
       return { color: CSS_DESTRUCTIVE, bg: CSS_DESTRUCTIVE_LIGHT }
-    case 'warning':
+    case TipUrgency.WARNING:
       return { color: CSS_WARNING, bg: CSS_WARNING_LIGHT }
-    case 'info':
+    case TipUrgency.INFO:
       return { color: CSS_INFO, bg: CSS_INFO_LIGHT }
-    case 'positive':
+    case TipUrgency.POSITIVE:
       return { color: CSS_PRIMARY, bg: CSS_PRIMARY_LIGHT_10 }
-    default:
+    case TipUrgency.NEUTRAL:
       return { color: CSS_MUTED_FG, bg: CSS_MUTED }
+    default:
+      return assertNever(urgency)
   }
 }
 
@@ -107,19 +124,21 @@ export const getTipStyle = (urgency: TipUrgency): TipStyle => {
 export const getTipIcon = (tip: ValidatorTip): React.ReactNode => {
   if (tip.alert) return ICON_ALERT
   switch (tip.constraint) {
-    case 'bond':
+    case TipConstraint.BOND:
       return ICON_BOND
     // 'bid' and 'rank' share the same lever (raise the bid) → same glyph.
     // Visual-language rule: glyph = the lever, never an axis duplicate.
-    case 'bid':
-    case 'rank':
+    case TipConstraint.BID:
+    case TipConstraint.RANK:
       return ICON_BID
-    case 'cap':
+    case TipConstraint.CAP:
       return ICON_CAP
-    default:
+    case TipConstraint.NONE:
       if (tip.delta > 0) return ICON_UP
       if (tip.delta < 0) return ICON_DOWN
       return ICON_RIGHT
+    default:
+      return assertNever(tip.constraint)
   }
 }
 
@@ -144,60 +163,68 @@ export function bondAdvice(
   minBondBalanceSol: number,
   bondBalanceSol: number,
 ): BondAdvice {
-  if (health === 'no-bond') {
-    return {
-      text: `Post a bond of ${stake(minBondBalanceSol)} to win stake.`,
-      urgency: 'critical',
-      tone: 'red',
-    }
-  }
-  // Below the SDK minimum: clipBondStakeCap → 0, a hard block. Tell the
-  // validator what to do — top up the bond to the minimum.
-  if (bondBalanceSol < minBondBalanceSol) {
+  // Below the SDK minimum (independent of health tier): clipBondStakeCap
+  // → 0, a hard block. Tell the validator what to do — top up to the
+  // minimum. Checked before the health switch so a below-min bond in any
+  // tier (typically no-bond/critical) gets the actionable wording.
+  if (
+    bondBalanceSol < minBondBalanceSol &&
+    health !== BondHealthState.NO_BOND
+  ) {
     return {
       text: `Top up bond to ${stake(minBondBalanceSol)} to win stake.`,
-      urgency: 'critical',
+      urgency: TipUrgency.CRITICAL,
       tone: 'red',
     }
   }
-  if (health === 'critical') {
-    // In-set critical bond (this branch only runs for in-set validators;
-    // out-of-set takes the outOfSetTip path). Every value here is the
-    // SDK's pre-settlement ESTIMATE for the next not-yet-settled epoch —
-    // never a charged-and-settled fact (those live in protected-events
-    // after the epoch closes). When the claimable bond sits below the
-    // projected floor (topUpToAvoidFee > 0), name the consequence: a
-    // fee. The action is the same — top up to clear it. This matches
-    // bondCoverageLabel in the Reserve row.
-    const text =
-      coverage.topUpToAvoidFee > 0
-        ? `Top up ${topUp(coverage.topUpToAvoidFee)} to avoid the bond risk fee.`
-        : bondRiskFeeSol > 0
-          ? `Estimated bond risk fee ${pay(bondRiskFeeSol)} next epoch.`
-          : 'Bond too thin — a bond risk fee can be charged.'
-    return { text, urgency: 'critical', tone: 'red' }
-  }
-  if (health === 'watch') {
-    const text =
-      coverage.topUpToKeepStake > 0
-        ? `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake.`
-        : 'Bond covers current stake.'
-    return { text, urgency: 'warning', tone: 'yellow' }
-  }
-  if (health === 'soft') {
-    const text =
-      coverage.topUpToIdealKeep > 0
-        ? `Top up ${topUp(coverage.topUpToIdealKeep)} to grow stake.`
-        : 'Bond meets ideal coverage.'
-    // Info/indigo — soft is "good enough but room to grow"; visually
-    // distinct from watch's warning-yellow so the user reads the chip as
-    // optional, not urgent.
-    return { text, urgency: 'info', tone: 'yellow' }
-  }
-  return {
-    text: 'Bond has enough coverage.',
-    urgency: 'positive',
-    tone: 'green',
+  switch (health) {
+    case BondHealthState.NO_BOND:
+      return {
+        text: `Post a bond of ${stake(minBondBalanceSol)} to win stake.`,
+        urgency: TipUrgency.CRITICAL,
+        tone: 'red',
+      }
+    case BondHealthState.CRITICAL: {
+      // In-set critical bond (this branch only runs for in-set validators;
+      // out-of-set takes the outOfSetTip path). Every value here is the
+      // SDK's pre-settlement ESTIMATE for the next not-yet-settled epoch —
+      // never a charged-and-settled fact (those live in protected-events
+      // after the epoch closes). When the claimable bond sits below the
+      // projected floor (topUpToAvoidFee > 0), name the consequence: a
+      // fee. The action is the same — top up to clear it.
+      const text =
+        coverage.topUpToAvoidFee > 0
+          ? `Top up ${topUp(coverage.topUpToAvoidFee)} to avoid the bond risk fee.`
+          : bondRiskFeeSol > 0
+            ? `Estimated bond risk fee ${pay(bondRiskFeeSol)} next epoch.`
+            : 'Bond too thin — a bond risk fee can be charged.'
+      return { text, urgency: TipUrgency.CRITICAL, tone: 'red' }
+    }
+    case BondHealthState.WATCH: {
+      const text =
+        coverage.topUpToKeepStake > 0
+          ? `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake.`
+          : 'Bond covers current stake.'
+      return { text, urgency: TipUrgency.WARNING, tone: 'yellow' }
+    }
+    case BondHealthState.SOFT: {
+      const text =
+        coverage.topUpToIdealKeep > 0
+          ? `Top up ${topUp(coverage.topUpToIdealKeep)} to grow stake.`
+          : 'Bond meets ideal coverage.'
+      // Info/indigo — soft is "good enough but room to grow"; visually
+      // distinct from watch's warning-yellow so the user reads the chip as
+      // optional, not urgent.
+      return { text, urgency: TipUrgency.INFO, tone: 'yellow' }
+    }
+    case BondHealthState.HEALTHY:
+      return {
+        text: 'Bond has enough coverage.',
+        urgency: TipUrgency.POSITIVE,
+        tone: 'green',
+      }
+    default:
+      return assertNever(health)
   }
 }
 
