@@ -29,6 +29,12 @@ pnpm vitest run path/to/file.test.ts    # run a single test file
 Pre-commit hooks run lint-staged (eslint --fix + prettier) via husky.
 First run may reformat — retry commit once if it fails.
 
+## Scratch files (untracked)
+
+`bugs.md`, `ISSUES.md`, `differences.md`, `docs/` are local-only review
+queues / audit notes — untracked, not part of the doc contract below.
+Append findings here during audits; the user prioritises and prunes.
+
 ## Live root docs
 
 Four repo-root files are live documentation. **Each must be updated in
