@@ -74,7 +74,7 @@ The bid-distribution histogram plots each validator's static CPMPE bid in quanti
 <a id="concentration"></a>
 ### Concentration Limits
 
-Per-country and per-ASO stake caps are enforced as a post-ranking filter: the SDK iterates winners in APY order and skips any validator whose group is already at the cap (`countryCapPct`, `asoCapPct` in `DsSamConfig`). Capped validators show in the Top Countries / Top ASOs tiles with a red marker. In expert mode, capped validators that would otherwise win appear below the cutoff line because the cap, not their bid, is the binding constraint.
+Per-country and per-ASO stake caps are enforced as a post-ranking filter: the SDK iterates winners in APY order and skips any validator whose group is already at the cap (`countryCapPct`, `asoCapPct` in `DsSamConfig`, both defaulting to 30%). A per-validator cap of 15% of TVL applies in parallel. Capped validators show in the Top Countries / Top ASOs tiles with a red marker. In expert mode, capped validators that would otherwise win appear below the cutoff line because the cap, not their bid, is the binding constraint.
 
 ---
 

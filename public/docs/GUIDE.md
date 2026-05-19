@@ -112,10 +112,11 @@ Each epoch, SAM runs a **last-price auction** to allocate stake.
 
 ### Participation requirements
 
-- Active PSR bond (validator created and funded one).
-- Adequate uptime (>80% across the last several epochs).
-- Effective commission within the SAM cap (currently 7%).
-- Bond funded enough to cover potential downtime payouts and bid costs.
+- Not on Marinade's blacklist.
+- Node version within the supported semver range.
+- Final inflation commission ≤ 7%.
+- Uptime > 80% in each of the last 3 epochs, measured by stake-weighted vote credits.
+- Active PSR bond funded to cover one epoch of downtime (1 SOL per 10k SOL of stake), one epoch of max yield, and one epoch of bid cost.
 
 ### Stability mechanisms
 
@@ -341,8 +342,9 @@ bounded amount of SOL:
 
 - **Re-delegation budget** — undeployed deposits and stake withdrawn from
   over-target validators are routed to validators whose auction target exceeds
-  their active stake. The total amount moved per epoch is capped to keep
-  activation/deactivation costs bounded.
+  their active stake. Under normal conditions, roughly 0.7% of total TVL can
+  be rebalanced per epoch; the rate accelerates when validators lose
+  eligibility.
 - **Withdrawal priority** — when natural turnover pulls SOL from the pool, it
   leaves over-target validators first. Validators sitting at or below target
   are protected from forced withdrawals as long as anyone is over-target.
@@ -410,11 +412,16 @@ count toward your total PMPE, so a larger gap pushes you up the queue.
 <a id="psr"></a>
 ### Protected Staking Rewards (PSR)
 
-PSR is the user-facing guarantee: if a validator under-delivers (downtime,
-commission hike, etc.), the affected stakers are made whole from the validator's
-bond. If the bond is insufficient, Marinade's backstop covers the remainder —
-which is *also* why under-collateralized bonds are penalised (see
-[Bond Risk Fee](#bond-risk-fee)).
+PSR is the user-facing guarantee: if a validator under-delivers — extended
+downtime ("LowCredits") or a mid-epoch commission increase
+("CommissionIncrease") — the affected stakers are made whole from the
+validator's bond. If the bond is insufficient, Marinade's backstop covers
+the remainder — which is *also* why under-collateralized bonds are
+penalised (see [Bond Risk Fee](#bond-risk-fee)).
+
+A 1% grace period applies before either trigger fires. For downtime, the
+validator's bond covers the rewards lost on uptime between 50% and 99%;
+Marinade absorbs the lower-than-50% tier.
 
 The Protected Events tab shows the history of every PSR settlement, including
 which were paid by the validator's bond vs Marinade's backstop.
@@ -447,7 +454,7 @@ A large gap between your bid and the clearing price means you have auction headr
 <a id="concentration"></a>
 ### Concentration Limits (Countries and ASOs)
 
-Marinade caps the fraction of auction stake that can go to validators in a single country or from a single Autonomous System Operator (ASO — the hosting provider or network operator). These caps protect the pool against correlated failures: if one cloud provider or jurisdiction has an outage, the impact on Marinade's stake is bounded.
+Marinade caps the fraction of auction stake that can go to validators in a single country or from a single Autonomous System Operator (ASO — the hosting provider or network operator). The default cap is 30% per country and 30% per ASO. A separate per-validator cap of 15% of TVL also applies. These caps protect the pool against correlated failures: if one cloud provider or jurisdiction has an outage, the impact on Marinade's stake is bounded.
 
 When a country or ASO hits its cap, validators there are cut — even if their bid is high enough to win. The "Top Countries" and "Top ASOs" tiles on the SAM page show the current fill level for each group and mark capped entries in red.
 
