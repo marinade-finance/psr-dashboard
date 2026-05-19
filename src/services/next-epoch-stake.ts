@@ -62,14 +62,17 @@ export const computeNextEpochStake = (
   const priorityFrontierPmpe =
     selectRedelegationPriorityFrontierPmpe(auctionResult)
   const nonBidPmpe = selectNonBidPmpe(v)
-  const targetTotalPmpePriority = Math.max(
-    currentTotalPmpe,
-    priorityFrontierPmpe,
-  )
-  const targetBidPmpePriority = Math.max(
-    0,
-    targetTotalPmpePriority - nonBidPmpe,
-  )
+  // Target derives from the priority frontier alone (file-comment invariant)
+  // — NOT max-with-current. When you already clear, the minimum static bid
+  // that still clears is `frontier − nonBid`; reporting your current bid
+  // as the target was the old bug, and it also leaked float-residue past
+  // the `bidIncrease > 0` guard, so #1 rows wrongly rendered
+  // "Bid increase needed: 0.00000". No binding frontier → target 0.
+  const targetTotalPmpePriority = priorityFrontierPmpe
+  const targetBidPmpePriority =
+    priorityFrontierPmpe > 0
+      ? Math.max(0, priorityFrontierPmpe - nonBidPmpe)
+      : 0
   const bidIncreaseForPriority = Math.max(
     0,
     targetBidPmpePriority - v.revShare.bidPmpe,
