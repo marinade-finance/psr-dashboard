@@ -161,18 +161,18 @@ export function bondAdvice(
     }
   }
   if (health === 'critical') {
-    // Only claim "avoid the fee" when a fee actually applies
-    // (bondRiskFeeSol>0). topUpToAvoidFee>0 alone is "claimable below the
-    // projected floor" — not the same as a charged fee; for out-of-set or
-    // otherwise no-fee rows, the truthful CTA is keep-stake, not a false
-    // fee claim.
+    // In-set critical bond (this branch only runs for in-set validators;
+    // out-of-set takes the outOfSetTip path). When the claimable bond sits
+    // below the projected floor (topUpToAvoidFee > 0), name the actual
+    // consequence: a fee. Whether the SDK has already CHARGED a fee this
+    // epoch (bondRiskFeeSol > 0) or it's about to fire next, the bond is
+    // in the fee zone and the action is the same — top up to clear it.
+    // This matches bondCoverageLabel in the Reserve row.
     const text =
-      bondRiskFeeSol > 0
-        ? coverage.topUpToAvoidFee > 0
-          ? `Top up ${topUp(coverage.topUpToAvoidFee)} to avoid the bond risk fee.`
-          : `Bond risk fee ${pay(bondRiskFeeSol)} this epoch.`
-        : coverage.topUpToAvoidFee > 0
-          ? `Top up ${topUp(coverage.topUpToAvoidFee)} to keep your stake.`
+      coverage.topUpToAvoidFee > 0
+        ? `Top up ${topUp(coverage.topUpToAvoidFee)} to avoid the bond risk fee.`
+        : bondRiskFeeSol > 0
+          ? `Bond risk fee ${pay(bondRiskFeeSol)} this epoch.`
           : 'Bond too thin — a bond risk fee can be charged.'
     return { text, urgency: 'critical', tone: 'red' }
   }

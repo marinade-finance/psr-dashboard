@@ -211,7 +211,12 @@ describe('getValidatorTip', () => {
     expect(tip.text).toContain('Bid too low')
   })
 
-  it('critical health, no actual fee → keep-stake (NOT a false fee claim)', () => {
+  it('critical health, claimable below floor → "avoid the bond risk fee" CTA', () => {
+    // Bond is in the fee-risk zone: claimable < projected floor (a.k.a.
+    // topUpToAvoidFee > 0). Whether the SDK has already CHARGED the fee
+    // this epoch (bondRiskFeeSol > 0) or it's about to fire next, the
+    // action is the same — top up. The CTA must name the consequence.
+    // alert (octagon + pulse) still gated on bondRiskFeeSol > 0.
     const validator = makeValidator({
       bondGoodForNEpochs: 4,
       bondBalanceSol: 0.001,
@@ -221,13 +226,12 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
-    // bondRiskFeeSol === 0 → must NOT claim "avoid the bond risk fee".
-    expect(tip.text).not.toContain('bond risk fee')
-    expect(tip.text).toContain('to keep your stake')
+    expect(tip.text).toContain('to avoid the bond risk fee')
+    // bondRiskFeeSol === 0 in fixture → alarm glyph stays off.
     expect(tip.alert).toBeFalsy()
   })
 
-  it('critical health (epochs > 5), no actual fee → keep-stake', () => {
+  it('critical health (epochs > 5), claimable below floor → "avoid the fee"', () => {
     const validator = makeValidator({
       bondGoodForNEpochs: 8,
       bondBalanceSol: 0.001,
@@ -237,8 +241,7 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
-    expect(tip.text).not.toContain('bond risk fee')
-    expect(tip.text).toContain('to keep your stake')
+    expect(tip.text).toContain('to avoid the bond risk fee')
     expect(tip.alert).toBeFalsy()
   })
 
