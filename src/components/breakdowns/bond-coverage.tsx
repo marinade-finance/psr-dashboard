@@ -3,7 +3,7 @@ import React from 'react'
 import { bondSol, pmpe, stake, topUp } from 'src/format'
 import { bondAdvice } from 'src/services/tip-engine'
 
-import { CalcCard, SIM_JUMP_BUTTON_CLASS, type CardStatus } from './card'
+import { CalcCard, type CardStatus } from './card'
 import { CalcRow, OkRow, SectionHeader } from './row'
 
 import type { BondCoverage } from 'src/services/bond-coverage'
@@ -69,7 +69,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
   isSimulated,
   onGoToSim,
 }) => {
-  const status = statusLine(
+  const baseStatus = statusLine(
     bondState,
     coverage,
     bondRiskFeeSol,
@@ -77,6 +77,12 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
     bondBalanceSol,
     expectedStakeDeltaSol,
   )
+  const status: CardStatus = onGoToSim
+    ? {
+        ...baseStatus,
+        action: { label: 'Simulate →', tone: 'yellow', onClick: onGoToSim },
+      }
+    : baseStatus
 
   // Show the penalty math whenever the bond is at risk (critical/watch) so
   // the user can SEE the threshold, how the fee is computed and the top-up
@@ -90,19 +96,12 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
     coverage.topUpToAvoidFee > 0 ||
     coverage.carriedPaidUndelegationSol > 0
 
-  const tip = onGoToSim ? (
-    <button className={SIM_JUMP_BUTTON_CLASS} onClick={onGoToSim}>
-      Simulate commission or bid changes →
-    </button>
-  ) : null
-
   return (
     <CalcCard
       title={title}
       guideTo={guideTo}
       isSimulated={isSimulated}
       status={status}
-      tip={tip}
     >
       <table className="w-full max-w-[34rem]">
         <tbody>

@@ -156,7 +156,7 @@ function overridesMessage(
   }
   const formatted =
     type === 'percentage' ? pct(overrideValue, 0) : String(overrideValue)
-  return `<b>Overrides ${label}: ${formatted}</b><br/>`
+  return `Overrides ${label}: ${formatted}`
 }
 
 export const selectBid = (validator: AuctionValidator) =>

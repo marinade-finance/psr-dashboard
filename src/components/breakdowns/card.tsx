@@ -1,15 +1,23 @@
 import React from 'react'
 
 import { cn } from 'src/class_utils'
+import { BondHealthState } from 'src/services/bond-health'
+import { TipUrgency, type ValidatorTip } from 'src/services/tip-engine'
+import { assertNever } from 'src/utils/assert-never'
 
 export type CardStatusTone = 'red' | 'yellow' | 'green' | 'grey'
+export type CardStatusAction = {
+  label: string
+  onClick: () => void
+  // Pill colour. Defaults to the banner's own tone (e.g. red status with a
+  // red "Bond tab →" pill). Override to 'yellow' for sim-jump pills so the
+  // simulation affordance reads consistently across tones.
+  tone?: CardStatusTone
+}
 export type CardStatus = {
   label: string
   tone: CardStatusTone
-  // Optional jump affordance rendered as a pill on the right side of the
-  // status banner — same visual as the validator-detail header banner's
-  // "Bond tab →" pill. Provide both label and onClick to render.
-  action?: { label: string; onClick: () => void }
+  action?: CardStatusAction
 }
 
 const STATUS_CLASSES: Record<CardStatusTone, string> = {
@@ -34,6 +42,75 @@ const STATUS_ACTION_CLASSES: Record<CardStatusTone, string> = {
   yellow: 'border-status-yellow text-status-yellow',
   green: 'border-primary text-primary',
   grey: 'border-muted-foreground text-muted-foreground',
+}
+
+// Bond tips colour off bond-health (red/yellow/green axis); other tips
+// colour off urgency. Returns the CardStatusTone for the validator-detail
+// header banner so it can reuse StatusBanner with the in-card visual.
+export const tipBannerTone = (
+  tip: ValidatorTip,
+  bondHealth: BondHealthState,
+): CardStatusTone => {
+  if (tip.constraint === 'bond' && tip.urgency !== TipUrgency.NEUTRAL) {
+    switch (bondHealth) {
+      case BondHealthState.NO_BOND:
+      case BondHealthState.CRITICAL:
+        return 'red'
+      case BondHealthState.WATCH:
+      case BondHealthState.SOFT:
+        return 'yellow'
+      case BondHealthState.HEALTHY:
+        return 'green'
+      default:
+        return assertNever(bondHealth)
+    }
+  }
+  switch (tip.urgency) {
+    case TipUrgency.CRITICAL:
+      return 'red'
+    case TipUrgency.WARNING:
+    case TipUrgency.INFO:
+      return 'yellow'
+    case TipUrgency.POSITIVE:
+      return 'green'
+    case TipUrgency.NEUTRAL:
+      return 'grey'
+    default:
+      return assertNever(tip.urgency)
+  }
+}
+
+// Shared status banner — rounded pill with status text on the left and an
+// optional action pill on the right. Used by CalcCard's status slot AND by
+// the validator-detail header tip banner so they stay byte-aligned.
+export const StatusBanner: React.FC<{
+  status: CardStatus
+  className?: string
+}> = ({ status, className }) => {
+  const actionTone = status.action?.tone ?? status.tone
+  return (
+    <div
+      className={cn(
+        'rounded-lg px-3 py-2 text-sm flex items-center gap-3',
+        STATUS_CLASSES[status.tone],
+        status.action && 'cursor-pointer select-none',
+        className,
+      )}
+      onClick={status.action?.onClick}
+    >
+      <span className="flex-1">{status.label}</span>
+      {status.action && (
+        <span
+          className={cn(
+            'text-xs font-medium shrink-0 px-2 py-0.5 rounded border whitespace-nowrap bg-card/55',
+            STATUS_ACTION_CLASSES[actionTone],
+          )}
+        >
+          {status.action.label}
+        </span>
+      )}
+    </div>
+  )
 }
 
 // Internal header for CalcCard — title + optional Guide link, with a
@@ -97,26 +174,7 @@ export const CalcCard: React.FC<{
     />
     {status && (
       <div className="mb-4">
-        <div
-          className={cn(
-            'rounded-lg px-3 py-2 text-sm flex items-center gap-3',
-            STATUS_CLASSES[status.tone],
-            status.action && 'cursor-pointer select-none',
-          )}
-          onClick={status.action?.onClick}
-        >
-          <span className="flex-1">{status.label}</span>
-          {status.action && (
-            <span
-              className={cn(
-                'text-xs font-medium shrink-0 px-2 py-0.5 rounded border whitespace-nowrap bg-card/55',
-                STATUS_ACTION_CLASSES[status.tone],
-              )}
-            >
-              {status.action.label}
-            </span>
-          )}
-        </div>
+        <StatusBanner status={status} />
         {tip && <div className="mt-2 px-3 text-left">{tip}</div>}
       </div>
     )}

@@ -5,7 +5,11 @@ import { cn } from 'src/class_utils'
 import { BidPenaltyBreakdown } from 'src/components/breakdowns/bid-penalty'
 import { BiddingBreakdown } from 'src/components/breakdowns/bidding'
 import { BondCoverageBreakdown } from 'src/components/breakdowns/bond-coverage'
-import { CalcCard } from 'src/components/breakdowns/card'
+import {
+  CalcCard,
+  StatusBanner,
+  tipBannerTone,
+} from 'src/components/breakdowns/card'
 import { docsPath } from 'src/components/breakdowns/docs-path'
 import { PaymentsBreakdown } from 'src/components/breakdowns/payments'
 import { SEPARATOR_DIV_CLASS } from 'src/components/breakdowns/row'
@@ -45,12 +49,11 @@ import {
 } from 'src/services/sam'
 import {
   getApyBreakdown,
-  getBondAdviceStyle,
   getValidatorTip,
   getTipStyle,
   getTipIcon,
 } from 'src/services/tip-engine'
-import { TipConstraint, TipUrgency } from 'src/services/tip-engine'
+import { TipConstraint } from 'src/services/tip-engine'
 import { assertNever } from 'src/utils/assert-never'
 
 import type { AuctionResult, DsSamConfig } from '@marinade.finance/ds-sam-sdk'
@@ -351,10 +354,6 @@ const PenaltyRow = ({
   </div>
 )
 
-/* eslint-disable sonarjs/cognitive-complexity --
-   The component composes tabs + simulation state + tip routing.
-   Splitting into helpers fragments the props plumbing without reducing
-   real complexity, so the rule is silenced for this function. */
 export const ValidatorDetail = ({
   validator,
   auctionResult,
@@ -362,7 +361,7 @@ export const ValidatorDetail = ({
   epochsPerYear,
   nameMap,
   notificationsMap,
-  rank: _rank,
+  rank,
   isSimulated = false,
   onClose,
   onSimulate,
@@ -484,14 +483,6 @@ export const ValidatorDetail = ({
   // TIP_TAB map so banner-nav and tab-dot can't disagree (previously the
   // banner's bid → overview contradicted the dot's bid → penalty).
   const isBondTip = tip.constraint === TipConstraint.BOND
-  // Bond tips normally follow the bond-health colour axis (red/yellow/green).
-  // Exception: a NEUTRAL bond tip (below-min bond with no fee pending) is
-  // an eligibility block, not an active charge — render grey to match the
-  // BondAdvice tone for the same case.
-  const bannerStyle =
-    isBondTip && tip.urgency !== TipUrgency.NEUTRAL
-      ? getBondAdviceStyle(bondHealth)
-      : tipStyle
   const tipTarget = TIP_TAB[tip.constraint]
 
   const attention = tabAttention({
@@ -523,10 +514,10 @@ export const ValidatorDetail = ({
         title="Validator detail"
         className={cn(
           'w-full max-w-4xl overflow-y-auto p-0',
-          isSimulated && 'border-t-4 border-t-status-yellow',
+          isSimulated && 'ring-4 ring-inset ring-status-yellow',
         )}
       >
-        <div className="flex items-start justify-between px-4 sm:px-6 py-4 border-b border-border sticky top-0 z-10 gap-2 bg-background">
+        <div className="flex items-start justify-between px-4 sm:px-6 py-4 sticky top-0 z-10 gap-2 bg-background">
           <div className="flex flex-col gap-1 min-w-0">
             <button
               className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors self-start"
@@ -552,16 +543,14 @@ export const ValidatorDetail = ({
                   <span className="text-sm leading-none">
                     {getTipIcon(tip)}
                   </span>
-                  {posVsWinning < 0
-                    ? `-#${Math.abs(posVsWinning)}`
-                    : `#${posVsWinning}`}
+                  {`#${rank}`}
                 </span>
                 <span className="text-xs font-mono text-muted-foreground">
-                  {inSet
-                    ? posVsWinning === 0
-                      ? 'at winning edge'
-                      : `${posVsWinning} ${posVsWinning === 1 ? 'place' : 'places'} above winning`
-                    : `${Math.abs(posVsWinning)} ${Math.abs(posVsWinning) === 1 ? 'place' : 'places'} below winning`}
+                  {posVsWinning === 0
+                    ? 'at winning edge'
+                    : posVsWinning > 0
+                      ? `${posVsWinning} ${posVsWinning === 1 ? 'place' : 'places'} above winning`
+                      : `${Math.abs(posVsWinning)} ${Math.abs(posVsWinning) === 1 ? 'place' : 'places'} below winning`}
                 </span>
               </span>
               {validatorName && (
@@ -625,39 +614,20 @@ export const ValidatorDetail = ({
           </div>
         </div>
 
-        <div
-          className={cn(
-            // Floating rounded banner — same look as the in-card status
-            // banner, just larger. Side margin keeps it off the panel edges.
-            'mx-4 sm:mx-6 my-3 rounded-lg px-3 py-2 flex items-center gap-3',
-            // Hide the jump affordance when the user is already on the
-            // target tab — the pill would be a no-op and the cursor
-            // pretending to be clickable misleads.
-            tipTarget && tipTarget !== tab && 'cursor-pointer select-none',
-          )}
-          style={{ background: bannerStyle.bg }}
-          onClick={
-            tipTarget && tipTarget !== tab ? () => setTab(tipTarget) : undefined
-          }
-        >
-          <span
-            className="text-sm font-medium flex-1"
-            style={{ color: bannerStyle.color }}
-          >
-            {tip.text}
-          </span>
-          {tipTarget && tipTarget !== tab && (
-            <span
-              className="text-xs font-medium shrink-0 px-2 py-0.5 rounded border whitespace-nowrap bg-card/55"
-              style={{
-                color: bannerStyle.color,
-                borderColor: bannerStyle.color,
-              }}
-            >
-              {isBondTip ? 'Bond tab →' : 'Simulate →'}
-            </span>
-          )}
-        </div>
+        <StatusBanner
+          className="mx-4 sm:mx-6 my-3"
+          status={{
+            label: tip.text,
+            tone: tipBannerTone(tip, bondHealth),
+            action:
+              tipTarget && tipTarget !== tab
+                ? {
+                    label: isBondTip ? 'Bond tab →' : 'Simulate →',
+                    onClick: () => setTab(tipTarget),
+                  }
+                : undefined,
+          }}
+        />
 
         {/*
           Tabs no longer render a tab-level title or Guide link.

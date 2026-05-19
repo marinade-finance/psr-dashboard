@@ -3,7 +3,7 @@ import React from 'react'
 import { cost, pct, pmpe, stake } from 'src/format'
 import { computeBidPenalty } from 'src/services/bid-penalty'
 
-import { CalcCard, SIM_JUMP_BUTTON_CLASS, type CardStatus } from './card'
+import { CalcCard, type CardStatus } from './card'
 import { CalcRow, OkRow, SectionHeader } from './row'
 
 import type {
@@ -32,7 +32,7 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
 }) => {
   const metrics = computeBidPenalty(validator, dsSamConfig, winningTotalPmpe)
 
-  const status: CardStatus = {
+  const baseStatus: Omit<CardStatus, 'action'> = {
     label:
       metrics.penaltySol > 0
         ? `Raise bid or pay a ${cost(metrics.penaltySol)} penalty this epoch.`
@@ -41,14 +41,16 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
           : 'Bid did not decrease — no penalty.',
     tone: metrics.penaltySol > 0 ? 'red' : 'green',
   }
-
-  const tip = onGoToSim ? (
-    <button className={SIM_JUMP_BUTTON_CLASS} onClick={onGoToSim}>
-      {metrics.penaltyPmpe > 0
-        ? `Raise bid to ≥ ${pmpe(metrics.adjustedLimit)} PMPE in simulation →`
-        : 'Simulate bid or commission changes →'}
-    </button>
-  ) : null
+  const status: CardStatus = onGoToSim
+    ? {
+        ...baseStatus,
+        action: {
+          label: metrics.penaltyPmpe > 0 ? 'Raise bid in sim →' : 'Simulate →',
+          tone: 'yellow',
+          onClick: onGoToSim,
+        },
+      }
+    : baseStatus
 
   return (
     <CalcCard
@@ -56,7 +58,6 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
       guideTo={guideTo}
       isSimulated={isSimulated}
       status={status}
-      tip={tip}
     >
       <table className="w-full max-w-[34rem]">
         <tbody>

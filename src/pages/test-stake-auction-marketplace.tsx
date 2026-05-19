@@ -14,6 +14,7 @@ import {
   TEST_VALIDATOR_NAMES,
 } from 'src/fixtures/test-validators'
 import { SamPage } from 'src/pages/stake-auction-marketplace'
+import { runSdkRerun } from 'src/services/sdk-rerun'
 
 import type { UserLevelProps } from 'src/components/navigation/navigation'
 import type { SamDataSources } from 'src/pages/stake-auction-marketplace'
@@ -62,7 +63,15 @@ export const TestSamPage: React.FC<UserLevelProps> = ({ level }) => {
   })
   const dataSources = useMemo<SamDataSources>(
     () => ({
-      loadAuction: () => Promise.resolve(SAM_RESULT),
+      loadAuction: overrides =>
+        Promise.resolve({
+          ...SAM_RESULT,
+          auctionResult: runSdkRerun(
+            TEST_AUCTION_RESULT.auctionData,
+            TEST_DS_SAM_CONFIG,
+            overrides,
+          ),
+        }),
       loadValidatorNames: () => Promise.resolve(TEST_VALIDATOR_NAMES),
     }),
     [],

@@ -8,7 +8,7 @@ import {
   selectProtectedStakeReason,
 } from 'src/services/protected-events'
 
-import { CalcCard, SIM_JUMP_BUTTON_CLASS, type CardStatus } from './card'
+import { CalcCard, type CardStatus } from './card'
 import { CalcRow, SectionHeader } from './row'
 
 import type { ProtectedEvent } from 'src/services/protected-events'
@@ -57,33 +57,30 @@ export const PaymentsBreakdown: React.FC<Props> = ({
   const total = m.total + penaltyTotal
   const hasPenalty = penaltyTotal > 0
 
-  const status: CardStatus = {
+  const baseStatus: Omit<CardStatus, 'action'> = {
     label: hasPenalty
       ? `You will pay ${cost(total)} in total this epoch — including ${cost(penaltyTotal)} in penalties.`
       : `You will pay ${cost(total)} in total this epoch — no penalties.`,
     tone: hasPenalty ? 'red' : 'green',
   }
+  const status: CardStatus = onGoToSim
+    ? {
+        ...baseStatus,
+        action: { label: 'Simulate →', tone: 'yellow', onClick: onGoToSim },
+      }
+    : baseStatus
 
-  const tip = (
-    <div className="flex flex-col gap-2">
-      {bidTooLowPenaltySol > 0 && onGoToPenalty && (
-        <button
-          className="text-xs text-destructive hover:underline text-left"
-          onClick={onGoToPenalty}
-        >
-          See bid-too-low penalty calculation →
-        </button>
-      )}
-      {onGoToSim && (
-        <button
-          className={`${SIM_JUMP_BUTTON_CLASS} self-start`}
-          onClick={onGoToSim}
-        >
-          Simulate commission or bid changes →
-        </button>
-      )}
-    </div>
-  )
+  // The penalty-link stays as a `tip` (rendered under the status banner) —
+  // it's a destructive cross-tab affordance, not a sim action.
+  const tip =
+    bidTooLowPenaltySol > 0 && onGoToPenalty ? (
+      <button
+        className="text-xs text-destructive hover:underline text-left"
+        onClick={onGoToPenalty}
+      >
+        See bid-too-low penalty calculation →
+      </button>
+    ) : null
 
   return (
     <CalcCard

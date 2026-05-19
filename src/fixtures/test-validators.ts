@@ -1095,7 +1095,7 @@ export const TEST_AUCTION_RESULT: AuctionResult = {
     stakeAmounts: {
       networkTotalSol: 2_000_000_000,
       marinadeSamTvlSol: TVL,
-      marinadeRemainingSamSol: TVL - 2_500_000,
+      marinadeRemainingSamSol: 300_000,
     },
     blacklist: new Set<string>(),
   },

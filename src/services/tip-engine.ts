@@ -409,11 +409,16 @@ function bidCta(
       delta,
     )
   }
-  // No penalty — out-of-set with an adequate bond becomes the rank CTA.
-  // Below-min bond is the bond lever's territory; defer.
+  // No penalty — out-of-set with an adequate bond becomes the rank CTA,
+  // BUT only when the bid is actually the problem. A validator can be
+  // out-of-set with a totalPmpe well above the winning total because a
+  // country/ASO/validator cap binds, or because they're sam-blocked. In
+  // those cases telling them to raise the bid is a lie — defer to capCta
+  // (or stay silent).
   if (
     !selectInSet(validator) &&
-    (validator.bondBalanceSol ?? 0) >= dsSamConfig.minBondBalanceSol
+    (validator.bondBalanceSol ?? 0) >= dsSamConfig.minBondBalanceSol &&
+    validator.revShare.totalPmpe < winningTotalPmpe
   ) {
     return tip(
       'Bid too low. Raise it to qualify for stake.',
@@ -441,6 +446,67 @@ function capCauseLine(
     default:
       return 'At a concentration cap'
   }
+}
+
+// Out-of-set despite a high enough totalPmpe. The bid isn't the lever —
+// some other constraint binds. Names the actual reason so the user knows
+// what to investigate (or accept) instead of seeing the deltaCta's
+// misleading "Losing N SOL" symptom.
+//
+// Reasons in priority order (most specific first):
+//   - samBlocked: hard block during auction (penalty escalation, etc.)
+//   - !samEligible: failed pre-auction gate (blacklist / client version /
+//     vote credits / no bond / totalPmpe below minimum)
+//   - lastCapConstraint binding: concentration / want cap
+//   - maxStakeWanted === 0: validator opted out of stake entirely
+//   - default: generic "constraint binds, investigate"
+function outOfSetCta(
+  validator: AugmentedAuctionValidator,
+  winningTotalPmpe: number,
+  delta: number,
+): ValidatorTip | null {
+  if (selectInSet(validator)) return null
+  // Bid actually is the lever to pull → let bidCta own the message.
+  if (validator.revShare.totalPmpe < winningTotalPmpe) return null
+  if (validator.samBlocked) {
+    return tip(
+      'Blocked from SAM this epoch.',
+      TipUrgency.WARNING,
+      TipConstraint.NONE,
+      delta,
+    )
+  }
+  if (!validator.samEligible) {
+    return tip(
+      'Not eligible — check blacklist, client version, vote credits, bond.',
+      TipUrgency.WARNING,
+      TipConstraint.NONE,
+      delta,
+    )
+  }
+  const cap = validator.lastCapConstraint
+  if (cap && cap.totalLeftToCapSol === 0) {
+    return tip(
+      `${capCauseLine(cap.constraintType, cap.constraintName)} — out of set.`,
+      TipUrgency.INFO,
+      TipConstraint.CAP,
+      delta,
+    )
+  }
+  if (validator.maxStakeWanted === 0) {
+    return tip(
+      'Max-stake-wanted set to 0 — opted out.',
+      TipUrgency.INFO,
+      TipConstraint.NONE,
+      delta,
+    )
+  }
+  return tip(
+    'Out of set — bid is high enough, another constraint binds.',
+    TipUrgency.WARNING,
+    TipConstraint.NONE,
+    delta,
+  )
 }
 
 // Cap lever. In-set + losing stake + a binding concentration cap
@@ -471,7 +537,11 @@ function capCta(
 // Delta lever — the "stake trajectory" fallback. Always emits something
 // for in-set validators except when the cap lever explains the loss
 // (mutual exclusion at source so we don't have to lie with urgency).
-function deltaCta(delta: number, capBinding: boolean): ValidatorTip {
+function deltaCta(
+  validator: AugmentedAuctionValidator,
+  delta: number,
+  capBinding: boolean,
+): ValidatorTip {
   if (delta > 0) {
     return tip(
       `${stake(delta)} arriving next epoch.`,
@@ -483,8 +553,15 @@ function deltaCta(delta: number, capBinding: boolean): ValidatorTip {
   // delta < 0 with a binding cap: cap owns the narrative — surface 'at
   // target' so cap (info) isn't beaten by losing (warning).
   if (delta === 0 || capBinding) {
+    // Differentiate "you're at YOUR own cap" from "you're at SAM's target".
+    // maxStakeWanted is the validator's opt-out knob; if they're at or above
+    // it, the lever to grow is theirs to pull, not SAM's. Other delta-0 cases
+    // are SAM-determined and not actionable from the validator's side.
+    const wanted = validator.maxStakeWanted
+    const target = validator.auctionStake.marinadeSamTargetSol
+    const atOwnCap = wanted != null && target >= wanted - 1e-6
     return tip(
-      'At target stake.',
+      atOwnCap ? 'At your max-stake-wanted setting.' : 'At target stake.',
       TipUrgency.NEUTRAL,
       TipConstraint.NONE,
       delta,
@@ -518,8 +595,9 @@ export const getValidatorTip = (
       precomputedCoverage,
     ),
     bidCta(validator, dsSamConfig, winningTotalPmpe, delta),
+    outOfSetCta(validator, winningTotalPmpe, delta),
     cap,
-    deltaCta(delta, cap !== null),
+    deltaCta(validator, delta, cap !== null),
   )
 }
 
