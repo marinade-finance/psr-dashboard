@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 
 import { ICON_BID } from 'src/components/icons/icon-bid'
 import { ICON_BOND } from 'src/components/icons/icon-bond'
+import { ICON_CAP } from 'src/components/icons/icon-cap'
 import { ICON_DOWN } from 'src/components/icons/icon-down'
 import { ICON_RIGHT } from 'src/components/icons/icon-right'
 import { ICON_UP } from 'src/components/icons/icon-up'
@@ -171,6 +172,10 @@ describe('getTipIcon', () => {
     expect(getTipIcon(tip({ constraint: 'rank' }))).toBe(ICON_BID)
   })
 
+  it('constraint:cap → fixed non-directional cap glyph', () => {
+    expect(getTipIcon(tip({ constraint: 'cap' }))).toBe(ICON_CAP)
+  })
+
   it('constraint:none — delta>0 → up, delta<0 → down, delta=0 → right', () => {
     expect(getTipIcon(tip({ constraint: 'none', delta: 100 }))).toBe(ICON_UP)
     expect(getTipIcon(tip({ constraint: 'none', delta: -100 }))).toBe(ICON_DOWN)
@@ -237,7 +242,7 @@ describe('getValidatorTip', () => {
     expect(tip.alert).toBeFalsy()
   })
 
-  it('soft health (bond covers stake but not ideal) → info/bond top-up', () => {
+  it('soft health (bond covers stake but not ideal) → warning/bond top-up', () => {
     // delta must be <= 0 to isolate the soft branch: a positive delta makes
     // "top up to grow stake" contradictory, so it correctly defers to the
     // positive "arriving next epoch" message (see contradiction test below).
@@ -248,7 +253,7 @@ describe('getValidatorTip', () => {
       values: { expectedStakeChangeSol: 0 },
     })
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
-    expect(tip.urgency).toBe('info')
+    expect(tip.urgency).toBe('warning')
     expect(tip.constraint).toBe('bond')
     expect(tip.text).toContain('Top up')
   })
@@ -282,12 +287,87 @@ describe('getValidatorTip', () => {
     expect(tip.constraint).toBe('none')
     expect(tip.text).toContain('Losing')
   })
+
+  it('delta < 0 + binding ASO cap → info/cap, names the ASO', () => {
+    const validator = makeValidator({
+      values: { expectedStakeChangeSol: -3953 },
+      lastCapConstraint: {
+        constraintType: 'ASO',
+        constraintName: 'Hetzner Online GmbH',
+        totalStakeSol: 1_450_000,
+        totalLeftToCapSol: 0,
+        marinadeStakeSol: 1_450_000,
+        marinadeLeftToCapSol: 0,
+        validators: [],
+      },
+    })
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
+    expect(tip.urgency).toBe('info')
+    expect(tip.constraint).toBe('cap')
+    expect(tip.text).toContain('Hetzner Online GmbH')
+    expect(tip.text).toContain('ASO at cap')
+    expect(tip.text).toContain('until cap frees')
+  })
+
+  it('delta < 0 + binding country cap → reads "at country cap"', () => {
+    const validator = makeValidator({
+      values: { expectedStakeChangeSol: -1200 },
+      lastCapConstraint: {
+        constraintType: 'COUNTRY',
+        constraintName: 'Germany',
+        totalStakeSol: 2_000_000,
+        totalLeftToCapSol: 0,
+        marinadeStakeSol: 2_000_000,
+        marinadeLeftToCapSol: 0,
+        validators: [],
+      },
+    })
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
+    expect(tip.constraint).toBe('cap')
+    expect(tip.text).toContain('Germany at country cap')
+  })
+
+  it('lastCapConstraint with headroom (totalLeftToCapSol > 0) → no cap CTA', () => {
+    const validator = makeValidator({
+      values: { expectedStakeChangeSol: -5000 },
+      lastCapConstraint: {
+        constraintType: 'ASO',
+        constraintName: 'Hetzner Online GmbH',
+        totalStakeSol: 1_000_000,
+        totalLeftToCapSol: 50_000,
+        marinadeStakeSol: 1_000_000,
+        marinadeLeftToCapSol: 50_000,
+        validators: [],
+      },
+    })
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
+    expect(tip.constraint).toBe('none')
+    expect(tip.text).toContain('Losing')
+  })
+
+  it('delta > 0 + binding cap → cap branch does not displace positive', () => {
+    const validator = makeValidator({
+      values: { expectedStakeChangeSol: 5000 },
+      lastCapConstraint: {
+        constraintType: 'ASO',
+        constraintName: 'Hetzner Online GmbH',
+        totalStakeSol: 1_000_000,
+        totalLeftToCapSol: 0,
+        marinadeStakeSol: 1_000_000,
+        marinadeLeftToCapSol: 0,
+        validators: [],
+      },
+    })
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
+    expect(tip.constraint).toBe('none')
+    expect(tip.urgency).toBe('positive')
+  })
 })
 
 // --- B8: getValidatorTip soft health gets bond CTA ---
 
 describe('getValidatorTip soft health', () => {
-  it('soft health with topUpToIdealKeep > 0 → info/bond tip', () => {
+  it('soft health with topUpToIdealKeep > 0 → warning/bond tip', () => {
     // bondBalanceSol=50 < idealBondPmpe/1000 * stake = (6/1000)*10000 = 60
     // claimableBondBalanceSol=50 >= minBondPmpe/1000 * stake = (1/1000)*10000 = 10
     // → topUpToAvoidFee=0, topUpToKeepStake=0, topUpToIdealKeep=10 → 'soft'
@@ -299,7 +379,7 @@ describe('getValidatorTip soft health', () => {
     })
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.constraint).toBe('bond')
-    expect(tip.urgency).toBe('info')
+    expect(tip.urgency).toBe('warning')
     expect(tip.text).toContain('SOL')
   })
 })
