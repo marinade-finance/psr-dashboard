@@ -389,7 +389,13 @@ export const ValidatorDetail = ({
   // the runway to Depleted so Balance, Reserve and Bid runway tell one
   // coherent story instead of "0 SOL / Critical / 6 epochs".
   const bondRunway = effectiveBondRunway(validator, bondHealth)
-  const tip = getValidatorTip(validator, dsSamConfig, winningTotalPmpe)
+  const tip = getValidatorTip(
+    validator,
+    dsSamConfig,
+    winningTotalPmpe,
+    undefined,
+    auctionResult.auctionData.blacklist,
+  )
   const tipStyle = getTipStyle(tip.urgency)
   const expectedStakeDelta = selectExpectedStakeChange(validator)
   const [tab, setTab] = useState<Tab>('overview')

@@ -727,6 +727,7 @@ export const SamTable: React.FC<Props> = ({
       dsSamConfig,
       winningTotalPmpe,
       validator.bondCoverage,
+      auctionResult.auctionData.blacklist,
     )
     const tipStyle = getTipStyle(tip.urgency)
 

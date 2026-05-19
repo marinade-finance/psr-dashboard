@@ -448,6 +448,12 @@ function capCauseLine(
   }
 }
 
+// Severity threshold for out-of-set tips: validators with more than this
+// much active Marinade stake have real stake at risk → critical/red.
+// Below it, the "out of set" status is informational, not a fire — grey.
+// 10k is the practical "real validator vs novelty" line on Solana.
+const NON_TRIVIAL_STAKE_SOL = 10_000
+
 // Out-of-set despite a high enough totalPmpe. The bid isn't the lever —
 // some other constraint binds. Names the actual reason so the user knows
 // what to investigate (or accept) instead of seeing the deltaCta's
@@ -455,31 +461,57 @@ function capCauseLine(
 //
 // Reasons in priority order (most specific first):
 //   - samBlocked: hard block during auction (penalty escalation, etc.)
-//   - !samEligible: failed pre-auction gate (blacklist / client version /
-//     vote credits / no bond / totalPmpe below minimum)
+//   - !samEligible: failed pre-auction gate — narrowed down by inspecting
+//     bondBalanceSol / blacklist where we can; falls back to a "check
+//     the usual suspects" hint otherwise
 //   - lastCapConstraint binding: concentration / want cap
 //   - maxStakeWanted === 0: validator opted out of stake entirely
 //   - default: generic "constraint binds, investigate"
+//
+// Severity tracks ACTIVE STAKE — > 10k means real stake at risk so the
+// tip goes critical-red; otherwise grey/neutral.
 function outOfSetCta(
   validator: AugmentedAuctionValidator,
   winningTotalPmpe: number,
   delta: number,
+  blacklist?: Set<string>,
 ): ValidatorTip | null {
   if (selectInSet(validator)) return null
   // Bid actually is the lever to pull → let bidCta own the message.
   if (validator.revShare.totalPmpe < winningTotalPmpe) return null
+
+  const atRisk =
+    (validator.marinadeActivatedStakeSol ?? 0) > NON_TRIVIAL_STAKE_SOL
+  const urgency = atRisk ? TipUrgency.CRITICAL : TipUrgency.NEUTRAL
+
   if (validator.samBlocked) {
     return tip(
       'Blocked from SAM this epoch.',
-      TipUrgency.WARNING,
+      urgency,
       TipConstraint.NONE,
       delta,
     )
   }
   if (!validator.samEligible) {
+    // Narrow the eligibility failure to the most actionable specific cause
+    // we can detect from data we have. Bond + blacklist are cheap checks;
+    // client-version semver matching and per-epoch vote-credit thresholds
+    // need the SDK's internal computation — fall through to a hint that
+    // names the remaining suspects.
+    if (validator.bondBalanceSol == null) {
+      return tip(
+        'No bond posted. Add a bond to qualify.',
+        urgency,
+        TipConstraint.BOND,
+        delta,
+      )
+    }
+    if (blacklist?.has(validator.voteAccount)) {
+      return tip('Blacklisted by Marinade.', urgency, TipConstraint.NONE, delta)
+    }
     return tip(
-      'Not eligible — check blacklist, client version, vote credits, bond.',
-      TipUrgency.WARNING,
+      'Not eligible — check client version and vote credits.',
+      urgency,
       TipConstraint.NONE,
       delta,
     )
@@ -488,7 +520,7 @@ function outOfSetCta(
   if (cap && cap.totalLeftToCapSol === 0) {
     return tip(
       `${capCauseLine(cap.constraintType, cap.constraintName)} — out of set.`,
-      TipUrgency.INFO,
+      atRisk ? TipUrgency.WARNING : TipUrgency.INFO,
       TipConstraint.CAP,
       delta,
     )
@@ -496,6 +528,8 @@ function outOfSetCta(
   if (validator.maxStakeWanted === 0) {
     return tip(
       'Max-stake-wanted set to 0 — opted out.',
+      // User-controlled choice; never escalate beyond info even when stake
+      // is on the line — they did this on purpose.
       TipUrgency.INFO,
       TipConstraint.NONE,
       delta,
@@ -503,7 +537,7 @@ function outOfSetCta(
   }
   return tip(
     'Out of set — bid is high enough, another constraint binds.',
-    TipUrgency.WARNING,
+    urgency,
     TipConstraint.NONE,
     delta,
   )
@@ -583,6 +617,9 @@ export const getValidatorTip = (
   // coverage to feed both the bond chip AND this tip. Passing it through
   // avoids a second computeBondCoverage call inside bondCta.
   precomputedCoverage?: BondCoverage,
+  // Optional blacklist set from the auction data — lets outOfSetCta name
+  // the specific eligibility failure when blacklist is the cause.
+  blacklist?: Set<string>,
 ): ValidatorTip => {
   const delta = validator.values.expectedStakeChangeSol ?? 0
   const cap = capCta(validator, delta)
@@ -595,7 +632,7 @@ export const getValidatorTip = (
       precomputedCoverage,
     ),
     bidCta(validator, dsSamConfig, winningTotalPmpe, delta),
-    outOfSetCta(validator, winningTotalPmpe, delta),
+    outOfSetCta(validator, winningTotalPmpe, delta, blacklist),
     cap,
     deltaCta(validator, delta, cap !== null),
   )
