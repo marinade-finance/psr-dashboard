@@ -23,7 +23,7 @@ import {
 } from 'src/css'
 import { pay, stake, topUp } from 'src/format'
 
-import { bidTooLowPenaltySol } from './bid-penalty'
+import { computeBidPenalty } from './bid-penalty'
 import { computeBondCoverage } from './bond-coverage'
 import { bondHealthFromAuction } from './bond-health'
 import { apyBreakdown } from './calculations'
@@ -162,17 +162,18 @@ export function bondAdvice(
   }
   if (health === 'critical') {
     // In-set critical bond (this branch only runs for in-set validators;
-    // out-of-set takes the outOfSetTip path). When the claimable bond sits
-    // below the projected floor (topUpToAvoidFee > 0), name the actual
-    // consequence: a fee. Whether the SDK has already CHARGED a fee this
-    // epoch (bondRiskFeeSol > 0) or it's about to fire next, the bond is
-    // in the fee zone and the action is the same — top up to clear it.
-    // This matches bondCoverageLabel in the Reserve row.
+    // out-of-set takes the outOfSetTip path). Every value here is the
+    // SDK's pre-settlement ESTIMATE for the next not-yet-settled epoch —
+    // never a charged-and-settled fact (those live in protected-events
+    // after the epoch closes). When the claimable bond sits below the
+    // projected floor (topUpToAvoidFee > 0), name the consequence: a
+    // fee. The action is the same — top up to clear it. This matches
+    // bondCoverageLabel in the Reserve row.
     const text =
       coverage.topUpToAvoidFee > 0
         ? `Top up ${topUp(coverage.topUpToAvoidFee)} to avoid the bond risk fee.`
         : bondRiskFeeSol > 0
-          ? `Bond risk fee ${pay(bondRiskFeeSol)} this epoch.`
+          ? `Estimated bond risk fee ${pay(bondRiskFeeSol)} next epoch.`
           : 'Bond too thin — a bond risk fee can be charged.'
     return { text, urgency: 'critical', tone: 'red' }
   }
@@ -200,92 +201,229 @@ export function bondAdvice(
   }
 }
 
-// Cap-binding CTA. When the validator is in-set, bond and bid are fine
-// (the cascades above didn't fire), and stake is leaking out, the BINDING
-// cause is the concentration cap (ASO or country) — not the bid and not
-// the bond. Guard on totalLeftToCapSol === 0 to isolate the actually-at-
-// cap case (the SDK populates lastCapConstraint with last-pass info even
-// when there's room left). Urgency:info — nothing the validator can do
-// via bond/bid; calling it warning would imply user error.
-function capBindingTip(
+// One CTA source per LEVER. Each helper owns its lever's wording and
+// urgency end-to-end; getValidatorTip just picks the highest-severity
+// candidate (with lever priority breaking ties). visuals.md doctrine:
+// color = severity, glyph = lever — keep them orthogonal at the source.
+
+const SEVERITY_ORDER: Record<TipUrgency, number> = {
+  critical: 0,
+  warning: 1,
+  info: 2,
+  positive: 3,
+  neutral: 4,
+}
+// Tiebreak at the same severity. Bond first (most actionable, hardest
+// block), then bid/rank (same lever — raise the bid), then cap (non-
+// actionable explanation), then none (the delta fallback).
+const LEVER_ORDER: Record<TipConstraint, number> = {
+  bond: 0,
+  bid: 1,
+  rank: 1,
+  cap: 2,
+  none: 3,
+}
+
+function tip(
+  text: string,
+  urgency: TipUrgency,
+  constraint: TipConstraint,
+  delta: number,
+  alert?: boolean,
+): ValidatorTip {
+  return alert
+    ? { text, urgency, constraint, delta, alert }
+    : { text, urgency, constraint, delta }
+}
+
+function selectTip(...candidates: (ValidatorTip | null)[]): ValidatorTip {
+  const live = candidates.filter((c): c is ValidatorTip => c !== null)
+  live.sort(
+    (a, b) =>
+      SEVERITY_ORDER[a.urgency] - SEVERITY_ORDER[b.urgency] ||
+      LEVER_ORDER[a.constraint] - LEVER_ORDER[b.constraint],
+  )
+  return live[0]
+}
+
+// Bond lever. Out-of-set + below-min is a hard block on the bond axis
+// (clipBondStakeCap → 0); in-set unhealthy bond gets the canonical
+// bondAdvice() text. Returns null when the bond is not the lever to pull
+// (out-of-set with bond OK, in-set with healthy bond, or the soft-bond +
+// gaining-stake exception — see comment below).
+function bondCta(
+  validator: AugmentedAuctionValidator,
+  dsSamConfig: DsSamConfig,
+  winningTotalPmpe: number,
+  delta: number,
+): ValidatorTip | null {
+  const bondBalance = validator.bondBalanceSol ?? 0
+  const bondRiskFeeSol = validator.values?.bondRiskFeeSol ?? 0
+  const coverage = computeBondCoverage(validator, dsSamConfig, winningTotalPmpe)
+
+  // Out-of-set: bond is the lever only when below-min (hard block). With an
+  // adequate bond the bid is the lever — defer to bidCta.
+  if (!selectInSet(validator)) {
+    if (bondBalance >= dsSamConfig.minBondBalanceSol) return null
+    // Fee impending leads — but only when a fee actually applies. Absent a
+    // fee, below-min is the hard block and "qualify" is the right call.
+    if (bondRiskFeeSol > 0) {
+      // The fee top-up alone may not clear the below-min hard block. Pin
+      // the CTA to whichever number is bigger so following it both avoids
+      // the fee AND re-qualifies the validator.
+      const topUpAmt = Math.max(
+        coverage.topUpToAvoidFee,
+        dsSamConfig.minBondBalanceSol - bondBalance,
+      )
+      return tip(
+        topUpAmt > 0
+          ? `Top up ${topUp(topUpAmt)} to avoid the fee and re-qualify.`
+          : `Estimated bond risk fee ${pay(bondRiskFeeSol)} next epoch.`,
+        'critical',
+        'bond',
+        delta,
+        true,
+      )
+    }
+    return tip(
+      bondBalance <= 0
+        ? `Post a bond of ${stake(dsSamConfig.minBondBalanceSol)} to qualify.`
+        : `Top up bond to ${stake(dsSamConfig.minBondBalanceSol)} to qualify.`,
+      'critical',
+      'bond',
+      delta,
+    )
+  }
+
+  // In-set: emit the bond CTA only for unhealthy bond, AND only when the
+  // advice is still truthful next to delta. "Top up to grow stake" (soft +
+  // ideal-keep top-up) contradicts a genuine positive delta — the inflow is
+  // already arriving — so it defers. Critical fee + watch keep-stake stay
+  // ahead of delta: the inflow neither pays a fee nor refills the bond.
+  const health = bondHealthFromAuction(validator, dsSamConfig, winningTotalPmpe)
+  const fires =
+    health === 'critical' ||
+    (health === 'watch' && coverage.topUpToKeepStake > 0) ||
+    (health === 'soft' && coverage.topUpToIdealKeep > 0 && delta <= 0)
+  if (!fires) return null
+  const advice = bondAdvice(
+    coverage,
+    health,
+    bondRiskFeeSol,
+    dsSamConfig.minBondBalanceSol,
+    bondBalance,
+  )
+  // Alert (octagon + pulse) ONLY when a fee is actually charged this epoch.
+  return tip(
+    advice.text,
+    health === 'critical' ? 'critical' : 'warning',
+    'bond',
+    delta,
+    health === 'critical' && bondRiskFeeSol > 0,
+  )
+}
+
+// Bid lever. Two mutually exclusive triggers — out-of-set + bond-OK
+// (raise the bid to qualify) and in-set + bid-too-low penalty (raise it
+// or pay the recurring penalty). Uses computeBidPenalty so the CTA can
+// never contradict the bid-penalty breakdown the user clicks through to
+// (both surfaces consume the same penaltyPmpe / penaltySol).
+function bidCta(
+  validator: AugmentedAuctionValidator,
+  dsSamConfig: DsSamConfig,
+  winningTotalPmpe: number,
+  delta: number,
+): ValidatorTip | null {
+  if (!selectInSet(validator)) {
+    if ((validator.bondBalanceSol ?? 0) < dsSamConfig.minBondBalanceSol) {
+      return null
+    }
+    return tip(
+      'Bid too low. Raise it to qualify for stake.',
+      'warning',
+      'rank',
+      delta,
+    )
+  }
+  const metrics = computeBidPenalty(validator, dsSamConfig, winningTotalPmpe)
+  if (metrics.penaltyPmpe <= 0) return null
+  // Penalty is real money charged this epoch — critical (red), not warning
+  // (amber). Alert/octagon stays reserved for bond risk fee; bid penalty
+  // is critical-red without the escalation.
+  return tip(
+    `Raise bid or pay a ${pay(metrics.penaltySol)} penalty.`,
+    'critical',
+    'bid',
+    delta,
+  )
+}
+
+function capCauseLine(
+  type: AuctionConstraintType | undefined,
+  name: string | undefined,
+): string {
+  switch (type) {
+    case AuctionConstraintType.COUNTRY:
+      return `${name ?? 'Country'} at country cap`
+    case AuctionConstraintType.ASO:
+      return `${name ?? 'ASO'} at ASO cap`
+    case AuctionConstraintType.VALIDATOR:
+      return 'At per-validator cap'
+    case AuctionConstraintType.WANT:
+      return 'At your stake-wanted setting'
+    default:
+      return 'At a concentration cap'
+  }
+}
+
+// Cap lever. In-set + losing stake + a binding concentration cap
+// (totalLeftToCapSol === 0). Non-actionable explanation — the validator
+// can't unilaterally clear an ASO/country cap. Urgency:info keeps the
+// chip distinct from warning-yellow (which implies "act"); cap outranks
+// the generic delta-losing message via mutual exclusion in deltaCta, not
+// by lying about urgency.
+function capCta(
   validator: AugmentedAuctionValidator,
   delta: number,
 ): ValidatorTip | null {
   const cap = validator.lastCapConstraint
   if (delta >= 0 || cap == null || cap.totalLeftToCapSol !== 0) return null
-  const losing = stake(Math.abs(delta))
   // Two-line CTA: cause on line 1, consequence on line 2. The pill in
   // sam-table.tsx renders with `whitespace-pre-line` so \n is honoured.
-  const cause =
-    cap.constraintType === AuctionConstraintType.COUNTRY
-      ? `${cap.constraintName} at country cap`
-      : `${cap.constraintName} ${cap.constraintType} at cap`
-  return {
-    text: `${cause}\nLosing ${losing} until cap frees.`,
-    urgency: 'info',
-    constraint: 'cap',
+  // COUNTRY/ASO carry a meaningful name; VALIDATOR's name is the vote
+  // account, so omit. Unknown enum values fall through to the generic phrasing.
+  const cause = capCauseLine(cap.constraintType, cap.constraintName)
+  return tip(
+    `${cause}\nLosing ${stake(Math.abs(delta))} until cap frees.`,
+    'info',
+    'cap',
     delta,
-  }
+  )
 }
 
-function outOfSetTip(
-  validator: AugmentedAuctionValidator,
-  dsSamConfig: DsSamConfig,
-  winningTotalPmpe: number,
-  delta: number,
-): ValidatorTip {
-  const bondBalance = validator.bondBalanceSol ?? 0
-  // Out-of-set with an adequate bond means the BID is why you're out —
-  // raising it is the lever, not growing the bond (a bond top-up can't get
-  // you in). Only the hard blocks below — sub-min / no-bond, or an
-  // impending fee — outrank the bid here; everything else falls to the
-  // bid-too-low message.
-  // Bond below SDK's `minBondBalanceSol`: clipBondStakeCap returns 0 so the
-  // validator can't win any stake regardless of bid — a hard block, hence
-  // critical (red). bond-health also reports 'no-bond'/'critical' here, so
-  // chip and tip agree on tone.
-  if (bondBalance < dsSamConfig.minBondBalanceSol) {
-    // Hierarchy: an impending bond risk fee is the most pressing remedy and
-    // leads — but only when a fee actually applies (a number exists). Absent
-    // a fee, below-min is the hard block and "qualify" is the right call.
-    const coverage = computeBondCoverage(
-      validator,
-      dsSamConfig,
-      winningTotalPmpe,
-    )
-    const bondRiskFeeSol = validator.values?.bondRiskFeeSol ?? 0
-    // Fee impending leads — but only when a fee actually applies. Absent a
-    // fee (bondRiskFeeSol === 0), below-min is the hard block and "qualify"
-    // is the right call — no false "avoid the fee" claim and no alert.
-    if (bondRiskFeeSol > 0) {
-      return {
-        text:
-          coverage.topUpToAvoidFee > 0
-            ? `Top up ${topUp(coverage.topUpToAvoidFee)} to avoid the bond risk fee.`
-            : `Bond risk fee ${pay(bondRiskFeeSol)} this epoch.`,
-        urgency: 'critical',
-        constraint: 'bond',
-        alert: true,
-        delta,
-      }
-    }
-    const text =
-      bondBalance <= 0
-        ? `Post a bond of ${stake(dsSamConfig.minBondBalanceSol)} to qualify.`
-        : `Top up bond to ${stake(dsSamConfig.minBondBalanceSol)} to qualify.`
-    return {
-      text,
-      urgency: 'critical',
-      constraint: 'bond',
+// Delta lever — the "stake trajectory" fallback. Always emits something
+// for in-set validators except when the cap lever explains the loss
+// (mutual exclusion at source so we don't have to lie with urgency).
+function deltaCta(delta: number, capBinding: boolean): ValidatorTip {
+  if (delta > 0) {
+    return tip(
+      `${stake(delta)} arriving next epoch.`,
+      'positive',
+      'none',
       delta,
-    }
+    )
   }
-  return {
-    text: 'Bid too low. Raise it to qualify for stake.',
-    urgency: 'warning',
-    constraint: 'rank',
+  // delta < 0 with a binding cap: cap owns the narrative — surface 'at
+  // target' so cap (info) isn't beaten by losing (warning).
+  if (delta === 0 || capBinding) {
+    return tip('At target stake.', 'neutral', 'none', delta)
+  }
+  return tip(
+    `Losing ${stake(Math.abs(delta))} next epoch.`,
+    'warning',
+    'none',
     delta,
-  }
+  )
 }
 
 export const getValidatorTip = (
@@ -293,120 +431,14 @@ export const getValidatorTip = (
   dsSamConfig: DsSamConfig,
   winningTotalPmpe: number,
 ): ValidatorTip => {
-  const inSet = selectInSet(validator)
   const delta = validator.values.expectedStakeChangeSol ?? 0
-  const health = bondHealthFromAuction(validator, dsSamConfig, winningTotalPmpe)
-
-  // Out-of-set validators: distinguish bid-too-low from bond-blocked.
-  // A would-be winner whose bid clears the threshold but whose bond can't
-  // back more stake gets the bond CTA, not the rank CTA.
-  if (!inSet)
-    return outOfSetTip(validator, dsSamConfig, winningTotalPmpe, delta)
-
-  // Bond CTA cascade — priority: avoid fee > keep stake > ideal. All three
-  // strings come from the canonical bondAdvice() so the breakdown banner
-  // and the header/pill never diverge.
-  if (health === 'critical' || health === 'watch' || health === 'soft') {
-    const coverage = computeBondCoverage(
-      validator,
-      dsSamConfig,
-      winningTotalPmpe,
-    )
-    const bondRiskFeeSol = validator.values?.bondRiskFeeSol ?? 0
-    const advice = bondAdvice(
-      coverage,
-      health,
-      bondRiskFeeSol,
-      dsSamConfig.minBondBalanceSol,
-      validator.bondBalanceSol ?? 0,
-    )
-
-    if (health === 'critical') {
-      return {
-        text: advice.text,
-        urgency: 'critical',
-        constraint: 'bond',
-        // Alert (octagon + pulse) ONLY when a fee is actually charged this
-        // epoch — not for thin-bond/topUp-only criticality.
-        alert: bondRiskFeeSol > 0,
-        delta,
-      }
-    }
-
-    if (health === 'watch' && coverage.topUpToKeepStake > 0) {
-      return {
-        text: advice.text,
-        urgency: 'warning',
-        constraint: 'bond',
-        delta,
-      }
-    }
-
-    // Soft is advisory only (lowest urgency, not a present danger). "Top up
-    // to grow stake" would directly contradict a genuine positive delta —
-    // stake is already arriving. The bond-coverage top-up sizes the bond vs
-    // *current* exposed stake and is independent of the auction's
-    // redelegation allocation that drives delta, so the two can disagree.
-    // When stake is genuinely growing, the positive "arriving next epoch"
-    // message wins; the Soft bond chip still surfaces independently.
-    // (critical fee + watch keep-stake stay ahead of delta: the inflow does
-    // not pay a fee nor refill the bond, so that advice is truthful even
-    // while gaining.)
-    if (health === 'soft' && coverage.topUpToIdealKeep > 0 && delta <= 0) {
-      return {
-        text: advice.text,
-        urgency: 'warning',
-        constraint: 'bond',
-        delta,
-      }
-    }
-  }
-
-  // Bid-too-low penalty active and bond is fine — the cascade above already
-  // returned for any bond-primary case, so the actionable problem here is the
-  // bid drifting down. Advise raising it, with the recurring penalty as the
-  // cost avoided (action + quantified consequence, same family as bondAdvice).
-  const penaltyPmpe = validator.revShare?.bidTooLowPenaltyPmpe ?? 0
-  if (penaltyPmpe > 0) {
-    const penaltySol = bidTooLowPenaltySol(validator)
-    return {
-      text: `Raise bid or pay a ${pay(penaltySol)} penalty.`,
-      // Penalty is real money charged this epoch — critical (red), not
-      // warning (amber). The alert/octagon stays reserved for bond risk
-      // fee; bid penalty is critical-red without the octagon escalation.
-      urgency: 'critical',
-      constraint: 'bid',
-      delta,
-    }
-  }
-
-  const capTip = capBindingTip(validator, delta)
-  if (capTip) return capTip
-
-  if (delta > 0) {
-    return {
-      text: `${stake(delta)} arriving next epoch.`,
-      urgency: 'positive',
-      constraint: 'none',
-      delta,
-    }
-  }
-
-  if (delta === 0) {
-    return {
-      text: 'At target stake.',
-      urgency: 'neutral',
-      constraint: 'none',
-      delta,
-    }
-  }
-
-  return {
-    text: `Losing ${stake(Math.abs(delta))} next epoch.`,
-    urgency: 'warning',
-    constraint: 'none',
-    delta,
-  }
+  const cap = capCta(validator, delta)
+  return selectTip(
+    bondCta(validator, dsSamConfig, winningTotalPmpe, delta),
+    bidCta(validator, dsSamConfig, winningTotalPmpe, delta),
+    cap,
+    deltaCta(delta, cap !== null),
+  )
 }
 
 export type ApyBreakdownValue = {

@@ -308,7 +308,7 @@ describe('getValidatorTip', () => {
     expect(tip.urgency).toBe('info')
     expect(tip.constraint).toBe('cap')
     expect(tip.text).toContain('Hetzner Online GmbH')
-    expect(tip.text).toContain('ASO at cap')
+    expect(tip.text).toContain('at ASO cap')
     expect(tip.text).toContain('until cap frees')
   })
 

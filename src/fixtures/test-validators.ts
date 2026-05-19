@@ -431,6 +431,16 @@ const v06: AuctionValidator = {
     ...makeRevShare(1.5, 0.8),
     auctionEffectiveBidPmpe: 1.5,
   },
+  // Drop history sets last-epoch bid above this epoch's 1.5 — exercises the
+  // bid-decrease branch in computeBidPenalty so the breakdown and the CTA
+  // both report a penalty. (Without this, makeAuctions emits three identical
+  // bidPmpe entries and isNegativeBiddingChange resolves to false.)
+  auctions: makeAuctions(2.5, 2.5).map((a, i) => ({
+    ...a,
+    bidPmpe: i < 2 ? 2.5 : 1.5,
+    auctionEffectiveBidPmpe: i < 2 ? 2.5 : 1.5,
+    effParticipatingBidPmpe: i < 2 ? 2.5 : 1.5,
+  })),
   bidTooLowPenalty: { coef: 0.3, base: 0.5 },
   bondForcedUndelegation: { coef: 0, base: 0, value: 0 },
   samEligible: true,
