@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useId, useRef, useState } from 'react'
 
 import { Tooltip } from 'src/components/ui/tooltip'
 
@@ -16,17 +16,65 @@ type Props = {
 const ICON_CLASSES =
   'text-xs leading-none text-muted-foreground/60 group-hover:text-muted-foreground border border-muted-foreground/30 rounded-full w-3.5 h-3.5 inline-flex items-center justify-center select-none shrink-0'
 
-// Hover previews the tip. Clicking the trigger pins it open; clicking it
-// again or anywhere on the tip body unpins. The guide opens from the
-// in-body "Learn more ↗" link (its own click is isolated so it doesn't
-// unpin or bubble to the row). With `children`, the whole "Label ?" group
-// is the trigger; without, just the ? icon (backwards-compat).
+// Module-level singleton: only ONE HelpTip can be pinned globally. Pinning
+// another closes the previous. Subscribers re-render off this. Survives the
+// life of the page (re-mounts re-subscribe). Living here, not in a context,
+// because HelpTips appear in slide-overs, tooltips, breakdowns — wiring
+// every render tree through a provider would be over-engineering for one
+// boolean.
+type PinSubscriber = (pinnedId: string | null) => void
+let currentPinnedId: string | null = null
+const pinSubscribers = new Set<PinSubscriber>()
+function setGlobalPinned(id: string | null) {
+  currentPinnedId = id
+  pinSubscribers.forEach(s => s(id))
+}
+
+// Hover previews the tip (Radix Tooltip). Click pins it open globally
+// (singleton: pinning a second tip unpins the first). Clicking anywhere
+// outside the trigger and the tooltip body dismisses the pin; Esc too.
+// `Learn more ↗` opens the guide (stopPropagation so it doesn't unpin).
 export const HelpTip: React.FC<Props> = ({ html, text, guideTo, children }) => {
+  const id = useId()
   const [pinned, setPinned] = useState(false)
   const [hovered, setHovered] = useState(false)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+
+  // Sync local pinned with the singleton.
+  useEffect(() => {
+    const sub: PinSubscriber = next => setPinned(next === id)
+    pinSubscribers.add(sub)
+    return () => {
+      pinSubscribers.delete(sub)
+    }
+  }, [id])
+
+  // Outside-click + Esc dismiss the global pin.
+  useEffect(() => {
+    if (!pinned) return undefined
+    const onDown = (e: MouseEvent) => {
+      const t = e.target
+      if (!(t instanceof Element)) return
+      // Inside the trigger? The button's onClick toggles — leave it alone.
+      if (triggerRef.current?.contains(t)) return
+      // Inside the tooltip body (Radix portals content with role="tooltip")?
+      // Keep open so users can read it and click "Learn more".
+      if (t.closest('[role="tooltip"]')) return
+      setGlobalPinned(null)
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setGlobalPinned(null)
+    }
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [pinned])
 
   const tooltipContent = (
-    <span className="flex flex-col gap-1" onClick={() => setPinned(false)}>
+    <span className="flex flex-col gap-1">
       {html ? (
         <span dangerouslySetInnerHTML={{ __html: html }} />
       ) : (
@@ -61,6 +109,7 @@ export const HelpTip: React.FC<Props> = ({ html, text, guideTo, children }) => {
       }}
     >
       <button
+        ref={triggerRef}
         type="button"
         // Buttons reset text-transform/letter-spacing/font in the UA
         // stylesheet, so a wrapped label would drop the parent's
@@ -73,14 +122,12 @@ export const HelpTip: React.FC<Props> = ({ html, text, guideTo, children }) => {
         }
         aria-label={children ? undefined : 'More info'}
         aria-pressed={pinned}
-        // Radix dismisses the tooltip on the trigger's pointerdown; with the
-        // controlled open this causes a close→reopen flicker on click. Block
-        // the pointerdown default so pinning toggles without the blink — the
-        // click still fires.
+        // Block Radix's pointerdown-dismiss so click toggles cleanly (no
+        // close→reopen flicker against the controlled `open`).
         onPointerDown={e => e.preventDefault()}
         onClick={e => {
           e.stopPropagation()
-          setPinned(p => !p)
+          setGlobalPinned(currentPinnedId === id ? null : id)
         }}
       >
         {children}
