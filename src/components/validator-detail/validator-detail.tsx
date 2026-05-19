@@ -621,10 +621,15 @@ export const ValidatorDetail = ({
         <div
           className={cn(
             'px-4 sm:px-6 py-3 flex items-center gap-3',
-            tipTarget && 'cursor-pointer select-none',
+            // Hide the jump affordance when the user is already on the
+            // target tab — the pill would be a no-op and the cursor
+            // pretending to be clickable misleads.
+            tipTarget && tipTarget !== tab && 'cursor-pointer select-none',
           )}
           style={{ background: bannerStyle.bg }}
-          onClick={tipTarget ? () => setTab(tipTarget) : undefined}
+          onClick={
+            tipTarget && tipTarget !== tab ? () => setTab(tipTarget) : undefined
+          }
         >
           <span
             className="text-sm font-medium flex-1"
@@ -632,7 +637,7 @@ export const ValidatorDetail = ({
           >
             {tip.text}
           </span>
-          {tipTarget && (
+          {tipTarget && tipTarget !== tab && (
             <span
               className="text-xs font-medium shrink-0 px-2 py-0.5 rounded border whitespace-nowrap bg-card/55"
               style={{

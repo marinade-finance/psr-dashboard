@@ -71,16 +71,21 @@ export const CalcCard: React.FC<{
       className="mb-3"
     />
     {status && (
-      <div
-        className={cn(
-          'rounded-lg px-3 py-2 text-sm mb-4',
-          STATUS_CLASSES[status.tone],
-        )}
-      >
-        {status.label}
+      <div className="mb-4">
+        <div
+          className={cn(
+            'rounded-lg px-3 py-2 text-sm',
+            STATUS_CLASSES[status.tone],
+          )}
+        >
+          {status.label}
+        </div>
+        {tip && <div className="mt-2 px-3 text-left">{tip}</div>}
       </div>
     )}
     {children}
-    {tip && <div className="mt-4 pt-3 border-t border-border">{tip}</div>}
+    {!status && tip && (
+      <div className="mt-4 pt-3 border-t border-border">{tip}</div>
+    )}
   </div>
 )

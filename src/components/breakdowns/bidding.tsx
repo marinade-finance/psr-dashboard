@@ -234,7 +234,7 @@ export const BiddingBreakdown: React.FC<Props> = ({
             // can still verify their position.
             <>
               <OkRow
-                message={`You already clear the priority total PMPE (${pmpe(nextEpoch.priorityFrontierPmpe)}). No bid increase needed for next-epoch priority.`}
+                message={`Clears the priority total (${pmpe(nextEpoch.priorityFrontierPmpe)} PMPE).`}
                 colSpan={2}
               />
               <CalcRow
