@@ -8,7 +8,7 @@ import {
   selectProtectedStakeReason,
 } from 'src/services/protected-events'
 
-import { CalcCard, type CardStatus } from './card'
+import { CalcCard, SIM_JUMP_BUTTON_CLASS, type CardStatus } from './card'
 import { CalcRow, SectionHeader } from './row'
 
 import type { ProtectedEvent } from 'src/services/protected-events'
@@ -76,7 +76,7 @@ export const PaymentsBreakdown: React.FC<Props> = ({
       )}
       {onGoToSim && (
         <button
-          className="text-xs font-medium px-2 py-0.5 rounded border border-primary text-primary hover:bg-primary-light self-start"
+          className={`${SIM_JUMP_BUTTON_CLASS} self-start`}
           onClick={onGoToSim}
         >
           Simulate commission or bid changes →

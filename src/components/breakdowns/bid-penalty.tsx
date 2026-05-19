@@ -3,7 +3,7 @@ import React from 'react'
 import { cost, pct, pmpe, stake } from 'src/format'
 import { computeBidPenalty } from 'src/services/bid-penalty'
 
-import { CalcCard, type CardStatus } from './card'
+import { CalcCard, SIM_JUMP_BUTTON_CLASS, type CardStatus } from './card'
 import { CalcRow, OkRow, SectionHeader } from './row'
 
 import type {
@@ -43,10 +43,7 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
   }
 
   const tip = onGoToSim ? (
-    <button
-      className="text-xs font-medium px-2 py-0.5 rounded border border-primary text-primary hover:bg-primary-light"
-      onClick={onGoToSim}
-    >
+    <button className={SIM_JUMP_BUTTON_CLASS} onClick={onGoToSim}>
       {metrics.penaltyPmpe > 0
         ? `Raise bid to ≥ ${pmpe(metrics.adjustedLimit)} PMPE in simulation →`
         : 'Simulate bid or commission changes →'}

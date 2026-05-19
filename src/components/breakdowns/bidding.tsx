@@ -5,7 +5,7 @@ import { computeBidding } from 'src/services/bidding'
 import { computeInAuctionTarget } from 'src/services/in-auction-target'
 import { computeNextEpochStake } from 'src/services/next-epoch-stake'
 
-import { CalcCard, type CardStatus } from './card'
+import { CalcCard, SIM_JUMP_BUTTON_CLASS, type CardStatus } from './card'
 import { CalcRow, OkRow, SectionHeader } from './row'
 
 import type { AuctionResult } from '@marinade.finance/ds-sam-sdk'
@@ -109,10 +109,7 @@ export const BiddingBreakdown: React.FC<Props> = ({
         }
 
   const tip = onGoToSim ? (
-    <button
-      className="text-xs font-medium px-2 py-0.5 rounded border border-primary text-primary hover:bg-primary-light"
-      onClick={onGoToSim}
-    >
+    <button className={SIM_JUMP_BUTTON_CLASS} onClick={onGoToSim}>
       Simulate this bid to confirm the exact figure →
     </button>
   ) : null

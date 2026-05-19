@@ -3,7 +3,7 @@ import React from 'react'
 import { bondSol, pmpe, stake, topUp } from 'src/format'
 import { bondAdvice } from 'src/services/tip-engine'
 
-import { CalcCard, type CardStatus } from './card'
+import { CalcCard, SIM_JUMP_BUTTON_CLASS, type CardStatus } from './card'
 import { CalcRow, OkRow, SectionHeader } from './row'
 
 import type { BondCoverage } from 'src/services/bond-coverage'
@@ -91,10 +91,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
     coverage.carriedPaidUndelegationSol > 0
 
   const tip = onGoToSim ? (
-    <button
-      className="text-xs font-medium px-2 py-0.5 rounded border border-primary text-primary hover:bg-primary-light"
-      onClick={onGoToSim}
-    >
+    <button className={SIM_JUMP_BUTTON_CLASS} onClick={onGoToSim}>
       Simulate commission or bid changes →
     </button>
   ) : null

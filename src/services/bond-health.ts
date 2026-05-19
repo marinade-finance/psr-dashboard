@@ -4,6 +4,7 @@ import type {
   AuctionValidator,
   DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
+import type { BondCoverage } from 'src/services/bond-coverage'
 
 // Five tiers so the bond chip and the page-level CTA agree on tone:
 //   no-bond  → no bond posted at all (red, "missing")
@@ -25,6 +26,11 @@ export function bondHealthFromAuction(
   v: AuctionValidator,
   config: DsSamConfig,
   winningTotalPmpe: number,
+  // Optional precomputed coverage. Callers that already computed it (e.g.
+  // tip-engine's bondCta) can pass it through instead of forcing a second
+  // call here — computeBondCoverage runs per row of the SAM table, so the
+  // duplicate adds up.
+  precomputedCoverage?: BondCoverage,
 ): BondHealthState {
   const bondBalance = v.bondBalanceSol ?? 0
   if (bondBalance <= 0) return BondHealthState.NO_BOND
@@ -35,7 +41,8 @@ export function bondHealthFromAuction(
   if (!v.auctionStake.marinadeSamTargetSol && !v.marinadeActivatedStakeSol) {
     return BondHealthState.HEALTHY
   }
-  const coverage = computeBondCoverage(v, config, winningTotalPmpe)
+  const coverage =
+    precomputedCoverage ?? computeBondCoverage(v, config, winningTotalPmpe)
   if (coverage.topUpToAvoidFee > 0) return BondHealthState.CRITICAL
   if (coverage.topUpToKeepStake > 0) return BondHealthState.WATCH
   if (coverage.topUpToIdealKeep > 0) return BondHealthState.SOFT

@@ -171,9 +171,7 @@ export function bondAdvice(
     bondBalanceSol < minBondBalanceSol &&
     health !== BondHealthState.NO_BOND
   ) {
-    // Below-min bond is a hard block on qualifying — but if no fee is
-    // pending right now, it's eligibility-not-urgency. Grey/neutral when
-    // there's no active charge; red only when a fee is on the line.
+    // Below-min without a pending fee is eligibility, not urgency — grey.
     const isCharging = bondRiskFeeSol > 0
     return {
       text: `Top up bond to ${stake(minBondBalanceSol)} to qualify.`,
@@ -340,7 +338,12 @@ function bondCta(
   // are misleading. SOFT additionally defers when delta>0 (the inflow is
   // already arriving — "grow stake" would contradict it).
   const inSet = selectInSet(validator)
-  const health = bondHealthFromAuction(validator, dsSamConfig, winningTotalPmpe)
+  const health = bondHealthFromAuction(
+    validator,
+    dsSamConfig,
+    winningTotalPmpe,
+    coverage,
+  )
   const fires =
     health === BondHealthState.CRITICAL ||
     (inSet &&
@@ -385,11 +388,17 @@ function bidCta(
   winningTotalPmpe: number,
   delta: number,
 ): ValidatorTip | null {
-  const metrics = computeBidPenalty(validator, dsSamConfig, winningTotalPmpe)
+  // No auction history → penaltyCoef structurally zero (isNegativeBiddingChange
+  // checks against a non-existent lastEpochBidPmpe). Skip the reduce + math
+  // for the common new-validator/missing-history rows.
+  const hasHistory = (validator.auctions?.length ?? 0) > 0
+  const metrics = hasHistory
+    ? computeBidPenalty(validator, dsSamConfig, winningTotalPmpe)
+    : null
   // Penalty is real money charged this epoch — critical (red), not warning
   // (amber). Fires for in-set OR out-of-set: bid history drives it, not
   // current in/out status. Alert/octagon stays reserved for bond risk fee.
-  if (metrics.penaltyPmpe > 0) {
+  if (metrics && metrics.penaltyPmpe > 0) {
     return tip(
       `Raise bid or pay a ${pay(metrics.penaltySol)} penalty.`,
       TipUrgency.CRITICAL,
