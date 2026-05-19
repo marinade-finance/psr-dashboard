@@ -29,7 +29,7 @@ export const HELP_TEXT = {
   winningValidators:
     'How many validators won at least some stake this epoch. The rest bid too low to make the cut.',
   bondCoverage:
-    'Whether your bond is fat enough for Marinade to feel comfortable. Under the minimum and you start paying fee penalties; under the ideal and you can stay in but won’t be given more stake.',
+    'Whether your bond is big enough to cover the risks it backs. Below the minimum you start paying fee penalties; below the ideal you can stay in but won’t be given more stake.',
   bidGap:
     'How much higher your own bid was than what you’ll actually pay. A larger gap means you rank higher and gain stake faster — but also increases the activating fee. You still pay only the auction-wide clearing rate.',
 } as const
