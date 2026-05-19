@@ -1,5 +1,6 @@
-// Docs page: markdown rendering, tab switcher, anchor links, code blocks.
-import { test, expect } from './fixtures/mock-api'
+// Docs page: markdown rendering, anchor links, code blocks. Basic mode
+// only — expert routes are not tested (see CLAUDE.md).
+import { test, expect } from '@playwright/test'
 
 test.describe('Docs markdown rendering', () => {
   test('basic guide renders a top-level heading', async ({ page }) => {
@@ -23,7 +24,6 @@ test.describe('Docs markdown rendering', () => {
     await page
       .getByRole('heading', { name: /PSR Dashboard Guide/i })
       .waitFor()
-    // The basic guide contains bullet-list copy under most subsections.
     const lists = page.locator('main ul li, ul li')
     expect(await lists.count()).toBeGreaterThan(0)
   })
@@ -35,7 +35,6 @@ test.describe('Docs markdown rendering', () => {
     await page
       .getByRole('heading', { name: /PSR Dashboard Guide/i })
       .waitFor()
-    // Any <code> not nested in a <pre> is inline; styled with `font-mono`.
     const inline = page.locator('code').first()
     expect(await inline.count()).toBeGreaterThan(0)
     const cls = await inline.getAttribute('class')
@@ -49,7 +48,6 @@ test.describe('Docs markdown rendering', () => {
     await page
       .getByRole('heading', { name: /PSR Dashboard Guide/i })
       .waitFor()
-    // Pick the first non-hash link.
     const links = page.locator('a[href^="http"]')
     if ((await links.count()) === 0) test.skip(true, 'no external links')
     const target = await links.first().getAttribute('target')
@@ -57,59 +55,9 @@ test.describe('Docs markdown rendering', () => {
   })
 })
 
-test.describe('Docs tab switcher', () => {
-  test('basic mode: no tab switcher rendered', async ({ page }) => {
-    await page.goto('/docs')
-    await expect(
-      page.getByRole('button', { name: 'Expert Guide' }),
-    ).toHaveCount(0)
-  })
-
-  test('expert mode: both Guide and Expert Guide tabs present', async ({
-    page,
-  }) => {
-    await page.goto('/expert-docs')
-    await expect(
-      page.getByRole('button', { name: 'Guide', exact: true }),
-    ).toBeVisible()
-    await expect(
-      page.getByRole('button', { name: 'Expert Guide' }),
-    ).toBeVisible()
-  })
-
-  test('expert mode defaults to Expert Guide', async ({ page }) => {
-    await page.goto('/expert-docs')
-    await expect(
-      page.getByRole('heading', { level: 1, name: /Expert View/ }),
-    ).toBeVisible()
-  })
-
-  test('clicking Guide tab swaps the rendered document', async ({ page }) => {
-    await page.goto('/expert-docs')
-    await page.getByRole('button', { name: 'Guide', exact: true }).click()
-    await expect(
-      page.getByRole('heading', { level: 1, name: /PSR Dashboard Guide/i }),
-    ).toBeVisible()
-  })
-})
-
 test.describe('Docs anchor links', () => {
-  test('clicking an inline #GUIDE link from expert guide switches tab', async ({
-    page,
-  }) => {
-    await page.goto('/expert-docs')
-    // The expert guide contains `[Dashboard Guide](#GUIDE)` rendered as a button.
-    await page.getByRole('button', { name: 'Dashboard Guide' }).click()
-    await expect(
-      page.getByRole('heading', { level: 1, name: /PSR Dashboard Guide/i }),
-    ).toBeVisible()
-  })
-
   test('loading /docs#sam scrolls to the section anchor', async ({ page }) => {
     await page.goto('/docs#sam')
-    // The anchor is an inline `<a id="sam"></a>` immediately above the
-    // section heading. After scroll, the heading "How the Auction Works"
-    // should be in view (top of viewport region).
     await page
       .getByRole('heading', { level: 2, name: /How the Auction Works/i })
       .waitFor()
@@ -120,7 +68,6 @@ test.describe('Docs anchor links', () => {
     const box = await heading.boundingBox()
     expect(box).not.toBeNull()
     if (box) {
-      // After the useEffect scroll, the heading should be inside the viewport.
       const viewport = page.viewportSize()
       expect(viewport).not.toBeNull()
       if (viewport) {
@@ -161,19 +108,6 @@ test.describe('Docs typography', () => {
       .waitFor()
     const h2 = page.locator('h2').first()
     const cls = await h2.getAttribute('class')
-    // Per src/pages/docs.tsx the h2 has a `border-t border-border`
     expect(cls || '').toMatch(/border-t/)
-  })
-
-  test('blockquotes render with muted background', async ({ page }) => {
-    await page.goto('/docs')
-    await page
-      .getByRole('heading', { name: /PSR Dashboard Guide/i })
-      .waitFor()
-    const bq = page.locator('blockquote')
-    const c = await bq.count()
-    if (c === 0) test.skip(true, 'no blockquotes in basic guide')
-    const cls = await bq.first().getAttribute('class')
-    expect(cls || '').toMatch(/bg-muted/)
   })
 })

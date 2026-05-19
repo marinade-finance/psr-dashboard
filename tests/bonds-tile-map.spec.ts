@@ -1,7 +1,7 @@
 // Bond coverage tile map: tier rows, tile coloring, tile sizing, coverage
 // gradient, hover tooltip. Hits the deterministic /test-bonds route so the
 // fixture data drives the tile grid.
-import { test, expect } from './fixtures/mock-api'
+import { test, expect } from '@playwright/test'
 
 import type { Page } from '@playwright/test'
 

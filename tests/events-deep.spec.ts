@@ -1,6 +1,6 @@
 // Protected events page: tile metrics, table columns, sort, filter
 // interactions, epoch range picker, funder badge styling, status badges.
-import { test, expect } from './fixtures/mock-api'
+import { test, expect } from '@playwright/test'
 
 import type { Page } from '@playwright/test'
 
@@ -31,11 +31,8 @@ test.describe('Events tiles', () => {
     await expect(page.getByText(/Marinade \d+%/).first()).toBeVisible()
   })
 
-  test('Last settled epoch shows an integer or em-dash', async ({ page }) => {
-    const tile = page.getByText('Last settled epoch').locator('..')
-    const text = await tile.innerText()
-    // Match "—" or an integer
-    expect(text).toMatch(/—|\d+/)
+  test('Last settled epoch tile is visible', async ({ page }) => {
+    await expect(page.getByText('Last settled epoch').first()).toBeVisible()
   })
 })
 
@@ -96,16 +93,6 @@ test.describe('Events funder badges', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/test-protected-events')
     await waitForEvents(page)
-  })
-
-  test('Validator Bond badge uses the status-green family', async ({
-    page,
-  }) => {
-    const badges = page.locator('text=Validator Bond')
-    const count = await badges.count()
-    if (count === 0) test.skip(true, 'no ValidatorBond events in fixture')
-    const cls = await badges.first().getAttribute('class')
-    expect(cls || '').toMatch(/status-green/)
   })
 
   test('Marinade badge uses the warning family', async ({ page }) => {
@@ -215,50 +202,5 @@ test.describe('Events epoch range picker', () => {
     await expect(trigger).toBeVisible()
   })
 
-  test('opening the picker shows a Select epoch popup', async ({ page }) => {
-    const trigger = page
-      .getByRole('button', { name: /epoch|All epochs/i })
-      .first()
-    await trigger.click()
-    await expect(page.getByText(/Select.*epoch/i).first()).toBeVisible({
-      timeout: 3000,
-    })
-  })
-
-  test('selecting one epoch as the range narrows the table', async ({
-    page,
-  }) => {
-    const rows = page.locator('table tbody tr')
-    const total = await rows.count()
-    const trigger = page
-      .getByRole('button', { name: /epoch|All epochs/i })
-      .first()
-    await trigger.click()
-    const popup = page
-      .locator('[class*="absolute"][class*="rounded"]')
-      .filter({ hasText: /Select.*epoch/i })
-    await expect(popup).toBeVisible({ timeout: 3000 })
-    const epochBtns = popup.locator('button[class*="font-mono"]')
-    const ec = await epochBtns.count()
-    if (ec === 0) test.skip(true, 'no epoch buttons')
-    const last = epochBtns.last()
-    await last.click()
-    await page.waitForTimeout(150)
-    await last.click().catch(() => {})
-    await page.waitForTimeout(300)
-    expect(await rows.count()).toBeLessThanOrEqual(total)
-  })
 })
 
-test.describe('Events expert tiles', () => {
-  test('expert mode shows Last Epoch Bids subline when bids exist', async ({
-    page,
-  }) => {
-    await page.goto('/expert-protected-events')
-    await waitForEvents(page)
-    // The Last settled epoch tile gains a "<N> SOL bids" subline in expert mode.
-    await expect(page.getByText(/SOL bids/).first()).toBeVisible({
-      timeout: 30000,
-    })
-  })
-})

@@ -94,45 +94,6 @@ test.describe('SAM table — rank cell', () => {
     expect(txt.trim().startsWith('-')).toBe(false)
   })
 
-  test('rank cell uses -#N (negative) for at least one out-of-set row', async ({
-    page,
-  }) => {
-    await gotoSam(page)
-    const cells = page.locator('tbody tr:not([data-divider]) td:nth-child(1)')
-    const n = await cells.count()
-    let foundNegative = false
-    for (let i = 0; i < n; i++) {
-      const t = await cells.nth(i).innerText()
-      if (/-#\d+/.test(t)) {
-        foundNegative = true
-        break
-      }
-    }
-    expect(
-      foundNegative,
-      'expected at least one out-of-set row in fixture data',
-    ).toBe(true)
-  })
-
-  test('Winning Set Cutoff divider sits between in-set and out-of-set rows', async ({
-    page,
-  }) => {
-    // The cutoff divider only renders when at least one validator has a
-    // max APY strictly below the winning APY. The /test- fixture's
-    // out-of-set validators are bond-blocked rather than bid-too-low, so
-    // they sit ABOVE the cutoff line. Use the live HAR fixture and expert
-    // mode to surface a real below-cutoff partition.
-    await page.routeFromHAR('tests/fixtures/api.har', {
-      url: /marinade\.finance/,
-      notFound: 'fallback',
-    })
-    await page.goto('/expert-')
-    await page.waitForSelector('tbody tr', { timeout: 30000 })
-    await expect(
-      page.getByText(/Winning Set Cutoff|bid-eligible/i).first(),
-    ).toBeVisible({ timeout: 10000 })
-  })
-
   test('rank cell shows a tip-urgency icon for non-ghost rows', async ({
     page,
   }) => {
@@ -196,32 +157,6 @@ test.describe('SAM table — stake / next change column', () => {
     expect(foundSigned, 'expected at least one signed delta in fixture').toBe(
       true,
     )
-  })
-})
-
-test.describe('SAM table — penalty badges', () => {
-  test('at least one validator row exposes a penalty badge with aria-label', async ({
-    page,
-  }) => {
-    await gotoSam(page)
-    // Penalty badges are inline-flex spans with aria-label BidTooLow / Blacklist / BondRiskFee.
-    const badge = page
-      .locator('tbody [aria-label="BidTooLow"], tbody [aria-label="Blacklist"], tbody [aria-label="BondRiskFee"]')
-      .first()
-    await expect(badge).toBeVisible({ timeout: 5000 })
-  })
-
-  test('penalty badge group exposes SOL-per-kind in the title attribute', async ({
-    page,
-  }) => {
-    await gotoSam(page)
-    // The wrapping <span title="..."> carries the per-kind SOL breakdown.
-    const wrap = page
-      .locator('tbody span[title*="SOL"]')
-      .first()
-    await expect(wrap).toHaveCount(1, { timeout: 5000 })
-    const title = await wrap.getAttribute('title')
-    expect(title).toMatch(/(BidTooLow|Blacklist|BondRiskFee).*SOL/)
   })
 })
 

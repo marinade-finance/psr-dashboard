@@ -79,6 +79,22 @@ thin wrappers around the real page components that swap in fixture data
 so Playwright snapshots stay deterministic. Don't add prod logic to the
 test pages; they exist only to feed fixtures.
 
+### Testing rules
+
+- **Use `/test-*` routes for every e2e test that doesn't specifically need
+  network data.** Don't invent a parallel mock-API infrastructure;
+  `/test-`, `/test-bonds`, `/test-protected-events` already wrap each page
+  with a `QueryClient` pre-seeded from `src/fixtures/*`.
+- **No expert test routes.** Don't add `/expert-test-*`. Don't write
+  Playwright tests that hit any `/expert-*` route. Expert mode is exercised
+  by the same fixture data that powers basic — there's nothing route-
+  specific to test beyond UI presence, which is covered indirectly.
+- **Mobile is not supported.** The app shows a "Mobile view is not supported"
+  banner (`src/components/navigation/navigation.tsx`) below 640px. Don't add
+  mobile viewport variants in tests; don't ship CSS that tries to make
+  pages usable on a phone. If a user opens it on mobile, the banner tells
+  them to widen the window.
+
 ### Key Files
 
 - `src/services/sam.ts` — auction data loading, metric selectors,
