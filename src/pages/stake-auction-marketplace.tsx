@@ -1,6 +1,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import React, { useState, useCallback, useEffect, useMemo } from 'react'
 
+import { cn } from 'src/class_utils'
 import { Banner } from 'src/components/banner/banner'
 import { Loader } from 'src/components/loader/loader'
 import { Navigation } from 'src/components/navigation/navigation'
@@ -227,36 +228,53 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
     }
   }, [selectedValidator, displayAuctionResult, data])
 
+  // Simulation ring wraps the broadcast banner AND the table together — all
+  // "what-if" surfaces sit inside one frame. Was previously inside SamTable,
+  // which only encircled the table.
+  const inSimulation = simulatedValidators.size > 0
+
   return (
     <div className="bg-background-page">
       <Navigation level={level} />
-      {latestBroadcastNotification && (
-        <div className="px-4 pt-3 pb-0 max-w-[1920px] mx-auto">
-          <Banner
-            key={latestBroadcastNotification.id}
-            title={latestBroadcastNotification.title ?? 'Announcement'}
-            body={latestBroadcastNotification.message}
+      <div
+        className={cn(
+          inSimulation &&
+            'mx-3 mt-3 ring-4 ring-inset ring-status-yellow rounded-lg overflow-hidden',
+        )}
+      >
+        {latestBroadcastNotification && (
+          <div
+            className={cn(
+              'max-w-[1920px] mx-auto',
+              inSimulation ? 'px-4 pt-3 pb-0' : 'px-4 pt-3 pb-0',
+            )}
+          >
+            <Banner
+              key={latestBroadcastNotification.id}
+              title={latestBroadcastNotification.title ?? 'Announcement'}
+              body={latestBroadcastNotification.message}
+            />
+          </div>
+        )}
+        {status === 'error' && <p>Error fetching data</p>}
+        {status === 'pending' && <Loader />}
+        {status === 'success' && displayAuctionResult && (
+          <SamTable
+            auctionResult={displayAuctionResult}
+            originalAuctionResult={originalAuctionResult}
+            epochsPerYear={data.epochsPerYear}
+            dsSamConfig={data.dcSamConfig}
+            level={level}
+            simulatedValidators={simulatedValidators}
+            isCalculating={isCalculating}
+            validatorMeta={nameMap}
+            onValidatorClick={handleValidatorClick}
+            onValidatorSearch={handleValidatorClick}
+            onClearValidator={handleClearValidator}
+            onResetSimulation={handleResetSimulation}
           />
-        </div>
-      )}
-      {status === 'error' && <p>Error fetching data</p>}
-      {status === 'pending' && <Loader />}
-      {status === 'success' && displayAuctionResult && (
-        <SamTable
-          auctionResult={displayAuctionResult}
-          originalAuctionResult={originalAuctionResult}
-          epochsPerYear={data.epochsPerYear}
-          dsSamConfig={data.dcSamConfig}
-          level={level}
-          simulatedValidators={simulatedValidators}
-          isCalculating={isCalculating}
-          validatorMeta={nameMap}
-          onValidatorClick={handleValidatorClick}
-          onValidatorSearch={handleValidatorClick}
-          onClearValidator={handleClearValidator}
-          onResetSimulation={handleResetSimulation}
-        />
-      )}
+        )}
+      </div>
       {status === 'success' &&
         displayAuctionResult &&
         sheetValidatorData &&

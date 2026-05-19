@@ -913,13 +913,14 @@ export const SamTable: React.FC<Props> = ({
 
   const inSimulation = simulatedValidators.size > 0
 
+  // Outer simulation ring lives at the PAGE level (so it wraps the broadcast
+  // banner above too — all "what-if" surfaces inside one frame). This
+  // component only renders the inner header bar + the table.
   return (
     <div
       className={cn(
         'w-full',
         isCalculating && 'opacity-70 pointer-events-none',
-        inSimulation &&
-          'ring-4 ring-inset ring-status-yellow rounded-lg overflow-hidden',
       )}
     >
       {inSimulation && (
