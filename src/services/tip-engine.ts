@@ -156,14 +156,18 @@ export function bondAdvice(
     }
   }
   if (health === 'critical') {
-    // A fee is charged / imminent. The top-up that clears it is the
-    // decisive value; only when no top-up is computable do we fall back
-    // to the fee figure.
+    // Only claim "avoid the fee" when a fee actually applies
+    // (bondRiskFeeSol>0). topUpToAvoidFee>0 alone is "claimable below the
+    // projected floor" — not the same as a charged fee; for out-of-set or
+    // otherwise no-fee rows, the truthful CTA is keep-stake, not a false
+    // fee claim.
     const text =
-      coverage.topUpToAvoidFee > 0
-        ? `Top up ${topUp(coverage.topUpToAvoidFee)} to avoid the bond risk fee.`
-        : bondRiskFeeSol > 0
-          ? `Bond risk fee ${pay(bondRiskFeeSol)} this epoch.`
+      bondRiskFeeSol > 0
+        ? coverage.topUpToAvoidFee > 0
+          ? `Top up ${topUp(coverage.topUpToAvoidFee)} to avoid the bond risk fee.`
+          : `Bond risk fee ${pay(bondRiskFeeSol)} this epoch.`
+        : coverage.topUpToAvoidFee > 0
+          ? `Top up ${topUp(coverage.topUpToAvoidFee)} to keep your stake.`
           : 'Bond too thin — a bond risk fee can be charged.'
     return { text, urgency: 'critical', tone: 'red' }
   }
@@ -214,18 +218,15 @@ function outOfSetTip(
       winningTotalPmpe,
     )
     const bondRiskFeeSol = validator.values?.bondRiskFeeSol ?? 0
-    if (coverage.topUpToAvoidFee > 0) {
-      return {
-        text: `Top up ${topUp(coverage.topUpToAvoidFee)} to avoid the bond risk fee.`,
-        urgency: 'critical',
-        constraint: 'bond',
-        alert: true,
-        delta,
-      }
-    }
+    // Fee impending leads — but only when a fee actually applies. Absent a
+    // fee (bondRiskFeeSol === 0), below-min is the hard block and "qualify"
+    // is the right call — no false "avoid the fee" claim and no alert.
     if (bondRiskFeeSol > 0) {
       return {
-        text: `Bond risk fee ${pay(bondRiskFeeSol)} this epoch.`,
+        text:
+          coverage.topUpToAvoidFee > 0
+            ? `Top up ${topUp(coverage.topUpToAvoidFee)} to avoid the bond risk fee.`
+            : `Bond risk fee ${pay(bondRiskFeeSol)} this epoch.`,
         urgency: 'critical',
         constraint: 'bond',
         alert: true,
@@ -284,15 +285,14 @@ export const getValidatorTip = (
       validator.bondBalanceSol ?? 0,
     )
 
-    if (
-      health === 'critical' &&
-      (bondRiskFeeSol > 0 || coverage.topUpToAvoidFee > 0)
-    ) {
+    if (health === 'critical') {
       return {
         text: advice.text,
         urgency: 'critical',
         constraint: 'bond',
-        alert: true,
+        // Alert (octagon + pulse) ONLY when a fee is actually charged this
+        // epoch — not for thin-bond/topUp-only criticality.
+        alert: bondRiskFeeSol > 0,
         delta,
       }
     }

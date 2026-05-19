@@ -207,7 +207,7 @@ describe('getValidatorTip', () => {
     expect(tip.text).toContain('Bid too low')
   })
 
-  it('critical health (near-zero bond) → critical/bond risk fee message', () => {
+  it('critical health, no actual fee → keep-stake (NOT a false fee claim)', () => {
     const validator = makeValidator({
       bondGoodForNEpochs: 4,
       bondBalanceSol: 0.001,
@@ -217,11 +217,13 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
-    expect(tip.text).toContain('bond risk fee')
-    expect(tip.text).toContain('Top up')
+    // bondRiskFeeSol === 0 → must NOT claim "avoid the bond risk fee".
+    expect(tip.text).not.toContain('bond risk fee')
+    expect(tip.text).toContain('to keep your stake')
+    expect(tip.alert).toBeFalsy()
   })
 
-  it('critical health (epochs > 5) → critical/bond risk fee message', () => {
+  it('critical health (epochs > 5), no actual fee → keep-stake', () => {
     const validator = makeValidator({
       bondGoodForNEpochs: 8,
       bondBalanceSol: 0.001,
@@ -231,7 +233,9 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
-    expect(tip.text).toContain('bond risk fee')
+    expect(tip.text).not.toContain('bond risk fee')
+    expect(tip.text).toContain('to keep your stake')
+    expect(tip.alert).toBeFalsy()
   })
 
   it('soft health (bond covers stake but not ideal) → info/bond top-up', () => {
