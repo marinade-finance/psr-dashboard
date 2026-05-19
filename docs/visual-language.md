@@ -1,0 +1,254 @@
+# Visual Language — Elements Alphabet
+
+The canonical, deduplicated set of visual primitives for the PSR Dashboard
+and the one rule that governs each. This extends the baseline in
+`CLAUDE.md` (surfaces / status families / bond tiers / charts / typography)
+with the rules synthesized this session. Ground truth is the committed
+code; every entry cites its file.
+
+---
+
+## PROPOSED CLAUDE.md merge
+
+> Splice the block below into `CLAUDE.md`'s "Visual Language" area (after
+> the "Inline style escape hatch" subsection, before "Typography scale").
+> Do NOT apply automatically — `CLAUDE.md` has uncommitted user edits.
+
+```markdown
+### Two orthogonal axes: severity vs lever
+
+Two independent encodings, never collapsed into one:
+
+- **Colour = severity.** `getTipStyle(urgency)` maps
+  critical→destructive, warning→warning, info→info, positive→primary,
+  neutral→muted. Same axis the breakdown banner uses
+  (`tone: red|yellow|green`). `src/services/tip-engine.ts`.
+- **Glyph = the lever** (which knob to turn): `bond`→ICON_BOND,
+  `bid`→ICON_BID, `rank`→ICON_RANK. Only `constraint:'none'` gets a
+  directional glyph (up/down/right), keyed off the real signed delta so
+  it cannot lie. `getTipIcon` in `src/services/tip-engine.ts`.
+- **Octagon alert is the ONLY severity-driven glyph.** `ICON_ALERT`
+  (stop-sign octagon) overrides the lever glyph for exactly one state:
+  an estimated bond risk fee this epoch (`tip.alert === true`). Plain
+  below-min / no-bond stay critical-red but keep their constraint glyph
+  — no escalation. `src/components/icons/icon-alert.tsx`.
+
+### Tip glyph set
+
+7 glyphs, all `viewBox 0 0 12 12`, uniform **14.4px** (12 → 14.4, +20%):
+bond, bid, rank, up, down, right, alert.
+`src/components/icons/icon-*.tsx`.
+
+### Phantom icon slot
+
+Every tip pill renders its glyph inside a fixed
+`w-4 h-4` centred box (`shrink-0 inline-flex items-center justify-center`)
+so glyph variance never shifts pill margins or breaks column alignment.
+`src/components/sam-table/sam-table.tsx` (Next Step cell).
+
+### Bond gauge
+
+One shared track-and-fill `Gauge` (`src/components/gauge/gauge.tsx`),
+two sizes. Fill = `clamp(value/scaleMax, 4%, 100%)`. **Critical band +
+marker scale independently of fill** — `criticalBand` and `marker` are
+fractions of the *track*, fill is a fraction of the *value range*.
+Bond pill: `scaleMax = 4 × idealBondEpochs`, `marker = criticalBand =
+minBondEpochs / scaleMax` (true SDK threshold position, no magic 0.25).
+`src/components/sam-table/sam-table.tsx`.
+
+### Breakdown table grammar — one 3-col model
+
+One uniform column model per `<table>`; never mix `CalcRow` (3-col) and
+`RevRow` (4-col). Unit rules, no exceptions:
+
+- **PMPE / epochs / named quantities** → declared once as the
+  `SectionHeader` `unit` (right-aligned, `font-mono normal-case`); rows
+  carry no suffix.
+- **SOL** → inline suffix on the value, NEVER a header.
+- **%** → inline annotation beside the value, NEVER a header.
+- A column never mixes value kinds.
+
+Row weights: plain = no flags; sub-total = `severity` only (dot carries
+signal, never with `bold`); section conclusion = `separator + bold +
+large`; total = `total`. `src/components/breakdowns/row.tsx`.
+
+### Attention dot persistence
+
+Per-tab attention dot (`w-1.5 h-1.5 rounded-full`,
+critical→destructive / warning→warning / info→info) **persists on the
+active tab and pulses** (`active && 'animate-pulse'`) — it never vanishes
+when the tab is opened. `src/components/validator-detail/validator-detail.tsx`.
+
+### Decorative borders
+
+NEVER `border-l` / left-border accent bands on any element. Status is
+carried by colour token + dot + glyph, not by a coloured edge.
+```
+
+---
+
+## Alphabet
+
+Each entry: **what it is** · **the one rule** · **where it lives**.
+
+### Surfaces & semantic colour
+See `CLAUDE.md` "Surfaces" and "Status & intent" tables. Tokens defined
+in `src/index.css` (`:root` + `.dark` overrides only where the value
+differs), exposed to Tailwind via `@theme`. **Rule:** always the semantic
+class (`bg-card`, `text-destructive`, …) — never raw hex/hsl, never
+inline `var(...)`, never arbitrary `text-[var(--…)]`.
+
+### CSS_* escape hatch
+`CSS_PRIMARY`, `CSS_DESTRUCTIVE`, `CSS_WARNING`, `CSS_INFO`,
+`CSS_STATUS_YELLOW`, `CSS_MUTED`, … — bare `var(--…)` strings, no hex
+fallback. **Rule:** use ONLY when the colour is chosen at runtime from
+JS state and a Tailwind class can't reach (inline `style`). Source:
+`src/css.ts` (note: not `src/lib/utils.ts`).
+
+### Severity axis (colour)
+`getTipStyle(urgency)` → `{color, bg}`: critical=destructive,
+warning=warning, info=info, positive=primary, neutral=muted. The
+breakdown status banner uses the parallel `tone: red|yellow|green`; they
+agree by construction (`bondAdvice` returns both). **Rule:** colour
+encodes severity ONLY — never the lever. `src/services/tip-engine.ts`.
+
+### Lever axis (glyph)
+`getTipIcon(tip)`: `bond`→ICON_BOND, `bid`→ICON_BID, `rank`→ICON_RANK;
+`constraint:'none'` → directional up/down/right keyed off signed
+`delta`. **Rule:** glyph encodes which knob to turn — orthogonal to
+colour; only the in-set "no constraint" case is allowed a directional
+glyph. `src/services/tip-engine.ts`.
+
+### Octagon alert glyph
+`ICON_ALERT` — stop-sign octagon, exclamation inside. **Rule:** the ONLY
+severity-driven glyph; shown ONLY when `tip.alert === true` (an estimated
+bond risk fee this epoch). Below-min / no-bond stay critical-red but keep
+their constraint glyph — no escalation.
+`src/components/icons/icon-alert.tsx`,
+gated in `getTipIcon` / `getValidatorTip`.
+
+### Tip glyph set (7)
+bond, bid, rank, up, down, right, alert. **Rule:** all `viewBox 0 0 12
+12`, uniform `width=height=14.4` (was 12; +20% session decision).
+`src/components/icons/icon-*.tsx`.
+
+### Phantom icon slot
+Fixed `w-4 h-4` centred container wrapping the tip glyph in the Next
+Step pill. **Rule:** glyph variance must never shift pill margins or
+column alignment — reserve identical space regardless of glyph.
+`src/components/sam-table/sam-table.tsx`.
+
+### Gauge (track + fill + marker + band)
+`Gauge` — one presentational primitive, sizes `sm`/`lg`. Fill =
+`clamp(value/scaleMax, 4%, 100%)`. `marker` and `criticalBand` are
+fractions of the **track** (0..1), independent of fill. **Rule:**
+critical band & threshold marker scale with the track, fill scales with
+the value range — never couple them. Bond pill derives all three from
+live SDK config: `scaleMax = 4 × idealBondEpochs`,
+`marker = criticalBand = minBondEpochs / scaleMax`.
+`src/components/gauge/gauge.tsx`; call site
+`src/components/sam-table/sam-table.tsx`.
+
+### Bond chip
+`BOND_CHIP[state]` → `{chip, dot, bar, shortText, label}`. Tiers:
+no-bond/critical = destructive ("No bond"/"Critical"), watch = warning
+("Watch"), soft = secondary+muted ("Adequate"), healthy = primary
+("Healthy"). **Rule:** chip, dot, gauge bar and runway all derive from
+the single `bondHealth` tier — they can never contradict.
+`src/components/sam-table/sam-table.tsx`.
+
+### Bond-coverage heatmap tiers
+`bg-bond-{none,low,mid,high,full}`. **Rule:** these five fixed HSL tiles
+are the bonds-page heatmap ONLY — do not reuse for status. Defined
+`src/index.css`.
+
+### Breakdown 3-col table grammar
+`CalcRow` (label | meta | value) and `RevRow` (label | pct | pmpe |
+value) share `rowStyle`. **Rule, one model per `<table>`:**
+- PMPE / epochs / named units → `SectionHeader` `unit` (declared once,
+  right-aligned over the value column); rows carry no suffix.
+- SOL → inline suffix on the value, never a header.
+- % → inline annotation, never a header.
+- One column never mixes value kinds; never mix `CalcRow` with `RevRow`.
+
+Row weight grammar: plain = no flags; sub-total = `severity` only (the
+`Marker` dot carries the signal, never combined with `bold`); section
+conclusion = `separator + bold + large`; total = `total` (implies all +
+divider above). `src/components/breakdowns/row.tsx`.
+
+### SectionHeader
+Uppercase, tracked, muted, dashed bottom border; optional right-aligned
+`unit` in `font-mono normal-case`. **Rule:** the `unit` slot declares
+ONLY non-SOL, non-% units (PMPE, epochs). `src/components/breakdowns/row.tsx`.
+
+### Marker dot (breakdown)
+`w-1.5 h-1.5 rounded-full` — red=destructive, yellow=status-yellow,
+green=primary. **Rule:** the sub-total signal carrier; mutually
+exclusive with bold (bold is reserved for conclusions/totals).
+`src/components/breakdowns/row.tsx`.
+
+### Attention dot (detail tabs)
+`w-1.5 h-1.5 rounded-full` — critical=destructive, warning=warning,
+info=info. **Rule:** persists on the active tab AND pulses
+(`active && 'animate-pulse'`); never vanishes on open. Each tone reuses
+an existing severity source (no new colour, no new fetch).
+`src/components/validator-detail/validator-detail.tsx`.
+
+### Alert/pulse dot (table row)
+`w-1.5 h-1.5 rounded-full bg-destructive animate-pulse` trailing the
+validator name when bond runway ≤5ep or utilisation ≥85%. **Rule:** same
+pulse idiom as the detail tab dot — a present-danger signal, not
+decorative. `src/components/sam-table/sam-table.tsx`.
+
+### Simulation surfaces
+`ring-status-yellow` inset ring around the table + a status-yellow
+banner with a pulsing dot; ghost rows `opacity-40 line-through
+bg-muted/30`. **Rule:** status-yellow is the single "simulated / not
+live" signal — don't reuse status-yellow for live status in the same
+view. `src/components/sam-table/sam-table.tsx`,
+`src/index.css` (`header-glow`, `sim-*` tokens).
+
+### Typography scale
+`text-[10px]` (glanceable meta) · `text-xs` 12px (table cells, meta
+labels) · `text-[13px]` (emphasised secondary, tab labels) · `text-sm`
+14px (primary row text) · `text-base`+ (headings). **Rule:** no
+off-scale arbitrary sizes (`text-[11px]` etc.) for primary or
+interactive content. Defined per-component; baseline in `CLAUDE.md`.
+
+### Charts
+`bg-chart-1 … bg-chart-5` fixed sequence for stacked bars / pie
+segments. **Rule:** stable ordered palette — not status colours.
+`src/index.css`.
+
+### Decorative borders
+**Rule:** NEVER `border-l` / left-edge accent bands on any element
+(persistent memory rule). Status reads from token + dot + glyph, never a
+coloured edge. (No committed `border-l` accent found — rule holds.)
+
+### Motion vocabulary
+`pulse` (present danger / live), `spin` (loading), `anchor-flash`
+(deep-link target, warning-light fade), `header-glow` (simulation
+header), sheet slide/fade (detail panel). **Rule:** `pulse` means "act
+now / live"; do not use it decoratively. Keyframes in `src/index.css`.
+
+---
+
+## Honesty notes (could not fully confirm in committed code)
+
+- **Attention-dot persistence** lives in
+  `validator-detail.tsx` (detail-panel TabStrip), confirmed in committed
+  code (lines 141–149: `active && 'animate-pulse'`). The brief mentioned
+  the nav; the committed `src/components/navigation/navigation.tsx` has
+  **no** attention dots — the persist+pulse rule applies to the
+  validator-detail tab strip only. (`navigation.tsx` is modified in the
+  working tree per `git status`; this doc reflects committed HEAD.)
+- **CSS_* constants** are in `src/css.ts`, **not** `src/lib/utils.ts`
+  (that path does not exist). `src/css.ts` exports no `CSS_STATUS_GREEN`
+  inline-light variant beyond what's listed; `getBondAdviceStyle` uses
+  `CSS_STATUS_YELLOW` + `CSS_STATUS_YELLOW_LIGHT`.
+- "No left-border accent" is enforced by the memory rule; no committed
+  decorative `border-l` was found to contradict it (the only `border-l*`
+  uses are table grid lines / dividers, not status accents).
+- The "12 → 14.4px, +20%" icon sizing is confirmed in all seven
+  `icon-*.tsx` files (every one declares `width={14.4} height={14.4}`,
+  `viewBox 0 0 12 12`).
