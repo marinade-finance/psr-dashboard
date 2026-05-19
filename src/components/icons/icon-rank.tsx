@@ -9,8 +9,8 @@ export const ICON_RANK = (
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    <path d="M1.6 9.2h8.8" />
-    <path d="M6 1.8v5.4" />
-    <path d="M3.6 4.2 6 1.8l2.4 2.4" />
+    <path d="M3.2 4.4 6 2l2.8 2.4" />
+    <path d="M3.2 7.4 6 5l2.8 2.4" />
+    <path d="M3.2 10.4 6 8l2.8 2.4" />
   </svg>
 )
