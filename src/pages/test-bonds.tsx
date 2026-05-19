@@ -2,6 +2,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React, { useState } from 'react'
 
 import { TEST_BONDS_DATA } from 'src/fixtures/test-bonds'
+import {
+  TEST_BROADCAST_NOTIFICATION,
+  TEST_NOTIFICATIONS_MAP,
+} from 'src/fixtures/test-notifications'
 import { TEST_PROTECTED_EVENTS } from 'src/fixtures/test-protected-events'
 import {
   TEST_AUCTION_RESULT,
@@ -37,8 +41,14 @@ export const TestBondsPage: React.FC<UserLevelProps> = ({ level }) => {
     // hover prefetches ['protected-events']. Seed both so nothing leaks.
     queryClient.setQueryData(['sam', 0], SAM_RESULT)
     queryClient.setQueryData(['protected-events'], TEST_PROTECTED_EVENTS)
-    queryClient.setQueryData(['notifications-broadcast'], null)
-    queryClient.setQueryData(['notifications-all', 'sam_auction'], {})
+    queryClient.setQueryData(
+      ['notifications-broadcast'],
+      TEST_BROADCAST_NOTIFICATION,
+    )
+    queryClient.setQueryData(
+      ['notifications-all', 'sam_auction'],
+      TEST_NOTIFICATIONS_MAP,
+    )
     return queryClient
   })
   return (

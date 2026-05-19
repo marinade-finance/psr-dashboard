@@ -2,7 +2,11 @@
  * Synthetic fixture data for the /test- route.
  * Covers every meaningful validator state without real API calls.
  */
-import { InputsSource, LogVerbosity } from '@marinade.finance/ds-sam-sdk'
+import {
+  AuctionConstraintType,
+  InputsSource,
+  LogVerbosity,
+} from '@marinade.finance/ds-sam-sdk'
 
 import type {
   AuctionResult,
@@ -10,14 +14,35 @@ import type {
   DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
 
-// Realistic epoch / TVL constants
-const TVL = 1_200_000
+// Realistic epoch / TVL constants. Sizes are scaled to Marinade mainnet
+// magnitudes: SAM TVL ~6 M SOL, mid validators ~150–350 k active, large
+// winners ~1 M, long-tail/critical rows a few k. All SOL quantities share
+// ONE multiplier so the redelegation budget (TVL − Σ active) and the
+// pro-rata natural-withdrawal stay sign-consistent — every gaining /
+// losing / flat and bond-tier state is degree-1 homogeneous in this scale,
+// so it survives unchanged. Bids / pmpe are intentionally NOT scaled
+// (they set the winning line, independent of stake size).
+const TVL = 6_000_000
 const EPOCH = 800
 // Clearing price MUST sit inside the validator totalPmpe spread
 // (makeRevShare → 5.0 + bid, bids ~0–3.5 → totalPmpe ~5.0–8.8). Below this,
 // rows fall under the winning price (bid too low) and the auction awards
 // them zero — keep it consistent with each row's marinadeSamTargetSol.
 const WINNING_PMPE = 6.0
+
+// Real-sounding ASO names spread across the fixture so the ASO concentration
+// breakdown shows a realistic distribution. HETZNER is deliberately over the
+// 30% network cap (carried by v12 + v02); the rest sit comfortably under.
+const ASO_HETZNER = 'Hetzner Online GmbH'
+const ASO_AWS = 'Amazon Web Services'
+const ASO_OVH = 'OVH SAS'
+const ASO_GCP = 'Google Cloud'
+const ASO_LATITUDE = 'Latitude.sh'
+const ASO_TERASWITCH = 'Teraswitch Networks Inc.'
+const ASO_CHERRY = 'Cherry Servers'
+const ASO_EQUINIX = 'Equinix'
+const ASO_VULTR = 'Vultr Holdings LLC'
+const ASO_CONTABO = 'Contabo GmbH'
 
 // Shared history: 3 auction entries per validator so bid-penalty logic has data
 function makeAuctions(bidPmpe: number, winningPmpe: number) {
@@ -104,7 +129,10 @@ function makeBase(
     marinadeActivatedStakeSol?: number
     totalActivatedStakeSol?: number
     bondBalanceSol?: number
+    claimableBondBalanceSol?: number
     maxStakeWanted?: number | null
+    country?: string
+    aso?: string
   } = {},
 ): Omit<
   AuctionValidator,
@@ -130,18 +158,18 @@ function makeBase(
   | 'bondSamHealth'
   | 'values'
 > {
-  const active = opts.marinadeActivatedStakeSol ?? 50_000
-  const bond = opts.bondBalanceSol ?? 20
+  const active = opts.marinadeActivatedStakeSol ?? 250_000
+  const bond = opts.bondBalanceSol ?? 100
   return {
     voteAccount,
     clientVersion: '1.18.26',
     voteCredits: 432000,
-    aso: 'Hetzner Online GmbH',
-    country: 'DE',
+    aso: opts.aso ?? ASO_HETZNER,
+    country: opts.country ?? 'DE',
     bondBalanceSol: bond,
-    claimableBondBalanceSol: 0,
+    claimableBondBalanceSol: opts.claimableBondBalanceSol ?? 0,
     lastBondBalanceSol: bond,
-    totalActivatedStakeSol: opts.totalActivatedStakeSol ?? active + 200_000,
+    totalActivatedStakeSol: opts.totalActivatedStakeSol ?? active + 1_000_000,
     marinadeActivatedStakeSol: active,
     lastMarinadeActivatedStakeSol: active,
     lastSamBlacklisted: false,
@@ -154,9 +182,9 @@ function makeBase(
         : 1.0,
     bidCpmpe: opts.bidCpmpe !== undefined ? opts.bidCpmpe : 2.5,
     maxStakeWanted:
-      opts.maxStakeWanted !== undefined ? opts.maxStakeWanted : 500_000,
+      opts.maxStakeWanted !== undefined ? opts.maxStakeWanted : 2_500_000,
     foundationStakeSol: 0,
-    selfStakeSol: 10_000,
+    selfStakeSol: 50_000,
     epochStats: [],
     auctions: makeAuctions(
       opts.bidCpmpe != null ? opts.bidCpmpe : 2.5,
@@ -170,8 +198,11 @@ function makeBase(
 // 1. In-set, healthy bond, gaining stake
 const v01: AuctionValidator = {
   ...makeBase('FiXtUREv1111111111111111111111111111111111aa', {
-    marinadeActivatedStakeSol: 40_000,
-    bondBalanceSol: 25,
+    marinadeActivatedStakeSol: 200_000,
+    bondBalanceSol: 260,
+    claimableBondBalanceSol: 260,
+    country: 'DE',
+    aso: ASO_OVH,
   }),
   revShare: makeRevShare(2.5),
   bidTooLowPenalty: { coef: 0, base: 0 },
@@ -179,29 +210,38 @@ const v01: AuctionValidator = {
   samEligible: true,
   backstopEligible: false,
   samBlocked: false,
-  auctionStake: { externalActivatedSol: 200_000, marinadeSamTargetSol: 55_000 },
+  auctionStake: {
+    externalActivatedSol: 1_000_000,
+    marinadeSamTargetSol: 275_000,
+  },
   lastCapConstraint: null,
   stakePriority: 1,
   unstakePriority: 0,
-  maxBondDelegation: 125_000,
-  bondSamStakeCapSol: 125_000,
-  unprotectedStakeCapSol: 5_000,
-  unprotectedStakeSol: 0,
+  maxBondDelegation: 625_000,
+  bondSamStakeCapSol: 625_000,
+  unprotectedStakeCapSol: 25_000,
+  unprotectedStakeSol: 15_000,
   minBondPmpe: 1.0,
   idealBondPmpe: 0.5,
   minUnprotectedReserve: 0,
   idealUnprotectedReserve: 0,
   bondGoodForNEpochs: 30,
   bondSamHealth: 1,
-  values: makeValues({ bondBalanceSol: 25, marinadeActivatedStakeSol: 40_000 }),
+  values: makeValues({
+    bondBalanceSol: 260,
+    marinadeActivatedStakeSol: 200_000,
+  }),
 }
 
 // 2. In-set, healthy bond, losing stake
 const v02: AuctionValidator = {
   ...makeBase('FiXtUREv2222222222222222222222222222222222bb', {
-    marinadeActivatedStakeSol: 70_000,
-    bondBalanceSol: 22,
+    marinadeActivatedStakeSol: 350_000,
+    bondBalanceSol: 420,
+    claimableBondBalanceSol: 420,
     bidCpmpe: 2.3,
+    country: 'FR',
+    aso: ASO_HETZNER,
   }),
   revShare: makeRevShare(2.3),
   bidTooLowPenalty: { coef: 0, base: 0 },
@@ -209,29 +249,52 @@ const v02: AuctionValidator = {
   samEligible: true,
   backstopEligible: false,
   samBlocked: false,
-  auctionStake: { externalActivatedSol: 150_000, marinadeSamTargetSol: 50_000 },
-  lastCapConstraint: null,
+  auctionStake: {
+    externalActivatedSol: 750_000,
+    marinadeSamTargetSol: 250_000,
+  },
+  // ASO concentration cap hit — Hetzner is over the 30% network cap on
+  // /test-, so the ASO concentration tile renders "(capped)".
+  lastCapConstraint: {
+    constraintType: AuctionConstraintType.ASO,
+    constraintName: ASO_HETZNER,
+    totalStakeSol: 1_450_000,
+    totalLeftToCapSol: 0,
+    marinadeStakeSol: 1_450_000,
+    marinadeLeftToCapSol: 0,
+    validators: [],
+  },
   stakePriority: 0,
   unstakePriority: 1,
-  maxBondDelegation: 110_000,
-  bondSamStakeCapSol: 110_000,
-  unprotectedStakeCapSol: 4_000,
-  unprotectedStakeSol: 0,
+  maxBondDelegation: 550_000,
+  bondSamStakeCapSol: 550_000,
+  unprotectedStakeCapSol: 20_000,
+  unprotectedStakeSol: 30_000,
   minBondPmpe: 1.0,
   idealBondPmpe: 0.5,
   minUnprotectedReserve: 0,
   idealUnprotectedReserve: 0,
   bondGoodForNEpochs: 25,
   bondSamHealth: 1,
-  values: makeValues({ bondBalanceSol: 22, marinadeActivatedStakeSol: 70_000 }),
+  values: makeValues({
+    bondBalanceSol: 420,
+    marinadeActivatedStakeSol: 350_000,
+  }),
 }
 
 // 3. In-set, watch bond (60–84% util, ~15 epoch runway)
 const v03: AuctionValidator = {
   ...makeBase('FiXtUREv3333333333333333333333333333333333cc', {
-    marinadeActivatedStakeSol: 45_000,
-    bondBalanceSol: 10, // ~90% utilization of bond*5000=50k → above 65% watch
+    marinadeActivatedStakeSol: 225_000,
+    // Watch: 90k paid undelegation shrinks projected exposed to 135k, so the
+    // projected floor (135k×1.2/1000 = 162) sits below claimable 200 → no
+    // fee. But the keep floor on the full 225k (×1.2/1000 = 270) exceeds
+    // claimable 200 → topUpToKeepStake > 0 → watch (orange), not critical.
+    bondBalanceSol: 200,
+    claimableBondBalanceSol: 200,
     bidCpmpe: 2.4,
+    country: 'FI',
+    aso: ASO_GCP,
   }),
   revShare: makeRevShare(2.4),
   bidTooLowPenalty: { coef: 0, base: 0 },
@@ -239,13 +302,16 @@ const v03: AuctionValidator = {
   samEligible: true,
   backstopEligible: false,
   samBlocked: false,
-  auctionStake: { externalActivatedSol: 180_000, marinadeSamTargetSol: 48_000 },
+  auctionStake: {
+    externalActivatedSol: 900_000,
+    marinadeSamTargetSol: 240_000,
+  },
   lastCapConstraint: null,
   stakePriority: 0,
   unstakePriority: 0,
-  maxBondDelegation: 50_000,
-  bondSamStakeCapSol: 50_000,
-  unprotectedStakeCapSol: 2_000,
+  maxBondDelegation: 250_000,
+  bondSamStakeCapSol: 250_000,
+  unprotectedStakeCapSol: 10_000,
   unprotectedStakeSol: 0,
   minBondPmpe: 1.2,
   idealBondPmpe: 0.6,
@@ -253,15 +319,27 @@ const v03: AuctionValidator = {
   idealUnprotectedReserve: 0,
   bondGoodForNEpochs: 16, // runway = bondGoodForNEpochs - minBondEpochs(1) = 15
   bondSamHealth: 0.7,
-  values: makeValues({ bondBalanceSol: 10, marinadeActivatedStakeSol: 45_000 }),
+  values: {
+    ...makeValues({
+      bondBalanceSol: 200,
+      marinadeActivatedStakeSol: 225_000,
+    }),
+    paidUndelegationSol: 90_000,
+  },
 }
 
 // 4. In-set, critical bond (<5 epochs runway)
 const v04: AuctionValidator = {
   ...makeBase('FiXtUREv4444444444444444444444444444444444dd', {
-    marinadeActivatedStakeSol: 30_000,
-    bondBalanceSol: 6,
+    marinadeActivatedStakeSol: 150_000,
+    // Genuinely critical: bond 30 ≥ 5 (not below-min) but claimable 12 sits
+    // far under the projected floor (150k×1.5/1000 = 225) → fee charged →
+    // critical. Reinforced by bondGoodForNEpochs 3 (< 5 runway).
+    bondBalanceSol: 30,
+    claimableBondBalanceSol: 12,
     bidCpmpe: 2.6,
+    country: 'CA',
+    aso: ASO_AWS,
   }),
   revShare: makeRevShare(2.6),
   bidTooLowPenalty: { coef: 0, base: 0 },
@@ -269,13 +347,16 @@ const v04: AuctionValidator = {
   samEligible: true,
   backstopEligible: false,
   samBlocked: false,
-  auctionStake: { externalActivatedSol: 100_000, marinadeSamTargetSol: 32_000 },
+  auctionStake: {
+    externalActivatedSol: 500_000,
+    marinadeSamTargetSol: 160_000,
+  },
   lastCapConstraint: null,
   stakePriority: 0,
   unstakePriority: 0,
-  maxBondDelegation: 30_000,
-  bondSamStakeCapSol: 30_000,
-  unprotectedStakeCapSol: 1_000,
+  maxBondDelegation: 150_000,
+  bondSamStakeCapSol: 150_000,
+  unprotectedStakeCapSol: 5_000,
   unprotectedStakeSol: 0,
   minBondPmpe: 1.5,
   idealBondPmpe: 0.8,
@@ -283,15 +364,21 @@ const v04: AuctionValidator = {
   idealUnprotectedReserve: 0,
   bondGoodForNEpochs: 3, // runway = 3 - 1 = 2 → red (< 5 epochs)
   bondSamHealth: 0.2,
-  values: makeValues({ bondBalanceSol: 6, marinadeActivatedStakeSol: 30_000 }),
+  values: makeValues({
+    bondBalanceSol: 30,
+    marinadeActivatedStakeSol: 150_000,
+  }),
 }
 
 // 5. In-set, critical bond (>85% utilization)
 const v05: AuctionValidator = {
   ...makeBase('FiXtUREv5555555555555555555555555555555555ee', {
-    marinadeActivatedStakeSol: 43_500, // 43500/(8*5000)=~109% → cap at 100% → critical
-    bondBalanceSol: 8,
+    marinadeActivatedStakeSol: 217_500, // bond floor heavily over-utilised → critical
+    bondBalanceSol: 40,
+    claimableBondBalanceSol: 30, // ≪ projected floor (217.5k×1.3/1000 = 283)
     bidCpmpe: 2.5,
+    country: 'US',
+    aso: ASO_LATITUDE,
   }),
   revShare: makeRevShare(2.5),
   bidTooLowPenalty: { coef: 0, base: 0 },
@@ -299,13 +386,16 @@ const v05: AuctionValidator = {
   samEligible: true,
   backstopEligible: false,
   samBlocked: false,
-  auctionStake: { externalActivatedSol: 120_000, marinadeSamTargetSol: 44_000 },
+  auctionStake: {
+    externalActivatedSol: 600_000,
+    marinadeSamTargetSol: 220_000,
+  },
   lastCapConstraint: null,
   stakePriority: 0,
   unstakePriority: 0,
-  maxBondDelegation: 40_000,
-  bondSamStakeCapSol: 40_000,
-  unprotectedStakeCapSol: 1_500,
+  maxBondDelegation: 200_000,
+  bondSamStakeCapSol: 200_000,
+  unprotectedStakeCapSol: 7_500,
   unprotectedStakeSol: 0,
   minBondPmpe: 1.3,
   idealBondPmpe: 0.7,
@@ -313,16 +403,24 @@ const v05: AuctionValidator = {
   idealUnprotectedReserve: 0,
   bondGoodForNEpochs: 15, // decent runway but utilization is high
   bondSamHealth: 0.3,
-  values: makeValues({ bondBalanceSol: 8, marinadeActivatedStakeSol: 43_500 }),
+  values: makeValues({
+    bondBalanceSol: 40,
+    marinadeActivatedStakeSol: 217_500,
+  }),
 }
 
-// 6. In-set, active bid-too-low penalty (bidTooLowPenaltyPmpe > 0)
+// 6. In-set, healthy bond, active bid-too-low penalty → primary CTA is the
+//    bid penalty. Bond is deliberately healthy (balance + claimable above
+//    every coverage floor) so the bond cascade does NOT shadow the bid CTA.
 const v06: AuctionValidator = {
   ...makeBase('FiXtUREv6666666666666666666666666666666666ff', {
-    marinadeActivatedStakeSol: 35_000,
-    bondBalanceSol: 15,
-    bidCpmpe: 1.5, // below clearing price
+    marinadeActivatedStakeSol: 175_000,
+    bondBalanceSol: 200,
+    bidCpmpe: 1.5,
+    country: 'JP',
+    aso: ASO_EQUINIX,
   }),
+  claimableBondBalanceSol: 200,
   revShare: {
     ...makeRevShare(1.5, 0.8),
     auctionEffectiveBidPmpe: 1.5,
@@ -332,13 +430,16 @@ const v06: AuctionValidator = {
   samEligible: true,
   backstopEligible: false,
   samBlocked: false,
-  auctionStake: { externalActivatedSol: 90_000, marinadeSamTargetSol: 35_000 },
+  auctionStake: {
+    externalActivatedSol: 450_000,
+    marinadeSamTargetSol: 175_000,
+  },
   lastCapConstraint: null,
   stakePriority: 0,
   unstakePriority: 0,
-  maxBondDelegation: 75_000,
-  bondSamStakeCapSol: 75_000,
-  unprotectedStakeCapSol: 3_000,
+  maxBondDelegation: 375_000,
+  bondSamStakeCapSol: 375_000,
+  unprotectedStakeCapSol: 15_000,
   unprotectedStakeSol: 0,
   minBondPmpe: 1.0,
   idealBondPmpe: 0.5,
@@ -346,15 +447,21 @@ const v06: AuctionValidator = {
   idealUnprotectedReserve: 0,
   bondGoodForNEpochs: 20,
   bondSamHealth: 1,
-  values: makeValues({ bondBalanceSol: 15, marinadeActivatedStakeSol: 35_000 }),
+  values: makeValues({
+    bondBalanceSol: 200,
+    marinadeActivatedStakeSol: 175_000,
+  }),
 }
 
 // 7. In-set, at stake target (delta=0)
 const v07: AuctionValidator = {
   ...makeBase('FiXtUREv7777777777777777777777777777777777gg', {
-    marinadeActivatedStakeSol: 60_000,
-    bondBalanceSol: 18,
+    marinadeActivatedStakeSol: 300_000,
+    bondBalanceSol: 360,
+    claimableBondBalanceSol: 360,
     bidCpmpe: 2.8,
+    country: 'US',
+    aso: ASO_AWS,
   }),
   revShare: makeRevShare(2.8),
   bidTooLowPenalty: { coef: 0, base: 0 },
@@ -362,29 +469,40 @@ const v07: AuctionValidator = {
   samEligible: true,
   backstopEligible: false,
   samBlocked: false,
-  auctionStake: { externalActivatedSol: 200_000, marinadeSamTargetSol: 60_000 },
+  auctionStake: {
+    externalActivatedSol: 1_000_000,
+    marinadeSamTargetSol: 300_000,
+  },
   lastCapConstraint: null,
   stakePriority: 0,
   unstakePriority: 0,
-  maxBondDelegation: 90_000,
-  bondSamStakeCapSol: 90_000,
-  unprotectedStakeCapSol: 3_500,
-  unprotectedStakeSol: 0,
+  maxBondDelegation: 450_000,
+  bondSamStakeCapSol: 450_000,
+  unprotectedStakeCapSol: 17_500,
+  unprotectedStakeSol: 25_000,
   minBondPmpe: 1.0,
   idealBondPmpe: 0.5,
   minUnprotectedReserve: 0,
   idealUnprotectedReserve: 0,
   bondGoodForNEpochs: 28,
   bondSamHealth: 1,
-  values: makeValues({ bondBalanceSol: 18, marinadeActivatedStakeSol: 60_000 }),
+  values: makeValues({
+    bondBalanceSol: 360,
+    marinadeActivatedStakeSol: 300_000,
+  }),
 }
 
 // 8. Eligible but bid below the winning price → zero target, loses all stake
 const v08: AuctionValidator = {
   ...makeBase('FiXtUREv8888888888888888888888888888888888hh', {
-    marinadeActivatedStakeSol: 10_000,
-    bondBalanceSol: 12,
+    marinadeActivatedStakeSol: 50_000,
+    // Healthy bond (claimable 80 ≥ floor 50k×1/1000 = 50) so the below-line
+    // "Bid too low" rank CTA isn't shadowed by a bond CTA.
+    bondBalanceSol: 80,
+    claimableBondBalanceSol: 80,
     bidCpmpe: 0.8, // totalPmpe 5.8 < winning 6.0 → below the line
+    country: 'US',
+    aso: ASO_AWS,
   }),
   revShare: makeRevShare(0.8),
   bidTooLowPenalty: { coef: 0, base: 0 },
@@ -392,12 +510,12 @@ const v08: AuctionValidator = {
   samEligible: true,
   backstopEligible: false,
   samBlocked: false,
-  auctionStake: { externalActivatedSol: 300_000, marinadeSamTargetSol: 0 },
+  auctionStake: { externalActivatedSol: 1_500_000, marinadeSamTargetSol: 0 },
   lastCapConstraint: null,
   stakePriority: 0,
   unstakePriority: 1,
-  maxBondDelegation: 60_000,
-  bondSamStakeCapSol: 60_000,
+  maxBondDelegation: 300_000,
+  bondSamStakeCapSol: 300_000,
   unprotectedStakeCapSol: 0,
   unprotectedStakeSol: 0,
   minBondPmpe: 1.0,
@@ -406,16 +524,22 @@ const v08: AuctionValidator = {
   idealUnprotectedReserve: 0,
   bondGoodForNEpochs: 22,
   bondSamHealth: 1,
-  values: makeValues({ bondBalanceSol: 12, marinadeActivatedStakeSol: 10_000 }),
+  values: makeValues({
+    bondBalanceSol: 80,
+    marinadeActivatedStakeSol: 50_000,
+  }),
 }
 
 // 9. No MEV client (mevCommissionDec = null)
 const v09: AuctionValidator = {
   ...makeBase('FiXtUREv9999999999999999999999999999999999ii', {
-    marinadeActivatedStakeSol: 25_000,
-    bondBalanceSol: 14,
+    marinadeActivatedStakeSol: 125_000,
+    bondBalanceSol: 160,
+    claimableBondBalanceSol: 160,
     mevCommissionDec: null,
     bidCpmpe: 2.1,
+    country: 'US',
+    aso: ASO_VULTR,
   }),
   revShare: { ...makeRevShare(2.1, 0, 4.1, 0), mevPmpe: 0, totalPmpe: 6.2 },
   bidTooLowPenalty: { coef: 0, base: 0 },
@@ -423,14 +547,17 @@ const v09: AuctionValidator = {
   samEligible: true,
   backstopEligible: false,
   samBlocked: false,
-  auctionStake: { externalActivatedSol: 80_000, marinadeSamTargetSol: 27_000 },
+  auctionStake: {
+    externalActivatedSol: 400_000,
+    marinadeSamTargetSol: 135_000,
+  },
   lastCapConstraint: null,
   stakePriority: 1,
   unstakePriority: 0,
-  maxBondDelegation: 70_000,
-  bondSamStakeCapSol: 70_000,
-  unprotectedStakeCapSol: 2_500,
-  unprotectedStakeSol: 0,
+  maxBondDelegation: 350_000,
+  bondSamStakeCapSol: 350_000,
+  unprotectedStakeCapSol: 12_500,
+  unprotectedStakeSol: 10_000,
   minBondPmpe: 1.0,
   idealBondPmpe: 0.5,
   minUnprotectedReserve: 0,
@@ -439,14 +566,14 @@ const v09: AuctionValidator = {
   bondSamHealth: 1,
   values: {
     ...makeValues({
-      bondBalanceSol: 14,
-      marinadeActivatedStakeSol: 25_000,
+      bondBalanceSol: 160,
+      marinadeActivatedStakeSol: 125_000,
       mevComm: 0,
     }),
     commissions: {
       ...makeValues({
-        bondBalanceSol: 14,
-        marinadeActivatedStakeSol: 25_000,
+        bondBalanceSol: 160,
+        marinadeActivatedStakeSol: 125_000,
         mevComm: 0,
       }).commissions,
       mevCommissionDec: 0,
@@ -459,10 +586,13 @@ const v09: AuctionValidator = {
 // 10. High inflation commission (10%)
 const v10: AuctionValidator = {
   ...makeBase('FiXtUREvaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaajj', {
-    marinadeActivatedStakeSol: 20_000,
-    bondBalanceSol: 16,
+    marinadeActivatedStakeSol: 100_000,
+    bondBalanceSol: 130,
+    claimableBondBalanceSol: 130,
     inflationCommissionDec: 0.1,
     bidCpmpe: 2.2,
+    country: 'SG',
+    aso: ASO_CONTABO,
   }),
   revShare: { ...makeRevShare(2.2, 0, 3.5), totalPmpe: 3.5 + 0.9 + 2.2 },
   bidTooLowPenalty: { coef: 0, base: 0 },
@@ -470,13 +600,16 @@ const v10: AuctionValidator = {
   samEligible: true,
   backstopEligible: false,
   samBlocked: false,
-  auctionStake: { externalActivatedSol: 70_000, marinadeSamTargetSol: 22_000 },
+  auctionStake: {
+    externalActivatedSol: 350_000,
+    marinadeSamTargetSol: 110_000,
+  },
   lastCapConstraint: null,
   stakePriority: 0,
   unstakePriority: 0,
-  maxBondDelegation: 80_000,
-  bondSamStakeCapSol: 80_000,
-  unprotectedStakeCapSol: 2_000,
+  maxBondDelegation: 400_000,
+  bondSamStakeCapSol: 400_000,
+  unprotectedStakeCapSol: 10_000,
   unprotectedStakeSol: 0,
   minBondPmpe: 1.0,
   idealBondPmpe: 0.5,
@@ -485,8 +618,8 @@ const v10: AuctionValidator = {
   bondGoodForNEpochs: 26,
   bondSamHealth: 1,
   values: makeValues({
-    bondBalanceSol: 16,
-    marinadeActivatedStakeSol: 20_000,
+    bondBalanceSol: 130,
+    marinadeActivatedStakeSol: 100_000,
     inflComm: 0.1,
   }),
 }
@@ -494,9 +627,13 @@ const v10: AuctionValidator = {
 // 11. Zero bid (bidPmpe = 0, edge case)
 const v11: AuctionValidator = {
   ...makeBase('FiXtUREvaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAkk', {
-    marinadeActivatedStakeSol: 5_000,
-    bondBalanceSol: 10,
+    marinadeActivatedStakeSol: 25_000,
+    // Healthy bond so the "zero bid" edge state isn't muddied by a bond CTA.
+    bondBalanceSol: 50,
+    claimableBondBalanceSol: 50,
     bidCpmpe: 0,
+    country: 'DE',
+    aso: ASO_HETZNER,
   }),
   revShare: { ...makeRevShare(0), bidPmpe: 0, auctionEffectiveBidPmpe: 0 },
   bidTooLowPenalty: { coef: 0, base: 0 },
@@ -504,12 +641,12 @@ const v11: AuctionValidator = {
   samEligible: false,
   backstopEligible: false,
   samBlocked: false,
-  auctionStake: { externalActivatedSol: 50_000, marinadeSamTargetSol: 0 },
+  auctionStake: { externalActivatedSol: 250_000, marinadeSamTargetSol: 0 },
   lastCapConstraint: null,
   stakePriority: 0,
   unstakePriority: 1,
-  maxBondDelegation: 50_000,
-  bondSamStakeCapSol: 50_000,
+  maxBondDelegation: 250_000,
+  bondSamStakeCapSol: 250_000,
   unprotectedStakeCapSol: 0,
   unprotectedStakeSol: 0,
   minBondPmpe: 1.0,
@@ -518,16 +655,22 @@ const v11: AuctionValidator = {
   idealUnprotectedReserve: 0,
   bondGoodForNEpochs: 35,
   bondSamHealth: 1,
-  values: makeValues({ bondBalanceSol: 10, marinadeActivatedStakeSol: 5_000 }),
+  values: makeValues({
+    bondBalanceSol: 50,
+    marinadeActivatedStakeSol: 25_000,
+  }),
 }
 
 // 12. Max stake (near TVL cap, very large stake)
 const v12: AuctionValidator = {
   ...makeBase('FiXtUREvaZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZll', {
-    marinadeActivatedStakeSol: 240_000,
-    bondBalanceSol: 60,
+    marinadeActivatedStakeSol: 1_200_000,
+    bondBalanceSol: 1_300,
+    claimableBondBalanceSol: 1_300,
     bidCpmpe: 3.2,
-    totalActivatedStakeSol: 800_000,
+    totalActivatedStakeSol: 4_000_000,
+    country: 'DE',
+    aso: ASO_HETZNER,
   }),
   revShare: makeRevShare(3.2, 0, 4.5, 1.1),
   bidTooLowPenalty: { coef: 0, base: 0 },
@@ -536,16 +679,27 @@ const v12: AuctionValidator = {
   backstopEligible: false,
   samBlocked: false,
   auctionStake: {
-    externalActivatedSol: 400_000,
-    marinadeSamTargetSol: 240_000,
+    externalActivatedSol: 2_000_000,
+    marinadeSamTargetSol: 1_200_000,
   },
-  lastCapConstraint: null,
+  // Country concentration cap hit — DE is over the 30% network cap on
+  // /test- (this 1.2M target plus v01's 275k = ~38.5%), so the country
+  // concentration tile renders "(capped)".
+  lastCapConstraint: {
+    constraintType: AuctionConstraintType.COUNTRY,
+    constraintName: 'DE',
+    totalStakeSol: 1_475_000,
+    totalLeftToCapSol: 0,
+    marinadeStakeSol: 1_475_000,
+    marinadeLeftToCapSol: 0,
+    validators: [],
+  },
   stakePriority: 0,
   unstakePriority: 0,
-  maxBondDelegation: 300_000,
-  bondSamStakeCapSol: 300_000,
-  unprotectedStakeCapSol: 10_000,
-  unprotectedStakeSol: 0,
+  maxBondDelegation: 1_500_000,
+  bondSamStakeCapSol: 1_500_000,
+  unprotectedStakeCapSol: 50_000,
+  unprotectedStakeSol: 80_000,
   minBondPmpe: 0.8,
   idealBondPmpe: 0.4,
   minUnprotectedReserve: 0,
@@ -553,8 +707,55 @@ const v12: AuctionValidator = {
   bondGoodForNEpochs: 40,
   bondSamHealth: 1,
   values: makeValues({
-    bondBalanceSol: 60,
-    marinadeActivatedStakeSol: 240_000,
+    bondBalanceSol: 1_300,
+    marinadeActivatedStakeSol: 1_200_000,
+  }),
+}
+
+// 13. No bond posted at all (bondBalanceSol = 0 → bondHealthFromAuction
+//   returns 'no-bond'). Eligible + staked + positive SAM target, so it
+//   passes every auction gate. NOTE: the SAM table's passesTableFilter
+//   short-circuits on `!v.bondBalanceSol` (sam-table.tsx) and the detail
+//   panel's sheetValidatorData filters `selectBondSize > 0`, so a true
+//   zero-bond row is structurally filtered out of /test- in both Basic
+//   and Expert. This row keeps the no-bond STATE present in the fixture
+//   data (every modality covered) even though the current page chrome
+//   never renders it — see the task report for the blocker.
+const v13: AuctionValidator = {
+  ...makeBase('FiXtUREvaNOBONDdddddddddddddddddddddddddddmm', {
+    marinadeActivatedStakeSol: 90_000,
+    bondBalanceSol: 0,
+    claimableBondBalanceSol: 0,
+    bidCpmpe: 2.4,
+    country: 'US',
+    aso: ASO_AWS,
+  }),
+  revShare: makeRevShare(2.4),
+  bidTooLowPenalty: { coef: 0, base: 0 },
+  bondForcedUndelegation: { coef: 0, base: 0, value: 0 },
+  samEligible: true,
+  backstopEligible: false,
+  samBlocked: false,
+  auctionStake: {
+    externalActivatedSol: 500_000,
+    marinadeSamTargetSol: 95_000,
+  },
+  lastCapConstraint: null,
+  stakePriority: 0,
+  unstakePriority: 0,
+  maxBondDelegation: 300_000,
+  bondSamStakeCapSol: 300_000,
+  unprotectedStakeCapSol: 0,
+  unprotectedStakeSol: 0,
+  minBondPmpe: 1.0,
+  idealBondPmpe: 0.5,
+  minUnprotectedReserve: 0,
+  idealUnprotectedReserve: 0,
+  bondGoodForNEpochs: 0,
+  bondSamHealth: 0,
+  values: makeValues({
+    bondBalanceSol: 0,
+    marinadeActivatedStakeSol: 90_000,
   }),
 }
 
@@ -563,7 +764,7 @@ const v12: AuctionValidator = {
 // One row per distinct getValidatorTip / bondAdvice / bond-health outcome and
 // the combinations a real validator hits, so /test- renders the full CTA
 // surface for visual review. The bond-coverage math (config below:
-// minBondEpochs=1, idealBondEpochs=3, minBondBalanceSol=5, bondRiskFeeMult=1)
+// minBondEpochs=1, idealBondEpochs=13, minBondBalanceSol=5, bondRiskFeeMult=1)
 // reduces — with unprotected reserves zeroed — to:
 //   floorBaseKeep      = (minBondPmpe   / 1000) * marinadeActivatedStakeSol
 //   requiredIdealKeep  = (idealBondPmpe / 1000) * marinadeActivatedStakeSol
@@ -575,13 +776,16 @@ const v12: AuctionValidator = {
 // keep>0 → watch; idealKeep>0 → soft; else healthy.
 // expectedStakeChangeSol is NOT set here — it is derived globally from the
 // greedy redelegation budget (= max(0, TVL − Σ active)). These rows keep a
-// small active base (10k) so Σ active stays well under TVL and the budget
-// can actually fund the "gaining" rows. Stake direction is then steered via
-// marinadeSamTargetSol vs marinadeActivatedStakeSol (and paidUndelegationSol):
-// target > active → inflow (gaining); target ≪ active → over-target, sheds
-// the pro-rata natural withdrawal (losing); target == active → flat.
+// modest active base (STATE_ACTIVE) so Σ active stays well under TVL and the
+// budget can actually fund the "gaining" rows. Stake direction is then
+// steered via marinadeSamTargetSol vs marinadeActivatedStakeSol (and
+// paidUndelegationSol): target > active → inflow (gaining); target ≪ active
+// → over-target, sheds the pro-rata natural withdrawal (losing); target ==
+// active → flat. Every per-mille example in the s-row comments below states
+// its floor relative to STATE_ACTIVE = 50_000; the relations are degree-1
+// homogeneous so the tier each row lands in is unchanged by the global scale.
 
-const STATE_ACTIVE = 10_000
+const STATE_ACTIVE = 50_000
 
 function stateValidator(
   voteAccount: string,
@@ -595,6 +799,8 @@ function stateValidator(
     bidCpmpe?: number
     paidUndelegationSol?: number
     marinadeActivatedStakeSol?: number
+    country?: string
+    aso?: string
   },
 ): AuctionValidator {
   const active = opts.marinadeActivatedStakeSol ?? STATE_ACTIVE
@@ -604,6 +810,8 @@ function stateValidator(
       marinadeActivatedStakeSol: active,
       bondBalanceSol: opts.bondBalanceSol,
       bidCpmpe: bid,
+      country: opts.country,
+      aso: opts.aso,
     }),
     claimableBondBalanceSol: opts.claimableBondBalanceSol,
     revShare: makeRevShare(bid),
@@ -615,14 +823,14 @@ function stateValidator(
     backstopEligible: false,
     samBlocked: false,
     auctionStake: {
-      externalActivatedSol: 150_000,
+      externalActivatedSol: 750_000,
       marinadeSamTargetSol: opts.marinadeSamTargetSol,
     },
     lastCapConstraint: null,
     stakePriority: 0,
     unstakePriority: 0,
-    maxBondDelegation: 200_000,
-    bondSamStakeCapSol: 200_000,
+    maxBondDelegation: 1_000_000,
+    bondSamStakeCapSol: 1_000_000,
     unprotectedStakeCapSol: 0,
     unprotectedStakeSol: 0,
     minBondPmpe: opts.minBondPmpe,
@@ -642,29 +850,33 @@ function stateValidator(
 }
 
 // 13. Healthy bond + gaining stake (positive / none, up arrow).
-//   ideal floor = (2/1000)*10000 = 20; bond 30 ≥ 20 → healthy.
-//   target 14k > active 10k → +4k inflow next epoch.
+//   ideal floor = (2/1000)*50000 = 100; bond 150 ≥ 100 → healthy.
+//   target 70k > active 50k → +20k inflow next epoch.
 const s13 = stateValidator('FiXtUREvbHEALTHYgaining1111111111111111111aa', {
   minBondPmpe: 1,
   idealBondPmpe: 2,
-  bondBalanceSol: 30,
-  claimableBondBalanceSol: 30,
-  marinadeSamTargetSol: 14_000,
+  bondBalanceSol: 150,
+  claimableBondBalanceSol: 150,
+  marinadeSamTargetSol: 70_000,
   bondGoodForNEpochs: 60,
   bidCpmpe: 3.4,
+  country: 'FI',
+  aso: ASO_GCP,
 })
 
 // 14. Healthy bond + losing stake (warning / none, down arrow).
-//   target 2k ≪ active 10k → big over-target excess; absorbs most of the
+//   target 10k ≪ active 50k → big over-target excess; absorbs most of the
 //   pro-rata natural withdrawal → clearly negative Δ next epoch.
 const s14 = stateValidator('FiXtUREvbHEALTHYlosing22222222222222222222bb', {
   minBondPmpe: 1,
   idealBondPmpe: 2,
-  bondBalanceSol: 30,
-  claimableBondBalanceSol: 30,
-  marinadeSamTargetSol: 2_000,
+  bondBalanceSol: 150,
+  claimableBondBalanceSol: 150,
+  marinadeSamTargetSol: 10_000,
   bondGoodForNEpochs: 55,
   bidCpmpe: 3.3,
+  country: 'GB',
+  aso: ASO_CHERRY,
 })
 
 // 15. Healthy bond + at target (neutral / none, → arrow, "At target stake.").
@@ -672,25 +884,29 @@ const s14 = stateValidator('FiXtUREvbHEALTHYlosing22222222222222222222bb', {
 const s15 = stateValidator('FiXtUREvbHEALTHYattarget3333333333333333cc', {
   minBondPmpe: 1,
   idealBondPmpe: 2,
-  bondBalanceSol: 30,
-  claimableBondBalanceSol: 30,
+  bondBalanceSol: 150,
+  claimableBondBalanceSol: 150,
   marinadeSamTargetSol: STATE_ACTIVE,
   bondGoodForNEpochs: 50,
   bidCpmpe: 3.2,
+  country: 'AU',
+  aso: ASO_CONTABO,
 })
 
 // 16. Soft bond + losing stake (info / bond, "Top up N to grow stake.").
-//   ideal floor = (10/1000)*10000 = 100; bond 40 < 100 → idealKeep=60 → soft.
-//   keep floor = (1/1000)*10000 = 10 ≤ claimable 40 → not watch. Δ≤0 so the
+//   ideal floor = (10/1000)*50000 = 500; bond 200 < 500 → idealKeep=300 → soft.
+//   keep floor = (1/1000)*50000 = 50 ≤ claimable 200 → not watch. Δ≤0 so the
 //   soft branch holds (not overridden by a positive delta).
 const s16 = stateValidator('FiXtUREvbSOFTlosing44444444444444444444444dd', {
   minBondPmpe: 1,
   idealBondPmpe: 10,
-  bondBalanceSol: 40,
-  claimableBondBalanceSol: 40,
-  marinadeSamTargetSol: 3_000,
+  bondBalanceSol: 200,
+  claimableBondBalanceSol: 200,
+  marinadeSamTargetSol: 15_000,
   bondGoodForNEpochs: 28,
   bidCpmpe: 3.0,
+  country: 'JP',
+  aso: ASO_EQUINIX,
 })
 
 // 17. Soft bond + gaining stake — the precedence rule: the advisory
@@ -699,73 +915,87 @@ const s16 = stateValidator('FiXtUREvbSOFTlosing44444444444444444444444dd', {
 const s17 = stateValidator('FiXtUREvbSOFTgaining55555555555555555555555ee', {
   minBondPmpe: 1,
   idealBondPmpe: 10,
-  bondBalanceSol: 40,
-  claimableBondBalanceSol: 40,
-  marinadeSamTargetSol: 30_000,
+  bondBalanceSol: 200,
+  claimableBondBalanceSol: 200,
+  marinadeSamTargetSol: 150_000,
   bondGoodForNEpochs: 26,
   bidCpmpe: 3.1,
+  country: 'FR',
+  aso: ASO_OVH,
 })
 
 // 18. Watch bond + losing stake (warning / bond, "Top up N to keep your
-//   stake."). minBondPmpe 2 → keep floor = 20. paid 6.5k shrinks projected
-//   exposed to 3.5k → floorProj = (2/1000)*3500 = 7 ≤ claimable 8 → fee=0;
-//   keep = 20 − 8 = 12 > 0 → watch. The paid undelegation also drives Δ < 0.
+//   stake."). minBondPmpe 2 → keep floor = (2/1000)*50000 = 100. paid 32.5k
+//   shrinks projected exposed to 17.5k → floorProj = (2/1000)*17500 = 35 ≤
+//   claimable 40 → fee=0; keep = 100 − 40 = 60 > 0 → watch. The paid
+//   undelegation also drives Δ < 0.
 const s18 = stateValidator('FiXtUREvbWATCHlosing66666666666666666666666ff', {
   minBondPmpe: 2,
   idealBondPmpe: 0.1,
-  bondBalanceSol: 8,
-  claimableBondBalanceSol: 8,
-  marinadeSamTargetSol: 6_000,
+  bondBalanceSol: 40,
+  claimableBondBalanceSol: 40,
+  marinadeSamTargetSol: 30_000,
   bondGoodForNEpochs: 12,
-  paidUndelegationSol: 6_500,
+  paidUndelegationSol: 32_500,
   bidCpmpe: 2.7,
+  country: 'NL',
+  aso: ASO_LATITUDE,
 })
 
 // 19. Watch bond + gaining stake — keep-stake CTA stays (truthful while
 //   gaining: the inflow does not refill the bond). Same watch shape as 18
-//   but target ≫ active so the inflow outweighs the 6.5k paid undelegation
+//   but target ≫ active so the inflow outweighs the 32.5k paid undelegation
 //   → net positive Δ, yet the bond CTA still wins by priority.
 const s19 = stateValidator('FiXtUREvbWATCHgaining77777777777777777777gg', {
   minBondPmpe: 2,
   idealBondPmpe: 0.1,
-  bondBalanceSol: 8,
-  claimableBondBalanceSol: 8,
-  marinadeSamTargetSol: 40_000,
+  bondBalanceSol: 40,
+  claimableBondBalanceSol: 40,
+  marinadeSamTargetSol: 200_000,
   bondGoodForNEpochs: 11,
-  paidUndelegationSol: 6_500,
+  paidUndelegationSol: 32_500,
   bidCpmpe: 3.5,
+  country: 'NL',
+  aso: ASO_TERASWITCH,
 })
 
 // 20. Critical bond via avoid-fee (critical / bond, "Top up N to avoid the
 //   bond risk fee."). minBondPmpe 2, paid 0 → projected floor =
-//   (2/1000)*10000 = 20; claimable 4 → fee = 16 > 0 → critical.
+//   (2/1000)*50000 = 100; claimable 20 → fee = 80 > 0 → critical.
 const s20 = stateValidator('FiXtUREvbCRITICALfee8888888888888888888888hh', {
   minBondPmpe: 2,
   idealBondPmpe: 4,
-  bondBalanceSol: 8,
-  claimableBondBalanceSol: 4,
-  marinadeSamTargetSol: 9_000,
+  bondBalanceSol: 40,
+  claimableBondBalanceSol: 20,
+  marinadeSamTargetSol: 45_000,
   bondGoodForNEpochs: 4,
   bidCpmpe: 2.9,
+  country: 'SG',
+  aso: ASO_VULTR,
 })
 
 // 21. Below-minimum bond, IN-SET (critical / bond, "Top up bond to 5 SOL to
 //   win stake."). bond 2 < minBondBalanceSol 5 → hard block; the sub-min
 //   force-removal makes the stake column show losing ALL active stake —
-//   the "critical bond + losing all stake" real combination.
+//   the "critical bond + losing all stake" real combination. The 2 SOL bond
+//   is an ABSOLUTE threshold vs the unscaled config minBondBalanceSol=5,
+//   not a stake-relative floor, so it is deliberately NOT scaled.
 const s21 = stateValidator('FiXtUREvbBELOWMINinset9999999999999999999ii', {
   minBondPmpe: 1,
   idealBondPmpe: 2,
   bondBalanceSol: 2,
   claimableBondBalanceSol: 2,
-  marinadeSamTargetSol: 40_000,
+  marinadeSamTargetSol: 200_000,
   bondGoodForNEpochs: 2,
   bidCpmpe: 2.6,
+  country: 'GB',
+  aso: ASO_CHERRY,
 })
 
 // 22. Below-minimum bond, OUT-OF-SET (critical / bond, "Top up bond to 5 SOL
 //   to qualify."). target 0, bond 2 < 5, still has active stake so it
-//   survives the Basic table filter.
+//   survives the Basic table filter. Bond left at 2 (absolute below-min
+//   threshold, not stake-relative — same rationale as s21).
 const s22 = stateValidator('FiXtUREvbBELOWMINoutaaaaaaaaaaaaaaaaaaaaajj', {
   minBondPmpe: 1,
   idealBondPmpe: 2,
@@ -774,6 +1004,8 @@ const s22 = stateValidator('FiXtUREvbBELOWMINoutaaaaaaaaaaaaaaaaaaaaajj', {
   marinadeSamTargetSol: 0,
   bondGoodForNEpochs: 3,
   bidCpmpe: 0.6,
+  country: 'FR',
+  aso: ASO_OVH,
 })
 
 // 23. Out-of-set, HEALTHY bond, bid too low (warning / rank). The pill
@@ -782,24 +1014,28 @@ const s22 = stateValidator('FiXtUREvbBELOWMINoutaaaaaaaaaaaaaaaaaaaaajj', {
 const s23 = stateValidator('FiXtUREvbOUTbidlowbbbbbbbbbbbbbbbbbbbbbbbbkk', {
   minBondPmpe: 1,
   idealBondPmpe: 2,
-  bondBalanceSol: 150,
-  claimableBondBalanceSol: 150,
+  bondBalanceSol: 750,
+  claimableBondBalanceSol: 750,
   marinadeSamTargetSol: 0,
   bondGoodForNEpochs: 45,
   bidCpmpe: 0.5,
+  country: 'GB',
+  aso: ASO_CHERRY,
 })
 
 // 24. Out-of-set, SOFT bond, top-up to grow (warning / bond, "Top up N to
-//   grow stake."). ideal floor = (10/1000)*10000 = 100; bond 40 < 100 →
+//   grow stake."). ideal floor = (10/1000)*50000 = 500; bond 200 < 500 →
 //   soft. Out-of-set + unhealthy bond → bond CTA, not the rank CTA.
 const s24 = stateValidator('FiXtUREvbOUTsoftgrowccccccccccccccccccccccll', {
   minBondPmpe: 1,
   idealBondPmpe: 10,
-  bondBalanceSol: 40,
-  claimableBondBalanceSol: 40,
+  bondBalanceSol: 200,
+  claimableBondBalanceSol: 200,
   marinadeSamTargetSol: 0,
   bondGoodForNEpochs: 22,
   bidCpmpe: 0.7,
+  country: 'NL',
+  aso: ASO_TERASWITCH,
 })
 
 export const TEST_VALIDATORS: AuctionValidator[] = [
@@ -815,6 +1051,7 @@ export const TEST_VALIDATORS: AuctionValidator[] = [
   v10,
   v11,
   v12,
+  v13,
   s13,
   s14,
   s15,
@@ -840,9 +1077,9 @@ export const TEST_AUCTION_RESULT: AuctionResult = {
       blockPmpe: 0,
     },
     stakeAmounts: {
-      networkTotalSol: 400_000_000,
+      networkTotalSol: 2_000_000_000,
       marinadeSamTvlSol: TVL,
-      marinadeRemainingSamSol: TVL - 500_000,
+      marinadeRemainingSamSol: TVL - 2_500_000,
     },
     blacklist: new Set<string>(),
   },
@@ -877,7 +1114,12 @@ export const TEST_DS_SAM_CONFIG: DsSamConfig = {
   // bonds are ≥ 6 SOL, so their health/coverage is unaffected.
   minBondBalanceSol: 5,
   minBondEpochs: 1,
-  idealBondEpochs: 3,
+  // Bond runway gauge scaleMax = 4 × idealBondEpochs = 52ep, so a healthy
+  // 40-60ep runway fills realistically instead of saturating at the old
+  // ceiling of 12 (4 × 3). minBondEpochs stays 1 (the SDK floor) — raising
+  // it would push s21 (bondGoodForNEpochs=2) and the low-runway critical
+  // s-rows below the Basic table's runway filter and drop their CTAs.
+  idealBondEpochs: 13,
   bondRiskFeeMult: 1.0,
   minMaxStakeWanted: null,
   expectedMaxWinningBidRatio: null,
@@ -917,6 +1159,7 @@ export const TEST_VALIDATOR_NAMES = new Map<string, string>([
   ],
   ['FiXtUREvaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAkk', 'Test: Zero Bid'],
   ['FiXtUREvaZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZll', 'Test: Max Stake'],
+  ['FiXtUREvaNOBONDdddddddddddddddddddddddddddmm', 'Test: No Bond Posted'],
   ['FiXtUREvbHEALTHYgaining1111111111111111111aa', 'CTA: Healthy + Gaining'],
   ['FiXtUREvbHEALTHYlosing22222222222222222222bb', 'CTA: Healthy + Losing'],
   ['FiXtUREvbHEALTHYattarget3333333333333333cc', 'CTA: Healthy + At-Target'],

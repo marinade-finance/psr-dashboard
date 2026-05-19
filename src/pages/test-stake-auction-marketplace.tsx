@@ -2,6 +2,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React, { useMemo, useState } from 'react'
 
 import { TEST_BONDS_DATA } from 'src/fixtures/test-bonds'
+import {
+  TEST_BROADCAST_NOTIFICATION,
+  TEST_NOTIFICATIONS_MAP,
+} from 'src/fixtures/test-notifications'
 import { TEST_PROTECTED_EVENTS } from 'src/fixtures/test-protected-events'
 import {
   TEST_AUCTION_RESULT,
@@ -41,8 +45,14 @@ export const TestSamPage: React.FC<UserLevelProps> = ({ level }) => {
     queryClient.setQueryData(['protected-events'], TEST_PROTECTED_EVENTS)
     queryClient.setQueryData(['bonds'], TEST_BONDS_DATA)
     queryClient.setQueryData(['validator-names'], TEST_VALIDATOR_NAMES)
-    queryClient.setQueryData(['notifications-broadcast'], null)
-    queryClient.setQueryData(['notifications-all', 'sam_auction'], {})
+    queryClient.setQueryData(
+      ['notifications-broadcast'],
+      TEST_BROADCAST_NOTIFICATION,
+    )
+    queryClient.setQueryData(
+      ['notifications-all', 'sam_auction'],
+      TEST_NOTIFICATIONS_MAP,
+    )
     // psrEstimates fires per-validator when the Payments tab opens. Seed an
     // empty array for every fixture vote account; the tab still renders.
     for (const voteAccount of TEST_VALIDATOR_NAMES.keys()) {

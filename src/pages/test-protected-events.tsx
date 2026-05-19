@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React, { useState } from 'react'
 
 import { TEST_BONDS_DATA } from 'src/fixtures/test-bonds'
+import { TEST_BROADCAST_NOTIFICATION } from 'src/fixtures/test-notifications'
 import { TEST_PROTECTED_EVENTS } from 'src/fixtures/test-protected-events'
 import {
   TEST_AUCTION_RESULT,
@@ -38,7 +39,10 @@ export const TestProtectedEventsPage: React.FC<UserLevelProps> = ({
     // EpochMeter (in nav) reads ['sam', 0]; nav hover prefetches ['bonds'].
     queryClient.setQueryData(['sam', 0], SAM_RESULT)
     queryClient.setQueryData(['bonds'], TEST_BONDS_DATA)
-    queryClient.setQueryData(['notifications-broadcast'], null)
+    queryClient.setQueryData(
+      ['notifications-broadcast'],
+      TEST_BROADCAST_NOTIFICATION,
+    )
     return queryClient
   })
   return (
