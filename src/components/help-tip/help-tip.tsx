@@ -6,16 +6,22 @@ type Props = {
   html?: string
   text?: string
   guideTo?: string
+  // When given, the label content is wrapped together with the ? icon as a
+  // single Radix trigger so hovering/clicking anywhere on "Label ?" works.
+  // Omit it (icon-only) where the label is also a sort / click target —
+  // wrapping it there would swallow that click.
+  children?: React.ReactNode
 }
 
 const ICON_CLASSES =
-  'cursor-pointer text-xs leading-none text-muted-foreground/60 hover:text-muted-foreground border border-muted-foreground/30 rounded-full w-3.5 h-3.5 inline-flex items-center justify-center select-none shrink-0'
+  'text-xs leading-none text-muted-foreground/60 group-hover:text-muted-foreground border border-muted-foreground/30 rounded-full w-3.5 h-3.5 inline-flex items-center justify-center select-none shrink-0'
 
-// Hover previews the tip. Clicking the ? pins it open; clicking the ?
+// Hover previews the tip. Clicking the trigger pins it open; clicking it
 // again or anywhere on the tip body unpins. The guide opens from the
 // in-body "Learn more ↗" link (its own click is isolated so it doesn't
-// unpin or bubble to the row).
-export const HelpTip: React.FC<Props> = ({ html, text, guideTo }) => {
+// unpin or bubble to the row). With `children`, the whole "Label ?" group
+// is the trigger; without, just the ? icon (backwards-compat).
+export const HelpTip: React.FC<Props> = ({ html, text, guideTo, children }) => {
   const [pinned, setPinned] = useState(false)
   const [hovered, setHovered] = useState(false)
 
@@ -40,6 +46,12 @@ export const HelpTip: React.FC<Props> = ({ html, text, guideTo }) => {
     </span>
   )
 
+  const icon = (
+    <span className={ICON_CLASSES} aria-hidden="true">
+      ?
+    </span>
+  )
+
   return (
     <Tooltip
       content={tooltipContent}
@@ -50,8 +62,16 @@ export const HelpTip: React.FC<Props> = ({ html, text, guideTo }) => {
     >
       <button
         type="button"
-        className={ICON_CLASSES}
-        aria-label="More info"
+        // Buttons reset text-transform/letter-spacing/font in the UA
+        // stylesheet, so a wrapped label would drop the parent's
+        // uppercase/tracking/weight. Force every typographic property to
+        // inherit so the label text stays byte-identical to before.
+        className={
+          children
+            ? 'group inline-flex items-center gap-1.5 cursor-help text-left align-baseline [text-transform:inherit] [letter-spacing:inherit] [font:inherit] [color:inherit]'
+            : 'group cursor-help inline-flex shrink-0'
+        }
+        aria-label={children ? undefined : 'More info'}
         aria-pressed={pinned}
         // Radix dismisses the tooltip on the trigger's pointerdown; with the
         // controlled open this causes a close→reopen flicker on click. Block
@@ -63,7 +83,8 @@ export const HelpTip: React.FC<Props> = ({ html, text, guideTo }) => {
           setPinned(p => !p)
         }}
       >
-        ?
+        {children}
+        {icon}
       </button>
     </Tooltip>
   )

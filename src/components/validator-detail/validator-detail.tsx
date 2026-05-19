@@ -878,11 +878,12 @@ export const ValidatorDetail = ({
             {simEnabled && (
               <div className="rounded-xl border border-status-yellow p-5 bg-status-yellow-light">
                 <h3 className="text-base font-semibold flex items-center gap-2 text-status-yellow">
-                  What-If Simulation
                   <HelpTip
                     text={HELP_TEXT.simulation}
                     guideTo={`${docsPath(level)}#simulation`}
-                  />
+                  >
+                    What-If Simulation
+                  </HelpTip>
                 </h3>
                 <fieldset className="space-y-3 mt-3">
                   <div className="space-y-1">

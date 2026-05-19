@@ -22,8 +22,13 @@ export const Metric: React.FC<Props> = ({
 }) => (
   <Card className="metric px-3 py-3 sm:px-5 sm:py-4 transition-shadow hover:shadow-hover">
     <div className="flex items-center gap-1 sm:whitespace-nowrap text-xs uppercase tracking-wider font-medium text-muted-foreground mb-1">
-      {label}
-      {tooltipHtml && <HelpTip html={tooltipHtml} guideTo={guideTo} />}
+      {tooltipHtml ? (
+        <HelpTip html={tooltipHtml} guideTo={guideTo}>
+          {label}
+        </HelpTip>
+      ) : (
+        label
+      )}
     </div>
     <div className="metricValue text-xl sm:text-2xl font-semibold font-mono truncate">
       {value}

@@ -91,8 +91,13 @@ export const ConcentrationMetric: React.FC<Props> = ({
       onMouseLeave={() => setOpen(false)}
     >
       <div className="text-xs uppercase tracking-wider font-medium text-muted-foreground mb-1 flex items-center gap-1">
-        {label}
-        {help && <HelpTip text={help} guideTo={guideTo} />}
+        {help ? (
+          <HelpTip text={help} guideTo={guideTo}>
+            {label}
+          </HelpTip>
+        ) : (
+          label
+        )}
       </div>
       {top ? (
         <>

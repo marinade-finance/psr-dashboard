@@ -28,10 +28,7 @@ export const SectionHeader: React.FC<{
       className="pt-4 pb-1 text-xs uppercase tracking-wider text-muted-foreground border-b border-dashed border-border"
     >
       <div className="flex items-center justify-between">
-        <span className="inline-flex items-center gap-1.5">
-          {title}
-          {help && <HelpTip text={help} />}
-        </span>
+        {help ? <HelpTip text={help}>{title}</HelpTip> : <span>{title}</span>}
         {unit && <span className="font-mono normal-case">{unit}</span>}
       </div>
     </td>
@@ -151,10 +148,7 @@ export const CalcRow: React.FC<{
         )}
       >
         {tone && !total && <Marker tone={tone} />}
-        <span className="inline-flex items-center gap-1.5">
-          {label}
-          {help && <HelpTip text={help} />}
-        </span>
+        {help ? <HelpTip text={help}>{label}</HelpTip> : <span>{label}</span>}
       </td>
       <td className={cn(MID_CELL, cellPad, sepBorder)}>
         {showSecondary ? secondary : ''}
@@ -238,10 +232,7 @@ export const RevRow: React.FC<{
         )}
       >
         {tone && !total && <Marker tone={tone} />}
-        <span className="inline-flex items-center gap-1.5">
-          {label}
-          {help && <HelpTip text={help} />}
-        </span>
+        {help ? <HelpTip text={help}>{label}</HelpTip> : <span>{label}</span>}
       </td>
       <td className={cn(MID_CELL, cellPad, sepBorder)}>{pct ?? ''}</td>
       <td className={cn(MID_CELL, cellPad, sepBorder)}>{pmpeStr ?? ''}</td>

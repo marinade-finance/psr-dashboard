@@ -953,9 +953,12 @@ export const SamTable: React.FC<Props> = ({
               className="px-3 py-3 sm:px-5 sm:py-4 flex-1 min-w-[140px] sm:min-w-[160px] overflow-hidden"
             >
               <div className="text-xs uppercase tracking-wider font-medium text-muted-foreground mb-1 flex items-center gap-1">
-                {stat.label}
-                {stat.help && (
-                  <HelpTip text={stat.help} guideTo={stat.guideTo} />
+                {stat.help ? (
+                  <HelpTip text={stat.help} guideTo={stat.guideTo}>
+                    {stat.label}
+                  </HelpTip>
+                ) : (
+                  stat.label
                 )}
               </div>
               <div className="flex items-baseline gap-0.5 min-w-0 overflow-hidden">
