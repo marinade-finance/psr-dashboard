@@ -3,8 +3,8 @@ import React from 'react'
 export const ICON_BOND = (
   <svg
     viewBox="0 0 12 12"
-    width={12}
-    height={12}
+    width={14.4}
+    height={14.4}
     stroke="currentColor"
     fill="none"
     strokeWidth="1.5"
