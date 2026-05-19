@@ -9,8 +9,8 @@ export const ICON_ALERT = (
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    <circle cx="6" cy="6" r="5" />
-    <path d="M6 3.2v3.2" />
-    <path d="M6 8.6h0.01" />
+    <polygon points="4,1 8,1 11,4 11,8 8,11 4,11 1,8 1,4" />
+    <path d="M6 3.4v3.4" />
+    <path d="M6 8.8h0.01" />
   </svg>
 )

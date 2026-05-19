@@ -46,6 +46,10 @@ export interface ValidatorTip {
   text: string
   urgency: TipUrgency
   constraint: TipConstraint
+  // True only for the single most-severe state: an estimated bond risk fee
+  // this epoch. Drives the alert glyph (and pulse) — never set for plain
+  // below-min / no-bond, which stay critical-red without the escalation.
+  alert?: boolean
   // Signed next-epoch stake delta. Only meaningful when constraint === 'none';
   // that's the sole case whose glyph is allowed to be directional.
   delta: number
@@ -88,15 +92,16 @@ export const getTipStyle = (urgency: TipUrgency): TipStyle => {
   }
 }
 
-// Glyph carries the tip's MEANING (which lever to pull). One exception: a
-// critical alarm (red bond-risk-fee / below-minimum / no-bond) shows the
-// alert glyph so the danger reads at a glance — severity overrides the
-// constraint glyph only here. Otherwise a constraint maps to one fixed
+// Glyph carries the tip's MEANING (which lever to pull). One exception:
+// the single most-severe state — an estimated bond risk fee this epoch
+// (tip.alert) — shows the alert glyph so the danger reads at a glance.
+// Plain below-min / no-bond stay critical-red but keep their constraint
+// glyph (no escalation). Otherwise a constraint maps to one fixed
 // non-directional glyph; only constraint:'none' (in-set, the only lever
 // left is the stake trajectory) gets a directional arrow, keyed off the
 // real signed delta so it can never lie.
 export const getTipIcon = (tip: ValidatorTip): React.ReactNode => {
-  if (tip.urgency === 'critical') return ICON_ALERT
+  if (tip.alert) return ICON_ALERT
   switch (tip.constraint) {
     case 'bond':
       return ICON_BOND
@@ -185,31 +190,14 @@ function outOfSetTip(
   validator: AugmentedAuctionValidator,
   dsSamConfig: DsSamConfig,
   winningTotalPmpe: number,
-  health: BondHealthState,
   delta: number,
 ): ValidatorTip {
   const bondBalance = validator.bondBalanceSol ?? 0
-  // Below-min stays a hard critical block; otherwise the canonical bond
-  // advice (top-up to grow / keep) — same string the breakdown shows.
-  if (health !== 'healthy' && bondBalance >= dsSamConfig.minBondBalanceSol) {
-    const coverage = computeBondCoverage(
-      validator,
-      dsSamConfig,
-      winningTotalPmpe,
-    )
-    const topUpSol =
-      coverage.topUpToIdealKeep > 0
-        ? coverage.topUpToIdealKeep
-        : coverage.topUpToKeepStake
-    if (topUpSol > 0) {
-      return {
-        text: `Top up ${topUp(topUpSol)} to grow stake.`,
-        urgency: 'warning',
-        constraint: 'bond',
-        delta,
-      }
-    }
-  }
+  // Out-of-set with an adequate bond means the BID is why you're out —
+  // raising it is the lever, not growing the bond (a bond top-up can't get
+  // you in). Only the hard blocks below — sub-min / no-bond, or an
+  // impending fee — outrank the bid here; everything else falls to the
+  // bid-too-low message.
   // Bond below SDK's `minBondBalanceSol`: clipBondStakeCap returns 0 so the
   // validator can't win any stake regardless of bid — a hard block, hence
   // critical (red). bond-health also reports 'no-bond'/'critical' here, so
@@ -229,6 +217,7 @@ function outOfSetTip(
         text: `Top up ${topUp(coverage.topUpToAvoidFee)} to avoid the bond risk fee.`,
         urgency: 'critical',
         constraint: 'bond',
+        alert: true,
         delta,
       }
     }
@@ -237,6 +226,7 @@ function outOfSetTip(
         text: `Bond risk fee ${pay(bondRiskFeeSol)} this epoch.`,
         urgency: 'critical',
         constraint: 'bond',
+        alert: true,
         delta,
       }
     }
@@ -272,7 +262,7 @@ export const getValidatorTip = (
   // A would-be winner whose bid clears the threshold but whose bond can't
   // back more stake gets the bond CTA, not the rank CTA.
   if (!inSet)
-    return outOfSetTip(validator, dsSamConfig, winningTotalPmpe, health, delta)
+    return outOfSetTip(validator, dsSamConfig, winningTotalPmpe, delta)
 
   // Bond CTA cascade — priority: avoid fee > keep stake > ideal. All three
   // strings come from the canonical bondAdvice() so the breakdown banner
@@ -300,6 +290,7 @@ export const getValidatorTip = (
         text: advice.text,
         urgency: 'critical',
         constraint: 'bond',
+        alert: true,
         delta,
       }
     }
