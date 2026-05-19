@@ -226,6 +226,28 @@ export const BiddingBreakdown: React.FC<Props> = ({
               message="No binding priority total PMPE this run — every winner gets served."
               colSpan={2}
             />
+          ) : nextEpoch.bidIncreaseForPriority <= 0 ? (
+            // Already clears the frontier — the target-derivation rows
+            // (Priority total / − Non-bid / = Target bid) describe a bid
+            // the validator would never need to make. Skip them; show only
+            // the green confirmation and the two context rows so a reader
+            // can still verify their position.
+            <>
+              <OkRow
+                message={`You already clear the priority total PMPE (${pmpe(nextEpoch.priorityFrontierPmpe)}). No bid increase needed for next-epoch priority.`}
+                colSpan={2}
+              />
+              <CalcRow
+                label="Your priority rank"
+                help={PRIORITY_RANK_HELP}
+                col2={`#${nextEpoch.priorityRank}`}
+              />
+              <CalcRow
+                label="Your bid gap"
+                help={BID_GAP_HELP}
+                col2={pmpe(nextEpoch.bidGapPmpe)}
+              />
+            </>
           ) : (
             <>
               <CalcRow
@@ -244,19 +266,12 @@ export const BiddingBreakdown: React.FC<Props> = ({
                 bold
                 separator
               />
-              {nextEpoch.bidIncreaseForPriority > 0 ? (
-                <CalcRow
-                  label="Bid increase needed"
-                  col2={pmpe(nextEpoch.bidIncreaseForPriority)}
-                  severity="warning"
-                  bold
-                />
-              ) : (
-                <OkRow
-                  message="You already clear the priority total PMPE."
-                  colSpan={2}
-                />
-              )}
+              <CalcRow
+                label="Bid increase needed"
+                col2={pmpe(nextEpoch.bidIncreaseForPriority)}
+                severity="warning"
+                bold
+              />
               <CalcRow
                 label="Your priority rank"
                 help={PRIORITY_RANK_HELP}
