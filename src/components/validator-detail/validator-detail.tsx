@@ -627,7 +627,9 @@ export const ValidatorDetail = ({
 
         <div
           className={cn(
-            'px-4 sm:px-6 py-3 flex items-center gap-3',
+            // Floating rounded banner — same look as the in-card status
+            // banner, just larger. Side margin keeps it off the panel edges.
+            'mx-4 sm:mx-6 my-3 rounded-lg px-3 py-2 flex items-center gap-3',
             // Hide the jump affordance when the user is already on the
             // target tab — the pill would be a no-op and the cursor
             // pretending to be clickable misleads.
