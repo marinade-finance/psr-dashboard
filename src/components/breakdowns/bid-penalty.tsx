@@ -110,8 +110,8 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
             unit="PMPE"
           />
           <CalcRow
-            label="Winning"
-            help="The total PMPE of the winning set this epoch. One of the two inputs to the threshold."
+            label="Winning bar"
+            help="The lowest total PMPE that still made the winning set this epoch — same metric as the Winning bar in the Bidding tab. One of the two inputs to the threshold."
             col2={pmpe(metrics.winningTotalPmpe)}
           />
           <CalcRow
