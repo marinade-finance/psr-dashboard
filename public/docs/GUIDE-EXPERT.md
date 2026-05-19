@@ -1,3 +1,5 @@
+<!-- page: expert | Expert Mode -->
+
 # Expert View
 
 Expert mode is reached via the `/expert-…` URL prefix or by toggling the docs
@@ -48,6 +50,8 @@ One extra metric tile at the top of the Protected Events page:
 
 ---
 
+<!-- page: expert-concepts | Expert Concepts -->
+
 ## Additional Concepts
 
 <a id="sfdp"></a>
@@ -71,6 +75,8 @@ The bid-distribution histogram plots each validator's static CPMPE bid in quanti
 Per-country and per-ASO stake caps are enforced as a post-ranking filter: the SDK iterates winners in APY order and skips any validator whose group is already at the cap (`countryCapPct`, `asoCapPct` in `DsSamConfig`). Capped validators show in the Top Countries / Top ASOs tiles with a red marker. In expert mode, capped validators that would otherwise win appear below the cutoff line because the cap, not their bid, is the binding constraint.
 
 ---
+
+<!-- page: expert -->
 
 ## Notes
 

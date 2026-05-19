@@ -1,3 +1,5 @@
+<!-- page: overview | Overview -->
+
 # PSR Dashboard Guide
 
 The PSR (Protected Staking Rewards) Dashboard shows Marinade's stake-distribution
@@ -108,6 +110,8 @@ Coverage (bar + percentage).
 
 ---
 
+<!-- page: auction | The Auction -->
+
 <a id="sam"></a>
 ## How the Auction Works
 
@@ -146,6 +150,8 @@ Each epoch, SAM runs a **last-price auction** to allocate stake.
 _See [Stake Auction Marketplace — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market#stake-auction-marketplace) for the full protocol spec._
 
 ---
+
+<!-- page: concepts | Key Concepts -->
 
 ## Key Concepts
 
@@ -221,6 +227,8 @@ and watch the validator's rank shift; see [Simulation Mode](#simulation).
 
 _See [How to participate — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market#how-to-participate-in-the-stake-auction-marketplace) for the participation rules and commission caps._
 
+<!-- page: bonds | Bonds & Risk Fee -->
+
 <a id="bond"></a>
 ### Validator Bonds
 
@@ -275,6 +283,8 @@ projected exposed stake at the minimum-bond rate.
   breakdown".
 
 _See [Stronger Bond Signals and a New Risk Fee in SAM — Marinade Blog](https://marinade.finance/blog/stronger-bond-signals-and-a-new-risk-fee-in-sam) for context._
+
+<!-- page: penalties | Penalties -->
 
 <a id="bid-penalty"></a>
 ### Bid-Too-Low Penalty
@@ -338,6 +348,8 @@ earning.
   detail panel.
 
 _See [Blacklist Policy — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market#blacklist-policy)._
+
+<!-- page: concepts -->
 
 <a id="redelegation"></a>
 ### Re-delegation and Undelegation Caps
@@ -458,6 +470,8 @@ Marinade caps the fraction of auction stake that can go to validators in a singl
 When a country or ASO hits its cap, validators there are cut — even if their bid is high enough to win. The "Top Countries" and "Top ASOs" tiles on the SAM page show the current fill level for each group and mark capped entries in red.
 
 ---
+
+<!-- page: screens | Screens & Panels -->
 
 <a id="auction-table"></a>
 ## Auction Table Columns
