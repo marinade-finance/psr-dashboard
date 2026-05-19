@@ -1,4 +1,5 @@
-import type { BondHealthState } from './bond-health'
+import { BondHealthState } from './bond-health'
+
 import type {
   AuctionValidator,
   DsSamConfig,
@@ -39,7 +40,11 @@ export function effectiveBondRunway(
   validator: AuctionValidator,
   bondHealth: BondHealthState,
 ): number {
-  if (bondHealth === 'no-bond' || bondHealth === 'critical') return 0
+  if (
+    bondHealth === BondHealthState.NO_BOND ||
+    bondHealth === BondHealthState.CRITICAL
+  )
+    return 0
   // Clamp at 0 so `(Nep)` can never render a negative epoch count — the
   // SDK can theoretically expose a negative bondGoodForNEpochs and the
   // gate above doesn't catch every such case.

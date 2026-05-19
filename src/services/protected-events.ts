@@ -117,8 +117,9 @@ export const selectProtectedStakeReason = (protectedEvent: ProtectedEvent) => {
     }
   }
   // After isProtectedEvent narrows the object case out, reason is the
-  // string-union. The switch is exhaustive — adding a new SDK reason
-  // forces a handler here.
+  // string-union. The default branch is lenient on purpose: a new SDK
+  // reason logs and falls back to "Unsupported" so a backend deploy
+  // can't break the page. (Trade-off vs assertNever: chose resilience.)
   switch (protectedEvent.reason) {
     case 'Bidding':
       return 'Bidding'

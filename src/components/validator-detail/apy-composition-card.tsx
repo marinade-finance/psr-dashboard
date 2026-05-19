@@ -32,7 +32,9 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
   isSimulated,
   onGoToBidding,
 }) => {
-  const inflComm = validator.inflationCommissionDec
+  // Simulation can null any commission field. Default to 0 so the rendered
+  // percentage stays "0%" instead of "NaN%".
+  const inflComm = validator.inflationCommissionDec ?? 0
   const mevComm = validator.mevCommissionDec ?? 0
   const blockComm = validator.blockRewardsCommissionDec ?? 0
 

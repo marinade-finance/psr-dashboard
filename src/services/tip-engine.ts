@@ -291,10 +291,13 @@ function bondCta(
   dsSamConfig: DsSamConfig,
   winningTotalPmpe: number,
   delta: number,
+  precomputedCoverage?: BondCoverage,
 ): ValidatorTip | null {
   const bondBalance = validator.bondBalanceSol ?? 0
   const bondRiskFeeSol = validator.values?.bondRiskFeeSol ?? 0
-  const coverage = computeBondCoverage(validator, dsSamConfig, winningTotalPmpe)
+  const coverage =
+    precomputedCoverage ??
+    computeBondCoverage(validator, dsSamConfig, winningTotalPmpe)
 
   // Below-min: the SDK qualification gate (clipBondStakeCap → 0). Only
   // realistic for out-of-set validators (in-set with sub-min is impossible).
@@ -499,11 +502,21 @@ export const getValidatorTip = (
   validator: AugmentedAuctionValidator,
   dsSamConfig: DsSamConfig,
   winningTotalPmpe: number,
+  // Hot-path optimisation: per-row callers (sam-table) precompute the
+  // coverage to feed both the bond chip AND this tip. Passing it through
+  // avoids a second computeBondCoverage call inside bondCta.
+  precomputedCoverage?: BondCoverage,
 ): ValidatorTip => {
   const delta = validator.values.expectedStakeChangeSol ?? 0
   const cap = capCta(validator, delta)
   return selectTip(
-    bondCta(validator, dsSamConfig, winningTotalPmpe, delta),
+    bondCta(
+      validator,
+      dsSamConfig,
+      winningTotalPmpe,
+      delta,
+      precomputedCoverage,
+    ),
     bidCta(validator, dsSamConfig, winningTotalPmpe, delta),
     cap,
     deltaCta(delta, cap !== null),

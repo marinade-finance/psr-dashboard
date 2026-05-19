@@ -31,6 +31,7 @@ import {
   bidTooLowPenaltySol,
   blacklistPenaltySol,
 } from 'src/services/bid-penalty'
+import { computeBondCoverage } from 'src/services/bond-coverage'
 import { bondHealthFromAuction } from 'src/services/bond-health'
 import {
   BOND_CRITICAL_FRAC,
@@ -63,6 +64,7 @@ import {
   nextStakeDeltaCell,
   TipConstraint,
 } from 'src/services/tip-engine'
+import { assertNever } from 'src/utils/assert-never'
 
 import { UserLevel } from '../navigation/navigation'
 
@@ -71,6 +73,7 @@ import type {
   AuctionValidator,
   DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
+import type { BondCoverage } from 'src/services/bond-coverage'
 import type { BondHealthState } from 'src/services/bond-health'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
 
@@ -83,6 +86,10 @@ export type ValidatorMeta = {
 // Validator with computed bond state
 type ValidatorWithBondState = AugmentedAuctionValidator & {
   bondHealth: BondHealthState
+  // Memoised so the per-row pipeline (bondHealth, tip, bond chip) computes
+  // it exactly once instead of repeating the bond-coverage math 2-3× per
+  // validator across ~300 rows.
+  bondCoverage: BondCoverage
 }
 
 const TEXT_MUTED = 'text-muted-foreground'
@@ -188,10 +195,17 @@ export function makeCompareFn(
       case 'bond':
         cmp = (a.bondBalanceSol ?? 0) - (b.bondBalanceSol ?? 0)
         break
-      default:
+      case 'nextStep':
+        // Sort by stake target — the simplest proxy for "how much help does
+        // this validator need next". A future SortColumn value would force
+        // a compile error here via assertNever rather than silently land
+        // in the same branch.
         cmp =
           b.auctionStake.marinadeSamTargetSol -
           a.auctionStake.marinadeSamTargetSol
+        break
+      default:
+        cmp = assertNever(col)
     }
     return dir === 'asc' ? cmp : -cmp
   }
@@ -440,14 +454,23 @@ export const SamTable: React.FC<Props> = ({
             dsSamConfig.minBondEpochs,
           ),
         )
-        .map(validator => ({
-          ...validator,
-          bondHealth: bondHealthFromAuction(
+        .map(validator => {
+          const bondCoverage = computeBondCoverage(
             validator,
             dsSamConfig,
             winningTotalPmpe,
-          ),
-        })),
+          )
+          return {
+            ...validator,
+            bondCoverage,
+            bondHealth: bondHealthFromAuction(
+              validator,
+              dsSamConfig,
+              winningTotalPmpe,
+              bondCoverage,
+            ),
+          }
+        }),
     [auctionResult, dsSamConfig, winningTotalPmpe, level],
   )
 
@@ -532,15 +555,23 @@ export const SamTable: React.FC<Props> = ({
       changedValidators,
       originalAuctionResult,
       originalPositionsMap,
-      orig =>
-        ({
+      orig => {
+        const bondCoverage = computeBondCoverage(
+          orig,
+          dsSamConfig,
+          winningTotalPmpe,
+        )
+        return {
           ...orig,
+          bondCoverage,
           bondHealth: bondHealthFromAuction(
             orig,
             dsSamConfig,
             winningTotalPmpe,
+            bondCoverage,
           ),
-        }) as ValidatorWithBondState,
+        } as ValidatorWithBondState
+      },
     )
   }, [
     sortedValidators,
@@ -689,7 +720,12 @@ export const SamTable: React.FC<Props> = ({
     const expectedChange = selectExpectedStakeChange(validator)
 
     // Tip
-    const tip = getValidatorTip(validator, dsSamConfig, winningTotalPmpe)
+    const tip = getValidatorTip(
+      validator,
+      dsSamConfig,
+      winningTotalPmpe,
+      validator.bondCoverage,
+    )
     const tipStyle = getTipStyle(tip.urgency)
 
     // Max APY
