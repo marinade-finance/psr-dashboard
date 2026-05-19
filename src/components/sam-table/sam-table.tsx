@@ -887,7 +887,9 @@ export const SamTable: React.FC<Props> = ({
                 <span className="shrink-0 inline-flex items-center justify-center w-4 h-4">
                   {getTipIcon(tip)}
                 </span>
-                <span className="break-words">{stepText}</span>
+                <span className="break-words whitespace-pre-line">
+                  {stepText}
+                </span>
               </div>
             </TableCell>
           )

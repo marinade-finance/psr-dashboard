@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { cost, pmpe } from 'src/format'
+import { cost, pmpe, stake } from 'src/format'
 import { computeBidding } from 'src/services/bidding'
 import {
   isProtectedEvent,
@@ -100,14 +100,48 @@ export const PaymentsBreakdown: React.FC<Props> = ({
       )}
       <table className="w-full max-w-[34rem]">
         <tbody>
-          <SectionHeader title="Bid cost" />
-          <CalcRow label="Active stake cost" col2={cost(m.cost)} />
+          {/* Receipt-slip layout: col1 carries PMPE rates only, col2 SOL */}
+          {/* amounts only. Each unit kind lives in its own column. Each */}
+          {/* sub-cost gets its own section header so a reader can scan */}
+          {/* by "where each number came from". The result row echoes the */}
+          {/* rate so multiplication reads left → right on one line. */}
+          <SectionHeader title="Active stake cost" col1Unit="PMPE" />
           <CalcRow
-            label="Activating stake cost"
+            label="Active stake"
+            help="Active Marinade stake this epoch — the base for the effective-bid rate."
+            col2={stake(m.stake)}
+          />
+          <CalcRow
+            label="× Effective bid"
+            help="The PMPE rate every winner pays this epoch (last-price auction)."
+            col1={pmpe(m.effBid)}
+          />
+          <CalcRow
+            label="= Active stake cost"
+            col1={pmpe(m.effBid)}
+            col2={cost(m.cost)}
+            bold
+            separator
+          />
+
+          <SectionHeader title="Activating stake cost" col1Unit="PMPE" />
+          <CalcRow
+            label="Activating stake"
+            help="Newly-activating stake — the base for the activating-stake rate."
+            col2={stake(m.activating)}
+          />
+          <CalcRow
+            label="× Activating-stake bid"
+            help="The PMPE rate applied to newly-activating stake."
+            col1={pmpe(m.activatingStakePmpe)}
+          />
+          <CalcRow
+            label="= Activating stake cost"
             col1={pmpe(m.activatingStakePmpe)}
             col2={cost(m.activatingCost)}
+            bold
+            separator
           />
-          <CalcRow label="Bid cost" col2={cost(m.total)} bold separator />
 
           <SectionHeader title="Penalties" />
           <CalcRow

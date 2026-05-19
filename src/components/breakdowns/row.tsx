@@ -16,25 +16,44 @@ export const NORMAL_CELL_PAD = 'py-1.5'
 // `unit` puts a shared column unit (e.g. "PMPE" or "epochs") in the section
 // header instead of repeating it on every row label. SOL and % are NEVER
 // declared here — SOL gets an inline suffix on the value, % is annotated
-// beside the value. The unit slot is right-aligned over the value columns.
+// beside the value. `unit` aligns over col2; `col1Unit` aligns over col1
+// for sections where the two columns carry different kinds (e.g. payments:
+// col1 = PMPE rate, col2 = SOL cost).
 export const SectionHeader: React.FC<{
   title: string
   colSpan?: number
   help?: string
   unit?: string
-}> = ({ title, colSpan = 3, help, unit }) => (
-  <tr>
-    <td
-      colSpan={colSpan}
-      className="pt-5 pb-1 text-xs uppercase tracking-wider text-muted-foreground border-b border-dashed border-border"
-    >
-      <div className="flex items-center justify-between">
-        {help ? <HelpTip text={help}>{title}</HelpTip> : <span>{title}</span>}
-        {unit && <span className="font-mono normal-case">{unit}</span>}
-      </div>
-    </td>
-  </tr>
-)
+  col1Unit?: string
+}> = ({ title, colSpan = 3, help, unit, col1Unit }) => {
+  const headerCellCls =
+    'pt-6 pb-1 text-xs uppercase tracking-wider text-muted-foreground border-t border-dashed border-border [tr:first-child>&]:border-t-0 [tr:first-child>&]:pt-0'
+  if (col1Unit) {
+    return (
+      <tr>
+        <td className={cn(headerCellCls, 'pr-2')}>
+          {help ? <HelpTip text={help}>{title}</HelpTip> : <span>{title}</span>}
+        </td>
+        <td className={cn(headerCellCls, 'px-2 text-right font-mono')}>
+          {col1Unit}
+        </td>
+        <td className={cn(headerCellCls, 'pl-2 text-right font-mono')}>
+          {unit ?? ''}
+        </td>
+      </tr>
+    )
+  }
+  return (
+    <tr>
+      <td colSpan={colSpan} className={headerCellCls}>
+        <div className="flex items-center justify-between">
+          {help ? <HelpTip text={help}>{title}</HelpTip> : <span>{title}</span>}
+          {unit && <span className="font-mono normal-case">{unit}</span>}
+        </div>
+      </td>
+    </tr>
+  )
+}
 
 const MARKER_CLASSES: Record<'red' | 'yellow' | 'green', string> = {
   red: 'bg-destructive',

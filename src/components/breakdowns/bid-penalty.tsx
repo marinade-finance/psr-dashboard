@@ -118,6 +118,8 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
           <CalcRow
             label="Shortfall"
             col2={pmpe(metrics.shortfall)}
+            bold
+            separator
             severity={
               metrics.shortfall === 0
                 ? 'ok'

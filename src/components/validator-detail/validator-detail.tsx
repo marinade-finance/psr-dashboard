@@ -21,6 +21,7 @@ import {
   CSS_DESTRUCTIVE,
   CSS_PRIMARY_LIGHT,
   CSS_DESTRUCTIVE_LIGHT,
+  CSS_STATUS_GREEN,
   CSS_WARNING,
   CSS_MUTED_FG,
 } from 'src/css'
@@ -255,14 +256,15 @@ const MetricRow = ({
   >
     <span className="text-xs text-muted-foreground flex items-center gap-1">
       {onSeeBreakdown ? (
-        <Tooltip content="See calculation">
+        <>
+          <span>{label}</span>
           <button
-            className="text-xs text-muted-foreground hover:text-primary hover:underline"
+            className="text-xs text-primary hover:underline"
             onClick={onSeeBreakdown}
           >
-            {label} →
+            Show calculation →
           </button>
-        </Tooltip>
+        </>
       ) : (
         label
       )}
@@ -286,20 +288,17 @@ const PenaltyRow = ({
   sub?: boolean
 }) => (
   <div className="flex items-center justify-between gap-2">
-    <Tooltip content="See calculation">
-      <button
-        className={cn(
-          'text-left flex-1',
-          sub
-            ? 'text-[10px] text-muted-foreground'
-            : 'text-xs text-muted-foreground',
-          'hover:text-foreground hover:underline',
-        )}
-        onClick={onSeeBreakdown}
-      >
-        {label} →
+    <span
+      className={cn(
+        'text-left flex-1 flex items-center gap-2',
+        sub ? 'text-[10px]' : 'text-xs',
+      )}
+    >
+      <span className="text-muted-foreground">{label}</span>
+      <button className="text-primary hover:underline" onClick={onSeeBreakdown}>
+        Show calculation →
       </button>
-    </Tooltip>
+    </span>
     <span
       className={cn('font-mono', sub ? 'text-[10px]' : 'text-sm font-semibold')}
       style={{ color: sub ? CSS_MUTED_FG : CSS_DESTRUCTIVE }}
@@ -309,6 +308,10 @@ const PenaltyRow = ({
   </div>
 )
 
+/* eslint-disable sonarjs/cognitive-complexity --
+   The component composes tabs + simulation state + tip routing.
+   Splitting into helpers fragments the props plumbing without reducing
+   real complexity, so the rule is silenced for this function. */
 export const ValidatorDetail = ({
   validator,
   auctionResult,
@@ -514,7 +517,7 @@ export const ValidatorDetail = ({
                 </span>
               </span>
               {validatorName && (
-                <span className="text-sm font-semibold text-foreground">
+                <span className="text-lg font-semibold text-foreground">
                   {validatorName}
                 </span>
               )}
@@ -620,6 +623,7 @@ export const ValidatorDetail = ({
                 bondRiskFeeSol={bondRiskFeeSol}
                 bondBalanceSol={validator.bondBalanceSol ?? 0}
                 minBondBalanceSol={dsSamConfig.minBondBalanceSol}
+                expectedStakeDeltaSol={expectedStakeDelta}
                 isSimulated={isSimulated}
                 onGoToSim={goToSim}
               />
@@ -760,6 +764,14 @@ export const ValidatorDetail = ({
                         ? stake(expectedStakeDelta)
                         : stake(0)
                   }
+                  valueStyle={{
+                    color:
+                      expectedStakeDelta > 0
+                        ? CSS_STATUS_GREEN
+                        : expectedStakeDelta < 0
+                          ? CSS_DESTRUCTIVE
+                          : undefined,
+                  }}
                   separator
                 />
               </div>

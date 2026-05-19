@@ -17,6 +17,10 @@ type Props = {
   bondRiskFeeSol: number
   bondBalanceSol: number
   minBondBalanceSol: number
+  // Signed delta from the auction's redelegation pass. When positive on a
+  // 'soft' bond, the canonical "top up to grow stake" CTA contradicts the
+  // truthful "stake is already arriving" — see statusLine().
+  expectedStakeDeltaSol?: number
   isSimulated?: boolean
   onGoToSim?: () => void
 }
@@ -30,7 +34,19 @@ const statusLine = (
   bondRiskFeeSol: number,
   minBondBalanceSol: number,
   bondBalanceSol: number,
+  expectedStakeDeltaSol: number,
 ): CardStatus => {
+  // Soft bond is advisory. When stake is already arriving the canonical
+  // "top up to grow stake" reads as a contradiction next to the +N SOL on
+  // the Stake card. The truthful banner here is the inflow line — the
+  // ideal top-up still shows in the section table below for users who
+  // want to lift the ceiling.
+  if (state === 'soft' && expectedStakeDeltaSol > 0) {
+    return {
+      label: `${stake(expectedStakeDeltaSol)} arriving next epoch — bond covers it.`,
+      tone: 'green',
+    }
+  }
   const advice = bondAdvice(
     coverage,
     state,
@@ -49,6 +65,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
   bondRiskFeeSol,
   bondBalanceSol,
   minBondBalanceSol,
+  expectedStakeDeltaSol = 0,
   isSimulated,
   onGoToSim,
 }) => {
@@ -58,6 +75,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
     bondRiskFeeSol,
     minBondBalanceSol,
     bondBalanceSol,
+    expectedStakeDeltaSol,
   )
 
   // Show the penalty math whenever the bond is at risk (critical/watch) so
@@ -113,12 +131,12 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           />
           <CalcRow
             label="Active Marinade stake"
-            col2={stake(coverage.marinadeActivatedStakeSol)}
+            col1={stake(coverage.marinadeActivatedStakeSol)}
           />
           <CalcRow
             label="Current exposed stake"
             help="The slice of your active Marinade stake the bond must back — active stake minus the unprotected portion."
-            col2={stake(coverage.currentExposedStakeSol)}
+            col1={stake(coverage.currentExposedStakeSol)}
           />
           <CalcRow
             label="Bond held for bid payments"
@@ -159,7 +177,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           <CalcRow
             label="Current exposed stake"
             help="The slice of your active Marinade stake the bond must back — active stake minus the unprotected portion."
-            col2={stake(coverage.currentExposedStakeSol)}
+            col1={stake(coverage.currentExposedStakeSol)}
           />
           <CalcRow
             label="Bond held for bid payments"
@@ -195,12 +213,12 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
                 <>
                   <CalcRow
                     label="Paid undelegation pending"
-                    col2={stake(coverage.carriedPaidUndelegationSol)}
+                    col1={stake(coverage.carriedPaidUndelegationSol)}
                   />
                   <CalcRow
                     label="Projected exposed stake"
                     help="Current exposed stake minus the paid undelegation already scheduled. The penalty threshold uses this projected stake, not today's stake."
-                    col2={stake(coverage.projectedExposedStakeSol)}
+                    col1={stake(coverage.projectedExposedStakeSol)}
                   />
                 </>
               )}

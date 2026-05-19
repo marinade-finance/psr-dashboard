@@ -188,16 +188,43 @@ export function bondAdvice(
       coverage.topUpToIdealKeep > 0
         ? `Top up ${topUp(coverage.topUpToIdealKeep)} to grow stake.`
         : 'Bond meets ideal coverage.'
-    // Yellow tone (same family as watch) — chosen over info/indigo because
-    // users don't read purple as a meaningful severity. Severity tier
-    // still distinct from watch via BondHealthState ('soft' vs 'watch'),
-    // just rendered the same colour.
-    return { text, urgency: 'warning', tone: 'yellow' }
+    // Info/indigo — soft is "good enough but room to grow"; visually
+    // distinct from watch's warning-yellow so the user reads the chip as
+    // optional, not urgent.
+    return { text, urgency: 'info', tone: 'yellow' }
   }
   return {
     text: 'Bond has enough coverage.',
     urgency: 'positive',
     tone: 'green',
+  }
+}
+
+// Cap-binding CTA. When the validator is in-set, bond and bid are fine
+// (the cascades above didn't fire), and stake is leaking out, the BINDING
+// cause is the concentration cap (ASO or country) — not the bid and not
+// the bond. Guard on totalLeftToCapSol === 0 to isolate the actually-at-
+// cap case (the SDK populates lastCapConstraint with last-pass info even
+// when there's room left). Urgency:info — nothing the validator can do
+// via bond/bid; calling it warning would imply user error.
+function capBindingTip(
+  validator: AugmentedAuctionValidator,
+  delta: number,
+): ValidatorTip | null {
+  const cap = validator.lastCapConstraint
+  if (delta >= 0 || cap == null || cap.totalLeftToCapSol !== 0) return null
+  const losing = stake(Math.abs(delta))
+  // Two-line CTA: cause on line 1, consequence on line 2. The pill in
+  // sam-table.tsx renders with `whitespace-pre-line` so \n is honoured.
+  const cause =
+    cap.constraintType === AuctionConstraintType.COUNTRY
+      ? `${cap.constraintName} at country cap`
+      : `${cap.constraintName} ${cap.constraintType} at cap`
+  return {
+    text: `${cause}\nLosing ${losing} until cap frees.`,
+    urgency: 'info',
+    constraint: 'cap',
+    delta,
   }
 }
 
@@ -353,28 +380,8 @@ export const getValidatorTip = (
     }
   }
 
-  // Cap-binding CTA. When the validator is in-set, bond and bid are fine
-  // (none of the cascades above fired), and stake is leaking out, the
-  // BINDING cause is the concentration cap (ASO or country) — not the bid
-  // and not the bond. Name it so the validator doesn't try to fix the
-  // wrong lever. Guard on totalLeftToCapSol === 0 to isolate the "actually
-  // at cap, zero headroom" case (the SDK populates lastCapConstraint with
-  // last-pass info even when there's room left). Urgency:info — there's
-  // nothing the validator can do via bond/bid; calling it warning would
-  // imply user error. Country reads cleaner with "at country cap" than
-  // "<country> country at cap".
-  const cap = validator.lastCapConstraint
-  if (delta < 0 && cap != null && cap.totalLeftToCapSol === 0) {
-    const losing = stake(Math.abs(delta))
-    // Two-line CTA: cause on line 1, consequence on line 2. The pill in
-    // sam-table.tsx renders with `whitespace-pre-line` so \n is honoured.
-    const cause =
-      cap.constraintType === AuctionConstraintType.COUNTRY
-        ? `${cap.constraintName} at country cap`
-        : `${cap.constraintName} ${cap.constraintType} at cap`
-    const text = `${cause}\nLosing ${losing} until cap frees.`
-    return { text, urgency: 'info', constraint: 'cap', delta }
-  }
+  const capTip = capBindingTip(validator, delta)
+  if (capTip) return capTip
 
   if (delta > 0) {
     return {
