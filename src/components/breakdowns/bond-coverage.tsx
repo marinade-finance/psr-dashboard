@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { cost, topUp, pay, pmpe, stake } from 'src/format'
+import { bondSol, pmpe, stake, topUp } from 'src/format'
 import { bondAdvice } from 'src/services/tip-engine'
 
 import { CalcCard, type CardStatus } from './card'
@@ -91,56 +91,52 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
     >
       <table className="w-full max-w-[34rem]">
         <tbody>
-          <SectionHeader title="Rates" />
+          <SectionHeader title="Rates" unit="PMPE" />
           <CalcRow
-            label="Expected max effective bid PMPE"
-            secondary={pmpe(coverage.expectedMaxEffBidPmpe)}
+            label="Expected max effective bid"
+            col2={pmpe(coverage.expectedMaxEffBidPmpe)}
           />
           <CalcRow
-            label="On-chain distributed rewards PMPE"
-            secondary={pmpe(coverage.onchainDistributedPmpe)}
+            label="On-chain distributed rewards"
+            col2={pmpe(coverage.onchainDistributedPmpe)}
           />
 
           <SectionHeader
-            title="Minimum bond to keep stake"
+            title={`Minimum bond to keep stake — ${coverage.minEp} epochs`}
             help={`What the bond needs to keep your stake for the next ${coverage.minEp} epochs. Fall short — you pay a bond risk fee AND are scheduled to lose stake immediately.`}
-          />
-          <CalcRow
-            label="Minimum bond epochs"
-            secondary={`${coverage.minEp} epochs`}
           />
           <CalcRow
             label="Claimable bond balance"
             help="The bond SOL the protocol can draw against right now to cover fees or shortfalls. Excludes amounts locked in pending operations."
-            value={cost(coverage.claimableBondBalanceSol)}
+            col2={bondSol(coverage.claimableBondBalanceSol)}
             bold
           />
           <CalcRow
             label="Active Marinade stake"
-            secondary={stake(coverage.marinadeActivatedStakeSol)}
+            col2={stake(coverage.marinadeActivatedStakeSol)}
           />
           <CalcRow
             label="Current exposed stake"
             help="The slice of your active Marinade stake the bond must back — active stake minus the unprotected portion."
-            secondary={stake(coverage.currentExposedStakeSol)}
+            col2={stake(coverage.currentExposedStakeSol)}
           />
           <CalcRow
             label="Bond held for bid payments"
-            value={pay(coverage.heldForBidKeep)}
+            col2={bondSol(coverage.heldForBidKeep)}
           />
           <CalcRow
             label="Bond held for reward payouts"
-            value={pay(coverage.rewardsGuaranteeKeep)}
+            col2={bondSol(coverage.rewardsGuaranteeKeep)}
           />
           <CalcRow
             label="Minimum bond required"
-            value={pay(coverage.floorBaseKeep)}
+            col2={bondSol(coverage.floorBaseKeep)}
             bold
           />
           {coverage.topUpToKeepStake > 0 ? (
             <CalcRow
               label="Top up to keep your stake"
-              value={topUp(coverage.topUpToKeepStake)}
+              col2={topUp(coverage.topUpToKeepStake)}
               total
               severity="warning"
             />
@@ -149,43 +145,39 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           )}
 
           <SectionHeader
-            title="Ideal bond to grow stake"
+            title={`Ideal bond to grow stake — ${coverage.idealEp} epochs`}
             help={
               'What the bond needs for the pool to feel comfortable giving you more stake.'
             }
           />
           <CalcRow
-            label="Ideal bond epochs"
-            secondary={`${coverage.idealEp} epochs`}
-          />
-          <CalcRow
             label="Bond balance"
             help="Total SOL you've deposited as bond — gross, before subtracting amounts locked in pending operations."
-            value={cost(coverage.bondBalanceSol)}
+            col2={bondSol(coverage.bondBalanceSol)}
             bold
           />
           <CalcRow
             label="Current exposed stake"
             help="The slice of your active Marinade stake the bond must back — active stake minus the unprotected portion."
-            secondary={stake(coverage.currentExposedStakeSol)}
+            col2={stake(coverage.currentExposedStakeSol)}
           />
           <CalcRow
             label="Bond held for bid payments"
-            value={pay(coverage.heldForBidIdeal)}
+            col2={bondSol(coverage.heldForBidIdeal)}
           />
           <CalcRow
             label="Bond held for reward payouts"
-            value={pay(coverage.rewardsGuaranteeIdeal)}
+            col2={bondSol(coverage.rewardsGuaranteeIdeal)}
           />
           <CalcRow
             label="Ideal bond required"
-            value={pay(coverage.requiredIdealKeep)}
+            col2={bondSol(coverage.requiredIdealKeep)}
             bold
           />
           {coverage.topUpToIdealKeep > 0 ? (
             <CalcRow
               label="Top up to grow stake"
-              value={topUp(coverage.topUpToIdealKeep)}
+              col2={topUp(coverage.topUpToIdealKeep)}
               total
               severity="warning"
             />
@@ -203,23 +195,23 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
                 <>
                   <CalcRow
                     label="Paid undelegation pending"
-                    secondary={stake(coverage.carriedPaidUndelegationSol)}
+                    col2={stake(coverage.carriedPaidUndelegationSol)}
                   />
                   <CalcRow
                     label="Projected exposed stake"
                     help="Current exposed stake minus the paid undelegation already scheduled. The penalty threshold uses this projected stake, not today's stake."
-                    secondary={stake(coverage.projectedExposedStakeSol)}
+                    col2={stake(coverage.projectedExposedStakeSol)}
                   />
                 </>
               )}
               <CalcRow
                 label="Minimum unprotected reserve"
-                secondary={pay(coverage.minUnprotectedReserveSol)}
+                col2={bondSol(coverage.minUnprotectedReserveSol)}
               />
               <CalcRow
                 label="Minimum bond on projected stake"
                 help="Projected exposed stake times the minimum bond rate — the stake-sized part of the threshold."
-                secondary={pay(
+                col2={bondSol(
                   coverage.floorBaseProjected -
                     coverage.minUnprotectedReserveSol,
                 )}
@@ -227,20 +219,20 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
               <CalcRow
                 label="Penalty trigger threshold"
                 help="The least claimable bond you can hold before the fee fires. Drop under it and you pay the bond risk fee and lose stake. It is a fixed reserve plus the minimum bond your projected stake needs."
-                value={pay(coverage.floorBaseProjected)}
+                col2={bondSol(coverage.floorBaseProjected)}
                 bold
               />
               <CalcRow
                 label="Claimable bond balance"
                 help="The bond the protocol can draw against right now. The fee triggers when this falls below the threshold above."
-                value={cost(coverage.claimableBondBalanceSol)}
+                col2={bondSol(coverage.claimableBondBalanceSol)}
                 bold
               />
               {coverage.topUpToAvoidFee > 0 && (
                 <CalcRow
                   label="Top up to avoid the fee"
                   help="How far the claimable bond is below the threshold. Add this much to clear the fee."
-                  value={topUp(coverage.topUpToAvoidFee)}
+                  col2={topUp(coverage.topUpToAvoidFee)}
                   total
                   severity="error"
                 />
@@ -249,7 +241,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
                 <CalcRow
                   label="Estimated bond risk fee this epoch"
                   help="Charged when the bond is below the threshold. The amount scales with the shortfall and the protocol's bond-risk rate, and some stake is undelegated alongside it."
-                  value={pay(bondRiskFeeSol)}
+                  col2={bondSol(bondRiskFeeSol)}
                   bold
                   severity="error"
                 />

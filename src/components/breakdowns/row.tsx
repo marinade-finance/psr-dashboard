@@ -8,14 +8,15 @@ export const SEPARATOR_DIV_CLASS = 'border-t border-border-grid pt-2 mt-1'
 // top space is what makes the total row breathe — a thin border alone reads
 // as "more rows below" without it.
 export const SEPARATOR_CELL_PAD = 'pt-3 pb-1.5'
-// Total rows get a bit more room above the divider to read as a conclusion.
-export const TOTAL_CELL_PAD = 'pt-4 pb-2'
+// Total rows: slightly tighter top than before so the following
+// SectionHeader breaks cleanly from the conclusion.
+export const TOTAL_CELL_PAD = 'pt-3 pb-2'
 export const NORMAL_CELL_PAD = 'py-1.5'
 
-// `unit` puts a shared column unit (e.g. "PMPE" or "SOL") in the section
-// header instead of repeating it on every row label below. It right-aligns
-// over the value column so the rows read as "<label> … <number>" with the
-// unit stated once.
+// `unit` puts a shared column unit (e.g. "PMPE" or "epochs") in the section
+// header instead of repeating it on every row label. SOL and % are NEVER
+// declared here — SOL gets an inline suffix on the value, % is annotated
+// beside the value. The unit slot is right-aligned over the value columns.
 export const SectionHeader: React.FC<{
   title: string
   colSpan?: number
@@ -25,7 +26,7 @@ export const SectionHeader: React.FC<{
   <tr>
     <td
       colSpan={colSpan}
-      className="pt-4 pb-1 text-xs uppercase tracking-wider text-muted-foreground border-b border-dashed border-border"
+      className="pt-5 pb-1 text-xs uppercase tracking-wider text-muted-foreground border-b border-dashed border-border"
     >
       <div className="flex items-center justify-between">
         {help ? <HelpTip text={help}>{title}</HelpTip> : <span>{title}</span>}
@@ -71,9 +72,19 @@ const TONE_TEXT: Record<'green' | 'yellow' | 'red', string> = {
   red: 'text-destructive',
 }
 
-// Shared per-row visual model — both CalcRow (3-col) and RevRow (4-col)
-// derive their padding / divider / weight from the same flags so the two
-// column models stay byte-identical where they overlap.
+// Single shared per-row visual model. CalcRow renders `Label | col1 | col2`
+// for every breakdown table. Padding/divider/weight derive from these flags:
+//
+//   - Plain row: raw input / step. No flags.
+//   - Sub-total / calculated intermediate: pass `severity` only — the dot
+//     carries the signal. Never combine with `bold`; bold is reserved for
+//     section conclusions / totals.
+//   - Section conclusion: `separator + bold + large`.
+//   - Total: `total` (implies separator + bold + large + divider above).
+//
+// Each column NEVER mixes value kinds. PMPE / epochs / named non-SOL non-%
+// units are declared once in the SectionHeader; SOL appears as an inline
+// suffix on the value; % appears as an inline annotation on the value.
 function rowStyle(opts: {
   bold?: boolean
   large?: boolean
@@ -94,34 +105,17 @@ function rowStyle(opts: {
   return { sep, bld, lg, cellPad, sepBorder, total: opts.total }
 }
 
-// Row visual conventions:
-//   - Plain row: raw input / step. No flags.
-//   - Sub-total / calculated intermediate: pass `severity` only — the dot
-//     carries the signal. Never combine with `bold`; bold is reserved for
-//     section conclusions / totals.
-//   - Section conclusion: `separator` + `bold` + `large`.
-//   - Total: `total` (implies separator + bold + large + divider above).
 export const CalcRow: React.FC<{
   label: string
   help?: string
-  secondary?: string
-  value?: string
+  col1?: string
+  col2?: string
   bold?: boolean
   large?: boolean
   separator?: boolean
   total?: boolean
   severity?: Severity
-}> = ({
-  label,
-  help,
-  secondary,
-  value,
-  bold,
-  large,
-  separator,
-  total,
-  severity,
-}) => {
+}> = ({ label, help, col1, col2, bold, large, separator, total, severity }) => {
   const tone = severity ? SEVERITY_TONE[severity] : undefined
   const { bld, lg, cellPad, sepBorder } = rowStyle({
     bold,
@@ -129,12 +123,6 @@ export const CalcRow: React.FC<{
     separator,
     total,
   })
-  // When a row has only `secondary` (informational metadata like an epoch
-  // count or a percentage) and no primary `value`, render the secondary in
-  // the rightmost column so every number in the table right-aligns to the
-  // same x-position. Without this, rows shimmy between two columns.
-  const showSecondary = secondary && value
-  const rightCell = value ?? secondary ?? ''
   return (
     <tr className="border-b border-border-grid/65 last:border-b-0">
       <td
@@ -150,9 +138,7 @@ export const CalcRow: React.FC<{
         {tone && !total && <Marker tone={tone} />}
         {help ? <HelpTip text={help}>{label}</HelpTip> : <span>{label}</span>}
       </td>
-      <td className={cn(MID_CELL, cellPad, sepBorder)}>
-        {showSecondary ? secondary : ''}
-      </td>
+      <td className={cn(MID_CELL, cellPad, sepBorder)}>{col1 ?? ''}</td>
       <td
         className={cn(
           'pl-2 text-right font-mono',
@@ -164,7 +150,7 @@ export const CalcRow: React.FC<{
           tone && TONE_TEXT[tone],
         )}
       >
-        {rightCell}
+        {col2 ?? ''}
       </td>
     </tr>
   )
@@ -183,72 +169,3 @@ export const OkRow: React.FC<{ message: string; colSpan?: number }> = ({
     </td>
   </tr>
 )
-
-// 4-column row for the bid/cost-PMPE breakdowns: label | pct | pmpe | value.
-// The pct and pmpe columns are the build-up; value is the SOL conclusion.
-// Rows that don't use a column leave it blank — one consistent column model
-// per table (never mixed with CalcRow in the same <table>). The shared unit
-// for the pmpe / value columns lives in the SectionHeader, not per row.
-export const RevRow: React.FC<{
-  label: string
-  help?: string
-  pct?: string
-  pmpe?: string
-  value?: string
-  bold?: boolean
-  large?: boolean
-  separator?: boolean
-  total?: boolean
-  severity?: Severity
-}> = ({
-  label,
-  help,
-  pct,
-  pmpe: pmpeStr,
-  value = '',
-  bold,
-  large,
-  separator,
-  total,
-  severity,
-}) => {
-  const tone = severity ? SEVERITY_TONE[severity] : undefined
-  const { bld, lg, cellPad, sepBorder } = rowStyle({
-    bold,
-    large,
-    separator,
-    total,
-  })
-  return (
-    <tr className="border-b border-border-grid/65 last:border-b-0">
-      <td
-        className={cn(
-          'pr-2',
-          lg ? TEXT_BASE : TEXT_XS,
-          cellPad,
-          bld && BOLD,
-          total ? 'text-foreground' : MUTED,
-          sepBorder,
-        )}
-      >
-        {tone && !total && <Marker tone={tone} />}
-        {help ? <HelpTip text={help}>{label}</HelpTip> : <span>{label}</span>}
-      </td>
-      <td className={cn(MID_CELL, cellPad, sepBorder)}>{pct ?? ''}</td>
-      <td className={cn(MID_CELL, cellPad, sepBorder)}>{pmpeStr ?? ''}</td>
-      <td
-        className={cn(
-          'pl-2 text-right font-mono',
-          lg ? TEXT_BASE : TEXT_XS,
-          cellPad,
-          bld && BOLD,
-          total ? 'tabular-nums text-foreground' : MUTED,
-          sepBorder,
-          tone && TONE_TEXT[tone],
-        )}
-      >
-        {value}
-      </td>
-    </tr>
-  )
-}

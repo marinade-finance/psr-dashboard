@@ -54,7 +54,7 @@ test.describe('detail sheet — full open-walk-simulate-close cycle', () => {
 
     await tab('Bidding').click()
     await expect(
-      page.locator(SHEET).getByText(/Goal A|cost-PMPE/i).first(),
+      page.locator(SHEET).getByText(/Get into the auction|Your bid today/i).first(),
     ).toBeVisible()
 
     await tab('Bond').click()

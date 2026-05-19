@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { pct, pay, pmpe, stake } from 'src/format'
+import { cost, pct, pmpe, stake } from 'src/format'
 import { computeBidPenalty } from 'src/services/bid-penalty'
 
 import { CalcCard, type CardStatus } from './card'
@@ -63,21 +63,21 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
     >
       <table className="w-full max-w-[34rem]">
         <tbody>
-          <SectionHeader title="Bid history" />
+          <SectionHeader title="Bid history" unit="PMPE" />
           <CalcRow
-            label="Last epoch bid PMPE"
-            value={pmpe(metrics.lastEpochBidPmpe)}
+            label="Last epoch bid"
+            col2={pmpe(metrics.lastEpochBidPmpe)}
           />
           <CalcRow
-            label="This epoch bid PMPE"
-            value={pmpe(metrics.thisEpochBidPmpe)}
+            label="This epoch bid"
+            col2={pmpe(metrics.thisEpochBidPmpe)}
           />
           {(() => {
             const d = metrics.thisEpochBidPmpe - metrics.lastEpochBidPmpe
             return (
               <CalcRow
                 label="Bid change this epoch"
-                value={`${d > 0 ? '+' : d < 0 ? '−' : ''}${pmpe(Math.abs(d))}`}
+                col2={`${d > 0 ? '+' : d < 0 ? '−' : ''}${pmpe(Math.abs(d))}`}
                 severity={
                   metrics.isNegativeBiddingChange
                     ? 'error'
@@ -89,42 +89,35 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
             )
           })()}
 
-          <SectionHeader title="Historical baseline" />
+          <SectionHeader title="Historical baseline" unit="PMPE" />
           <CalcRow
-            label="History window"
-            secondary={`${metrics.historyEpochs} epochs`}
-          />
-          <CalcRow
-            label="Historical bid limit"
+            label={`Historical bid limit — ${metrics.historyEpochs} epoch window`}
             help="The lowest effective participating bid PMPE seen across the recent history window. Defines a floor — your bid can't drop below it without triggering the penalty."
-            value={pmpe(metrics.worstHistoricalPmpe)}
+            col2={pmpe(metrics.worstHistoricalPmpe)}
           />
 
-          <SectionHeader title="Threshold" />
+          <SectionHeader title="Threshold" unit="PMPE" />
+          <CalcRow label="Winning" col2={pmpe(metrics.winningTotalPmpe)} />
           <CalcRow
-            label="Winning PMPE"
-            value={pmpe(metrics.winningTotalPmpe)}
-          />
-          <CalcRow
-            label="Effective participating bid PMPE"
-            value={pmpe(metrics.effParticipatingBidPmpe)}
+            label="Effective participating bid"
+            col2={pmpe(metrics.effParticipatingBidPmpe)}
           />
           <CalcRow
             label="Effective limit"
             help="The lower of your current effective participating bid PMPE and the historical bid limit. Whichever is smaller becomes the threshold the penalty checks against."
-            value={pmpe(metrics.limit)}
+            col2={pmpe(metrics.limit)}
           />
           <CalcRow
             label="Adjusted limit after permitted deviation"
-            value={pmpe(metrics.adjustedLimit)}
+            col2={pmpe(metrics.adjustedLimit)}
           />
           <CalcRow
-            label="Bond obligation PMPE"
-            value={pmpe(metrics.bondObligationPmpe)}
+            label="Bond obligation"
+            col2={pmpe(metrics.bondObligationPmpe)}
           />
           <CalcRow
             label="Shortfall"
-            value={pmpe(metrics.shortfall)}
+            col2={pmpe(metrics.shortfall)}
             severity={
               metrics.shortfall === 0
                 ? 'ok'
@@ -134,26 +127,34 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
             }
           />
 
-          <SectionHeader title="Penalty" />
+          <SectionHeader title="Penalty coefficient" />
           <CalcRow
             label="Penalty coefficient"
-            secondary={pct(metrics.penaltyCoef, 2)}
+            col2={pct(metrics.penaltyCoef, 2)}
           />
+
+          <SectionHeader title="Penalty rate" unit="PMPE" />
           <CalcRow
             label="Penalty base"
             help="Winning PMPE plus your effective participating bid PMPE. The penalty coefficient is applied to this sum to size the per-PMPE charge."
-            value={pmpe(metrics.base)}
+            col2={pmpe(metrics.base)}
           />
           <CalcRow
-            label="Penalty PMPE"
-            value={pmpe(metrics.penaltyPmpe)}
+            label="Penalty"
+            col2={pmpe(metrics.penaltyPmpe)}
             severity={metrics.penaltyPmpe > 0 ? 'error' : undefined}
+            bold
+          />
+
+          <SectionHeader title="Penalty this epoch" />
+          <CalcRow
+            label="Marinade activated stake"
+            col2={stake(metrics.marinadeActivatedStakeSol)}
           />
           {metrics.penaltySol > 0 ? (
             <CalcRow
               label="Penalty this epoch"
-              secondary={stake(metrics.marinadeActivatedStakeSol)}
-              value={pay(metrics.penaltySol)}
+              col2={cost(metrics.penaltySol)}
               total
               severity="error"
             />

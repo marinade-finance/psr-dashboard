@@ -9,7 +9,7 @@ import {
 } from 'src/services/protected-events'
 
 import { CalcCard, type CardStatus } from './card'
-import { RevRow, SectionHeader } from './row'
+import { CalcRow, SectionHeader } from './row'
 
 import type { ProtectedEvent } from 'src/services/protected-events'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
@@ -30,8 +30,10 @@ type Props = {
 // "How much will I pay?" — the cost story only. Bid cost (active +
 // activating stake), every penalty, conditional PSR settlements, and the
 // grand total. Forward-looking "what should I bid" lives in the Bidding
-// tab; this tab is purely explanatory. Math comes verbatim from the
-// existing selectors — this component only arranges the rows.
+// tab; this tab is purely explanatory. SOL on every value (inline suffix);
+// the activating-stake row carries its PMPE rate in col1 — a single-unit
+// column shared with no other kind. Math comes verbatim from the existing
+// selectors — this component only arranges the rows.
 export const PaymentsBreakdown: React.FC<Props> = ({
   title,
   guideTo,
@@ -98,55 +100,56 @@ export const PaymentsBreakdown: React.FC<Props> = ({
       )}
       <table className="w-full max-w-[34rem]">
         <tbody>
-          <SectionHeader title="Bid cost" unit="SOL" colSpan={4} />
-          <RevRow label="Active stake cost" value={cost(m.cost)} />
-          <RevRow
-            label="Activating stake cost"
-            pmpe={pmpe(m.activatingStakePmpe)}
-            value={cost(m.activatingCost)}
+          <SectionHeader title="Activating stake rate" unit="PMPE" />
+          <CalcRow
+            label="Activating stake PMPE"
+            col2={pmpe(m.activatingStakePmpe)}
           />
-          <RevRow label="Bid cost" value={cost(m.total)} bold separator />
 
-          <SectionHeader title="Penalties" unit="SOL" colSpan={4} />
-          <RevRow
+          <SectionHeader title="Bid cost" />
+          <CalcRow label="Active stake cost" col2={cost(m.cost)} />
+          <CalcRow
+            label="Activating stake cost"
+            col2={cost(m.activatingCost)}
+          />
+          <CalcRow label="Bid cost" col2={cost(m.total)} bold separator />
+
+          <SectionHeader title="Penalties" />
+          <CalcRow
             label="Bid-too-low penalty"
-            value={bidTooLowPenaltySol > 0 ? cost(bidTooLowPenaltySol) : '—'}
+            col2={bidTooLowPenaltySol > 0 ? cost(bidTooLowPenaltySol) : '—'}
           />
-          <RevRow
+          <CalcRow
             label="Blacklist penalty"
-            value={blacklistPenaltySol > 0 ? cost(blacklistPenaltySol) : '—'}
+            col2={blacklistPenaltySol > 0 ? cost(blacklistPenaltySol) : '—'}
           />
-          <RevRow
+          <CalcRow
             label="Bond risk fee"
-            value={bondRiskFeeSol > 0 ? cost(bondRiskFeeSol) : '—'}
+            col2={bondRiskFeeSol > 0 ? cost(bondRiskFeeSol) : '—'}
           />
           {psrEstimates.length > 0 && (
             <>
-              <SectionHeader
-                title="PSR settlements — estimated"
-                unit="SOL"
-                colSpan={4}
-              />
+              <SectionHeader title="PSR settlements — estimated" />
               {psrEstimates.map((estimate, i) => {
                 const label = isProtectedEvent(estimate.reason)
                   ? selectProtectedStakeReason(estimate)
                   : estimate.reason
                 return (
-                  <RevRow
+                  <CalcRow
                     key={i}
                     label={String(label)}
-                    pct={
+                    col1={
                       estimate.meta.funder === 'ValidatorBond'
                         ? 'from bond'
                         : 'from Marinade'
                     }
-                    value={cost(selectAmount(estimate))}
+                    col2={cost(selectAmount(estimate))}
                   />
                 )
               })}
             </>
           )}
-          <RevRow label="Total payment" value={cost(total)} total />
+          <CalcRow label="Total payment" col2={cost(total)} total />
         </tbody>
       </table>
     </CalcCard>

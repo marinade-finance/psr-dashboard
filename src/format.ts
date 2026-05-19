@@ -45,6 +45,17 @@ export const cost = (n: number) => `${sol(n, 3)} SOL`
 export const signedStake = (n: number) =>
   n === 0 ? stake(0) : `${n > 0 ? '+' : '−'}${stake(Math.abs(n))}`
 
+// Bond balances and bond-side floor amounts — 1 decimal place, rounded
+// DOWN. Always understate what's held (never overstate available bond)
+// so the user can't be misled into thinking they have more cover than
+// they do. Used for: bond balances, claimable bond, minimum bond
+// required, bond held for bid payments, bond held for reward payouts.
+export const bondSol = (n: number) =>
+  `${(Math.floor(n * 10) / 10).toLocaleString(undefined, {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  })} SOL`
+
 // Top-up advice — SOL the user is told to deposit into their bond.
 // ALWAYS rounds UP (ceil): advising a rounded-down top-up would leave the
 // bond short, so the validator stays under-collateralised and the advice

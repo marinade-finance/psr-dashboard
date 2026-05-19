@@ -1,12 +1,12 @@
 import React from 'react'
 
-import { cost, pmpe, topUp } from 'src/format'
+import { bondSol, pmpe, topUp } from 'src/format'
 import { computeBidding } from 'src/services/bidding'
 import { computeInAuctionTarget } from 'src/services/in-auction-target'
 import { computeNextEpochStake } from 'src/services/next-epoch-stake'
 
 import { CalcCard, type CardStatus } from './card'
-import { OkRow, RevRow, SectionHeader } from './row'
+import { CalcRow, OkRow, SectionHeader } from './row'
 
 import type { AuctionResult } from '@marinade.finance/ds-sam-sdk'
 import type { BondCoverage } from 'src/services/bond-coverage'
@@ -53,12 +53,11 @@ const BID_GAP_HELP =
   'your priority rank, since the queue is ordered on total PMPE, not bid.'
 
 // "What should I bid to get into the auction and win stake?" — the
-// actionable story, two parallel goals: get IN, get STAKE. Both sections
-// share the same row shape (bar → your total → target total → target
-// bid → bid increase) so the user reads them as parallel math. Stake
-// position and the bid-cost story live in the Payments tab; this tab is
-// purely about what to bid. Math comes verbatim from the existing
-// selectors — this component only arranges the rows.
+// actionable story, two parallel goals: get IN, get STAKE. Each section
+// has a PMPE build-up; the bond requirement (SOL) for "Get into the
+// auction" lives in its own SOL sub-section so no column ever mixes
+// units. Math comes verbatim from the existing selectors — this
+// component only arranges the rows.
 export const BiddingBreakdown: React.FC<Props> = ({
   title,
   guideTo,
@@ -119,134 +118,137 @@ export const BiddingBreakdown: React.FC<Props> = ({
       <table className="w-full max-w-[34rem]">
         <tbody>
           <SectionHeader
-            title="Your cost-PMPE today"
+            title="Your bid today"
             help="What you bring to the auction this epoch: non-bid revenue (the commission you keep) plus your static bid. The two target sections below subtract your non-bid revenue from each bar to size the bid."
             unit="PMPE"
-            colSpan={4}
           />
-          <RevRow label="Inflation" pct={m.inflPct} pmpe={pmpe(m.inflPmpe)} />
-          <RevRow label="MEV" pct={m.mevPct} pmpe={pmpe(m.mevPmpe)} />
-          <RevRow label="Block rewards" pct={m.blkPct} pmpe={pmpe(m.blkPmpe)} />
-          <RevRow
+          <CalcRow label="Inflation" col1={m.inflPct} col2={pmpe(m.inflPmpe)} />
+          <CalcRow label="MEV" col1={m.mevPct} col2={pmpe(m.mevPmpe)} />
+          <CalcRow
+            label="Block rewards"
+            col1={m.blkPct}
+            col2={pmpe(m.blkPmpe)}
+          />
+          <CalcRow
             label="Non-bid revenue"
             help={NON_BID_HELP}
-            pmpe={pmpe(inAuction.nonBidPmpe)}
+            col2={pmpe(inAuction.nonBidPmpe)}
             bold
           />
-          <RevRow
+          <CalcRow
             label="Static bid"
             help={STATIC_BID_HELP}
-            pmpe={pmpe(inAuction.currentBidPmpe)}
+            col2={pmpe(inAuction.currentBidPmpe)}
           />
-          <RevRow
+          <CalcRow
             label="Total"
-            pmpe={pmpe(inAuction.nonBidPmpe + inAuction.currentBidPmpe)}
+            col2={pmpe(inAuction.nonBidPmpe + inAuction.currentBidPmpe)}
             bold
             separator
           />
 
           <SectionHeader
-            title="Goal A — get into the auction"
+            title="Get into the auction"
             help={IN_AUCTION_HELP}
             unit="PMPE"
-            colSpan={4}
           />
-          <RevRow
-            label="Winning bar PMPE"
-            pmpe={pmpe(inAuction.winningTotalPmpe)}
+          <CalcRow
+            label="Winning bar"
+            col2={pmpe(inAuction.winningTotalPmpe)}
           />
-          <RevRow
+          <CalcRow
             label="Your current total"
-            pmpe={pmpe(inAuction.nonBidPmpe + inAuction.currentBidPmpe)}
+            col2={pmpe(inAuction.nonBidPmpe + inAuction.currentBidPmpe)}
           />
-          <RevRow
+          <CalcRow
             label="Target static bid"
-            pmpe={pmpe(inAuction.targetBidPmpe)}
+            col2={pmpe(inAuction.targetBidPmpe)}
             bold
           />
           {inAuction.capConstrained ? (
-            <RevRow
+            <CalcRow
               label={`Binding cap — ${inAuction.capConstraintName ?? 'concentration'} is full`}
-              value="blocked"
+              col2="blocked"
               severity="error"
               bold
             />
           ) : inAuction.bidIncrease > 0 ? (
-            <RevRow
+            <CalcRow
               label="Bid increase needed"
-              pmpe={pmpe(inAuction.bidIncrease)}
+              col2={pmpe(inAuction.bidIncrease)}
               severity="warning"
               bold
             />
           ) : (
             <OkRow
               message="Your bid already clears the winning bar."
-              colSpan={3}
+              colSpan={2}
             />
           )}
-          <RevRow
+
+          <SectionHeader title="Bond needed behind that stake" />
+          <CalcRow
             label="Minimum bond required"
-            value={cost(inAuction.bondFloorToBack)}
+            col2={bondSol(inAuction.bondFloorToBack)}
           />
           {inAuction.bondTopUp > 0 ? (
-            <RevRow
+            <CalcRow
               label="Bond top-up to keep stake"
-              value={topUp(inAuction.bondTopUp)}
+              col2={topUp(inAuction.bondTopUp)}
               severity="warning"
               bold
             />
           ) : (
-            <OkRow message="Bond covers the stake." colSpan={3} />
+            <OkRow message="Bond covers the stake." colSpan={2} />
           )}
 
           <SectionHeader
-            title="Goal B — get stake next epoch"
+            title="Win stake next epoch"
             help={NEXT_EPOCH_HELP}
             unit="PMPE"
-            colSpan={4}
           />
           {noFrontier ? (
             <OkRow
               message="No binding priority bar this run — every winner gets served."
-              colSpan={3}
+              colSpan={2}
             />
           ) : (
             <>
-              <RevRow
-                label="Priority bar PMPE"
-                pmpe={pmpe(nextEpoch.priorityFrontierPmpe)}
+              <CalcRow
+                label="Priority bar"
+                col2={pmpe(nextEpoch.priorityFrontierPmpe)}
               />
-              <RevRow
+              <CalcRow
                 label="Your current total"
-                pmpe={pmpe(nextEpoch.currentTotalPmpe)}
+                col2={pmpe(nextEpoch.currentTotalPmpe)}
               />
-              <RevRow
+              <CalcRow
                 label="Target static bid"
-                pmpe={pmpe(nextEpoch.targetBidPmpePriority)}
+                col2={pmpe(nextEpoch.targetBidPmpePriority)}
                 bold
               />
               {nextEpoch.bidIncreaseForPriority > 0 ? (
-                <RevRow
+                <CalcRow
                   label="Bid increase needed"
-                  pmpe={pmpe(nextEpoch.bidIncreaseForPriority)}
+                  col2={pmpe(nextEpoch.bidIncreaseForPriority)}
                   severity="warning"
                   bold
                 />
               ) : (
                 <OkRow
                   message="You already clear the priority bar."
-                  colSpan={3}
+                  colSpan={2}
                 />
               )}
-              <RevRow
+              <CalcRow
                 label="Your priority rank"
                 help={PRIORITY_RANK_HELP}
-                value={`#${nextEpoch.priorityRank}`}
+                col2={`#${nextEpoch.priorityRank}`}
               />
-              <RevRow
+              <CalcRow
                 label="Your bid gap"
                 help={BID_GAP_HELP}
-                pmpe={pmpe(nextEpoch.bidGapPmpe)}
+                col2={pmpe(nextEpoch.bidGapPmpe)}
               />
             </>
           )}
