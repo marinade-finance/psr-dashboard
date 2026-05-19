@@ -35,7 +35,11 @@ export function computeBidPenalty(
 ): BidPenalty {
   const historyEpochs = dsSamConfig.bidTooLowPenaltyHistoryEpochs
   // SDK auction.js:202 passes this field as permittedBidDeviation ∈ [0,1].
-  const permittedDeviation = dsSamConfig.bidTooLowPenaltyPermittedDeviationPmpe
+  // Falls back to 0 if missing — the SDK's `calcBidTooLowPenalty` defaults
+  // the same way; without this, `1 - undefined` poisons every downstream
+  // value with NaN (badge, banner, payments row).
+  const permittedDeviation =
+    dsSamConfig.bidTooLowPenaltyPermittedDeviationPmpe ?? 0
 
   const auctions = v.auctions ?? []
   const pastAuction = auctions[0]
@@ -72,9 +76,13 @@ export function computeBidPenalty(
     thisEpochBidPmpe,
     isNegativeBiddingChange,
     effParticipatingBidPmpe,
+    // With no history `worstHistoricalPmpe` stays `Infinity` and `limit`
+    // collapses to `effParticipatingBidPmpe` (the min(eff, ∞) above). Mirror
+    // that on the displayed value so the breakdown's "Historical bid limit"
+    // row doesn't read 0 while the math actually used the eff bid.
     worstHistoricalPmpe: Number.isFinite(worstHistoricalPmpe)
       ? worstHistoricalPmpe
-      : 0,
+      : effParticipatingBidPmpe,
     limit,
     adjustedLimit,
     bondObligationPmpe,

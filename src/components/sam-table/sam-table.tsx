@@ -61,6 +61,7 @@ import {
   getTipStyle,
   getTipIcon,
   nextStakeDeltaCell,
+  TipConstraint,
 } from 'src/services/tip-engine'
 
 import { UserLevel } from '../navigation/navigation'
@@ -880,7 +881,7 @@ export const SamTable: React.FC<Props> = ({
             state, not an alarm: render it muted with a 2-word label;
             the full sentence lives in the detail panel. */}
         {(() => {
-          const bidTooLow = tip.constraint === 'rank'
+          const bidTooLow = tip.constraint === TipConstraint.RANK
           const stepColor = bidTooLow ? CSS_MUTED_FG : tipStyle.color
           const stepBg = bidTooLow ? CSS_MUTED : tipStyle.bg
           const stepText = bidTooLow

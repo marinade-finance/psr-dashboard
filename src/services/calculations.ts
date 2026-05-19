@@ -40,7 +40,10 @@ export function effectiveBondRunway(
   bondHealth: BondHealthState,
 ): number {
   if (bondHealth === 'no-bond' || bondHealth === 'critical') return 0
-  return validator.bondGoodForNEpochs ?? 0
+  // Clamp at 0 so `(Nep)` can never render a negative epoch count — the
+  // SDK can theoretically expose a negative bondGoodForNEpochs and the
+  // gate above doesn't catch every such case.
+  return Math.max(0, validator.bondGoodForNEpochs ?? 0)
 }
 
 // Bond gauge geometry, shared so the sam-table and detail gauges share one
