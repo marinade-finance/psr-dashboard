@@ -3,7 +3,6 @@ import { describe, it, expect } from 'vitest'
 import { ICON_BID } from 'src/components/icons/icon-bid'
 import { ICON_BOND } from 'src/components/icons/icon-bond'
 import { ICON_DOWN } from 'src/components/icons/icon-down'
-import { ICON_RANK } from 'src/components/icons/icon-rank'
 import { ICON_RIGHT } from 'src/components/icons/icon-right'
 import { ICON_UP } from 'src/components/icons/icon-up'
 
@@ -169,7 +168,7 @@ describe('getTipIcon', () => {
   })
 
   it('constraint:rank → fixed non-directional rank glyph', () => {
-    expect(getTipIcon(tip({ constraint: 'rank' }))).toBe(ICON_RANK)
+    expect(getTipIcon(tip({ constraint: 'rank' }))).toBe(ICON_BID)
   })
 
   it('constraint:none — delta>0 → up, delta<0 → down, delta=0 → right', () => {

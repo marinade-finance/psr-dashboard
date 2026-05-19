@@ -26,7 +26,7 @@ import {
 } from 'src/css'
 import { cost, topUp, stake } from 'src/format'
 import {
-  computeBidPenalty,
+  bidTooLowPenaltySol as computeBidTooLowPenaltySol,
   blacklistPenaltySol as computeBlacklistPenaltySol,
 } from 'src/services/bid-penalty'
 import { computeBidding } from 'src/services/bidding'
@@ -359,15 +359,6 @@ export const ValidatorDetail = ({
     [validator, dsSamConfig, winningTotalPmpe],
   )
   const paymentMetrics = useMemo(() => computeBidding(validator), [validator])
-  const penaltyMetrics = useMemo(
-    () => computeBidPenalty(validator, dsSamConfig, winningTotalPmpe),
-    [
-      validator,
-      dsSamConfig.minBondEpochs,
-      dsSamConfig.bondRiskFeeMult,
-      winningTotalPmpe,
-    ],
-  )
   const { data: psrEstimates = [] } = useQuery({
     queryKey: ['psrEstimates', voteAccount],
     queryFn: () => fetchPsrEstimatesForValidator(voteAccount),
@@ -377,7 +368,7 @@ export const ValidatorDetail = ({
 
   const bondRiskFeeSol = validator.values.bondRiskFeeSol ?? 0
   const blacklistPenaltySol = computeBlacklistPenaltySol(validator)
-  const bidTooLowPenaltySol = penaltyMetrics.penaltySol
+  const bidTooLowPenaltySol = computeBidTooLowPenaltySol(validator)
 
   const [editBid, setEditBid] = useState(validator.revShare.bidPmpe.toString())
   const [editInflation, setEditInflation] = useState(

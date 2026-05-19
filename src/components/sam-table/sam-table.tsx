@@ -244,15 +244,9 @@ const PENALTY_ICONS: Record<PenaltyKind, React.ReactElement> = {
 
 const PenaltyBadges: React.FC<{
   validator: AuctionValidator
-  dsSamConfig: DsSamConfig
-  winningTotalPmpe: number
-}> = ({ validator, dsSamConfig, winningTotalPmpe }) => {
+}> = ({ validator }) => {
   const badges: { label: string; sol: number; kind: PenaltyKind }[] = []
-  const bidLowSol = bidTooLowPenaltySol(
-    validator,
-    dsSamConfig,
-    winningTotalPmpe,
-  )
+  const bidLowSol = bidTooLowPenaltySol(validator)
   const blacklistSol = blacklistPenaltySol(validator)
   const bondRiskSol = validator.values?.bondRiskFeeSol ?? 0
   if (bidLowSol > 0)
@@ -777,13 +771,7 @@ export const SamTable: React.FC<Props> = ({
                 {hasAlert && (
                   <span className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0 animate-pulse" />
                 )}
-                {!isGhost && (
-                  <PenaltyBadges
-                    validator={validator}
-                    dsSamConfig={dsSamConfig}
-                    winningTotalPmpe={winningTotalPmpe}
-                  />
-                )}
+                {!isGhost && <PenaltyBadges validator={validator} />}
               </>
             }
           />
@@ -961,7 +949,7 @@ export const SamTable: React.FC<Props> = ({
           {stats.map(stat => (
             <Card
               key={stat.label}
-              className="px-3 py-3 sm:px-5 sm:py-4 flex-1 min-w-[140px] sm:min-w-[160px] overflow-hidden"
+              className="px-3 py-3 sm:px-5 sm:py-4 flex-1 min-w-[140px] sm:min-w-[160px] overflow-hidden flex flex-col"
             >
               <div className="text-xs uppercase tracking-wider font-medium text-muted-foreground mb-1 flex items-center gap-1">
                 {stat.help ? (
@@ -972,7 +960,7 @@ export const SamTable: React.FC<Props> = ({
                   stat.label
                 )}
               </div>
-              <div className="flex items-baseline gap-0.5 min-w-0 overflow-hidden">
+              <div className="mt-auto flex items-baseline gap-0.5 min-w-0 overflow-hidden">
                 <span className="text-xl sm:text-2xl font-semibold text-foreground font-mono truncate">
                   {stat.value}
                 </span>

@@ -1,5 +1,3 @@
-import React from 'react'
-
 export const ICON_BID = (
   <svg
     viewBox="0 0 12 12"
@@ -11,6 +9,8 @@ export const ICON_BID = (
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    <path d="M2.5 10h7M3.5 10V7M6 10V4.5M8.5 10V6" />
+    <path d="M3.2 4.4 6 2l2.8 2.4" />
+    <path d="M3.2 7.4 6 5l2.8 2.4" />
+    <path d="M3.2 10.4 6 8l2.8 2.4" />
   </svg>
 )

@@ -2,7 +2,6 @@ import { ICON_ALERT } from 'src/components/icons/icon-alert'
 import { ICON_BID } from 'src/components/icons/icon-bid'
 import { ICON_BOND } from 'src/components/icons/icon-bond'
 import { ICON_DOWN } from 'src/components/icons/icon-down'
-import { ICON_RANK } from 'src/components/icons/icon-rank'
 import { ICON_RIGHT } from 'src/components/icons/icon-right'
 import { ICON_UP } from 'src/components/icons/icon-up'
 import {
@@ -107,10 +106,11 @@ export const getTipIcon = (tip: ValidatorTip): React.ReactNode => {
   switch (tip.constraint) {
     case 'bond':
       return ICON_BOND
+    // 'bid' and 'rank' share the same lever (raise the bid) → same glyph.
+    // Visual-language rule: glyph = the lever, never an axis duplicate.
     case 'bid':
-      return ICON_BID
     case 'rank':
-      return ICON_RANK
+      return ICON_BID
     default:
       if (tip.delta > 0) return ICON_UP
       if (tip.delta < 0) return ICON_DOWN
@@ -327,14 +327,13 @@ export const getValidatorTip = (
   // cost avoided (action + quantified consequence, same family as bondAdvice).
   const penaltyPmpe = validator.revShare?.bidTooLowPenaltyPmpe ?? 0
   if (penaltyPmpe > 0) {
-    const penaltySol = bidTooLowPenaltySol(
-      validator,
-      dsSamConfig,
-      winningTotalPmpe,
-    )
+    const penaltySol = bidTooLowPenaltySol(validator)
     return {
       text: `Raise bid or pay a ${pay(penaltySol)} penalty.`,
-      urgency: 'warning',
+      // Penalty is real money charged this epoch — critical (red), not
+      // warning (amber). The alert/octagon stays reserved for bond risk
+      // fee; bid penalty is critical-red without the octagon escalation.
+      urgency: 'critical',
       constraint: 'bid',
       delta,
     }
