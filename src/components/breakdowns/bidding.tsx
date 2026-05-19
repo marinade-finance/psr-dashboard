@@ -110,7 +110,7 @@ export const BiddingBreakdown: React.FC<Props> = ({
 
   const tip = onGoToSim ? (
     <button
-      className="text-xs text-primary hover:underline text-left"
+      className="text-xs font-medium px-2 py-0.5 rounded border border-primary text-primary hover:bg-primary-light"
       onClick={onGoToSim}
     >
       Simulate this bid to confirm the exact figure →

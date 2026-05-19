@@ -44,7 +44,7 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
 
   const tip = onGoToSim ? (
     <button
-      className="text-xs text-primary hover:underline"
+      className="text-xs font-medium px-2 py-0.5 rounded border border-primary text-primary hover:bg-primary-light"
       onClick={onGoToSim}
     >
       {metrics.penaltyPmpe > 0

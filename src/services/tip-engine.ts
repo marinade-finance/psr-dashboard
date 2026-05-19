@@ -153,7 +153,7 @@ export const getTipIcon = (tip: ValidatorTip): React.ReactNode => {
 export type BondAdvice = {
   text: string
   urgency: TipUrgency
-  tone: 'red' | 'yellow' | 'green'
+  tone: 'red' | 'yellow' | 'green' | 'grey'
 }
 
 export function bondAdvice(
@@ -171,10 +171,14 @@ export function bondAdvice(
     bondBalanceSol < minBondBalanceSol &&
     health !== BondHealthState.NO_BOND
   ) {
+    // Below-min bond is a hard block on qualifying — but if no fee is
+    // pending right now, it's eligibility-not-urgency. Grey/neutral when
+    // there's no active charge; red only when a fee is on the line.
+    const isCharging = bondRiskFeeSol > 0
     return {
-      text: `Top up bond to ${stake(minBondBalanceSol)} to win stake.`,
-      urgency: TipUrgency.CRITICAL,
-      tone: 'red',
+      text: `Top up bond to ${stake(minBondBalanceSol)} to qualify.`,
+      urgency: isCharging ? TipUrgency.CRITICAL : TipUrgency.NEUTRAL,
+      tone: isCharging ? 'red' : 'grey',
     }
   }
   switch (health) {
@@ -316,11 +320,13 @@ function bondCta(
         true,
       )
     }
+    // Below-min with no fee pending: it's an eligibility block, not an
+    // active charge. Neutral/grey, not critical-red.
     return tip(
       bondBalance <= 0
         ? `Post a bond of ${stake(dsSamConfig.minBondBalanceSol)} to qualify.`
         : `Top up bond to ${stake(dsSamConfig.minBondBalanceSol)} to qualify.`,
-      TipUrgency.CRITICAL,
+      TipUrgency.NEUTRAL,
       TipConstraint.BOND,
       delta,
     )

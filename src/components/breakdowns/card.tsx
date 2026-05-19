@@ -2,13 +2,14 @@ import React from 'react'
 
 import { cn } from 'src/class_utils'
 
-export type CardStatusTone = 'red' | 'yellow' | 'green'
+export type CardStatusTone = 'red' | 'yellow' | 'green' | 'grey'
 export type CardStatus = { label: string; tone: CardStatusTone }
 
 const STATUS_CLASSES: Record<CardStatusTone, string> = {
   red: 'bg-destructive-light text-destructive',
   yellow: 'bg-status-yellow-light text-status-yellow',
   green: 'bg-primary-light text-primary',
+  grey: 'bg-muted text-muted-foreground',
 }
 
 // Internal header for CalcCard — title + optional Guide link, with a

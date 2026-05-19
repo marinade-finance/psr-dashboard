@@ -76,7 +76,7 @@ export const PaymentsBreakdown: React.FC<Props> = ({
       )}
       {onGoToSim && (
         <button
-          className="text-xs text-primary hover:underline text-left"
+          className="text-xs font-medium px-2 py-0.5 rounded border border-primary text-primary hover:bg-primary-light self-start"
           onClick={onGoToSim}
         >
           Simulate commission or bid changes →

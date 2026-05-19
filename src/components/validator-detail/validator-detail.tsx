@@ -50,7 +50,7 @@ import {
   getTipStyle,
   getTipIcon,
 } from 'src/services/tip-engine'
-import { TipConstraint } from 'src/services/tip-engine'
+import { TipConstraint, TipUrgency } from 'src/services/tip-engine'
 import { assertNever } from 'src/utils/assert-never'
 
 import type { AuctionResult, DsSamConfig } from '@marinade.finance/ds-sam-sdk'
@@ -484,7 +484,14 @@ export const ValidatorDetail = ({
   // TIP_TAB map so banner-nav and tab-dot can't disagree (previously the
   // banner's bid → overview contradicted the dot's bid → penalty).
   const isBondTip = tip.constraint === TipConstraint.BOND
-  const bannerStyle = isBondTip ? getBondAdviceStyle(bondHealth) : tipStyle
+  // Bond tips normally follow the bond-health colour axis (red/yellow/green).
+  // Exception: a NEUTRAL bond tip (below-min bond with no fee pending) is
+  // an eligibility block, not an active charge — render grey to match the
+  // BondAdvice tone for the same case.
+  const bannerStyle =
+    isBondTip && tip.urgency !== TipUrgency.NEUTRAL
+      ? getBondAdviceStyle(bondHealth)
+      : tipStyle
   const tipTarget = TIP_TAB[tip.constraint]
 
   const attention = tabAttention({
