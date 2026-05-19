@@ -63,7 +63,11 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
     >
       <table className="w-full max-w-[34rem]">
         <tbody>
-          <SectionHeader title="Bid history" unit="PMPE" />
+          <SectionHeader
+            title="Bid history"
+            help="Your bid last epoch versus this epoch. If it dropped, the penalty checks whether your bond still covers what you previously promised."
+            unit="PMPE"
+          />
           <CalcRow
             label="Last epoch bid"
             col2={pmpe(metrics.lastEpochBidPmpe)}
@@ -89,17 +93,30 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
             )
           })()}
 
-          <SectionHeader title="Historical baseline" unit="PMPE" />
+          <SectionHeader
+            title="Historical baseline"
+            help="The lowest bid you held over the recent window. Your bid can drop, but not below this — or the penalty fires."
+            unit="PMPE"
+          />
           <CalcRow
             label={`Historical bid limit — ${metrics.historyEpochs} epoch window`}
             help="The lowest effective participating bid PMPE seen across the recent history window. Defines a floor — your bid can't drop below it without triggering the penalty."
             col2={pmpe(metrics.worstHistoricalPmpe)}
           />
 
-          <SectionHeader title="Threshold" unit="PMPE" />
-          <CalcRow label="Winning" col2={pmpe(metrics.winningTotalPmpe)} />
+          <SectionHeader
+            title="Threshold"
+            help="The bar your bond has to clear this epoch. Built from the auction's winning total and your current participating bid — whichever is lower sets the bar."
+            unit="PMPE"
+          />
+          <CalcRow
+            label="Winning"
+            help="The total PMPE of the winning set this epoch. One of the two inputs to the threshold."
+            col2={pmpe(metrics.winningTotalPmpe)}
+          />
           <CalcRow
             label="Effective participating bid"
+            help="The portion of your bid the auction counts toward the threshold this epoch. Lower than your static bid when the auction caps it."
             col2={pmpe(metrics.effParticipatingBidPmpe)}
           />
           <CalcRow
@@ -109,14 +126,17 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
           />
           <CalcRow
             label="Adjusted limit after permitted deviation"
+            help="The effective limit with a small grace margin subtracted. Your bond obligation is allowed to land below the raw limit, but not below this adjusted bar."
             col2={pmpe(metrics.adjustedLimit)}
           />
           <CalcRow
             label="Bond obligation"
+            help="The per-epoch rate your bond currently backs, expressed as PMPE. The penalty fires when this falls below the adjusted limit above."
             col2={pmpe(metrics.bondObligationPmpe)}
           />
           <CalcRow
             label="Shortfall"
+            help="How far the bond obligation lands below the adjusted limit. Zero means no penalty. Positive means a penalty proportional to this gap."
             col2={pmpe(metrics.shortfall)}
             bold
             separator
@@ -129,13 +149,20 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
             }
           />
 
-          <SectionHeader title="Penalty coefficient" />
+          <SectionHeader
+            title="Penalty coefficient"
+            help="The multiplier the protocol applies to the shortfall when sizing the per-PMPE penalty. Fixed by protocol config — you can't change it."
+          />
           <CalcRow
             label="Penalty coefficient"
             col2={pct(metrics.penaltyCoef, 2)}
           />
 
-          <SectionHeader title="Penalty rate" unit="PMPE" />
+          <SectionHeader
+            title="Penalty rate"
+            help="The per-1000-SOL charge before it is scaled by your stake. Coefficient times penalty base."
+            unit="PMPE"
+          />
           <CalcRow
             label="Penalty base"
             help="Winning PMPE plus your effective participating bid PMPE. The penalty coefficient is applied to this sum to size the per-PMPE charge."
@@ -148,7 +175,10 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
             bold
           />
 
-          <SectionHeader title="Penalty this epoch" />
+          <SectionHeader
+            title="Penalty this epoch"
+            help="The actual SOL charge: penalty rate scaled to your Marinade-activated stake. Collected as forced stake undelegation."
+          />
           <CalcRow
             label="Marinade activated stake"
             col2={stake(metrics.marinadeActivatedStakeSol)}

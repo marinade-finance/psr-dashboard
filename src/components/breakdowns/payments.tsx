@@ -143,22 +143,31 @@ export const PaymentsBreakdown: React.FC<Props> = ({
             separator
           />
 
-          <SectionHeader title="Penalties" />
+          <SectionHeader
+            title="Penalties"
+            help="Extra charges on top of the bid cost. Each one fires for a specific reason: dropping your bid below what you previously committed, sitting on Marinade's blacklist while holding stake, or letting the bond fall below its required floor."
+          />
           <CalcRow
             label="Bid-too-low penalty"
+            help="Charged when you drop your bid this epoch and your bond doesn't cover what you previously promised stakers."
             col2={bidTooLowPenaltySol > 0 ? cost(bidTooLowPenaltySol) : '—'}
           />
           <CalcRow
             label="Blacklist penalty"
+            help="Charged when your validator is on Marinade's blacklist but still holds Marinade stake."
             col2={blacklistPenaltySol > 0 ? cost(blacklistPenaltySol) : '—'}
           />
           <CalcRow
             label="Bond risk fee"
+            help="Charged when your claimable bond drops below the trigger threshold. Some stake also gets pulled back alongside the fee."
             col2={bondRiskFeeSol > 0 ? cost(bondRiskFeeSol) : '—'}
           />
           {psrEstimates.length > 0 && (
             <>
-              <SectionHeader title="PSR settlements — estimated" />
+              <SectionHeader
+                title="PSR settlements — estimated"
+                help="Payouts to stakers when something went wrong this epoch: missed votes, downtime, or bid shortfall. Each row says where the money comes from — your bond or Marinade's own pool."
+              />
               {psrEstimates.map((estimate, i) => {
                 const label = isProtectedEvent(estimate.reason)
                   ? selectProtectedStakeReason(estimate)

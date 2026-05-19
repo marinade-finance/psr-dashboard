@@ -109,13 +109,19 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
     >
       <table className="w-full max-w-[34rem]">
         <tbody>
-          <SectionHeader title="Rates" unit="PMPE" />
+          <SectionHeader
+            title="Rates"
+            help="Two per-epoch rates that size the bond. The bid rate is what winners pay this epoch. The rewards rate is what your validator hands stakers from its own block rewards. Both are quoted per 1000 SOL of stake."
+            unit="PMPE"
+          />
           <CalcRow
             label="Expected max effective bid"
+            help="The highest per-epoch bid winners are expected to pay this epoch. The bond must hold enough to cover this rate against your stake."
             col2={pmpe(coverage.expectedMaxEffBidPmpe)}
           />
           <CalcRow
             label="On-chain distributed rewards"
+            help="The rewards your validator pays stakers directly each epoch. The bond must hold enough to make stakers whole if you ever skip this payout."
             col2={pmpe(coverage.onchainDistributedPmpe)}
           />
 
@@ -140,10 +146,12 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           />
           <CalcRow
             label="Bond held for bid payments"
+            help="The slice of the bond set aside to pay your bid this epoch. Bid times stake, over the covered window."
             col2={bondSol(coverage.heldForBidKeep)}
           />
           <CalcRow
             label="Bond held for reward payouts"
+            help="The slice of the bond set aside in case your validator misses a rewards payout to stakers. Sized so stakers can be reimbursed without touching the bid-payments slice."
             col2={bondSol(coverage.rewardsGuaranteeKeep)}
           />
           <CalcRow
@@ -181,10 +189,12 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           />
           <CalcRow
             label="Bond held for bid payments"
+            help="The slice of the bond set aside to pay your bid over the longer ideal window. Bigger than the keep-stake version because it covers more epochs."
             col2={bondSol(coverage.heldForBidIdeal)}
           />
           <CalcRow
             label="Bond held for reward payouts"
+            help="The slice of the bond set aside to reimburse stakers across the longer ideal window if your validator ever misses a payout."
             col2={bondSol(coverage.rewardsGuaranteeIdeal)}
           />
           <CalcRow
@@ -213,6 +223,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
                 <>
                   <CalcRow
                     label="Paid undelegation pending"
+                    help="Stake the protocol has already decided to pull back from this validator next epoch. It still counts as exposed today, but the projected threshold below subtracts it."
                     col1={stake(coverage.carriedPaidUndelegationSol)}
                   />
                   <CalcRow
@@ -224,6 +235,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
               )}
               <CalcRow
                 label="Minimum unprotected reserve"
+                help="A fixed floor of bond the protocol always wants on top of stake-sized requirements. Falling below this alone triggers the bond risk fee."
                 col2={bondSol(coverage.minUnprotectedReserveSol)}
               />
               <CalcRow

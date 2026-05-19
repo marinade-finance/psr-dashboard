@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { bondSol, pmpe, topUp } from 'src/format'
+import { pmpe } from 'src/format'
 import { computeBidding } from 'src/services/bidding'
 import { computeInAuctionTarget } from 'src/services/in-auction-target'
 import { computeNextEpochStake } from 'src/services/next-epoch-stake'
@@ -136,10 +136,21 @@ export const BiddingBreakdown: React.FC<Props> = ({
             help="What you bring to the auction this epoch: non-bid revenue (the commission you keep) plus your static bid. The two target sections below subtract your non-bid revenue from each bar to size the bid."
             unit="PMPE"
           />
-          <CalcRow label="Inflation" col1={m.inflPct} col2={pmpe(m.inflPmpe)} />
-          <CalcRow label="MEV" col1={m.mevPct} col2={pmpe(m.mevPmpe)} />
+          <CalcRow
+            label="Inflation"
+            help="The share of Solana's new-coin inflation rewards your validator keeps. The percentage is your commission, the PMPE is what it earns per 1000 SOL of stake this epoch."
+            col1={m.inflPct}
+            col2={pmpe(m.inflPmpe)}
+          />
+          <CalcRow
+            label="MEV"
+            help="Extra tips your validator collects from ordering transactions. The percentage is your share, the PMPE is what it earns per 1000 SOL of stake this epoch."
+            col1={m.mevPct}
+            col2={pmpe(m.mevPmpe)}
+          />
           <CalcRow
             label="Block rewards"
+            help="Priority fees paid for landing transactions in blocks your validator produced. The percentage is your share, the PMPE is what it earns per 1000 SOL of stake this epoch."
             col1={m.blkPct}
             col2={pmpe(m.blkPmpe)}
           />
@@ -168,16 +179,24 @@ export const BiddingBreakdown: React.FC<Props> = ({
           />
           <CalcRow
             label="Winning bar"
+            help="The lowest total PMPE that still makes the winning set this epoch. Beat it and you are in, fall short and you are out."
             col2={pmpe(inAuction.winningTotalPmpe)}
           />
           <CalcRow
-            label="Your current total"
-            col2={pmpe(inAuction.nonBidPmpe + inAuction.currentBidPmpe)}
+            label="− Non-bid revenue"
+            help={NON_BID_HELP}
+            col2={pmpe(inAuction.nonBidPmpe)}
           />
           <CalcRow
-            label="Target static bid"
+            label="= Target static bid"
             col2={pmpe(inAuction.targetBidPmpe)}
             bold
+            separator
+          />
+          <CalcRow
+            label="Your static bid"
+            help={STATIC_BID_HELP}
+            col2={pmpe(inAuction.currentBidPmpe)}
           />
           {inAuction.capConstrained ? (
             <CalcRow label={capLabel} col2="blocked" severity="error" bold />
@@ -187,28 +206,13 @@ export const BiddingBreakdown: React.FC<Props> = ({
               col2={pmpe(inAuction.bidIncrease)}
               severity="warning"
               bold
+              separator
             />
           ) : (
             <OkRow
               message="Your bid already clears the winning bar."
               colSpan={2}
             />
-          )}
-
-          <SectionHeader title="Bond needed behind that stake" />
-          <CalcRow
-            label="Minimum bond required"
-            col2={bondSol(inAuction.bondFloorToBack)}
-          />
-          {inAuction.bondTopUp > 0 ? (
-            <CalcRow
-              label="Bond top-up to keep stake"
-              col2={topUp(inAuction.bondTopUp)}
-              severity="warning"
-              bold
-            />
-          ) : (
-            <OkRow message="Bond covers the stake." colSpan={2} />
           )}
 
           <SectionHeader
@@ -225,16 +229,19 @@ export const BiddingBreakdown: React.FC<Props> = ({
             <>
               <CalcRow
                 label="Priority bar"
+                help="The total PMPE the last validator to receive new stake from the redelegation budget had. Clear this and the budget reaches you before it runs out."
                 col2={pmpe(nextEpoch.priorityFrontierPmpe)}
               />
               <CalcRow
-                label="Your current total"
-                col2={pmpe(nextEpoch.currentTotalPmpe)}
+                label="− Non-bid revenue"
+                help={NON_BID_HELP}
+                col2={pmpe(inAuction.nonBidPmpe)}
               />
               <CalcRow
-                label="Target static bid"
+                label="= Target static bid"
                 col2={pmpe(nextEpoch.targetBidPmpePriority)}
                 bold
+                separator
               />
               {nextEpoch.bidIncreaseForPriority > 0 ? (
                 <CalcRow

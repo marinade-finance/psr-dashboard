@@ -27,7 +27,7 @@ export const SectionHeader: React.FC<{
   col1Unit?: string
 }> = ({ title, colSpan = 3, help, unit, col1Unit }) => {
   const headerCellCls =
-    'pt-6 pb-1 text-xs uppercase tracking-wider text-muted-foreground border-t border-dashed border-border [tr:first-child>&]:border-t-0 [tr:first-child>&]:pt-0'
+    'pt-6 pb-1 text-xs uppercase tracking-wider text-muted-foreground border-t border-dashed border-border [tr:first-child>&]:pt-0 [tr:first-child>&]:border-t-0'
   if (col1Unit) {
     return (
       <tr>
@@ -118,9 +118,10 @@ function rowStyle(opts: {
     : sep
       ? SEPARATOR_CELL_PAD
       : NORMAL_CELL_PAD
-  const sepBorder = opts.total
-    ? 'border-t border-muted-foreground/30'
-    : sep && 'border-t-2 border-border'
+  // One subtle hairline for every "= result" row — total or subtotal.
+  // (Previously the subtotal used a heavier `border-t-2` which only added
+  // visual noise; the semantic — "math conclusion above" — is identical.)
+  const sepBorder = sep ? 'border-t border-muted-foreground/30' : false
   return { sep, bld, lg, cellPad, sepBorder, total: opts.total }
 }
 
@@ -143,7 +144,7 @@ export const CalcRow: React.FC<{
     total,
   })
   return (
-    <tr className="border-b border-border-grid/65 last:border-b-0">
+    <tr className="border-b border-border-grid/55 last:border-b-0">
       <td
         className={cn(
           'pr-2',
