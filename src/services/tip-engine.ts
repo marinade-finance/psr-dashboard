@@ -1,3 +1,4 @@
+import { ICON_ALERT } from 'src/components/icons/icon-alert'
 import { ICON_BID } from 'src/components/icons/icon-bid'
 import { ICON_BOND } from 'src/components/icons/icon-bond'
 import { ICON_DOWN } from 'src/components/icons/icon-down'
@@ -70,7 +71,8 @@ export const getBondAdviceStyle = (health: BondHealthState): TipStyle => {
   return { color: CSS_PRIMARY, bg: CSS_PRIMARY_LIGHT_10 }
 }
 
-// Color carries severity ONLY. Glyph never does — see getTipIcon.
+// Color carries severity. Glyph carries the lever — except a critical
+// alarm also swaps to the alert glyph; see getTipIcon.
 export const getTipStyle = (urgency: TipUrgency): TipStyle => {
   switch (urgency) {
     case 'critical':
@@ -86,12 +88,15 @@ export const getTipStyle = (urgency: TipUrgency): TipStyle => {
   }
 }
 
-// Glyph carries the tip's MEANING (which lever to pull), never its severity.
-// A constraint maps to one fixed non-directional glyph. Only constraint:'none'
-// (the validator is in-set, the only lever left is the stake trajectory) gets
-// a directional arrow, and it is keyed off the real signed delta so it can
-// never lie — an up arrow appears iff stake is genuinely growing.
+// Glyph carries the tip's MEANING (which lever to pull). One exception: a
+// critical alarm (red bond-risk-fee / below-minimum / no-bond) shows the
+// alert glyph so the danger reads at a glance — severity overrides the
+// constraint glyph only here. Otherwise a constraint maps to one fixed
+// non-directional glyph; only constraint:'none' (in-set, the only lever
+// left is the stake trajectory) gets a directional arrow, keyed off the
+// real signed delta so it can never lie.
 export const getTipIcon = (tip: ValidatorTip): React.ReactNode => {
+  if (tip.urgency === 'critical') return ICON_ALERT
   switch (tip.constraint) {
     case 'bond':
       return ICON_BOND
@@ -210,6 +215,31 @@ function outOfSetTip(
   // critical (red). bond-health also reports 'no-bond'/'critical' here, so
   // chip and tip agree on tone.
   if (bondBalance < dsSamConfig.minBondBalanceSol) {
+    // Hierarchy: an impending bond risk fee is the most pressing remedy and
+    // leads — but only when a fee actually applies (a number exists). Absent
+    // a fee, below-min is the hard block and "qualify" is the right call.
+    const coverage = computeBondCoverage(
+      validator,
+      dsSamConfig,
+      winningTotalPmpe,
+    )
+    const bondRiskFeeSol = validator.values?.bondRiskFeeSol ?? 0
+    if (coverage.topUpToAvoidFee > 0) {
+      return {
+        text: `Top up ${topUp(coverage.topUpToAvoidFee)} to avoid the bond risk fee.`,
+        urgency: 'critical',
+        constraint: 'bond',
+        delta,
+      }
+    }
+    if (bondRiskFeeSol > 0) {
+      return {
+        text: `Bond risk fee ${pay(bondRiskFeeSol)} this epoch.`,
+        urgency: 'critical',
+        constraint: 'bond',
+        delta,
+      }
+    }
     const text =
       bondBalance <= 0
         ? `Post a bond of ${stake(dsSamConfig.minBondBalanceSol)} to qualify.`
@@ -295,6 +325,22 @@ export const getValidatorTip = (
     // while gaining.)
     if (health === 'soft' && coverage.topUpToIdealKeep > 0 && delta <= 0) {
       return { text: advice.text, urgency: 'info', constraint: 'bond', delta }
+    }
+  }
+
+  // Bid-too-low penalty active and bond is fine — the cascade above already
+  // returned for any bond-primary case, so the actionable problem here is the
+  // bid drifting down. Advise raising it, with the recurring penalty as the
+  // cost avoided (action + quantified consequence, same family as bondAdvice).
+  const penaltyPmpe = validator.revShare?.bidTooLowPenaltyPmpe ?? 0
+  if (penaltyPmpe > 0) {
+    const penaltySol =
+      (penaltyPmpe / 1000) * validator.marinadeActivatedStakeSol
+    return {
+      text: `Raise bid or pay a ${pay(penaltySol)} penalty.`,
+      urgency: 'warning',
+      constraint: 'bid',
+      delta,
     }
   }
 
