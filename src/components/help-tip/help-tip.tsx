@@ -53,6 +53,11 @@ export const HelpTip: React.FC<Props> = ({ html, text, guideTo }) => {
         className={ICON_CLASSES}
         aria-label="More info"
         aria-pressed={pinned}
+        // Radix dismisses the tooltip on the trigger's pointerdown; with the
+        // controlled open this causes a close→reopen flicker on click. Block
+        // the pointerdown default so pinning toggles without the blink — the
+        // click still fires.
+        onPointerDown={e => e.preventDefault()}
         onClick={e => {
           e.stopPropagation()
           setPinned(p => !p)
