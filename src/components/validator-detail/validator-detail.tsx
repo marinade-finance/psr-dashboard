@@ -412,7 +412,11 @@ export const ValidatorDetail = ({
 
   const bondRiskFeeSol = validator.values.bondRiskFeeSol ?? 0
   const blacklistPenaltySol = computeBlacklistPenaltySol(validator)
-  const bidTooLowPenaltySol = computeBidTooLowPenaltySol(validator)
+  const bidTooLowPenaltySol = computeBidTooLowPenaltySol(
+    validator,
+    dsSamConfig,
+    winningTotalPmpe,
+  )
 
   const [editBid, setEditBid] = useState(validator.revShare.bidPmpe.toString())
   const [editInflation, setEditInflation] = useState(

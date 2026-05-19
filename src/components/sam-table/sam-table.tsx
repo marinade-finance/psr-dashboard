@@ -244,9 +244,15 @@ const PENALTY_ICONS: Record<PenaltyKind, React.ReactElement> = {
 
 const PenaltyBadges: React.FC<{
   validator: AuctionValidator
-}> = ({ validator }) => {
+  dsSamConfig: DsSamConfig
+  winningTotalPmpe: number
+}> = ({ validator, dsSamConfig, winningTotalPmpe }) => {
   const badges: { label: string; sol: number; kind: PenaltyKind }[] = []
-  const bidLowSol = bidTooLowPenaltySol(validator)
+  const bidLowSol = bidTooLowPenaltySol(
+    validator,
+    dsSamConfig,
+    winningTotalPmpe,
+  )
   const blacklistSol = blacklistPenaltySol(validator)
   const bondRiskSol = validator.values?.bondRiskFeeSol ?? 0
   if (bidLowSol > 0)
@@ -771,7 +777,13 @@ export const SamTable: React.FC<Props> = ({
                 {hasAlert && (
                   <span className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0 animate-pulse" />
                 )}
-                {!isGhost && <PenaltyBadges validator={validator} />}
+                {!isGhost && (
+                  <PenaltyBadges
+                    validator={validator}
+                    dsSamConfig={dsSamConfig}
+                    winningTotalPmpe={winningTotalPmpe}
+                  />
+                )}
               </>
             }
           />

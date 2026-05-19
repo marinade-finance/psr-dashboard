@@ -24,7 +24,7 @@ import {
 import { pay, stake, topUp } from 'src/format'
 import { assertNever } from 'src/utils/assert-never'
 
-import { bidTooLowPenaltySol, computeBidPenalty } from './bid-penalty'
+import { computeBidPenalty } from './bid-penalty'
 import { computeBondCoverage } from './bond-coverage'
 import { BondHealthState, bondHealthFromAuction } from './bond-health'
 import { apyBreakdown } from './calculations'
@@ -362,10 +362,9 @@ function bondCta(
 
 // Bid lever. Two mutually exclusive triggers — out-of-set + bond-OK
 // (raise the bid to qualify) and in-set + bid-too-low penalty (raise it
-// or pay the recurring penalty). Gate uses computeBidPenalty (matches the
-// breakdown walkthrough), but the displayed SOL amount uses the
-// authoritative `bidTooLowPenaltySol` so the banner can't contradict the
-// Payments tab's penalty row.
+// or pay the recurring penalty). Uses computeBidPenalty so the CTA, the
+// bid-penalty breakdown headline, and the Payments tab's penalty row all
+// quote the same SOL figure — and so simulation updates them together.
 function bidCta(
   validator: AugmentedAuctionValidator,
   dsSamConfig: DsSamConfig,
@@ -389,7 +388,7 @@ function bidCta(
   // (amber). Alert/octagon stays reserved for bond risk fee; bid penalty
   // is critical-red without the escalation.
   return tip(
-    `Raise bid or pay a ${pay(bidTooLowPenaltySol(validator))} penalty.`,
+    `Raise bid or pay a ${pay(metrics.penaltySol)} penalty.`,
     TipUrgency.CRITICAL,
     TipConstraint.BID,
     delta,

@@ -95,17 +95,20 @@ export function penaltyPmpeToSol(pmpe: number, stakeSol: number): number {
   return (pmpe / 1000) * stakeSol
 }
 
-// Single home for the bid-too-low penalty in SOL. Uses the SDK-pre-computed
-// `revShare.bidTooLowPenaltyPmpe` (authoritative) projected onto active stake,
-// NOT `computeBidPenalty().penaltySol`: the local recompute requires a model
-// of negative bid change via the auctions history, which synthetic fixtures
-// and some live edges don't satisfy — they diverge to 0 while the SDK truth
-// is non-zero. CTA/table badge/detail panel all consume this.
-export function bidTooLowPenaltySol(v: AuctionValidator): number {
-  return penaltyPmpeToSol(
-    v.revShare?.bidTooLowPenaltyPmpe ?? 0,
-    v.marinadeActivatedStakeSol,
-  )
+// Single home for the bid-too-low penalty in SOL. Sources from the local
+// computeBidPenalty recompute (NOT the SDK-pre-computed
+// `revShare.bidTooLowPenaltyPmpe`) so that under simulation — where the SDK
+// field is frozen against the original commission/bid — the displayed
+// penalty updates with the user's edits. Every surface (tip banner, sam-
+// table badge, validator-detail header, Payments breakdown row, Bid Penalty
+// breakdown headline) consumes THIS value, so they can never contradict
+// each other.
+export function bidTooLowPenaltySol(
+  v: AuctionValidator,
+  dsSamConfig: DsSamConfig,
+  winningTotalPmpe: number,
+): number {
+  return computeBidPenalty(v, dsSamConfig, winningTotalPmpe).penaltySol
 }
 
 // Blacklist penalty in SOL against the validator's active Marinade stake.

@@ -34,12 +34,12 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
 
   const status: CardStatus = {
     label:
-      metrics.penaltyPmpe > 0
-        ? `Penalty active: ${pmpe(metrics.penaltyPmpe)} PMPE this epoch.`
+      metrics.penaltySol > 0
+        ? `Raise bid or pay a ${cost(metrics.penaltySol)} penalty this epoch.`
         : metrics.isNegativeBiddingChange
           ? 'Bid dropped this epoch but bond obligation covers it — no penalty.'
           : 'Bid did not decrease — no penalty.',
-    tone: metrics.penaltyPmpe > 0 ? 'red' : 'green',
+    tone: metrics.penaltySol > 0 ? 'red' : 'green',
   }
 
   const tip = onGoToSim ? (
