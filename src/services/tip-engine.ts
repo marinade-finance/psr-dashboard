@@ -185,10 +185,10 @@ export function bondAdvice(
         tone: 'red',
       }
     case BondHealthState.CRITICAL: {
-      // In-set critical bond (this branch only runs for in-set validators;
-      // out-of-set takes the outOfSetTip path). Every value here is the
-      // SDK's pre-settlement ESTIMATE for the next not-yet-settled epoch —
-      // never a charged-and-settled fact (those live in protected-events
+      // Critical bond — fires for in-set OR out-of-set + above-min;
+      // bond-driven alert isn't gated by rank. Every value here is the
+      // SDK's pre-settlement ESTIMATE for the next not-yet-settled epoch
+      // — never a charged-and-settled fact (those live in protected-events
       // after the epoch closes). When the claimable bond sits below the
       // projected floor (topUpToAvoidFee > 0), name the consequence: a
       // fee. The action is the same — top up to clear it.
