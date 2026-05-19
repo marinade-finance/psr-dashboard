@@ -24,7 +24,7 @@ import {
 import { pay, stake, topUp } from 'src/format'
 import { assertNever } from 'src/utils/assert-never'
 
-import { computeBidPenalty } from './bid-penalty'
+import { bidTooLowPenaltySol, computeBidPenalty } from './bid-penalty'
 import { computeBondCoverage } from './bond-coverage'
 import { BondHealthState, bondHealthFromAuction } from './bond-health'
 import { apyBreakdown } from './calculations'
@@ -263,7 +263,13 @@ function tip(
     : { text, urgency, constraint, delta }
 }
 
-function selectTip(...candidates: (ValidatorTip | null)[]): ValidatorTip {
+// Callers must include at least one non-null candidate (in practice the
+// always-non-null deltaCta sits at the tail). The signature relies on
+// that — if every candidate is null, indexing into the empty array would
+// return `undefined` and the cast would mask it.
+function selectTip(
+  ...candidates: [...(ValidatorTip | null)[], ValidatorTip]
+): ValidatorTip {
   const live = candidates.filter((c): c is ValidatorTip => c !== null)
   live.sort(
     (a, b) =>
@@ -306,8 +312,8 @@ function bondCta(
         topUpAmt > 0
           ? `Top up ${topUp(topUpAmt)} to avoid the fee and re-qualify.`
           : `Estimated bond risk fee ${pay(bondRiskFeeSol)} next epoch.`,
-        'critical',
-        'bond',
+        TipUrgency.CRITICAL,
+        TipConstraint.BOND,
         delta,
         true,
       )
@@ -316,8 +322,8 @@ function bondCta(
       bondBalance <= 0
         ? `Post a bond of ${stake(dsSamConfig.minBondBalanceSol)} to qualify.`
         : `Top up bond to ${stake(dsSamConfig.minBondBalanceSol)} to qualify.`,
-      'critical',
-      'bond',
+      TipUrgency.CRITICAL,
+      TipConstraint.BOND,
       delta,
     )
   }
@@ -329,9 +335,11 @@ function bondCta(
   // ahead of delta: the inflow neither pays a fee nor refills the bond.
   const health = bondHealthFromAuction(validator, dsSamConfig, winningTotalPmpe)
   const fires =
-    health === 'critical' ||
-    (health === 'watch' && coverage.topUpToKeepStake > 0) ||
-    (health === 'soft' && coverage.topUpToIdealKeep > 0 && delta <= 0)
+    health === BondHealthState.CRITICAL ||
+    (health === BondHealthState.WATCH && coverage.topUpToKeepStake > 0) ||
+    (health === BondHealthState.SOFT &&
+      coverage.topUpToIdealKeep > 0 &&
+      delta <= 0)
   if (!fires) return null
   const advice = bondAdvice(
     coverage,
@@ -343,18 +351,21 @@ function bondCta(
   // Alert (octagon + pulse) ONLY when a fee is actually charged this epoch.
   return tip(
     advice.text,
-    health === 'critical' ? 'critical' : 'warning',
-    'bond',
+    health === BondHealthState.CRITICAL
+      ? TipUrgency.CRITICAL
+      : TipUrgency.WARNING,
+    TipConstraint.BOND,
     delta,
-    health === 'critical' && bondRiskFeeSol > 0,
+    health === BondHealthState.CRITICAL && bondRiskFeeSol > 0,
   )
 }
 
 // Bid lever. Two mutually exclusive triggers — out-of-set + bond-OK
 // (raise the bid to qualify) and in-set + bid-too-low penalty (raise it
-// or pay the recurring penalty). Uses computeBidPenalty so the CTA can
-// never contradict the bid-penalty breakdown the user clicks through to
-// (both surfaces consume the same penaltyPmpe / penaltySol).
+// or pay the recurring penalty). Gate uses computeBidPenalty (matches the
+// breakdown walkthrough), but the displayed SOL amount uses the
+// authoritative `bidTooLowPenaltySol` so the banner can't contradict the
+// Payments tab's penalty row.
 function bidCta(
   validator: AugmentedAuctionValidator,
   dsSamConfig: DsSamConfig,
@@ -367,8 +378,8 @@ function bidCta(
     }
     return tip(
       'Bid too low. Raise it to qualify for stake.',
-      'warning',
-      'rank',
+      TipUrgency.WARNING,
+      TipConstraint.RANK,
       delta,
     )
   }
@@ -378,9 +389,9 @@ function bidCta(
   // (amber). Alert/octagon stays reserved for bond risk fee; bid penalty
   // is critical-red without the escalation.
   return tip(
-    `Raise bid or pay a ${pay(metrics.penaltySol)} penalty.`,
-    'critical',
-    'bid',
+    `Raise bid or pay a ${pay(bidTooLowPenaltySol(validator))} penalty.`,
+    TipUrgency.CRITICAL,
+    TipConstraint.BID,
     delta,
   )
 }
@@ -422,8 +433,8 @@ function capCta(
   const cause = capCauseLine(cap.constraintType, cap.constraintName)
   return tip(
     `${cause}\nLosing ${stake(Math.abs(delta))} until cap frees.`,
-    'info',
-    'cap',
+    TipUrgency.INFO,
+    TipConstraint.CAP,
     delta,
   )
 }
@@ -435,20 +446,25 @@ function deltaCta(delta: number, capBinding: boolean): ValidatorTip {
   if (delta > 0) {
     return tip(
       `${stake(delta)} arriving next epoch.`,
-      'positive',
-      'none',
+      TipUrgency.POSITIVE,
+      TipConstraint.NONE,
       delta,
     )
   }
   // delta < 0 with a binding cap: cap owns the narrative — surface 'at
   // target' so cap (info) isn't beaten by losing (warning).
   if (delta === 0 || capBinding) {
-    return tip('At target stake.', 'neutral', 'none', delta)
+    return tip(
+      'At target stake.',
+      TipUrgency.NEUTRAL,
+      TipConstraint.NONE,
+      delta,
+    )
   }
   return tip(
     `Losing ${stake(Math.abs(delta))} next epoch.`,
-    'warning',
-    'none',
+    TipUrgency.WARNING,
+    TipConstraint.NONE,
     delta,
   )
 }

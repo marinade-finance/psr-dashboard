@@ -27,17 +27,17 @@ export function bondHealthFromAuction(
   winningTotalPmpe: number,
 ): BondHealthState {
   const bondBalance = v.bondBalanceSol ?? 0
-  if (bondBalance <= 0) return 'no-bond'
+  if (bondBalance <= 0) return BondHealthState.NO_BOND
   // Below the SDK minimum the validator can win no stake regardless of bid
   // (clipBondStakeCap → 0). Runway-vs-tiny-stake looks huge, so the
   // coverage-based diagnosis below would mislabel it healthy — gate it red here.
-  if (bondBalance < config.minBondBalanceSol) return 'critical'
+  if (bondBalance < config.minBondBalanceSol) return BondHealthState.CRITICAL
   if (!v.auctionStake.marinadeSamTargetSol && !v.marinadeActivatedStakeSol) {
-    return 'healthy'
+    return BondHealthState.HEALTHY
   }
   const coverage = computeBondCoverage(v, config, winningTotalPmpe)
-  if (coverage.topUpToAvoidFee > 0) return 'critical'
-  if (coverage.topUpToKeepStake > 0) return 'watch'
-  if (coverage.topUpToIdealKeep > 0) return 'soft'
-  return 'healthy'
+  if (coverage.topUpToAvoidFee > 0) return BondHealthState.CRITICAL
+  if (coverage.topUpToKeepStake > 0) return BondHealthState.WATCH
+  if (coverage.topUpToIdealKeep > 0) return BondHealthState.SOFT
+  return BondHealthState.HEALTHY
 }

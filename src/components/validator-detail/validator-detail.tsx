@@ -50,14 +50,17 @@ import {
   getTipStyle,
   getTipIcon,
 } from 'src/services/tip-engine'
+import { TipConstraint } from 'src/services/tip-engine'
 import { assertNever } from 'src/utils/assert-never'
 
 import type { AuctionResult, DsSamConfig } from '@marinade.finance/ds-sam-sdk'
 import type { UserLevel } from 'src/components/navigation/navigation'
 import type { BondCoverage } from 'src/services/bond-coverage'
-import type { NotificationSummary } from 'src/services/notifications'
+import type {
+  NotificationPriority,
+  NotificationSummary,
+} from 'src/services/notifications'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
-import type { TipConstraint } from 'src/services/tip-engine'
 
 interface ValidatorDetailProps {
   validator: AugmentedAuctionValidator
@@ -99,9 +102,9 @@ const TAB_DEFS: ReadonlyArray<{ id: Tab; label: string }> = [
 
 // Attention cue on a tab whose content needs a look. It persists on the
 // active tab too — pulsing — so opening the tab doesn't erase the signal
-// while the issue is unresolved. One tone axis, shared with the
-// status/intent families — never a new colour.
-type AttentionTone = 'critical' | 'warning' | 'info'
+// while the issue is unresolved. Same three-level axis as
+// NotificationPriority; aliased so the two stay aligned.
+type AttentionTone = NotificationPriority
 
 const ATTENTION_DOT: Record<AttentionTone, string> = {
   critical: 'bg-destructive',
@@ -113,6 +116,21 @@ const ATTENTION_TEXT: Record<AttentionTone, string> = {
   critical: 'text-destructive',
   warning: 'text-warning',
   info: 'text-info',
+}
+
+// Single source for "which tab does this lever live on". Used both by the
+// tab-strip dot in tabAttention and by the header banner's click target —
+// keeps both surfaces in lockstep. Record<TipConstraint, Tab|null> forces
+// an explicit mapping for every enum value (a new lever fails the build
+// until added). 'bid' = in-set penalty → Penalty tab (the math lives
+// there); 'rank' = out-of-set → Bidding tab (raise the static bid);
+// 'cap'/'none' have no dedicated tab (explanation lives in the header).
+const TIP_TAB: Record<TipConstraint, Tab | null> = {
+  bond: 'bond',
+  bid: 'penalty',
+  rank: 'bidding',
+  cap: null,
+  none: null,
 }
 
 function TabStrip({
@@ -172,7 +190,7 @@ function TabStrip({
 function tabAttention(args: {
   bondHealth: BondHealthState
   bidPenaltySol: number
-  notes: ReadonlyArray<{ priority: 'critical' | 'warning' | 'info' }>
+  notes: ReadonlyArray<{ priority: NotificationPriority }>
   tipConstraint: TipConstraint
 }): Partial<Record<Tab, AttentionTone>> {
   const { bondHealth, bidPenaltySol, notes, tipConstraint } = args
@@ -187,27 +205,15 @@ function tabAttention(args: {
         : undefined
   const attention: Partial<Record<Tab, AttentionTone>> = {}
   if (
-    bondHealth === 'critical' ||
-    bondHealth === 'no-bond' ||
-    bondHealth === 'watch'
+    bondHealth === BondHealthState.CRITICAL ||
+    bondHealth === BondHealthState.NO_BOND
   ) {
-    attention.bond = bondHealth === 'watch' ? 'warning' : 'critical'
+    attention.bond = 'critical'
+  } else if (bondHealth === BondHealthState.WATCH) {
+    attention.bond = 'warning'
   }
   if (bidPenaltySol > 0) attention.penalty = 'critical'
   if (notifTone) attention.notifications = notifTone
-  // Exhaustive map TipConstraint → Tab. A new constraint added to the
-  // enum forces an update here at compile time (the Record type errors
-  // until every key is filled). 'bid' = in-set penalty → Penalty tab
-  // (where the math lives); 'rank' = out-of-set → Bidding tab (where
-  // raising the static bid is the lever); 'cap'/'none' have no
-  // dedicated tab (delta/cap explanations live in the header).
-  const TIP_TAB: Record<TipConstraint, Tab | null> = {
-    bond: 'bond',
-    bid: 'penalty',
-    rank: 'bidding',
-    cap: null,
-    none: null,
-  }
   const tipTab = TIP_TAB[tipConstraint]
   if (tipTab && !attention[tipTab]) attention[tipTab] = 'info'
   return attention
@@ -291,20 +297,13 @@ const MetricRow = ({
       tabIndex={clickable ? 0 : undefined}
     >
       <span className="text-xs text-muted-foreground flex items-center gap-2 min-w-0">
-        <span className="truncate">{label}</span>
+        <span
+          className={cn('truncate', clickable && 'hover:underline')}
+          title={clickable ? 'Show calculation' : undefined}
+        >
+          {label}
+        </span>
         {help && <HelpTip text={help} guideTo={helpGuideTo} />}
-        {clickable && (
-          <button
-            type="button"
-            className="text-[10px] text-primary hover:underline shrink-0"
-            onClick={e => {
-              e.stopPropagation()
-              onSeeBreakdown?.()
-            }}
-          >
-            Show calculation →
-          </button>
-        )}
       </span>
       <span className="text-sm font-semibold font-mono" style={valueStyle}>
         {value}
@@ -339,17 +338,9 @@ const PenaltyRow = ({
         sub ? 'text-[13px]' : 'text-xs',
       )}
     >
-      <span className="truncate">{label}</span>
-      <button
-        type="button"
-        className="text-[10px] text-primary hover:underline shrink-0"
-        onClick={e => {
-          e.stopPropagation()
-          onSeeBreakdown()
-        }}
-      >
-        Show calculation →
-      </button>
+      <span className="truncate hover:underline" title="Show calculation">
+        {label}
+      </span>
     </span>
     <span
       className={cn('font-mono', sub ? 'text-[13px]' : 'text-sm font-semibold')}
@@ -405,9 +396,7 @@ export const ValidatorDetail = ({
   const [tab, setTab] = useState<Tab>('overview')
 
   const inSet = selectInSet(validator)
-  // Dense rank around the winning cutoff: 0 at cutoff, +N at the Nth distinct
-  // APY tier above, −N below. Computed once in sam.ts; consistent with the
-  // rank cell in sam-table.
+  // Dense rank around the winning cutoff: 0 at cutoff, +N above, −N below.
   const posVsWinning = validator.values.cutoffRank ?? 0
   const bondCoverage = useMemo(
     () => computeBondCoverage(validator, dsSamConfig, winningTotalPmpe),
@@ -439,9 +428,6 @@ export const ValidatorDetail = ({
       ? (validator.blockRewardsCommissionDec * 100).toString()
       : '',
   )
-  // Caller passes a `key` keyed on the selected validator's vote account, so
-  // each new validator mounts a fresh ValidatorDetail and this initialiser
-  // re-runs. No mirror-prop-into-state useEffect needed.
   const [simEnabled, setSimEnabled] = useState(isSimulated)
 
   // Debounced auto-recalc whenever inputs change while simulation is enabled.
@@ -489,14 +475,13 @@ export const ValidatorDetail = ({
     setTab('overview')
   }
 
-  // Banner — see the bond-tip / tip-style discussion below.
-  const isBondTip = tip.constraint === 'bond'
+  // Banner tone follows the bond-health axis when the tip is bond-driven,
+  // otherwise tracks the tip's own urgency. Click target reuses the shared
+  // TIP_TAB map so banner-nav and tab-dot can't disagree (previously the
+  // banner's bid → overview contradicted the dot's bid → penalty).
+  const isBondTip = tip.constraint === TipConstraint.BOND
   const bannerStyle = isBondTip ? getBondAdviceStyle(bondHealth) : tipStyle
-  const tipTarget: Tab | null = isBondTip
-    ? 'bond'
-    : tip.constraint === 'bid'
-      ? 'overview'
-      : null
+  const tipTarget = TIP_TAB[tip.constraint]
 
   const attention = tabAttention({
     bondHealth,
