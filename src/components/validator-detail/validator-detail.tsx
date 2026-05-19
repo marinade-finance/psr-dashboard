@@ -89,8 +89,10 @@ const TAB_DEFS: ReadonlyArray<{ id: Tab; label: string }> = [
   { id: 'penalty', label: 'Bid Penalty' },
 ]
 
-// Secondary attention cue on an inactive tab whose content needs a look.
-// One tone axis, shared with the status/intent families — never a new colour.
+// Attention cue on a tab whose content needs a look. It persists on the
+// active tab too — pulsing — so opening the tab doesn't erase the signal
+// while the issue is unresolved. One tone axis, shared with the
+// status/intent families — never a new colour.
 type AttentionTone = 'critical' | 'warning' | 'info'
 
 const ATTENTION_DOT: Record<AttentionTone, string> = {
@@ -118,14 +120,15 @@ function TabStrip({
     <div className="border-b border-border bg-background sticky top-[68px] z-[5]">
       <div className="flex gap-1 px-4 sm:px-6 overflow-x-auto">
         {TAB_DEFS.map(t => {
-          const tone = tab === t.id ? undefined : attention[t.id]
+          const tone = attention[t.id]
+          const active = tab === t.id
           return (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
               className={cn(
                 'px-3 py-2.5 text-[13px] font-medium border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5',
-                tab === t.id
+                active
                   ? 'border-primary text-primary'
                   : tone
                     ? cn(
@@ -141,6 +144,7 @@ function TabStrip({
                   className={cn(
                     'w-1.5 h-1.5 rounded-full shrink-0',
                     ATTENTION_DOT[tone],
+                    active && 'animate-pulse',
                   )}
                 />
               )}
