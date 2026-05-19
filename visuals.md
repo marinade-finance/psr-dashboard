@@ -17,16 +17,23 @@ code; every entry cites its file.
 ```markdown
 ### Two orthogonal axes: severity vs lever
 
-Two independent encodings, never collapsed into one:
+Two independent encodings, never collapsed into one. Enforced at the
+source — one CTA helper per lever in `src/services/tip-engine.ts`
+(`bondCta`, `bidCta`, `capCta`, `deltaCta`); `selectTip` picks the
+highest-severity candidate, with `LEVER_ORDER` (bond → bid/rank → cap →
+none) breaking ties at the same severity.
 
 - **Colour = severity.** `getTipStyle(urgency)` maps
-  critical→destructive, warning→warning, info→info, positive→primary,
-  neutral→muted. Same axis the breakdown banner uses
-  (`tone: red|yellow|green`). `src/services/tip-engine.ts`.
-- **Glyph = the lever** (which knob to turn): `bond`→ICON_BOND,
-  `bid`→ICON_BID, `rank`→ICON_RANK. Only `constraint:'none'` gets a
-  directional glyph (up/down/right), keyed off the real signed delta so
-  it cannot lie. `getTipIcon` in `src/services/tip-engine.ts`.
+  `TipUrgency.CRITICAL`→destructive, `WARNING`→warning, `INFO`→info,
+  `POSITIVE`→primary, `NEUTRAL`→muted. Same axis the breakdown banner
+  uses (`tone: red|yellow|green`); `bondAdvice()` emits both so they
+  agree by construction.
+- **Glyph = the lever** (which knob to turn).
+  `TipConstraint.BOND`→ICON_BOND, `BID`→ICON_BID, `RANK`→ICON_BID (same
+  lever — raise the bid, so same glyph), `CAP`→ICON_CAP. Only
+  `TipConstraint.NONE` (in-set, no binding constraint) gets a
+  directional glyph — up/down/right keyed off the real signed `delta`
+  so it cannot lie. `getTipIcon` in `src/services/tip-engine.ts`.
 - **Octagon alert is the ONLY severity-driven glyph.** `ICON_ALERT`
   (stop-sign octagon) overrides the lever glyph for exactly one state:
   an estimated bond risk fee this epoch (`tip.alert === true`). Plain
@@ -36,8 +43,9 @@ Two independent encodings, never collapsed into one:
 ### Tip glyph set
 
 7 glyphs, all `viewBox 0 0 12 12`, uniform **14.4px** (12 → 14.4, +20%):
-bond, bid, rank, up, down, right, alert.
-`src/components/icons/icon-*.tsx`.
+bond, bid, cap, alert, up, down, right. `src/components/icons/icon-*.tsx`.
+No `rank` glyph — `TipConstraint.RANK` reuses ICON_BID because the lever
+is identical.
 
 ### Phantom icon slot
 
@@ -106,18 +114,31 @@ JS state and a Tailwind class can't reach (inline `style`). Source:
 `src/css.ts` (note: not `src/lib/utils.ts`).
 
 ### Severity axis (colour)
-`getTipStyle(urgency)` → `{color, bg}`: critical=destructive,
-warning=warning, info=info, positive=primary, neutral=muted. The
+`getTipStyle(urgency)` → `{color, bg}`: `TipUrgency.CRITICAL`=destructive,
+`WARNING`=warning, `INFO`=info, `POSITIVE`=primary, `NEUTRAL`=muted. The
 breakdown status banner uses the parallel `tone: red|yellow|green`; they
 agree by construction (`bondAdvice` returns both). **Rule:** colour
 encodes severity ONLY — never the lever. `src/services/tip-engine.ts`.
 
 ### Lever axis (glyph)
-`getTipIcon(tip)`: `bond`→ICON_BOND, `bid`→ICON_BID, `rank`→ICON_RANK;
-`constraint:'none'` → directional up/down/right keyed off signed
+`getTipIcon(tip)` switches on `tip.constraint` (`TipConstraint` enum):
+`BOND`→ICON_BOND, `BID`/`RANK`→ICON_BID (same lever, same glyph),
+`CAP`→ICON_CAP, `NONE`→directional up/down/right keyed off signed
 `delta`. **Rule:** glyph encodes which knob to turn — orthogonal to
-colour; only the in-set "no constraint" case is allowed a directional
-glyph. `src/services/tip-engine.ts`.
+colour; only `TipConstraint.NONE` is allowed a directional glyph (it
+is the sole lever-less case where stake trajectory is the only signal
+left). `src/services/tip-engine.ts`.
+
+### CTA dispatch (one source per lever)
+Four CTA helpers in `src/services/tip-engine.ts`, each owning one lever's
+text + urgency end-to-end: `bondCta`, `bidCta`, `capCta`, `deltaCta`.
+`selectTip` sorts surviving candidates by `SEVERITY_ORDER` first
+(critical→warning→info→positive→neutral), then `LEVER_ORDER`
+(bond→bid/rank→cap→none) as the tiebreak. **Rule:** never reword a CTA
+at a call site; the helper is the canonical source for the sam-table
+Next Step pill, the validator-detail header tip and the matching
+breakdown status banner — they surface the same string byte-for-byte
+for a given state.
 
 ### Octagon alert glyph
 `ICON_ALERT` — stop-sign octagon, exclamation inside. **Rule:** the ONLY
@@ -128,8 +149,10 @@ their constraint glyph — no escalation.
 gated in `getTipIcon` / `getValidatorTip`.
 
 ### Tip glyph set (7)
-bond, bid, rank, up, down, right, alert. **Rule:** all `viewBox 0 0 12
-12`, uniform `width=height=14.4` (was 12; +20% session decision).
+bond, bid, cap, alert, up, down, right. **Rule:** all `viewBox 0 0 12
+12`, uniform `width=height=14.4`. No `rank` glyph —
+`TipConstraint.RANK` reuses ICON_BID because both `BID` and `RANK`
+point at the same lever (raise the bid).
 `src/components/icons/icon-*.tsx`.
 
 ### Phantom icon slot
@@ -150,9 +173,11 @@ live SDK config: `scaleMax = 4 × idealBondEpochs`,
 `src/components/sam-table/sam-table.tsx`.
 
 ### Bond chip
-`BOND_CHIP[state]` → `{chip, dot, bar, shortText, label}`. Tiers:
-no-bond/critical = destructive ("No bond"/"Critical"), watch = warning
-("Watch"), soft = secondary+muted ("Adequate"), healthy = primary
+`BOND_CHIP[state]` → `{chip, dot, bar, shortText, label}`, keyed by the
+`BondHealthState` enum (`src/services/bond-health.ts`:
+`NO_BOND`/`CRITICAL`/`WATCH`/`SOFT`/`HEALTHY`). Tones: `NO_BOND` and
+`CRITICAL` = destructive ("No bond" / "Critical"), `WATCH` = warning
+("Watch"), `SOFT` = secondary+muted ("Adequate"), `HEALTHY` = primary
 ("Healthy"). **Rule:** chip, dot, gauge bar and runway all derive from
 the single `bondHealth` tier — they can never contradict.
 `src/components/sam-table/sam-table.tsx`.
@@ -191,7 +216,12 @@ exclusive with bold (bold is reserved for conclusions/totals).
 `w-1.5 h-1.5 rounded-full` — critical=destructive, warning=warning,
 info=info. **Rule:** persists on the active tab AND pulses
 (`active && 'animate-pulse'`); never vanishes on open. Each tone reuses
-an existing severity source (no new colour, no new fetch).
+an existing severity source (no new colour, no new fetch). Dispatch in
+`tabAttention()` is an exhaustive `Record<TipConstraint, Tab | null>`:
+`BOND` → Bond tab, `BID` → Bid Penalty tab (the in-set penalty is the
+"raise the bid" math), `RANK` → Bidding tab (out-of-set "raise the
+static bid to qualify" lever), `CAP`/`NONE` → no dedicated tab.
+A new `TipConstraint` value is a compile error until the map is filled.
 `src/components/validator-detail/validator-detail.tsx`.
 
 ### Alert/pulse dot (table row)
@@ -249,6 +279,6 @@ now / live"; do not use it decoratively. Keyframes in `src/index.css`.
 - "No left-border accent" is enforced by the memory rule; no committed
   decorative `border-l` was found to contradict it (the only `border-l*`
   uses are table grid lines / dividers, not status accents).
-- The "12 → 14.4px, +20%" icon sizing is confirmed in all seven
-  `icon-*.tsx` files (every one declares `width={14.4} height={14.4}`,
-  `viewBox 0 0 12 12`).
+- The "14.4px / viewBox 0 0 12 12" icon sizing is confirmed across the
+  seven tip glyphs (`icon-bond`, `icon-bid`, `icon-cap`, `icon-alert`,
+  `icon-up`, `icon-down`, `icon-right`).

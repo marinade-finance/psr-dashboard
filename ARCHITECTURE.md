@@ -51,6 +51,7 @@ contributor rules, see `CLAUDE.md`.
 | `src/pages/`          | Route components — one file per page.                                                              |
 | `src/components/`     | All view components, grouped by feature.                                                           |
 | `src/services/`       | Data fetching, computation, types. UI-free.                                                        |
+| `src/utils/`          | Tiny pure helpers shared across services + components (`assert-never.ts`).                         |
 | `src/class_utils.ts`  | `cn` helper (`clsx` + `tailwind-merge`).                                                           |
 | `src/css.ts`          | `CSS_*` runtime colour escape hatches (return `var(--…)` strings).                                 |
 | `src/format.ts`       | Number / SOL / percentage formatters (`sol`, `stake`, `pct`, `pmpe`, `pay`, `payCta`).             |
@@ -267,18 +268,43 @@ where applicable.
 - **`calculations.ts`** — pure math: `compoundApy`, `bondRunwayEpochs`,
   `bondRunwayDays`, `bondUtilizationPct`, `stakeDelta`,
   `selectMaxWantedStake`, `apyBreakdown`, `isNonProductive`.
-- **`tip-engine.ts`** — `getValidatorTip` (urgency + text + constraint +
-  signed delta), `getTipStyle` (colour/bg = severity only, no icon),
-  `getTipIcon` (glyph = constraint/direction: one constraint→glyph map +
-  a single signed-delta arrow for the in-set `none` case),
-  `getBondHealthStyle`, `getApyBreakdown`, `nextStakeDeltaCell`,
-  `calculateBondUtilization`. Drives the rank-cell colour and the Next
-  Step column.
+- **`tip-engine.ts`** — drives the rank-cell colour and the Next Step
+  column. `TipUrgency`, `TipConstraint` are const-object enums; a
+  `ValidatorTip` carries `text`, `urgency`, `constraint`, signed `delta`,
+  optional `alert`. The tip is assembled from four orthogonal lever
+  helpers, each returning `ValidatorTip | null`:
+  - `bondCta` — out-of-set + below-min hard block, or in-set unhealthy
+    bond (defers to `bondAdvice` for canonical wording; the soft-bond +
+    positive-delta case yields to `deltaCta`).
+  - `bidCta` — out-of-set + bond OK ("Bid too low. Raise it to qualify"),
+    or in-set with `computeBidPenalty().penaltyPmpe > 0` (critical, names
+    the authoritative `bidTooLowPenaltySol`).
+  - `capCta` — in-set + losing stake + binding concentration cap
+    (`lastCapConstraint.totalLeftToCapSol === 0`); two-line `cause\nconsequence`,
+    urgency `info`.
+  - `deltaCta` — stake-trajectory fallback. Mutually excludes the cap
+    case at source (`capBinding` arg flips losing → neutral "At target
+    stake.") so cap (`info`) is never beaten by losing (`warning`).
+  `selectTip` sorts non-null candidates by `SEVERITY_ORDER`
+  (critical < warning < info < positive < neutral) then `LEVER_ORDER`
+  (bond < bid = rank < cap < none) and returns the head. `bondAdvice`
+  is the single source for every bond-state CTA string — sam-table
+  Next Step pill, header tip and Bond breakdown banner all surface the
+  same bytes for a given `BondHealthState`. `getTipStyle` (colour =
+  severity), `getTipIcon` (glyph = constraint, or `ICON_ALERT` when
+  `tip.alert`, or signed-delta arrow for `constraint === 'none'`),
+  `getBondAdviceStyle` (header bond tip colour off `BondHealthState`,
+  not urgency — keeps it in lockstep with the Bond banner). Also exports
+  `getApyBreakdown`, `nextStakeDeltaCell`, `calculateBondUtilization`.
+  Every switch uses `assertNever` so a new enum value fails to compile.
 - **`bidding.ts`** — `computeBidding` (per-validator stake/bid/cost row).
 - **`bond-coverage.ts`** — `computeBondCoverage` (keep-stake and avoid-fee
   top-ups on current vs projected exposed stake).
-- **`bond-health.ts`** — `bondHealthFromAuction`
-  (`'healthy'|'soft'|'watch'|'critical'`).
+- **`bond-health.ts`** — `BondHealthState` const-object enum
+  (`NO_BOND | CRITICAL | WATCH | SOFT | HEALTHY`) and
+  `bondHealthFromAuction(v, config, winningTotalPmpe)`. Below-min
+  balances gate red before the coverage-based diagnosis so a tiny stake
+  can't masquerade as healthy.
 - **`bid-penalty.ts`** — `computeBidPenalty`; local `TOL_COEF`/`SCALE_COEF`
   mirror SDK `calcBidTooLowPenalty`.
 - **`in-auction-target.ts`** — `computeInAuctionTarget` (Table A). Closed-
