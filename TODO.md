@@ -1,8 +1,22 @@
 # TODO
 
-## Queued — blocked behind the running HelpTip visual agent
+## Queued — fix on a clean tree, verify, then commit
 
-(It owns `row.tsx` + `sam-table.tsx` + the browser. Do these the moment it lands; verify in-browser; one shared change then per-table, never parallel subs on `row.tsx`.)
+### avoid-fee CTA fires when NO fee is charged (real bug)
+
+`bondAdvice` (`tip-engine.ts:161`) and `outOfSetTip` (`tip-engine.ts`
+below-min branch) emit "Top up N SOL to avoid the bond risk fee."
+whenever `coverage.topUpToAvoidFee > 0`. But `topUpToAvoidFee`
+(`bond-coverage.ts:126`) = `max(0, floorBaseProjected − claimableBond)`
+— only "claimable below the projected floor", NOT "a fee is charged".
+A below-min / out-of-set / target-0 row with `bondRiskFeeSol === 0`
+(Payments shows "No penalties") still gets the avoid-fee CTA + the
+octagon `alert` escalation — false/misleading. Fix: gate the avoid-fee
+text AND `alert: true` on an ACTUAL fee (`bondRiskFeeSol > 0`, or the
+real SDK fee-trigger), not on `topUpToAvoidFee > 0`; when no fee,
+fall to the below-min "post / top up bond to win stake" message.
+Blocked: the consolidation sub owns `tip-engine.ts`. Verify a no-fee
+below-min row shows NO "avoid the fee" and NO octagon.
 
 ### Breakdown tables — uniform 3-col model
 
