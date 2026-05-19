@@ -294,16 +294,14 @@ function bondCta(
   const bondRiskFeeSol = validator.values?.bondRiskFeeSol ?? 0
   const coverage = computeBondCoverage(validator, dsSamConfig, winningTotalPmpe)
 
-  // Out-of-set: bond is the lever only when below-min (hard block). With an
-  // adequate bond the bid is the lever — defer to bidCta.
-  if (!selectInSet(validator)) {
-    if (bondBalance >= dsSamConfig.minBondBalanceSol) return null
-    // Fee impending leads — but only when a fee actually applies. Absent a
-    // fee, below-min is the hard block and "qualify" is the right call.
+  // Below-min: the SDK qualification gate (clipBondStakeCap → 0). Only
+  // realistic for out-of-set validators (in-set with sub-min is impossible).
+  // Wording carries the "qualify" / "re-qualify" framing the in-set CTA
+  // doesn't need.
+  if (bondBalance < dsSamConfig.minBondBalanceSol) {
     if (bondRiskFeeSol > 0) {
-      // The fee top-up alone may not clear the below-min hard block. Pin
-      // the CTA to whichever number is bigger so following it both avoids
-      // the fee AND re-qualifies the validator.
+      // Fee top-up alone may not clear the below-min block — pin the CTA to
+      // whichever number is bigger so it covers both.
       const topUpAmt = Math.max(
         coverage.topUpToAvoidFee,
         dsSamConfig.minBondBalanceSol - bondBalance,
@@ -328,16 +326,22 @@ function bondCta(
     )
   }
 
-  // In-set: emit the bond CTA only for unhealthy bond, AND only when the
-  // advice is still truthful next to delta. "Top up to grow stake" (soft +
-  // ideal-keep top-up) contradicts a genuine positive delta — the inflow is
-  // already arriving — so it defers. Critical fee + watch keep-stake stay
-  // ahead of delta: the inflow neither pays a fee nor refills the bond.
+  // Above-min: emit the unhealthy-bond CTA via bondAdvice. CRITICAL (fee
+  // imminent) fires for in-set OR out-of-set — the fee is bond-driven, not
+  // rank-driven, so the alert can't be masked by out-of-set status. WATCH
+  // (keep-stake) and SOFT (grow-stake) gate on in-set: when target=0 the
+  // stake is leaving regardless of bond, so the "keep" / "grow" advisories
+  // are misleading. SOFT additionally defers when delta>0 (the inflow is
+  // already arriving — "grow stake" would contradict it).
+  const inSet = selectInSet(validator)
   const health = bondHealthFromAuction(validator, dsSamConfig, winningTotalPmpe)
   const fires =
     health === BondHealthState.CRITICAL ||
-    (health === BondHealthState.WATCH && coverage.topUpToKeepStake > 0) ||
-    (health === BondHealthState.SOFT &&
+    (inSet &&
+      health === BondHealthState.WATCH &&
+      coverage.topUpToKeepStake > 0) ||
+    (inSet &&
+      health === BondHealthState.SOFT &&
       coverage.topUpToIdealKeep > 0 &&
       delta <= 0)
   if (!fires) return null
@@ -360,21 +364,39 @@ function bondCta(
   )
 }
 
-// Bid lever. Two mutually exclusive triggers — out-of-set + bond-OK
-// (raise the bid to qualify) and in-set + bid-too-low penalty (raise it
-// or pay the recurring penalty). Uses computeBidPenalty so the CTA, the
-// bid-penalty breakdown headline, and the Payments tab's penalty row all
-// quote the same SOL figure — and so simulation updates them together.
+// Bid lever. Two triggers — bid-too-low penalty (critical) and
+// out-of-set bid-too-low (warning) — checked independently so the
+// more-urgent CTA always wins under severity sort. A validator that
+// dropped their bid hard can simultaneously be out-of-set AND penalised;
+// nesting the penalty check inside the in-set branch would let the rank
+// warning mask the critical penalty. Uses computeBidPenalty so the CTA,
+// the bid-penalty breakdown headline, and the Payments tab's penalty
+// row all quote the same SOL figure — and so simulation updates them
+// together.
 function bidCta(
   validator: AugmentedAuctionValidator,
   dsSamConfig: DsSamConfig,
   winningTotalPmpe: number,
   delta: number,
 ): ValidatorTip | null {
-  if (!selectInSet(validator)) {
-    if ((validator.bondBalanceSol ?? 0) < dsSamConfig.minBondBalanceSol) {
-      return null
-    }
+  const metrics = computeBidPenalty(validator, dsSamConfig, winningTotalPmpe)
+  // Penalty is real money charged this epoch — critical (red), not warning
+  // (amber). Fires for in-set OR out-of-set: bid history drives it, not
+  // current in/out status. Alert/octagon stays reserved for bond risk fee.
+  if (metrics.penaltyPmpe > 0) {
+    return tip(
+      `Raise bid or pay a ${pay(metrics.penaltySol)} penalty.`,
+      TipUrgency.CRITICAL,
+      TipConstraint.BID,
+      delta,
+    )
+  }
+  // No penalty — out-of-set with an adequate bond becomes the rank CTA.
+  // Below-min bond is the bond lever's territory; defer.
+  if (
+    !selectInSet(validator) &&
+    (validator.bondBalanceSol ?? 0) >= dsSamConfig.minBondBalanceSol
+  ) {
     return tip(
       'Bid too low. Raise it to qualify for stake.',
       TipUrgency.WARNING,
@@ -382,17 +404,7 @@ function bidCta(
       delta,
     )
   }
-  const metrics = computeBidPenalty(validator, dsSamConfig, winningTotalPmpe)
-  if (metrics.penaltyPmpe <= 0) return null
-  // Penalty is real money charged this epoch — critical (red), not warning
-  // (amber). Alert/octagon stays reserved for bond risk fee; bid penalty
-  // is critical-red without the escalation.
-  return tip(
-    `Raise bid or pay a ${pay(metrics.penaltySol)} penalty.`,
-    TipUrgency.CRITICAL,
-    TipConstraint.BID,
-    delta,
-  )
+  return null
 }
 
 function capCauseLine(

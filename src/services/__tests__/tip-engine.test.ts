@@ -65,6 +65,8 @@ const DS_SAM_CONFIG = {
   // SDK minimum (they pin the fee branch, not the below-min branch); large
   // enough that stake(minBondBalanceSol) renders for the no-bond message.
   minBondBalanceSol: 0.0001,
+  bidTooLowPenaltyHistoryEpochs: 10,
+  bidTooLowPenaltyPermittedDeviationPmpe: 0.0001,
 } as unknown as DsSamConfig
 
 // --- bondUtilizationPct ---
@@ -209,6 +211,52 @@ describe('getValidatorTip', () => {
     expect(tip.urgency).toBe('warning')
     expect(tip.constraint).toBe('rank')
     expect(tip.text).toContain('Bid too low')
+  })
+
+  it('out-of-set + bid penalty firing → critical/bid (penalty outranks rank)', () => {
+    // A validator that dropped their bid hard can be BOTH out-of-set AND
+    // paying a penalty. The critical penalty CTA must win the rank warning,
+    // not be masked by an early out-of-set return.
+    const validator = makeValidator({
+      auctionStake: { marinadeSamTargetSol: 0 },
+      revShare: {
+        ...{
+          inflationPmpe: 5,
+          mevPmpe: 2,
+          blockPmpe: 1,
+          bidPmpe: 0.5,
+          totalPmpe: 8.5,
+          bondObligationPmpe: 0,
+          effParticipatingBidPmpe: 0.5,
+          bidTooLowPenaltyPmpe: 0.5,
+        },
+      },
+      auctions: [
+        { bidPmpe: 5, effParticipatingBidPmpe: 5 },
+        { bidPmpe: 5, effParticipatingBidPmpe: 5 },
+        { bidPmpe: 0.5, effParticipatingBidPmpe: 0.5 },
+      ],
+    })
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
+    expect(tip.urgency).toBe('critical')
+    expect(tip.constraint).toBe('bid')
+    expect(tip.text).toContain('Raise bid')
+  })
+
+  it('out-of-set + above-min + critical bond (fee impending) → critical/bond', () => {
+    // Out-of-set status doesn't dampen a bond risk fee — the alert is
+    // bond-driven, not rank-driven. Previously the !inSet branch returned
+    // early and the alert was lost.
+    const validator = makeValidator({
+      auctionStake: { marinadeSamTargetSol: 0 },
+      bondBalanceSol: 50,
+      claimableBondBalanceSol: 0,
+      marinadeActivatedStakeSol: 100000,
+    })
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
+    expect(tip.urgency).toBe('critical')
+    expect(tip.constraint).toBe('bond')
+    expect(tip.text).toContain('to avoid the bond risk fee')
   })
 
   it('critical health, claimable below floor → "avoid the bond risk fee" CTA', () => {
