@@ -199,17 +199,29 @@ export function bondAdvice(
       }
     }
     case BondHealthState.CRITICAL: {
-      const text =
-        bondRiskFeeSol > 0
-          ? coverage.bondRiskFeeShortfall > 0
+      // Fee is actually being charged OR bond is already below the penalty
+      // threshold → red/critical. Runway-only CRITICAL (no fee, above
+      // threshold) → yellow/warning: the fee is approaching but not here yet.
+      if (bondRiskFeeSol > 0) {
+        const text =
+          coverage.bondRiskFeeShortfall > 0
             ? `Top up ${topUp(coverage.bondRiskFeeShortfall)} to avoid the fee.`
             : `Estimated bond fee ${pay(bondRiskFeeSol)} next epoch.`
-          : coverage.bondRiskFeeShortfall > 0
-            ? `Top up ${topUp(coverage.bondRiskFeeShortfall)} — bond below the penalty threshold.`
-            : coverage.topUpToIdealKeep > 0
-              ? `Top up ${topUp(coverage.topUpToIdealKeep)} to avoid the fee.`
-              : 'Bond near threshold — top up to avoid the fee.'
-      return { text, urgency: TipUrgency.CRITICAL, tone: CardStatusTone.RED }
+        return { text, urgency: TipUrgency.CRITICAL, tone: CardStatusTone.RED }
+      }
+      if (coverage.bondRiskFeeShortfall > 0) {
+        return {
+          text: `Top up ${topUp(coverage.bondRiskFeeShortfall)} — bond below the penalty threshold.`,
+          urgency: TipUrgency.CRITICAL,
+          tone: CardStatusTone.RED,
+        }
+      }
+      // Near threshold, no fee yet — warn, not critical.
+      const text =
+        coverage.topUpToIdealKeep > 0
+          ? `Top up ${topUp(coverage.topUpToIdealKeep)} to avoid the fee.`
+          : 'Bond near threshold — top up to avoid the fee.'
+      return { text, urgency: TipUrgency.WARNING, tone: CardStatusTone.YELLOW }
     }
     case BondHealthState.WATCH: {
       if (coverage.topUpToKeepStake > 0) {
