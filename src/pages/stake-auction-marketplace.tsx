@@ -144,6 +144,10 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
     [simulationOverrides],
   )
 
+  const handleClearSelectedValidator = useCallback(() => {
+    if (selectedValidator) handleClearValidator(selectedValidator)
+  }, [selectedValidator, handleClearValidator])
+
   const handleValidatorClick = useCallback((voteAccount: string) => {
     setSelectedValidator(prev => {
       const url = new URL(window.location.href)
@@ -296,8 +300,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
             onSimulate={handleDetailSimulate}
             onClearSimulation={
               simulatedValidators.has(selectedValidator ?? '')
-                ? () =>
-                    selectedValidator && handleClearValidator(selectedValidator)
+                ? handleClearSelectedValidator
                 : undefined
             }
             isCalculating={isCalculating}

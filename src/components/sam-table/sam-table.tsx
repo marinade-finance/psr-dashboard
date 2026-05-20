@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 
 import { cn } from 'src/class_utils'
 import { docsPath } from 'src/components/breakdowns/docs-path'
@@ -406,9 +406,18 @@ export const SamTable: React.FC<Props> = ({
   const {
     auctionData: { validators },
   } = auctionResult
-  const samDistributedStake = selectSamDistributedStake(validators)
-  const winningAPY = selectWinningAPY(auctionResult, epochsPerYear)
-  const projectedApy = selectProjectedAPY(auctionResult, epochsPerYear)
+  const samDistributedStake = useMemo(
+    () => selectSamDistributedStake(validators),
+    [validators],
+  )
+  const winningAPY = useMemo(
+    () => selectWinningAPY(auctionResult, epochsPerYear),
+    [auctionResult, epochsPerYear],
+  )
+  const projectedApy = useMemo(
+    () => selectProjectedAPY(auctionResult, epochsPerYear),
+    [auctionResult, epochsPerYear],
+  )
   const concentration = useMemo(
     () => buildConcentrationBreakdown(auctionResult, dsSamConfig),
     [auctionResult, dsSamConfig],
@@ -418,7 +427,7 @@ export const SamTable: React.FC<Props> = ({
   const tableRef = useRef<HTMLDivElement>(null)
   const flashTimeoutRef = useRef<number | null>(null)
 
-  const handleGhostClick = (voteAccount: string) => {
+  const handleGhostClick = useCallback((voteAccount: string) => {
     const root = tableRef.current
     if (!root) return
     const target = root.querySelector<HTMLElement>(
@@ -429,20 +438,23 @@ export const SamTable: React.FC<Props> = ({
     if (flashTimeoutRef.current) window.clearTimeout(flashTimeoutRef.current)
     setFlashId(voteAccount)
     flashTimeoutRef.current = window.setTimeout(() => setFlashId(null), 800)
-  }
+  }, [])
 
   // Sorting state
   const [sortColumn, setSortColumn] = useState<SortColumn>('maxApy')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
 
-  const handleSort = (column: SortColumn) => {
-    if (sortColumn === column) {
-      setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'))
-    } else {
-      setSortColumn(column)
-      setSortDirection('desc')
-    }
-  }
+  const handleSort = useCallback(
+    (column: SortColumn) => {
+      if (sortColumn === column) {
+        setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'))
+      } else {
+        setSortColumn(column)
+        setSortDirection('desc')
+      }
+    },
+    [sortColumn],
+  )
 
   // Current validators with bond health and expected stake change computed
   const validatorsWithBond: ValidatorWithBondState[] = useMemo(
@@ -636,55 +648,64 @@ export const SamTable: React.FC<Props> = ({
     [auctionResult, dsSamConfig.minBondBalanceSol],
   )
   const eligibleCount = bondEligibleValidators.length
-  const eligibleWinningCount = bondEligibleValidators.filter(
-    v => v.auctionStake.marinadeSamTargetSol > 0,
-  ).length
+  const eligibleWinningCount = useMemo(
+    () =>
+      bondEligibleValidators.filter(
+        v => v.auctionStake.marinadeSamTargetSol > 0,
+      ).length,
+    [bondEligibleValidators],
+  )
 
   const dp = docsPath(level)
 
-  const stats: {
-    label: string
-    value: string
-    unit: string
-    help: string | undefined
-    guideTo: string
-  }[] = [
-    {
-      label: 'Re-delegation',
-      value: sol(totalRedelegation, 0),
-      unit: 'SOL',
-      help: 'Roughly how much SOL Marinade will redelegate into under-stake validators next epoch, pushing them toward their target allocation.',
-      guideTo: `${dp}#redelegation`,
-    },
-    {
-      label: 'Winning APY',
-      value: pct(winningAPY, 2),
-      unit: '',
-      help: HELP_TEXT.winningApy,
-      guideTo: `${dp}#last-price`,
-    },
-    {
-      label: 'Projected APY',
-      value: pct(projectedApy, 2),
-      unit: '',
-      help: HELP_TEXT.projectedApy,
-      guideTo: `${dp}#sam`,
-    },
-    {
-      label: 'Winning Validators',
-      value: `${eligibleWinningCount}`,
-      unit: ` /${eligibleCount}`,
-      help: HELP_TEXT.winningValidators,
-      guideTo: `${dp}#sam`,
-    },
-    {
-      label: 'Total Auction Stake',
-      value: sol(samDistributedStake, 0),
-      unit: 'SOL',
-      help: HELP_TEXT.totalAuctionStake,
-      guideTo: `${dp}#sam`,
-    },
-  ]
+  const stats = useMemo(
+    () => [
+      {
+        label: 'Re-delegation',
+        value: sol(totalRedelegation, 0),
+        unit: 'SOL',
+        help: 'Roughly how much SOL Marinade will redelegate into under-stake validators next epoch, pushing them toward their target allocation.',
+        guideTo: `${dp}#redelegation`,
+      },
+      {
+        label: 'Winning APY',
+        value: pct(winningAPY, 2),
+        unit: '',
+        help: HELP_TEXT.winningApy,
+        guideTo: `${dp}#last-price`,
+      },
+      {
+        label: 'Projected APY',
+        value: pct(projectedApy, 2),
+        unit: '',
+        help: HELP_TEXT.projectedApy,
+        guideTo: `${dp}#sam`,
+      },
+      {
+        label: 'Winning Validators',
+        value: `${eligibleWinningCount}`,
+        unit: ` /${eligibleCount}`,
+        help: HELP_TEXT.winningValidators,
+        guideTo: `${dp}#sam`,
+      },
+      {
+        label: 'Total Auction Stake',
+        value: sol(samDistributedStake, 0),
+        unit: 'SOL',
+        help: HELP_TEXT.totalAuctionStake,
+        guideTo: `${dp}#sam`,
+      },
+    ],
+    [
+      totalRedelegation,
+      winningAPY,
+      projectedApy,
+      eligibleWinningCount,
+      eligibleCount,
+      samDistributedStake,
+      dp,
+    ],
+  )
 
   const renderRow = (
     validator: ValidatorWithBondState,
