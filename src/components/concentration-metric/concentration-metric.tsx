@@ -86,7 +86,7 @@ export const ConcentrationMetric: React.FC<Props> = ({
 
   return (
     <Card
-      className="relative px-3 py-3 sm:px-5 sm:py-4 flex-1 min-w-[140px] sm:min-w-[160px] overflow-visible flex flex-col"
+      className="relative px-3 py-3 sm:px-5 sm:py-4 overflow-visible flex flex-col"
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
     >
