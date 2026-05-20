@@ -180,7 +180,7 @@ export const selectBid = (validator: AuctionValidator) =>
 
 export const overridesCpmpeMessage = (validator: AuctionValidator): string =>
   overridesMessage(
-    'CPMPE',
+    'Cost PMPE',
     validator.values?.commissions?.bidCpmpeOverrideDec,
     'number',
   )

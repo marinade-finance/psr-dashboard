@@ -100,7 +100,7 @@ see the Expert Guide.
 Each epoch, SAM runs a **last-price auction** to allocate stake.
 
 1. **Validators bid.** Two complementary methods, combinable:
-   - **Static bid (CPMPE)** — fixed cost per 1000 SOL per epoch, deducted directly
+   - **Static bid (Cost PMPE)** — fixed cost per 1000 SOL per epoch, deducted directly
      from the validator's bond. Predictable.
    - **Dynamic commission bid** — percentage of actual rewards (inflation, MEV,
      block rewards) shared with stakers. Each dimension can be set independently.
@@ -139,20 +139,20 @@ _See [Stake Auction Marketplace — Marinade Docs](https://docs.marinade.finance
 ## Key Concepts
 
 <a id="cpmpe"></a>
-### PMPE / CPMPE — Per Mille Per Epoch
+### PMPE / Cost PMPE — Per Mille Per Epoch
 
 PMPE measures revenue per 1000 SOL per epoch. The unit the auction speaks in.
 
 - **PMPE** — generic per-1000-SOL-per-epoch number. Used for every revenue stream
   (inflation, MEV, block rewards, stake bid).
-- **CPMPE** — *cost* per 1000 SOL per epoch. The validator's static bid component:
+- **Cost PMPE** — cost per 1000 SOL per epoch. The validator's static bid component:
   a fixed amount the validator pays out of their bond for every 1000 SOL of stake
-  they receive, every epoch.
+  they receive, every epoch. (Also identified as `cpmpe` in the protocol.)
 - **0.1 PMPE = 0.1 SOL earned per 1000 SOL per epoch.**
 - **APY conversion**: `APY = (1 + PMPE/1000)^182.6 − 1` (≈182.6 epochs per year).
 
 A validator's **max APY** in the table is the sum of all PMPE streams converted
-to APY, with the static CPMPE bid mixed in.
+to APY, with the static Cost PMPE bid mixed in.
 
 #### Activating-stake PMPE
 
@@ -220,7 +220,7 @@ _See [How to participate — Marinade Docs](https://docs.marinade.finance/marina
 A bond is a pre-funded vault each validator creates to participate in SAM. It has
 three jobs:
 
-1. Pays static bid costs (CPMPE × stake) every epoch.
+1. Pays static bid costs (Cost PMPE × stake) every epoch.
 2. Backs Protected Staking Rewards payouts if the validator under-delivers (see
    [PSR](#psr)).
 3. Signals commitment.
@@ -520,7 +520,7 @@ A compact summary of the validator's bond:
     risk fee is being charged this epoch. See [Bond Risk Fee](#bond-risk-fee).
 - **Balance** — bond size in SOL.
 - **Runway** — `(Nep)` shows how many epochs the bond will last at the current
-  burn rate (CPMPE bid + risk fee). `(0ep)` or "Depleted" means out of money
+  burn rate (Cost PMPE bid + risk fee). `(0ep)` or "Depleted" means out of money
   imminently.
 - **Health bar** — remaining-runway gauge above the minimum threshold.
   Full bar = runway well above minimum; partially filled = approaching
@@ -706,8 +706,8 @@ are the supporting context that feeds the target-bid math.
   reorders as bids change — so the figure is an estimate. See
   [Getting stake next epoch](#next-epoch-stake).
 
-The PMPE and CPMPE units are explained under
-[PMPE / CPMPE](#cpmpe). An "**Overrides CPMPE**" notice appears above
+The PMPE and Cost PMPE units are explained under
+[PMPE / Cost PMPE](#cpmpe). An "**Overrides Cost PMPE**" notice appears above
 the table if `values.commissions.bidCpmpeOverrideDec` is set — the
 displayed bid is a manual override, not the on-chain value. One action
 link in the card footer, "Simulate this bid to confirm the exact figure
@@ -877,7 +877,7 @@ alone does not clear the simulation.
 
 ## Technical Notes
 
-- Bond data (bid/CPMPE and bond balance) is reloaded periodically by
+- Bond data (bid/Cost PMPE and bond balance) is reloaded periodically by
   Marinade — typically once per hour. Other validator and auction data
   follow their own refresh cadences (see the table at the top).
 - Solana epochs are roughly 2 days (~182.6 epochs per year).

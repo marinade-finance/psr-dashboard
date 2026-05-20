@@ -25,7 +25,7 @@ type Props = {
 }
 
 const STATIC_BID_HELP =
-  'The fixed CPMPE you configure on-chain — the same number the Simulate ' +
+  'The fixed Cost PMPE you configure on-chain — the same number the Simulate ' +
   'input shows. Different from the effective bid, which is the ' +
   'clearing price every winner actually pays.'
 

@@ -69,7 +69,7 @@ Validator-set upper bound on Marinade delegation. The SDK caps `marinadeSamTarge
 <a id="bid-distribution"></a>
 ### Bid Distribution
 
-The bid-distribution histogram plots each validator's static CPMPE bid in quantile buckets. Useful for gauging whether a given bid is at the top, middle, or tail of the current field. The clearing price (`winningTotalPmpe − onchainDistributedPmpe`) sets the practical floor; bids below it lose stake regardless of absolute size.
+The bid-distribution histogram plots each validator's static Cost PMPE bid in quantile buckets. Useful for gauging whether a given bid is at the top, middle, or tail of the current field. The clearing price (`winningTotalPmpe − onchainDistributedPmpe`) sets the practical floor; bids below it lose stake regardless of absolute size.
 
 <a id="concentration"></a>
 ### Concentration Limits
