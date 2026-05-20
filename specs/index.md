@@ -24,7 +24,7 @@
 | [1/3-test-fixtures.md](1/3-test-fixtures.md) | planned | Test fixtures: full auction-state + CTA coverage for /test- routes |
 | [1/4-sdk-features.md](1/4-sdk-features.md) | planned | SDK migration, rank tracking, precise APY, PSR query dedup — all blocked on SDK |
 | [1/5-new-ui-features.md](1/5-new-ui-features.md) | planned | PSR pending badge, epoch status, My Validator pin, forward bond ideal row |
-| [1/6-content.md](1/6-content.md) | planned | GUIDE gaps, CPMPE investigation, 0.7% verify, docs line-length hygiene |
+| [1/6-content.md](1/6-content.md) | partial | GUIDE gaps, docs line-length hygiene (CPMPE + turnover shipped) |
 
 ---
 
@@ -66,4 +66,4 @@ Code evidence is present but correctness needs a manual check at `/test-` or in 
 | `/test-` simulation (hasOverrides branch) | `runSdkRerun` wired; verify rows update correctly when sim panel is edited |
 | Tip-engine WANT/VALIDATOR/COUNTRY/ASO branches | Branches exist; verify tip text renders correctly for each cap type |
 | Test fixture redelegation budget + clearing cutoff | o01–o12 exist; confirm budget > 0 and auction produces winners + losers |
-| CPMPE term review | Oracle consultation pending (usage limit hit 2026-05-13) — see `1/6-content.md` |
+| Tip-engine WANT/VALIDATOR/COUNTRY/ASO branches | All 4 types verified — fixture rows + correct tip text confirmed |

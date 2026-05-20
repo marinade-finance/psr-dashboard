@@ -23,17 +23,16 @@ bond breakdown AND a GUIDE explanation.
 **Where:** `public/docs/GUIDE.md`, `src/components/breakdowns/bond-coverage.tsx`
 (item 4 label).
 
-## Investigate: CPMPE term
+## CPMPE → Cost PMPE rename (shipped)
 
-**Status:** partially resolved. Working hypothesis (2026-05-13 notes): keep the
-term; expand the definition so it foregrounds the unit relationship — "same unit
-as PMPE, representing what you pay rather than what you earn." The C-prefix is
-load-bearing because validators see revenue PMPE and cost PMPE side-by-side.
+Oracle verdict: the C-prefix is a UI smell — directional distinction is
+load-bearing but should be natural language, not a single-letter prefix.
 
-**Open question:** confirm with oracle (attempt hit usage limit 2026-05-13,
-retry). If the term stays, update the GUIDE gloss only; no rename.
-
-**References:** `public/docs/GUIDE.md:128-142`, `src/services/sam.ts:132`.
+Renamed user-facing label from `CPMPE` to `Cost PMPE` everywhere:
+`public/docs/GUIDE.md`, `public/docs/GUIDE-EXPERT.md`,
+`src/services/sam.ts` (column header string),
+`src/components/breakdowns/bidding.tsx` (tooltip).
+Internal identifier `cpmpe` in code is unchanged.
 
 ## Natural turnover rate (shipped)
 
