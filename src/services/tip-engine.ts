@@ -205,7 +205,7 @@ export function bondAdvice(
       if (bondRiskFeeSol > 0) {
         const text =
           coverage.bondRiskFeeShortfall > 0
-            ? `Top up ${topUp(coverage.bondRiskFeeShortfall)} to avoid the fee.`
+            ? `Top up ${topUp(coverage.bondRiskFeeShortfall)} or pay ${pay(bondRiskFeeSol)} bond fee.`
             : `Bond fee ${pay(bondRiskFeeSol)} estimated next epoch.`
         return { text, urgency: TipUrgency.CRITICAL, tone: CardStatusTone.RED }
       }
@@ -219,8 +219,8 @@ export function bondAdvice(
       // Near threshold, no fee yet — warn, not critical.
       const text =
         coverage.topUpToIdealKeep > 0
-          ? `Top up ${topUp(coverage.topUpToIdealKeep)} to avoid future fee.`
-          : 'Bond near threshold — top up to avoid future fee.'
+          ? `Top up ${topUp(coverage.topUpToIdealKeep)} to avoid future bond fee.`
+          : 'Bond near threshold — top up to avoid future bond fee.'
       return { text, urgency: TipUrgency.WARNING, tone: CardStatusTone.YELLOW }
     }
     case BondHealthState.WATCH: {
@@ -336,7 +336,7 @@ function bondCta(
         dsSamConfig.minBondBalanceSol - bondBalance,
       )
       return tip(
-        `Top up ${topUp(topUpAmt)} to avoid next epoch fee and re-qualify.`,
+        `Top up ${topUp(topUpAmt)} to avoid next epoch bond fee and re-qualify.`,
         TipUrgency.CRITICAL,
         TipConstraint.BOND,
         delta,

@@ -309,7 +309,7 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
-    expect(tip.text).toContain('to avoid the fee')
+    expect(tip.text).toContain('bond fee')
     expect(tip.alert).toBe(true)
   })
 
