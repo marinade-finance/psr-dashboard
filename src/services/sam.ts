@@ -464,7 +464,7 @@ export function augmentAuctionResult(
     (a, b) => b - a,
   )
   const aboveRank = new Map<number, number>()
-  above.forEach((p, i) => aboveRank.set(p, 1 + i))
+  for (let i = 0; i < above.length; i++) aboveRank.set(above[i], 1 + i)
   const belowRank = new Map<number, number>()
   below.forEach((p, i) => belowRank.set(p, -1 - i))
   const cutoffRanks = new Map<string, number>()
