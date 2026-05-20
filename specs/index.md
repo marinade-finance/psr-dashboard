@@ -10,3 +10,9 @@
 | [../SCREENS.md](../SCREENS.md)                             | live    | Live UI inventory (repo root). Kept in sync with code.                     |
 | [5/1-bond-calculator.md](5/1-bond-calculator.md)           | planned | Bond calculator: bid and bond required for target stake                    |
 | [5/2-followups.md](5/2-followups.md)                       | planned | Deferred: SAM stats-bar combined-metric tile redesign (4d6aac6a roll-back) |
+| [6/1-fixes.md](6/1-fixes.md)                               | planned | Queued fixes: tooltip, /test- sim, avoid-fee CTA text (shipped items noted) |
+| [6/2-cta-engine.md](6/2-cta-engine.md)                     | planned | CTA unified shape (action + consequence) + sim pre-fill from breakdowns    |
+| [6/3-test-fixtures.md](6/3-test-fixtures.md)               | planned | Test fixtures: full auction-state + CTA coverage for /test- routes         |
+| [6/4-sdk-features.md](6/4-sdk-features.md)                 | planned | SDK migration + rank tracking + precise APY + PSR query dedup              |
+| [6/5-new-ui-features.md](6/5-new-ui-features.md)           | planned | PSR pending badge, epoch status, My Validator pin, forward bond ideal      |
+| [6/6-content.md](6/6-content.md)                           | planned | GUIDE gaps, CPMPE investigation, 0.7% verify, docs line-length hygiene     |

@@ -35,6 +35,23 @@ First run may reformat — retry commit once if it fails.
 queues / audit notes — untracked, not part of the doc contract below.
 Append findings here during audits; the user prioritises and prunes.
 
+## Planned and queued work
+
+All planned work lives in `specs/` — see `specs/index.md` for the master list.
+`TODO.md` is a redirect stub; do NOT accumulate a queue there.
+
+**New item:** open the relevant spec file in `specs/6/` (or create a new
+`specs/6/N-topic.md`) and add the item as a named section. If no existing spec
+fits, create a new file. Add a row to `specs/index.md`.
+
+**Shipped item:** set `status: shipped` in the spec frontmatter, trim the
+section to WHY + code pointers (drop HOW), update `specs/index.md` status.
+
+Lifecycle: `planned` → `partial` → `shipped`.
+
+During audits, record bugs in `bugs.md`; record design intent and queued
+features in the relevant spec file.
+
 ## Live root docs
 
 Four repo-root files are live documentation. **Each must be updated in
