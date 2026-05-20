@@ -132,6 +132,9 @@ test pages; they exist only to feed fixtures.
   mobile viewport variants in tests; don't ship CSS that tries to make
   pages usable on a phone. If a user opens it on mobile, the banner tells
   them to widen the window.
+- **Unit tests live in `src/services/__tests__/`** (not colocated). One file
+  per service: `calculations.test.ts`, `tip-engine.test.ts`, `sam.test.ts`,
+  `next-epoch-stake.test.ts`, `protected-events-estimator.test.ts`.
 
 ### Key Files
 
@@ -174,6 +177,21 @@ test pages; they exist only to feed fixtures.
   prefetches bonds and protected-events data on tab hover
 - `src/components/banner/banner.tsx` — dismissible announcement card;
   dismissed state persisted in localStorage keyed by title
+- `src/services/simulation.ts` — `AppOverrides` type (wraps SDK's
+  `SourceDataOverrides` + `bondBalanceSol: Map<string,number>`); `PendingEdits`
+  for in-flight sim panel edits. Bond overrides flow through here, not
+  directly via the SDK type.
+- `src/services/epoch.ts` — `EPOCH_DURATION_MS = 48 * 60 * 60 * 1000`
+  (canonical epoch duration — **48 h, not 52**); `EpochProgress`,
+  `TimelineStage` enum.
+- `src/services/help-text.ts` — `HELP_TEXT` const — canonical source for all
+  tooltip/help strings. Add new metric text here first, not inline.
+- `src/services/scoring.ts` — `fetchScoring()` returns `ScoringValidator[]`
+  (includes `bondRiskFeeSol`, `bidTooLowPenaltyPmpe`). Live bond risk fee
+  data originates here before flowing into bond-health.
+- `src/services/sdk-rerun.ts` — wraps SDK `Auction` + `AuctionConstraints`
+  for the simulation rerun path. Call via `loadSam(overrides)` in `sam.ts`,
+  not directly.
 - `src/services/validators.ts` — validator API client
 - `src/format.ts` — number formatting utilities. `pay()` always **rounds up** (ceil) — fee and penalty amounts shown to users are never understated. On-chain values are exact to the lamport; the ceiling is display-only.
 
