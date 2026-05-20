@@ -1252,9 +1252,8 @@ const o06: AuctionValidator = {
   values: outOfSetValues(75_000, 100),
 }
 
-// o07. Generic fallthrough — eligible, no cap, no opt-out, not blocked, but
-//   out-of-set (marinadeSamTargetSol forced to 0). →
-//   "Out of set — bid is high enough, another constraint binds."
+// o07. Generic out-of-set — eligible, no cap, not blocked, bid clears.
+//   No specific constraint detected → falls to deltaCta: "Losing X SOL next epoch."
 const o07: AuctionValidator = {
   ...outOfSetBase('FiXtUREvoGENERIChi7777777777777777777777777gg', {
     marinadeActivatedStakeSol: 45_000,
