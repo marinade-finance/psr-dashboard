@@ -40,8 +40,8 @@ Append findings here during audits; the user prioritises and prunes.
 All planned work lives in `specs/` — see `specs/index.md` for the master list.
 `TODO.md` is a redirect stub; do NOT accumulate a queue there.
 
-**New item:** open the relevant spec file in `specs/6/` (or create a new
-`specs/6/N-topic.md`) and add the item as a named section. If no existing spec
+**New item:** open the relevant spec file in `specs/1/` (or create a new
+`specs/1/N-topic.md`) and add the item as a named section. If no existing spec
 fits, create a new file. Add a row to `specs/index.md`.
 
 **Shipped item:** set `status: shipped` in the spec frontmatter, trim the
@@ -195,18 +195,67 @@ maps passed to `dsSam.runFinalOnly(overrides)`.
 
 ## Visual Language
 
-Visual tokens, status families, typography, and component primitives are
-documented in `VISUALS.md` (the canonical alphabet —
-surfaces, status & intent, bond tiers, charts, simulation tokens, inline
-escape hatches, components). Defer to that file. The screen-level
-inventory (pages, panels, columns, tabs, badges) lives in `SCREENS.md`.
+Visual language — tokens, status families, typography, component primitives — is documented in `VISUALS.md`. Key rules for code-touching agents:
 
-The single rule worth restating here so any code-touching agent can't
-miss it: **use the semantic Tailwind class. Never inline `var(...)`,
-never raw hex/rgb/hsl, never arbitrary `text-[var(--…)]`, never arbitrary
-`text-[Npx]` sizes (use `text-2xs/3xs/xs/mid/sm/...` — see VISUALS).**
-New colours
-go through `src/index.css` (`:root` → `.dark` only if different → expose
-as `--color-…` in `@theme`) and Tailwind generates the rest. No CSS
-Modules; `src/index.css` only holds tokens, the global transition rule,
-and keyframe animations.
+### Two orthogonal axes: severity vs lever
+
+Two independent encodings, never collapsed into one. Enforced at the
+source — one CTA helper per lever in `src/services/tip-engine.ts`
+(`bondCta`, `bidCta`, `outOfSetCta`, `capCta`, `deltaCta`); `selectTip`
+picks the highest-severity candidate, with `LEVER_ORDER` (bond →
+bid/rank → cap → none) breaking ties at the same severity.
+
+- **Colour = severity.** `getTipStyle(urgency)` maps
+  `TipUrgency.CRITICAL`→destructive, `WARNING`→warning, `INFO`→info,
+  `POSITIVE`→primary, `NEUTRAL`→muted. Same axis the breakdown banner
+  uses (`tone: red|yellow|green`); `bondAdvice()` emits both so they
+  agree by construction.
+- **Glyph = the lever** (which knob to turn).
+  `TipConstraint.BOND`→ICON_BOND, `BID`→ICON_BID, `RANK`→ICON_BID (same
+  lever — raise the bid, so same glyph), `CAP`→ICON_CAP. Only
+  `TipConstraint.NONE` (in-set, no binding constraint) gets a
+  directional glyph — up/down/right keyed off the real signed `delta`
+  so it cannot lie. `getTipIcon` in `src/services/tip-engine.ts`.
+- **Octagon alert is the ONLY severity-driven glyph.** `ICON_ALERT`
+  (stop-sign octagon) overrides the lever glyph for exactly one state:
+  an estimated bond risk fee this epoch (`tip.alert === true`). Plain
+  below-min / no-bond stay critical-red but keep their constraint glyph
+  — no escalation. `src/components/icons/icon-alert.tsx`.
+
+### Tip glyph set
+
+7 glyphs, all `viewBox 0 0 12 12`, uniform **14.4px**: bond, bid, cap,
+alert, up, down, right. `src/components/icons/icon-*.tsx`. No `rank`
+glyph — `TipConstraint.RANK` reuses ICON_BID (same lever).
+
+### Phantom icon slot
+
+Every tip pill renders its glyph inside a fixed `w-4 h-4` centred box
+(`shrink-0 inline-flex items-center justify-center`) so glyph variance
+never shifts pill margins or breaks column alignment.
+`src/components/sam-table/sam-table.tsx` (Next Step cell).
+
+### Bond gauge
+
+`scaleMax = bondGaugeScaleMax(config) = minBondEpochs / BOND_CRITICAL_FRAC`
+(= `5 × minBondEpochs`). Both `marker` and `criticalBand` are the
+constant `BOND_CRITICAL_FRAC = 0.2`. `src/services/calculations.ts`.
+
+### Breakdown table grammar — one 3-col model
+
+One uniform column model per `<table>`; never mix `CalcRow` (3-col) and
+`RevRow` (4-col). Unit rules: PMPE / epochs → declared once in
+`SectionHeader` `unit`, no suffix on rows; SOL → inline suffix, NEVER a
+header; % → inline annotation, NEVER a header. A column never mixes
+value kinds. `src/components/breakdowns/row.tsx`.
+
+### Attention dot persistence
+
+Per-tab attention dot (`w-1.5 h-1.5 rounded-full`) **persists on the
+active tab and pulses** (`active && 'animate-pulse'`).
+`src/components/validator-detail/validator-detail.tsx`.
+
+### Decorative borders
+
+NEVER `border-l` / left-border accent bands on any element. Status is
+carried by colour token + dot + glyph, not by a coloured edge.

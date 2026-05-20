@@ -43,8 +43,7 @@ below `sm`), **Epoch meter**, `ThemeToggle`.
 
 ### Epoch meter
 
-`src/components/epoch-meter/epoch-meter.tsx`. Replaces the bare
-`Epoch {N}` chip. Chip shows `Epoch {auctionEpoch}` (the common case,
+`src/components/epoch-meter/epoch-meter.tsx`. Chip shows `Epoch {auctionEpoch}` (the common case,
 `auctionEpoch === networkEpoch`); only when they differ it shows
 `{networkEpoch} → {auctionEpoch}`, tinted `text-warning` iff
 `auctionEpoch < networkEpoch` (view is stale). A shared `HelpTip`
@@ -175,8 +174,7 @@ Tracked in `SamPage`: `simulationRunId`, `simulationOverrides`,
 ['sam', simulationRunId], queryFn: () => loadSam(overrides),
 placeholderData: keepPreviousData })`. After a re-run, `insertGhostRows`
 injects ghost entries at original positions of changed validators.
-Detection of refetch completion watches `fetchStatus === 'idle'`
-(v5 dropped `onSettled`).
+Detection of refetch completion watches `fetchStatus === 'idle'`.
 
 ### Bond chip
 
@@ -221,7 +219,7 @@ slot uses, so card-level and header-level banners stay byte-aligned.
 Carries the real `getValidatorTip` text. Tone resolves through
 `tipBannerTone(tip, bondHealth)`: bond tips colour off bond-health
 (`red / yellow / green`); the bond + `NEUTRAL` exception (below-min, no
-fee pending) routes to the new `grey` tone so eligibility doesn't masquerade
+fee pending) routes to the `grey` tone so eligibility doesn't masquerade
 as urgency. Non-bond tips colour off `tip.urgency`. The right-side action
 pill routes to the tab named by the module-scope `TIP_TAB` map (`bond` →
 Bond, `bid` → Bid Penalty, `rank` → Bidding), suppressed when the user is
