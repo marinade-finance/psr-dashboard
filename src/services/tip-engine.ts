@@ -232,7 +232,7 @@ export function bondAdvice(
 
 // One CTA source per LEVER. Each helper owns its lever's wording and
 // urgency end-to-end; getValidatorTip just picks the highest-severity
-// candidate (with lever priority breaking ties). visuals.md doctrine:
+// candidate (with lever priority breaking ties). VISUALS.md doctrine:
 // color = severity, glyph = lever — keep them orthogonal at the source.
 
 const SEVERITY_ORDER: Record<TipUrgency, number> = {

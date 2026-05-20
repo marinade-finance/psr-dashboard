@@ -1,7 +1,7 @@
 # Screens — PSR Dashboard
 
 > Visual tokens (colours, typography, component primitives) live in
-> `visuals.md`. `CLAUDE.md` lists testing / architecture
+> `VISUALS.md`. `CLAUDE.md` lists testing / architecture
 > rules. **This file lists the SHAPES** — pages, panels, columns,
 > badges, tabs.
 

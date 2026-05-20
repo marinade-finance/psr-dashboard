@@ -47,7 +47,7 @@ maintainer can trust them.
   on the validator detail panel, changing a default sort / tier threshold
   / status label / token, moving a route, replacing a badge style,
   adding a card.
-- **`visuals.md`** — the visual-language alphabet: surfaces, status
+- **`VISUALS.md`** — the visual-language alphabet: surfaces, status
   families, bond tiers, charts, simulation tokens, typography, component
   primitives, inline-style escape hatch. Update when: adding / removing
   / renaming a token, status family, or shared primitive; changing a
@@ -179,7 +179,7 @@ maps passed to `dsSam.runFinalOnly(overrides)`.
 ## Visual Language
 
 Visual tokens, status families, typography, and component primitives are
-documented in `visuals.md` (the canonical alphabet —
+documented in `VISUALS.md` (the canonical alphabet —
 surfaces, status & intent, bond tiers, charts, simulation tokens, inline
 escape hatches, components). Defer to that file. The screen-level
 inventory (pages, panels, columns, tabs, badges) lives in `SCREENS.md`.
