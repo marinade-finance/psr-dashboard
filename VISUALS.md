@@ -112,7 +112,8 @@ and the epoch-meter — concentration tiles do NOT route through `Gauge`.
 `BondHealthState` enum (`src/services/bond-health.ts`:
 `NO_BOND`/`CRITICAL`/`WATCH`/`HEALTHY` — 4 tiers, no `SOFT`).
 Health ladder (runway = `bondGoodForNEpochs`):
-`NO_BOND` → no bond balance; `CRITICAL` → fee shortfall > 0 OR
+`NO_BOND` → no bond balance; `CRITICAL` → coverage shortfall > 0 OR
+estimated fee this epoch (`bondRiskFeeSol > 0`) OR
 runway ≤ `minBondEpochs + BOND_URGENT_EPOCHS` (3); `WATCH` →
 runway < `idealBondEpochs`; `HEALTHY` → runway ≥ `idealBondEpochs`.
 Tones: `NO_BOND`/`CRITICAL` = destructive, `WATCH` = warning,

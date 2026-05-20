@@ -142,7 +142,7 @@ test pages; they exist only to feed fixtures.
 - `src/services/bond-coverage.ts` — `computeBondCoverage` (keep-stake and
   avoid-fee top-ups)
 - `src/services/bond-health.ts` — `bondHealthFromAuction` (returns
-  `'healthy'|'soft'|'watch'|'critical'`)
+  `'healthy'|'watch'|'critical'|'no-bond'`)
 - `src/services/bid-penalty.ts` — `computeBidPenalty`
 - `src/services/in-auction-target.ts` — `computeInAuctionTarget` (Table A:
   closed-form bid to clear the winning total + bond floor from memoised
@@ -240,8 +240,9 @@ never shifts pill margins or breaks column alignment.
 `scaleMax = bondGaugeScaleMax(config) = 4 × idealBondEpochs`.
 `marker = criticalBand = bondCriticalFrac(config) = minBondEpochs /
 bondGaugeScaleMax(config)` (fraction where penalty threshold sits).
-Health ladder: `NO_BOND` → no balance; `CRITICAL` → fee shortfall > 0
-OR runway ≤ `minBondEpochs + BOND_URGENT_EPOCHS` (3); `WATCH` →
+Health ladder: `NO_BOND` → no balance; `CRITICAL` → coverage shortfall > 0
+OR estimated fee this epoch (`bondRiskFeeSol > 0`) OR runway ≤
+`minBondEpochs + BOND_URGENT_EPOCHS` (3); `WATCH` →
 runway < `idealBondEpochs`; `HEALTHY` → runway ≥ `idealBondEpochs`.
 4 tiers — no `SOFT`. `src/services/calculations.ts`,
 `src/services/bond-health.ts`.

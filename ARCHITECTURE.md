@@ -127,7 +127,7 @@ UI-free. Pure functions and async fetchers, typed against SDK types where applic
 | `tip-engine.ts`        | Drives the rank-cell colour and Next Step column. Assembles a `ValidatorTip` from five orthogonal lever helpers sorted by severity then lever priority. |
 | `bidding.ts`           | Per-validator stake / bid / cost row.                                                                 |
 | `bond-coverage.ts`     | Bond top-up calculations for keep-stake and avoid-fee thresholds.                                     |
-| `bond-health.ts`       | Five-tier bond health state (`NO_BOND → CRITICAL → WATCH → SOFT → HEALTHY`).                         |
+| `bond-health.ts`       | Four-tier bond health state (`NO_BOND → CRITICAL → WATCH → HEALTHY`).                                |
 | `bid-penalty.ts`       | Bid-too-low penalty recompute, mirroring SDK `calcBidTooLowPenalty`.                                  |
 | `in-auction-target.ts` | Closed-form static bid to clear the winning total (estimate — verify in Simulate).                    |
 | `next-epoch-stake.ts`  | Heuristic bid to clear the redelegation priority frontier (estimate — verify in Simulate).            |
