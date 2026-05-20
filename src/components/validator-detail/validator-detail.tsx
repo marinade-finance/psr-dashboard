@@ -158,7 +158,7 @@ function TabStrip({
               key={t.id}
               onClick={() => setTab(t.id)}
               className={cn(
-                'px-3 py-2.5 text-[13px] font-medium border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5',
+                'px-3 py-2.5 text-mid font-medium border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5',
                 active
                   ? 'border-primary text-primary'
                   : tone
@@ -250,7 +250,7 @@ export function bondCoverageLabel(
       }
       return 'Adequate'
     case BondHealthState.HEALTHY:
-      return 'Fully covered'
+      return 'Healthy'
     default:
       return assertNever(health)
   }
@@ -346,7 +346,7 @@ const PenaltyRow = ({
     <span
       className={cn(
         'text-muted-foreground text-left flex items-center gap-2 min-w-0',
-        sub ? 'text-[13px]' : 'text-xs',
+        sub ? 'text-mid' : 'text-xs',
       )}
     >
       <span className="truncate hover:underline" title="Show calculation">
@@ -354,7 +354,7 @@ const PenaltyRow = ({
       </span>
     </span>
     <span
-      className={cn('font-mono', sub ? 'text-[13px]' : 'text-sm font-semibold')}
+      className={cn('font-mono', sub ? 'text-mid' : 'text-sm font-semibold')}
       style={{ color: sub ? CSS_MUTED_FG : CSS_DESTRUCTIVE }}
     >
       {value}
@@ -545,7 +545,7 @@ export const ValidatorDetail = ({
   )
   // A no-bond or below-minimum bond sustains zero stake regardless of the
   // SDK's raw bondGoodForNEpochs, which ignores the below-min gate. Force
-  // the runway to Depleted so Balance, Reserve and Bid runway tell one
+  // the runway to Depleted so Balance, Reserve and Bond runway tell one
   // coherent story instead of "0 SOL / Critical / 6 epochs".
   const bondRunway = effectiveBondRunway(validator, bondHealth)
   const tip = getValidatorTip(
@@ -819,6 +819,7 @@ export const ValidatorDetail = ({
                 bondState={bondHealth}
                 bondRiskFeeSol={bondRiskFeeSol}
                 bondBalanceSol={validator.bondBalanceSol ?? 0}
+                marinadeActivatedStakeSol={validator.marinadeActivatedStakeSol}
                 minBondBalanceSol={dsSamConfig.minBondBalanceSol}
                 expectedStakeDeltaSol={expectedStakeDelta}
                 isSimulated={isSimulated}
@@ -910,7 +911,7 @@ export const ValidatorDetail = ({
                             {notification.body}
                           </div>
                           {notification.footer && (
-                            <div className="text-[10px] text-muted-foreground italic mt-1.5">
+                            <div className="text-2xs text-muted-foreground italic mt-1.5">
                               {notification.footer}
                             </div>
                           )}
@@ -942,7 +943,7 @@ export const ValidatorDetail = ({
             >
               <div className="space-y-3">
                 <MetricRow
-                  label="Active Marinade stake"
+                  label="Activated Marinade stake"
                   value={stake(validator.marinadeActivatedStakeSol)}
                 />
                 <MetricRow
@@ -993,7 +994,7 @@ export const ValidatorDetail = ({
                   valueStyle={{ color: bondCoverageColor(bondHealth) }}
                 />
                 <MetricRow
-                  label="Bid runway"
+                  label="Bond runway"
                   help={HELP_TEXT.bondRunway}
                   helpGuideTo={`${docsPath(level)}#bond-risk-fee`}
                   value={
@@ -1013,7 +1014,7 @@ export const ValidatorDetail = ({
             >
               <div className="space-y-3">
                 <MetricRow
-                  label="Active stake cost"
+                  label="Activated stake cost"
                   value={cost(paymentMetrics.cost)}
                 />
                 <MetricRow
@@ -1094,7 +1095,7 @@ export const ValidatorDetail = ({
                 <fieldset className="space-y-3 mt-3">
                   <div className="space-y-1">
                     <label className="text-xs font-medium text-muted-foreground">
-                      Stake Bid (PMPE)
+                      Static bid (PMPE)
                     </label>
                     <Input
                       type="number"
@@ -1120,8 +1121,12 @@ export const ValidatorDetail = ({
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-medium text-muted-foreground">
+                    <label className="text-xs font-medium text-muted-foreground inline-flex items-center gap-1">
                       MEV Commission %
+                      <HelpTip
+                        text="MEV (Maximal Extractable Value) — extra tips earned from transaction ordering. Your commission here is the share you keep before passing the rest to stakers."
+                        guideTo={`${docsPath(level)}#bidding`}
+                      />
                     </label>
                     <Input
                       type="number"

@@ -287,7 +287,7 @@ export const DocsPage: React.FC<Props> = ({ level }) => {
                   key={doc}
                   onClick={() => switchDoc(doc)}
                   className={cn(
-                    'px-3 py-2 text-[13px] font-medium border-b-2 transition-colors -mb-px',
+                    'px-3 py-2 text-mid font-medium border-b-2 transition-colors -mb-px',
                     activeDoc === doc
                       ? 'border-primary text-primary'
                       : 'border-transparent text-muted-foreground hover:text-foreground',
@@ -306,7 +306,7 @@ export const DocsPage: React.FC<Props> = ({ level }) => {
                     <button
                       onClick={() => selectPage(p.id)}
                       className={cn(
-                        'w-full text-left px-3 py-2 rounded-md text-[13px] font-medium transition-colors',
+                        'w-full text-left px-3 py-2 rounded-md text-mid font-medium transition-colors',
                         activePage?.id === p.id
                           ? 'bg-primary-light text-primary'
                           : 'text-muted-foreground hover:text-foreground hover:bg-muted',

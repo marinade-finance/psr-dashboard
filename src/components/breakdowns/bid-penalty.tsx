@@ -178,7 +178,7 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
             help="The actual SOL charge: penalty rate scaled to your Marinade-activated stake. Collected as forced stake undelegation."
           />
           <CalcRow
-            label="Marinade activated stake"
+            label="Activated Marinade stake"
             col2={stake(metrics.marinadeActivatedStakeSol)}
           />
           {metrics.penaltySol > 0 ? (

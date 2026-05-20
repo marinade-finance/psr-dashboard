@@ -73,7 +73,7 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
             <span className="text-sm font-bold text-foreground leading-tight">
               PSR Dashboard
             </span>
-            <span className="text-[10px] text-muted-foreground leading-tight">
+            <span className="text-2xs text-muted-foreground leading-tight">
               Protected Stake Rewards
             </span>
           </div>

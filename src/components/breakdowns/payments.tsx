@@ -97,15 +97,15 @@ export const PaymentsBreakdown: React.FC<Props> = ({
           {/* sub-cost gets its own section header so a reader can scan */}
           {/* by "where each number came from". The result row echoes the */}
           {/* rate so multiplication reads left → right on one line. */}
-          <SectionHeader title="Active stake cost" col1Unit="PMPE" />
-          <CalcRow label="Active stake" col2={stake(m.stake)} />
+          <SectionHeader title="Activated stake cost" col1Unit="PMPE" />
+          <CalcRow label="Activated Marinade stake" col2={stake(m.stake)} />
           <CalcRow
             label="× Effective bid"
             help="The PMPE rate every winner pays this epoch (last-price auction)."
             col1={pmpe(m.effBid)}
           />
           <CalcRow
-            label="= Active stake cost"
+            label="= Activated stake cost"
             col1={pmpe(m.effBid)}
             col2={cost(m.cost)}
             bold
@@ -163,7 +163,7 @@ export const PaymentsBreakdown: React.FC<Props> = ({
                     col1={
                       estimate.meta.funder === 'ValidatorBond'
                         ? 'from bond'
-                        : 'from Marinade'
+                        : 'from Marinade backstop'
                     }
                     col2={cost(selectAmount(estimate))}
                   />

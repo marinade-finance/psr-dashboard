@@ -42,7 +42,7 @@ test.describe('simulation — toggle reveals What-If form', () => {
     await openSheet(page, V01)
     await enableSimulate(page)
     const sheet = page.locator(SHEET)
-    await expect(sheet.getByText('Stake Bid (PMPE)')).toBeVisible()
+    await expect(sheet.getByText('Static bid (PMPE)')).toBeVisible()
     await expect(sheet.getByText('Inflation Commission %')).toBeVisible()
     await expect(sheet.getByText('MEV Commission %')).toBeVisible()
     await expect(sheet.getByText('Block Rewards Commission %')).toBeVisible()

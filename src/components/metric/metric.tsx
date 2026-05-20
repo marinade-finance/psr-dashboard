@@ -34,7 +34,7 @@ export const Metric: React.FC<Props> = ({
       {value}
     </div>
     {subline && (
-      <div className="text-[10px] text-muted-foreground font-mono mt-0.5">
+      <div className="text-2xs text-muted-foreground font-mono mt-0.5">
         {subline}
       </div>
     )}

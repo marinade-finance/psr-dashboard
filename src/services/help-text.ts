@@ -4,13 +4,13 @@ export const HELP_TEXT = {
   bond: 'SOL you lock up as a safety deposit. If you under-deliver on the promised APY, stakers get reimbursed from this. The fuller your bond is being drawn down, the sooner it runs out.',
   stakeDelta:
     "How much stake you'll gain or lose next epoch. Positive means Marinade will send you more SOL; negative means some will be pulled back.",
-  stakeBid:
+  staticBid:
     'Extra yearly return you pay stakers out of your own pocket — added on top of normal validator rewards. This is the main knob to climb the ranking. The cost comes out of your bond each epoch.',
   winningApy:
     'The lowest yearly return that still won stake this epoch. Your Max APY has to clear this level — beat it and you receive stake, fall short and you don’t.',
   want: 'The cap you set on how much stake you’ll take. Set it too low and you miss out on stake you could have earned.',
   bondHealth:
-    'How well your bond covers the upcoming bid costs. Critical — too thin, fee penalties already kicking in. Watch — too thin to keep current stake; some will be pulled back unless you top up. Soft — covers current stake but below the ideal buffer; no fee risk yet, topping up unlocks room for more stake. Healthy — comfortably covers what you’ll owe.',
+    'How well your bond covers the upcoming bid costs. Critical — too thin, fee penalties already kicking in. Watch — too thin to keep current stake; some will be pulled back unless you top up. Adequate — covers current stake but below the ideal buffer; no fee risk yet, topping up unlocks room for more stake. Healthy — comfortably covers what you’ll owe.',
   sfdp: 'Whether you meet Solana Foundation’s SFDP criteria — the foundation’s own delegation programme. Meeting it gives you a small boost in Marinade’s auction too.',
   penalty:
     "Charged when your bid drops this epoch and your bond obligation drops below the worst bid you'd committed in recent history (minus the permitted deviation). The amount scales with how far the bond obligation sits below that floor.",

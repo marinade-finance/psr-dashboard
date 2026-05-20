@@ -349,7 +349,7 @@ const RankCell: React.FC<{
         className={`text-muted-foreground ${RANK_MONO} flex flex-col items-center gap-0`}
       >
         <span className="text-sm">{rankLabel}</span>
-        <span className="text-[10px] opacity-60 font-normal leading-tight">
+        <span className="text-2xs opacity-60 font-normal leading-tight">
           {rankSubLabel}
         </span>
       </span>
@@ -382,7 +382,7 @@ const RankCell: React.FC<{
       style={{ color: tipColor }}
     >
       <span className="text-sm">{rankLabel}</span>
-      <span className="text-[10px] opacity-60 font-normal text-muted-foreground leading-tight">
+      <span className="text-2xs opacity-60 font-normal text-muted-foreground leading-tight">
         {rankSubLabel}
       </span>
     </span>
@@ -880,7 +880,7 @@ export const SamTable: React.FC<Props> = ({
           </div>
         </TableCell>
 
-        {/* Stake / Next Δ */}
+        {/* Stake / Next change */}
         <TableCell className="px-3.5 py-3">
           <div className="flex flex-col gap-0.5">
             <span className="text-muted-foreground text-xs font-mono">

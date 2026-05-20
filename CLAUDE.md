@@ -95,7 +95,7 @@ test pages; they exist only to feed fixtures.
 - **Never use "bar" as a UI metaphor** ("winning bar", "priority bar",
   "the bar your bond has to clear"). The word is unknown jargon to
   novice readers. The underlying field is `winningTotalPmpe` /
-  `priorityFrontierPmpe` — use "Winning total" / "Priority total" /
+  `priorityFrontierPmpe` — use "Winning total" / "Priority frontier" /
   "the level …" / "the threshold …" instead. Applies to labels,
   tooltips, banner copy, breakdown rows, and the GUIDE.md prose.
 
@@ -186,7 +186,9 @@ inventory (pages, panels, columns, tabs, badges) lives in `SCREENS.md`.
 
 The single rule worth restating here so any code-touching agent can't
 miss it: **use the semantic Tailwind class. Never inline `var(...)`,
-never raw hex/rgb/hsl, never arbitrary `text-[var(--…)]`.** New colours
+never raw hex/rgb/hsl, never arbitrary `text-[var(--…)]`, never arbitrary
+`text-[Npx]` sizes (use `text-2xs/3xs/xs/mid/sm/...` — see VISUALS).**
+New colours
 go through `src/index.css` (`:root` → `.dark` only if different → expose
 as `--color-…` in `@theme`) and Tailwind generates the rest. No CSS
 Modules; `src/index.css` only holds tokens, the global transition rule,

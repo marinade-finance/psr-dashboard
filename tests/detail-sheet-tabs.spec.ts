@@ -79,7 +79,7 @@ test.describe('detail sheet — overview tab', () => {
   }) => {
     await openSheet(page, V01)
     const sheet = page.locator(SHEET)
-    await expect(sheet.getByText('Active Marinade stake')).toBeVisible()
+    await expect(sheet.getByText('Activated Marinade stake')).toBeVisible()
     await expect(sheet.getByText('Target Marinade stake')).toBeVisible()
     await expect(sheet.getByText('Expected change next epoch')).toBeVisible()
   })
@@ -89,7 +89,7 @@ test.describe('detail sheet — overview tab', () => {
   }) => {
     await openSheet(page, V01)
     const sheet = page.locator(SHEET)
-    await expect(sheet.getByText(/Active Stake Cost/i).first()).toBeVisible()
+    await expect(sheet.getByText(/Activated Stake Cost/i).first()).toBeVisible()
     await expect(
       sheet.getByText(/Activating Stake Cost/i).first(),
     ).toBeVisible()
@@ -99,7 +99,7 @@ test.describe('detail sheet — overview tab', () => {
     await openSheet(page, V01)
     const sheet = page.locator(SHEET)
     await expect(sheet.getByText('Max APY Composition')).toBeVisible()
-    for (const label of ['Inflation', 'MEV', 'Block rewards', 'Stake bid']) {
+    for (const label of ['Inflation', 'MEV', 'Block rewards', 'Static bid']) {
       await expect(sheet.getByText(label, { exact: true }).first()).toBeVisible()
     }
   })

@@ -240,7 +240,7 @@ export const EpochRangePicker: React.FC<Props> = ({
             open && selecting === 'start' && 'bg-primary/5',
           )}
         >
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground leading-none mb-0.5">
+          <span className="text-2xs uppercase tracking-wider text-muted-foreground leading-none mb-0.5">
             From
           </span>
           <span
@@ -265,7 +265,7 @@ export const EpochRangePicker: React.FC<Props> = ({
             open && selecting === 'end' && 'bg-primary/5',
           )}
         >
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground leading-none mb-0.5">
+          <span className="text-2xs uppercase tracking-wider text-muted-foreground leading-none mb-0.5">
             To
           </span>
           <span
@@ -350,7 +350,7 @@ export const EpochRangePicker: React.FC<Props> = ({
               </svg>
               older
             </button>
-            <span className="text-[10px] text-muted-foreground">
+            <span className="text-2xs text-muted-foreground">
               {epochs[pageStart]}–
               {
                 epochs[

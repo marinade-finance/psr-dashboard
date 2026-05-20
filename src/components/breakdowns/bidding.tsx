@@ -26,7 +26,7 @@ type Props = {
 
 const STATIC_BID_HELP =
   'The fixed CPMPE you configure on-chain — the same number the Simulate ' +
-  'input shows. Different from the auction effective bid, which is the ' +
+  'input shows. Different from the effective bid, which is the ' +
   'clearing price every winner actually pays.'
 
 const NON_BID_HELP =
@@ -35,7 +35,9 @@ const NON_BID_HELP =
 
 const IN_AUCTION_HELP =
   'Closed-form estimate. Adding or growing this winner shifts the clearing ' +
-  'price, so treat it as a floor and confirm in Simulate.'
+  'price, so treat it as a floor and confirm in Simulate. Country and ' +
+  'ASO (Autonomous System Operator — the hosting provider) caps can also ' +
+  'block you regardless of bid.'
 
 const NEXT_EPOCH_HELP =
   'Being in the set is not the same as receiving stake. The redelegation ' +
@@ -90,7 +92,7 @@ export const BiddingBreakdown: React.FC<Props> = ({
         : inAuction.capConstraintType === AuctionConstraintType.VALIDATOR
           ? 'Per-validator cap is at the limit'
           : inAuction.capConstraintType === AuctionConstraintType.WANT
-            ? 'At your max-stake-wanted setting'
+            ? 'At your `maxStakeWanted` setting'
             : 'A concentration cap is at the limit'
 
   const clears = inAuction.bidIncrease <= 0 && !inAuction.capConstrained
@@ -137,7 +139,7 @@ export const BiddingBreakdown: React.FC<Props> = ({
           />
           <CalcRow
             label="MEV"
-            help="Your MEV share and epoch PMPE per 1000 SOL."
+            help="MEV (Maximal Extractable Value) — extra tips from transaction ordering. Shows your MEV commission and epoch PMPE per 1000 SOL."
             col1={m.mevPct}
             col2={pmpe(m.mevPmpe)}
           />
@@ -215,18 +217,18 @@ export const BiddingBreakdown: React.FC<Props> = ({
           />
           {noFrontier ? (
             <OkRow
-              message="No binding priority total PMPE this run — every winner gets served."
+              message="No binding priority frontier PMPE this run — every winner gets served."
               colSpan={2}
             />
           ) : nextEpoch.bidIncreaseForPriority <= 0 ? (
             // Already clears the frontier — the target-derivation rows
-            // (Priority total / − Non-bid / = Target bid) describe a bid
+            // (Priority frontier / − Non-bid / = Target bid) describe a bid
             // the validator would never need to make. Skip them; show only
             // the green confirmation and the two context rows so a reader
             // can still verify their position.
             <>
               <OkRow
-                message={`Clears the priority total (${pmpe(nextEpoch.priorityFrontierPmpe)} PMPE).`}
+                message={`Clears the priority frontier (${pmpe(nextEpoch.priorityFrontierPmpe)} PMPE).`}
                 colSpan={2}
               />
               <CalcRow
@@ -243,7 +245,7 @@ export const BiddingBreakdown: React.FC<Props> = ({
           ) : (
             <>
               <CalcRow
-                label="Priority total"
+                label="Priority frontier"
                 help="Lowest total PMPE still fully funded by the redelegation budget."
                 col2={pmpe(nextEpoch.priorityFrontierPmpe)}
               />

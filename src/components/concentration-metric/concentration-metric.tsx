@@ -104,7 +104,7 @@ export const ConcentrationMetric: React.FC<Props> = ({
           <div className={nameClass} title={top.key}>
             {top.key}
             {anyCapped && (
-              <span className="ml-1 text-[10px] font-bold">(capped)</span>
+              <span className="ml-1 text-2xs font-bold">(capped)</span>
             )}
           </div>
           <div className="flex items-baseline min-w-0 overflow-hidden">
@@ -129,7 +129,7 @@ export const ConcentrationMetric: React.FC<Props> = ({
             past it are over.
           </div>
           <table className="w-full">
-            <thead className="text-muted-foreground/70 uppercase tracking-wide text-[10px]">
+            <thead className="text-muted-foreground/70 uppercase tracking-wide text-2xs">
               <tr>
                 <th className="text-left py-1 font-medium">Name</th>
                 <th className="text-right py-1 font-medium">Share</th>
@@ -167,7 +167,7 @@ export const ConcentrationMetric: React.FC<Props> = ({
                           />
                           {i === 0 && (
                             <span
-                              className="absolute top-[-13px] text-[10px] font-mono text-muted-foreground pointer-events-none"
+                              className="absolute top-[-13px] text-2xs font-mono text-muted-foreground pointer-events-none"
                               style={{
                                 left: `${capLeft}%`,
                                 transform: 'translateX(-50%)',

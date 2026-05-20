@@ -65,8 +65,8 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
       context: `${pct(blockComm, 0)} shared`,
     },
     {
-      label: 'Stake bid',
-      apy: apyBreakdown.stakeBid,
+      label: 'Static bid',
+      apy: apyBreakdown.staticBid,
       pmpe: r.bidPmpe,
       swatch: 'bg-chart-4',
       context: 'your bid',
@@ -112,7 +112,7 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
             onClick={onGoToBidding}
             className="group flex flex-col items-end gap-0.5 cursor-pointer"
           >
-            <span className="text-[10px] text-destructive font-medium leading-none group-hover:underline">
+            <span className="text-2xs text-destructive font-medium leading-none group-hover:underline">
               Fix in Bidding ↗
             </span>
             <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-md border bg-destructive-light text-destructive border-destructive">

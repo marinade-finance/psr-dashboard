@@ -146,6 +146,40 @@ easier testing at the SDK level.
 
 **Blocked on:** SDK changes (export calculations index, add `expectedStakeChangeSol` to `AuctionValidator`).
 
+**Forward-looking projections also belong in the SDK.** Today the dashboard
+maintains three projection helpers that are NOT auction outputs but are
+derived locally from auction state:
+
+- `computeInAuctionTarget` (`src/services/in-auction-target.ts`) — closed-form
+  bid that would clear `winningTotalPmpe + bond floor`. Tagged "estimate,
+  verify in Simulate" because the last-price coupling means adding/growing
+  this winner shifts the clearing price.
+- `computeNextEpochStake` (`src/services/next-epoch-stake.ts`) — heuristic
+  bid to clear the redelegation priority frontier; surfaces `priorityRank`
+  and `bidGapPmpe`. Built on the local greedy `allocateRedelegation` in
+  `sam.ts` which does NOT enforce country/ASO/validator caps (the SDK does
+  during `evaluate()` — see bugs.md #7).
+- `computeBidPenalty` (`src/services/bid-penalty.ts`) — pedagogical recompute
+  of the bid-too-low penalty. The local recompute diverges from the SDK's
+  `revShare.bidTooLowPenaltyPmpe` on synthetic fixtures; sessions have been
+  spent reconciling the two surfaces ([[concepts-audit]] §2 — "Penalty this
+  epoch" label divergence).
+
+The GUIDE.md prose claims "every number comes from the same algorithm
+Marinade runs on the backend" — currently a lie because of these three
+projections. The user-visible cost is: every UI label that surfaces a
+projection has to be tagged "estimate, verify in Simulate", and bug-hunt
+agents repeatedly find subtle divergences between the local projection and
+the SDK's actual behaviour after a rerun. Upstream solution: the SDK should
+expose its own projection helpers (or a "what-if" evaluation path) so the
+dashboard becomes a pure rendering layer over SDK outputs.
+
+**End-state goal:** the dashboard imports `@marinade.finance/ds-sam-sdk`,
+calls it for every number it displays (including projections and
+simulation reruns), and contains zero arithmetic of its own. Every
+`compute*` service in `src/services/` is then a thin adapter that selects
+SDK fields and formats them — no math.
+
 
 ### 2. Rank tracking — surface position history in the dashboard
 
@@ -480,6 +514,89 @@ Touches:
 
 Blocked: `sam-table.tsx` is under another agent's edit; do after it
 frees. Don't hardcode `0.25` again — derive everything from the scale.
+
+## Bond breakdown: forward-looking ideal bond for SOFT + growing validators
+
+The Bond tab's "Ideal bond to grow stake" section sizes its `requiredIdealKeep`
+against `currentExposedStakeSol` — fine for a validator at steady state, but
+WRONG for a SOFT-bond validator who is *gaining* stake next epoch. They need to
+pre-fund the bond for the stake that's about to arrive, not for what they hold
+today. Currently the row tells them "top up N SOL" where N is sized for current
+stake; the real ask is sized for `marinadeSamTargetSol`.
+
+**Where:** `src/services/bond-coverage.ts` (computes `requiredIdealKeep` and
+`topUpToIdealKeep`), `src/components/breakdowns/bond-coverage.tsx` (renders the
+"Ideal bond to grow stake" section). Likely add a parallel `requiredIdealAtTarget`
++ `topUpToIdealAtTarget` pair sized against `auctionStake.marinadeSamTargetSol`
+(or `marinadeActivatedStakeSol + expectedStakeChangeSol`), only surfaced when
+positive delta is expected.
+
+**Design call needed before coding:**
+- (a) NEW row alongside existing ideal (current vs projected side-by-side)
+- (b) REPLACE the current "Ideal" row with the projected version when delta > 0,
+  reverting to current-stake basis at steady state
+- (c) Single row that picks max(current, projected) so the recommendation is
+  always defensive
+
+**Why:** transcripts surfaced operators reading the existing "Top up N SOL"
+recommendation as "to keep my current stake" when it was actually sized for
+projected stake. Both numbers exist; surfacing only one of them confuses readers.
+
+## Docs hygiene: enforce ≤120-char line length across GUIDE / SCREENS / VISUALS / ARCHITECTURE / README / TODO
+
+Wisdom rule in `~/.claude/skills/wisdom/SKILL.md`: prose lines wrap at ≤120
+chars (most code follows the same width). Several root docs and
+`public/docs/GUIDE.md` have long-form prose lines that exceed this — notably
+GUIDE.md's "Data Sources" table (lines ~22-25 are 200+ chars), the
+participation-requirements bullet at line 119, and any markdown table that
+includes long URLs.
+
+**What to do** when the tree is clean:
+- Walk every line in `public/docs/GUIDE.md`, `public/docs/GUIDE-EXPERT.md`,
+  `SCREENS.md`, `VISUALS.md`, `ARCHITECTURE.md`, `README.md`, `TODO.md`,
+  `CLAUDE.md`, and `bugs.md`.
+- Wrap prose lines at ≤120 chars. Don't break mid-link or mid-codespan.
+- Markdown tables with long URLs: either pin the URLs in a footnote
+  reference (`[1]: https://…`) and use the short reference at the cell, or
+  accept the table as the one exception (consistent with how most projects
+  treat tables) and document the exception in CLAUDE.md.
+- Don't reformat code blocks inside docs — those follow the language's own
+  width rule.
+
+**Why:** consistent width = clean diffs, easy review, and the rule is
+already in wisdom — the docs just drifted.
+
+## Simulation: pre-fill inputs from the breakdown's suggested values
+
+Today the sim panel opens with the validator's current commissions/bid as the
+defaults. The breakdown cards already compute concrete suggestions —
+`computeInAuctionTarget.targetBidPmpe` ("the bid that clears the winning
+total"), `computeNextEpochStake.targetBidPmpePriority` ("the bid that clears
+the priority frontier"), the bond coverage's `topUpToKeepStake` / `topUpToAvoidFee`
+— and each card has a "Simulate →" CTA. Clicking "Simulate →" should pre-fill
+the panel with the suggested values so the user lands inside the panel ready
+to evaluate the recommendation, not at their current state.
+
+**Per CTA, which fields to pre-fill:**
+
+- Bidding "Get into the auction" CTA → set bid to `inAuction.targetBidPmpe`.
+- Bidding "Next epoch stake" CTA → set bid to `nextEpoch.targetBidPmpePriority`.
+- Bond "Top up to keep stake" → set bond to `bondBalanceSol + topUpToKeepStake`.
+- Bond "Top up to avoid the fee" → set bond to `bondBalanceSol + topUpToAvoidFee`.
+- Bid-penalty "Raise bid in sim →" → set bid to `metrics.adjustedLimit` (the
+  threshold the breakdown already labels as the safe bid).
+- Payments "Simulate" → no specific suggestion, use current state (existing
+  behaviour stays).
+
+**Wiring:** `onGoToSim` callback today takes no arguments — extend it to
+accept an optional `{ bid?, bond?, infl?, mev?, blk? }` and have each
+breakdown pass the relevant suggestion. The sim panel then seeds its
+controlled inputs from those values when present, falls back to current.
+
+**Why:** the existing "Simulate →" affordance is a navigation, not a
+recommendation. Pre-filling closes the loop — the user can immediately tweak
+the suggestion and see what shifts instead of having to read the breakdown,
+remember the number, and re-type it.
 
 ## Feature: "My Validator" address pin + personal notification ribbon
 

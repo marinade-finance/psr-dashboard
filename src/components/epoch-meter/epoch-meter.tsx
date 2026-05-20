@@ -168,7 +168,7 @@ function TimelineCard({
                     'font-mono leading-none',
                     isLive
                       ? 'text-sm font-semibold text-foreground'
-                      : 'text-[11px] text-muted-foreground',
+                      : 'text-3xs text-muted-foreground',
                   )}
                 >
                   {n.epoch}
@@ -177,8 +177,8 @@ function TimelineCard({
                   className={cn(
                     'leading-tight text-center',
                     isLive
-                      ? 'text-[11px] font-medium text-foreground'
-                      : 'text-[10px] text-muted-foreground',
+                      ? 'text-3xs font-medium text-foreground'
+                      : 'text-2xs text-muted-foreground',
                   )}
                 >
                   {nodeLabel(n.stages)}
@@ -192,7 +192,7 @@ function TimelineCard({
         <div className="w-full flex flex-col items-stretch gap-1 mt-1 px-1">
           <Gauge value={percent} scaleMax={100} tone="bg-primary" size="lg" />
           {hours !== null && (
-            <span className="text-[10px] text-muted-foreground text-center">
+            <span className="text-2xs text-muted-foreground text-center">
               ~{Math.round(hours)}h remaining
             </span>
           )}

@@ -17,6 +17,7 @@ type Props = {
   bondRiskFeeSol: number
   bondBalanceSol: number
   minBondBalanceSol: number
+  marinadeActivatedStakeSol: number
   // Signed delta from the auction's redelegation pass. When positive on a
   // 'soft' bond, the canonical "top up to grow stake" CTA contradicts the
   // truthful "stake is already arriving" — see statusLine().
@@ -34,6 +35,7 @@ const statusLine = (
   bondRiskFeeSol: number,
   minBondBalanceSol: number,
   bondBalanceSol: number,
+  marinadeActivatedStakeSol: number,
   expectedStakeDeltaSol: number,
 ): CardStatus => {
   // Soft bond is advisory. When stake is already arriving the canonical
@@ -53,6 +55,7 @@ const statusLine = (
     bondRiskFeeSol,
     minBondBalanceSol,
     bondBalanceSol,
+    marinadeActivatedStakeSol,
   )
   return { label: advice.text, tone: advice.tone }
 }
@@ -65,6 +68,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
   bondRiskFeeSol,
   bondBalanceSol,
   minBondBalanceSol,
+  marinadeActivatedStakeSol,
   expectedStakeDeltaSol = 0,
   isSimulated,
   onGoToSim,
@@ -75,6 +79,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
     bondRiskFeeSol,
     minBondBalanceSol,
     bondBalanceSol,
+    marinadeActivatedStakeSol,
     expectedStakeDeltaSol,
   )
   const status: CardStatus = withSimAction(baseStatus, onGoToSim)
@@ -195,7 +200,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
             bold
           />
           <CalcRow
-            label="Active Marinade stake"
+            label="Activated Marinade stake"
             col1={stake(coverage.marinadeActivatedStakeSol)}
           />
           <CalcRow

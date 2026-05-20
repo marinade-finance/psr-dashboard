@@ -305,11 +305,20 @@ view. `src/components/sam-table/sam-table.tsx`,
 `src/index.css` (`header-glow`, `sim-*` tokens).
 
 ### Typography scale
-`text-[10px]` (glanceable meta) · `text-xs` 12px (table cells, meta
-labels) · `text-[13px]` (emphasised secondary, tab labels) · `text-sm`
-14px (primary row text) · `text-base`+ (headings). **Rule:** no
-off-scale arbitrary sizes (`text-[11px]` etc.) for primary or
-interactive content. Defined per-component; baseline in `CLAUDE.md`.
+`text-2xs` 10px (glanceable meta — cell sub-labels, axis ticks) · `text-3xs`
+11px (epoch-meter micro ticks only) · `text-xs` 12px (table cells, meta
+labels) · `text-mid` 13px (emphasised secondary, tab labels) · `text-sm`
+14px (primary row text) · `text-base`+ (headings). **Rule:** named tokens
+only — NEVER `text-[Npx]` arbitrary sizes. Tokens declared in
+`src/index.css` `@theme` (`--text-2xs/3xs/mid`).
+
+### Radius scale
+`rounded-xs` (.125rem) · `rounded-sm` (.25rem) · `rounded-md` /
+`rounded-lg` (.5rem, intentionally equal — matches Marinade app) ·
+`rounded-xl` (.75rem) · `rounded-2xl` (1rem) · `rounded-3xl` (1.5rem) ·
+`rounded-full` (pills/dots). Tokens in `src/index.css` `@theme`
+(`--radius-*`). Existing components use `rounded-md/lg/full`; the wider
+scale is available for future shadcn primitives.
 
 ### Charts
 `bg-chart-1 … bg-chart-5` fixed sequence for stacked bars / pie

@@ -132,7 +132,7 @@ const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
             >
               {/* Stake tier label */}
               <div
-                className="flex items-center justify-center shrink-0 text-[10px] text-muted-foreground font-mono"
+                className="flex items-center justify-center shrink-0 text-2xs text-muted-foreground font-mono"
                 style={{ width: 56, minHeight: 40 }}
               >
                 {tier.label}
@@ -177,7 +177,7 @@ const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
                         {size >= 36 && (
                           <div className="flex-1 px-1.5 pt-1 overflow-hidden">
                             <div
-                              className="text-[10px] font-bold leading-tight truncate"
+                              className="text-2xs font-bold leading-tight truncate"
                               style={{
                                 color: 'rgba(255,255,255,0.95)',
                                 textShadow: '0 1px 2px rgba(0,0,0,0.5)',

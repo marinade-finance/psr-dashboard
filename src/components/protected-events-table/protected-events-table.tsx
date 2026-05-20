@@ -65,7 +65,7 @@ const renderFunderBadge = (protectedEvent: ProtectedEvent) => {
     return (
       <HtmlTooltip html="Marinade had to step in and pay because the validator's bond ran out.">
         <Badge className="cursor-help bg-warning-light text-warning border-warning/30">
-          Marinade
+          Marinade backstop
         </Badge>
       </HtmlTooltip>
     )
@@ -205,7 +205,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
                       style={{ width: `${100 - bondPct}%` }}
                     />
                   </div>
-                  <div className="flex justify-between text-[10px] text-muted-foreground font-mono mt-1">
+                  <div className="flex justify-between text-2xs text-muted-foreground font-mono mt-1">
                     <span>Bond {pct(bondRatio, 0)}</span>
                     <span>Marinade {pct(1 - bondRatio, 0)}</span>
                   </div>
