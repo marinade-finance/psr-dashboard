@@ -203,12 +203,12 @@ describe('getTipIcon', () => {
 // --- getValidatorTip — all priority branches ---
 
 describe('getValidatorTip', () => {
-  it('not in set → warning/rank', () => {
+  it('not in set → info/rank (growth lever — raise bid to qualify)', () => {
     const validator = makeValidator({
       auctionStake: { marinadeSamTargetSol: 0 },
     })
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
-    expect(tip.urgency).toBe('warning')
+    expect(tip.urgency).toBe('info')
     expect(tip.constraint).toBe('rank')
     expect(tip.text).toContain('Bid too low')
   })
@@ -293,10 +293,12 @@ describe('getValidatorTip', () => {
     expect(tip.alert).toBeFalsy()
   })
 
-  it('soft health (bond covers stake but not ideal) → warning/bond top-up', () => {
-    // delta must be <= 0 to isolate the soft branch: a positive delta makes
-    // "top up to grow stake" contradictory, so it correctly defers to the
-    // positive "arriving next epoch" message (see contradiction test below).
+  it('soft health (bond covers stake but not ideal) → info/bond top-up', () => {
+    // SOFT is the grow lever — "Top up N to grow stake." Per the severity
+    // ladder it's violet/info (more stake possible if you act), not yellow
+    // (which is reserved for "stake is leaving"). delta must be <= 0 to
+    // isolate the soft branch: a positive delta makes the message
+    // contradictory, so it correctly defers to "arriving next epoch".
     const validator = makeValidator({
       bondBalanceSol: 50,
       claimableBondBalanceSol: 50,
@@ -304,7 +306,7 @@ describe('getValidatorTip', () => {
       values: { expectedStakeChangeSol: 0 },
     })
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
-    expect(tip.urgency).toBe('warning')
+    expect(tip.urgency).toBe('info')
     expect(tip.constraint).toBe('bond')
     expect(tip.text).toContain('Top up')
   })
@@ -321,12 +323,24 @@ describe('getValidatorTip', () => {
     expect(tip.text).toContain('arriving next epoch')
   })
 
-  it('delta === 0 → neutral/none at-target message', () => {
-    const validator = makeValidator({ values: { expectedStakeChangeSol: 0 } })
+  it('delta === 0 + active ≈ target → neutral "At target stake"', () => {
+    const validator = makeValidator({
+      marinadeActivatedStakeSol: 15000,
+      auctionStake: { marinadeSamTargetSol: 15000 },
+      values: { expectedStakeChangeSol: 0 },
+    })
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('neutral')
     expect(tip.constraint).toBe('none')
     expect(tip.text).toContain('At target')
+  })
+
+  it('delta === 0 + active << target → neutral "won’t change next epoch"', () => {
+    const validator = makeValidator({ values: { expectedStakeChangeSol: 0 } })
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
+    expect(tip.urgency).toBe('neutral')
+    expect(tip.constraint).toBe('none')
+    expect(tip.text).toContain('won’t change')
   })
 
   it('delta < 0 → warning, losing stake message', () => {
@@ -418,7 +432,7 @@ describe('getValidatorTip', () => {
 // --- B8: getValidatorTip soft health gets bond CTA ---
 
 describe('getValidatorTip soft health', () => {
-  it('soft health with topUpToIdealKeep > 0 → warning/bond tip', () => {
+  it('soft health with topUpToIdealKeep > 0 → info/bond tip (growth lever)', () => {
     // bondBalanceSol=50 < idealBondPmpe/1000 * stake = (6/1000)*10000 = 60
     // claimableBondBalanceSol=50 >= minBondPmpe/1000 * stake = (1/1000)*10000 = 10
     // → topUpToAvoidFee=0, topUpToKeepStake=0, topUpToIdealKeep=10 → 'soft'
@@ -430,7 +444,7 @@ describe('getValidatorTip soft health', () => {
     })
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.constraint).toBe('bond')
-    expect(tip.urgency).toBe('warning')
+    expect(tip.urgency).toBe('info')
     expect(tip.text).toContain('SOL')
   })
 })

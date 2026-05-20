@@ -243,8 +243,8 @@ const SEVERITY_ORDER: Record<TipUrgency, number> = {
   neutral: 4,
 }
 // Tiebreak at the same severity. Bond first (most actionable, hardest
-// block), then bid/rank (same lever — raise the bid), then cap (non-
-// actionable explanation), then none (the delta fallback).
+// block), then bid/rank (same lever — raise the bid), then cap, then
+// external block (samBlocked / blacklist), then none (the delta fallback).
 const LEVER_ORDER: Record<TipConstraint, number> = {
   bond: 0,
   bid: 1,
@@ -321,13 +321,14 @@ function bondCta(
         true,
       )
     }
-    // Below-min with no fee pending: it's an eligibility block, not an
-    // active charge. Neutral/grey, not critical-red.
+    // Below-min, no SDK fee yet. Severity follows the global ladder:
+    //   yellow — defending (meaningful stake leaving).
+    //   grey   — eligibility-only, novelty validator with no real stake.
     return tip(
       bondBalance <= 0
         ? `Post a bond of ${stake(dsSamConfig.minBondBalanceSol)} to qualify.`
         : `Top up bond to ${stake(dsSamConfig.minBondBalanceSol)} to qualify.`,
-      TipUrgency.NEUTRAL,
+      isDefending(validator, delta) ? TipUrgency.WARNING : TipUrgency.NEUTRAL,
       TipConstraint.BOND,
       delta,
     )
@@ -364,12 +365,12 @@ function bondCta(
     dsSamConfig.minBondBalanceSol,
     bondBalance,
   )
-  // Alert (octagon + pulse) ONLY when a fee is actually charged this epoch.
+  // Use bondAdvice's urgency as the canonical source — same severity the
+  // breakdown banner uses. Alert (octagon) ONLY when a fee is actually
+  // charged this epoch.
   return tip(
     advice.text,
-    health === BondHealthState.CRITICAL
-      ? TipUrgency.CRITICAL
-      : TipUrgency.WARNING,
+    advice.urgency,
     TipConstraint.BOND,
     delta,
     health === BondHealthState.CRITICAL && bondRiskFeeSol > 0,
@@ -398,15 +399,16 @@ function bidCta(
   const metrics = hasHistory
     ? computeBidPenalty(validator, dsSamConfig, winningTotalPmpe)
     : null
-  // Penalty is real money charged this epoch — critical (red), not warning
-  // (amber). Fires for in-set OR out-of-set: bid history drives it, not
-  // current in/out status. Alert/octagon stays reserved for bond risk fee.
+  // Penalty is real money charged this epoch — red + octagon (cost lever
+  // = red + alert glyph everywhere in the engine). Fires for in-set OR
+  // out-of-set; bid history drives it, not current in/out status.
   if (metrics && metrics.penaltyPmpe > 0) {
     return tip(
       `Raise bid or pay a ${pay(metrics.penaltySol)} penalty.`,
       TipUrgency.CRITICAL,
       TipConstraint.BID,
       delta,
+      true,
     )
   }
   // No penalty — out-of-set with an adequate bond becomes the rank CTA,
@@ -420,9 +422,12 @@ function bidCta(
     (validator.bondBalanceSol ?? 0) >= dsSamConfig.minBondBalanceSol &&
     validator.revShare.totalPmpe < winningTotalPmpe
   ) {
+    // Bid too low — growth lever in general (raise the bid → qualify),
+    // escalates to defend lever (yellow) when meaningful stake is leaving
+    // so it outranks the generic "Losing N" delta narrative.
     return tip(
       'Bid too low. Raise it to qualify for stake.',
-      TipUrgency.WARNING,
+      isDefending(validator, delta) ? TipUrgency.WARNING : TipUrgency.INFO,
       TipConstraint.RANK,
       delta,
     )
@@ -442,17 +447,33 @@ function capCauseLine(
     case AuctionConstraintType.VALIDATOR:
       return 'At per-validator cap'
     case AuctionConstraintType.WANT:
-      return 'At your stake-wanted setting'
+      return 'At your max-stake-wanted setting'
     default:
       return 'At a concentration cap'
   }
 }
 
-// Severity threshold for out-of-set tips: validators with more than this
-// much active Marinade stake have real stake at risk → critical/red.
-// Below it, the "out of set" status is informational, not a fire — grey.
-// 10k is the practical "real validator vs novelty" line on Solana.
+// Two thresholds for the severity ladder:
+//   NON_TRIVIAL_STAKE_SOL — validator HAS real stake (atRisk gate). 10k
+//     is the practical "real validator vs novelty" line on Solana.
+//   NON_TRIVIAL_LOSS_SOL — validator IS LOSING meaningful stake this
+//     epoch (defend-lever gate). 1k is small enough to flag any
+//     non-noise outflow, large enough to ignore rounding/cooldown jitter.
 const NON_TRIVIAL_STAKE_SOL = 10_000
+const NON_TRIVIAL_LOSS_SOL = 1_000
+
+// Defend-lever predicate: a real validator is actively losing meaningful
+// stake this epoch. Single source so the 5 CTA branches that gate WARNING
+// vs INFO/NEUTRAL don't drift apart.
+function isDefending(
+  validator: AugmentedAuctionValidator,
+  delta: number,
+): boolean {
+  return (
+    (validator.marinadeActivatedStakeSol ?? 0) > NON_TRIVIAL_STAKE_SOL &&
+    Math.abs(delta) > NON_TRIVIAL_LOSS_SOL
+  )
+}
 
 // Out-of-set despite a high enough totalPmpe. The bid isn't the lever —
 // some other constraint binds. Names the actual reason so the user knows
@@ -480,16 +501,25 @@ function outOfSetCta(
   // Bid actually is the lever to pull → let bidCta own the message.
   if (validator.revShare.totalPmpe < winningTotalPmpe) return null
 
-  const atRisk =
-    (validator.marinadeActivatedStakeSol ?? 0) > NON_TRIVIAL_STAKE_SOL
-  const urgency = atRisk ? TipUrgency.CRITICAL : TipUrgency.NEUTRAL
+  // Severity ladder, applied throughout this function:
+  //   red    — a real penalty is charged this epoch. Set tip.alert so the
+  //            pill swaps to the octagon glyph.
+  //   yellow — meaningful active stake is leaving (no penalty yet — "don't
+  //            lose stake"). Gated on both atRisk AND non-trivial delta.
+  //   violet — growth lever available ("get more stake" if you act).
+  //   grey   — user's own choice / informational.
+  const defending = isDefending(validator, delta)
 
   if (validator.samBlocked) {
+    // Testing-only state — production traffic shouldn't reach here. Kept
+    // red + octagon as a loud "this should never ship live" signal; not
+    // worth the conditional-severity logic the other branches need.
     return tip(
       'Blocked from SAM this epoch.',
-      urgency,
+      TipUrgency.CRITICAL,
       TipConstraint.NONE,
       delta,
+      true,
     )
   }
   // Opt-out is the most informative explanation when both apply — check
@@ -498,9 +528,9 @@ function outOfSetCta(
   if (validator.maxStakeWanted === 0) {
     return tip(
       'Max-stake-wanted set to 0 — opted out.',
-      // User-controlled choice; never escalate beyond info even when stake
-      // is on the line — they did this on purpose.
-      TipUrgency.INFO,
+      // User-controlled choice; informational only — grey, like the WANT
+      // cap and "at target stake" — never escalates.
+      TipUrgency.NEUTRAL,
       TipConstraint.NONE,
       delta,
     )
@@ -514,35 +544,70 @@ function outOfSetCta(
     // need the SDK's internal computation — fall through to a hint that
     // names the remaining suspects.
     if (validator.bondBalanceSol == null) {
+      // Growth lever — post a bond and you can win stake. Violet.
       return tip(
         'No bond posted. Add a bond to qualify.',
-        urgency,
+        TipUrgency.INFO,
         TipConstraint.BOND,
         delta,
       )
     }
     if (blacklist?.has(validator.voteAccount)) {
-      return tip('Blacklisted by Marinade.', urgency, TipConstraint.NONE, delta)
+      // Red ONLY when the blacklist penalty is actively charging this
+      // epoch (revShare.blacklistPenaltyPmpe > 0) — real money, octagon.
+      // Otherwise it's informational ("flagged but no charge this epoch")
+      // and stays grey regardless of stake size.
+      const penaltyPmpe = validator.revShare?.blacklistPenaltyPmpe ?? 0
+      if (penaltyPmpe > 0) {
+        const penaltySol =
+          (penaltyPmpe / 1000) * (validator.marinadeActivatedStakeSol ?? 0)
+        return tip(
+          `Blacklisted — ${pay(penaltySol)} penalty this epoch.`,
+          TipUrgency.CRITICAL,
+          TipConstraint.NONE,
+          delta,
+          true,
+        )
+      }
+      return tip(
+        'Blacklisted by Marinade.',
+        TipUrgency.NEUTRAL,
+        TipConstraint.NONE,
+        delta,
+      )
     }
+    // Growth lever — fix the eligibility checks and you can qualify. Violet.
     return tip(
       'Not eligible — check client version and vote credits.',
-      urgency,
+      TipUrgency.INFO,
       TipConstraint.NONE,
       delta,
     )
   }
   const cap = validator.lastCapConstraint
   if (cap && cap.totalLeftToCapSol === 0) {
+    // WANT cap = user-set → grey (their choice).
+    // Other caps: yellow when stake is actively leaving in meaningful
+    // amounts, else violet (informational, no immediate loss).
+    const capUrgency =
+      cap.constraintType === AuctionConstraintType.WANT
+        ? TipUrgency.NEUTRAL
+        : defending
+          ? TipUrgency.WARNING
+          : TipUrgency.INFO
     return tip(
-      `${capCauseLine(cap.constraintType, cap.constraintName)} — out of set.`,
-      atRisk ? TipUrgency.WARNING : TipUrgency.INFO,
+      `${capCauseLine(cap.constraintType, cap.constraintName)}.`,
+      capUrgency,
       TipConstraint.CAP,
       delta,
     )
   }
+  // Generic fallback — total clears winning, no other branch fired.
+  // Yellow when defending (stake leaving); violet otherwise (growth lever
+  // — adjusting the suspects could let you in).
   return tip(
-    'Out of set — bid is high enough, another constraint binds.',
-    urgency,
+    'Check max-stake-wanted and bond-stake capacity.',
+    defending ? TipUrgency.WARNING : TipUrgency.INFO,
     TipConstraint.NONE,
     delta,
   )
@@ -562,12 +627,20 @@ function capCta(
   if (delta >= 0 || cap == null || cap.totalLeftToCapSol !== 0) return null
   // Two-line CTA: cause on line 1, consequence on line 2. The pill in
   // sam-table.tsx renders with `whitespace-pre-line` so \n is honoured.
-  // COUNTRY/ASO carry a meaningful name; VALIDATOR's name is the vote
-  // account, so omit. Unknown enum values fall through to the generic phrasing.
+  // Severity follows the global ladder:
+  //   grey   — WANT cap (user-set).
+  //   yellow — other cap AND defending (meaningful stake leaving).
+  //   violet — other cap but the loss is novelty-scale (informational).
+  const urgency =
+    cap.constraintType === AuctionConstraintType.WANT
+      ? TipUrgency.NEUTRAL
+      : isDefending(validator, delta)
+        ? TipUrgency.WARNING
+        : TipUrgency.INFO
   const cause = capCauseLine(cap.constraintType, cap.constraintName)
   return tip(
     `${cause}\nLosing ${stake(Math.abs(delta))} until cap frees.`,
-    TipUrgency.INFO,
+    urgency,
     TipConstraint.CAP,
     delta,
   )
@@ -592,19 +665,23 @@ function deltaCta(
   // delta < 0 with a binding cap: cap owns the narrative — surface 'at
   // target' so cap (info) isn't beaten by losing (warning).
   if (delta === 0 || capBinding) {
-    // Differentiate "you're at YOUR own cap" from "you're at SAM's target".
-    // maxStakeWanted is the validator's opt-out knob; if they're at or above
-    // it, the lever to grow is theirs to pull, not SAM's. Other delta-0 cases
-    // are SAM-determined and not actionable from the validator's side.
+    // Three flavours of "delta=0":
+    //   a) at validator's own max-stake-wanted cap (their lever)
+    //   b) active ≈ target — really at the SAM-assigned target
+    //   c) active well below target — budget didn't reach this row
+    // "At target stake" is only honest in (b); (c) made the message a lie on
+    // budget-constrained runs (active 30k, target 72k, delta 0 -> "At target").
     const wanted = validator.maxStakeWanted
     const target = validator.auctionStake.marinadeSamTargetSol
+    const active = validator.marinadeActivatedStakeSol
     const atOwnCap = wanted != null && target >= wanted - 1e-9
-    return tip(
-      atOwnCap ? 'At your max-stake-wanted setting.' : 'At target stake.',
-      TipUrgency.NEUTRAL,
-      TipConstraint.NONE,
-      delta,
-    )
+    const belowTarget = target > 0 && active < target * 0.99
+    const text = atOwnCap
+      ? 'At your max-stake-wanted setting.'
+      : belowTarget
+        ? 'Stake won’t change next epoch.'
+        : 'At target stake.'
+    return tip(text, TipUrgency.NEUTRAL, TipConstraint.NONE, delta)
   }
   return tip(
     `Losing ${stake(Math.abs(delta))} next epoch.`,
