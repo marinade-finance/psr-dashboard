@@ -461,11 +461,11 @@ const NON_TRIVIAL_STAKE_SOL = 10_000
 //
 // Reasons in priority order (most specific first):
 //   - samBlocked: hard block during auction (penalty escalation, etc.)
-//   - !samEligible: failed pre-auction gate — narrowed down by inspecting
-//     bondBalanceSol / blacklist where we can; falls back to a "check
-//     the usual suspects" hint otherwise
-//   - lastCapConstraint binding: concentration / want cap
 //   - maxStakeWanted === 0: validator opted out of stake entirely
+//   - samEligible === false: failed pre-auction gate — narrowed down by
+//     inspecting bondBalanceSol / blacklist where we can; falls back to
+//     a "check the usual suspects" hint otherwise
+//   - lastCapConstraint binding: concentration / want cap
 //   - default: generic "constraint binds, investigate"
 //
 // Severity tracks ACTIVE STAKE — > 10k means real stake at risk so the
@@ -492,7 +492,22 @@ function outOfSetCta(
       delta,
     )
   }
-  if (!validator.samEligible) {
+  // Opt-out is the most informative explanation when both apply — check
+  // before cap so 'maxStakeWanted=0 + cap binding' shows the user's choice,
+  // not the cap symptom.
+  if (validator.maxStakeWanted === 0) {
+    return tip(
+      'Max-stake-wanted set to 0 — opted out.',
+      // User-controlled choice; never escalate beyond info even when stake
+      // is on the line — they did this on purpose.
+      TipUrgency.INFO,
+      TipConstraint.NONE,
+      delta,
+    )
+  }
+  // Gate on === false so an undefined samEligible (SDK pre-auction state)
+  // doesn't route through the "not eligible" fallback by accident.
+  if (validator.samEligible === false) {
     // Narrow the eligibility failure to the most actionable specific cause
     // we can detect from data we have. Bond + blacklist are cheap checks;
     // client-version semver matching and per-epoch vote-credit thresholds
@@ -522,16 +537,6 @@ function outOfSetCta(
       `${capCauseLine(cap.constraintType, cap.constraintName)} — out of set.`,
       atRisk ? TipUrgency.WARNING : TipUrgency.INFO,
       TipConstraint.CAP,
-      delta,
-    )
-  }
-  if (validator.maxStakeWanted === 0) {
-    return tip(
-      'Max-stake-wanted set to 0 — opted out.',
-      // User-controlled choice; never escalate beyond info even when stake
-      // is on the line — they did this on purpose.
-      TipUrgency.INFO,
-      TipConstraint.NONE,
       delta,
     )
   }

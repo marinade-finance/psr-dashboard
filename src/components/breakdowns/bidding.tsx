@@ -1,3 +1,4 @@
+import { AuctionConstraintType } from '@marinade.finance/ds-sam-sdk'
 import React from 'react'
 
 import { pmpe } from 'src/format'
@@ -82,13 +83,13 @@ export const BiddingBreakdown: React.FC<Props> = ({
   // "name" is the vote account → omit. WANT/other → generic.
   const capName = inAuction.capConstraintName
   const capLabel =
-    inAuction.capConstraintType === 'COUNTRY'
+    inAuction.capConstraintType === AuctionConstraintType.COUNTRY
       ? `Country cap is at the limit${capName ? ` — ${capName}` : ''}`
-      : inAuction.capConstraintType === 'ASO'
+      : inAuction.capConstraintType === AuctionConstraintType.ASO
         ? `ASO cap is at the limit${capName ? ` — ${capName}` : ''}`
-        : inAuction.capConstraintType === 'VALIDATOR'
+        : inAuction.capConstraintType === AuctionConstraintType.VALIDATOR
           ? 'Per-validator cap is at the limit'
-          : inAuction.capConstraintType === 'WANT'
+          : inAuction.capConstraintType === AuctionConstraintType.WANT
             ? 'At your max-stake-wanted setting'
             : 'A concentration cap is at the limit'
 

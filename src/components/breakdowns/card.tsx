@@ -27,12 +27,6 @@ const STATUS_CLASSES: Record<CardStatusTone, string> = {
   grey: 'bg-muted text-muted-foreground',
 }
 
-// Shared button shape for the "Simulate ... →" tip at the bottom of each
-// breakdown card. Identical across bid-penalty / bidding / bond-coverage /
-// payments — kept here so the four breakdowns stay byte-aligned.
-export const SIM_JUMP_BUTTON_CLASS =
-  'text-xs font-medium px-2 py-0.5 rounded border border-primary text-primary hover:bg-primary-light'
-
 // Pill border/text per tone — paired with bg-card/55 fill for the action
 // affordance on the right of a status banner. Same recipe as the
 // validator-detail header banner's "Bond tab →" pill: bg-card/55 + tone-

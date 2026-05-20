@@ -157,10 +157,10 @@ new validator gets a fresh component (no mirror-prop-into-state needed).
   header tip banner so they stay byte-aligned), the `CardStatusTone`
   union (`red | yellow | green | grey`), `CardStatusAction` with optional
   `tone` override (used to pin sim-jump pills to yellow across tones),
-  the `tipBannerTone` resolver (bond tips colour off bond-health, others
-  off urgency; `bond + NEUTRAL` stays grey for below-min-no-fee), and
-  `SIM_JUMP_BUTTON_CLASS` — the shared button shape for "Simulate … →"
-  tips that keeps every breakdown card's affordance identical.
+  and the `tipBannerTone` resolver (bond tips colour off bond-health,
+  others off urgency; `bond + NEUTRAL` stays grey for below-min-no-fee).
+  Sim-jump pills are rendered via the `CardStatusAction.tone` field on
+  the status banner itself, not a separate button class.
 - `row.tsx` — `CalcRow` (3-col), `RevRow` (4-col: `label | pct | pmpe
   | value`), `OkRow`, `SectionHeader` (with a `unit` slot for the
   shared column unit), `Marker`, plus the `SEPARATOR_DIV_CLASS` /
