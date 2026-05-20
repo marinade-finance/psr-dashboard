@@ -242,8 +242,8 @@ export function bondAdvice(
         return {
           text:
             coverage.topUpToIdealKeep > 0
-              ? `Top up ${topUp(coverage.topUpToIdealKeep)} to avoid future bond fee.`
-              : 'Bond near threshold — top up to avoid future bond fee.',
+              ? `Top up ${topUp(coverage.topUpToIdealKeep)} to avoid bond fee.`
+              : 'Bond near threshold — top up to avoid bond fee.',
           urgency: TipUrgency.WARNING,
           tone: CardStatusTone.YELLOW,
         }

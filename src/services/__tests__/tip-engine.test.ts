@@ -676,7 +676,7 @@ describe('bondAdvice — canonical CTA contract', () => {
     }, // healthy
   ]
 
-  it('WATCH + nearFeeThreshold=true → warning/yellow "avoid future bond fee"', () => {
+  it('WATCH + nearFeeThreshold=true → warning/yellow "avoid bond fee"', () => {
     // bondGoodForNEpochs=7 → WATCH; topUpToIdealKeep>0; no fee yet.
     const v = makeValidator({
       bondGoodForNEpochs: 7,
@@ -697,7 +697,7 @@ describe('bondAdvice — canonical CTA contract', () => {
       true,
     )
     expect(advice.urgency).toBe('warning')
-    expect(advice.text).toContain('avoid future bond fee')
+    expect(advice.text).toContain('avoid bond fee')
     expect(advice.tone).toBe('yellow')
   })
 
