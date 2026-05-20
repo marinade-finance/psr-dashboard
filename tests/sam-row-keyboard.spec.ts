@@ -14,7 +14,9 @@ async function gotoSam(page: Page) {
 }
 
 test.describe('SAM table — keyboard activation of rows', () => {
-  test('Enter key on a focused row opens the detail sheet', async ({ page }) => {
+  test('Enter key on a focused row opens the detail sheet', async ({
+    page,
+  }) => {
     await gotoSam(page)
     const row = page.locator('tbody tr[role="button"]').first()
     await row.focus()
@@ -24,7 +26,9 @@ test.describe('SAM table — keyboard activation of rows', () => {
     await expect(page).toHaveURL(/\?v=[1-9A-HJ-NP-Za-km-z]{32,}/)
   })
 
-  test('Space key on a focused row opens the detail sheet', async ({ page }) => {
+  test('Space key on a focused row opens the detail sheet', async ({
+    page,
+  }) => {
     await gotoSam(page)
     const row = page.locator('tbody tr[role="button"]').first()
     await row.focus()

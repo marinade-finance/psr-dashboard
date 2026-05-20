@@ -50,7 +50,9 @@ test('V04 detail sheet Bond tab surfaces the critical CTA', async ({
   await expect(
     page
       .locator(SHEET)
-      .getByText(/Top up.*to.*(avoid the bond risk fee|keep your stake)|bond risk fee/i)
+      .getByText(
+        /Top up.*to.*(avoid the bond risk fee|keep your stake)|bond risk fee/i,
+      )
       .first(),
   ).toBeVisible()
 })
@@ -64,7 +66,10 @@ test('V06 detail sheet Next-Step tip points at the Bidding lever', async ({
   // Bid-too-low penalty → the canonical tip mentions "Raise bid" or a
   // "Simulate →" path. Either phrasing is acceptable per bondAdvice.
   await expect(
-    page.locator(SHEET).getByText(/Raise bid|Simulate →|bid/i).first(),
+    page
+      .locator(SHEET)
+      .getByText(/Raise bid|Simulate →|bid/i)
+      .first(),
   ).toBeVisible()
 })
 
@@ -76,9 +81,7 @@ test('VCAP (out-of-set at ASO cap) row tip names the binding constraint', async 
   // outOfSetCta fires for out-of-set validators and surfaces the cap-binding
   // cause line: "<ASO name> at ASO cap." — instead of the generic bid/rank
   // message. This confirms the cap constraint overrides the rank CTA.
-  await expect(
-    row.getByText(/OVH SAS at ASO cap/i).first(),
-  ).toBeVisible()
+  await expect(row.getByText(/OVH SAS at ASO cap/i).first()).toBeVisible()
 })
 
 test('V08 (Out of Set) row carries the destructive out-of-set tint', async ({

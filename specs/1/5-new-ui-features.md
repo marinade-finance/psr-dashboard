@@ -11,12 +11,14 @@ distinguish "settlement final, on-chain claim not yet visible" from
 "current-epoch projection."
 
 Three states total:
+
 - **ESTIMATE** — current-epoch projection (existing).
 - **PENDING** — auction-emitted / settled, on-chain claim not yet visible (new).
 - **FINALIZED** — on-chain settlement done, muted badge (existing label, needs
   explicit rendering even when muted so every row has a status).
 
 **Where:**
+
 - `src/services/validator-with-protected_event.ts` — gate between ESTIMATE and
   PENDING based on auction emit flag.
 - `src/components/protected-events-table/` — third badge colour for PENDING.
@@ -27,6 +29,7 @@ Three states total:
 the network is in the current epoch's lifecycle.
 
 **What to show:**
+
 - Progress bar for the current epoch (current slot / 432000).
 - Pending vs finalized state of the prior epoch.
 - Which epoch the next auction will run for.
@@ -40,6 +43,7 @@ timing" section).
 their row in the table.
 
 **UX:**
+
 - Input in the navigation where the validator pastes their vote account.
   Validation: account must exist in current auction data or still show
   notifications if not in auction (chip marked muted).
@@ -54,6 +58,7 @@ their row in the table.
 endpoint. Reuses the 5-min refresh.
 
 **Where:**
+
 - `src/components/navigation/navigation.tsx` — input/chip.
 - New `src/components/my-validator-ribbon/` — renders the notification list.
 - Pages mount ribbon between `<Navigation>` and `<Banner>`.
@@ -65,12 +70,14 @@ endpoint. Reuses the 5-min refresh.
 pre-fund for the stake that's arriving, not for what they hold today.
 
 **Design call needed:** choose between three options before implementing:
+
 - (a) NEW row alongside existing ideal — current vs projected side-by-side.
 - (b) REPLACE current "Ideal" row with projected version when delta > 0,
   revert to current-stake basis at steady state.
 - (c) Single row picks `max(current, projected)` — always defensive.
 
 **Where:**
+
 - `src/services/bond-coverage.ts` — add `requiredIdealAtTarget` /
   `topUpToIdealAtTarget` sized against `auctionStake.marinadeSamTargetSol`.
 - `src/components/breakdowns/bond-coverage.tsx` — "Ideal bond to grow stake"

@@ -11,6 +11,7 @@ code; every entry cites its file.
 Each entry: **what it is** · **the one rule** · **where it lives**.
 
 ### Surfaces & semantic colour
+
 Tokens defined in `src/index.css` (`:root` + `.dark` overrides only where
 the value differs), exposed to Tailwind via `@theme`. New colours go
 through `src/index.css` — never added inline. No CSS Modules;
@@ -19,7 +20,8 @@ animations only. **Rule:** always the semantic class (`bg-card`,
 `text-destructive`, …) — never raw hex/hsl, never inline `var(...)`,
 never arbitrary `text-[var(--…)]`.
 
-### CSS_* escape hatch
+### CSS\_\* escape hatch
+
 `CSS_PRIMARY`, `CSS_DESTRUCTIVE`, `CSS_WARNING`, `CSS_INFO`,
 `CSS_STATUS_YELLOW`, `CSS_MUTED`, … — bare `var(--…)` strings, no hex
 fallback. **Rule:** use ONLY when the colour is chosen at runtime from
@@ -27,6 +29,7 @@ JS state and a Tailwind class can't reach (inline `style`). Source:
 `src/css.ts` (note: not `src/lib/utils.ts`).
 
 ### Severity axis (colour)
+
 `getTipStyle(urgency)` → `{color, bg}`: `TipUrgency.CRITICAL`=destructive,
 `WARNING`=warning, `INFO`=info, `POSITIVE`=primary, `NEUTRAL`=muted. The
 breakdown status banner uses the parallel `CardStatusTone: red | yellow
@@ -38,6 +41,7 @@ not urgency). **Rule:** colour encodes severity ONLY — never the lever.
 `src/services/tip-engine.ts`, `src/components/breakdowns/card.tsx`.
 
 ### Lever axis (glyph)
+
 `getTipIcon(tip)` switches on `tip.constraint` (`TipConstraint` enum):
 `BOND`→ICON_BOND, `BID`/`RANK`→ICON_BID (same lever, same glyph),
 `CAP`→ICON_CAP, `NONE`→directional up/down/right keyed off signed
@@ -47,6 +51,7 @@ is the sole lever-less case where stake trajectory is the only signal
 left). `src/services/tip-engine.ts`.
 
 ### CTA dispatch (one source per lever)
+
 Five CTA helpers in `src/services/tip-engine.ts`, each owning one lever's
 text + urgency end-to-end: `bondCta`, `bidCta`, `outOfSetCta`, `capCta`,
 `deltaCta`. `outOfSetCta` fires only when the validator is out-of-set
@@ -69,6 +74,7 @@ breakdown status banner — they surface the same string byte-for-byte
 for a given state.
 
 ### Octagon alert glyph
+
 `ICON_ALERT` — stop-sign octagon, exclamation inside. **Rule:** the ONLY
 severity-driven glyph; shown ONLY when `tip.alert === true` (an estimated
 bond risk fee this epoch). Below-min / no-bond stay critical-red but keep
@@ -77,6 +83,7 @@ their constraint glyph — no escalation.
 gated in `getTipIcon` / `getValidatorTip`.
 
 ### Tip glyph set (7)
+
 bond, bid, cap, alert, up, down, right. **Rule:** all `viewBox 0 0 12
 12`, uniform `width=height=14.4`. No `rank` glyph —
 `TipConstraint.RANK` reuses ICON_BID because both `BID` and `RANK`
@@ -84,12 +91,14 @@ point at the same lever (raise the bid).
 `src/components/icons/icon-*.tsx`.
 
 ### Phantom icon slot
+
 Fixed `w-4 h-4` centred container wrapping the tip glyph in the Next
 Step pill. **Rule:** glyph variance must never shift pill margins or
 column alignment — reserve identical space regardless of glyph.
 `src/components/sam-table/sam-table.tsx`.
 
 ### Gauge (track + fill + marker + band)
+
 `Gauge` — one presentational primitive, sizes `sm`/`lg`. Fill =
 `clamp(value/scaleMax, 4%, 100%)`. `marker` and `criticalBand` are
 fractions of the **track** (0..1), independent of fill. **Rule:**
@@ -108,6 +117,7 @@ and the epoch-meter — concentration tiles do NOT route through `Gauge`.
 `src/components/epoch-meter/epoch-meter.tsx`.
 
 ### Bond chip
+
 `BOND_CHIP[state]` → `{chip, dot, bar, shortText, label}`, keyed by the
 `BondHealthState` enum (`src/services/bond-health.ts`:
 `NO_BOND`/`CRITICAL`/`WATCH`/`HEALTHY` — 4 tiers, no `SOFT`).
@@ -124,6 +134,7 @@ all derive from the single `bondHealth` tier — they can never
 contradict. `src/components/sam-table/sam-table.tsx`.
 
 ### Bond-coverage heatmap tiers
+
 Five fixed HSL tokens — `--bond-none` / `--bond-low` / `--bond-mid` /
 `--bond-high` / `--bond-full` — applied via inline `style={{ background:
 'var(--bond-…)' }}` on the heatmap tiles and legend swatches. The
@@ -136,7 +147,9 @@ status. Tokens in `src/index.css`; call site
 (`tileColor()` + the legend swatches).
 
 ### Breakdown 3-col table grammar
+
 `CalcRow` (label | meta | value) — one model per `<table>`. **Rules:**
+
 - PMPE / epochs / named units → `SectionHeader` `unit` (declared once,
   right-aligned over the value column); rows carry no suffix.
 - SOL → inline suffix on the value, never a header.
@@ -149,17 +162,20 @@ conclusion = `separator + bold + large`; total = `total` (implies all +
 divider above). `src/components/breakdowns/row.tsx`.
 
 ### SectionHeader
+
 Uppercase, tracked, muted, dashed bottom border; optional right-aligned
 `unit` in `font-mono normal-case`. **Rule:** the `unit` slot declares
 ONLY non-SOL, non-% units (PMPE, epochs). `src/components/breakdowns/row.tsx`.
 
 ### Marker dot (breakdown)
+
 `w-1.5 h-1.5 rounded-full` — red=destructive, yellow=status-yellow,
 green=primary. **Rule:** the sub-total signal carrier; mutually
 exclusive with bold (bold is reserved for conclusions/totals).
 `src/components/breakdowns/row.tsx`.
 
 ### Attention dot (detail tabs)
+
 `w-1.5 h-1.5 rounded-full shrink-0` — critical=destructive,
 warning=warning, info=info. The dot renders on every tab whose
 `attention[tab]` tone is set, regardless of which tab is active; on the
@@ -176,12 +192,14 @@ soft info dot on the matching tab (`BOND` → Bond, `BID` → Bid Penalty,
 stronger tone already. `src/components/validator-detail/validator-detail.tsx`.
 
 ### Alert/pulse dot (table row)
+
 `w-1.5 h-1.5 rounded-full bg-destructive animate-pulse` trailing the
 validator name when bond runway ≤5ep or utilisation ≥85%. **Rule:** same
 pulse idiom as the detail tab dot — a present-danger signal, not
 decorative. `src/components/sam-table/sam-table.tsx`.
 
 ### StatusBanner (shared primitive)
+
 `StatusBanner` in `src/components/breakdowns/card.tsx` — `rounded-lg
 px-3 py-2 text-sm` row, tone fill `bg-{tone}-light text-{tone}` (red →
 `bg-destructive-light` at `rgba(248,113,113,0.15)`, yellow →
@@ -204,6 +222,7 @@ that links to the sim panel (bidding, payments, bond-coverage) routes
 through it so the yellow sim-jump pill stays uniform.
 
 ### Simulation surfaces
+
 `ring-status-yellow` inset ring around the table + a status-yellow
 banner with a pulsing dot; ghost rows `opacity-40 line-through
 bg-muted/30`. **Rule:** status-yellow is the single "simulated / not
@@ -212,6 +231,7 @@ view. `src/components/sam-table/sam-table.tsx`,
 `src/index.css` (`header-glow`, `sim-*` tokens).
 
 ### Typography scale
+
 `text-2xs` 10px (glanceable meta — cell sub-labels, axis ticks) · `text-3xs`
 11px (epoch-meter micro ticks only) · `text-xs` 12px (table cells, meta
 labels) · `text-mid` 13px (emphasised secondary, tab labels) · `text-sm`
@@ -220,6 +240,7 @@ only — NEVER `text-[Npx]` arbitrary sizes. Tokens declared in
 `src/index.css` `@theme` (`--text-2xs/3xs/mid`).
 
 ### Radius scale
+
 `rounded-xs` (.125rem) · `rounded-sm` (.25rem) · `rounded-md` /
 `rounded-lg` (.5rem, intentionally equal — matches Marinade app) ·
 `rounded-xl` (.75rem) · `rounded-2xl` (1rem) · `rounded-3xl` (1.5rem) ·
@@ -228,16 +249,19 @@ only — NEVER `text-[Npx]` arbitrary sizes. Tokens declared in
 scale is available for future shadcn primitives.
 
 ### Charts
+
 `bg-chart-1 … bg-chart-5` fixed sequence for stacked bars / pie
 segments. **Rule:** stable ordered palette — not status colours.
 `src/index.css`.
 
 ### Decorative borders
+
 **Rule:** NEVER `border-l` / left-edge accent bands on any element
 (persistent memory rule). Status reads from token + dot + glyph, never a
 coloured edge. (No committed `border-l` accent found — rule holds.)
 
 ### Motion vocabulary
+
 `pulse` (present danger / live), `spin` (loading), `anchor-flash`
 (deep-link target, warning-light fade), `header-glow` (simulation
 header), sheet slide/fade (detail panel). **Rule:** `pulse` means "act

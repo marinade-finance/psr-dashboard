@@ -89,43 +89,43 @@ test.describe('banner — dismiss flow', () => {
   test('dismissed banner stays hidden after reload', async ({ page }) => {
     await mockBroadcast(page, 'Banner Persist', 'Body for persistence test.')
     await page.goto('/')
-    await expect(
-      page.getByText('Banner Persist', { exact: true }),
-    ).toBeVisible({ timeout: 30000 })
+    await expect(page.getByText('Banner Persist', { exact: true })).toBeVisible(
+      { timeout: 30000 },
+    )
     await page.getByRole('button', { name: 'Dismiss' }).click()
-    await expect(
-      page.getByText('Banner Persist', { exact: true }),
-    ).toHaveCount(0)
+    await expect(page.getByText('Banner Persist', { exact: true })).toHaveCount(
+      0,
+    )
     await page.reload()
     // Don't wait for tbody data (HAR replay can flake on reload). The
     // banner is rendered synchronously from localStorage state — once the
     // nav is visible, the assertion is already meaningful.
     await page.waitForSelector('.navigation, nav', { timeout: 30000 })
-    await expect(
-      page.getByText('Banner Persist', { exact: true }),
-    ).toHaveCount(0)
+    await expect(page.getByText('Banner Persist', { exact: true })).toHaveCount(
+      0,
+    )
   })
 
   test('a different title re-shows the banner', async ({ page }) => {
     // First visit dismisses Title A.
     await mockBroadcast(page, 'Banner Title A', 'Body A.')
     await page.goto('/')
-    await expect(
-      page.getByText('Banner Title A', { exact: true }),
-    ).toBeVisible({ timeout: 30000 })
+    await expect(page.getByText('Banner Title A', { exact: true })).toBeVisible(
+      { timeout: 30000 },
+    )
     await page.getByRole('button', { name: 'Dismiss' }).click()
-    await expect(
-      page.getByText('Banner Title A', { exact: true }),
-    ).toHaveCount(0)
+    await expect(page.getByText('Banner Title A', { exact: true })).toHaveCount(
+      0,
+    )
 
     // Now swap in a different banner — the new title must show again.
     await page.unroute(`https://${BROADCAST_HOST}/**`)
     await mockBroadcast(page, 'Banner Title B', 'Body B.')
     await page.reload()
     await page.waitForSelector('tbody tr', { timeout: 30000 })
-    await expect(
-      page.getByText('Banner Title B', { exact: true }),
-    ).toBeVisible({ timeout: 10000 })
+    await expect(page.getByText('Banner Title B', { exact: true })).toBeVisible(
+      { timeout: 10000 },
+    )
   })
 })
 

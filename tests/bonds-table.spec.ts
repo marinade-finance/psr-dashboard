@@ -189,4 +189,3 @@ test.describe('Bonds coverage hero', () => {
     await expect(page.getByText(/Max protectable/i)).toHaveCount(0)
   })
 })
-

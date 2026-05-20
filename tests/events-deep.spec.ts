@@ -126,12 +126,9 @@ test.describe('Events status badges', () => {
   }) => {
     const badges = page.locator('table tbody .badge')
     const count = await badges.count()
-    if (count === 0)
-      test.skip(true, 'fixture has no Estimate/Dryrun events')
+    if (count === 0) test.skip(true, 'fixture has no Estimate/Dryrun events')
     const texts = await badges.allInnerTexts()
-    expect(
-      texts.some(t => /Dryrun|Estimate/i.test(t)),
-    ).toBe(true)
+    expect(texts.some(t => /Dryrun|Estimate/i.test(t))).toBe(true)
   })
 })
 
@@ -201,6 +198,4 @@ test.describe('Events epoch range picker', () => {
       .first()
     await expect(trigger).toBeVisible()
   })
-
 })
-

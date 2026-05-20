@@ -21,33 +21,23 @@ test.describe('Docs markdown rendering', () => {
 
   test('markdown unordered lists render as <ul><li>', async ({ page }) => {
     await page.goto('/docs')
-    await page
-      .getByRole('heading', { name: /PSR Dashboard Guide/i })
-      .waitFor()
+    await page.getByRole('heading', { name: /PSR Dashboard Guide/i }).waitFor()
     const lists = page.locator('main ul li, ul li')
     expect(await lists.count()).toBeGreaterThan(0)
   })
 
-  test('inline code spans render with monospaced styling', async ({
-    page,
-  }) => {
+  test('inline code spans render with monospaced styling', async ({ page }) => {
     await page.goto('/docs')
-    await page
-      .getByRole('heading', { name: /PSR Dashboard Guide/i })
-      .waitFor()
+    await page.getByRole('heading', { name: /PSR Dashboard Guide/i }).waitFor()
     const inline = page.locator('code').first()
     expect(await inline.count()).toBeGreaterThan(0)
     const cls = await inline.getAttribute('class')
     expect(cls || '').toMatch(/font-mono/)
   })
 
-  test('external links open in new tab (target="_blank")', async ({
-    page,
-  }) => {
+  test('external links open in new tab (target="_blank")', async ({ page }) => {
     await page.goto('/docs')
-    await page
-      .getByRole('heading', { name: /PSR Dashboard Guide/i })
-      .waitFor()
+    await page.getByRole('heading', { name: /PSR Dashboard Guide/i }).waitFor()
     const links = page.locator('a[href^="http"]')
     if ((await links.count()) === 0) test.skip(true, 'no external links')
     const target = await links.first().getAttribute('target')
@@ -103,9 +93,7 @@ test.describe('Docs anchor links', () => {
 test.describe('Docs typography', () => {
   test('h2 sections use a top border divider', async ({ page }) => {
     await page.goto('/docs')
-    await page
-      .getByRole('heading', { name: /PSR Dashboard Guide/i })
-      .waitFor()
+    await page.getByRole('heading', { name: /PSR Dashboard Guide/i }).waitFor()
     const h2 = page.locator('h2').first()
     const cls = await h2.getAttribute('class')
     expect(cls || '').toMatch(/border-t/)

@@ -68,10 +68,7 @@ test.describe('simulation — editing fires a recompute and surfaces ghost+sim r
     await openSheet(page, V01)
     await enableSimulate(page)
 
-    const bidInput = page
-      .locator(SHEET)
-      .locator('input[type="number"]')
-      .first()
+    const bidInput = page.locator(SHEET).locator('input[type="number"]').first()
     await bidInput.fill('0.5')
     // Debounce is 400ms — wait a bit longer for re-run + paint.
     await page.waitForTimeout(1200)
@@ -92,10 +89,7 @@ test.describe('simulation — editing fires a recompute and surfaces ghost+sim r
   }) => {
     await openSheet(page, V01)
     await enableSimulate(page)
-    const bidInput = page
-      .locator(SHEET)
-      .locator('input[type="number"]')
-      .first()
+    const bidInput = page.locator(SHEET).locator('input[type="number"]').first()
     await bidInput.fill('0.1')
     await page.waitForTimeout(1200)
 
@@ -107,9 +101,10 @@ test.describe('simulation — editing fires a recompute and surfaces ghost+sim r
     const resetBtn = page.getByRole('button', { name: /Reset Simulation/i })
     await expect(resetBtn).toBeVisible({ timeout: 8000 })
     await resetBtn.click()
-    await expect(
-      page.getByText(/Simulation Mode .* validator/i),
-    ).toHaveCount(0, { timeout: 5000 })
+    await expect(page.getByText(/Simulation Mode .* validator/i)).toHaveCount(
+      0,
+      { timeout: 5000 },
+    )
   })
 
   // Ghost-row rendering requires a rank change between original and
@@ -124,10 +119,7 @@ test.describe('simulation — toggling OFF clears the active sim for that valida
   }) => {
     await openSheet(page, V01)
     await enableSimulate(page)
-    const bidInput = page
-      .locator(SHEET)
-      .locator('input[type="number"]')
-      .first()
+    const bidInput = page.locator(SHEET).locator('input[type="number"]').first()
     await bidInput.fill('0.4')
     await page.waitForTimeout(1200)
 

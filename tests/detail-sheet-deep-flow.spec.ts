@@ -49,22 +49,34 @@ test.describe('detail sheet — full open-walk-simulate-close cycle', () => {
 
     await tab('Payments').click()
     await expect(
-      page.locator(SHEET).getByText(/Total payment|Total this epoch/i).first(),
+      page
+        .locator(SHEET)
+        .getByText(/Total payment|Total this epoch/i)
+        .first(),
     ).toBeVisible()
 
     await tab('Bidding').click()
     await expect(
-      page.locator(SHEET).getByText(/Get into the auction|Your bid today/i).first(),
+      page
+        .locator(SHEET)
+        .getByText(/Get into the auction|Your bid today/i)
+        .first(),
     ).toBeVisible()
 
     await tab('Bond').click()
     await expect(
-      page.locator(SHEET).getByText(/Bond calculation|Held for bid/i).first(),
+      page
+        .locator(SHEET)
+        .getByText(/Bond calculation|Held for bid/i)
+        .first(),
     ).toBeVisible()
 
     await tab('Bid Penalty').click()
     await expect(
-      page.locator(SHEET).getByText(/Bid history|Threshold/).first(),
+      page
+        .locator(SHEET)
+        .getByText(/Bid history|Threshold/)
+        .first(),
     ).toBeVisible()
 
     // (4) Close via X — URL drops ?v=.
@@ -78,9 +90,7 @@ test.describe('detail sheet — simulate then reset cycle', () => {
   test('editing a bid surfaces Remove from simulation + Reset banner; Reset clears all', async ({
     page,
   }) => {
-    await page.goto(
-      '/test-?v=FiXtUREv1111111111111111111111111111111111aa',
-    )
+    await page.goto('/test-?v=FiXtUREv1111111111111111111111111111111111aa')
     await page.waitForSelector('tbody tr', { timeout: 30000 })
     await expect(page.locator(SHEET).first()).toBeVisible({ timeout: 5000 })
 

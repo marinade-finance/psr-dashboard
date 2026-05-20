@@ -39,11 +39,13 @@ over SDK fields — no arithmetic.
 **What to track per epoch per validator:** rank, in-set status, SAM-active stake.
 
 **Where to surface:**
+
 - Main table: Δ rank vs previous epoch inline in the Rank cell (`▲3` / `▼1`).
 - Validator detail / Overview tab: sparkline or table of last N epoch positions.
 - Stats bar: count of validators that moved ≥5 places.
 
 **Data source options (in priority order):**
+
 1. Scoring API response adds a `/history` endpoint.
 2. SDK exposes `epoch` on `AuctionResult` → accumulate in a new react-query
    `['epochHistory']` key, keyed by `(voteAccount, epoch)`.
@@ -98,6 +100,7 @@ filters client-side. The react-query key is `['psrEstimates', voteAccount]` so
 opening N detail sheets makes N full `fetchValidatorsWithEpochs(3)` calls.
 
 **Fix:** split into two cached queries:
+
 1. `['psrEstimatesAll']` — fetches all validators, runs
    `calculateProtectedEventEstimates`, `staleTime: 5 min`.
 2. Per-validator filter runs client-side from the cached result.

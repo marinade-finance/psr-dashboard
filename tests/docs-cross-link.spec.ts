@@ -24,11 +24,12 @@ test.describe('docs cross-links — guide link hrefs from detail sheet', () => {
   }) => {
     await openSheet(page)
     // Every CalcCard renders a "Guide ↗" link with href docsPath + anchor.
-    const links = page
-      .locator(SHEET)
-      .locator('a', { hasText: /Guide ↗/i })
+    const links = page.locator(SHEET).locator('a', { hasText: /Guide ↗/i })
     const count = await links.count()
-    expect(count, 'detail sheet should expose at least one Guide ↗ link').toBeGreaterThan(0)
+    expect(
+      count,
+      'detail sheet should expose at least one Guide ↗ link',
+    ).toBeGreaterThan(0)
     for (let i = 0; i < count; i++) {
       const href = await links.nth(i).getAttribute('href')
       expect(href, `link #${i} href`).toMatch(/^\/docs#[a-z0-9-]+$/)

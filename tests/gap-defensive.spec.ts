@@ -104,9 +104,9 @@ test('search: typing then clearing the input restores the empty state', async ({
   await page.waitForSelector('tbody tr', { timeout: 30000 })
   const search = page.getByPlaceholder(/Find validator/i).first()
   await search.fill('Test')
-  await expect(
-    page.locator('[role="listbox"]').first(),
-  ).toBeVisible({ timeout: 3000 })
+  await expect(page.locator('[role="listbox"]').first()).toBeVisible({
+    timeout: 3000,
+  })
   await search.fill('')
   // Dropdown stays empty (or hidden) when query.trim().length < 2 — see
   // src/components/validator-search/validator-search.tsx showDropdown.

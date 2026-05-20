@@ -90,4 +90,3 @@ test.describe('ValidatorIdentity — truncation format', () => {
     }
   })
 })
-

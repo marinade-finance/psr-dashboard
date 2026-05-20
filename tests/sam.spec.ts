@@ -35,9 +35,10 @@ test('header columns present (#, Validator, Max APY, Bond, Stake, Next Step)', a
     'Stake',
     'Next Step',
   ]) {
-    expect(headers.some(h => h.includes(col)), `column "${col}" missing`).toBe(
-      true,
-    )
+    expect(
+      headers.some(h => h.includes(col)),
+      `column "${col}" missing`,
+    ).toBe(true)
   }
 })
 

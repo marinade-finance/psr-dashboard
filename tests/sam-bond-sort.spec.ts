@@ -125,7 +125,10 @@ test.describe('SAM table — default sort holds after reload', () => {
   }) => {
     await gotoSam(page)
     // Flip to ASC.
-    const apyH = page.locator('thead th').filter({ hasText: /Max APY/ }).first()
+    const apyH = page
+      .locator('thead th')
+      .filter({ hasText: /Max APY/ })
+      .first()
     await apyH.click({ position: { x: 10, y: 10 } })
     await expect(apyH).toContainText('↑')
     // Now reload — sort state is in-memory, so the default ↓ should be back.

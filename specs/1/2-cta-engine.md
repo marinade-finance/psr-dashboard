@@ -17,12 +17,12 @@ consequence.
 
 **Canonical shape:** `Action N SOL [or|to] Consequence M SOL.`
 
-| State | CTA shape | Number source |
-|---|---|---|
-| Holds stake, bond below min (critical, clips to 0) | `Top up N SOL or lose M SOL.` | N: `computeBondCoverage.topUpToKeepStake`; M: row delta |
-| No stake, wants in | `Top up N SOL to win M SOL.` | carrot, no "or lose" |
-| Bond thin, risk fee imminent | `Top up N SOL or pay ~M SOL fee.` | M: `bondRiskFeeSol` |
-| Stake shrinks due to bid | `Raise bid or lose M SOL.` | bid action unquantified — see below |
+| State                                              | CTA shape                         | Number source                                           |
+| -------------------------------------------------- | --------------------------------- | ------------------------------------------------------- |
+| Holds stake, bond below min (critical, clips to 0) | `Top up N SOL or lose M SOL.`     | N: `computeBondCoverage.topUpToKeepStake`; M: row delta |
+| No stake, wants in                                 | `Top up N SOL to win M SOL.`      | carrot, no "or lose"                                    |
+| Bond thin, risk fee imminent                       | `Top up N SOL or pay ~M SOL fee.` | M: `bondRiskFeeSol`                                     |
+| Stake shrinks due to bid                           | `Raise bid or lose M SOL.`        | bid action unquantified — see below                     |
 
 Bid-side: `computeInAuctionTarget` / `computeNextEpochStake` carry a
 "last-price coupling" caveat and are not yet trusted as headline numbers. Keep
@@ -40,14 +40,14 @@ re-type it in the sim panel. Pre-fill closes the loop.
 
 **What each CTA pre-fills:**
 
-| Breakdown + CTA | Field to seed |
-|---|---|
-| Bidding "Get into the auction" | `bid` ← `inAuction.targetBidPmpe` |
-| Bidding "Next epoch stake" | `bid` ← `nextEpoch.targetBidPmpePriority` |
-| Bond "Top up to keep stake" | `bond` ← `bondBalanceSol + topUpToKeepStake` |
-| Bond "Top up to avoid the fee" | `bond` ← `bondBalanceSol + topUpToAvoidFee` |
-| Bid-penalty "Raise bid" | `bid` ← `metrics.adjustedLimit` |
-| Payments "Simulate" | no seed — current state (existing) |
+| Breakdown + CTA                | Field to seed                                |
+| ------------------------------ | -------------------------------------------- |
+| Bidding "Get into the auction" | `bid` ← `inAuction.targetBidPmpe`            |
+| Bidding "Next epoch stake"     | `bid` ← `nextEpoch.targetBidPmpePriority`    |
+| Bond "Top up to keep stake"    | `bond` ← `bondBalanceSol + topUpToKeepStake` |
+| Bond "Top up to avoid the fee" | `bond` ← `bondBalanceSol + topUpToAvoidFee`  |
+| Bid-penalty "Raise bid"        | `bid` ← `metrics.adjustedLimit`              |
+| Payments "Simulate"            | no seed — current state (existing)           |
 
 **Wiring:** extend `onGoToSim` callback from `() => void` to
 `(seed?: { bid?: number; bond?: number; infl?: number; mev?: number; blk?: number }) => void`.
@@ -55,6 +55,7 @@ Each breakdown passes the relevant suggestion. The sim panel seeds its
 controlled inputs from those values when present, falls back to current.
 
 **Where:**
+
 - `src/components/breakdowns/card.tsx` — `onGoToSim` prop signature.
 - Each breakdown component — pass the seed value.
 - Sim panel in `src/components/validator-detail/validator-detail.tsx` — accept

@@ -45,7 +45,9 @@ test.describe('jump-search — visibility and dropdown', () => {
   }) => {
     await gotoSam(page)
     await searchInput(page).fill('Test')
-    await expect(page.locator('[role="listbox"]')).toBeVisible({ timeout: 3000 })
+    await expect(page.locator('[role="listbox"]')).toBeVisible({
+      timeout: 3000,
+    })
     expect(await page.getByRole('option').count()).toBeGreaterThan(0)
   })
 

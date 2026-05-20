@@ -4,7 +4,6 @@
 import { test, expect } from '@playwright/test'
 import type { Locator, Page } from '@playwright/test'
 
-
 // Snippets pulled verbatim from src/services/help-text.ts — the test asserts
 // the live tooltip's first sentence matches, so a copy change here doubles as
 // a reminder to update both files.
@@ -48,7 +47,6 @@ test.describe('HelpTip — stats bar', () => {
     const tip = card.locator('text=?').first()
     await hoverAndAssertTooltip(page, tip, HELP_SNIPPETS.winningApy)
   })
-
 })
 
 test.describe('HelpTip — Learn more link', () => {
@@ -77,19 +75,18 @@ test.describe('HelpTip — Learn more link', () => {
 test.describe('HelpTip — column headers', () => {
   test('Max APY header tooltip shows the canonical copy', async ({ page }) => {
     await gotoSam(page)
-    const header = page.locator('th').filter({ hasText: /Max APY/ }).first()
+    const header = page
+      .locator('th')
+      .filter({ hasText: /Max APY/ })
+      .first()
     const tip = header.locator('text=?').first()
     await hoverAndAssertTooltip(page, tip, HELP_SNIPPETS.maxApy)
   })
 
   test('Bond header tooltip exposes the bond-health copy', async ({ page }) => {
     await gotoSam(page)
-    const header = page
-      .locator('th')
-      .filter({ hasText: /^Bond/ })
-      .first()
+    const header = page.locator('th').filter({ hasText: /^Bond/ }).first()
     const tip = header.locator('text=?').first()
     await hoverAndAssertTooltip(page, tip, HELP_SNIPPETS.bondHealth)
   })
 })
-

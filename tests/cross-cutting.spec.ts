@@ -50,7 +50,10 @@ test('tip banner exposes a constraint-specific CTA for V04 (Bond)', async ({
   // Bond constraint validator surfaces "Bond tab →" or "Top up …" in the
   // header tip area. Either reads as the CTA.
   await expect(
-    page.locator(SHEET).getByText(/Bond tab →|Top up |Bond risk fee/i).first(),
+    page
+      .locator(SHEET)
+      .getByText(/Bond tab →|Top up |Bond risk fee/i)
+      .first(),
   ).toBeVisible()
 })
 
@@ -62,7 +65,10 @@ test('tip banner exposes a constraint-specific CTA for V06 (Bid)', async ({
   await expect(page.locator(SHEET).first()).toBeVisible({ timeout: 10000 })
   // Bid-too-low validator surfaces "Simulate →" or "Raise bid" in tip.
   await expect(
-    page.locator(SHEET).getByText(/Simulate →|Raise bid|bid/i).first(),
+    page
+      .locator(SHEET)
+      .getByText(/Simulate →|Raise bid|bid/i)
+      .first(),
   ).toBeVisible()
 })
 
@@ -112,9 +118,9 @@ test('banner element has aria-live="polite" for screen readers', async ({
     notFound: 'fallback',
   })
   await page.goto('/')
-  await expect(
-    page.getByText('A11y Banner Test', { exact: true }),
-  ).toBeVisible({ timeout: 30000 })
+  await expect(page.getByText('A11y Banner Test', { exact: true })).toBeVisible(
+    { timeout: 30000 },
+  )
   const status = page.locator('[role="status"]').first()
   await expect(status).toHaveAttribute('aria-live', 'polite')
 })

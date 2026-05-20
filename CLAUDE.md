@@ -96,6 +96,7 @@ with Playwright (which runs against `pnpm preview`, not the dev server).
 
 Each user-facing route has Basic and Expert variants (Expert shows extra
 metrics/columns and the simulation panel):
+
 - `/` and `/expert-` → SAM auction (`src/pages/stake-auction-marketplace.tsx`)
 - `/bonds` and `/expert-bonds` → Validator bonds (`src/pages/validator-bonds.tsx`)
 - `/protected-events` and `/expert-protected-events` → Protected events

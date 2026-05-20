@@ -13,7 +13,7 @@ contributor rules, see `CLAUDE.md`.
 ## Stack
 
 - **Bundler**: Vite 7 (`vite.config.ts`). Dev server on port 3000 (`pnpm
-  start:dev`), build output to `build/` (`pnpm build`), preview on 8080
+start:dev`), build output to `build/` (`pnpm build`), preview on 8080
   (`pnpm preview`).
 - **Language**: TypeScript 5.9. No `tsc` build step — Vite transpiles;
   `npx tsc --noEmit` for type checks. `src` alias → `./src`.
@@ -41,24 +41,24 @@ contributor rules, see `CLAUDE.md`.
 
 ## Top-level layout
 
-| Path                  | Purpose                                                                                            |
-| --------------------- | -------------------------------------------------------------------------------------------------- |
-| `src/pages/`          | Route components — one file per page.                                                              |
-| `src/components/`     | All view components, grouped by feature.                                                           |
-| `src/services/`       | Data fetching, computation, types. UI-free.                                                        |
-| `src/utils/`          | Tiny pure helpers shared across services + components (`assert-never.ts`).                         |
-| `src/class_utils.ts`  | `cn` helper (`clsx` + `tailwind-merge`).                                                           |
-| `src/css.ts`          | `CSS_*` runtime colour escape hatches (return `var(--…)` strings).                                 |
-| `src/format.ts`       | Number / SOL / percentage formatters (`sol`, `stake`, `pct`, `pmpe`, `pay`, `payCta`).             |
-| `src/fixtures/`       | Auction fixtures used by `/test-*` routes.                                                         |
-| `src/index.css`       | Design tokens, dark-mode overrides, `@theme` Tailwind exposure, global transition rule, keyframes. |
-| `src/index.tsx`       | App entry: router, query client, GTM, prefetches.                                                  |
-| `public/docs/*.md`    | `GUIDE.md`, `GUIDE-EXPERT.md` — rendered by the docs page.                                         |
-| `public/_redirects`   | Netlify-style SPA fallback for the deploy host.                                                    |
-| `specs/`              | Design specs — phase-numbered subdirs, `index.md` is the master index.                             |
-| `tests/`              | Playwright e2e specs and `__screenshots__/` baselines.                                             |
-| `.diary/`             | Date-named milestone notes (YYYYMMDD.md), checked in.                                              |
-| `.ship/`              | Ephemeral shipping artifacts, gitignored.                                                          |
+| Path                 | Purpose                                                                                            |
+| -------------------- | -------------------------------------------------------------------------------------------------- |
+| `src/pages/`         | Route components — one file per page.                                                              |
+| `src/components/`    | All view components, grouped by feature.                                                           |
+| `src/services/`      | Data fetching, computation, types. UI-free.                                                        |
+| `src/utils/`         | Tiny pure helpers shared across services + components (`assert-never.ts`).                         |
+| `src/class_utils.ts` | `cn` helper (`clsx` + `tailwind-merge`).                                                           |
+| `src/css.ts`         | `CSS_*` runtime colour escape hatches (return `var(--…)` strings).                                 |
+| `src/format.ts`      | Number / SOL / percentage formatters (`sol`, `stake`, `pct`, `pmpe`, `pay`, `payCta`).             |
+| `src/fixtures/`      | Auction fixtures used by `/test-*` routes.                                                         |
+| `src/index.css`      | Design tokens, dark-mode overrides, `@theme` Tailwind exposure, global transition rule, keyframes. |
+| `src/index.tsx`      | App entry: router, query client, GTM, prefetches.                                                  |
+| `public/docs/*.md`   | `GUIDE.md`, `GUIDE-EXPERT.md` — rendered by the docs page.                                         |
+| `public/_redirects`  | Netlify-style SPA fallback for the deploy host.                                                    |
+| `specs/`             | Design specs — phase-numbered subdirs, `index.md` is the master index.                             |
+| `tests/`             | Playwright e2e specs and `__screenshots__/` baselines.                                             |
+| `.diary/`            | Date-named milestone notes (YYYYMMDD.md), checked in.                                              |
+| `.ship/`             | Ephemeral shipping artifacts, gitignored.                                                          |
 
 `SCREENS.md`, `ARCHITECTURE.md`, `README.md`, `CLAUDE.md`, `TODO.md`,
 `bugs.md` live at repo root.
@@ -70,19 +70,19 @@ contributor rules, see `CLAUDE.md`.
 `src/index.tsx` registers the full route table on a single
 `createBrowserRouter` call.
 
-| Route                      | Component                                                          | Level                      |
-| -------------------------- | ------------------------------------------------------------------ | -------------------------- |
-| `/`                        | `SamPage` (`src/pages/stake-auction-marketplace.tsx`)              | Basic                      |
-| `/expert-`                 | `SamPage`                                                          | Expert                     |
-| `/bonds`                   | `ValidatorBondsPage` (`src/pages/validator-bonds.tsx`)             | Basic                      |
-| `/expert-bonds`            | `ValidatorBondsPage`                                               | Expert                     |
-| `/protected-events`        | `ProtectedEventsPage` (`src/pages/protected-events.tsx`)           | Basic                      |
-| `/expert-protected-events` | `ProtectedEventsPage`                                              | Expert                     |
-| `/docs`                    | `DocsPage` (`src/pages/docs.tsx`)                                  | Basic (`GUIDE.md`)         |
-| `/expert-docs`             | `DocsPage`                                                         | Expert (`GUIDE-EXPERT.md`) |
-| `/test-`                   | `TestSamPage` (`src/pages/test-stake-auction-marketplace.tsx`)     | Internal sandbox (fixture) |
-| `/test-bonds`              | `TestBondsPage` (`src/pages/test-bonds.tsx`)                       | Internal sandbox (fixture) |
-| `/test-protected-events`   | `TestProtectedEventsPage` (`src/pages/test-protected-events.tsx`)  | Internal sandbox (fixture) |
+| Route                      | Component                                                         | Level                      |
+| -------------------------- | ----------------------------------------------------------------- | -------------------------- |
+| `/`                        | `SamPage` (`src/pages/stake-auction-marketplace.tsx`)             | Basic                      |
+| `/expert-`                 | `SamPage`                                                         | Expert                     |
+| `/bonds`                   | `ValidatorBondsPage` (`src/pages/validator-bonds.tsx`)            | Basic                      |
+| `/expert-bonds`            | `ValidatorBondsPage`                                              | Expert                     |
+| `/protected-events`        | `ProtectedEventsPage` (`src/pages/protected-events.tsx`)          | Basic                      |
+| `/expert-protected-events` | `ProtectedEventsPage`                                             | Expert                     |
+| `/docs`                    | `DocsPage` (`src/pages/docs.tsx`)                                 | Basic (`GUIDE.md`)         |
+| `/expert-docs`             | `DocsPage`                                                        | Expert (`GUIDE-EXPERT.md`) |
+| `/test-`                   | `TestSamPage` (`src/pages/test-stake-auction-marketplace.tsx`)    | Internal sandbox (fixture) |
+| `/test-bonds`              | `TestBondsPage` (`src/pages/test-bonds.tsx`)                      | Internal sandbox (fixture) |
+| `/test-protected-events`   | `TestProtectedEventsPage` (`src/pages/test-protected-events.tsx`) | Internal sandbox (fixture) |
 
 `UserLevel` enum lives in `src/components/navigation/navigation.tsx`. The
 `level` prop threads from each route into the page and downstream into
@@ -92,24 +92,24 @@ tables / detail panels.
 
 ## Components
 
-| Path                                   | Purpose                                                                                           |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `components/ui/`                       | shadcn-style primitives (badge, button, card, input, sheet, switch, tooltip, etc.).               |
-| `components/sam-table/`                | Main auction table: 7-column sortable table with simulation mode, ghost rows, bond chip.          |
-| `components/validator-detail/`         | Slide-over detail sheet with tabs: Overview, Notifications, Bidding, Payments, Bond, Bid Penalty. |
-| `components/breakdowns/`               | Calculation panels inside the detail sheet. Shared `CalcCard` / `CalcRow` primitives.            |
-| `components/validator-bonds-table/`    | Bonds page table + tile-map.                                                                      |
-| `components/protected-events-table/`   | Protected events table + filter strip.                                                            |
-| `components/table/`                    | Generic sortable table used by bonds and events pages.                                            |
-| `components/navigation/`               | Top bar, tab switcher, epoch meter, theme toggle.                                                 |
-| `components/epoch-meter/`              | Epoch chip in the nav; pure render over `services/epoch.ts` logic.                               |
-| `components/concentration-metric/`     | Stacked-bar country / ASO concentration tile on the SAM page.                                    |
-| `components/validator-search/`         | Vote-account / name search input on the SAM page.                                                 |
-| `components/banner/`                   | Dismissible announcement card (localStorage-persisted dismiss).                                   |
-| `components/help-tip/`                 | Shared inline `?` tooltip icon.                                                                   |
-| `components/metric/`                   | KPI card with label + value + optional subline.                                                   |
-| `components/validator-identity/`       | Canonical name + truncated vote-account cell — use in every validator-listing table.              |
-| `components/icons/`                    | SVG icons: Marinade logo, bell, penalty glyphs.                                                   |
+| Path                                 | Purpose                                                                                           |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| `components/ui/`                     | shadcn-style primitives (badge, button, card, input, sheet, switch, tooltip, etc.).               |
+| `components/sam-table/`              | Main auction table: 7-column sortable table with simulation mode, ghost rows, bond chip.          |
+| `components/validator-detail/`       | Slide-over detail sheet with tabs: Overview, Notifications, Bidding, Payments, Bond, Bid Penalty. |
+| `components/breakdowns/`             | Calculation panels inside the detail sheet. Shared `CalcCard` / `CalcRow` primitives.             |
+| `components/validator-bonds-table/`  | Bonds page table + tile-map.                                                                      |
+| `components/protected-events-table/` | Protected events table + filter strip.                                                            |
+| `components/table/`                  | Generic sortable table used by bonds and events pages.                                            |
+| `components/navigation/`             | Top bar, tab switcher, epoch meter, theme toggle.                                                 |
+| `components/epoch-meter/`            | Epoch chip in the nav; pure render over `services/epoch.ts` logic.                                |
+| `components/concentration-metric/`   | Stacked-bar country / ASO concentration tile on the SAM page.                                     |
+| `components/validator-search/`       | Vote-account / name search input on the SAM page.                                                 |
+| `components/banner/`                 | Dismissible announcement card (localStorage-persisted dismiss).                                   |
+| `components/help-tip/`               | Shared inline `?` tooltip icon.                                                                   |
+| `components/metric/`                 | KPI card with label + value + optional subline.                                                   |
+| `components/validator-identity/`     | Canonical name + truncated vote-account cell — use in every validator-listing table.              |
+| `components/icons/`                  | SVG icons: Marinade logo, bell, penalty glyphs.                                                   |
 
 ---
 
@@ -119,18 +119,18 @@ UI-free. Pure functions and async fetchers, typed against SDK types where applic
 
 ### Auction & SAM
 
-| File                   | What it does                                                                                          |
-| ---------------------- | ----------------------------------------------------------------------------------------------------- |
+| File                   | What it does                                                                                                                                                                    |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `sam.ts`               | Loads and runs the SDK auction (`loadSam`). Augments results with per-validator expected stake change. Selectors for APY, stake, bid, budget, priority frontier, concentration. |
-| `simulation.ts`        | Builds `SourceDataOverrides` from form edits; produces ghost-row state for the simulation UI.         |
-| `calculations.ts`      | Pure math: APY compounding, bond runway, stake delta, APY breakdown.                                  |
-| `tip-engine.ts`        | Drives the rank-cell colour and Next Step column. Assembles a `ValidatorTip` from five orthogonal lever helpers sorted by severity then lever priority. |
-| `bidding.ts`           | Per-validator stake / bid / cost row.                                                                 |
-| `bond-coverage.ts`     | Bond top-up calculations for keep-stake and avoid-fee thresholds.                                     |
-| `bond-health.ts`       | Four-tier bond health state (`NO_BOND → CRITICAL → WATCH → HEALTHY`).                                |
-| `bid-penalty.ts`       | Bid-too-low penalty recompute, mirroring SDK `calcBidTooLowPenalty`.                                  |
-| `in-auction-target.ts` | Closed-form static bid to clear the winning total (estimate — verify in Simulate).                    |
-| `next-epoch-stake.ts`  | Heuristic bid to clear the redelegation priority frontier (estimate — verify in Simulate).            |
+| `simulation.ts`        | Builds `SourceDataOverrides` from form edits; produces ghost-row state for the simulation UI.                                                                                   |
+| `calculations.ts`      | Pure math: APY compounding, bond runway, stake delta, APY breakdown.                                                                                                            |
+| `tip-engine.ts`        | Drives the rank-cell colour and Next Step column. Assembles a `ValidatorTip` from five orthogonal lever helpers sorted by severity then lever priority.                         |
+| `bidding.ts`           | Per-validator stake / bid / cost row.                                                                                                                                           |
+| `bond-coverage.ts`     | Bond top-up calculations for keep-stake and avoid-fee thresholds.                                                                                                               |
+| `bond-health.ts`       | Four-tier bond health state (`NO_BOND → CRITICAL → WATCH → HEALTHY`).                                                                                                           |
+| `bid-penalty.ts`       | Bid-too-low penalty recompute, mirroring SDK `calcBidTooLowPenalty`.                                                                                                            |
+| `in-auction-target.ts` | Closed-form static bid to clear the winning total (estimate — verify in Simulate).                                                                                              |
+| `next-epoch-stake.ts`  | Heuristic bid to clear the redelegation priority frontier (estimate — verify in Simulate).                                                                                      |
 
 ### Validator data
 
@@ -162,17 +162,17 @@ UI-free. Pure functions and async fetchers, typed against SDK types where applic
 
 ### react-query keys
 
-| Key                                    | Owner                                                                                      | Notes                                                                                                                  |
-| -------------------------------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| `['sam', simulationRunId]`             | `SamPage`                                                                                  | Increments on every simulate/reset → re-runs with `simulationOverrides`. `placeholderData: keepPreviousData`. Refetch every hour. |
-| `['sam', 0]`                           | `index.tsx` prefetch + `EpochMeter`                                                        | Warms the cache on cold load; `EpochMeter` subscribes for the auction epoch.                                           |
-| `['validator-names']`                  | `SamPage`                                                                                  | `staleTime: Infinity`.                                                                                                 |
-| `['notifications-all', 'sam_auction']` | `SamPage`, `ValidatorBondsPage`                                                            | Refetch every 5 min.                                                                                                   |
-| `['notifications-broadcast']`          | All three top pages                                                                        | Refetch every 5 min.                                                                                                   |
-| `['bonds']`                            | `ValidatorBondsPage` + `Navigation` hover-prefetch + `index.tsx` prefetch                 | Refetch every hour; nav-hover uses `staleTime: 5 min`.                                                                 |
-| `['protected-events']`                 | `ProtectedEventsPage` + `Navigation` hover-prefetch + `index.tsx` prefetch + `EpochMeter` | Refetch every hour; nav-hover and `EpochMeter` use `staleTime: 5 min`.                                                 |
-| `['psrEstimates', voteAccount]`        | `ValidatorDetail`                                                                          | `staleTime: 5 min`, per-validator.                                                                                     |
-| `['doc', activeDoc]`                   | `DocsPage`                                                                                 | `staleTime: Infinity`.                                                                                                 |
+| Key                                    | Owner                                                                                     | Notes                                                                                                                             |
+| -------------------------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `['sam', simulationRunId]`             | `SamPage`                                                                                 | Increments on every simulate/reset → re-runs with `simulationOverrides`. `placeholderData: keepPreviousData`. Refetch every hour. |
+| `['sam', 0]`                           | `index.tsx` prefetch + `EpochMeter`                                                       | Warms the cache on cold load; `EpochMeter` subscribes for the auction epoch.                                                      |
+| `['validator-names']`                  | `SamPage`                                                                                 | `staleTime: Infinity`.                                                                                                            |
+| `['notifications-all', 'sam_auction']` | `SamPage`, `ValidatorBondsPage`                                                           | Refetch every 5 min.                                                                                                              |
+| `['notifications-broadcast']`          | All three top pages                                                                       | Refetch every 5 min.                                                                                                              |
+| `['bonds']`                            | `ValidatorBondsPage` + `Navigation` hover-prefetch + `index.tsx` prefetch                 | Refetch every hour; nav-hover uses `staleTime: 5 min`.                                                                            |
+| `['protected-events']`                 | `ProtectedEventsPage` + `Navigation` hover-prefetch + `index.tsx` prefetch + `EpochMeter` | Refetch every hour; nav-hover and `EpochMeter` use `staleTime: 5 min`.                                                            |
+| `['psrEstimates', voteAccount]`        | `ValidatorDetail`                                                                         | `staleTime: 5 min`, per-validator.                                                                                                |
+| `['doc', activeDoc]`                   | `DocsPage`                                                                                | `staleTime: Infinity`.                                                                                                            |
 
 ### SAM page state
 

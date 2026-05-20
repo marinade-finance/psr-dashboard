@@ -100,7 +100,9 @@ test.describe('detail sheet — overview tab', () => {
     const sheet = page.locator(SHEET)
     await expect(sheet.getByText('Max APY Composition')).toBeVisible()
     for (const label of ['Inflation', 'MEV', 'Block rewards', 'Static bid']) {
-      await expect(sheet.getByText(label, { exact: true }).first()).toBeVisible()
+      await expect(
+        sheet.getByText(label, { exact: true }).first(),
+      ).toBeVisible()
     }
   })
 })

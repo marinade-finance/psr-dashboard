@@ -56,7 +56,9 @@ test.describe('bonds tile map — interaction', () => {
     expect(count).toBeGreaterThan(0)
     for (let i = 0; i < count; i++) {
       const role = await tiles.nth(i).getAttribute('role')
-      expect(role, `tile ${i} should not advertise as button`).not.toBe('button')
+      expect(role, `tile ${i} should not advertise as button`).not.toBe(
+        'button',
+      )
     }
   })
 

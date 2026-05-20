@@ -18,7 +18,10 @@ function parseNum(s: string): number {
 }
 
 async function maxApyHeader(page: Page) {
-  return page.locator('thead th').filter({ hasText: /Max APY/ }).first()
+  return page
+    .locator('thead th')
+    .filter({ hasText: /Max APY/ })
+    .first()
 }
 
 test.describe('SAM table — sort defaults', () => {
@@ -87,7 +90,9 @@ test.describe('SAM table — rank cell', () => {
   test('rank cell uses #N (positive) for in-set rows', async ({ page }) => {
     await gotoSam(page)
     // First in-set row should have a positive #N label.
-    const firstRank = page.locator('tbody tr:not([data-divider]) td:nth-child(1)').first()
+    const firstRank = page
+      .locator('tbody tr:not([data-divider]) td:nth-child(1)')
+      .first()
     const txt = await firstRank.innerText()
     expect(txt).toMatch(/#\d+/)
     // No leading dash for in-set rows (cutoff rank is positive above the line).
@@ -100,9 +105,7 @@ test.describe('SAM table — rank cell', () => {
     await gotoSam(page)
     // The rank cell contains a tip icon — at least one row should render an
     // <svg> inside its rank cell (the icon).
-    const iconInRank = page
-      .locator('tbody tr td:nth-child(1) svg')
-      .first()
+    const iconInRank = page.locator('tbody tr td:nth-child(1) svg').first()
     await expect(iconInRank).toBeVisible({ timeout: 5000 })
   })
 })
@@ -116,7 +119,9 @@ test.describe('SAM table — bond column', () => {
     const n = await cells.count()
     const texts: string[] = []
     for (let i = 0; i < n; i++) texts.push(await cells.nth(i).innerText())
-    expect(texts.some(t => /Healthy|Adequate|Watch|Critical/.test(t))).toBe(true)
+    expect(texts.some(t => /Healthy|Adequate|Watch|Critical/.test(t))).toBe(
+      true,
+    )
   })
 
   test('bond cell renders runway as parenthesised "(Nep)" suffix', async ({
@@ -186,9 +191,10 @@ test.describe('SAM table — winning set tint', () => {
         break
       }
     }
-    expect(found, 'expected at least one out-of-set row with destructive tint').toBe(
-      true,
-    )
+    expect(
+      found,
+      'expected at least one out-of-set row with destructive tint',
+    ).toBe(true)
   })
 })
 
@@ -199,7 +205,10 @@ test.describe('SAM table — horizontal scroll on narrow viewports', () => {
     await page.setViewportSize({ width: 700, height: 900 })
     await gotoSam(page)
     // The wrapper carries overflow-x-auto and the inner table is wider than viewport.
-    const wrap = page.locator('div.overflow-x-auto').filter({ has: page.locator('table') }).first()
+    const wrap = page
+      .locator('div.overflow-x-auto')
+      .filter({ has: page.locator('table') })
+      .first()
     await expect(wrap).toBeVisible()
     const scrollMetrics = await wrap.evaluate((el: HTMLElement) => ({
       scrollWidth: el.scrollWidth,

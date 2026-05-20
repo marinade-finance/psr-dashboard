@@ -31,9 +31,9 @@ test('jump-search "no match" state surfaces helper text', async ({ page }) => {
   await page.waitForSelector('tbody tr', { timeout: 30000 })
   const search = page.getByPlaceholder(/Find validator/i).first()
   await search.fill('zzzzzzzz-impossible-prefix')
-  await expect(
-    page.getByText(/No validator matches/),
-  ).toBeVisible({ timeout: 3000 })
+  await expect(page.getByText(/No validator matches/)).toBeVisible({
+    timeout: 3000,
+  })
 })
 
 test('simulation: editing inflation commission marks the row simulated', async ({
@@ -164,6 +164,8 @@ test('nav tab hover prefetches the target route (Bonds)', async ({ page }) => {
   // /test- QueryClient already has the data and nothing fires. Both are
   // acceptable — the assertion is "hover doesn't crash and the link is
   // hover-targetable". Bare existence of the link is the testable contract.
-  await expect(page.locator('.navigation a[href="/bonds"]').first()).toBeVisible()
+  await expect(
+    page.locator('.navigation a[href="/bonds"]').first(),
+  ).toBeVisible()
   void beforeCount
 })

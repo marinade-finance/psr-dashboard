@@ -16,9 +16,9 @@ test('/docs guide has Data Sources section', async ({ page }) => {
 
 test('basic mode: expert-only tab switcher is hidden', async ({ page }) => {
   await page.goto('/docs')
-  await expect(
-    page.getByRole('button', { name: 'Expert Guide' }),
-  ).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Expert Guide' })).toHaveCount(
+    0,
+  )
 })
 
 test('basic-mode Docs link in nav navigates to /docs', async ({ page }) => {

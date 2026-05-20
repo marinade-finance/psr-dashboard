@@ -14,12 +14,12 @@ test('navigation: 3 tab links and Docs link visible', async ({ page }) => {
   for (const tab of TABS) {
     await expect(page.getByRole('link', { name: tab })).toBeVisible()
   }
-  await expect(
-    page.getByRole('link', { name: /Docs/i }).first(),
-  ).toBeVisible()
+  await expect(page.getByRole('link', { name: /Docs/i }).first()).toBeVisible()
 })
 
-test('navigation: Docs link points to /docs in basic mode', async ({ page }) => {
+test('navigation: Docs link points to /docs in basic mode', async ({
+  page,
+}) => {
   await page.goto('/test-')
   await page.waitForSelector('nav, [class*="navigation"]', { timeout: 15000 })
   const docsLink = page.locator('.docsButton').first()

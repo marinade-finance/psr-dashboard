@@ -37,6 +37,7 @@ in the test page — the main page never exercises it. A bug in that branch won'
 be caught.
 
 **Three options (pick one):**
+
 1. Make `SamDataSources.loadAuction` in the test page a thin wrapper around the
    same `loadSam()` factory the main page uses, with fixture data injected.
    No bespoke branching.
