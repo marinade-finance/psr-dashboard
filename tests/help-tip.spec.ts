@@ -51,6 +51,29 @@ test.describe('HelpTip — stats bar', () => {
 
 })
 
+test.describe('HelpTip — Learn more link', () => {
+  test('clicking Learn more on a pinned stat tooltip opens docs in a new tab', async ({
+    page,
+    context,
+  }) => {
+    await gotoSam(page)
+    // Column header "Bond ?" has guideTo=#bond. Click to pin the tooltip.
+    const header = page.locator('th').filter({ hasText: /^Bond/ }).first()
+    const tip = header.locator('button[aria-label="More info"]').first()
+    await tip.click()
+    const tooltip = page.getByRole('tooltip').first()
+    await expect(tooltip).toBeVisible({ timeout: 5000 })
+    const learnMore = tooltip.getByText('Learn more')
+    await expect(learnMore).toBeVisible()
+    const [newPage] = await Promise.all([
+      context.waitForEvent('page'),
+      learnMore.click(),
+    ])
+    await newPage.waitForLoadState('domcontentloaded')
+    expect(newPage.url()).toMatch(/\/docs/)
+  })
+})
+
 test.describe('HelpTip — column headers', () => {
   test('Max APY header tooltip shows the canonical copy', async ({ page }) => {
     await gotoSam(page)
