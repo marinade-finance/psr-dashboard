@@ -206,7 +206,7 @@ export function bondAdvice(
         const text =
           coverage.bondRiskFeeShortfall > 0
             ? `Top up ${topUp(coverage.bondRiskFeeShortfall)} to avoid the fee.`
-            : `Estimated bond fee ${pay(bondRiskFeeSol)} next epoch.`
+            : `Bond fee ${pay(bondRiskFeeSol)} charged this epoch.`
         return { text, urgency: TipUrgency.CRITICAL, tone: CardStatusTone.RED }
       }
       if (coverage.bondRiskFeeShortfall > 0) {
@@ -339,7 +339,7 @@ function bondCta(
       return tip(
         topUpAmt > 0
           ? `Top up ${topUp(topUpAmt)} to avoid the fee and re-qualify.`
-          : `Estimated bond risk fee ${pay(bondRiskFeeSol)} next epoch.`,
+          : `Bond fee ${pay(bondRiskFeeSol)} charged this epoch.`,
         TipUrgency.CRITICAL,
         TipConstraint.BOND,
         delta,
