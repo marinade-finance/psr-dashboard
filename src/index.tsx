@@ -72,21 +72,6 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
   },
   {
-    path: '/expert-',
-    element: <SamPage level={UserLevel.Expert} />,
-    errorElement: <ErrorPage />,
-  },
-  {
-    path: '/expert-bonds',
-    element: <ValidatorBondsPage level={UserLevel.Expert} />,
-    errorElement: <ErrorPage />,
-  },
-  {
-    path: '/expert-protected-events',
-    element: <ProtectedEventsPage level={UserLevel.Expert} />,
-    errorElement: <ErrorPage />,
-  },
-  {
     path: '/test-',
     element: <TestSamPage level={UserLevel.Basic} />,
     errorElement: <ErrorPage />,
@@ -104,11 +89,6 @@ const router = createBrowserRouter([
   {
     path: '/docs',
     element: <DocsPage level={UserLevel.Basic} />,
-    errorElement: <ErrorPage />,
-  },
-  {
-    path: '/expert-docs',
-    element: <DocsPage level={UserLevel.Expert} />,
     errorElement: <ErrorPage />,
   },
   {

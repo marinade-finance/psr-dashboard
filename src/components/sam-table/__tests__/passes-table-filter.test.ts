@@ -1,5 +1,5 @@
-// Tests for passesTableFilter: bond-below-min always visible, Basic vs Expert mode
-// differences, and that bond runway does not drive row visibility.
+// Tests for passesTableFilter: bond-below-min always excluded,
+// no-marinade-stake excluded, bond runway does not drive visibility.
 import { describe, expect, it } from 'vitest'
 
 import { UserLevel } from '../../navigation/navigation'
@@ -22,38 +22,21 @@ const makeValidator = (
   }) as unknown as AuctionValidator
 
 describe('passesTableFilter', () => {
-  it('drops validators with bond below minimum regardless of level', () => {
+  it('drops validators with bond below minimum', () => {
     for (const bondBalanceSol of [0, MIN_BOND_SOL - 1]) {
       const v = makeValidator({ bondBalanceSol })
-      expect(passesTableFilter(v, UserLevel.Expert, MIN_BOND_SOL)).toBe(false)
       expect(passesTableFilter(v, UserLevel.Basic, MIN_BOND_SOL)).toBe(false)
     }
   })
 
-  it('expert mode shows everything with sufficient bond', () => {
-    const atMin = makeValidator({ bondBalanceSol: MIN_BOND_SOL })
-    const noStake = makeValidator({
-      bondBalanceSol: MIN_BOND_SOL,
-      marinadeActivatedStakeSol: 0,
-      auctionStake: { marinadeSamTargetSol: 0 } as never,
-    })
-    expect(passesTableFilter(atMin, UserLevel.Expert, MIN_BOND_SOL)).toBe(true)
-    expect(passesTableFilter(noStake, UserLevel.Expert, MIN_BOND_SOL)).toBe(
-      true,
-    )
-  })
-
-  it('bond runway does not drive visibility in either mode', () => {
+  it('bond runway does not drive visibility', () => {
     const zeroRunway = makeValidator({ bondGoodForNEpochs: 0 })
-    expect(passesTableFilter(zeroRunway, UserLevel.Expert, MIN_BOND_SOL)).toBe(
-      true,
-    )
     expect(passesTableFilter(zeroRunway, UserLevel.Basic, MIN_BOND_SOL)).toBe(
       true,
     )
   })
 
-  it('basic mode hides validators with no marinade stake', () => {
+  it('hides validators with no marinade stake', () => {
     const noStake = makeValidator({
       marinadeActivatedStakeSol: 0,
       auctionStake: { marinadeSamTargetSol: 0 } as never,

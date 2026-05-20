@@ -148,11 +148,10 @@ export type SortDirection = 'asc' | 'desc'
 // detail for any filtered-out validator.
 export function passesTableFilter(
   v: AuctionValidator,
-  level: UserLevel,
+  _level: UserLevel,
   minBondBalanceSol: number,
 ): boolean {
   if ((v.bondBalanceSol ?? 0) < minBondBalanceSol) return false
-  if (level === UserLevel.Expert) return true
   const inSetOrStaked =
     v.marinadeActivatedStakeSol > 0 || v.auctionStake.marinadeSamTargetSol > 0
   return inSetOrStaked

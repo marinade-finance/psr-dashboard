@@ -69,11 +69,13 @@ export const ValidatorBondsPage: React.FC<UserLevelProps> = ({ level }) => {
       {status === 'pending' && <Loader />}
       {status === 'success' && (
         <ValidatorBondsTable
-          data={data.filter(
+          data={data.entries.filter(
             ({ validator, bond }) =>
               selectTotalMarinadeStake(validator) > 0 ||
               Number(bond?.effective_amount) > 0,
           )}
+          totalFundedBonds={data.totalFundedBonds}
+          totalBondBalance={data.totalBondBalance}
           level={level}
           notificationsMap={notificationsMap}
         />

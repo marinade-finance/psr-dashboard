@@ -2,16 +2,11 @@ import React from 'react'
 
 import { cn } from 'src/class_utils'
 import { docsPath } from 'src/components/breakdowns/docs-path'
-import { UserLevel } from 'src/components/navigation/navigation'
 import { HtmlTooltip } from 'src/components/ui/tooltip'
 import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
 import { pct, sol, lamportsToSol } from 'src/format'
-import { selectEffectiveAmount } from 'src/services/bonds'
 import { notificationTooltip } from 'src/services/notifications'
-import {
-  selectProtectedStake,
-  selectMaxProtectedStake,
-} from 'src/services/validator-with-bond'
+import { selectProtectedStake } from 'src/services/validator-with-bond'
 import {
   selectLiquidMarinadeStake,
   selectName,
@@ -29,11 +24,14 @@ import {
   TableShell,
 } from '../table/table'
 
+import type { UserLevel } from 'src/components/navigation/navigation'
 import type { NotificationSummary } from 'src/services/notifications'
 import type { ValidatorWithBond } from 'src/services/validator-with-bond'
 
 type Props = {
   data: ValidatorWithBond[]
+  totalFundedBonds: number
+  totalBondBalance: number
   level?: UserLevel
   notificationsMap?: Record<string, NotificationSummary>
 }
@@ -293,6 +291,8 @@ function rowCoverageBarColor(ratio: number, hasBond: boolean): string {
 
 export const ValidatorBondsTable: React.FC<Props> = ({
   data,
+  totalFundedBonds,
+  totalBondBalance,
   level,
   notificationsMap,
 }) => {
@@ -304,47 +304,11 @@ export const ValidatorBondsTable: React.FC<Props> = ({
     (sum, validatorWithBond) => sum + selectProtectedStake(validatorWithBond),
     0,
   )
-  const totalMaxProtectedStake = data.reduce(
-    (sum, entry) => sum + selectMaxProtectedStake(entry),
-    0,
-  )
-  const effectiveBalance = data.reduce(
-    (sum, { bond }) => sum + (bond ? selectEffectiveAmount(bond) : 0),
-    0,
-  )
-  const totalFundedBonds = data.filter(
-    ({ bond }) => (bond ? selectEffectiveAmount(bond) : 0) > 0,
-  ).length
 
   const coveredRatio =
     totalMarinadeStake > 0 ? totalProtectedStake / totalMarinadeStake : 0
   // Integer-by-construction, used only for CSS width math and threshold checks.
   const coveredPct = Math.round(coveredRatio * 100)
-
-  const expertColumns: {
-    header: string
-    headerHelp?: string
-    headerGuideTo?: string
-    render: (entry: ValidatorWithBond) => React.ReactElement
-    compare: (a: ValidatorWithBond, b: ValidatorWithBond) => number
-    alignment: Alignment
-  }[] =
-    level === UserLevel.Expert
-      ? [
-          {
-            header: 'Max protectable [SOL]',
-            headerHelp:
-              'The most stake this bond could ever reimburse if it were stretched to its limit. A bigger bond pushes this number up.',
-            headerGuideTo: `${docsPath(level)}#bond`,
-            render: (entry: ValidatorWithBond) => (
-              <>{sol(selectMaxProtectedStake(entry))}</>
-            ),
-            compare: (a: ValidatorWithBond, b: ValidatorWithBond) =>
-              selectMaxProtectedStake(a) - selectMaxProtectedStake(b),
-            alignment: Alignment.RIGHT,
-          },
-        ]
-      : []
 
   return (
     <div className="relative">
@@ -407,7 +371,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
               <span className="text-muted-foreground">
                 Total bonds:{' '}
                 <strong className="text-foreground">
-                  {sol(effectiveBalance)} SOL
+                  {sol(totalBondBalance)} SOL
                 </strong>
               </span>
             </HtmlTooltip>
@@ -419,20 +383,6 @@ export const ValidatorBondsTable: React.FC<Props> = ({
                 </strong>
               </span>
             </HtmlTooltip>
-            {level === UserLevel.Expert && (
-              <HtmlTooltip html="If every bond stretched as far as it could, this is the share of Marinade's stake that would be covered.">
-                <span className="text-muted-foreground">
-                  Max protectable:{' '}
-                  <strong className="text-foreground">
-                    {pct(
-                      totalMarinadeStake > 0
-                        ? totalMaxProtectedStake / totalMarinadeStake
-                        : 0,
-                    )}
-                  </strong>
-                </span>
-              </HtmlTooltip>
-            )}
           </div>
         </div>
       </div>
@@ -563,7 +513,6 @@ export const ValidatorBondsTable: React.FC<Props> = ({
                 },
                 alignment: Alignment.RIGHT,
               },
-              ...expertColumns,
             ]}
             defaultOrder={[[1, OrderDirection.DESC]]}
           />

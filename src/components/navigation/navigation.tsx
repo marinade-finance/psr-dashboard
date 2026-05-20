@@ -11,7 +11,6 @@ import { fetchProtectedEventsWithValidator } from 'src/services/validator-with-p
 
 export enum UserLevel {
   Basic = 'basic',
-  Expert = 'expert',
 }
 
 export type UserLevelProps = {
@@ -27,11 +26,8 @@ const tabActive =
   'bg-primary text-primary-foreground shadow-sm hover:bg-primary hover:text-primary-foreground'
 
 export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
-  level,
   children,
 }) => {
-  const isExpert = level === UserLevel.Expert
-  const prefix = isExpert ? 'expert-' : ''
   const queryClient = useQueryClient()
 
   const prefetch = useCallback(
@@ -65,7 +61,7 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
       </div>
       <div className="navigation flex items-center h-14 bg-card border-b border-border shadow-card [&_a]:no-underline overflow-x-auto">
         <Link
-          to={`/${prefix}`}
+          to="/"
           className="flex items-center gap-2.5 mx-3 hover:opacity-80 transition-opacity shrink-0"
         >
           <MarinadeLogo />
@@ -80,7 +76,7 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
         </Link>
         <div className="w-px h-6 bg-border mr-2 hidden sm:block shrink-0" />
         <div className="flex items-center gap-1 shrink-0">
-          <NavLink to={`/${prefix}`}>
+          <NavLink to="/">
             {({ isActive }) => (
               <div className={cn(tab, isActive && tabActive)}>
                 <span className="hidden sm:inline">
@@ -91,7 +87,7 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
             )}
           </NavLink>
           <NavLink
-            to={`/${prefix}protected-events`}
+            to="/protected-events"
             onMouseEnter={() => prefetch(PROTECTED_EVENTS)}
           >
             {({ isActive }) => (
@@ -101,7 +97,7 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
               </div>
             )}
           </NavLink>
-          <NavLink to={`/${prefix}bonds`} onMouseEnter={() => prefetch(BONDS)}>
+          <NavLink to="/bonds" onMouseEnter={() => prefetch(BONDS)}>
             {({ isActive }) => (
               <div className={cn(tab, isActive && tabActive)}>
                 <span className="hidden sm:inline">Validator Bonds</span>
@@ -112,7 +108,7 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
         </div>
         <div className="ml-auto flex items-center gap-2 shrink-0">
           <a
-            href={isExpert ? '/expert-docs' : '/docs'}
+            href="/docs"
             target="_blank"
             rel="noopener noreferrer"
             className={cn(

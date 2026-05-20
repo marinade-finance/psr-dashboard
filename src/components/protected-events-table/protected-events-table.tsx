@@ -16,7 +16,6 @@ import { ProtectedEventStatus } from 'src/services/validator-with-protected_even
 import { selectName } from 'src/services/validators'
 
 import { Metric } from '../metric/metric'
-import { UserLevel } from '../navigation/navigation'
 import {
   Alignment,
   OrderDirection,
@@ -25,6 +24,7 @@ import {
   TableShell,
 } from '../table/table'
 
+import type { UserLevel } from '../navigation/navigation'
 import type { ProtectedEvent } from 'src/services/protected-events'
 import type { ProtectedEventWithValidator } from 'src/services/validator-with-protected_event'
 
@@ -220,9 +220,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
           label="Last settled epoch"
           value={lastSettledEpoch > 0 ? lastSettledEpoch.toLocaleString() : '—'}
           subline={
-            level === UserLevel.Expert && lastEpochBids > 0
-              ? `${sol(lastEpochBids)} SOL bids`
-              : undefined
+            lastEpochBids > 0 ? `${sol(lastEpochBids)} SOL bids` : undefined
           }
           tooltipHtml="The most recent epoch where reimbursements have been fully paid out and locked in."
           guideTo={`${docsPath(level)}#psr`}

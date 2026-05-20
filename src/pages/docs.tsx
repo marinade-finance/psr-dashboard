@@ -7,16 +7,15 @@ import remarkGfm from 'remark-gfm'
 import { cn } from 'src/class_utils'
 import { Loader } from 'src/components/loader/loader'
 import { Navigation } from 'src/components/navigation/navigation'
-import { UserLevel } from 'src/components/navigation/navigation'
 
 type Props = {
-  level?: UserLevel
+  level?: string
 }
 
-// Each user level maps to one markdown document. The document is split into
-// navigable pages by `<!-- page: id | Title -->` markers (see public/docs/*).
-type Doc = 'GUIDE' | 'GUIDE-EXPERT'
-const DOCS: readonly Doc[] = ['GUIDE', 'GUIDE-EXPERT'] as const
+// The document is split into navigable pages by `<!-- page: id | Title -->`
+// markers (see public/docs/GUIDE.md).
+type Doc = 'GUIDE'
+const DOCS: readonly Doc[] = ['GUIDE'] as const
 
 const fetchDoc = (name: Doc) =>
   fetch(`/docs/${name}.md`).then(res => {
@@ -72,9 +71,9 @@ function splitPages(md: string): Page[] {
   return pages
 }
 
-function makeComponents(
-  onAnchor: (doc: Doc) => void,
-): React.ComponentProps<typeof ReactMarkdown>['components'] {
+function makeComponents(): React.ComponentProps<
+  typeof ReactMarkdown
+>['components'] {
   return {
     h1: ({ children }) => (
       <h1 className="text-2xl font-semibold text-foreground mb-2 leading-tight">
@@ -97,20 +96,6 @@ function makeComponents(
       </p>
     ),
     a: ({ href, children }) => {
-      // Hash-only links route to a doc level (e.g. [Dashboard Guide](#GUIDE)).
-      if (href?.startsWith('#')) {
-        const target = href.slice(1) as Doc
-        if (DOCS.includes(target)) {
-          return (
-            <button
-              onClick={() => onAnchor(target)}
-              className="text-primary hover:underline cursor-pointer bg-transparent border-0 p-0 font-inherit"
-            >
-              {children}
-            </button>
-          )
-        }
-      }
       return (
         <a
           href={href}
@@ -185,14 +170,8 @@ function makeComponents(
   }
 }
 
-export const DocsPage: React.FC<Props> = ({ level }) => {
-  const isExpert = level === UserLevel.Expert
-  // The active document. Direct hash links (e.g. a breakdown "Guide ↗")
-  // target anchors that live in GUIDE; default to GUIDE when a hash is
-  // present so the scroll target resolves regardless of expert mode.
-  const [activeDoc, setActiveDoc] = useState<Doc>(
-    isExpert && !window.location.hash ? 'GUIDE-EXPERT' : 'GUIDE',
-  )
+export const DocsPage: React.FC<Props> = () => {
+  const activeDoc: Doc = 'GUIDE'
   const [pageId, setPageId] = useState<string | null>(null)
   // Bumped on browser hash navigation so the page resolver re-reads the
   // hash and jumps to whichever page now owns the anchor.
@@ -224,12 +203,7 @@ export const DocsPage: React.FC<Props> = ({ level }) => {
     return m
   }, [pages])
 
-  const switchDoc = (doc: Doc) => {
-    setActiveDoc(doc)
-    setPageId(null)
-  }
-
-  const components = useMemo(() => makeComponents(switchDoc), [])
+  const components = useMemo(() => makeComponents(), [])
 
   // Resolve the current page: an explicit user selection wins; otherwise a
   // URL hash picks the page that owns the anchor; otherwise the first page.
@@ -277,27 +251,9 @@ export const DocsPage: React.FC<Props> = ({ level }) => {
 
   return (
     <div className="bg-background-page min-h-screen">
-      <Navigation level={level} />
+      <Navigation />
       <div className="flex justify-center px-4 sm:px-6">
         <div className="w-full max-w-5xl">
-          {isExpert && (
-            <div className="flex gap-1 pt-4 border-b border-border mb-0">
-              {DOCS.map(doc => (
-                <button
-                  key={doc}
-                  onClick={() => switchDoc(doc)}
-                  className={cn(
-                    'px-3 py-2 text-mid font-medium border-b-2 transition-colors -mb-px',
-                    activeDoc === doc
-                      ? 'border-primary text-primary'
-                      : 'border-transparent text-muted-foreground hover:text-foreground',
-                  )}
-                >
-                  {doc === 'GUIDE' ? 'Guide' : 'Expert Guide'}
-                </button>
-              ))}
-            </div>
-          )}
           <div className="flex flex-col md:flex-row gap-8 py-10">
             <nav className="md:w-56 shrink-0">
               <ul className="flex flex-row flex-wrap md:flex-col gap-1 md:sticky md:top-6">

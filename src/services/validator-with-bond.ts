@@ -35,9 +35,13 @@ export const selectProtectedStake = (entry: ValidatorWithBond) =>
     selectTotalMarinadeStake(entry.validator),
   )
 
-export const fetchValidatorsWithBonds = async (): Promise<
-  ValidatorWithBond[]
-> => {
+export type BondsResult = {
+  entries: ValidatorWithBond[]
+  totalFundedBonds: number
+  totalBondBalance: number
+}
+
+export const fetchValidatorsWithBonds = async (): Promise<BondsResult> => {
   const [{ validators }, { bonds }, { auctionResult }] = await Promise.all([
     fetchValidatorsWithEpochs(0),
     fetchBonds(),
@@ -65,5 +69,17 @@ export const fetchValidatorsWithBonds = async (): Promise<
     }
   }
 
-  return Object.values(validatorsWithBonds)
+  const totalFundedBonds = bonds.filter(
+    bond => selectEffectiveAmount(bond) > 0,
+  ).length
+  const totalBondBalance = bonds.reduce(
+    (sum, bond) => sum + selectEffectiveAmount(bond),
+    0,
+  )
+
+  return {
+    entries: Object.values(validatorsWithBonds),
+    totalFundedBonds,
+    totalBondBalance,
+  }
 }
