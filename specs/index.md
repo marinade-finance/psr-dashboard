@@ -19,12 +19,12 @@
 
 | Spec | Status | Summary |
 | ---- | ------ | ------- |
-| [6/1-fixes.md](6/1-fixes.md) | planned | Queued fixes: avoid-fee CTA text, tooltip singleton, /test- sim, test-page parity |
-| [6/2-cta-engine.md](6/2-cta-engine.md) | planned | CTA unified shape (action + consequence) + sim pre-fill from breakdowns |
-| [6/3-test-fixtures.md](6/3-test-fixtures.md) | planned | Test fixtures: full auction-state + CTA coverage for /test- routes |
-| [6/4-sdk-features.md](6/4-sdk-features.md) | planned | SDK migration, rank tracking, precise APY, PSR query dedup — all blocked on SDK |
-| [6/5-new-ui-features.md](6/5-new-ui-features.md) | planned | PSR pending badge, epoch status, My Validator pin, forward bond ideal row |
-| [6/6-content.md](6/6-content.md) | planned | GUIDE gaps, CPMPE investigation, 0.7% verify, docs line-length hygiene |
+| [1/1-fixes.md](1/1-fixes.md) | planned | Queued fixes: avoid-fee CTA text, tooltip singleton, /test- sim, test-page parity |
+| [1/2-cta-engine.md](1/2-cta-engine.md) | planned | CTA unified shape (action + consequence) + sim pre-fill from breakdowns |
+| [1/3-test-fixtures.md](1/3-test-fixtures.md) | planned | Test fixtures: full auction-state + CTA coverage for /test- routes |
+| [1/4-sdk-features.md](1/4-sdk-features.md) | planned | SDK migration, rank tracking, precise APY, PSR query dedup — all blocked on SDK |
+| [1/5-new-ui-features.md](1/5-new-ui-features.md) | planned | PSR pending badge, epoch status, My Validator pin, forward bond ideal row |
+| [1/6-content.md](1/6-content.md) | planned | GUIDE gaps, CPMPE investigation, 0.7% verify, docs line-length hygiene |
 
 ---
 
@@ -62,9 +62,9 @@ Code evidence is present but correctness needs a manual check at `/test-` or in 
 
 | Item | Uncertainty |
 | ---- | ----------- |
-| avoid-fee CRITICAL text when `bondRiskFeeSol === 0` | `bondAdvice()` line 215 may still emit "avoid the fee" even with no fee charged — see `6/1-fixes.md` |
+| avoid-fee CRITICAL text when `bondRiskFeeSol === 0` | `bondAdvice()` line 215 may still emit "avoid the fee" even with no fee charged — see `1/1-fixes.md` |
 | `/test-` simulation (hasOverrides branch) | `runSdkRerun` wired; verify rows update correctly when sim panel is edited |
 | Tip-engine WANT/VALIDATOR/COUNTRY/ASO branches | Branches exist; verify tip text renders correctly for each cap type |
 | Test fixture redelegation budget + clearing cutoff | o01–o12 exist; confirm budget > 0 and auction produces winners + losers |
-| CPMPE term review | Oracle consultation pending (usage limit hit 2026-05-13) — see `6/6-content.md` |
-| 0.7% natural turnover framing | GUIDE updated; model comment not confirmed against SDK design — see `6/6-content.md` |
+| CPMPE term review | Oracle consultation pending (usage limit hit 2026-05-13) — see `1/6-content.md` |
+| 0.7% natural turnover framing | GUIDE updated; model comment not confirmed against SDK design — see `1/6-content.md` |
