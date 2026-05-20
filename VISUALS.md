@@ -60,9 +60,13 @@ One shared track-and-fill `Gauge` (`src/components/gauge/gauge.tsx`),
 two sizes. Fill = `clamp(value/scaleMax, 4%, 100%)`. **Critical band +
 marker scale independently of fill** — `criticalBand` and `marker` are
 fractions of the *track*, fill is a fraction of the *value range*.
-Bond pill: `scaleMax = 4 × idealBondEpochs`, `marker = criticalBand =
-minBondEpochs / scaleMax` (true SDK threshold position, no magic 0.25).
-`src/components/sam-table/sam-table.tsx`.
+Bond pill: `scaleMax = bondGaugeScaleMax(config) = minBondEpochs /
+BOND_CRITICAL_FRAC` (i.e. `5 × minBondEpochs`), and both `marker` and
+`criticalBand` are passed the constant `BOND_CRITICAL_FRAC = 0.2` — the
+20% mark literally is the SDK fee-charged threshold. Healthy validators
+above `5 × minBondEpochs` saturate at 100% (accepted tradeoff).
+`src/services/calculations.ts` (`BOND_CRITICAL_FRAC`,
+`bondGaugeScaleMax`); call site `src/components/sam-table/sam-table.tsx`.
 
 ### Breakdown table grammar — one 3-col model
 
@@ -138,10 +142,15 @@ Five CTA helpers in `src/services/tip-engine.ts`, each owning one lever's
 text + urgency end-to-end: `bondCta`, `bidCta`, `outOfSetCta`, `capCta`,
 `deltaCta`. `outOfSetCta` fires only when the validator is out-of-set
 despite `revShare.totalPmpe ≥ winningTotalPmpe` — it names the actual
-binding reason (samBlocked / blacklist / no bond / cap binding /
-opted-out) instead of letting `deltaCta` lie with a "Losing N SOL"
-symptom; severity tracks `marinadeActivatedStakeSol` against the 10k
-`NON_TRIVIAL_STAKE_SOL` line (critical above, neutral below).
+binding reason instead of letting `deltaCta` lie with a "Losing N SOL"
+symptom. Reasons are checked in source order: samBlocked → opted-out
+(`maxStakeWanted === 0`, pinned to INFO regardless of stake) →
+`samEligible === false` (narrowed to no-bond when `bondBalanceSol == null`,
+then to blacklisted, then to a generic "client version / vote credits"
+hint) → binding cap → generic "another constraint binds". Severity
+tracks `marinadeActivatedStakeSol` against the 10k `NON_TRIVIAL_STAKE_SOL`
+line — critical above, neutral below; the cap branch reads warning above
+the line, info below.
 `selectTip` sorts surviving candidates by `SEVERITY_ORDER` first
 (critical→warning→info→positive→neutral), then `LEVER_ORDER`
 (bond→bid/rank→cap→none) as the tiebreak. **Rule:** never reword a CTA
@@ -176,10 +185,12 @@ column alignment — reserve identical space regardless of glyph.
 `clamp(value/scaleMax, 4%, 100%)`. `marker` and `criticalBand` are
 fractions of the **track** (0..1), independent of fill. **Rule:**
 critical band & threshold marker scale with the track, fill scales with
-the value range — never couple them. Bond pill derives all three from
-live SDK config: `scaleMax = 4 × idealBondEpochs`,
-`marker = criticalBand = minBondEpochs / scaleMax`.
-`src/components/gauge/gauge.tsx`; call site
+the value range — never couple them. Bond pill derives geometry from
+live SDK config via `bondGaugeScaleMax(config) = minBondEpochs /
+BOND_CRITICAL_FRAC` (`= 5 × minBondEpochs`), with
+`marker = criticalBand = BOND_CRITICAL_FRAC = 0.2`.
+`src/components/gauge/gauge.tsx`,
+`src/services/calculations.ts`; call site
 `src/components/sam-table/sam-table.tsx`.
 
 ### Bond chip
@@ -250,7 +261,11 @@ pill colour independently — sim-jump pills pin to yellow across all
 banner tones, so the simulation affordance reads consistently. **Rule:**
 never render a bespoke status pill inline — route through
 `StatusBanner` so banner-level chrome stays one shape, one set of tone
-classes (`STATUS_CLASSES` × `STATUS_ACTION_CLASSES`).
+classes (`STATUS_CLASSES` × `STATUS_ACTION_CLASSES`). The
+`withSimAction(base, onGoToSim)` helper (same file) is the one canonical
+way to attach a "Simulate →" action to a status — every breakdown card
+that links to the sim panel (bidding, payments, bond-coverage) routes
+through it so the yellow sim-jump pill stays uniform.
 
 ### Simulation surfaces
 `ring-status-yellow` inset ring around the table + a status-yellow

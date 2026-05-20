@@ -143,9 +143,9 @@ indicator `↑`/`↓` next to active header. Table sits in a scroll-x card
 | `#`            | `rank`       | Primary: absolute 1-based stake-priority rank from the top of the sorted auction (`#N`, `text-sm`), coloured by tip urgency, no trend arrow — the `#` appears only here. Sub-label underneath (`text-[10px]`, ~40% smaller): cutoff-relative position from `validator.values.cutoffRank` — `at cutoff`, `N above`, or `N below`; no `#` prefix, NBSP binds count to word. Ghost rows: muted same layout. Simulated rows: posColor-tinted `#N` (no sub) + `✕` clear button. Keyboard-activatable (`role="button"`, `tabIndex`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | Validator      | `validator`  | `<ValidatorIdentity>` — name + responsive vote account. Trailing red pulsing dot when validator has an alert (`bondRunway ≤ 5` or `bondUtilPct ≥ 85`). `PenaltyBadges` slot for the active penalty icons.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | Max APY        | `maxApy`     | `selectMaxAPY` pill. Primary tone if in winning set, destructive-light otherwise.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| Bond           | `bond`       | Bond chip (No bond / Critical / Watch / Adequate / Healthy — see § Bond chip) + dot + balance, then a compact `<Gauge size="sm">` (the shared track-and-fill component, also used larger by the Concentration metrics) + `(Nep)` runway suffix. The gauge fills proportionally to `bondGoodForNEpochs` against a fixed 100-epoch scale (so a 5ep bond reads short and a 90ep bond nearly full; runway over the cap renders a full bar — the old `100 − utilization` encoding was discarded because utilization is ≈0 for almost every validator and rendered every bar full). Fill colour follows the existing bond-health tier (`BOND_CHIP[...].bar`: primary / muted / warning / destructive) so a near-critical bond reads red even when its runway is only a few epochs. A thin `bg-destructive` tick at the danger (left) end marks the `dsSamConfig.minBondEpochs` critical floor (no number label — the `w-14` cell can't fit one without crowding the `(Nep)` token). The bond pill passes `criticalBand={0.25}`, so the leftmost 25% of the track carries a faint `bg-destructive/15` zone drawn behind the value fill — the critical-runway region reads red at a glance. The band is bond-pill-only: the `size="lg"` Concentration gauge does not pass `criticalBand` (its marker is the cap, a different semantic). Track height and fill are a uniform 4px across every row variant (normal, out-of-set, ghost, simulated, alert). The runway number is display-capped: `≥ 100` epochs renders `(>100ep)`, below that the exact rounded value (e.g. `(37ep)`). |
+| Bond           | `bond`       | Bond chip (No bond / Critical / Watch / Adequate / Healthy — see § Bond chip) + dot + balance, then a compact `<Gauge size="sm">` (the shared track-and-fill component, also used larger by the Concentration metrics) + `(Nep)` runway suffix. Gauge geometry lives in `src/services/calculations.ts` — `BOND_CRITICAL_FRAC = 0.2` and `bondGaugeScaleMax(config) = minBondEpochs / 0.2`. The scale is chosen so the SDK's `minBondEpochs` floor lands at exactly 20% of the track; runway above `5 × minBondEpochs` saturates at full. Fill colour follows the bond-health tier (`BOND_CHIP[...].bar`: primary / muted / warning / destructive), so a near-critical bond reads red even when its runway is only a few epochs. A thin `bg-destructive` marker tick at the 20% mark (`marker={BOND_CRITICAL_FRAC}`) flags the `minBondEpochs` critical floor — no number label, the `w-14` cell cannot fit one without crowding the `(Nep)` token. The bond pill also passes `criticalBand={BOND_CRITICAL_FRAC}`, so the leftmost 20% of the track carries a faint `bg-destructive/15` zone drawn behind the value fill — the critical-runway region reads red at a glance. The band is bond-pill-only: the `size="lg"` Concentration gauge does not pass `criticalBand` — its marker is the cap, a different semantic. Runway display is capped at 100: `≥ 100` epochs renders `(>100ep)`, below that the rounded value, e.g. `(37ep)`. |
 | Stake / Next change | `stakeDelta` | Active SAM stake on top, expected next-epoch change underneath. Muted `0 SOL` when delta is zero, otherwise tinted `+/−` SOL coloured `var(--status-green)` / `var(--destructive)`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| Next Step      | `nextStep`   | One-line tip from `getValidatorTip`, pill capped at `max-w-[260px]` so the column stays rhythmic. **Colour = severity** via `getTipStyle(tip.urgency)`. **Glyph = lever** via `getTipIcon`: `TipConstraint.BOND` → shield glyph, `BID`/`RANK` → bars glyph (same lever — raise the bid), `CAP` → cap glyph; all non-directional and severity-agnostic. Only `TipConstraint.NONE` is directional and keyed off the real signed delta — ↗ gain, ↘ loss, → at target — so an up-arrow can never appear on a losing or blocked row. One escalation: `tip.alert === true` (an estimated bond risk fee this epoch) swaps the glyph for the octagon `ICON_ALERT`. The contiguous out-of-set "bid too low" block (`constraint: 'rank'`) is an expected state, not an alarm — rendered muted with a 2-word "Bid too low" label; the full sentence shows in the detail panel. Out-of-set validators whose `revShare.totalPmpe` already clears the winning total surface the binding reason directly (`outOfSetCta`): `Blocked from SAM this epoch.`, `Blacklisted by Marinade.`, `No bond posted. Add a bond to qualify.`, `Not eligible — check client version and vote credits.`, the cap cause line (country/ASO/validator/want) suffixed `— out of set.`, `Max-stake-wanted set to 0 — opted out.`, or the generic `Out of set — bid is high enough, another constraint binds.` Severity tracks active Marinade stake — above 10k SOL the tip is critical-red, otherwise grey; the opt-out branch is always `info`. In-set `deltaCta` says `At your max-stake-wanted setting.` when the target meets the validator's own `maxStakeWanted`, otherwise `At target stake.` for zero / cap-bound deltas.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| Next Step      | `nextStep`   | One-line tip from `getValidatorTip`, pill capped at `max-w-[260px]` so the column stays rhythmic. **Colour = severity** via `getTipStyle(tip.urgency)`. **Glyph = lever** via `getTipIcon`: `TipConstraint.BOND` → shield glyph, `BID`/`RANK` → ascending-chevrons glyph (same lever — raise the bid), `CAP` → cap glyph; all non-directional and severity-agnostic. Only `TipConstraint.NONE` is directional and keyed off the real signed delta — ↗ gain, ↘ loss, → at target — so an up-arrow can never appear on a losing or blocked row. One escalation: `tip.alert === true` (an estimated bond risk fee this epoch) swaps the glyph for the octagon `ICON_ALERT`. The contiguous out-of-set "bid too low" block (`constraint: 'rank'`) is an expected state, not an alarm — rendered muted with a 2-word "Bid too low" label; the full sentence shows in the detail panel. Out-of-set validators whose `revShare.totalPmpe` already clears the winning total surface the binding reason directly (`outOfSetCta`): `Blocked from SAM this epoch.`, `Blacklisted by Marinade.`, `No bond posted. Add a bond to qualify.`, `Not eligible — check client version and vote credits.`, the cap cause line (country/ASO/validator/want) suffixed `— out of set.`, `Max-stake-wanted set to 0 — opted out.`, or the generic `Out of set — bid is high enough, another constraint binds.` Severity tracks active Marinade stake — above 10k SOL the tip is critical-red, otherwise grey; the opt-out branch is always `info`. In-set `deltaCta` says `At your max-stake-wanted setting.` when the target meets the validator's own `maxStakeWanted`, otherwise `At target stake.` for zero / cap-bound deltas.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | (chevron)      | —            | Drill-in cue, recolours on row hover.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
 ### Cutoff divider
@@ -309,30 +309,52 @@ Right column:
   change`).
 
 **Bidding tab** — one `BiddingBreakdown` card
-(`breakdowns/bidding.tsx`), a SINGLE continuous 4-column `<table>`. The
-two advisory estimates are the centerpiece; the sections above feed the
-target-bid math. `SectionHeader`-delimited sections, top to bottom:
-Stake position → Cost-PMPE composition → Bid gap → Get into the auction
-→ Get stake next epoch. The status banner is a verdict — green "Your
-bid clears the winning bar — you are in the auction", red "Raise your
-static bid to X PMPE …", yellow when a concentration cap is binding.
-Tip footer carries "Simulate this bid to confirm the exact figure →".
-The two estimate sections' `SectionHeader` `help` tooltips carry the
-closed-form last-price / greedy-heuristic and verify-in-Simulate
-caveats. The "Expected change next epoch" row renders `0 SOL` (never a
-dash) on a real zero and carries a `HelpTip` explaining why it can be
-zero even when target > active.
+(`breakdowns/bidding.tsx`), a SINGLE continuous `<table>` (`max-w-[34rem]`)
+built from the shared `CalcRow` / `SectionHeader` / `OkRow` primitives.
+`SectionHeader`-delimited sections, top to bottom: **Your bid today** →
+**Get into the auction** → **Get stake delegated next epoch**. Each
+section header carries `unit="PMPE"`. The first section sums non-bid
+revenue (inflation + MEV + block rewards) and the static bid; the next
+two derive a target static bid by subtracting non-bid revenue from a
+threshold — the winning total PMPE for "Get into the auction", the
+redelegation priority frontier for "Get stake delegated next epoch".
+
+Status banner verdicts (`baseStatus` in `bidding.tsx`):
+
+- `clears` (green, `Already clears — keep your static bid at or above N
+  PMPE.`) when `inAuction.bidIncrease ≤ 0` and no cap binds.
+- Increase needed (red, `Bid X → Y PMPE to clear the winning total
+  PMPE.`) when the current bid is short.
+- Cap binding (yellow, `<capLabel> — raising your bid alone will not
+  get you in.`) where `capLabel` resolves to the country / ASO / per-
+  validator / want / generic phrasing in `bidding.tsx:84-94`.
+
+The right-side action pill is the shared `withSimAction` yellow
+`Simulate →` chip; no tip footer. The `IN_AUCTION_HELP` and
+`NEXT_EPOCH_HELP` strings carry the closed-form / greedy-heuristic
+verify-in-Simulate caveats. When the priority frontier is zero
+(`noFrontier`) or already cleared, the third section collapses to a
+single green `OkRow` plus the priority-rank and bid-gap context rows.
 
 **Payments tab** — one `PaymentsBreakdown` card
-(`breakdowns/payments.tsx`), a SINGLE continuous 4-column `<table>`,
-purely the cost story. `SectionHeader`-delimited sections: Bid cost
-(Active stake cost, Activating stake cost, Bid cost subtotal) →
-Penalties → PSR settlements (conditional) → **Total payment**. One
-status banner summarises the combined state (green "no penalties" / red
-"including Y in penalties"), one tip footer carries "See bid-too-low
-penalty calculation →" (when active) and "Simulate commission or bid
-changes →". The "Total payment" row is black (`text-foreground`, no
-severity) — it is a conclusion, not a warning.
+(`breakdowns/payments.tsx`), purely the cost story. The table uses the
+shared `CalcRow` / `SectionHeader` primitives (`max-w-[34rem]`); col1
+carries PMPE rates only, col2 SOL amounts only, so units never mix in a
+column. `SectionHeader`-delimited sections, top to bottom: **Active
+stake cost** (Active stake → × Effective bid → = Active stake cost) →
+**Activating stake cost** (Activating stake → × Activating-stake bid →
+= Activating stake cost) → **Penalties** (Bid-too-low, Blacklist, Bond
+risk fee — each `—` when zero) → **PSR settlements — estimated**
+(conditional, one row per estimate with funder in col1) → **Total
+payment** (`total` styling — separator + bold + large, no severity
+colour). Status banner summarises the combined state from
+`baseStatus`: green `You will pay X SOL in total this epoch — no
+penalties.` or red `You will pay X SOL in total this epoch —
+including Y SOL in penalties.`. The right-side action pill is the
+shared yellow `Simulate →` chip via `withSimAction`. Only the
+bid-too-low penalty link remains as a `tip` slot under the banner — a
+destructive cross-tab affordance, not a sim action — rendered as `See
+bid-too-low penalty calculation →` when `bidTooLowPenaltySol > 0`.
 
 **Bond tab** — one `BondCoverageBreakdown` `CalcCard`
 (`breakdowns/bond-coverage.tsx`). Rates section → "Minimum bond to keep
@@ -350,13 +372,14 @@ this epoch. Each `SectionHeader` carries the PMPE / unit-less unit.
 `warning` / `info`) in the family colour, then title / body / footer.
 "No notifications for this validator." when empty.
 
-**Shared row model** — Bidding and Payments use the shared 4-column
-`RevRow` from `breakdowns/row.tsx` (`label | pct | pmpe | value`);
-rows that don't use a column leave it blank, never mixed with
-`CalcRow` in the same table. The column unit (`PMPE` / `SOL`) lives in
-the `SectionHeader` `unit` slot, stated once per section instead of
-suffixed on every row label. `CalcRow` and `RevRow` derive paddings,
-dividers and weight from one shared `rowStyle()` helper.
+**Shared row model** — Bidding and Payments use the same primitives
+from `breakdowns/row.tsx`: `CalcRow` (label | col1 | col2),
+`SectionHeader` (title + optional `unit` / `col1Unit` slots),
+`OkRow` (green confirmation), and `Marker`. Column units live in the
+`SectionHeader` `unit` slot, stated once per section instead of
+suffixed on every row label. Paddings, dividers and weight derive from
+one shared `rowStyle()` helper inside `row.tsx`. Conclusion rows pass
+`total` to get `separator + bold + large` in one prop.
 
 `MetricRow` and `PenaltyRow` are file-private helpers in
 `validator-detail.tsx`; they are not exported as shared primitives.
@@ -551,8 +574,8 @@ When you change the UI in any way that's user-visible, update this file in
 the same commit:
 
 - Add / remove / rename a column → update the corresponding column table.
-- Add a new tab on the validator detail panel → list it under "Overview"
-  or as its own section.
+- Add a new tab on the validator detail panel → list it under
+  "Validator detail sheet → Tabs" and add the per-tab section below.
 - Change a default sort, a tier threshold, a status label, or a token →
   update the relevant row.
 - Move a route → update Navigation + the affected page section.
