@@ -16,11 +16,6 @@ export const BOND_URGENT_EPOCHS = 3
 //   critical → fee charging now, OR runway ≤ minBondEpochs + BOND_URGENT_EPOCHS (red, urgent)
 //   watch    → runway between urgent threshold and idealBondEpochs (yellow)
 //   healthy  → runway above idealBondEpochs (green)
-//
-// The former 'soft' tier (adequate but not ideal) is merged into 'watch' —
-// the visual difference between "growing" and "keeping" wasn't actionable
-// enough to justify a fifth color. The urgency split is now runway-based:
-// within BOND_URGENT_EPOCHS of the penalty gate → red; above idealBondEpochs → green.
 export const BondHealthState = {
   NO_BOND: 'no-bond',
   CRITICAL: 'critical',
@@ -52,6 +47,7 @@ export function bondHealthFromAuction(
   const coverage =
     precomputedCoverage ?? computeBondCoverage(v, config, winningTotalPmpe)
   if (coverage.bondRiskFeeShortfall > 0) return BondHealthState.CRITICAL
+  if (v.values.bondRiskFeeSol > 0) return BondHealthState.CRITICAL
   // Below ideal coverage → yellow watch. Includes the BOND_URGENT_EPOCHS
   // near-threshold zone: urgency is expressed through the CTA message
   // ("avoid future bond fee") not through red chip color, since no fee fires.

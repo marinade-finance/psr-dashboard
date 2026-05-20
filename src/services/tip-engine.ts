@@ -224,6 +224,11 @@ export function bondAdvice(
           tone: CardStatusTone.RED,
         }
       }
+      return {
+        text: 'Bond below minimum — top up to maintain eligibility.',
+        urgency: TipUrgency.CRITICAL,
+        tone: CardStatusTone.RED,
+      }
     }
     case BondHealthState.WATCH: {
       if (coverage.topUpToKeepStake > 0) {
@@ -511,7 +516,7 @@ function isDefending(
 ): boolean {
   return (
     (validator.marinadeActivatedStakeSol ?? 0) > NON_TRIVIAL_STAKE_SOL &&
-    Math.abs(delta) > NON_TRIVIAL_LOSS_SOL
+    delta < -NON_TRIVIAL_LOSS_SOL
   )
 }
 

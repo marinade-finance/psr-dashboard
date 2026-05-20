@@ -231,6 +231,7 @@ export function bondCoverageLabel(
   health: BondHealthState,
   coverage: BondCoverage,
   expectedStakeDeltaSol = 0,
+  nearFeeThreshold = false,
 ): string {
   switch (health) {
     case BondHealthState.NO_BOND:
@@ -242,6 +243,11 @@ export function bondCoverageLabel(
     case BondHealthState.WATCH:
       if (coverage.topUpToKeepStake > 0) {
         return `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake`
+      }
+      if (nearFeeThreshold) {
+        return coverage.topUpToIdealKeep > 0
+          ? `Top up ${topUp(coverage.topUpToIdealKeep)} to avoid future bond fee`
+          : 'Near penalty threshold'
       }
       if (coverage.topUpToIdealKeep > 0 && expectedStakeDeltaSol <= 0) {
         return `Top up ${topUp(coverage.topUpToIdealKeep)} to grow stake`
@@ -992,6 +998,10 @@ export const ValidatorDetail = ({
                     bondHealth,
                     bondCoverage,
                     expectedStakeDelta,
+                    bondHealth === BondHealthState.WATCH &&
+                      (validator.bondGoodForNEpochs ?? 0) <=
+                        dsSamConfig.minBondEpochs + BOND_URGENT_EPOCHS &&
+                      bondCoverage.bondRiskFeeShortfall === 0,
                   )}
                   valueStyle={{ color: bondCoverageColor(bondHealth) }}
                 />

@@ -505,9 +505,9 @@ describe('getValidatorTip', () => {
   })
 })
 
-// --- B8: getValidatorTip soft health gets bond CTA ---
+// --- B8: getValidatorTip watch health gets bond CTA ---
 
-describe('getValidatorTip watch health (grow-stake lever)', () => {
+describe('getValidatorTip watch health (bond top-up lever)', () => {
   it('watch health with topUpToIdealKeep > 0, delta=0 → info/bond tip (growth lever)', () => {
     // bondBalanceSol=50 < idealBondPmpe/1000 * stake = (6/1000)*10000 = 60
     // claimableBondBalanceSol=50 >= minBondPmpe/1000 * stake = (1/1000)*10000 = 10
@@ -558,7 +558,7 @@ describe('getValidatorTip watch health (grow-stake lever)', () => {
 // pays a fee nor refills the bond, so that advice is truthful when gaining).
 
 describe('getValidatorTip — positive delta vs bond top-up precedence', () => {
-  it('soft bond + topUpToIdealKeep>0 + delta>0 → NOT the "grow stake" top-up', () => {
+  it('watch bond + topUpToIdealKeep>0 + delta>0 → NOT the "grow stake" top-up', () => {
     // Same soft-bond shape as B8 (topUpToIdealKeep=10) but delta>0. The
     // advisory "Top up N to grow stake" would directly contradict the
     // arriving stake, so it must defer to the positive message.
@@ -652,6 +652,13 @@ describe('bondAdvice — canonical CTA contract', () => {
       marinadeActivatedStakeSol: 100000,
     }, // critical (fee)
     {
+      bondGoodForNEpochs: 1,
+      bondBalanceSol: 0.001,
+      claimableBondBalanceSol: 0,
+      marinadeActivatedStakeSol: 100000,
+      values: { bondRiskFeeSol: 5, paidUndelegationSol: 0 },
+    }, // critical: fee>0 AND shortfall>0 → "Top up X or pay Y bond fee."
+    {
       bondBalanceSol: 100,
       claimableBondBalanceSol: 5,
       marinadeActivatedStakeSol: 10000,
@@ -668,6 +675,31 @@ describe('bondAdvice — canonical CTA contract', () => {
       marinadeActivatedStakeSol: 10000,
     }, // healthy
   ]
+
+  it('WATCH + nearFeeThreshold=true → warning/yellow "avoid future bond fee"', () => {
+    // bondGoodForNEpochs=7 → WATCH; topUpToIdealKeep>0; no fee yet.
+    const v = makeValidator({
+      bondGoodForNEpochs: 7,
+      bondBalanceSol: 50,
+      claimableBondBalanceSol: 50,
+      marinadeActivatedStakeSol: 10000,
+    })
+    const health = bondHealthFromAuction(v, DS_SAM_CONFIG, 100)
+    const coverage = computeBondCoverage(v, DS_SAM_CONFIG, 100)
+    const advice = bondAdvice(
+      coverage,
+      health,
+      0,
+      (DS_SAM_CONFIG as unknown as { minBondBalanceSol: number })
+        .minBondBalanceSol ?? 0,
+      v.bondBalanceSol ?? 0,
+      v.marinadeActivatedStakeSol ?? 0,
+      true,
+    )
+    expect(advice.urgency).toBe('warning')
+    expect(advice.text).toContain('avoid future bond fee')
+    expect(advice.tone).toBe('yellow')
+  })
 
   it('every CTA is paren-free, sentence-case, ends with a period', () => {
     for (const s of states) {
