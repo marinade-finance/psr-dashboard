@@ -243,10 +243,10 @@ describe('getValidatorTip', () => {
     expect(tip.text).toContain('Raise bid')
   })
 
-  it('out-of-set + above-min + critical bond (fee impending) → critical/bond', () => {
-    // Out-of-set status doesn't dampen a bond risk fee — the alert is
-    // bond-driven, not rank-driven. Previously the !inSet branch returned
-    // early and the alert was lost.
+  it('out-of-set + above-min + critical bond, no fee yet → below-threshold CTA', () => {
+    // Bond is below the penalty floor (topUpToAvoidFee > 0) but the SDK
+    // has not charged a fee this epoch (bondRiskFeeSol === 0). The honest
+    // text is "below the penalty threshold", not "avoid the fee".
     const validator = makeValidator({
       auctionStake: { marinadeSamTargetSol: 0 },
       bondBalanceSol: 50,
@@ -256,15 +256,13 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
-    expect(tip.text).toContain('to avoid the bond risk fee')
+    expect(tip.text).toContain('below the penalty threshold')
+    expect(tip.alert).toBeFalsy()
   })
 
-  it('critical health, claimable below floor → "avoid the bond risk fee" CTA', () => {
-    // Bond is in the fee-risk zone: claimable < projected floor (a.k.a.
-    // topUpToAvoidFee > 0). Whether the SDK has already CHARGED the fee
-    // this epoch (bondRiskFeeSol > 0) or it's about to fire next, the
-    // action is the same — top up. The CTA must name the consequence.
-    // alert (octagon + pulse) still gated on bondRiskFeeSol > 0.
+  it('critical health, claimable below floor, no fee → "below the penalty threshold"', () => {
+    // topUpToAvoidFee > 0 but bondRiskFeeSol === 0 — threshold crossed but
+    // no fee charged yet. Text names the threshold, not the fee.
     const validator = makeValidator({
       bondGoodForNEpochs: 4,
       bondBalanceSol: 0.001,
@@ -274,12 +272,28 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
-    expect(tip.text).toContain('to avoid the bond risk fee')
-    // bondRiskFeeSol === 0 in fixture → alarm glyph stays off.
+    expect(tip.text).toContain('below the penalty threshold')
     expect(tip.alert).toBeFalsy()
   })
 
-  it('critical health (epochs > 5), claimable below floor → "avoid the fee"', () => {
+  it('critical health, claimable below floor AND fee charged → "avoid the bond risk fee"', () => {
+    // Both topUpToAvoidFee > 0 AND bondRiskFeeSol > 0 — fee is real.
+    // Only now does "avoid the fee" fire.
+    const validator = makeValidator({
+      bondGoodForNEpochs: 4,
+      bondBalanceSol: 0.001,
+      claimableBondBalanceSol: 0,
+      marinadeActivatedStakeSol: 100000,
+      values: { bondRiskFeeSol: 5 },
+    })
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
+    expect(tip.urgency).toBe('critical')
+    expect(tip.constraint).toBe('bond')
+    expect(tip.text).toContain('to avoid the bond risk fee')
+    expect(tip.alert).toBe(true)
+  })
+
+  it('critical health (epochs > 5), claimable below floor, no fee → threshold CTA', () => {
     const validator = makeValidator({
       bondGoodForNEpochs: 8,
       bondBalanceSol: 0.001,
@@ -289,7 +303,7 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
-    expect(tip.text).toContain('to avoid the bond risk fee')
+    expect(tip.text).toContain('below the penalty threshold')
     expect(tip.alert).toBeFalsy()
   })
 

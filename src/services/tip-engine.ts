@@ -203,19 +203,17 @@ export function bondAdvice(
       }
     }
     case BondHealthState.CRITICAL: {
-      // Critical bond — fires for in-set OR out-of-set + above-min;
-      // bond-driven alert isn't gated by rank. Every value here is the
-      // SDK's pre-settlement ESTIMATE for the next not-yet-settled epoch
-      // — never a charged-and-settled fact (those live in protected-events
-      // after the epoch closes). When the claimable bond sits below the
-      // projected floor (topUpToAvoidFee > 0), name the consequence: a
-      // fee. The action is the same — top up to clear it.
+      // Four honest states — SDK bondRiskFeeSol is the authoritative fee
+      // signal; topUpToAvoidFee only means "below projected floor", not
+      // "fee is being charged". Gate "avoid the fee" on both.
       const text =
-        coverage.topUpToAvoidFee > 0
+        coverage.topUpToAvoidFee > 0 && bondRiskFeeSol > 0
           ? `Top up ${topUp(coverage.topUpToAvoidFee)} to avoid the bond risk fee.`
           : bondRiskFeeSol > 0
             ? `Estimated bond risk fee ${pay(bondRiskFeeSol)} next epoch.`
-            : 'Bond too thin — a bond risk fee can be charged.'
+            : coverage.topUpToAvoidFee > 0
+              ? `Top up ${topUp(coverage.topUpToAvoidFee)} — bond below the penalty threshold.`
+              : 'Bond too thin — a bond risk fee can be charged.'
       return { text, urgency: TipUrgency.CRITICAL, tone: 'red' }
     }
     case BondHealthState.WATCH: {
