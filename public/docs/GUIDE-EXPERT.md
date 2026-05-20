@@ -64,7 +64,7 @@ Validators meeting the foundation's uptime, commission, and identity criteria re
 <a id="stake-wanted"></a>
 ### Max Stake Wanted
 
-Validator-set upper bound on Marinade delegation. The SDK caps `marinadeSamTargetSol` at `wantedSol`; the constraint shows up in the Next Step tip as "Raise your max-stake-wanted". Bond and bid improvements are inert while `wantedSol` is binding.
+Validator-set upper bound on Marinade delegation. The SDK caps `marinadeSamTargetSol` at `maxStakeWanted`; the constraint shows up in the Next Step tip as "At your `maxStakeWanted` setting". Bond and bid improvements are inert while `maxStakeWanted` is binding.
 
 <a id="bid-distribution"></a>
 ### Bid Distribution

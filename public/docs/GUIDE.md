@@ -149,7 +149,7 @@ PMPE measures revenue per 1000 SOL per epoch. The unit the auction speaks in.
   a fixed amount the validator pays out of their bond for every 1000 SOL of stake
   they receive, every epoch.
 - **0.1 PMPE = 0.1 SOL earned per 1000 SOL per epoch.**
-- **APY conversion**: `APY = (1 + PMPE/1000)^182 − 1` (≈182 epochs per year).
+- **APY conversion**: `APY = (1 + PMPE/1000)^182.6 − 1` (≈182.6 epochs per year).
 
 A validator's **max APY** in the table is the sum of all PMPE streams converted
 to APY, with the static CPMPE bid mixed in.
@@ -159,10 +159,12 @@ to APY, with the static CPMPE bid mixed in.
 When the auction grows your target stake above what's currently
 delegated, the gap doesn't appear instantly — it warms up. SAM still
 charges your bid against that incoming stake at a separate rate called
-the activating-stake PMPE, billed only on `max(0, target − active)`.
-The Payments tab shows it on its own row inside the **Bid cost**
-section. If your target is at or below your active stake, this cost is
-zero.
+the activating-stake PMPE, billed on the stake the auction is actually
+delegating to you this epoch — the expected stake change, which may be
+less than the full target-minus-active gap when the re-delegation budget
+runs out. The Payments tab shows it on its own row inside the **Bid
+cost** section. If no stake is being delegated to you this epoch, this
+cost is zero.
 
 #### Where to read it on the dashboard
 
@@ -343,12 +345,12 @@ bounded amount of SOL:
 - **Re-delegation budget** — undeployed deposits and stake withdrawn from
   over-target validators are routed to validators whose auction target exceeds
   their active stake. Under normal conditions, roughly 0.7% of total TVL can
-  be rebalanced per epoch; the rate accelerates when validators lose
-  eligibility.
+  be rebalanced per epoch; the rate accelerates when a validator poses a high
+  risk of not delivering rewards or loses eligibility.
 - **Withdrawal priority** — when natural turnover pulls SOL from the pool, it
   leaves over-target validators first. Validators sitting at or below target
   are protected from forced withdrawals as long as anyone is over-target.
-- **Why "Next Δ" might be smaller than (target − active).** Because the
+- **Why "Next change" might be smaller than (target − active).** Because the
   rebalancing budget is shared across the whole pool. A validator far below
   target won't close the entire gap in one epoch.
 
@@ -375,10 +377,14 @@ agree.
 This is a closed-form **estimate**. Adding or growing a winner shifts
 the clearing price itself, so the real answer is approximately this
 much, often a touch more. Treat the figure as a floor and confirm the
-exact bid with **Simulate**, which re-runs the real auction. If a
-country or ASO concentration cap is the binding limit, the section says
-so plainly — raising the bid alone will not get you in until that cap
-frees up.
+exact bid with **Simulate**, which re-runs the real auction. The
+simulation panel lets you try the static bid AND the three commissions
+(inflation, MEV, block rewards) together — lowering a commission lifts
+your non-bid revenue and can clear the level without raising the bid at
+all, so it's worth trying both knobs before committing to a top-up. If
+a country or ASO concentration cap is the binding limit, the section
+says so plainly — raising the bid or lowering commissions alone will
+not get you in until that cap frees up.
 
 <a id="next-epoch-stake"></a>
 ### Getting stake next epoch
@@ -386,7 +392,7 @@ frees up.
 Being in the auction set is not the same as receiving stake. The
 re-delegation budget is handed out greedily by total PMPE, highest
 first, until it runs out. The lowest total PMPE among validators that
-got their full below-target top-up this run is the **priority total PMPE**
+got their full below-target top-up this run is the **priority frontier PMPE**
 (`priorityFrontierPmpe`). The "Get stake delegated next epoch" section
 estimates the bid that would put you at or above that threshold:
 
@@ -399,7 +405,7 @@ bidIncrease             = max(0, targetBidPmpe − currentStaticBidPmpe)
 This is a **heuristic**, not a guarantee. Raising your bid reorders
 the queue and moves the threshold itself, so the number is an estimate —
 always verify it in **Simulate**. When the budget is large enough to
-reach every below-target winner, there is no binding priority total and the
+reach every below-target winner, there is no binding priority frontier and the
 section says so.
 
 The section also shows the two inputs the queue order is read from:
@@ -527,8 +533,8 @@ A compact summary of the validator's bond:
 Two numbers stacked:
 
 - **Top:** currently active SAM stake (SOL).
-- **Bottom (Δ):** projected stake change next epoch — driven by the
-  validator's auction outcome (bond, bid, max-stake-wanted), capped
+- **Bottom (Next change):** projected stake change next epoch — driven by the
+  validator's auction outcome (bond, bid, `maxStakeWanted`), capped
   by the redelegation budget.
   - **Positive (green)** — the auction set a target above the current
     active stake; the bond and bid support more.
@@ -547,7 +553,7 @@ action that would help most. Strings come verbatim from
 
 - "Top up X to avoid the bond risk fee." (bond constraint)
 - "Top up bond to X SOL to win stake." (bond below minimum)
-- "Top up X to grow stake." (soft bond — bond covers stake, not ideal)
+- "Top up X to grow stake." (adequate bond — bond covers stake, not ideal)
 - "Top up X to keep your stake." (watch bond)
 - "Bid too low. Raise it to qualify for stake." (out of set, bond fine)
 - "Raise bid or pay a X penalty." (bid-too-low penalty active)
@@ -600,7 +606,7 @@ Composition — let you click their title to jump there.
   reads as "0 SOL"), Reserve (a coverage status label like "Fully
   covered", "Top up X to keep your stake", or "Top up X to avoid the
   bond risk fee" — the same canonical CTA shown on the table pill, never
-  re-worded — coloured by health), and Bid runway in epochs ("N epochs" or
+  re-worded — coloured by health), and Bond runway in epochs ("N epochs" or
   "Depleted"; shown as "Depleted" whenever the bond is missing or below
   the minimum, so it agrees with a Critical reserve instead of
   contradicting it). Click the card title to open the full Bond tab and
@@ -693,7 +699,7 @@ are the supporting context that feeds the target-bid math.
   confirmation. Closed-form estimate with a last-price caveat in the
   section tooltip — see [Getting into the auction](#in-auction).
 - **Get stake delegated next epoch** — same receipt-slip pattern with
-  the **Priority total PMPE** in place of the winning total: clearing
+  the **Priority frontier PMPE** in place of the winning total: clearing
   this puts you at or above the threshold where the redelegation budget
   reaches you in full. Also lists **Your priority rank** and **Your bid
   gap** (`max(0, staticBid − effectiveBid)`). Heuristic — the queue
@@ -874,7 +880,7 @@ alone does not clear the simulation.
 - Bond data (bid/CPMPE and bond balance) is reloaded periodically by
   Marinade — typically once per hour. Other validator and auction data
   follow their own refresh cadences (see the table at the top).
-- Solana epochs are roughly 2 days (~182 epochs per year).
+- Solana epochs are roughly 2 days (~182.6 epochs per year).
 - The page auto-refreshes its main data once an hour. Manual reload
   forces an immediate refetch.
 - All auction math runs client-side via the SDK. Numbers should match Marinade's
