@@ -62,6 +62,35 @@ constant if the sample window is too narrow.
 
 **Where:** `src/services/sam.ts` — replace the constant with the derived value.
 
+## 5. Bond override — add to SourceDataOverrides in ds-sam-sdk
+
+**Why:** `AppOverrides` in `src/services/simulation.ts` wraps `SourceDataOverrides` with
+an extra `bondBalanceSol: Map<string, number>` because the SDK type has no bond
+override path. `sdk-rerun.ts` manually patches `bondBalanceSol` /
+`claimableBondBalanceSol` on the cloned validator before calling `Auction.evaluate()`.
+This is a workaround — bond is a first-class simulation input and belongs in
+`SourceDataOverrides` alongside commissions and bid.
+
+**Blocked on:** SDK adding `bondBalanceSol` to `SourceDataOverrides` and reading it
+inside the validator-patch step of `runFinalOnly`.
+
+**End state:** drop `AppOverrides`; use `SourceDataOverrides` directly everywhere.
+`sdk-rerun.ts` bond-patch block goes away; `simulation.ts` `AppOverrides` type is deleted.
+
+## 6. RedelegationAllocation — extract to own module, then to SDK
+
+**Why:** `RedelegationAllocation` (the greedy inflow/frontier/rank result) lives in
+`src/services/sam.ts` alongside unrelated data-loading and selector logic. The
+allocation computation (`allocateRedelegation`) is a pure algorithm that belongs
+in the SDK alongside `Auction.evaluate()`.
+
+**Step 1:** extract `RedelegationAllocation`, `allocateRedelegation`, and its
+selectors (`selectRedelegationBudget`, `selectRedelegationPriorityFrontierPmpe`,
+`selectRedelegationPriorityRank`) into `src/services/redelegation.ts`.
+
+**Step 2 (SDK):** move the algorithm to `ds-sam-sdk` once the SDK exposes the
+greedy allocation as a named export; drop the local copy.
+
 ## 4. PSR estimate query — share all-validator fetch across detail opens
 
 **Why:** `fetchPsrEstimatesForValidator` fetches all validators (3 epochs) and
