@@ -19,9 +19,9 @@ code; every entry cites its file.
 
 Two independent encodings, never collapsed into one. Enforced at the
 source — one CTA helper per lever in `src/services/tip-engine.ts`
-(`bondCta`, `bidCta`, `capCta`, `deltaCta`); `selectTip` picks the
-highest-severity candidate, with `LEVER_ORDER` (bond → bid/rank → cap →
-none) breaking ties at the same severity.
+(`bondCta`, `bidCta`, `outOfSetCta`, `capCta`, `deltaCta`); `selectTip`
+picks the highest-severity candidate, with `LEVER_ORDER` (bond →
+bid/rank → cap → none) breaking ties at the same severity.
 
 - **Colour = severity.** `getTipStyle(urgency)` maps
   `TipUrgency.CRITICAL`→destructive, `WARNING`→warning, `INFO`→info,
@@ -116,9 +116,13 @@ JS state and a Tailwind class can't reach (inline `style`). Source:
 ### Severity axis (colour)
 `getTipStyle(urgency)` → `{color, bg}`: `TipUrgency.CRITICAL`=destructive,
 `WARNING`=warning, `INFO`=info, `POSITIVE`=primary, `NEUTRAL`=muted. The
-breakdown status banner uses the parallel `tone: red|yellow|green`; they
-agree by construction (`bondAdvice` returns both). **Rule:** colour
-encodes severity ONLY — never the lever. `src/services/tip-engine.ts`.
+breakdown status banner uses the parallel `CardStatusTone: red | yellow
+| green | grey`; they agree by construction (`bondAdvice` returns both,
+and `tipBannerTone` in `breakdowns/card.tsx` resolves any
+`ValidatorTip` → tone). The `grey` tone is paired with
+`TipUrgency.NEUTRAL` (below-min bond with no pending fee — eligibility,
+not urgency). **Rule:** colour encodes severity ONLY — never the lever.
+`src/services/tip-engine.ts`, `src/components/breakdowns/card.tsx`.
 
 ### Lever axis (glyph)
 `getTipIcon(tip)` switches on `tip.constraint` (`TipConstraint` enum):
@@ -130,8 +134,14 @@ is the sole lever-less case where stake trajectory is the only signal
 left). `src/services/tip-engine.ts`.
 
 ### CTA dispatch (one source per lever)
-Four CTA helpers in `src/services/tip-engine.ts`, each owning one lever's
-text + urgency end-to-end: `bondCta`, `bidCta`, `capCta`, `deltaCta`.
+Five CTA helpers in `src/services/tip-engine.ts`, each owning one lever's
+text + urgency end-to-end: `bondCta`, `bidCta`, `outOfSetCta`, `capCta`,
+`deltaCta`. `outOfSetCta` fires only when the validator is out-of-set
+despite `revShare.totalPmpe ≥ winningTotalPmpe` — it names the actual
+binding reason (samBlocked / blacklist / no bond / cap binding /
+opted-out) instead of letting `deltaCta` lie with a "Losing N SOL"
+symptom; severity tracks `marinadeActivatedStakeSol` against the 10k
+`NON_TRIVIAL_STAKE_SOL` line (critical above, neutral below).
 `selectTip` sorts surviving candidates by `SEVERITY_ORDER` first
 (critical→warning→info→positive→neutral), then `LEVER_ORDER`
 (bond→bid/rank→cap→none) as the tiebreak. **Rule:** never reword a CTA
@@ -229,6 +239,18 @@ A new `TipConstraint` value is a compile error until the map is filled.
 validator name when bond runway ≤5ep or utilisation ≥85%. **Rule:** same
 pulse idiom as the detail tab dot — a present-danger signal, not
 decorative. `src/components/sam-table/sam-table.tsx`.
+
+### StatusBanner (shared primitive)
+`StatusBanner` in `src/components/breakdowns/card.tsx` — rounded pill,
+status text on the left, optional action pill on the right
+(`bg-card/55` fill + tone-coloured border/text). Used both by every
+`CalcCard`'s status slot AND by the validator-detail header tip banner;
+both surfaces are byte-aligned. `CardStatusAction.tone` can override the
+pill colour independently — sim-jump pills pin to yellow across all
+banner tones, so the simulation affordance reads consistently. **Rule:**
+never render a bespoke status pill inline — route through
+`StatusBanner` so banner-level chrome stays one shape, one set of tone
+classes (`STATUS_CLASSES` × `STATUS_ACTION_CLASSES`).
 
 ### Simulation surfaces
 `ring-status-yellow` inset ring around the table + a status-yellow

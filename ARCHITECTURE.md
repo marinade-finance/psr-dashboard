@@ -117,8 +117,15 @@ dual-select.
 `sam-table.tsx`. Owns `ValidatorMeta`, `BOND_CHIP`, `SortColumn`,
 `SortDirection`, `passesTableFilter`, `makeCompareFn`. 7-column table
 with simulation mode, ghost rows, cutoff divider, bond chip, keyboard-
-activatable rank cell, position-change grading. Embedded helpers
-include the local `RankCell`, `PenaltyBadges`. Tests in
+activatable rank cell, position-change grading. The `Re-delegation`
+headline tile reads `selectRedelegationBudget` (TVL − Σ active stake) so
+the number matches `psr.marinade.finance` — not a per-row sum of
+`expectedStakeChangeSol`. Each row is augmented to
+`ValidatorWithBondState` (one `computeBondCoverage` per row, memoised)
+so the bond chip, the bond gauge and `getValidatorTip`'s `bondCta` all
+read the same `BondCoverage` instance — no recomputation. `SortColumn`
+dispatch goes through `assertNever`. Embedded helpers include the local
+`RankCell`, `PenaltyBadges`. Tests in
 `__tests__/`: `bond-chip.test.ts`, `passes-table-filter.test.ts`,
 `sam-table-sort.test.ts`.
 
@@ -145,7 +152,15 @@ new validator gets a fresh component (no mirror-prop-into-state needed).
 ### `components/breakdowns/` — calculation panels
 
 - `card.tsx` — `CalcCard` (title + optional guide link + optional
-  status pill + optional tip footer).
+  status pill + optional tip footer), the shared `StatusBanner` primitive
+  (used both inside `CalcCard`'s status slot and by the validator-detail
+  header tip banner so they stay byte-aligned), the `CardStatusTone`
+  union (`red | yellow | green | grey`), `CardStatusAction` with optional
+  `tone` override (used to pin sim-jump pills to yellow across tones),
+  the `tipBannerTone` resolver (bond tips colour off bond-health, others
+  off urgency; `bond + NEUTRAL` stays grey for below-min-no-fee), and
+  `SIM_JUMP_BUTTON_CLASS` — the shared button shape for "Simulate … →"
+  tips that keeps every breakdown card's affordance identical.
 - `row.tsx` — `CalcRow` (3-col), `RevRow` (4-col: `label | pct | pmpe
   | value`), `OkRow`, `SectionHeader` (with a `unit` slot for the
   shared column unit), `Marker`, plus the `SEPARATOR_DIV_CLASS` /
@@ -271,32 +286,48 @@ where applicable.
 - **`tip-engine.ts`** — drives the rank-cell colour and the Next Step
   column. `TipUrgency`, `TipConstraint` are const-object enums; a
   `ValidatorTip` carries `text`, `urgency`, `constraint`, signed `delta`,
-  optional `alert`. The tip is assembled from four orthogonal lever
+  optional `alert`. The tip is assembled from five orthogonal lever
   helpers, each returning `ValidatorTip | null`:
-  - `bondCta` — out-of-set + below-min hard block, or in-set unhealthy
-    bond (defers to `bondAdvice` for canonical wording; the soft-bond +
+  - `bondCta` — below-min hard block (critical when a fee is pending,
+    neutral/grey when it is plain eligibility), or in-set unhealthy bond
+    (defers to `bondAdvice` for canonical wording; the soft-bond +
     positive-delta case yields to `deltaCta`).
-  - `bidCta` — out-of-set + bond OK ("Bid too low. Raise it to qualify"),
-    or in-set with `computeBidPenalty().penaltyPmpe > 0` (critical, names
-    the authoritative `bidTooLowPenaltySol`).
+  - `bidCta` — bid-too-low penalty (critical, in-set or out, names the
+    authoritative `bidTooLowPenaltySol`), or out-of-set with bond OK and
+    `revShare.totalPmpe < winningTotalPmpe` ("Bid too low. Raise it to
+    qualify").
+  - `outOfSetCta` — out-of-set despite `revShare.totalPmpe ≥
+    winningTotalPmpe`. Names the binding reason in priority order:
+    `samBlocked`, `!samEligible` (narrowed to no bond / blacklist /
+    fallback hint), binding `lastCapConstraint`, `maxStakeWanted === 0`,
+    or a generic "another constraint binds". Severity tracks active
+    Marinade stake — above `NON_TRIVIAL_STAKE_SOL` (10k) it goes critical;
+    below, neutral/grey. The opt-out branch is pinned to `info` because
+    it's a deliberate user choice.
   - `capCta` — in-set + losing stake + binding concentration cap
     (`lastCapConstraint.totalLeftToCapSol === 0`); two-line `cause\nconsequence`,
     urgency `info`.
-  - `deltaCta` — stake-trajectory fallback. Mutually excludes the cap
-    case at source (`capBinding` arg flips losing → neutral "At target
-    stake.") so cap (`info`) is never beaten by losing (`warning`).
+  - `deltaCta` — stake-trajectory fallback. Emits `${stake} arriving next
+    epoch.` (positive), `At your max-stake-wanted setting.` when the
+    target meets `maxStakeWanted`, otherwise `At target stake.` for the
+    zero / cap-bound case, and `Losing ${stake} next epoch.` for in-set
+    losses. Mutually excludes the cap case at source (`capBinding` arg)
+    so cap (`info`) is never beaten by losing (`warning`).
   `selectTip` sorts non-null candidates by `SEVERITY_ORDER`
   (critical < warning < info < positive < neutral) then `LEVER_ORDER`
   (bond < bid = rank < cap < none) and returns the head. `bondAdvice`
   is the single source for every bond-state CTA string — sam-table
   Next Step pill, header tip and Bond breakdown banner all surface the
-  same bytes for a given `BondHealthState`. `getTipStyle` (colour =
-  severity), `getTipIcon` (glyph = constraint, or `ICON_ALERT` when
-  `tip.alert`, or signed-delta arrow for `constraint === 'none'`),
-  `getBondAdviceStyle` (header bond tip colour off `BondHealthState`,
-  not urgency — keeps it in lockstep with the Bond banner). Also exports
-  `getApyBreakdown`, `nextStakeDeltaCell`, `calculateBondUtilization`.
-  Every switch uses `assertNever` so a new enum value fails to compile.
+  same bytes for a given `BondHealthState`. `BondAdvice.tone` is
+  `red | yellow | green | grey`; the new `grey` tone pairs with
+  `TipUrgency.NEUTRAL` for below-min bonds with no pending fee
+  (eligibility, not urgency). `getTipStyle` (colour = severity),
+  `getTipIcon` (glyph = constraint, or `ICON_ALERT` when `tip.alert`, or
+  signed-delta arrow for `constraint === 'none'`), `getBondAdviceStyle`
+  (header bond tip colour off `BondHealthState`, not urgency — keeps it
+  in lockstep with the Bond banner). Also exports `getApyBreakdown`,
+  `nextStakeDeltaCell`, `calculateBondUtilization`. Every switch uses
+  `assertNever` so a new enum value fails to compile.
 - **`bidding.ts`** — `computeBidding` (per-validator stake/bid/cost row).
 - **`bond-coverage.ts`** — `computeBondCoverage` (keep-stake and avoid-fee
   top-ups on current vs projected exposed stake).
@@ -310,11 +341,15 @@ where applicable.
 - **`in-auction-target.ts`** — `computeInAuctionTarget` (Table A). Closed-
   form static-bid PMPE needed to clear the winning total, plus the bond
   floor and top-up read from the memoised `BondCoverage` (reconciles with
-  the Bond tab). Last-price-coupling caveat — verify exact in Simulate.
+  the Bond tab). Ranks and clear-checks against `revShare.totalPmpe`
+  directly (single ordering rule — no reconstructed `nonBid + staticBid`
+  sum). Last-price-coupling caveat — verify exact in Simulate.
 - **`next-epoch-stake.ts`** — `computeNextEpochStake` (Table B). Heuristic
   bid increase to clear the redelegation priority frontier; reads
-  `selectRedelegationPriorityFrontierPmpe` / `selectRedelegationBudget`.
-  Greedy reorders, so it is an estimate — verify in Simulate.
+  `selectRedelegationPriorityFrontierPmpe` / `selectRedelegationBudget`
+  and compares against `revShare.totalPmpe` (same ordering rule as
+  in-auction-target). Greedy reorders, so it is an estimate — verify in
+  Simulate.
 
 ### Validator data
 
