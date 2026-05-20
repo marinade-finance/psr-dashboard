@@ -1267,6 +1267,21 @@ const o07: AuctionValidator = {
   values: outOfSetValues(45_000, 100),
 }
 
+// o07b. Same generic fallthrough path as o07 but large active stake → WARNING
+//   (yellow) "Losing X SOL next epoch." (isDefending fires at > 10k active + > 1k delta).
+const o07b: AuctionValidator = {
+  ...outOfSetBase('FiXtUREvoGENERIChi7bbbbbbbbbbbbbbbbbbbbbbbgg', {
+    marinadeActivatedStakeSol: 120_000,
+    country: C_US,
+    aso: ASO_AWS,
+  }),
+  ...O_COMMON,
+  samEligible: true,
+  samBlocked: false,
+  lastCapConstraint: null,
+  values: outOfSetValues(120_000, 100),
+}
+
 // o08. samBlocked + low stake (≤10k) → NEUTRAL/grey tone.
 const o08: AuctionValidator = {
   ...outOfSetBase('FiXtUREvoSAMBLOCKEDlo888888888888888888888hh', {
@@ -1444,6 +1459,7 @@ export const TEST_VALIDATORS: AuctionValidator[] = [
   o05,
   o06,
   o07,
+  o07b,
   o08,
   o09,
   o10,
@@ -1597,6 +1613,10 @@ export const TEST_VALIDATOR_NAMES = new Map<string, string>([
     'Test: Cap ASO (real stake)',
   ],
   ['FiXtUREvoGENERIChi7777777777777777777777777gg', 'Test: Generic out-of-set'],
+  [
+    'FiXtUREvoGENERIChi7bbbbbbbbbbbbbbbbbbbbbbbgg',
+    'Test: Generic out-of-set (large)',
+  ],
   [
     'FiXtUREvoSAMBLOCKEDlo888888888888888888888hh',
     'Test: samBlocked (no stake)',
