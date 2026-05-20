@@ -50,10 +50,10 @@ export async function fetchAllNotifications(
       url.searchParams.set('scope', 'individual')
       url.searchParams.set('limit', String(PAGE_SIZE))
       url.searchParams.set('offset', String(page * PAGE_SIZE))
-      // eslint-disable-next-line no-await-in-loop
+
       const res = await fetch(url.toString())
       if (!res.ok) break
-      // eslint-disable-next-line no-await-in-loop
+
       const notifications = (await res.json()) as ValidatorNotification[]
 
       for (const notification of notifications) {

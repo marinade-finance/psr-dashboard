@@ -167,7 +167,7 @@ describe('apyBreakdown', () => {
         bondObligationPmpe: 0,
         auctionEffectiveBidPmpe: 0,
         effParticipatingBidPmpe: 0,
-      } as AuctionValidator['revShare'],
+      },
     })
     const bd = apyBreakdown(validator, 182)
     expect(bd.total).toBe(0)
@@ -188,7 +188,7 @@ describe('apyBreakdown', () => {
         bondObligationPmpe: 0,
         auctionEffectiveBidPmpe: 0,
         effParticipatingBidPmpe: 0,
-      } as AuctionValidator['revShare'],
+      },
     })
     const bd = apyBreakdown(validator, 182)
     expect(bd.inflation).toBeGreaterThan(0)
@@ -225,7 +225,7 @@ describe('B2 — selectMaxProtectedStake zero-pmpe guard', () => {
           bondObligationPmpe: 0,
           auctionEffectiveBidPmpe: 0,
           effParticipatingBidPmpe: 0,
-        } as AuctionValidator['revShare'],
+        },
       }),
     }
     const result = selectMaxProtectedStake(entry)

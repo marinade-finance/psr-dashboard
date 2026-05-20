@@ -469,7 +469,7 @@ export function augmentAuctionResult(
         expectedStakeRedelegationInflowSol: change?.redelegationInflow ?? 0,
         expectedStakeNaturalWithdrawalSol: change?.naturalWithdrawal ?? 0,
         cutoffRank: cutoffRanks.get(validator.voteAccount) ?? 0,
-      } as AugmentedAuctionValidator['values'],
+      },
     }
   })
   augmentCache.set(auctionResult, { minBondBalanceSol, result })

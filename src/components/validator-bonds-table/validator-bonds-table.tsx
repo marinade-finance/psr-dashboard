@@ -325,7 +325,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
     header: string
     headerHelp?: string
     headerGuideTo?: string
-    render: (entry: ValidatorWithBond) => JSX.Element
+    render: (entry: ValidatorWithBond) => React.ReactElement
     compare: (a: ValidatorWithBond, b: ValidatorWithBond) => number
     alignment: Alignment
   }[] =

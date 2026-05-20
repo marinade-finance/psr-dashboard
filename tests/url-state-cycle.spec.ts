@@ -34,10 +34,12 @@ test.describe('URL ?v= state cycle', () => {
     await expect(page.locator(SHEET).first()).toBeVisible({ timeout: 10000 })
     expect(page.url()).toContain(V01)
 
-    // Click V02 row while sheet is open — replaceState
+    // Click V02 row while sheet is open — replaceState.
+    // The dialog covers the right ~70% of the viewport; click the left visible
+    // portion of the row so the dialog content doesn't intercept the hit test.
     const v02Row = page.locator(`tbody tr[data-vote-account="${V02}"]`).first()
     await expect(v02Row).toBeVisible()
-    await v02Row.click()
+    await v02Row.click({ position: { x: 50, y: 10 } })
     await expect(page).toHaveURL(new RegExp(V02), { timeout: 5000 })
     expect(page.url()).not.toContain(V01)
 

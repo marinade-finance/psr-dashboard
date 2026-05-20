@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react'
 
 import { cn } from 'src/class_utils'
 import { HelpTip } from 'src/components/help-tip/help-tip'
@@ -29,7 +29,7 @@ export function TableShell({
 }: {
   children: ReactNode
   className?: string
-}): JSX.Element {
+}): React.ReactElement {
   return (
     <div
       className={cn(
@@ -94,7 +94,7 @@ function renderHeader<Item>(
   userOrder: [number, OrderDirection] | null,
   defaultOrder: Order[],
   showRowNumber: boolean,
-): JSX.Element {
+): React.ReactElement {
   const [userOrderColumn, userOrderDirection] = userOrder ?? [null, null]
   const [defaultOrderColumn, defaultOrderDirection] = defaultOrder[0] ?? [
     null,
@@ -156,7 +156,7 @@ function renderRows<Item>(
     item: Item,
     index: number,
   ) => HTMLAttributes<HTMLTableRowElement>,
-): JSX.Element[] {
+): React.ReactElement[] {
   return items.map((item, i) =>
     renderRow(item, columns, i, showRowNumber, rowAttrsFn),
   )
@@ -171,7 +171,7 @@ function renderRow<Item>(
     item: Item,
     index: number,
   ) => HTMLAttributes<HTMLTableRowElement>,
-): JSX.Element {
+): React.ReactElement {
   return (
     <TableRow key={index} {...(rowAttrsFn ? rowAttrsFn(item, index) : {})}>
       {showRowNumber ? <TableCell>{index + 1}</TableCell> : null}
@@ -202,7 +202,7 @@ type Column<Item> = {
   headerGuideTo?: string
   headerAttrsFn?: () => HTMLAttributes<HTMLTableCellElement>
   cellAttrsFn?: (item: Item) => HTMLAttributes<HTMLTableCellElement>
-  render: (item: Item, index?: number) => JSX.Element
+  render: (item: Item, index?: number) => React.ReactElement
   compare?: (a: Item, b: Item) => number
   sortable?: boolean
   background?: (item: Item) => Color | undefined
@@ -221,7 +221,7 @@ type Props<Item> = {
   className?: string
 }
 
-export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
+export const Table: <Item>(props: Props<Item>) => React.ReactElement = ({
   data,
   columns,
   defaultOrder,

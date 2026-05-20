@@ -7,7 +7,7 @@ import { Button } from 'src/components/ui/button'
 
 export type Props = {
   title: string
-  body: JSX.Element | string
+  body: React.ReactElement | string
 }
 
 const ALLOWED_ELEMENTS = [
