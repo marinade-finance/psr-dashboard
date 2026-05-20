@@ -204,10 +204,10 @@ marks the sheet when the open validator is currently simulated.
 **Sticky header** (top of sheet, `sticky top-0 z-10`):
 
 - **Back to rankings** chevron-left button (closes the sheet).
-- **Rank glyph** — large mono `#N` (or `-#N` when below winning),
-  coloured by tip urgency, prefixed with the same `getTipIcon` glyph
-  the sam-table Next Step uses. Sub-label underneath: `at winning
-  edge` / `N place(s) above winning` / `N place(s) below winning`.
+- **Rank glyph** — large mono `#N` (always positive), coloured by tip
+  urgency, prefixed with the same `getTipIcon` glyph the sam-table
+  Next Step uses. Sub-label underneath: `at winning edge` /
+  `N place(s) above winning` / `N place(s) below winning`.
 - Validator display name + truncated vote account.
 - **In Set / Out of Set** pill (primary-light vs destructive-light).
 - **Simulated** pill (yellow uppercase) — only when this validator
