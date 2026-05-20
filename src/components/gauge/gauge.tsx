@@ -15,6 +15,9 @@ type Props = {
   scaleMax: number
   // Optional thin tick at this fraction of the track (0..1).
   marker?: number
+  // Optional second marker (e.g. the ideal/green threshold). Rendered in
+  // a separate tone (default primary).
+  idealMarker?: number
   // Opt-in faint-red zone over the leftmost fraction of the track (0..1),
   // drawn behind the value fill. Omitted = no band. The bond pill uses this
   // to mark the critical-runway region; the concentration bar does not.
@@ -41,6 +44,7 @@ export const Gauge: React.FC<Props> = ({
   value,
   scaleMax,
   marker,
+  idealMarker,
   criticalBand,
   tone,
   markerTone = 'bg-destructive',
@@ -51,6 +55,10 @@ export const Gauge: React.FC<Props> = ({
     scaleMax > 0 ? Math.max(Math.min((value / scaleMax) * 100, 100), 4) : 4
   const markerLeft =
     marker === undefined ? null : Math.max(Math.min(marker * 100, 100), 2)
+  const idealLeft =
+    idealMarker === undefined
+      ? null
+      : Math.max(Math.min(idealMarker * 100, 100), 2)
   const bandWidth =
     criticalBand === undefined ? null : Math.min(criticalBand * 100, 100)
   return (
@@ -75,6 +83,12 @@ export const Gauge: React.FC<Props> = ({
         <div
           className={cn('absolute rounded-full', TICK[size], markerTone)}
           style={{ left: `${markerLeft}%` }}
+        />
+      )}
+      {idealLeft !== null && (
+        <div
+          className={cn('absolute rounded-full bg-primary/60', TICK[size])}
+          style={{ left: `${idealLeft}%` }}
         />
       )}
     </div>

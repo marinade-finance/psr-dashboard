@@ -237,18 +237,13 @@ export function bondCoverageLabel(
         ? `Top up ${topUp(coverage.bondRiskFeeShortfall)} to avoid the fee`
         : 'Critical'
     case BondHealthState.WATCH:
-      return coverage.topUpToKeepStake > 0
-        ? `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake`
-        : 'Watch'
-    case BondHealthState.SOFT:
-      // "Top up to grow stake" contradicts a positive delta — stake is
-      // already arriving. Match bondCta's guard: the grow-prompt only
-      // makes sense when stake isn't already growing. Otherwise the
-      // bond is doing its job for the current allocation.
+      if (coverage.topUpToKeepStake > 0) {
+        return `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake`
+      }
       if (coverage.topUpToIdealKeep > 0 && expectedStakeDeltaSol <= 0) {
         return `Top up ${topUp(coverage.topUpToIdealKeep)} to grow stake`
       }
-      return 'Adequate'
+      return 'Watch'
     case BondHealthState.HEALTHY:
       return 'Healthy'
     default:
@@ -263,8 +258,6 @@ function bondCoverageColor(health: BondHealthState): string {
       return CSS_DESTRUCTIVE
     case BondHealthState.WATCH:
       return CSS_WARNING
-    case BondHealthState.SOFT:
-      return CSS_MUTED_FG
     case BondHealthState.HEALTHY:
       return CSS_PRIMARY
     default:

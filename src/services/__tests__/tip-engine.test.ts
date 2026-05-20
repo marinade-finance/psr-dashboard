@@ -327,13 +327,15 @@ describe('getValidatorTip', () => {
     expect(tip.alert).toBeFalsy()
   })
 
-  it('soft health (bond covers stake but not ideal) → info/bond top-up', () => {
-    // SOFT is the grow lever — "Top up N to grow stake." Per the severity
-    // ladder it's violet/info (more stake possible if you act), not yellow
-    // (which is reserved for "stake is leaving"). delta must be <= 0 to
-    // isolate the soft branch: a positive delta makes the message
-    // contradictory, so it correctly defers to "arriving next epoch".
+  it('watch health (bond covers stake but not ideal) → info/bond top-up', () => {
+    // WATCH + topUpToIdealKeep > 0 is the grow lever — "Top up N to grow stake."
+    // Per the severity ladder it's violet/info (more stake possible if you act),
+    // not yellow (reserved for "stake is leaving"). delta must be <= 0 to
+    // isolate this branch: a positive delta makes the message contradictory,
+    // so it correctly defers to "arriving next epoch".
+    // bondGoodForNEpochs=7 → WATCH (between minBondEpochs+BOND_URGENT_EPOCHS=3 and idealBondEpochs=10).
     const validator = makeValidator({
+      bondGoodForNEpochs: 7,
       bondBalanceSol: 50,
       claimableBondBalanceSol: 50,
       marinadeActivatedStakeSol: 10000,
@@ -482,12 +484,14 @@ describe('getValidatorTip', () => {
 
 // --- B8: getValidatorTip soft health gets bond CTA ---
 
-describe('getValidatorTip soft health', () => {
-  it('soft health with topUpToIdealKeep > 0, delta=0 → info/bond tip (growth lever)', () => {
+describe('getValidatorTip watch health (grow-stake lever)', () => {
+  it('watch health with topUpToIdealKeep > 0, delta=0 → info/bond tip (growth lever)', () => {
     // bondBalanceSol=50 < idealBondPmpe/1000 * stake = (6/1000)*10000 = 60
     // claimableBondBalanceSol=50 >= minBondPmpe/1000 * stake = (1/1000)*10000 = 10
-    // → topUpToAvoidFee=0, topUpToKeepStake=0, topUpToIdealKeep=10 → 'soft'
+    // → topUpToAvoidFee=0, topUpToKeepStake=0, topUpToIdealKeep=10
+    // bondGoodForNEpochs=7 → WATCH (3 < 7 < 10)
     const validator = makeValidator({
+      bondGoodForNEpochs: 7,
       bondBalanceSol: 50,
       claimableBondBalanceSol: 50,
       marinadeActivatedStakeSol: 10000,
@@ -499,15 +503,17 @@ describe('getValidatorTip soft health', () => {
     expect(tip.text).toContain('SOL')
   })
 
-  it('soft health + defending (large loss) → warning/bond "keep your stake" (beats deltaCta)', () => {
-    // SOFT shape with marinadeActivatedStakeSol=50000, claimable=100:
+  it('watch health + defending (large loss) → warning/bond "keep your stake" (beats deltaCta)', () => {
+    // WATCH shape with marinadeActivatedStakeSol=50000, claimable=100:
     //   stakeKeepFloor   = (1/1000)*50000 = 50  → topUpToKeepStake   = max(0,50-100)=0
     //   bondRiskFeeFloor = (1/1000)*50000 = 50  → bondRiskFeeShortfall = 0
-    //   stakeIdealFloor  = (6/1000)*50000 = 300 → topUpToIdealKeep   = max(0,300-100)=200>0 → SOFT
+    //   stakeIdealFloor  = (6/1000)*50000 = 300 → topUpToIdealKeep   = max(0,300-100)=200>0
+    // bondGoodForNEpochs=7 → WATCH (3 < 7 < 10)
     // delta=-33000 with active=50000 → isDefending=true.
     // bondCta escalates to WARNING so it outranks deltaCta's WARNING via
     // LEVER_ORDER (bond=0 beats none=3) and the text reflects keeping, not growing.
     const validator = makeValidator({
+      bondGoodForNEpochs: 7,
       bondBalanceSol: 100,
       claimableBondBalanceSol: 100,
       marinadeActivatedStakeSol: 50000,
@@ -554,9 +560,11 @@ describe('getValidatorTip — positive delta vs bond top-up precedence', () => {
     //   current exposed = 10000 → floorBaseKeep = (1/1000)*10000 = 10
     //   projected exposed = 10000 - 8000 = 2000 → floorBaseProj = 2
     //   claimable = 5 → topUpToAvoidFee = max(0, 2-5) = 0 (no fee)
-    //                   topUpToKeepStake = max(0, 10-5) = 5 > 0 → 'watch'
+    //                   topUpToKeepStake = max(0, 10-5) = 5 > 0
     //   bondBalanceSol = 100 → topUpToIdealKeep = 0 (irrelevant)
+    // bondGoodForNEpochs=7 → WATCH (3 < 7 < 10) so bondCta fires
     const validator = makeValidator({
+      bondGoodForNEpochs: 7,
       bondBalanceSol: 100,
       claimableBondBalanceSol: 5,
       marinadeActivatedStakeSol: 10000,
@@ -674,7 +682,9 @@ describe('bondAdvice — canonical CTA contract', () => {
     // A validator whose state resolves to a bond-constraint tip. The pill /
     // header render tip.text; the breakdown banner renders bondAdvice().text.
     // They must be the SAME string for the SAME state.
+    // bondGoodForNEpochs=7 → WATCH so both paths emit a bond CTA.
     const v = makeValidator({
+      bondGoodForNEpochs: 7,
       bondBalanceSol: 50,
       claimableBondBalanceSol: 50,
       marinadeActivatedStakeSol: 10000,
@@ -683,6 +693,7 @@ describe('bondAdvice — canonical CTA contract', () => {
     const tip = getValidatorTip(v, DS_SAM_CONFIG, 100)
     expect(tip.constraint).toBe('bond')
     const { text } = adviceFor({
+      bondGoodForNEpochs: 7,
       bondBalanceSol: 50,
       claimableBondBalanceSol: 50,
       marinadeActivatedStakeSol: 10000,

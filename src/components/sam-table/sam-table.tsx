@@ -34,8 +34,9 @@ import {
 import { computeBondCoverage } from 'src/services/bond-coverage'
 import { bondHealthFromAuction } from 'src/services/bond-health'
 import {
-  BOND_CRITICAL_FRAC,
+  bondCriticalFrac,
   bondGaugeScaleMax,
+  bondIdealFrac,
   bondUtilizationPct,
   effectiveBondRunway,
 } from 'src/services/calculations'
@@ -95,7 +96,6 @@ type ValidatorWithBondState = AugmentedAuctionValidator & {
 }
 
 const TEXT_MUTED = 'text-muted-foreground'
-const BG_MUTED = 'bg-muted-foreground'
 const DESTRUCTIVE_LIGHT_CHIP = 'bg-destructive-light text-destructive'
 // no-bond and critical share the red chip — they differ only by label.
 const DESTRUCTIVE_CHIP = {
@@ -113,19 +113,9 @@ export const BOND_CHIP: Record<
     ...DESTRUCTIVE_CHIP,
     label: 'No bond',
   },
-  healthy: {
-    chip: 'bg-primary-light-10 text-primary',
-    dot: 'bg-primary',
-    bar: 'bg-primary',
-    shortText: 'text-primary',
-    label: 'Healthy',
-  },
-  soft: {
-    chip: `bg-secondary ${TEXT_MUTED}`,
-    dot: BG_MUTED,
-    bar: BG_MUTED,
-    shortText: TEXT_MUTED,
-    label: 'Adequate',
+  critical: {
+    ...DESTRUCTIVE_CHIP,
+    label: 'Critical',
   },
   watch: {
     chip: 'bg-warning-light text-warning',
@@ -134,9 +124,12 @@ export const BOND_CHIP: Record<
     shortText: 'text-warning',
     label: 'Watch',
   },
-  critical: {
-    ...DESTRUCTIVE_CHIP,
-    label: 'Critical',
+  healthy: {
+    chip: 'bg-primary-light-10 text-primary',
+    dot: 'bg-primary',
+    bar: 'bg-primary',
+    shortText: 'text-primary',
+    label: 'Healthy',
   },
 }
 
@@ -738,6 +731,8 @@ export const SamTable: React.FC<Props> = ({
     const bondRunway = effectiveBondRunway(validator, bondHealth)
     const hasAlert = bondRunway <= 5 || bondUtilPct >= 85
     const bondScaleMax = bondGaugeScaleMax(dsSamConfig)
+    const bondCritical = bondCriticalFrac(dsSamConfig)
+    const bondIdeal = bondIdealFrac(dsSamConfig)
 
     const expectedChange = selectExpectedStakeChange(validator)
 
@@ -884,14 +879,17 @@ export const SamTable: React.FC<Props> = ({
               size="sm"
               value={bondRunway}
               scaleMax={bondScaleMax}
-              marker={BOND_CRITICAL_FRAC}
-              criticalBand={BOND_CRITICAL_FRAC}
+              marker={bondCritical}
+              idealMarker={bondIdeal}
+              criticalBand={bondCritical}
               tone={bondChip.bar}
             />
             <span
               className={cn(
                 'text-xs opacity-60 font-mono whitespace-nowrap',
-                bondRunway <= 10 ? bondChip.shortText : TEXT_MUTED,
+                bondRunway < dsSamConfig.idealBondEpochs
+                  ? bondChip.shortText
+                  : TEXT_MUTED,
               )}
             >
               ({Math.round(bondRunway) >= 100 ? '>100' : Math.round(bondRunway)}

@@ -6,17 +6,25 @@ import type {
 } from '@marinade.finance/ds-sam-sdk'
 import type { BondCoverage } from 'src/services/bond-coverage'
 
-// Five tiers so the bond chip and the page-level CTA agree on tone:
-//   no-bond  → no bond posted at all (red, "missing")
-//   critical → fee being charged, about to, or bond below the SDK minimum (red)
-//   watch    → bond too thin to keep current stake (orange)
-//   soft     → bond covers current stake but not ideal (indigo, info)
-//   healthy  → bond covers ideal target (green)
+// Runway window between the penalty threshold and the red chip.
+// Validators not paying yet but within this many epochs of the threshold
+// get the red "top up urgently" pill.
+export const BOND_URGENT_EPOCHS = 3
+
+// Four tiers driving the bond chip color and the page-level CTA:
+//   no-bond  → no bond posted at all (red)
+//   critical → fee charging now, OR runway ≤ minBondEpochs + BOND_URGENT_EPOCHS (red, urgent)
+//   watch    → runway between urgent threshold and idealBondEpochs (yellow)
+//   healthy  → runway above idealBondEpochs (green)
+//
+// The former 'soft' tier (adequate but not ideal) is merged into 'watch' —
+// the visual difference between "growing" and "keeping" wasn't actionable
+// enough to justify a fifth color. The urgency split is now runway-based:
+// within BOND_URGENT_EPOCHS of the penalty gate → red; above idealBondEpochs → green.
 export const BondHealthState = {
   NO_BOND: 'no-bond',
   CRITICAL: 'critical',
   WATCH: 'watch',
-  SOFT: 'soft',
   HEALTHY: 'healthy',
 } as const
 export type BondHealthState =
@@ -44,7 +52,11 @@ export function bondHealthFromAuction(
   const coverage =
     precomputedCoverage ?? computeBondCoverage(v, config, winningTotalPmpe)
   if (coverage.bondRiskFeeShortfall > 0) return BondHealthState.CRITICAL
-  if (coverage.topUpToKeepStake > 0) return BondHealthState.WATCH
-  if (coverage.topUpToIdealKeep > 0) return BondHealthState.SOFT
+  // Runway within BOND_URGENT_EPOCHS of the penalty gate → urgent red.
+  const runway = v.bondGoodForNEpochs ?? 0
+  if (runway <= config.minBondEpochs + BOND_URGENT_EPOCHS)
+    return BondHealthState.CRITICAL
+  // Below the ideal coverage target → yellow watch.
+  if (runway < config.idealBondEpochs) return BondHealthState.WATCH
   return BondHealthState.HEALTHY
 }

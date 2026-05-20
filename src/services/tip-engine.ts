@@ -84,7 +84,6 @@ export const getBondAdviceStyle = (health: BondHealthState): TipStyle => {
     case BondHealthState.CRITICAL:
       return { color: CSS_DESTRUCTIVE, bg: CSS_DESTRUCTIVE_LIGHT }
     case BondHealthState.WATCH:
-    case BondHealthState.SOFT:
       return { color: CSS_STATUS_YELLOW, bg: CSS_STATUS_YELLOW_LIGHT }
     case BondHealthState.HEALTHY:
       return { color: CSS_PRIMARY, bg: CSS_PRIMARY_LIGHT_10 }
@@ -211,21 +210,25 @@ export function bondAdvice(
       return { text, urgency: TipUrgency.CRITICAL, tone: CardStatusTone.RED }
     }
     case BondHealthState.WATCH: {
-      const text =
-        coverage.topUpToKeepStake > 0
-          ? `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake.`
-          : 'Bond covers current stake.'
-      return { text, urgency: TipUrgency.WARNING, tone: CardStatusTone.YELLOW }
-    }
-    case BondHealthState.SOFT: {
-      const text =
-        coverage.topUpToIdealKeep > 0
-          ? `Top up ${topUp(coverage.topUpToIdealKeep)} to grow stake.`
-          : 'Bond meets ideal coverage.'
-      // Info/indigo — soft is "good enough but room to grow"; visually
-      // distinct from watch's warning-yellow so the user reads the chip as
-      // optional, not urgent.
-      return { text, urgency: TipUrgency.INFO, tone: CardStatusTone.YELLOW }
+      if (coverage.topUpToKeepStake > 0) {
+        return {
+          text: `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake.`,
+          urgency: TipUrgency.WARNING,
+          tone: CardStatusTone.YELLOW,
+        }
+      }
+      if (coverage.topUpToIdealKeep > 0) {
+        return {
+          text: `Top up ${topUp(coverage.topUpToIdealKeep)} to grow stake.`,
+          urgency: TipUrgency.INFO,
+          tone: CardStatusTone.YELLOW,
+        }
+      }
+      return {
+        text: 'Bond covers current stake.',
+        urgency: TipUrgency.INFO,
+        tone: CardStatusTone.YELLOW,
+      }
     }
     case BondHealthState.HEALTHY:
       return {
@@ -360,16 +363,17 @@ function bondCta(
     health === BondHealthState.CRITICAL ||
     (inSet &&
       health === BondHealthState.WATCH &&
-      coverage.topUpToKeepStake > 0) ||
-    (inSet &&
-      health === BondHealthState.SOFT &&
-      coverage.topUpToIdealKeep > 0 &&
-      delta <= 0)
+      (coverage.topUpToKeepStake > 0 ||
+        (coverage.topUpToIdealKeep > 0 && delta <= 0)))
   if (!fires) return null
-  // SOFT + defending: the standard "grow stake" advisory fires at INFO, which
-  // selectTip ranks below deltaCta's WARNING. Escalate to WARNING and use
-  // keep-stake framing so the actionable bond advice beats the symptom message.
-  if (health === BondHealthState.SOFT && isDefending(validator, delta)) {
+  // WATCH + no keep-shortfall + defending: the "grow stake" advisory fires at
+  // INFO, which selectTip ranks below deltaCta's WARNING. Escalate to WARNING
+  // so the actionable bond advice beats the symptom message.
+  if (
+    health === BondHealthState.WATCH &&
+    coverage.topUpToKeepStake === 0 &&
+    isDefending(validator, delta)
+  ) {
     const topUpAmt = coverage.topUpToIdealKeep
     return tip(
       topUpAmt > 0

@@ -69,7 +69,6 @@ const bondHealthToTone = (health: BondHealthState): CardStatusTone => {
     case BondHealthState.CRITICAL:
       return CardStatusTone.RED
     case BondHealthState.WATCH:
-    case BondHealthState.SOFT:
       return CardStatusTone.YELLOW
     case BondHealthState.HEALTHY:
       return CardStatusTone.GREEN

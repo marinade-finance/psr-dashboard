@@ -43,12 +43,15 @@ const statusLine = (
   marinadeActivatedStakeSol: number,
   expectedStakeDeltaSol: number,
 ): CardStatus => {
-  // Soft bond is advisory. When stake is already arriving the canonical
-  // "top up to grow stake" reads as a contradiction next to the +N SOL on
-  // the Stake card. The truthful banner here is the inflow line — the
-  // ideal top-up still shows in the section table below for users who
-  // want to lift the ceiling.
-  if (state === BondHealthState.SOFT && expectedStakeDeltaSol > 0) {
+  // WATCH bond with a positive delta: the canonical "top up to grow stake"
+  // reads as a contradiction next to the +N SOL on the Stake card when stake
+  // is already arriving. Surface the inflow line instead — the ideal top-up
+  // still shows in the section table below.
+  if (
+    state === BondHealthState.WATCH &&
+    coverage.topUpToKeepStake === 0 &&
+    expectedStakeDeltaSol > 0
+  ) {
     return {
       label: `${stake(expectedStakeDeltaSol)} arriving next epoch — bond covers it.`,
       tone: CardStatusTone.GREEN,

@@ -1,29 +1,29 @@
-// Regression guard for BOND_CHIP label mapping: soft tier must render "Adequate", not "OK".
-// Tests bondCoverageLabel and BOND_CHIP display text per health tier.
+// Regression guard for BOND_CHIP label mapping: 4 tiers, no 'soft'/'Adequate'.
 import { describe, expect, it } from 'vitest'
 
-import { bondCoverageLabel } from '../../validator-detail/validator-detail'
 import { BOND_CHIP } from '../sam-table'
 
-import type { BondCoverage } from 'src/services/bond-coverage'
-
-// Regression: soft tier label was 'OK', which collided with the imperative
-// "OK" mood (everything is fine) when the actual meaning is "bond covers the
-// stake but is below the ideal coverage tier". Renamed to 'Adequate'.
-
-describe("soft bond tier label is 'Adequate', not 'OK'", () => {
-  it('sam-table BOND_CHIP soft label', () => {
-    expect(BOND_CHIP.soft.label).toBe('Adequate')
-    expect(BOND_CHIP.soft.label).not.toBe('OK')
+describe('BOND_CHIP covers exactly the 4 health tiers', () => {
+  it('has no-bond tier', () => {
+    expect(BOND_CHIP['no-bond'].label).toBe('No bond')
   })
 
-  it('validator-detail bondCoverageLabel: soft + no top-up → "Adequate"', () => {
-    const coverage = {
-      topUpToAvoidFee: 0,
-      topUpToKeepStake: 0,
-      topUpToIdealKeep: 0,
-    } as unknown as BondCoverage
-    expect(bondCoverageLabel('soft', coverage)).toBe('Adequate')
-    expect(bondCoverageLabel('soft', coverage)).not.toBe('OK')
+  it('has critical tier (red)', () => {
+    expect(BOND_CHIP.critical.label).toBe('Critical')
+    expect(BOND_CHIP.critical.bar).toContain('destructive')
+  })
+
+  it('has watch tier (yellow)', () => {
+    expect(BOND_CHIP.watch.label).toBe('Watch')
+    expect(BOND_CHIP.watch.bar).toContain('warning')
+  })
+
+  it('has healthy tier (green)', () => {
+    expect(BOND_CHIP.healthy.label).toBe('Healthy')
+    expect(BOND_CHIP.healthy.bar).toContain('primary')
+  })
+
+  it('does not have a soft/Adequate tier', () => {
+    expect(Object.keys(BOND_CHIP)).not.toContain('soft')
   })
 })

@@ -51,16 +51,25 @@ export function effectiveBondRunway(
   return Math.max(0, validator.bondGoodForNEpochs ?? 0)
 }
 
-// Bond gauge geometry, shared so the sam-table and detail gauges share one
-// scale. The 20% red boundary IS the actual SDK fee-charged threshold
-// (runway < minBondEpochs): scale is chosen so minBondEpochs lands exactly
-// at BOND_CRITICAL_FRAC of the track. Healthy validators (runway >
-// 5×minBondEpochs) saturate at 100% — accepted tradeoff for the marker
-// being literally true rather than just visually prominent.
-export const BOND_CRITICAL_FRAC = 0.2
-
+// Bond gauge geometry. Scale = 4 × idealBondEpochs so the green "safe" zone
+// starts at 25% and saturates well before the end. The red penalty marker
+// (minBondEpochs) sits at its natural position on this scale rather than
+// being forced to a fixed 20%.
+//
 export function bondGaugeScaleMax(config: DsSamConfig): number {
-  return config.minBondEpochs / BOND_CRITICAL_FRAC
+  return 4 * config.idealBondEpochs
+}
+
+// Fraction of the gauge track where the penalty threshold (minBondEpochs) sits.
+export function bondCriticalFrac(config: DsSamConfig): number {
+  const max = bondGaugeScaleMax(config)
+  return max > 0 ? config.minBondEpochs / max : 0.2
+}
+
+// Fraction of the gauge track where the ideal threshold (idealBondEpochs) sits.
+export function bondIdealFrac(config: DsSamConfig): number {
+  const max = bondGaugeScaleMax(config)
+  return max > 0 ? config.idealBondEpochs / max : 0.25
 }
 
 // Bond utilization 0..100. 0 = bond fully covers, 100 = depleted relative to
