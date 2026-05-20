@@ -156,14 +156,13 @@ export type SortDirection = 'asc' | 'desc'
 export function passesTableFilter(
   v: AuctionValidator,
   level: UserLevel,
-  minBondEpochs: number,
+  minBondBalanceSol: number,
 ): boolean {
-  if (!v.bondBalanceSol) return false
+  if ((v.bondBalanceSol ?? 0) < minBondBalanceSol) return false
   if (level === UserLevel.Expert) return true
   const inSetOrStaked =
     v.marinadeActivatedStakeSol > 0 || v.auctionStake.marinadeSamTargetSol > 0
   if (!inSetOrStaked) return false
-  if ((v.bondGoodForNEpochs ?? 0) < minBondEpochs) return false
   return true
 }
 
@@ -453,7 +452,7 @@ export const SamTable: React.FC<Props> = ({
           passesTableFilter(
             validator,
             level ?? UserLevel.Basic,
-            dsSamConfig.minBondEpochs,
+            dsSamConfig.minBondBalanceSol,
           ),
         )
         .map(validator => {
