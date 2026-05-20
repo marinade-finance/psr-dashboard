@@ -180,9 +180,7 @@ new validator gets a fresh component (no mirror-prop-into-state needed).
 - `payments.tsx` — `PaymentsBreakdown`, the "how much will I pay?" tab.
   ONE `CalcCard` / ONE 4-column `RevRow` `<table>`: bid cost
   (`computeBidding`), penalties + PSR estimates, **Total payment**. One
-  status pill, one tip footer (`onGoToSim` + `onGoToPenalty`). (Replaces
-  the deleted `payments-merged.tsx`, which had merged both questions
-  into one table.)
+  status pill, one tip footer (`onGoToSim` + `onGoToPenalty`).
 
 ### `components/validator-bonds-table/`
 

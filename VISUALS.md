@@ -6,107 +6,18 @@ code; every entry cites its file.
 
 ---
 
-## PROPOSED CLAUDE.md merge
-
-> Splice the block below into `CLAUDE.md`'s "Visual Language" area (after
-> the "Inline style escape hatch" subsection, before "Typography scale").
-> Do NOT apply automatically — `CLAUDE.md` has uncommitted user edits.
-
-```markdown
-### Two orthogonal axes: severity vs lever
-
-Two independent encodings, never collapsed into one. Enforced at the
-source — one CTA helper per lever in `src/services/tip-engine.ts`
-(`bondCta`, `bidCta`, `outOfSetCta`, `capCta`, `deltaCta`); `selectTip`
-picks the highest-severity candidate, with `LEVER_ORDER` (bond →
-bid/rank → cap → none) breaking ties at the same severity.
-
-- **Colour = severity.** `getTipStyle(urgency)` maps
-  `TipUrgency.CRITICAL`→destructive, `WARNING`→warning, `INFO`→info,
-  `POSITIVE`→primary, `NEUTRAL`→muted. Same axis the breakdown banner
-  uses (`tone: red|yellow|green`); `bondAdvice()` emits both so they
-  agree by construction.
-- **Glyph = the lever** (which knob to turn).
-  `TipConstraint.BOND`→ICON_BOND, `BID`→ICON_BID, `RANK`→ICON_BID (same
-  lever — raise the bid, so same glyph), `CAP`→ICON_CAP. Only
-  `TipConstraint.NONE` (in-set, no binding constraint) gets a
-  directional glyph — up/down/right keyed off the real signed `delta`
-  so it cannot lie. `getTipIcon` in `src/services/tip-engine.ts`.
-- **Octagon alert is the ONLY severity-driven glyph.** `ICON_ALERT`
-  (stop-sign octagon) overrides the lever glyph for exactly one state:
-  an estimated bond risk fee this epoch (`tip.alert === true`). Plain
-  below-min / no-bond stay critical-red but keep their constraint glyph
-  — no escalation. `src/components/icons/icon-alert.tsx`.
-
-### Tip glyph set
-
-7 glyphs, all `viewBox 0 0 12 12`, uniform **14.4px** (12 → 14.4, +20%):
-bond, bid, cap, alert, up, down, right. `src/components/icons/icon-*.tsx`.
-No `rank` glyph — `TipConstraint.RANK` reuses ICON_BID because the lever
-is identical.
-
-### Phantom icon slot
-
-Every tip pill renders its glyph inside a fixed
-`w-4 h-4` centred box (`shrink-0 inline-flex items-center justify-center`)
-so glyph variance never shifts pill margins or breaks column alignment.
-`src/components/sam-table/sam-table.tsx` (Next Step cell).
-
-### Bond gauge
-
-One shared track-and-fill `Gauge` (`src/components/gauge/gauge.tsx`),
-two sizes. Fill = `clamp(value/scaleMax, 4%, 100%)`. **Critical band +
-marker scale independently of fill** — `criticalBand` and `marker` are
-fractions of the *track*, fill is a fraction of the *value range*.
-Bond pill: `scaleMax = bondGaugeScaleMax(config) = minBondEpochs /
-BOND_CRITICAL_FRAC` (i.e. `5 × minBondEpochs`), and both `marker` and
-`criticalBand` are passed the constant `BOND_CRITICAL_FRAC = 0.2` — the
-20% mark literally is the SDK fee-charged threshold. Healthy validators
-above `5 × minBondEpochs` saturate at 100% (accepted tradeoff).
-`src/services/calculations.ts` (`BOND_CRITICAL_FRAC`,
-`bondGaugeScaleMax`); call site `src/components/sam-table/sam-table.tsx`.
-
-### Breakdown table grammar — one 3-col model
-
-One uniform column model per `<table>`; never mix `CalcRow` (3-col) and
-`RevRow` (4-col). Unit rules, no exceptions:
-
-- **PMPE / epochs / named quantities** → declared once as the
-  `SectionHeader` `unit` (right-aligned, `font-mono normal-case`); rows
-  carry no suffix.
-- **SOL** → inline suffix on the value, NEVER a header.
-- **%** → inline annotation beside the value, NEVER a header.
-- A column never mixes value kinds.
-
-Row weights: plain = no flags; sub-total = `severity` only (dot carries
-signal, never with `bold`); section conclusion = `separator + bold +
-large`; total = `total`. `src/components/breakdowns/row.tsx`.
-
-### Attention dot persistence
-
-Per-tab attention dot (`w-1.5 h-1.5 rounded-full`,
-critical→destructive / warning→warning / info→info) **persists on the
-active tab and pulses** (`active && 'animate-pulse'`) — it never vanishes
-when the tab is opened. `src/components/validator-detail/validator-detail.tsx`.
-
-### Decorative borders
-
-NEVER `border-l` / left-border accent bands on any element. Status is
-carried by colour token + dot + glyph, not by a coloured edge.
-```
-
----
-
 ## Alphabet
 
 Each entry: **what it is** · **the one rule** · **where it lives**.
 
 ### Surfaces & semantic colour
-See `CLAUDE.md` "Surfaces" and "Status & intent" tables. Tokens defined
-in `src/index.css` (`:root` + `.dark` overrides only where the value
-differs), exposed to Tailwind via `@theme`. **Rule:** always the semantic
-class (`bg-card`, `text-destructive`, …) — never raw hex/hsl, never
-inline `var(...)`, never arbitrary `text-[var(--…)]`.
+Tokens defined in `src/index.css` (`:root` + `.dark` overrides only where
+the value differs), exposed to Tailwind via `@theme`. New colours go
+through `src/index.css` — never added inline. No CSS Modules;
+`src/index.css` holds tokens, the global transition rule, and keyframe
+animations only. **Rule:** always the semantic class (`bg-card`,
+`text-destructive`, …) — never raw hex/hsl, never inline `var(...)`,
+never arbitrary `text-[var(--…)]`.
 
 ### CSS_* escape hatch
 `CSS_PRIMARY`, `CSS_DESTRUCTIVE`, `CSS_WARNING`, `CSS_INFO`,
