@@ -103,11 +103,7 @@ export const PaymentsBreakdown: React.FC<Props> = ({
           {/* by "where each number came from". The result row echoes the */}
           {/* rate so multiplication reads left → right on one line. */}
           <SectionHeader title="Active stake cost" col1Unit="PMPE" />
-          <CalcRow
-            label="Active stake"
-            help="Active Marinade stake this epoch — the base for the effective-bid rate."
-            col2={stake(m.stake)}
-          />
+          <CalcRow label="Active stake" col2={stake(m.stake)} />
           <CalcRow
             label="× Effective bid"
             help="The PMPE rate every winner pays this epoch (last-price auction)."
@@ -122,11 +118,7 @@ export const PaymentsBreakdown: React.FC<Props> = ({
           />
 
           <SectionHeader title="Activating stake cost" col1Unit="PMPE" />
-          <CalcRow
-            label="Activating stake"
-            help="Newly-activating stake — the base for the activating-stake rate."
-            col2={stake(m.activating)}
-          />
+          <CalcRow label="Activating stake" col2={stake(m.activating)} />
           <CalcRow
             label="× Activating-stake bid"
             help="The PMPE rate applied to newly-activating stake."

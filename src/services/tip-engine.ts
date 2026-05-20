@@ -593,7 +593,7 @@ function deltaCta(
     // are SAM-determined and not actionable from the validator's side.
     const wanted = validator.maxStakeWanted
     const target = validator.auctionStake.marinadeSamTargetSol
-    const atOwnCap = wanted != null && target >= wanted - 1e-6
+    const atOwnCap = wanted != null && target >= wanted - 1e-9
     return tip(
       atOwnCap ? 'At your max-stake-wanted setting.' : 'At target stake.',
       TipUrgency.NEUTRAL,

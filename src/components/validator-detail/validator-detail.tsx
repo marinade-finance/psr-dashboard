@@ -777,7 +777,6 @@ export const ValidatorDetail = ({
               <div className="space-y-3">
                 <MetricRow
                   label="Active Marinade stake"
-                  help="How much SOL Marinade has staked with you right now."
                   value={stake(validator.marinadeActivatedStakeSol)}
                 />
                 <MetricRow

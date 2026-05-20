@@ -135,19 +135,19 @@ export const BiddingBreakdown: React.FC<Props> = ({
           />
           <CalcRow
             label="Inflation"
-            help="The share of Solana's new-coin inflation rewards your validator keeps. The percentage is your commission, the PMPE is what it earns per 1000 SOL of stake this epoch."
+            help="Your inflation commission and epoch PMPE per 1000 SOL."
             col1={m.inflPct}
             col2={pmpe(m.inflPmpe)}
           />
           <CalcRow
             label="MEV"
-            help="Extra tips your validator collects from ordering transactions. The percentage is your share, the PMPE is what it earns per 1000 SOL of stake this epoch."
+            help="Your MEV share and epoch PMPE per 1000 SOL."
             col1={m.mevPct}
             col2={pmpe(m.mevPmpe)}
           />
           <CalcRow
             label="Block rewards"
-            help="Priority fees paid for landing transactions in blocks your validator produced. The percentage is your share, the PMPE is what it earns per 1000 SOL of stake this epoch."
+            help="Your block-reward share and epoch PMPE per 1000 SOL."
             col1={m.blkPct}
             col2={pmpe(m.blkPmpe)}
           />
@@ -248,7 +248,7 @@ export const BiddingBreakdown: React.FC<Props> = ({
             <>
               <CalcRow
                 label="Priority total"
-                help="The total PMPE of the lowest-ranked validator whose full below-target gap was filled before the redelegation budget ran out. Clear this and the budget reaches you in full."
+                help="Lowest total PMPE still fully funded by the redelegation budget."
                 col2={pmpe(nextEpoch.priorityFrontierPmpe)}
               />
               <CalcRow

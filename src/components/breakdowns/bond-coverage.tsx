@@ -140,7 +140,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
               />
               <CalcRow
                 label="Penalty trigger threshold"
-                help="The least claimable bond you can hold before the fee fires. Drop under it and the protocol charges the bond risk fee. It is a fixed reserve plus the minimum bond your projected stake needs."
+                help="Threshold where bond risk fee starts: reserve plus required bond."
                 col2={bondSol(coverage.floorBaseProjected)}
                 bold
               />
@@ -153,7 +153,6 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
               {coverage.topUpToAvoidFee > 0 && (
                 <CalcRow
                   label="Top up to avoid the fee"
-                  help="How far the claimable bond is below the threshold. Add this much to clear the fee."
                   col2={topUp(coverage.topUpToAvoidFee)}
                   total
                   severity="error"
@@ -206,7 +205,6 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           />
           <CalcRow
             label="Current exposed stake"
-            help="The slice of your active Marinade stake the bond must back — active stake minus the unprotected portion."
             col1={stake(coverage.currentExposedStakeSol)}
           />
           <CalcRow
@@ -243,13 +241,11 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           />
           <CalcRow
             label="Bond balance"
-            help="Total SOL you've deposited as bond — gross, before subtracting amounts locked in pending operations."
             col2={bondSol(coverage.bondBalanceSol)}
             bold
           />
           <CalcRow
             label="Current exposed stake"
-            help="The slice of your active Marinade stake the bond must back — active stake minus the unprotected portion."
             col1={stake(coverage.currentExposedStakeSol)}
           />
           <CalcRow

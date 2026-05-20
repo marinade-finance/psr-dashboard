@@ -44,28 +44,8 @@ const STATUS_ACTION_CLASSES: Record<CardStatusTone, string> = {
   grey: 'border-muted-foreground text-muted-foreground',
 }
 
-// Bond tips colour off bond-health (red/yellow/green axis); other tips
-// colour off urgency. Returns the CardStatusTone for the validator-detail
-// header banner so it can reuse StatusBanner with the in-card visual.
-export const tipBannerTone = (
-  tip: ValidatorTip,
-  bondHealth: BondHealthState,
-): CardStatusTone => {
-  if (tip.constraint === 'bond' && tip.urgency !== TipUrgency.NEUTRAL) {
-    switch (bondHealth) {
-      case BondHealthState.NO_BOND:
-      case BondHealthState.CRITICAL:
-        return 'red'
-      case BondHealthState.WATCH:
-      case BondHealthState.SOFT:
-        return 'yellow'
-      case BondHealthState.HEALTHY:
-        return 'green'
-      default:
-        return assertNever(bondHealth)
-    }
-  }
-  switch (tip.urgency) {
+const urgencyToTone = (urgency: TipUrgency): CardStatusTone => {
+  switch (urgency) {
     case TipUrgency.CRITICAL:
       return 'red'
     case TipUrgency.WARNING:
@@ -76,8 +56,36 @@ export const tipBannerTone = (
     case TipUrgency.NEUTRAL:
       return 'grey'
     default:
-      return assertNever(tip.urgency)
+      return assertNever(urgency)
   }
+}
+
+const bondHealthToTone = (health: BondHealthState): CardStatusTone => {
+  switch (health) {
+    case BondHealthState.NO_BOND:
+    case BondHealthState.CRITICAL:
+      return 'red'
+    case BondHealthState.WATCH:
+    case BondHealthState.SOFT:
+      return 'yellow'
+    case BondHealthState.HEALTHY:
+      return 'green'
+    default:
+      return assertNever(health)
+  }
+}
+
+// Bond tips colour off bond-health (red/yellow/green axis); other tips
+// colour off urgency. Bond + NEUTRAL is the "below-min, no fee" exception —
+// stays urgency-driven so it can read grey instead of inheriting health red.
+export const tipBannerTone = (
+  tip: ValidatorTip,
+  bondHealth: BondHealthState,
+): CardStatusTone => {
+  if (tip.constraint === 'bond' && tip.urgency !== TipUrgency.NEUTRAL) {
+    return bondHealthToTone(bondHealth)
+  }
+  return urgencyToTone(tip.urgency)
 }
 
 // Shared status banner — rounded pill with status text on the left and an
