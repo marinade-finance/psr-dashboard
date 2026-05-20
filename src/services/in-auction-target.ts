@@ -27,9 +27,9 @@ export type InAuctionTarget = {
   currentBidPmpe: number
   targetBidPmpe: number
   bidIncrease: number
-  // = coverage.floorBaseKeep — minimum bond required behind current stake.
+  // Minimum bond required behind current stake.
   bondFloorToBack: number
-  // = coverage.topUpToKeepStake — bond top-up to keep that stake.
+  // Bond top-up to keep that stake.
   bondTopUp: number
   // True when a cap (country/ASO/etc) is the binding constraint, so
   // clearing the bid alone will NOT get the validator in.
@@ -53,16 +53,15 @@ export const computeInAuctionTarget = (
   // that would close the gap holding everything else constant; it's a
   // legible UI presentation, not the SDK's allocation logic.
   const currentTotalPmpe = v.revShare.totalPmpe
-  const totalGap = Math.max(0, winningTotalPmpe - currentTotalPmpe)
-  const targetBidPmpe = currentBidPmpe + totalGap
-  const bidIncrease = totalGap
+  const pmpeGap = Math.max(0, winningTotalPmpe - currentTotalPmpe)
+  const targetBidPmpe = currentBidPmpe + pmpeGap
   return {
     winningTotalPmpe,
     currentTotalPmpe,
     nonBidPmpe,
     currentBidPmpe,
     targetBidPmpe,
-    bidIncrease,
+    bidIncrease: pmpeGap,
     bondFloorToBack: coverage.floorBaseKeep,
     bondTopUp: coverage.topUpToKeepStake,
     capConstrained: v.lastCapConstraint != null,

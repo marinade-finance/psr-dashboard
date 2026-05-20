@@ -126,8 +126,6 @@ export const getTipIcon = (tip: ValidatorTip): React.ReactNode => {
   switch (tip.constraint) {
     case TipConstraint.BOND:
       return ICON_BOND
-    // 'bid' and 'rank' share the same lever (raise the bid) → same glyph.
-    // Visual-language rule: glyph = the lever, never an axis duplicate.
     case TipConstraint.BID:
     case TipConstraint.RANK:
       return ICON_BID
@@ -203,17 +201,14 @@ export function bondAdvice(
       }
     }
     case BondHealthState.CRITICAL: {
-      // Four honest states — SDK bondRiskFeeSol is the authoritative fee
-      // signal; topUpToAvoidFee only means "below projected floor", not
-      // "fee is being charged". Gate "avoid the fee" on both.
       const text =
-        coverage.topUpToAvoidFee > 0 && bondRiskFeeSol > 0
-          ? `Top up ${topUp(coverage.topUpToAvoidFee)} to avoid the bond risk fee.`
-          : bondRiskFeeSol > 0
-            ? `Estimated bond risk fee ${pay(bondRiskFeeSol)} next epoch.`
-            : coverage.topUpToAvoidFee > 0
-              ? `Top up ${topUp(coverage.topUpToAvoidFee)} — bond below the penalty threshold.`
-              : 'Bond too thin — a bond risk fee can be charged.'
+        bondRiskFeeSol > 0
+          ? coverage.topUpToAvoidFee > 0
+            ? `Top up ${topUp(coverage.topUpToAvoidFee)} to avoid the bond risk fee.`
+            : `Estimated bond risk fee ${pay(bondRiskFeeSol)} next epoch.`
+          : coverage.topUpToAvoidFee > 0
+            ? `Top up ${topUp(coverage.topUpToAvoidFee)} — bond below the penalty threshold.`
+            : 'Bond too thin — a bond risk fee can be charged.'
       return { text, urgency: TipUrgency.CRITICAL, tone: 'red' }
     }
     case BondHealthState.WATCH: {
@@ -564,7 +559,7 @@ function outOfSetCta(
       // epoch (revShare.blacklistPenaltyPmpe > 0) — real money, octagon.
       // Otherwise it's informational ("flagged but no charge this epoch")
       // and stays grey regardless of stake size.
-      const penaltyPmpe = validator.revShare?.blacklistPenaltyPmpe ?? 0
+      const penaltyPmpe = validator.revShare.blacklistPenaltyPmpe ?? 0
       if (penaltyPmpe > 0) {
         const penaltySol =
           (penaltyPmpe / 1000) * (validator.marinadeActivatedStakeSol ?? 0)

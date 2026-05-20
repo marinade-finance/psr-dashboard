@@ -21,21 +21,11 @@ const makeValidator = (
 
 describe('passesTableFilter', () => {
   it('drops validators with bond below minimum regardless of level', () => {
-    const belowMin = makeValidator({ bondBalanceSol: MIN_BOND_SOL - 1 })
-    expect(passesTableFilter(belowMin, UserLevel.Expert, MIN_BOND_SOL)).toBe(
-      false,
-    )
-    expect(passesTableFilter(belowMin, UserLevel.Basic, MIN_BOND_SOL)).toBe(
-      false,
-    )
-  })
-
-  it('drops validators with zero bond regardless of level', () => {
-    const noBond = makeValidator({ bondBalanceSol: 0 })
-    expect(passesTableFilter(noBond, UserLevel.Expert, MIN_BOND_SOL)).toBe(
-      false,
-    )
-    expect(passesTableFilter(noBond, UserLevel.Basic, MIN_BOND_SOL)).toBe(false)
+    for (const bondBalanceSol of [0, MIN_BOND_SOL - 1]) {
+      const v = makeValidator({ bondBalanceSol })
+      expect(passesTableFilter(v, UserLevel.Expert, MIN_BOND_SOL)).toBe(false)
+      expect(passesTableFilter(v, UserLevel.Basic, MIN_BOND_SOL)).toBe(false)
+    }
   })
 
   it('expert mode shows everything with sufficient bond', () => {
@@ -45,13 +35,18 @@ describe('passesTableFilter', () => {
       marinadeActivatedStakeSol: 0,
       auctionStake: { marinadeSamTargetSol: 0 } as never,
     })
-    // low runway does NOT cause expert to hide a row
-    const tinyRunway = makeValidator({ bondGoodForNEpochs: 0 })
     expect(passesTableFilter(atMin, UserLevel.Expert, MIN_BOND_SOL)).toBe(true)
     expect(passesTableFilter(noStake, UserLevel.Expert, MIN_BOND_SOL)).toBe(
       true,
     )
-    expect(passesTableFilter(tinyRunway, UserLevel.Expert, MIN_BOND_SOL)).toBe(
+  })
+
+  it('bond runway does not drive visibility in either mode', () => {
+    const zeroRunway = makeValidator({ bondGoodForNEpochs: 0 })
+    expect(passesTableFilter(zeroRunway, UserLevel.Expert, MIN_BOND_SOL)).toBe(
+      true,
+    )
+    expect(passesTableFilter(zeroRunway, UserLevel.Basic, MIN_BOND_SOL)).toBe(
       true,
     )
   })
@@ -64,17 +59,5 @@ describe('passesTableFilter', () => {
     expect(passesTableFilter(noStake, UserLevel.Basic, MIN_BOND_SOL)).toBe(
       false,
     )
-  })
-
-  it('basic mode shows in-set validators regardless of runway', () => {
-    const zeroRunway = makeValidator({ bondGoodForNEpochs: 0 })
-    expect(passesTableFilter(zeroRunway, UserLevel.Basic, MIN_BOND_SOL)).toBe(
-      true,
-    )
-  })
-
-  it('basic mode keeps validators at exactly min bond', () => {
-    const atMin = makeValidator({ bondBalanceSol: MIN_BOND_SOL })
-    expect(passesTableFilter(atMin, UserLevel.Basic, MIN_BOND_SOL)).toBe(true)
   })
 })

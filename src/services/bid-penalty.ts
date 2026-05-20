@@ -44,11 +44,11 @@ export function computeBidPenalty(
   const auctions = v.auctions ?? []
   const pastAuction = auctions[0]
   const lastEpochBidPmpe = finite(pastAuction?.bidPmpe)
-  const thisEpochBidPmpe = finite(v.revShare?.bidPmpe)
+  const thisEpochBidPmpe = finite(v.revShare.bidPmpe)
   const threshold = TOL_COEF * lastEpochBidPmpe
   const isNegativeBiddingChange = thisEpochBidPmpe < threshold
 
-  const effParticipatingBidPmpe = finite(v.revShare?.effParticipatingBidPmpe)
+  const effParticipatingBidPmpe = finite(v.revShare.effParticipatingBidPmpe)
   // SDK calculations.js:121-123 — uses ?? not ||, so 0 stays 0.
   const worstHistoricalPmpe = auctions
     .slice(0, historyEpochs)
@@ -59,7 +59,7 @@ export function computeBidPenalty(
   const limit = Math.min(effParticipatingBidPmpe, worstHistoricalPmpe)
   const adjustedLimit = limit * (1 - permittedDeviation)
 
-  const bondObligationPmpe = finite(v.revShare?.bondObligationPmpe)
+  const bondObligationPmpe = finite(v.revShare.bondObligationPmpe)
   const shortfall = Math.max(0, adjustedLimit - bondObligationPmpe)
   const shortfallRatio = adjustedLimit > 0 ? shortfall / adjustedLimit : 0
   const rawCoef =

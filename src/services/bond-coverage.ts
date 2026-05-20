@@ -52,8 +52,8 @@ export function computeBondCoverage(
   const claimableBondBalanceSol = v.claimableBondBalanceSol ?? 0
   const marinadeActivatedStakeSol = v.marinadeActivatedStakeSol
   const paidUndelegationSol = selectPaidUndelegationSol(v)
-  const expectedMaxEffBidPmpe = finite(v.revShare?.expectedMaxEffBidPmpe)
-  const onchainDistributedPmpe = finite(v.revShare?.onchainDistributedPmpe)
+  const expectedMaxEffBidPmpe = finite(v.revShare.expectedMaxEffBidPmpe)
+  const onchainDistributedPmpe = finite(v.revShare.onchainDistributedPmpe)
   const unprotectedStakeSol = v.unprotectedStakeSol ?? 0
 
   // Strip this cycle's freshly-charged undelegation so the projection isn't
@@ -64,7 +64,7 @@ export function computeBondCoverage(
     (v.bondForcedUndelegation?.value ?? 0) * Math.min(1, config.bondRiskFeeMult)
   const freshBidTooLowUndel =
     winningTotalPmpe > 0
-      ? ((v.revShare?.bidTooLowPenaltyPmpe ?? 0) * marinadeActivatedStakeSol) /
+      ? ((v.revShare.bidTooLowPenaltyPmpe ?? 0) * marinadeActivatedStakeSol) /
         winningTotalPmpe
       : 0
   const carriedPaidUndelegationSol = Math.max(

@@ -162,8 +162,7 @@ export function passesTableFilter(
   if (level === UserLevel.Expert) return true
   const inSetOrStaked =
     v.marinadeActivatedStakeSol > 0 || v.auctionStake.marinadeSamTargetSol > 0
-  if (!inSetOrStaked) return false
-  return true
+  return inSetOrStaked
 }
 
 export function makeCompareFn(

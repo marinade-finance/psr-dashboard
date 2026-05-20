@@ -25,17 +25,15 @@ export const computeNextEpochStake = (
 ): NextEpochStake => {
   const priorityFrontierPmpe =
     selectRedelegationPriorityFrontierPmpe(auctionResult)
-  // Uses revShare.totalPmpe (SDK ranking) — reconstructing from non-bid + static
-  // bid diverges when the SDK clips auctionEffectiveBidPmpe below the static bid.
-  const totalGap =
+  const pmpeGap =
     priorityFrontierPmpe > 0
       ? Math.max(0, priorityFrontierPmpe - v.revShare.totalPmpe)
       : 0
   return {
     priorityFrontierPmpe,
     targetBidPmpePriority:
-      priorityFrontierPmpe > 0 ? v.revShare.bidPmpe + totalGap : 0,
-    bidIncreaseForPriority: totalGap,
+      priorityFrontierPmpe > 0 ? v.revShare.bidPmpe + pmpeGap : 0,
+    bidIncreaseForPriority: pmpeGap,
     bidGapPmpe: Math.max(0, v.revShare.bidPmpe - selectEffectiveBid(v)),
     priorityRank: selectRedelegationPriorityRank(v, auctionResult),
   }

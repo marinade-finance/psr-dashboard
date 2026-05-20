@@ -89,7 +89,7 @@ describe('bondUtilizationPct', () => {
 // --- getApyBreakdown ---
 
 describe('getApyBreakdown', () => {
-  it('has all expected keys', () => {
+  it('returns all five APY components: inflation, mev, blockRewards, staticBid, total', () => {
     const validator = makeValidator()
     const bd = getApyBreakdown(validator, EPOCHS_PER_YEAR)
     expect(bd).toHaveProperty('inflation')
@@ -137,7 +137,7 @@ describe('getTipStyle', () => {
     expect(getTipStyle('neutral').color).toContain('muted')
   })
 
-  it('no longer carries an icon (color = severity only)', () => {
+  it('getTipStyle returns color and bg fields, no icon', () => {
     const urgencies = [
       'critical',
       'warning',
@@ -184,7 +184,7 @@ describe('getTipIcon', () => {
     expect(getTipIcon(tip({ constraint: 'none', delta: 0 }))).toBe(ICON_RIGHT)
   })
 
-  it('regression: a constraint glyph is NEVER the up arrow', () => {
+  it('bond/bid/rank constraint → glyph is never ICON_UP even when losing stake', () => {
     // The bug: warning-urgency bond/bid/rank tips rendered ICON_UP via the
     // old urgency→icon map, putting a "gain" arrow on blocked/losing rows.
     for (const c of ['bond', 'bid', 'rank'] as const) {
@@ -193,7 +193,7 @@ describe('getTipIcon', () => {
     }
   })
 
-  it('regression: a losing in-set tip is the down arrow, never up', () => {
+  it('constraint NONE + delta < 0 → ICON_DOWN', () => {
     const losing = tip({ constraint: 'none', urgency: 'warning', delta: -5000 })
     expect(getTipIcon(losing)).toBe(ICON_DOWN)
     expect(getTipIcon(losing)).not.toBe(ICON_UP)
@@ -618,7 +618,7 @@ describe('bondAdvice — canonical CTA contract', () => {
     }
   })
 
-  it('no CTA is the long a3f39201 sentence', () => {
+  it("no CTA text contains the multi-clause 'too thin to back your stake' phrasing", () => {
     for (const s of states) {
       const { text } = adviceFor(s)
       expect(text).not.toContain('too thin to back your stake, so')
