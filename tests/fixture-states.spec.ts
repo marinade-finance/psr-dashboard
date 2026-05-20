@@ -77,7 +77,7 @@ test('V02 (Hetzner ASO at cap) row tip names the binding constraint', async ({
   // N SOL next epoch.". Match on the cap-CTA suffix; the SOL figure is
   // delta-dependent.
   await expect(
-    row.getByText(/Hetzner Online GmbH ASO at cap[\s\S]*until cap frees/i).first(),
+    row.getByText(/Hetzner Online GmbH at ASO cap[\s\S]*until cap frees/i).first(),
   ).toBeVisible()
 })
 

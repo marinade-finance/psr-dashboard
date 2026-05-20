@@ -87,6 +87,7 @@ test.describe('docs cross-links — guide link hrefs from detail sheet', () => {
     await page
       .locator(SHEET)
       .getByRole('button', { name: 'Payments', exact: true })
+      .first()
       .click()
     const link = page
       .locator(SHEET)

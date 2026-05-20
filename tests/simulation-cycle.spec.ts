@@ -36,7 +36,7 @@ test.describe('simulation — toggle reveals What-If form', () => {
     await expect(sw).toHaveAttribute('aria-checked', 'false')
   })
 
-  test('toggling Simulate ON reveals the 4 numeric inputs', async ({
+  test('toggling Simulate ON reveals the 5 numeric inputs', async ({
     page,
   }) => {
     await openSheet(page, V01)
@@ -47,7 +47,7 @@ test.describe('simulation — toggle reveals What-If form', () => {
     await expect(sheet.getByText('MEV Commission %')).toBeVisible()
     await expect(sheet.getByText('Block Rewards Commission %')).toBeVisible()
     const inputs = sheet.locator('input[type="number"]')
-    await expect(inputs).toHaveCount(4)
+    await expect(inputs).toHaveCount(5)
   })
 
   test('What-If card shows "Auto-recalc on change" status initially', async ({
