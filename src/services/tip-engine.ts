@@ -27,7 +27,11 @@ import { assertNever } from 'src/utils/assert-never'
 
 import { computeBidPenalty } from './bid-penalty'
 import { computeBondCoverage } from './bond-coverage'
-import { BondHealthState, bondHealthFromAuction } from './bond-health'
+import {
+  BOND_URGENT_EPOCHS,
+  BondHealthState,
+  bondHealthFromAuction,
+} from './bond-health'
 import { apyBreakdown } from './calculations'
 import { selectInSet } from './sam'
 
@@ -169,6 +173,10 @@ export function bondAdvice(
   minBondBalanceSol: number,
   bondBalanceSol: number,
   marinadeActivatedStakeSol: number,
+  // True when the validator is WATCH but within BOND_URGENT_EPOCHS of the
+  // penalty fee threshold — no fee yet, but approaching. Shows the urgent
+  // "avoid future bond fee" message in yellow rather than the generic grow CTA.
+  nearFeeThreshold?: boolean,
 ): BondAdvice {
   // Below the SDK minimum (independent of health tier): clipBondStakeCap
   // → 0, a hard block. Tell the validator what to do — top up to the
@@ -216,17 +224,21 @@ export function bondAdvice(
           tone: CardStatusTone.RED,
         }
       }
-      // Near threshold, no fee yet — warn, not critical.
-      const text =
-        coverage.topUpToIdealKeep > 0
-          ? `Top up ${topUp(coverage.topUpToIdealKeep)} to avoid future bond fee.`
-          : 'Bond near threshold — top up to avoid future bond fee.'
-      return { text, urgency: TipUrgency.WARNING, tone: CardStatusTone.YELLOW }
     }
     case BondHealthState.WATCH: {
       if (coverage.topUpToKeepStake > 0) {
         return {
           text: `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake.`,
+          urgency: TipUrgency.WARNING,
+          tone: CardStatusTone.YELLOW,
+        }
+      }
+      if (nearFeeThreshold) {
+        return {
+          text:
+            coverage.topUpToIdealKeep > 0
+              ? `Top up ${topUp(coverage.topUpToIdealKeep)} to avoid future bond fee.`
+              : 'Bond near threshold — top up to avoid future bond fee.',
           urgency: TipUrgency.WARNING,
           tone: CardStatusTone.YELLOW,
         }
@@ -370,11 +382,17 @@ function bondCta(
     winningTotalPmpe,
     coverage,
   )
+  const runway = validator.bondGoodForNEpochs ?? 0
+  const nearFeeThreshold =
+    health === BondHealthState.WATCH &&
+    runway <= dsSamConfig.minBondEpochs + BOND_URGENT_EPOCHS &&
+    coverage.bondRiskFeeShortfall === 0
   const fires =
     health === BondHealthState.CRITICAL ||
     (inSet &&
       health === BondHealthState.WATCH &&
       (coverage.topUpToKeepStake > 0 ||
+        nearFeeThreshold ||
         (coverage.topUpToIdealKeep > 0 && delta <= 0)))
   if (!fires) return null
   // WATCH + no keep-shortfall + defending: the "grow stake" advisory fires at
@@ -383,6 +401,7 @@ function bondCta(
   if (
     health === BondHealthState.WATCH &&
     coverage.topUpToKeepStake === 0 &&
+    !nearFeeThreshold &&
     isDefending(validator, delta)
   ) {
     const topUpAmt = coverage.topUpToIdealKeep
@@ -402,6 +421,7 @@ function bondCta(
     dsSamConfig.minBondBalanceSol,
     bondBalance,
     validator.marinadeActivatedStakeSol,
+    nearFeeThreshold,
   )
   // Use bondAdvice's urgency as the canonical source — same severity the
   // breakdown banner uses. Alert (octagon) ONLY when a fee is actually

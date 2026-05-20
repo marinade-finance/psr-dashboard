@@ -52,11 +52,10 @@ export function bondHealthFromAuction(
   const coverage =
     precomputedCoverage ?? computeBondCoverage(v, config, winningTotalPmpe)
   if (coverage.bondRiskFeeShortfall > 0) return BondHealthState.CRITICAL
-  // Runway within BOND_URGENT_EPOCHS of the penalty gate → urgent red.
+  // Below ideal coverage → yellow watch. Includes the BOND_URGENT_EPOCHS
+  // near-threshold zone: urgency is expressed through the CTA message
+  // ("avoid future bond fee") not through red chip color, since no fee fires.
   const runway = v.bondGoodForNEpochs ?? 0
-  if (runway <= config.minBondEpochs + BOND_URGENT_EPOCHS)
-    return BondHealthState.CRITICAL
-  // Below the ideal coverage target → yellow watch.
   if (runway < config.idealBondEpochs) return BondHealthState.WATCH
   return BondHealthState.HEALTHY
 }

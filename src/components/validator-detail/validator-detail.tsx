@@ -36,8 +36,11 @@ import {
 } from 'src/services/bid-penalty'
 import { computeBidding } from 'src/services/bidding'
 import { computeBondCoverage } from 'src/services/bond-coverage'
-import { bondHealthFromAuction } from 'src/services/bond-health'
-import { BondHealthState } from 'src/services/bond-health'
+import {
+  BOND_URGENT_EPOCHS,
+  BondHealthState,
+  bondHealthFromAuction,
+} from 'src/services/bond-health'
 import { effectiveBondRunway } from 'src/services/calculations'
 import { HELP_TEXT } from 'src/services/help-text'
 import { fetchPsrEstimatesForValidator } from 'src/services/protected-events-estimator'
@@ -815,6 +818,12 @@ export const ValidatorDetail = ({
                 marinadeActivatedStakeSol={validator.marinadeActivatedStakeSol}
                 minBondBalanceSol={dsSamConfig.minBondBalanceSol}
                 expectedStakeDeltaSol={expectedStakeDelta}
+                nearFeeThreshold={
+                  bondHealth === BondHealthState.WATCH &&
+                  (validator.bondGoodForNEpochs ?? 0) <=
+                    dsSamConfig.minBondEpochs + BOND_URGENT_EPOCHS &&
+                  bondCoverage.bondRiskFeeShortfall === 0
+                }
                 isSimulated={isSimulated}
                 onGoToSim={goToSim}
               />
