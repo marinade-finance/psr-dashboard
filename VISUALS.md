@@ -1,9 +1,7 @@
 # Visual Language — Elements Alphabet
 
 The canonical, deduplicated set of visual primitives for the PSR Dashboard
-and the one rule that governs each. This extends the baseline in
-`CLAUDE.md` (surfaces / status families / bond tiers / charts / typography)
-with the rules synthesized this session. Ground truth is the committed
+and the one rule that governs each. Ground truth is the committed
 code; every entry cites its file.
 
 ---
