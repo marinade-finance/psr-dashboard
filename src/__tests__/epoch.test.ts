@@ -1,3 +1,5 @@
+// Tests for epoch selectors: selectNetworkEpoch, selectCurrentEpochProgress (48 h clamp),
+// selectLatestPaymentSettled, selectLatestAuctionSettled, and epochMeterModel timeline builder.
 import { describe, it, expect } from 'vitest'
 
 import {

@@ -1,3 +1,5 @@
+// Tests for tip-engine: getTipStyle/getTipIcon mappings, getValidatorTip branch coverage
+// (bond/bid/cap/delta CTAs, severity ordering), bondAdvice contract, and nextStakeDeltaCell.
 import { describe, it, expect } from 'vitest'
 
 import { ICON_BID } from 'src/components/icons/icon-bid'

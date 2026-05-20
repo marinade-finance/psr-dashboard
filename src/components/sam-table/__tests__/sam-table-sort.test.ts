@@ -1,3 +1,5 @@
+// Tests for makeCompareFn (table sort): rank column sorts by totalPmpe descending,
+// not by stakeDelta — regression guard for the sort-key selection.
 import { describe, expect, it } from 'vitest'
 
 import { makeCompareFn } from '../sam-table'

@@ -1,3 +1,5 @@
+// Tests for passesTableFilter: bond-below-min always visible, Basic vs Expert mode
+// differences, and that bond runway does not drive row visibility.
 import { describe, expect, it } from 'vitest'
 
 import { UserLevel } from '../../navigation/navigation'

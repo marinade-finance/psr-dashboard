@@ -1,3 +1,5 @@
+// Tests for augmentAuctionResult: dense cutoffRank computation, tied validators,
+// sub-min-bond stake loss, and selectCutoffRank edge cases.
 import { describe, it, expect, vi } from 'vitest'
 
 import {

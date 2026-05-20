@@ -1,3 +1,5 @@
+// Tests for computeNextEpochStake (Table B heuristic): priority rank selection,
+// bid-gap clamping, and redelegation priority frontier interactions.
 import { describe, it, expect } from 'vitest'
 
 import { computeNextEpochStake } from '../next-epoch-stake'

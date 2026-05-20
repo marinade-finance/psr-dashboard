@@ -1,3 +1,5 @@
+// Tests for number-formatting helpers: sol, pay, stake, pmpe, topUp, pct — decimal places,
+// rounding direction, and edge values.
 import { describe, it, expect } from 'vitest'
 
 import { sol, pct, pay, pmpe, stake, topUp } from '../format'
