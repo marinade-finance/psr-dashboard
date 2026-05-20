@@ -95,14 +95,14 @@ describe('getApyBreakdown', () => {
     expect(bd).toHaveProperty('inflation')
     expect(bd).toHaveProperty('mev')
     expect(bd).toHaveProperty('blockRewards')
-    expect(bd).toHaveProperty('stakeBid')
+    expect(bd).toHaveProperty('staticBid')
     expect(bd).toHaveProperty('total')
   })
 
-  it('stakeBid maps to bid pmpe (not named "bid")', () => {
+  it('staticBid maps to bid pmpe (not named "bid")', () => {
     const validator = makeValidator()
     const bd = getApyBreakdown(validator, EPOCHS_PER_YEAR)
-    expect(bd.stakeBid).toBeGreaterThan(0)
+    expect(bd.staticBid).toBeGreaterThan(0)
     expect((bd as Record<string, unknown>).bid).toBeUndefined()
   })
 
@@ -343,12 +343,25 @@ describe('getValidatorTip', () => {
     expect(tip.text).toContain('won’t change')
   })
 
-  it('delta < 0 → warning, losing stake message', () => {
+  it('delta < 0 + defending → warning, losing stake message', () => {
     const validator = makeValidator({
-      values: { expectedStakeChangeSol: -5000 },
+      marinadeActivatedStakeSol: 50_000, // > NON_TRIVIAL_STAKE_SOL
+      values: { expectedStakeChangeSol: -5000 }, // > NON_TRIVIAL_LOSS_SOL
     })
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('warning')
+    expect(tip.constraint).toBe('none')
+    expect(tip.text).toContain('Losing')
+  })
+
+  it('delta < 0 + not defending → info, losing stake message', () => {
+    // Active at boundary (10k = not > NON_TRIVIAL_STAKE_SOL) → not defending.
+    const validator = makeValidator({
+      marinadeActivatedStakeSol: 10_000,
+      values: { expectedStakeChangeSol: -5000 },
+    })
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
+    expect(tip.urgency).toBe('info')
     expect(tip.constraint).toBe('none')
     expect(tip.text).toContain('Losing')
   })
@@ -537,6 +550,7 @@ describe('bondAdvice — canonical CTA contract', () => {
       (DS_SAM_CONFIG as unknown as { minBondBalanceSol: number })
         .minBondBalanceSol ?? 0,
       v.bondBalanceSol ?? 0,
+      v.marinadeActivatedStakeSol ?? 0,
     )
   }
 

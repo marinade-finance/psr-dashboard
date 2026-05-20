@@ -156,12 +156,23 @@ export type BondAdvice = {
   tone: 'red' | 'yellow' | 'green' | 'grey'
 }
 
+// Two thresholds for the severity ladder, hoisted so bondAdvice can also
+// use NON_TRIVIAL_STAKE_SOL:
+//   NON_TRIVIAL_STAKE_SOL — validator HAS real stake (atRisk gate). 10k
+//     is the practical "real validator vs novelty" line on Solana.
+//   NON_TRIVIAL_LOSS_SOL — validator IS LOSING meaningful stake this
+//     epoch (defend-lever gate). 1k is small enough to flag any
+//     non-noise outflow, large enough to ignore rounding/cooldown jitter.
+const NON_TRIVIAL_STAKE_SOL = 10_000
+const NON_TRIVIAL_LOSS_SOL = 1_000
+
 export function bondAdvice(
   coverage: BondCoverage,
   health: BondHealthState,
   bondRiskFeeSol: number,
   minBondBalanceSol: number,
   bondBalanceSol: number,
+  marinadeActivatedStakeSol: number,
 ): BondAdvice {
   // Below the SDK minimum (independent of health tier): clipBondStakeCap
   // → 0, a hard block. Tell the validator what to do — top up to the
@@ -180,12 +191,17 @@ export function bondAdvice(
     }
   }
   switch (health) {
-    case BondHealthState.NO_BOND:
+    case BondHealthState.NO_BOND: {
+      // Novelty validators (active < 10k SOL) are effectively outside the
+      // auction already — surface the CTA muted/grey. Only escalate to red
+      // when there's real stake at risk of being pulled.
+      const hasRealStake = marinadeActivatedStakeSol > NON_TRIVIAL_STAKE_SOL
       return {
         text: `Post a bond of ${stake(minBondBalanceSol)} to win stake.`,
-        urgency: TipUrgency.CRITICAL,
-        tone: 'red',
+        urgency: hasRealStake ? TipUrgency.CRITICAL : TipUrgency.NEUTRAL,
+        tone: hasRealStake ? 'red' : 'grey',
       }
+    }
     case BondHealthState.CRITICAL: {
       // Critical bond — fires for in-set OR out-of-set + above-min;
       // bond-driven alert isn't gated by rank. Every value here is the
@@ -364,6 +380,7 @@ function bondCta(
     bondRiskFeeSol,
     dsSamConfig.minBondBalanceSol,
     bondBalance,
+    validator.marinadeActivatedStakeSol,
   )
   // Use bondAdvice's urgency as the canonical source — same severity the
   // breakdown banner uses. Alert (octagon) ONLY when a fee is actually
@@ -447,20 +464,11 @@ function capCauseLine(
     case AuctionConstraintType.VALIDATOR:
       return 'At per-validator cap'
     case AuctionConstraintType.WANT:
-      return 'At your max-stake-wanted setting'
+      return 'At your `maxStakeWanted` setting'
     default:
       return 'At a concentration cap'
   }
 }
-
-// Two thresholds for the severity ladder:
-//   NON_TRIVIAL_STAKE_SOL — validator HAS real stake (atRisk gate). 10k
-//     is the practical "real validator vs novelty" line on Solana.
-//   NON_TRIVIAL_LOSS_SOL — validator IS LOSING meaningful stake this
-//     epoch (defend-lever gate). 1k is small enough to flag any
-//     non-noise outflow, large enough to ignore rounding/cooldown jitter.
-const NON_TRIVIAL_STAKE_SOL = 10_000
-const NON_TRIVIAL_LOSS_SOL = 1_000
 
 // Defend-lever predicate: a real validator is actively losing meaningful
 // stake this epoch. Single source so the 5 CTA branches that gate WARNING
@@ -526,11 +534,12 @@ function outOfSetCta(
   // before cap so 'maxStakeWanted=0 + cap binding' shows the user's choice,
   // not the cap symptom.
   if (validator.maxStakeWanted === 0) {
+    // User's own choice — grey when not losing meaningful stake. When
+    // defending (meaningful active stake leaving), escalate to yellow so
+    // this message outranks deltaCta's "Losing N SOL" and names the cause.
     return tip(
       'Max-stake-wanted set to 0 — opted out.',
-      // User-controlled choice; informational only — grey, like the WANT
-      // cap and "at target stake" — never escalates.
-      TipUrgency.NEUTRAL,
+      defending ? TipUrgency.WARNING : TipUrgency.NEUTRAL,
       TipConstraint.NONE,
       delta,
     )
@@ -569,17 +578,20 @@ function outOfSetCta(
           true,
         )
       }
+      // Yellow when defending so this message outranks deltaCta's symptom.
       return tip(
         'Blacklisted by Marinade.',
-        TipUrgency.NEUTRAL,
+        defending ? TipUrgency.WARNING : TipUrgency.NEUTRAL,
         TipConstraint.NONE,
         delta,
       )
     }
-    // Growth lever — fix the eligibility checks and you can qualify. Violet.
+    // Growth lever — fix the eligibility checks and you can qualify.
+    // Escalate to yellow when defending so this names the cause instead of
+    // letting deltaCta's "Losing N SOL" win the severity sort.
     return tip(
       'Not eligible — check client version and vote credits.',
-      TipUrgency.INFO,
+      defending ? TipUrgency.WARNING : TipUrgency.INFO,
       TipConstraint.NONE,
       delta,
     )
@@ -606,7 +618,7 @@ function outOfSetCta(
   // Yellow when defending (stake leaving); violet otherwise (growth lever
   // — adjusting the suspects could let you in).
   return tip(
-    'Check max-stake-wanted and bond-stake capacity.',
+    'Check `maxStakeWanted` and bond-stake capacity.',
     defending ? TipUrgency.WARNING : TipUrgency.INFO,
     TipConstraint.NONE,
     delta,
@@ -677,7 +689,7 @@ function deltaCta(
     const atOwnCap = wanted != null && target >= wanted - 1e-9
     const belowTarget = target > 0 && active < target * 0.99
     const text = atOwnCap
-      ? 'At your max-stake-wanted setting.'
+      ? 'At your `maxStakeWanted` setting.'
       : belowTarget
         ? 'Stake won’t change next epoch.'
         : 'At target stake.'
@@ -693,9 +705,12 @@ function deltaCta(
     validator.values.expectedStakeNaturalWithdrawalSol ?? 0,
   )
   const cause = naturalOut > 0 ? ' — pool withdrawals.' : '.'
+  // Yellow only when the loss is meaningful (isDefending). Sub-threshold
+  // losses (< 1k SOL or < 10k active) stay violet so a specific-reason
+  // CTA at INFO level (bid too low, not-eligible) can outrank the symptom.
   return tip(
     `Losing ${stake(Math.abs(delta))} next epoch${cause}`,
-    TipUrgency.WARNING,
+    isDefending(validator, delta) ? TipUrgency.WARNING : TipUrgency.INFO,
     TipConstraint.NONE,
     delta,
   )
@@ -734,7 +749,7 @@ export type ApyBreakdownValue = {
   inflation: number
   mev: number
   blockRewards: number
-  stakeBid: number
+  staticBid: number
   total: number
 }
 
@@ -747,7 +762,7 @@ export const getApyBreakdown = (
     inflation: bd.inflation,
     mev: bd.mev,
     blockRewards: bd.blockRewards,
-    stakeBid: bd.bid,
+    staticBid: bd.bid,
     total: bd.total,
   }
 }

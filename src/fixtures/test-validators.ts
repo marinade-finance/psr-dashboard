@@ -1360,6 +1360,58 @@ const o12: AuctionValidator = {
   values: outOfSetValues(50_000, 100),
 }
 
+// ───── Out-of-set + bid-too-low penalty (p-row) ──────────────────────────────
+//
+// Validators that dropped their bid hard: now both below the winning line
+// (out-of-set) AND paying a bid-too-low penalty. bidCta fires CRITICAL/BID
+// ("Raise bid or pay penalty") which outranks the rank WARNING.
+
+// p01. Out-of-set + penalty + healthy bond → CRITICAL/BID.
+//   Dropped from 2.5 to 0.5 (bidPmpe < lastEpochBid) → penalty active.
+//   totalPmpe = 5.5 < WINNING_PMPE 6.0 → below line → out of set.
+//   Bond 200 well above min (5) → bond CTA does not shadow penalty.
+const p01: AuctionValidator = {
+  ...makeBase('FiXtURevpPENALTYouthealthy1111111111111111aa', {
+    marinadeActivatedStakeSol: 55_000,
+    bondBalanceSol: 200,
+    claimableBondBalanceSol: 200,
+    bidCpmpe: 0.5, // totalPmpe = 4.1+0.9+0.5 = 5.5 < 6.0
+    country: C_US,
+    aso: ASO_AWS,
+  }),
+  // History: bid was 2.5 for two epochs, dropped to 0.5 → bidTooLowPenalty fires.
+  auctions: makeAuctions(2.5, WINNING_PMPE).map((a, i) => ({
+    ...a,
+    bidPmpe: i < 2 ? 2.5 : 0.5,
+    auctionEffectiveBidPmpe: i < 2 ? 2.5 : 0.5,
+    effParticipatingBidPmpe: i < 2 ? 2.5 : 0.5,
+  })),
+  revShare: { ...makeRevShare(0.5, 0.6), auctionEffectiveBidPmpe: 0.5 },
+  bidTooLowPenalty: { coef: 0.3, base: 0.5 },
+  bondForcedUndelegation: { coef: 0, base: 0, value: 0 },
+  samEligible: true,
+  backstopEligible: false,
+  samBlocked: false,
+  auctionStake: { externalActivatedSol: 600_000, marinadeSamTargetSol: 0 },
+  lastCapConstraint: null,
+  stakePriority: 0,
+  unstakePriority: 1,
+  maxBondDelegation: 300_000,
+  bondSamStakeCapSol: 300_000,
+  unprotectedStakeCapSol: 0,
+  unprotectedStakeSol: 0,
+  minBondPmpe: 1.0,
+  idealBondPmpe: 0.5,
+  minUnprotectedReserve: 0,
+  idealUnprotectedReserve: 0,
+  bondGoodForNEpochs: 30,
+  bondSamHealth: 1,
+  values: makeValues({
+    bondBalanceSol: 200,
+    marinadeActivatedStakeSol: 55_000,
+  }),
+}
+
 export const TEST_VALIDATORS: AuctionValidator[] = [
   v01,
   v02,
@@ -1398,6 +1450,7 @@ export const TEST_VALIDATORS: AuctionValidator[] = [
   o10,
   o11,
   o12,
+  p01,
 ]
 
 export const TEST_AUCTION_RESULT: AuctionResult = {
@@ -1455,6 +1508,8 @@ export const TEST_DS_SAM_CONFIG: DsSamConfig = {
   // s-rows below the Basic table's runway filter and drop their CTAs.
   idealBondEpochs: 13,
   bondRiskFeeMult: 1.0,
+  activatingStakePmpeMult: 1,
+  bondSamHealthMult: 1.1,
   minMaxStakeWanted: null,
   expectedMaxWinningBidRatio: null,
   minExpectedEffBidPmpe: 0,
@@ -1551,4 +1606,8 @@ export const TEST_VALIDATOR_NAMES = new Map<string, string>([
   ['FiXtUREvoOPTEDOUTaaaaaaaaaaaaaaaaaaaaaaaajj', 'Test: Opted out'],
   ['FiXtUREvoCAPVALIDATORbbbbbbbbbbbbbbbbbbbbbkk', 'Test: Cap VALIDATOR'],
   ['FiXtUREvoCAPWANTccccccccccccccccccccccccccll', 'Test: Cap WANT'],
+  [
+    'FiXtURevpPENALTYouthealthy1111111111111111aa',
+    'Test: Out-of-Set + Penalty',
+  ],
 ])
