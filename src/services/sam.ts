@@ -304,7 +304,7 @@ function allocateRedelegation(
     v.auctionStake.marinadeSamTargetSol - effectiveActive(v)
 
   const sorted = [...validators].sort(
-    (va, vb) => (vb.revShare.totalPmpe ?? 0) - (va.revShare.totalPmpe ?? 0),
+    (va, vb) => vb.stakePriority - va.stakePriority,
   )
   const inflowByVote = new Map<string, number>()
   const rankByVote = new Map<string, number>()

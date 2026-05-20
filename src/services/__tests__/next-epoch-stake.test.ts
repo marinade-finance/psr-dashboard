@@ -22,6 +22,7 @@ function makeValidator(
     auctionStake: { marinadeSamTargetSol: 100 },
     marinadeActivatedStakeSol: 0,
     bondBalanceSol: 100,
+    stakePriority: totalPmpe,
     revShare: {
       totalPmpe,
       bidPmpe,
