@@ -5,8 +5,6 @@ import {
 
 import type { Validator } from 'src/services/validators'
 
-// Pure epoch-meter logic. No React, no fetching — fully unit-testable.
-
 export const EPOCH_DURATION_MS = 48 * 60 * 60 * 1000
 
 export type EpochProgress = {
