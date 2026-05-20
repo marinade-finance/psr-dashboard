@@ -51,6 +51,7 @@ import {
   selectWinningApyForValidator,
 } from 'src/services/sam'
 import {
+  bondAdvice,
   getApyBreakdown,
   getValidatorTip,
   getTipStyle,
@@ -241,16 +242,22 @@ export function bondCoverageLabel(
         ? `Top up ${topUp(coverage.bondRiskFeeShortfall)} to avoid the fee`
         : 'Critical'
     case BondHealthState.WATCH:
-      if (coverage.topUpToKeepStake > 0) {
-        return `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake`
-      }
-      if (nearFeeThreshold) {
-        return coverage.topUpToIdealKeep > 0
-          ? `Top up ${topUp(coverage.topUpToIdealKeep)} to avoid bond fee`
-          : 'Near penalty threshold'
-      }
-      if (coverage.topUpToIdealKeep > 0 && expectedStakeDeltaSol <= 0) {
-        return `Top up ${topUp(coverage.topUpToIdealKeep)} to grow stake`
+      // Route through bondAdvice — the canonical CTA source — strip trailing period.
+      // WATCH implies bondRiskFeeSol=0 (fee→CRITICAL) and above minBondBalance (below-min→CRITICAL).
+      if (
+        coverage.topUpToKeepStake > 0 ||
+        nearFeeThreshold ||
+        (coverage.topUpToIdealKeep > 0 && expectedStakeDeltaSol <= 0)
+      ) {
+        return bondAdvice(
+          coverage,
+          BondHealthState.WATCH,
+          0,
+          0,
+          coverage.bondBalanceSol,
+          coverage.marinadeActivatedStakeSol,
+          nearFeeThreshold,
+        ).text.replace(/\.$/, '')
       }
       return 'Watch'
     case BondHealthState.HEALTHY:
