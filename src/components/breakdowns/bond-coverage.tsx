@@ -98,7 +98,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
     bondState === BondHealthState.CRITICAL ||
     bondState === BondHealthState.WATCH ||
     bondRiskFeeSol > 0 ||
-    coverage.topUpToAvoidFee > 0 ||
+    coverage.bondRiskFeeShortfall > 0 ||
     coverage.carriedPaidUndelegationSol > 0
 
   return (
@@ -139,14 +139,13 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
                 label="Minimum bond on projected stake"
                 help="Projected exposed stake times the minimum bond rate — the stake-sized part of the threshold."
                 col2={bondSol(
-                  coverage.floorBaseProjected -
-                    coverage.minUnprotectedReserveSol,
+                  coverage.bondRiskFeeFloor - coverage.minUnprotectedReserveSol,
                 )}
               />
               <CalcRow
                 label="Penalty trigger threshold"
                 help="Threshold where bond risk fee starts: reserve plus required bond."
-                col2={bondSol(coverage.floorBaseProjected)}
+                col2={bondSol(coverage.bondRiskFeeFloor)}
                 bold
               />
               <CalcRow
@@ -155,10 +154,10 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
                 col2={bondSol(coverage.claimableBondBalanceSol)}
                 bold
               />
-              {coverage.topUpToAvoidFee > 0 && (
+              {coverage.bondRiskFeeShortfall > 0 && (
                 <CalcRow
                   label="Top up to avoid the fee"
-                  col2={topUp(coverage.topUpToAvoidFee)}
+                  col2={topUp(coverage.bondRiskFeeShortfall)}
                   total
                   severity="error"
                 />
@@ -172,7 +171,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
                   severity="error"
                 />
               )}
-              {coverage.topUpToAvoidFee === 0 && bondRiskFeeSol === 0 && (
+              {coverage.bondRiskFeeShortfall === 0 && bondRiskFeeSol === 0 && (
                 <OkRow message="Claimable bond is above the penalty threshold." />
               )}
             </>
@@ -224,7 +223,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           />
           <CalcRow
             label="Minimum bond required"
-            col2={bondSol(coverage.floorBaseKeep)}
+            col2={bondSol(coverage.stakeKeepFloor)}
             bold
           />
           {coverage.topUpToKeepStake > 0 ? (
@@ -265,7 +264,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           />
           <CalcRow
             label="Ideal bond required"
-            col2={bondSol(coverage.requiredIdealKeep)}
+            col2={bondSol(coverage.stakeIdealFloor)}
             bold
           />
           {coverage.topUpToIdealKeep > 0 ? (

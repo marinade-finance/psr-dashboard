@@ -33,14 +33,14 @@ export type BondCoverage = {
   // "Held for bid payments" row that the UI surfaces.
   heldForBidKeep: number
   heldForBidIdeal: number
-  floorBaseKeep: number
+  stakeKeepFloor: number
   topUpToKeepStake: number
   idealCoverageBidKeep: number
-  requiredIdealKeep: number
+  stakeIdealFloor: number
   topUpToIdealKeep: number
   // Risk section (projected basis): SDK penalty trigger
-  floorBaseProjected: number
-  topUpToAvoidFee: number
+  bondRiskFeeFloor: number
+  bondRiskFeeShortfall: number
 }
 
 export function computeBondCoverage(
@@ -106,26 +106,26 @@ export function computeBondCoverage(
   // stake portions. Hides the unprotected-vs-exposed split which is 0 for most
   // SAM-delegated validators anyway.
   const heldForBidKeep = minCoverageBidKeep + minUnprotectedReserveSol
-  const floorBaseKeep =
+  const stakeKeepFloor =
     minUnprotectedReserveSol + (minBondPmpe / 1000) * currentExposedStakeSol
-  const topUpToKeepStake = Math.max(0, floorBaseKeep - claimableBondBalanceSol)
+  const topUpToKeepStake = Math.max(0, stakeKeepFloor - claimableBondBalanceSol)
 
   const idealCoverageBidKeep =
     ((idealEp * expectedMaxEffBidPmpe) / 1000) * currentExposedStakeSol
   const rewardsGuaranteeIdeal = rewardsGuaranteeKeep
   const heldForBidIdeal = idealCoverageBidKeep + idealUnprotectedReserveSol
-  const requiredIdealKeep =
+  const stakeIdealFloor =
     idealUnprotectedReserveSol + (idealBondPmpe / 1000) * currentExposedStakeSol
-  const topUpToIdealKeep = Math.max(0, requiredIdealKeep - bondBalanceSol)
+  const topUpToIdealKeep = Math.max(0, stakeIdealFloor - bondBalanceSol)
 
   // Projected basis: post-undelegation. Mirrors the SDK's fee trigger:
   //   claimableBond >= minUnprotectedReserve + projectedExposed * minBondPmpe/1000
   // Used only for the Bond Risk section (top up to avoid the fee).
-  const floorBaseProjected =
+  const bondRiskFeeFloor =
     minUnprotectedReserveSol + (minBondPmpe / 1000) * projectedExposedStakeSol
-  const topUpToAvoidFee = Math.max(
+  const bondRiskFeeShortfall = Math.max(
     0,
-    floorBaseProjected - claimableBondBalanceSol,
+    bondRiskFeeFloor - claimableBondBalanceSol,
   )
 
   return {
@@ -146,12 +146,12 @@ export function computeBondCoverage(
     minCoverageBidKeep,
     heldForBidKeep,
     heldForBidIdeal,
-    floorBaseKeep,
+    stakeKeepFloor,
     topUpToKeepStake,
     idealCoverageBidKeep,
-    requiredIdealKeep,
+    stakeIdealFloor,
     topUpToIdealKeep,
-    floorBaseProjected,
-    topUpToAvoidFee,
+    bondRiskFeeFloor,
+    bondRiskFeeShortfall,
   }
 }

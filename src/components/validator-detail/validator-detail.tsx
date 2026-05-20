@@ -233,8 +233,8 @@ export function bondCoverageLabel(
     case BondHealthState.NO_BOND:
       return 'No bond'
     case BondHealthState.CRITICAL:
-      return coverage.topUpToAvoidFee > 0
-        ? `Top up ${topUp(coverage.topUpToAvoidFee)} to avoid the fee`
+      return coverage.bondRiskFeeShortfall > 0
+        ? `Top up ${topUp(coverage.bondRiskFeeShortfall)} to avoid the fee`
         : 'Critical'
     case BondHealthState.WATCH:
       return coverage.topUpToKeepStake > 0

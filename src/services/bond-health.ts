@@ -43,7 +43,7 @@ export function bondHealthFromAuction(
   }
   const coverage =
     precomputedCoverage ?? computeBondCoverage(v, config, winningTotalPmpe)
-  if (coverage.topUpToAvoidFee > 0) return BondHealthState.CRITICAL
+  if (coverage.bondRiskFeeShortfall > 0) return BondHealthState.CRITICAL
   if (coverage.topUpToKeepStake > 0) return BondHealthState.WATCH
   if (coverage.topUpToIdealKeep > 0) return BondHealthState.SOFT
   return BondHealthState.HEALTHY

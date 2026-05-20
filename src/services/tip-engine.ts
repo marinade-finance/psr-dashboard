@@ -202,11 +202,11 @@ export function bondAdvice(
     case BondHealthState.CRITICAL: {
       const text =
         bondRiskFeeSol > 0
-          ? coverage.topUpToAvoidFee > 0
-            ? `Top up ${topUp(coverage.topUpToAvoidFee)} to avoid the bond risk fee.`
+          ? coverage.bondRiskFeeShortfall > 0
+            ? `Top up ${topUp(coverage.bondRiskFeeShortfall)} to avoid the bond risk fee.`
             : `Estimated bond risk fee ${pay(bondRiskFeeSol)} next epoch.`
-          : coverage.topUpToAvoidFee > 0
-            ? `Top up ${topUp(coverage.topUpToAvoidFee)} — bond below the penalty threshold.`
+          : coverage.bondRiskFeeShortfall > 0
+            ? `Top up ${topUp(coverage.bondRiskFeeShortfall)} — bond below the penalty threshold.`
             : 'Bond too thin — a bond risk fee can be charged.'
       return { text, urgency: TipUrgency.CRITICAL, tone: CardStatusTone.RED }
     }
@@ -316,7 +316,7 @@ function bondCta(
       // Fee top-up alone may not clear the below-min block — pin the CTA to
       // whichever number is bigger so it covers both.
       const topUpAmt = Math.max(
-        coverage.topUpToAvoidFee,
+        coverage.bondRiskFeeShortfall,
         dsSamConfig.minBondBalanceSol - bondBalance,
       )
       return tip(

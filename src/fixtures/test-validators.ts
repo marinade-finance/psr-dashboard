@@ -782,12 +782,12 @@ const v13: AuctionValidator = {
 // surface for visual review. The bond-coverage math (config below:
 // minBondEpochs=1, idealBondEpochs=13, minBondBalanceSol=5, bondRiskFeeMult=1)
 // reduces — with unprotected reserves zeroed — to:
-//   floorBaseKeep      = (minBondPmpe   / 1000) * marinadeActivatedStakeSol
-//   requiredIdealKeep  = (idealBondPmpe / 1000) * marinadeActivatedStakeSol
-//   floorBaseProjected = (minBondPmpe   / 1000) * (active − paidUndelegationSol)
-//   topUpToKeepStake   = max(0, floorBaseKeep      − claimableBondBalanceSol)
-//   topUpToIdealKeep   = max(0, requiredIdealKeep  − bondBalanceSol)
-//   topUpToAvoidFee    = max(0, floorBaseProjected − claimableBondBalanceSol)
+//   stakeKeepFloor      = (minBondPmpe   / 1000) * marinadeActivatedStakeSol
+//   stakeIdealFloor  = (idealBondPmpe / 1000) * marinadeActivatedStakeSol
+//   bondRiskFeeFloor = (minBondPmpe   / 1000) * (active − paidUndelegationSol)
+//   topUpToKeepStake   = max(0, stakeKeepFloor      − claimableBondBalanceSol)
+//   topUpToIdealKeep   = max(0, stakeIdealFloor  − bondBalanceSol)
+//   bondRiskFeeShortfall    = max(0, bondRiskFeeFloor − claimableBondBalanceSol)
 // Health: bond≤0 → no-bond; bond<5 → critical; avoidFee>0 → critical;
 // keep>0 → watch; idealKeep>0 → soft; else healthy.
 // expectedStakeChangeSol is NOT set here — it is derived globally from the

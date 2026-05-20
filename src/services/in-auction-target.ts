@@ -13,7 +13,7 @@ export type InAuctionTarget = {
   currentBidPmpe: number
   targetBidPmpe: number
   bidIncrease: number
-  bondFloorToBack: number // coverage.floorBaseKeep — min bond behind current stake
+  bondFloorToBack: number // coverage.stakeKeepFloor — min bond behind current stake
   bondTopUp: number // coverage.topUpToKeepStake — top-up to hold that stake
   // True when a cap is the binding constraint — clearing bid alone won't help.
   capConstrained: boolean
@@ -39,7 +39,7 @@ export const computeInAuctionTarget = (
     currentBidPmpe,
     targetBidPmpe,
     bidIncrease: pmpeGap,
-    bondFloorToBack: coverage.floorBaseKeep,
+    bondFloorToBack: coverage.stakeKeepFloor,
     bondTopUp: coverage.topUpToKeepStake,
     capConstrained: v.lastCapConstraint != null,
     capConstraintName: v.lastCapConstraint?.constraintName ?? null,
