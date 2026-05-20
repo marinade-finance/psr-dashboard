@@ -246,7 +246,7 @@ export function bondCoverageLabel(
       }
       if (nearFeeThreshold) {
         return coverage.topUpToIdealKeep > 0
-          ? `Top up ${topUp(coverage.topUpToIdealKeep)} to avoid future bond fee`
+          ? `Top up ${topUp(coverage.topUpToIdealKeep)} to avoid bond fee`
           : 'Near penalty threshold'
       }
       if (coverage.topUpToIdealKeep > 0 && expectedStakeDeltaSol <= 0) {
