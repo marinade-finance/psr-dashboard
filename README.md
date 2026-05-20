@@ -1,97 +1,68 @@
 # Marinade PSR Dashboard
 
-Dashboard for Marinade's Protected Staking Rewards program. Displays SAM auction results, validator bonds, and protected events.
+Marinade Finance PSR (Protected Staking Rewards) dashboard — a React SPA
+that visualises the live SAM (Stake Auction Marketplace) auction,
+validator bonds, and protected events. Auction computation comes from
+[`@marinade.finance/ds-sam-sdk`](https://www.npmjs.com/package/@marinade.finance/ds-sam-sdk).
 
-## Development
-
-Start the development server:
+## Local development
 
 ```sh
 pnpm install
-pnpm start:dev
+pnpm start:dev          # Vite dev server (HMR), port 3000
+pnpm build              # production build → build/
+pnpm preview            # serve build/ on :8080 (used by Playwright)
+
+pnpm lint               # eslint
+pnpm format:check       # prettier check
+pnpm check              # lint + format:check
+pnpm test               # vitest unit
+pnpm test:e2e           # playwright e2e (auto-starts preview)
+pnpm test:e2e:update    # refresh visual-regression baselines
+npx tsc --noEmit        # type check
 ```
 
-### Environment variables
+Pre-commit hooks (husky + lint-staged) run `eslint --fix` + `prettier
+--write` on staged TS/TSX. First run may reformat — retry the commit
+once if it fails.
 
-Environment variables are injected at build time via `webpack.DefinePlugin`. To override a variable, set it before running the dev server or build:
+## Routes
 
-```sh
-NOTIFICATIONS_API_URL=http://localhost:3000 pnpm start:dev
-```
+Each page has a Basic and an Expert variant; Expert exposes additional
+metrics, columns, and the simulation panel.
 
-| Variable | Default | Description |
+| Basic | Expert | Page |
 |---|---|---|
-| `VALIDATORS_API_URL` | `https://validators-api.marinade.finance` | Validators API (rewards, validator list) |
-| `VALIDATOR_BONDS_API_URL` | `https://validator-bonds-api.marinade.finance` | Validator Bonds API (bonds, protected events) |
-| `SCORING_API_URL` | `https://scoring.marinade.finance` | Scoring API (SAM scores) |
-| `NOTIFICATIONS_API_URL` | `https://marinade-notifications.marinade.finance` | Notifications API |
+| `/` | `/expert-` | SAM auction |
+| `/bonds` | `/expert-bonds` | Validator bonds |
+| `/protected-events` | `/expert-protected-events` | Protected events |
+| `/docs` | `/expert-docs` | In-app guide |
 
-## Banner Notifications
+Three additional routes (`/test-`, `/test-bonds`, `/test-protected-events`)
+mount the same pages with fixture data instead of live APIs; Playwright
+uses these for deterministic visual snapshots.
 
-The dashboard displays broadcast notifications as banners at the top of every page.
-Notifications are fetched from the [marinade-notifications API](https://marinade-notifications.marinade.finance/docs)
-(`GET /v1/notifications/broadcast?notification_type=sam_auction`).
+The main data query on every page auto-refreshes once an hour.
 
-When there are no active notifications, no banner is shown.
+## Documentation
 
-### Adding a banner notification
+- [`SCREENS.md`](SCREENS.md) — live UI inventory (every page, panel, column, badge).
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — code layout, services, data flow, conventions.
+- [`CLAUDE.md`](CLAUDE.md) — contributor rules, visual-language tokens.
+- [`public/docs/GUIDE.md`](public/docs/GUIDE.md), [`public/docs/GUIDE-EXPERT.md`](public/docs/GUIDE-EXPERT.md) — end-user guides rendered by `/docs`.
+- [`specs/index.md`](specs/index.md) — design specs.
 
-Post an announcement event to the notifications API:
+## Contributing
 
-```bash
-# 1. Generate a JWT token (in the marinade-notifications repo)
-cd ~/marinade/marinade-notifications/notification-service
-pnpm jwt generate-token <username> 720h
-# The JWT `sub` claim must match a username in ALLOWED_USERS env var
+Three rules:
 
-# 2. Post the announcement
-curl -X POST https://marinade-notifications.marinade.finance/bonds-event-v1 \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <YOUR_JWT_TOKEN>" \
-  -d '{
-    "header": {
-      "producer_id": "my-producer",
-      "message_id": "'$(uuidgen)'",
-      "created_at": '$(date +%s%3N)'
-    },
-    "payload": {
-      "type": "bonds",
-      "inner_type": "announcement",
-      "vote_account": "11111111111111111111111111111111",
-      "bond_pubkey": null,
-      "bond_type": "bidding",
-      "epoch": 800,
-      "data": {
-        "message": "Your announcement text here.\n\nSecond paragraph here.",
-        "title": "Banner Title",
-        "details": {}
-      },
-      "created_at": "'$(date -u +%Y-%m-%dT%H:%M:%S.000Z)'"
-    }
-  }'
-```
-
-- `data.title` — banner heading (falls back to "Announcement" when null)
-- `data.message` — banner body; supports markdown. Single newlines (`\n`) render as line breaks; blank lines (`\n\n`) start a new paragraph.
-- `vote_account` — required by schema but ignored for announcements (they broadcast to all)
-
-### Expiry
-
-Announcements auto-expire after **14 days** (configured as `relevance_hours: 336`
-in `notifications-bonds/src/config/thresholds.yaml`). The API filters out expired
-notifications automatically — no cleanup needed.
-
-### Removing a banner early
-
-There is no API endpoint for deactivation yet. Use SQL directly:
-
-```sql
--- Find recent announcements
-SELECT id, title, message, created_at FROM notifications_outbox
-WHERE inner_type = 'announcement' ORDER BY created_at DESC LIMIT 5;
-
--- Deactivate by id
-UPDATE notifications_outbox SET deactivated_at = now() WHERE id = <id>;
-```
-
-Once `deactivated_at` is set, the notification disappears from the dashboard immediately.
+1. **Live docs travel with the change.** Update `SCREENS.md` whenever
+   the UI changes (column, badge, default sort, route). Update
+   `ARCHITECTURE.md` whenever the structure changes (new service,
+   new route, new query key, new external dep). Same commit as the code.
+2. **Use semantic Tailwind tokens.** Never inline `var(...)`, never raw
+   hex/rgb. New colours: define a CSS var in `src/index.css`, expose it
+   in the `@theme` block, then use the generated `bg-…` / `text-…`
+   class. See `CLAUDE.md` for the full rules.
+3. **Commit format**: `[section] Message`. Examples: `[fix]`,
+   `[a11y][perf]`, `[docs]`, `[test]`, `[specs]`.

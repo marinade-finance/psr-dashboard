@@ -1,85 +1,94 @@
-# Expert View Guide
+<!-- page: expert | Expert Mode -->
 
-See the **Guide** tab above for general documentation. Additional metrics visible in expert mode.
+# Expert View
 
----
+Expert mode is reached via the `/expert-…` URL prefix or by toggling the docs
+selector. It exposes a small set of additional metrics and removes the basic-mode
+filter that hides inactive validators.
 
-## Expert Table Columns
-
-### SAM Target [☉]
-
-Target stake a validator should receive based on the latest auction result. Expert-only column on the SAM table — hover
-the cell for the binding constraint (bid cap, bond cap, stake cap, or concentration limit) that determined the target.
+See the [Dashboard Guide](#GUIDE) for everything else.
 
 ---
 
-## Expert Metrics
+## What changes in expert mode
 
-### Ideal APY
+### Stake Auction Marketplace — full validator list
 
-Estimated APY of currently active stake. Unlike Projected APY in basic mode, divides by active stake ratio to show the
-return on stake that is actually earning rewards. Assumes no Marinade fees and that all distributed stake is active.
+In basic mode, the SAM table shows only validators that either currently have
+active Marinade stake **or** are receiving stake in this epoch's auction.
+Everyone else is hidden because the row would show all-zeros.
 
-### Stake to Move
+In expert mode, **every validator known to the auction is listed** — including
+those that bid but didn't win, those that aren't bidding, and those that have
+neither active stake nor a target. Useful when investigating the long tail (why
+did this validator not get any stake? what's their bid? bond? rank in the order?).
 
-Percentage of total auction stake that needs to be redistributed to match current auction results. High values indicate
-the current on-chain delegation diverges significantly from the auction's target distribution.
+The cutoff line still marks the boundary between winners and non-winners; the
+extra rows simply continue below it.
 
-### Avg. Stake
+### Validator Bonds — Max Protectable
 
-Average SOL stake per winning validator. Calculated as total auction stake divided by number of winning validators.
+Two extras appear on the Validator Bonds page:
 
-### Conc. TVL
+- **Hero-bar stat: "Max protectable: NN%"** — what fraction of total Marinade
+  stake _could_ be protected if every existing bond were fully utilized. This is
+  always ≥ the currently-protected percentage; the gap shows headroom.
+- **Table column: "Max protectable [SOL]"** — per-validator maximum bond-only
+  protection capacity. Computed as `bondEffectiveAmount ÷ ((inflationPmpe +
+mevPmpe + effParticipatingBidPmpe) ÷ 1000)` — bond divided by the
+  participating-total PMPE rate per 1000 SOL of stake, i.e. how much stake one
+  epoch's commitments would just cover. No horizon multiplier.
 
-Total target stake concentrated in the top 5 validators by target stake. Shows absolute SOL exposure to the largest
-validators, complementing Conc. Risk which shows the APY impact of their departure.
+These are useful for asking "how much more stake could this validator absorb
+before their bond becomes the binding constraint?".
 
-### Target Protected
+### Protected Events — Last Epoch Bids
 
-Percentage of total SAM target stake with validator bond coverage.
-Calculated as `1 - (actuallyUnprotectedStake / totalTargetStake)`,
-where unprotected stake is `max(0, targetStake - (bondCapacity - existingUnprotectedStake))`.
+One extra metric tile at the top of the Protected Events page:
 
-### Target Unprotected
+- **Last Epoch Bids** — total SOL collected as bid payments in the most recent
+  fully-settled epoch, summed across all validators. (The basic page only shows
+  protected-event payouts; this tile adds the routine bid revenue stream.)
 
-Total SOL where target stake exceeds validator bond-only capacity.
-Sum of `max(0, targetStake - (bondCapacity - unprotectedStake))` across all validators.
-Represents stake lacking bond coverage if validators fail to pay bids.
+---
 
-### Conc. Risk (Backstop)
+<!-- page: expert-concepts | Expert Concepts -->
 
-APY impact if top 5 validators by target stake departed. Stake redistributes proportionally to remaining validators.
-Both APYs use formula `(1 + profit/tvl)^epochsPerYear - 1` with identical TVL. Difference: base profit from all
-validators at current stake, backstop profit from remaining validators earning on original plus redistributed stake.
-Result: `backstopAPY - baseAPY`.
+## Additional Concepts
 
-- **Positive value** (e.g., +0.18%) &mdash; Departed validators had below-average effective bids; APY improves
-- **Negative value** &mdash; Departed validators contributed above-average revenue; APY declines
+<a id="sfdp"></a>
 
-Measures concentration risk and dependence on largest validators for yield.
+### SFDP — Solana Foundation Delegation Programme
 
-### +10% TVL
+Validators meeting the foundation's uptime, commission, and identity criteria receive a minor stake-weight uplift in the SAM auction. The boolean is read from the validators API and treated as a static score component — it does not interact with the bid or bond math.
 
-APY impact if 10% more TVL enters the pool. Computed by re-running the full SAM auction with
-`marinadeSamTvlSol * 1.1` and `marinadeRemainingSamSol * 1.1`. The auction recalculates constraints (stake caps scale
-with TVL), re-evaluates all validators, and produces a new stake distribution.
-Result: `joinAPY - baseAPY` where each APY = `(1 + profit/tvl)^epochsPerYear - 1`.
+<a id="stake-wanted"></a>
 
-- **Negative value** (typical, e.g., -0.70%) &mdash; More TVL dilutes per-SOL revenue; validators bid the same but
-  stake is spread across more SOL
-- **Near zero** &mdash; Additional TVL unlocks enough new validator capacity to offset dilution
+### Max Stake Wanted
 
-### -10% TVL
+Validator-set upper bound on Marinade delegation. The SDK caps `marinadeSamTargetSol` at `maxStakeWanted`; the constraint shows up in the Next Step tip as "At your `maxStakeWanted` setting". Bond and bid improvements are inert while `maxStakeWanted` is binding.
 
-APY impact if 10% of TVL leaves the pool. Computed by re-running the full SAM auction with
-`marinadeSamTvlSol * 0.9` and `marinadeRemainingSamSol * 0.9`. Constraints shrink with TVL (per-validator caps,
-concentration limits). Result: `leaveAPY - baseAPY`.
+<a id="bid-distribution"></a>
 
-- **Positive value** (typical) &mdash; Less TVL concentrates per-SOL revenue; same bids spread over fewer SOL
-- **Near zero** &mdash; Reduced capacity offsets the concentration benefit
+### Bid Distribution
 
-### Productive Stake / Active Stake
+The bid-distribution histogram plots each validator's static Cost PMPE bid in quantile buckets. Useful for gauging whether a given bid is at the top, middle, or tail of the current field. The clearing price (`winningTotalPmpe − onchainDistributedPmpe`) sets the practical floor; bids below it lose stake regardless of absolute size.
 
-- **Productive Stake** &mdash; Ratio of activated stake on validators paying ≥90% of effective participating bid.
-  Measures stake delegated to validators meeting revenue commitments.
-- **Active Stake** &mdash; Ratio of currently activated stake vs total target auction stake (marinadeSamTargetSol)
+<a id="concentration"></a>
+
+### Concentration Limits
+
+Per-country and per-ASO stake caps are enforced as a post-ranking filter: the SDK iterates winners in APY order and skips any validator whose group is already at the cap (`countryCapPct`, `asoCapPct` in `DsSamConfig`, both defaulting to 30%). A per-validator cap of 15% of TVL applies in parallel. Capped validators show in the Top Countries / Top ASOs tiles with a red marker. In expert mode, capped validators that would otherwise win appear below the cutoff line because the cap, not their bid, is the binding constraint.
+
+---
+
+<!-- page: expert -->
+
+## Notes
+
+- The `expert-` URL prefix persists across navigation: clicking between SAM,
+  Bonds, Protected Events, and Docs keeps you in expert mode.
+- Expert mode does not unlock additional table columns on the SAM table or the
+  Protected Events table — those columns are the same as in basic mode.
+- Simulation mode, the validator-detail panel, and all calculation breakdowns are
+  available in both modes.

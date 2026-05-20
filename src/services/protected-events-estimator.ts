@@ -1,10 +1,16 @@
 import { lamportsToSol } from 'src/format'
 
 import { fetchRewards } from './rewards'
+import { fetchValidatorsWithEpochs } from './validators'
 
 import type { ProtectedEvent, SettlementMeta } from './protected-events'
 import type { EpochRewards } from './rewards'
 import type { Validator, ValidatorEpoch } from './validators'
+
+// Internal math runs in SOL; the on-chain `ProtectedEvent.amount` field is
+// in lamports (matches the backend API). Convert at the boundary when
+// constructing the event.
+const SOL_TO_LAMPORTS = 1e9
 
 type LowCreditsSettlementConfig = {
   meta: SettlementMeta
@@ -23,13 +29,13 @@ type CommissionIncreaseSettlementConfig = {
 const lowCreditsSettlementConfigs: LowCreditsSettlementConfig[] = [
   {
     meta: { funder: 'ValidatorBond' },
-    min_settlement_lamports: 100000000,
+    min_settlement_lamports: 100_000_000,
     grace_low_credits_bps: 100,
     covered_range_bps: [0, 2000],
   },
   {
     meta: { funder: 'Marinade' },
-    min_settlement_lamports: 100000000,
+    min_settlement_lamports: 100_000_000,
     grace_low_credits_bps: 100,
     covered_range_bps: [2000, 10000],
   },
@@ -39,7 +45,7 @@ const commissionIncreaseSettlementConfigs: CommissionIncreaseSettlementConfig[] 
   [
     {
       meta: { funder: 'ValidatorBond' },
-      min_settlement_lamports: 100000000,
+      min_settlement_lamports: 100_000_000,
       grace_commission_increase: 1,
       covered_range_bps: [0, 10000],
     },
@@ -62,7 +68,7 @@ const claimAmountInLossRange = (
   const claimPerStake =
     Math.min(expectedEpr - actualEpr, maxClaimPerStake) - ignoredClaimPerStake
 
-  return Math.round(Math.max(stake * claimPerStake, 0))
+  return Math.max(stake * claimPerStake, 0)
 }
 
 const calcStakeByEpoch = (validators: Validator[]) => {
@@ -132,7 +138,8 @@ const buildLowCreditsProtectedEvent = (
     (epochStat.credits / targetCredits)
 
   const marinadeStake =
-    Number(epochStat.marinade_native_stake) + Number(epochStat.marinade_stake)
+    Number(lamportsToSol(epochStat.marinade_native_stake)) +
+    Number(lamportsToSol(epochStat.marinade_stake))
   if (marinadeStake === 0) {
     return null
   }
@@ -145,19 +152,19 @@ const buildLowCreditsProtectedEvent = (
     return null
   }
 
-  const amount = claimAmountInLossRange(
+  const amountSol = claimAmountInLossRange(
     config.covered_range_bps,
     actualEpr,
     expectedEpr,
     marinadeStake,
   )
-  if (amount < config.min_settlement_lamports) {
+  if (amountSol * SOL_TO_LAMPORTS < config.min_settlement_lamports) {
     return null
   }
 
   return {
     epoch: epochStat.epoch,
-    amount,
+    amount: Math.round(amountSol * SOL_TO_LAMPORTS),
     vote_account: validator.vote_account,
     meta: config.meta,
     reason: {
@@ -195,7 +202,8 @@ const buildCommissionIncreaseProtectedEvent = (
   const actualEpr = eprCalculator(epochStat.commission_advertised)
 
   const marinadeStake =
-    Number(epochStat.marinade_native_stake) + Number(epochStat.marinade_stake)
+    Number(lamportsToSol(epochStat.marinade_native_stake)) +
+    Number(lamportsToSol(epochStat.marinade_stake))
   if (marinadeStake === 0) {
     return null
   }
@@ -204,23 +212,23 @@ const buildCommissionIncreaseProtectedEvent = (
   const actualRewards = marinadeStake * actualEpr
 
   const eprLossBps = Math.round(10000 * (1 - actualRewards / expectedRewards))
-  if (eprLossBps < config.grace_commission_increase) {
+  if (eprLossBps < config.grace_commission_increase * 100) {
     return null
   }
 
-  const amount = claimAmountInLossRange(
+  const amountSol = claimAmountInLossRange(
     config.covered_range_bps,
     actualEpr,
     expectedEpr,
     marinadeStake,
   )
-  if (amount < config.min_settlement_lamports) {
+  if (amountSol * SOL_TO_LAMPORTS < config.min_settlement_lamports) {
     return null
   }
 
   return {
     epoch: epochStat.epoch,
-    amount,
+    amount: Math.round(amountSol * SOL_TO_LAMPORTS),
     vote_account: validator.vote_account,
     meta: config.meta,
     reason: {
@@ -339,4 +347,12 @@ export const calculateProtectedEventEstimates = async (
     ...calculateLowCreditsEstimates(validators, eprCalculators),
     ...calculateCommissionIncreaseEstimates(validators, eprCalculators),
   ]
+}
+
+export const fetchPsrEstimatesForValidator = async (
+  voteAccount: string,
+): Promise<ProtectedEvent[]> => {
+  const { validators } = await fetchValidatorsWithEpochs(3)
+  const all = await calculateProtectedEventEstimates(validators)
+  return all.filter(event => event.vote_account === voteAccount)
 }

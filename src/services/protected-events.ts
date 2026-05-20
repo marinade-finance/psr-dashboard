@@ -1,13 +1,14 @@
-import { formatPercentage } from 'src/format'
+import { pct } from 'src/format'
 import { VALIDATOR_BONDS_API_URL } from 'src/services/apiUrls'
+import { fetchJson } from 'src/services/fetch-utils'
 
-export type SettlementFunder = 'ValidatorBond' | 'Marinade'
+type SettlementFunder = 'ValidatorBond' | 'Marinade'
 
 export type SettlementMeta = {
   funder: SettlementFunder
 }
 
-export type ProtectedEventCommissionSamIncreaseReason = {
+type ProtectedEventCommissionSamIncreaseReason = {
   vote_account: string
   actual_inflation_commission: number
   expected_inflation_commission: number
@@ -18,7 +19,7 @@ export type ProtectedEventCommissionSamIncreaseReason = {
   epr_loss_bps: number
   stake: number
 }
-export type ProtectedEventCommissionIncrease = {
+type ProtectedEventCommissionIncrease = {
   vote_account: string
   previous_commission: number
   current_commission: number
@@ -27,7 +28,7 @@ export type ProtectedEventCommissionIncrease = {
   epr_loss_bps: number
   stake: number
 }
-export type ProtectedEventLowCredits = {
+type ProtectedEventLowCredits = {
   vote_account: string
   expected_credits: number
   actual_credits: number
@@ -38,14 +39,14 @@ export type ProtectedEventLowCredits = {
   stake: number
 }
 
-export type CommissionIncreaseReason = {
+type CommissionIncreaseReason = {
   CommissionIncrease: ProtectedEventCommissionIncrease
 }
-export type LowCreditsReason = { LowCredits: ProtectedEventLowCredits }
-export type DowntimeRevenueImpactReason = {
+type LowCreditsReason = { LowCredits: ProtectedEventLowCredits }
+type DowntimeRevenueImpactReason = {
   DowntimeRevenueImpact: ProtectedEventLowCredits
 }
-export type CommissionSamIncreaseReason = {
+type CommissionSamIncreaseReason = {
   CommissionSamIncrease: ProtectedEventCommissionSamIncreaseReason
 }
 export type ProtectedEventReason =
@@ -66,7 +67,7 @@ const isCommissionSamIncreaseReason = (
   e: ProtectedEventReason,
 ): e is CommissionSamIncreaseReason => 'CommissionSamIncrease' in e
 
-export type ProtectedEventSettlement = {
+type ProtectedEventSettlement = {
   ProtectedEvent: ProtectedEventReason
 }
 
@@ -91,7 +92,7 @@ export type ProtectedEvent = {
   reason: SettlementReason
 }
 
-export type ProtectedEventsResponse = {
+type ProtectedEventsResponse = {
   protected_events: ProtectedEvent[]
 }
 
@@ -102,45 +103,44 @@ export const selectProtectedStakeReason = (protectedEvent: ProtectedEvent) => {
       return `Commission ${reason.CommissionIncrease.previous_commission}% -> ${reason.CommissionIncrease.current_commission}%`
     }
     if (isCommissionSamIncreaseReason(reason)) {
-      return `Inflation Commission ${formatPercentage(reason.CommissionSamIncrease.expected_inflation_commission)} -> ${formatPercentage(reason.CommissionSamIncrease.actual_inflation_commission)}; MEV Commission ${formatPercentage(reason.CommissionSamIncrease.expected_mev_commission)} -> ${formatPercentage(reason.CommissionSamIncrease.actual_mev_commission)}`
+      return `Inflation Commission ${pct(reason.CommissionSamIncrease.expected_inflation_commission)} -> ${pct(reason.CommissionSamIncrease.actual_inflation_commission)}; MEV Commission ${pct(reason.CommissionSamIncrease.expected_mev_commission)} -> ${pct(reason.CommissionSamIncrease.actual_mev_commission)}`
     }
     if (isLowCreditsReason(reason)) {
-      return `Uptime ${formatPercentage(reason.LowCredits.actual_credits / reason.LowCredits.expected_credits)}`
+      const { actual_credits: actual, expected_credits: expected } =
+        reason.LowCredits
+      return `Uptime ${pct(expected > 0 ? actual / expected : 0)}`
     }
     if (isDowntimeRevenueImpactReason(reason)) {
-      return `Uptime ${formatPercentage(reason.DowntimeRevenueImpact.actual_credits / reason.DowntimeRevenueImpact.expected_credits)}`
+      const { actual_credits: actual, expected_credits: expected } =
+        reason.DowntimeRevenueImpact
+      return `Uptime ${pct(expected > 0 ? actual / expected : 0)}`
     }
   }
-  if (protectedEvent.reason === 'BidTooLowPenalty') return 'BidTooLow'
-  if (protectedEvent.reason === 'BlacklistPenalty') return 'Blacklist'
-  if (protectedEvent.reason === 'BondRiskFee') return 'BondRiskFee'
-  if (protectedEvent.reason === 'PriorityFee') return 'PriorityFee'
-  console.log('unsupported event:', protectedEvent)
-  return 'Unsupported'
-}
-
-export const selectEprLossBps = (protectedEvent: ProtectedEvent) => {
-  if (isProtectedEvent(protectedEvent.reason)) {
-    const reason = protectedEvent.reason.ProtectedEvent
-    if (isCommissionIncreaseReason(reason)) {
-      return (
-        10000 -
-        (10000 * (100 - reason.CommissionIncrease.current_commission)) /
-          (100 - reason.CommissionIncrease.previous_commission)
-      )
-    }
-    if (isLowCreditsReason(reason)) {
-      return reason.LowCredits.epr_loss_bps
-    }
+  // After isProtectedEvent narrows the object case out, reason is the
+  // string-union. The default branch is lenient on purpose: a new SDK
+  // reason logs and falls back to "Unsupported" so a backend deploy
+  // can't break the page. (Trade-off vs assertNever: chose resilience.)
+  switch (protectedEvent.reason) {
+    case 'Bidding':
+      return 'Bidding'
+    case 'BidTooLowPenalty':
+      return 'Bid too low'
+    case 'BlacklistPenalty':
+      return 'Blacklisted'
+    case 'BondRiskFee':
+      return 'Bond risk fee'
+    case 'PriorityFee':
+      return 'Priority fee'
+    default:
+      console.log('unsupported event:', protectedEvent)
+      return 'Unsupported'
   }
-  return 0
 }
 
 export const selectAmount = (protectedEvent: ProtectedEvent) =>
   Number(protectedEvent.amount / 1e9)
 
-export const fetchProtectedEvents =
-  async (): Promise<ProtectedEventsResponse> => {
-    const res = await fetch(`${VALIDATOR_BONDS_API_URL}/protected-events`)
-    return (await res.json()) as ProtectedEventsResponse
-  }
+export const fetchProtectedEvents = (): Promise<ProtectedEventsResponse> =>
+  fetchJson<ProtectedEventsResponse>(
+    `${VALIDATOR_BONDS_API_URL}/protected-events`,
+  )

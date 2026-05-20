@@ -1,5 +1,5 @@
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import React from 'react'
-import { useQuery } from 'react-query'
 
 import { Banner } from 'src/components/banner/banner'
 import { Loader } from 'src/components/loader/loader'
@@ -12,41 +12,61 @@ import {
 import { fetchValidatorsWithBonds } from 'src/services/validator-with-bond'
 import { selectTotalMarinadeStake } from 'src/services/validators'
 
-import styles from './validator-bonds.module.css'
-
 import type { UserLevelProps } from 'src/components/navigation/navigation'
 
 export const ValidatorBondsPage: React.FC<UserLevelProps> = ({ level }) => {
-  const { data, status } = useQuery('bonds', fetchValidatorsWithBonds)
-  const { data: latestBroadcastNotification } = useQuery(
-    'notifications-broadcast',
-    fetchLatestSamAuctionBroadcastNotification,
-    {
-      refetchInterval: 5 * 60 * 1000,
-      keepPreviousData: true,
-    },
-  )
-  const { data: notificationsMap } = useQuery(
-    ['notifications-all', 'sam_auction'],
-    () => fetchAllNotifications('sam_auction'),
-    {
-      refetchInterval: 5 * 60 * 1000,
-      keepPreviousData: true,
-    },
-  )
+  const { data, status } = useQuery({
+    queryKey: ['bonds'],
+    queryFn: fetchValidatorsWithBonds,
+    staleTime: 5 * 60 * 1000,
+    refetchInterval: 60 * 60 * 1000,
+    placeholderData: keepPreviousData,
+  })
+  const { data: latestBroadcastNotification } = useQuery({
+    queryKey: ['notifications-broadcast'],
+    queryFn: fetchLatestSamAuctionBroadcastNotification,
+    refetchInterval: 5 * 60 * 1000,
+    placeholderData: keepPreviousData,
+  })
+  const { data: notificationsMap } = useQuery({
+    queryKey: ['notifications-all', 'sam_auction'],
+    queryFn: () => fetchAllNotifications('sam_auction'),
+    refetchInterval: 5 * 60 * 1000,
+    placeholderData: keepPreviousData,
+  })
 
   return (
-    <div className={styles.page}>
+    <div className="bg-background-page">
       <Navigation level={level} />
-      {latestBroadcastNotification && (
-        <Banner
-          key={latestBroadcastNotification.id}
-          title={latestBroadcastNotification.title ?? 'Announcement'}
-          body={latestBroadcastNotification.message}
-        />
+      <div className="px-4 py-4">
+        {latestBroadcastNotification && (
+          <Banner
+            key={latestBroadcastNotification.id}
+            title={latestBroadcastNotification.title ?? 'Announcement'}
+            body={latestBroadcastNotification.message}
+          />
+        )}
+      </div>
+      {status === 'error' && (
+        <div className="px-4 py-8 max-w-2xl mx-auto text-center">
+          <p className="text-base font-medium text-destructive">
+            Couldn&apos;t load validator bonds.
+          </p>
+          <p className="text-sm text-muted-foreground mt-2">
+            The bonds API didn&apos;t respond. The page can&apos;t render
+            without it. Try reloading; if the problem persists, check the
+            validator-bonds API status.
+          </p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="mt-4 text-sm text-primary hover:underline"
+          >
+            Reload page
+          </button>
+        </div>
       )}
-      {status === 'error' && <p>Error fetching data</p>}
-      {status === 'loading' && <Loader />}
+      {status === 'pending' && <Loader />}
       {status === 'success' && (
         <ValidatorBondsTable
           data={data.filter(

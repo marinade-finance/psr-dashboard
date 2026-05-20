@@ -18,6 +18,13 @@ lerna-debug.log*
 # Tests
 /coverage
 /.nyc_output
+/tests/__screenshots__
+/test-results
+/playwright-report
+
+# Debug captures
+/capture.png
+/tmp
 
 # IDEs and editors
 /.idea
@@ -41,3 +48,18 @@ lerna-debug.log*
 
 # Local
 *.local.json
+
+# Shipping artifacts (ephemeral)
+/.ship
+
+# Diary — local only, not committed
+/.diary
+
+# Package manager cache
+/.pnpm-store
+
+# Tmp directories at any depth
+tmp/
+
+# Session / task locks
+*scheduled_tasks.lock

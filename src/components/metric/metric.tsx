@@ -1,19 +1,43 @@
 import React from 'react'
 
-import styles from './metric.module.css'
+import { HelpTip } from 'src/components/help-tip/help-tip'
+import { Card } from 'src/components/ui/card'
 
 type Props = {
   label: string
   value: React.ReactNode
-  'data-tooltip-id'?: string
-  'data-tooltip-html'?: string
+  subline?: React.ReactNode
+  extra?: React.ReactNode
+  tooltipHtml?: string
+  guideTo?: string
 }
 
-export const Metric: React.FC<Props> = ({ label, value, ...tooltipsProps }) => {
-  return (
-    <div className={styles.metricWrap} {...tooltipsProps}>
-      <div>{label}</div>
-      <div>{value}</div>
+export const Metric: React.FC<Props> = ({
+  label,
+  value,
+  subline,
+  extra,
+  tooltipHtml,
+  guideTo,
+}) => (
+  <Card className="metric px-3 py-3 sm:px-5 sm:py-4 transition-shadow hover:shadow-hover">
+    <div className="flex items-center gap-1 sm:whitespace-nowrap text-xs uppercase tracking-wider font-medium text-muted-foreground mb-1">
+      {tooltipHtml ? (
+        <HelpTip html={tooltipHtml} guideTo={guideTo}>
+          {label}
+        </HelpTip>
+      ) : (
+        label
+      )}
     </div>
-  )
-}
+    <div className="metricValue text-xl sm:text-2xl font-semibold font-mono truncate">
+      {value}
+    </div>
+    {subline && (
+      <div className="text-2xs text-muted-foreground font-mono mt-0.5">
+        {subline}
+      </div>
+    )}
+    {extra && <div className="mt-2">{extra}</div>}
+  </Card>
+)

@@ -1,5 +1,6 @@
 import { lamportsToSol } from 'src/format'
 import { VALIDATORS_API_URL } from 'src/services/apiUrls'
+import { fetchJson } from 'src/services/fetch-utils'
 
 export type ValidatorEpoch = {
   credits: number
@@ -15,20 +16,21 @@ export type ValidatorEpoch = {
 export type Validator = {
   vote_account: string
   info_name: string | null
+  dc_country_iso: string | null
   marinade_stake: string
   marinade_native_stake: string
   activated_stake: string
   epoch_stats: ValidatorEpoch[]
 }
 
+// SOL-valued selectors return the full precision lamports → SOL gives.
+// Rounding belongs at the formatter, never at the source — see CLAUDE.md.
 export const selectTotalMarinadeStake = (validator: Validator) =>
-  Math.round(
-    selectLiquidMarinadeStake(validator) + selectNativeMarinadeStake(validator),
-  )
+  selectLiquidMarinadeStake(validator) + selectNativeMarinadeStake(validator)
 export const selectLiquidMarinadeStake = (validator: Validator) =>
-  Math.round(Number(lamportsToSol(validator.marinade_stake)))
+  Number(lamportsToSol(validator.marinade_stake))
 export const selectNativeMarinadeStake = (validator: Validator) =>
-  Math.round(Number(lamportsToSol(validator.marinade_native_stake)))
+  Number(lamportsToSol(validator.marinade_native_stake))
 
 export const selectVoteAccount = (validator: Validator) =>
   validator.vote_account
@@ -39,14 +41,15 @@ export type ValidatorsResponse = {
   validators: Validator[]
 }
 
-export const fetchValidators = async (): Promise<ValidatorsResponse> =>
-  fetchValidatorsWithEpochs(0)
-
-export const fetchValidatorsWithEpochs = async (
+export const fetchValidatorsWithEpochs = (
   epochs: number,
-): Promise<ValidatorsResponse> => {
-  const res = await fetch(
+): Promise<ValidatorsResponse> =>
+  fetchJson<ValidatorsResponse>(
     `${VALIDATORS_API_URL}/validators?limit=9999&epochs=${epochs}`,
-  )
-  return (await res.json()) as ValidatorsResponse
-}
+  ).then(data => ({
+    validators: data.validators.filter(
+      validator =>
+        Number(validator.marinade_stake) > 0 ||
+        Number(validator.marinade_native_stake) > 0,
+    ),
+  }))

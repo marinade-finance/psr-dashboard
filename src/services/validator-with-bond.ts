@@ -1,6 +1,9 @@
 import { fetchBonds, selectEffectiveAmount } from './bonds'
 import { loadSam } from './sam'
-import { fetchValidators, selectTotalMarinadeStake } from './validators'
+import {
+  fetchValidatorsWithEpochs,
+  selectTotalMarinadeStake,
+} from './validators'
 
 import type { BondRecord } from './bonds'
 import type { Validator } from './validators'
@@ -22,39 +25,37 @@ export const selectMaxProtectedStake = ({
       auction.revShare.mevPmpe +
       auction.revShare.effParticipatingBidPmpe
     : Infinity
+  if (participatingTotalBidPmpe === 0) return 0
   return Math.max(0, effBondBalance / (participatingTotalBidPmpe / 1000))
 }
 
 export const selectProtectedStake = (entry: ValidatorWithBond) =>
-  Math.round(
-    Math.min(
-      entry.bond ? selectMaxProtectedStake(entry) : 0,
-      selectTotalMarinadeStake(entry.validator),
-    ),
+  Math.min(
+    entry.bond ? selectMaxProtectedStake(entry) : 0,
+    selectTotalMarinadeStake(entry.validator),
   )
-
-export const selectMaxStakeWanted = (bond: BondRecord) =>
-  bond.max_stake_wanted / 1e9
 
 export const fetchValidatorsWithBonds = async (): Promise<
   ValidatorWithBond[]
 > => {
   const [{ validators }, { bonds }, { auctionResult }] = await Promise.all([
-    fetchValidators(),
+    fetchValidatorsWithEpochs(0),
     fetchBonds(),
     loadSam(),
   ])
 
+  const auctionByVoteAccount = new Map<string, AuctionValidator>()
+  for (const validator of auctionResult.auctionData.validators) {
+    auctionByVoteAccount.set(validator.voteAccount, validator)
+  }
+
   const validatorsWithBonds: Record<string, ValidatorWithBond> = {}
 
   for (const validator of validators) {
-    const auction = auctionResult.auctionData.validators.find(
-      ({ voteAccount }) => voteAccount === validator.vote_account,
-    )
     validatorsWithBonds[validator.vote_account] = {
       validator,
       bond: null,
-      auction,
+      auction: auctionByVoteAccount.get(validator.vote_account),
     }
   }
 
