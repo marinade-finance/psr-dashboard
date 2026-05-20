@@ -13,7 +13,12 @@ export type EpochProgress = {
   hoursRemaining: number
 }
 
-export type TimelineStage = 'payment' | 'auction' | 'live' | 'next'
+export enum TimelineStage {
+  PAYMENT = 'payment',
+  AUCTION = 'auction',
+  LIVE = 'live',
+  NEXT = 'next',
+}
 
 export type TimelineNode = {
   epoch: number
@@ -125,10 +130,12 @@ export const epochMeterModel = ({
     arr.push(stage)
     map.set(epoch, arr)
   }
-  add(paymentSettled, 'payment')
-  if (auctionSettled !== paymentSettled) add(auctionSettled, 'auction')
-  add(networkEpoch, 'live')
-  if (auctionEpoch > (networkEpoch ?? -Infinity)) add(auctionEpoch, 'next')
+  add(paymentSettled, TimelineStage.PAYMENT)
+  if (auctionSettled !== paymentSettled)
+    add(auctionSettled, TimelineStage.AUCTION)
+  add(networkEpoch, TimelineStage.LIVE)
+  if (auctionEpoch > (networkEpoch ?? -Infinity))
+    add(auctionEpoch, TimelineStage.NEXT)
 
   const timeline: TimelineNode[] = [...map.entries()]
     .sort(([a], [b]) => a - b)
