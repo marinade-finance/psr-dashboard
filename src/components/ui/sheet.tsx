@@ -11,7 +11,7 @@ interface SheetProps {
 
 export function Sheet({ open, onOpenChange, children }: SheetProps) {
   return (
-    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
+    <DialogPrimitive.Root modal={false} open={open} onOpenChange={onOpenChange}>
       {children}
     </DialogPrimitive.Root>
   )
@@ -53,7 +53,7 @@ export function SheetContent({
   return (
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay
-        className="fixed inset-0 z-50 bg-black/50"
+        className="fixed inset-0 z-50 bg-black/50 pointer-events-none"
         style={{ animation: 'sheet-fade-in 150ms ease' }}
       />
       <DialogPrimitive.Content
