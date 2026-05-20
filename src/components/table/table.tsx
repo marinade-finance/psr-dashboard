@@ -1,10 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import { cn } from 'src/class_utils'
 import { HelpTip } from 'src/components/help-tip/help-tip'
 import {
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -81,7 +80,6 @@ function colorClassName(color?: Color): string {
     case Color.GREEN:
       return 'bg-cell-green'
     case Color.YELLOW:
-    case Color.ORANGE:
       return 'bg-cell-yellow'
     case Color.GREY:
       return 'bg-cell-grey'
@@ -126,11 +124,16 @@ function renderHeader<Item>(
             {...(column.headerAttrsFn ? column.headerAttrsFn() : {})}
           >
             {column.header}
-            {column.headerHelp && <HelpTip text={column.headerHelp} />}
+            {column.headerHelp && (
+              <HelpTip
+                text={column.headerHelp}
+                guideTo={column.headerGuideTo}
+              />
+            )}
             {isSortable && (
               <span
                 className={cn(
-                  'ml-1 text-[10px] opacity-40',
+                  'ml-1 text-xs opacity-40',
                   isUserSorted && 'opacity-100! text-primary!',
                   isDefaultSorted && 'opacity-60! text-muted-foreground!',
                 )}
@@ -153,10 +156,9 @@ function renderRows<Item>(
     item: Item,
     index: number,
   ) => HTMLAttributes<HTMLTableRowElement>,
-  rowNumberRender?: (item: Item, index: number) => JSX.Element,
 ): JSX.Element[] {
   return items.map((item, i) =>
-    renderRow(item, columns, i, showRowNumber, rowAttrsFn, rowNumberRender),
+    renderRow(item, columns, i, showRowNumber, rowAttrsFn),
   )
 }
 
@@ -169,15 +171,10 @@ function renderRow<Item>(
     item: Item,
     index: number,
   ) => HTMLAttributes<HTMLTableRowElement>,
-  rowNumberRender?: (item: Item, index: number) => JSX.Element,
 ): JSX.Element {
   return (
     <TableRow key={index} {...(rowAttrsFn ? rowAttrsFn(item, index) : {})}>
-      {showRowNumber ? (
-        <TableCell>
-          {rowNumberRender ? rowNumberRender(item, index) : <>{index + 1}</>}
-        </TableCell>
-      ) : null}
+      {showRowNumber ? <TableCell>{index + 1}</TableCell> : null}
       {columns.map((column, i) => {
         const cellAttrs = column.cellAttrsFn ? column.cellAttrsFn(item) : {}
         const { className: cellClassName, ...restCellAttrs } = cellAttrs
@@ -202,6 +199,7 @@ function renderRow<Item>(
 type Column<Item> = {
   header: string
   headerHelp?: string
+  headerGuideTo?: string
   headerAttrsFn?: () => HTMLAttributes<HTMLTableCellElement>
   cellAttrsFn?: (item: Item) => HTMLAttributes<HTMLTableCellElement>
   render: (item: Item, index?: number) => JSX.Element
@@ -220,10 +218,6 @@ type Props<Item> = {
     item: Item,
     index: number,
   ) => HTMLAttributes<HTMLTableRowElement>
-  rowNumberRender?: (item: Item, index: number) => JSX.Element
-  onOrderChange?: (order: Order[]) => void
-  presorted?: boolean
-  caption?: React.ReactNode
   className?: string
 }
 
@@ -233,10 +227,6 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
   defaultOrder,
   showRowNumber,
   rowAttrsFn,
-  rowNumberRender,
-  onOrderChange,
-  presorted,
-  caption,
   className,
 }) => {
   const [userOrder, setUserOrder] = useState<Order | null>(null)
@@ -252,18 +242,11 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
     return [...defaultOrder]
   }, [userOrder, defaultOrderKey])
 
-  useEffect(() => {
-    onOrderChange?.(order)
-  }, [order])
-
   // `columns` is deliberately omitted from deps: call sites pass inline array
   // literals, so including it would re-sort on every parent render. Sort
   // results are stable as long as comparators derive their result from the
   // row data passed in (a, b) — that contract holds for all current consumers.
   const sortedData = useMemo(() => {
-    if (presorted) {
-      return data
-    }
     const items = [...data]
     items.sort((a, b) => {
       for (const [columnIndex, orderDirection] of order) {
@@ -279,7 +262,7 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
       return 0
     })
     return items
-  }, [order, data, presorted])
+  }, [order, data])
 
   const onSort = (columnIndex: number) => {
     const column = columns[columnIndex]
@@ -298,7 +281,6 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
 
   return (
     <UiTable className={cn(TABLE_BASE, className)}>
-      {caption && <TableCaption>{caption}</TableCaption>}
       <TableHeader>
         {renderHeader(
           columns,
@@ -309,13 +291,7 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
         )}
       </TableHeader>
       <TableBody>
-        {renderRows(
-          sortedData,
-          columns,
-          showRowNumber ?? false,
-          rowAttrsFn,
-          rowNumberRender,
-        )}
+        {renderRows(sortedData, columns, showRowNumber ?? false, rowAttrsFn)}
       </TableBody>
     </UiTable>
   )

@@ -1,6 +1,13 @@
+// Tests for augmentAuctionResult: dense cutoffRank computation, tied validators,
+// sub-min-bond stake loss, and selectCutoffRank edge cases.
 import { describe, it, expect, vi } from 'vitest'
 
-import { augmentAuctionResult, selectCutoffRank } from '../sam'
+import {
+  augmentAuctionResult,
+  selectCutoffRank,
+  selectExpectedStakeChange,
+  selectExpectedStakeChangeBreakdown,
+} from '../sam'
 
 import type * as ValidatorsModule from '../validators'
 import type {
@@ -48,7 +55,7 @@ describe('augmentAuctionResult — dense cutoffRank', () => {
       makeValidator('B', 10, true),
       makeValidator('C', 8, false),
     ])
-    const augmented = augmentAuctionResult(result)
+    const augmented = augmentAuctionResult(result, 0)
     const byVa = new Map(
       augmented.map(v => [v.voteAccount, selectCutoffRank(v)]),
     )
@@ -62,7 +69,7 @@ describe('augmentAuctionResult — dense cutoffRank', () => {
       makeValidator('C', 10, true),
       makeValidator('D', 8, false),
     ])
-    const augmented = augmentAuctionResult(result)
+    const augmented = augmentAuctionResult(result, 0)
     const byVa = new Map(
       augmented.map(v => [v.voteAccount, selectCutoffRank(v)]),
     )
@@ -78,7 +85,7 @@ describe('augmentAuctionResult — dense cutoffRank', () => {
       makeValidator('C', 8, false),
       makeValidator('D', 6, false),
     ])
-    const augmented = augmentAuctionResult(result)
+    const augmented = augmentAuctionResult(result, 0)
     const byVa = new Map(
       augmented.map(v => [v.voteAccount, selectCutoffRank(v)]),
     )
@@ -96,7 +103,7 @@ describe('augmentAuctionResult — dense cutoffRank', () => {
       makeValidator('D', 8, false),
       makeValidator('E', 6, false),
     ])
-    const augmented = augmentAuctionResult(result)
+    const augmented = augmentAuctionResult(result, 0)
     const byVa = new Map(
       augmented.map(v => [v.voteAccount, selectCutoffRank(v)]),
     )
@@ -105,5 +112,86 @@ describe('augmentAuctionResult — dense cutoffRank', () => {
     expect(byVa.get('C')).toBe(0)
     expect(byVa.get('D')).toBe(-1)
     expect(byVa.get('E')).toBe(-2)
+  })
+})
+
+function makeBondValidator(
+  voteAccount: string,
+  bondBalanceSol: number,
+  active: number,
+  target: number,
+): AuctionValidator {
+  return {
+    voteAccount,
+    auctionStake: { marinadeSamTargetSol: target },
+    marinadeActivatedStakeSol: active,
+    bondBalanceSol,
+    values: { paidUndelegationSol: 0 },
+    revShare: { totalPmpe: 10 },
+  } as unknown as AuctionValidator
+}
+
+function makeBondResult(
+  validators: AuctionValidator[],
+  tvl: number,
+): AuctionResult {
+  return {
+    winningTotalPmpe: 10,
+    auctionData: {
+      validators,
+      stakeAmounts: { marinadeSamTvlSol: tvl },
+    },
+  } as unknown as AuctionResult
+}
+
+describe('augmentAuctionResult — bond below minBondBalanceSol', () => {
+  it('predicts a full loss; the three components still sum exactly', () => {
+    // SUB has a sub-minimum bond and is below target — it would otherwise
+    // be a redelegation recipient. It must instead lose ALL active stake.
+    const result = makeBondResult(
+      [
+        makeBondValidator('SUB', 0.05, 1000, 5000),
+        makeBondValidator('OK', 5, 2000, 8000),
+      ],
+      // TVL > Σactive so there is a redelegation budget to hand out.
+      20000,
+    )
+    const augmented = augmentAuctionResult(result, 0.1)
+    const sub = augmented.find(v => v.voteAccount === 'SUB')
+    expect(sub).toBeDefined()
+    if (!sub) return
+    const total = selectExpectedStakeChange(sub)
+    const bd = selectExpectedStakeChangeBreakdown(sub)
+
+    expect(total).toBe(-1000)
+    expect(bd.paidUndelegation).toBe(-1000)
+    expect(bd.redelegationInflow).toBe(0)
+    expect(
+      bd.paidUndelegation + bd.redelegationInflow + bd.naturalWithdrawal,
+    ).toBeCloseTo(total, 9)
+  })
+
+  it('leaves a healthy-bond validator unaffected', () => {
+    const result = makeBondResult(
+      [
+        makeBondValidator('SUB', 0.05, 1000, 5000),
+        makeBondValidator('OK', 5, 2000, 8000),
+      ],
+      20000,
+    )
+    const augmented = augmentAuctionResult(result, 0.1)
+    const ok = augmented.find(v => v.voteAccount === 'OK')
+    expect(ok).toBeDefined()
+    if (!ok) return
+    const total = selectExpectedStakeChange(ok)
+    const bd = selectExpectedStakeChangeBreakdown(ok)
+
+    // Healthy bond, below target, budget available → positive inflow,
+    // never a forced full loss.
+    expect(total).not.toBe(-2000)
+    expect(bd.redelegationInflow).toBeGreaterThan(0)
+    expect(
+      bd.paidUndelegation + bd.redelegationInflow + bd.naturalWithdrawal,
+    ).toBeCloseTo(total, 9)
   })
 })

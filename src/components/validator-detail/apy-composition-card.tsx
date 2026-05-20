@@ -13,6 +13,7 @@ interface ApyCompositionCardProps {
   validator: AuctionValidator
   guideTo?: string
   isSimulated?: boolean
+  onGoToBidding?: () => void
 }
 
 type Row = {
@@ -29,8 +30,11 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
   validator,
   guideTo,
   isSimulated,
+  onGoToBidding,
 }) => {
-  const inflComm = validator.inflationCommissionDec
+  // Simulation can null any commission field. Default to 0 so the rendered
+  // percentage stays "0%" instead of "NaN%".
+  const inflComm = validator.inflationCommissionDec ?? 0
   const mevComm = validator.mevCommissionDec ?? 0
   const blockComm = validator.blockRewardsCommissionDec ?? 0
 
@@ -61,16 +65,17 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
       context: `${pct(blockComm, 0)} shared`,
     },
     {
-      label: 'Stake bid',
-      apy: apyBreakdown.stakeBid,
+      label: 'Static bid',
+      apy: apyBreakdown.staticBid,
       pmpe: r.bidPmpe,
       swatch: 'bg-chart-4',
       context: 'your bid',
     },
   ]
 
-  // Two scales: APY for the per-row bars (so Total APY anchors the rightmost
-  // tick); PMPE for the stacked Total bar segments (so they actually sum).
+  // Two scales: PMPE for the per-row bars (linear, sums to totalPmpe);
+  // APY for the Total bar (so the winning marker anchors against the total
+  // APY shown to the right).
   const apyScale = Math.max(apyBreakdown.total, winningApy) * 1.2
   const winPct = (winningApy / apyScale) * 100
   const delta = apyBreakdown.total - winningApy
@@ -84,29 +89,50 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
     >
       <div className="flex items-center justify-between mb-3">
         <p className="text-xs text-muted-foreground">
-          Winning threshold {pct(winningApy, 2)}
+          Winning APY threshold {pct(winningApy, 2)}
         </p>
-        <span
-          className={cn(
-            'text-xs font-mono font-semibold px-2 py-0.5 rounded-md',
-            above
-              ? 'bg-primary-light text-primary'
-              : 'bg-destructive-light text-destructive',
-          )}
-        >
-          {above ? '+' : ''}
-          {pct(delta, 2)} vs winning
-        </span>
+        {above || !onGoToBidding ? (
+          <span
+            className={cn(
+              'text-xs font-mono font-semibold px-2 py-0.5 rounded-md border',
+              above
+                ? 'bg-primary-light text-primary border-primary'
+                : 'bg-destructive-light text-destructive border-destructive',
+            )}
+          >
+            {above ? '+' : ''}
+            {pct(delta, 2)} vs winning
+          </span>
+        ) : (
+          // The pill IS the metric. The action label sits above as an
+          // auxiliary hint so the pill chrome stays clean. Whole stack is
+          // one click target.
+          <button
+            type="button"
+            onClick={onGoToBidding}
+            className="group flex flex-col items-end gap-0.5 cursor-pointer"
+          >
+            <span className="text-2xs text-destructive font-medium leading-none group-hover:underline">
+              Fix in Bidding ↗
+            </span>
+            <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-md border bg-destructive-light text-destructive border-destructive">
+              {pct(delta, 2)} vs winning
+            </span>
+            <span className="sr-only">
+              see the target bid on the Bidding tab
+            </span>
+          </button>
+        )}
       </div>
       <div className="space-y-2">
         {rows.map(({ label, apy, pmpe, swatch, context }) => (
           <div key={label} className="flex items-center gap-2">
             <span className={cn('w-2 h-2 rounded-sm shrink-0', swatch)} />
             <div className="w-24 shrink-0">
-              <div className="text-[13px] text-muted-foreground leading-tight">
+              <div className="text-sm text-muted-foreground leading-tight">
                 {label}
               </div>
-              <div className="text-[10px] text-muted-foreground/70 font-mono leading-tight">
+              <div className="text-xs text-muted-foreground/70 font-mono leading-tight">
                 {context}
               </div>
             </div>
@@ -128,7 +154,7 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
         ))}
         <div className="flex items-center gap-2 pt-1 border-t border-border-grid">
           <span className="w-2 shrink-0" />
-          <span className="text-[13px] font-semibold w-24 shrink-0">Total</span>
+          <span className="text-sm font-semibold w-24 shrink-0">Total</span>
           <div className="flex-1 relative h-4 bg-secondary rounded overflow-visible">
             <div
               className="h-full rounded overflow-hidden flex"
@@ -152,7 +178,7 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
               style={{ left: `${winPct}%` }}
             />
             <span
-              className="absolute top-[-18px] text-[10px] font-mono text-muted-foreground"
+              className="absolute top-[-18px] text-xs font-mono text-muted-foreground"
               style={{ left: `${winPct}%`, transform: 'translateX(-50%)' }}
             >
               {pct(winningApy, 2)}

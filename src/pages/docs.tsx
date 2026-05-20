@@ -13,6 +13,8 @@ type Props = {
   level?: UserLevel
 }
 
+// Each user level maps to one markdown document. The document is split into
+// navigable pages by `<!-- page: id | Title -->` markers (see public/docs/*).
 type Doc = 'GUIDE' | 'GUIDE-EXPERT'
 const DOCS: readonly Doc[] = ['GUIDE', 'GUIDE-EXPERT'] as const
 
@@ -21,6 +23,54 @@ const fetchDoc = (name: Doc) =>
     if (!res.ok) throw new Error('Failed to load')
     return res.text()
   })
+
+type Page = {
+  id: string
+  title: string
+  body: string
+  anchors: string[]
+}
+
+const PAGE_MARKER = /^<!--\s*page:\s*([\w-]+)(?:\s*\|\s*([^>]+?))?\s*-->\s*$/
+const ANCHOR_RE = /<a\s+id="([\w-]+)"\s*>/g
+
+// Split the raw markdown on `<!-- page: id | Title -->` lines into ordered
+// pages. A marker without a title (`<!-- page: id -->`) re-opens an earlier
+// page so its body slices concatenate in source order — this lets a guide
+// return to "Key Concepts" after the Bonds/Penalties pages without renaming
+// any anchor ids. Anything before the first marker is dropped (there is
+// always a leading marker in the source docs).
+function splitPages(md: string): Page[] {
+  const order: string[] = []
+  const byId = new Map<string, Page>()
+  let current: Page | null = null
+  for (const line of md.split('\n')) {
+    const m = line.match(PAGE_MARKER)
+    if (m) {
+      const id = m[1]
+      const title = m[2]?.trim()
+      let page = byId.get(id)
+      if (!page) {
+        page = { id, title: title || id, body: '', anchors: [] }
+        byId.set(id, page)
+        order.push(id)
+      } else if (title) {
+        page.title = title
+      }
+      current = page
+      continue
+    }
+    if (current) current.body += line + '\n'
+  }
+  const pages = order.flatMap(id => {
+    const p = byId.get(id)
+    return p ? [p] : []
+  })
+  for (const p of pages) {
+    p.anchors = [...p.body.matchAll(ANCHOR_RE)].map(a => a[1])
+  }
+  return pages
+}
 
 function makeComponents(
   onAnchor: (doc: Doc) => void,
@@ -47,7 +97,7 @@ function makeComponents(
       </p>
     ),
     a: ({ href, children }) => {
-      // Hash-only links route to a doc tab (e.g. [Dashboard Guide](#GUIDE)).
+      // Hash-only links route to a doc level (e.g. [Dashboard Guide](#GUIDE)).
       if (href?.startsWith('#')) {
         const target = href.slice(1) as Doc
         if (DOCS.includes(target)) {
@@ -137,12 +187,25 @@ function makeComponents(
 
 export const DocsPage: React.FC<Props> = ({ level }) => {
   const isExpert = level === UserLevel.Expert
-  // When navigating directly to a hash anchor (e.g. from a breakdown "Guide →"
-  // link), all substantive section anchors live in GUIDE.md. Default to GUIDE
-  // so the scroll target is present regardless of which expert tab was last open.
+  // The active document. Direct hash links (e.g. a breakdown "Guide ↗")
+  // target anchors that live in GUIDE; default to GUIDE when a hash is
+  // present so the scroll target resolves regardless of expert mode.
   const [activeDoc, setActiveDoc] = useState<Doc>(
     isExpert && !window.location.hash ? 'GUIDE-EXPERT' : 'GUIDE',
   )
+  const [pageId, setPageId] = useState<string | null>(null)
+  // Bumped on browser hash navigation so the page resolver re-reads the
+  // hash and jumps to whichever page now owns the anchor.
+  const [hashTick, setHashTick] = useState(0)
+
+  useEffect(() => {
+    const onHash = () => {
+      setPageId(null)
+      setHashTick(t => t + 1)
+    }
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
 
   const { data, status } = useQuery({
     queryKey: ['doc', activeDoc],
@@ -150,35 +213,81 @@ export const DocsPage: React.FC<Props> = ({ level }) => {
     staleTime: Infinity,
   })
 
-  const components = useMemo(() => makeComponents(setActiveDoc), [])
+  const pages = useMemo(() => (data ? splitPages(data) : []), [data])
 
-  // Scroll to the URL hash anchor once the doc has rendered. Re-runs on
-  // doc-tab switch and on browser hash changes (back/forward navigation).
-  useEffect(() => {
-    if (status !== 'success') return undefined
+  // anchor id -> page id, derived from the rendered slices so it can never
+  // drift from the markdown. Legacy links like /docs#bond resolve through
+  // this map to whichever page now holds that anchor.
+  const anchorToPage = useMemo(() => {
+    const m = new Map<string, string>()
+    for (const p of pages) for (const a of p.anchors) m.set(a, p.id)
+    return m
+  }, [pages])
+
+  const switchDoc = (doc: Doc) => {
+    setActiveDoc(doc)
+    setPageId(null)
+  }
+
+  const components = useMemo(() => makeComponents(switchDoc), [])
+
+  // Resolve the current page: an explicit user selection wins; otherwise a
+  // URL hash picks the page that owns the anchor; otherwise the first page.
+  const activePage = useMemo(() => {
+    if (!pages.length) return null
+    if (pageId) return pages.find(p => p.id === pageId) ?? pages[0]
     const hash = window.location.hash.slice(1)
-    if (!hash) return undefined
-    // Defer one frame so the markdown DOM is mounted before we look up the id.
+    if (hash) {
+      const owner = anchorToPage.get(hash)
+      if (owner) return pages.find(p => p.id === owner) ?? pages[0]
+    }
+    return pages[0]
+  }, [pages, pageId, anchorToPage, hashTick])
+
+  // Scroll to the URL hash anchor once the owning page has rendered, and
+  // flash a brief highlight. Re-runs on page switch and on hash changes
+  // (browser back/forward). Anchors are <a id="..."> just before a heading;
+  // we flash both so the eye lands on something visible.
+  useEffect(() => {
+    if (status !== 'success' || !activePage) return undefined
+    const hash = window.location.hash.slice(1)
+    if (!hash || DOCS.includes(hash as Doc)) return undefined
+    if (!activePage.anchors.includes(hash)) return undefined
     const id = requestAnimationFrame(() => {
       const el = document.getElementById(hash)
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      if (!el) return
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      const targets: Element[] = [el]
+      const next = el.nextElementSibling
+      if (next && /^H[1-6]$/.test(next.tagName)) targets.push(next)
+      for (const t of targets) {
+        t.classList.add('anchor-highlight')
+        setTimeout(() => t.classList.remove('anchor-highlight'), 2200)
+      }
     })
-    return () => cancelAnimationFrame(id)
-  }, [status, activeDoc])
+    return () => {
+      cancelAnimationFrame(id)
+    }
+  }, [status, activePage, hashTick])
+
+  const selectPage = (id: string) => {
+    setPageId(id)
+    window.scrollTo({ top: 0 })
+  }
 
   return (
     <div className="bg-background-page min-h-screen">
       <Navigation level={level} />
       <div className="flex justify-center px-4 sm:px-6">
-        <div className="w-full max-w-3xl">
+        <div className="w-full max-w-5xl">
           {isExpert && (
             <div className="flex gap-1 pt-4 border-b border-border mb-0">
               {DOCS.map(doc => (
                 <button
                   key={doc}
-                  onClick={() => setActiveDoc(doc)}
+                  onClick={() => switchDoc(doc)}
                   className={cn(
-                    'px-3 py-2 text-[13px] font-medium border-b-2 transition-colors -mb-px',
+                    'px-3 py-2 text-mid font-medium border-b-2 transition-colors -mb-px',
                     activeDoc === doc
                       ? 'border-primary text-primary'
                       : 'border-transparent text-muted-foreground hover:text-foreground',
@@ -189,20 +298,41 @@ export const DocsPage: React.FC<Props> = ({ level }) => {
               ))}
             </div>
           )}
-          <div className="py-10">
-            {status === 'pending' && <Loader />}
-            {status === 'error' && (
-              <p className="text-sm text-destructive">Failed to load docs.</p>
-            )}
-            {status === 'success' && data && (
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeRaw]}
-                components={components}
-              >
-                {data}
-              </ReactMarkdown>
-            )}
+          <div className="flex flex-col md:flex-row gap-8 py-10">
+            <nav className="md:w-56 shrink-0">
+              <ul className="flex flex-row flex-wrap md:flex-col gap-1 md:sticky md:top-6">
+                {pages.map(p => (
+                  <li key={p.id}>
+                    <button
+                      onClick={() => selectPage(p.id)}
+                      className={cn(
+                        'w-full text-left px-3 py-2 rounded-md text-mid font-medium transition-colors',
+                        activePage?.id === p.id
+                          ? 'bg-primary-light text-primary'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+                      )}
+                    >
+                      {p.title}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+            <div className="min-w-0 flex-1">
+              {status === 'pending' && <Loader />}
+              {status === 'error' && (
+                <p className="text-sm text-destructive">Failed to load docs.</p>
+              )}
+              {status === 'success' && activePage && (
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeRaw]}
+                  components={components}
+                >
+                  {activePage.body}
+                </ReactMarkdown>
+              )}
+            </div>
           </div>
         </div>
       </div>

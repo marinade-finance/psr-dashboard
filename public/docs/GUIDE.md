@@ -1,3 +1,5 @@
+<!-- page: overview | Overview -->
+
 # PSR Dashboard Guide
 
 The PSR (Protected Staking Rewards) Dashboard shows Marinade's stake-distribution
@@ -6,8 +8,10 @@ have bond coverage, and which past epochs triggered protected-event payouts.
 
 The auction itself is recomputed in your browser using the
 [`@marinade.finance/ds-sam-sdk`](https://github.com/marinade-finance/ds-sam/tree/main/packages/ds-sam-sdk)
-package — every number you see comes from the same algorithm Marinade uses on the
-backend.
+package — so most numbers come straight from the same algorithm Marinade runs
+on the backend. A few values (in-auction target bid, next-epoch stake estimate,
+bid-penalty projection) are forward-looking projections; each card that shows
+one labels it as an estimate.
 
 ---
 
@@ -31,13 +35,15 @@ set, and what each validator's situation looks like.
 
 **Top metric tiles**
 
-- **Total Auction Stake** — total SOL that SAM is distributing this epoch.
+Tile order (left → right) as rendered in `sam-table.tsx`:
+
+- **Re-delegation** — estimated SOL the protocol will move next epoch toward
+  validators that are below their auction target (capped by the rebalancing budget).
 - **Winning APY** — APY of the *last* validator to make the cut. The clearing
   price of the auction.
 - **Projected APY** — expected return for stakers across the whole winning set.
 - **Winning Validators** — count of validators receiving stake this epoch.
-- **Re-delegation** — estimated SOL the protocol will move next epoch toward
-  validators that are below their auction target (capped by the rebalancing budget).
+- **Total Auction Stake** — total SOL that SAM is distributing this epoch.
 
 The detailed column reference is in [Auction Table Columns](#auction-table) and
 the side panel in [Validator Detail Panel](#detail-panel).
@@ -69,17 +75,6 @@ backstop.
 - **DRYRUN** — test event from the pre-launch period; no real payout.
 - (No badge) — finalized on-chain settlement.
 
-**Table Columns:**
-
-| Column             | Description                          |
-| ------------------ | ------------------------------------ |
-| **Epoch**          | Epoch of the event                   |
-| **Validator**      | Vote account public key              |
-| **Name**           | Validator display name               |
-| **Settlement [☉]** | Settlement amount in SOL             |
-| **Reason**         | Reason for the protected event       |
-| **Funder**         | Who funded the settlement            |
-
 ### Validator Bonds
 
 How much of Marinade's stake is currently bond-protected.
@@ -92,21 +87,12 @@ total bond capacity.
 <40% / 40–70% / 70–95% / ≥95%). Tile size ∝ √stake. Hover for details.
 
 **Table columns**: Validator · Marinade Stake · Bond Balance · Protected Stake ·
-Coverage (bar + percentage).
-
-**Table Columns:**
-
-| Column                   | Description                                                          |
-| ------------------------ | -------------------------------------------------------------------- |
-| **Validator**            | Vote account public key                                              |
-| **Name**                 | Validator display name                                               |
-| **Bond balance [☉]**     | Total bond deposit in SOL                                            |
-| **Max Stake Wanted [☉]** | Maximum stake the validator wants from Marinade                      |
-| **Bond Comm.**           | Commission override configured via bond                              |
-| **Marinade stake [☉]**   | Currently delegated Marinade stake                                   |
-| **Eff. Cost [☉]**        | Effective cost                                                       |
+Coverage (bar + percentage). Expert mode adds **Max protectable [SOL]** —
+see the Expert Guide.
 
 ---
+
+<!-- page: auction | The Auction -->
 
 <a id="sam"></a>
 ## How the Auction Works
@@ -114,7 +100,7 @@ Coverage (bar + percentage).
 Each epoch, SAM runs a **last-price auction** to allocate stake.
 
 1. **Validators bid.** Two complementary methods, combinable:
-   - **Static bid (CPMPE)** — fixed cost per 1000 SOL per epoch, deducted directly
+   - **Static bid (Cost PMPE)** — fixed cost per 1000 SOL per epoch, deducted directly
      from the validator's bond. Predictable.
    - **Dynamic commission bid** — percentage of actual rewards (inflation, MEV,
      block rewards) shared with stakers. Each dimension can be set independently.
@@ -126,10 +112,11 @@ Each epoch, SAM runs a **last-price auction** to allocate stake.
 
 ### Participation requirements
 
-- Active PSR bond (validator created and funded one).
-- Adequate uptime (>80% across the last several epochs).
-- Effective commission within the SAM cap (currently 7%).
-- Bond funded enough to cover potential downtime payouts and bid costs.
+- Not on Marinade's blacklist.
+- Node version within the supported semver range.
+- Final inflation commission ≤ 7%.
+- Uptime > 80% in each of the last 3 epochs, measured by stake-weighted vote credits.
+- Active PSR bond funded to cover one epoch of downtime (1 SOL per 10k SOL of stake), one epoch of max yield, and one epoch of bid cost.
 
 ### Stability mechanisms
 
@@ -147,23 +134,44 @@ _See [Stake Auction Marketplace — Marinade Docs](https://docs.marinade.finance
 
 ---
 
+<!-- page: concepts | Key Concepts -->
+
 ## Key Concepts
 
 <a id="cpmpe"></a>
-### PMPE / CPMPE — Per Mille Per Epoch
+### PMPE / Cost PMPE — Per Mille Per Epoch
 
 PMPE measures revenue per 1000 SOL per epoch. The unit the auction speaks in.
 
 - **PMPE** — generic per-1000-SOL-per-epoch number. Used for every revenue stream
   (inflation, MEV, block rewards, stake bid).
-- **CPMPE** — *cost* per 1000 SOL per epoch. The validator's static bid component:
+- **Cost PMPE** — cost per 1000 SOL per epoch. The validator's static bid component:
   a fixed amount the validator pays out of their bond for every 1000 SOL of stake
-  they receive, every epoch.
+  they receive, every epoch. (Also identified as `cpmpe` in the protocol.)
 - **0.1 PMPE = 0.1 SOL earned per 1000 SOL per epoch.**
-- **APY conversion**: `APY = (1 + PMPE/1000)^182 − 1` (≈182 epochs per year).
+- **APY conversion**: `APY = (1 + PMPE/1000)^182.6 − 1` (≈182.6 epochs per year).
 
 A validator's **max APY** in the table is the sum of all PMPE streams converted
-to APY, with the static CPMPE bid mixed in.
+to APY, with the static Cost PMPE bid mixed in.
+
+#### Activating-stake PMPE
+
+When the auction grows your target stake above what's currently
+delegated, the gap doesn't appear instantly — it warms up. SAM still
+charges your bid against that incoming stake at a separate rate called
+the activating-stake PMPE, billed on the stake the auction is actually
+delegating to you this epoch — the expected stake change, which may be
+less than the full target-minus-active gap when the re-delegation budget
+runs out. The Payments tab shows it on its own row inside the **Bid
+cost** section. If no stake is being delegated to you this epoch, this
+cost is zero.
+
+#### Where to read it on the dashboard
+
+The bid construction in PMPE — stake position, commissions split by
+stream, the static-vs-effective bid gap, and the target-bid math —
+lives on the validator detail panel's **[Bidding tab](#bidding)**. The
+**[Payments tab](#payments)** then shows the resulting cost in SOL.
 
 _See [Last-Price Auction — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market#last-price-auction) for how PMPE feeds the clearing price._
 
@@ -204,13 +212,15 @@ and watch the validator's rank shift; see [Simulation Mode](#simulation).
 
 _See [How to participate — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market#how-to-participate-in-the-stake-auction-marketplace) for the participation rules and commission caps._
 
+<!-- page: bonds | Bonds & Risk Fee -->
+
 <a id="bond"></a>
 ### Validator Bonds
 
 A bond is a pre-funded vault each validator creates to participate in SAM. It has
 three jobs:
 
-1. Pays static bid costs (CPMPE × stake) every epoch.
+1. Pays static bid costs (Cost PMPE × stake) every epoch.
 2. Backs Protected Staking Rewards payouts if the validator under-delivers (see
    [PSR](#psr)).
 3. Signals commitment.
@@ -259,14 +269,50 @@ projected exposed stake at the minimum-bond rate.
 
 _See [Stronger Bond Signals and a New Risk Fee in SAM — Marinade Blog](https://marinade.finance/blog/stronger-bond-signals-and-a-new-risk-fee-in-sam) for context._
 
+<!-- page: penalties | Penalties -->
+
 <a id="bid-penalty"></a>
 ### Bid-Too-Low Penalty
 
 Charged at auction time when a validator's bid drops between epochs
 and their bond obligation no longer services what their historical
-bid implied. The dashboard's **Bid Penalty** tab on the validator
-detail panel shows the live trigger thresholds, the shortfall, and
-the per-component breakdown.
+bid implied.
+
+#### When it fires
+
+Two conditions both have to hold:
+
+1. **Bid dropped this epoch.** The validator's effective participating
+   bid PMPE is lower than it was the previous epoch.
+2. **Bond obligation fell below the historical floor.** The lower of
+   the current effective participating bid and the worst bid seen
+   across the recent history window — minus a small permitted
+   deviation — is the **adjusted limit**. The bond obligation PMPE has
+   to drop below that limit for the penalty to engage.
+
+If only one of those is true the dashboard shows a green status
+("Bid dropped but bond obligation covers it — no penalty" or "Bid did
+not decrease — no penalty").
+
+#### How big it gets
+
+The shortfall — how far the bond obligation sits under the adjusted
+limit — gets normalised by the limit, square-rooted, and capped at 1
+to produce a coefficient. That coefficient is multiplied by a base of
+`winning total PMPE + effective participating bid PMPE`, then turned
+into SOL by multiplying by activated stake / 1000.
+
+In practice this means a small dip below the limit costs a relatively
+small fraction of one epoch's revenue; a large dip can wipe out the
+whole epoch's revenue from that validator.
+
+#### Where to read it on the dashboard
+
+The validator detail panel's **Bid Penalty tab** walks you through
+every input — bid history, historical baseline, threshold inputs, the
+shortfall, the coefficient, and the final SOL charge. See the
+[Bid Penalty tab subsection](#detail-panel) for the row-by-row
+formula.
 
 _See [Bid Reduction Penalty — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market#bid-reduction-penalty)._
 
@@ -288,6 +334,8 @@ earning.
 
 _See [Blacklist Policy — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market#blacklist-policy)._
 
+<!-- page: concepts -->
+
 <a id="redelegation"></a>
 ### Re-delegation and Undelegation Caps
 
@@ -296,32 +344,129 @@ bounded amount of SOL:
 
 - **Re-delegation budget** — undeployed deposits and stake withdrawn from
   over-target validators are routed to validators whose auction target exceeds
-  their active stake. The total amount moved per epoch is capped to keep
-  activation/deactivation costs bounded.
+  their active stake. Under normal conditions, roughly 1% of total TVL can
+  be rebalanced per epoch; the rate accelerates when a validator poses a high
+  risk of not delivering rewards or loses eligibility.
 - **Withdrawal priority** — when natural turnover pulls SOL from the pool, it
   leaves over-target validators first. Validators sitting at or below target
   are protected from forced withdrawals as long as anyone is over-target.
-- **Why "Next Δ" might be smaller than (target − active).** Because the
+- **Why "Next change" might be smaller than (target − active).** Because the
   rebalancing budget is shared across the whole pool. A validator far below
   target won't close the entire gap in one epoch.
 
 _See [Stake Matching — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market#stake-matching) for the rebalancing algorithm._
 
+<a id="in-auction"></a>
+### Getting into the auction
+
+The "Get into the auction" section of the Payments table works out the
+static bid that would lift your total to the winning total PMPE, and the bond
+you need to back the stake that follows. The math is simple:
+
+```
+nonBidPmpe    = inflationPmpe + mevPmpe + blockPmpe
+targetBidPmpe = max(0, winningTotalPmpe − nonBidPmpe)
+bidIncrease   = max(0, targetBidPmpe − currentStaticBidPmpe)
+```
+
+It reasons in your **static bid** — the same number the simulation
+input shows — not the effective clearing bid. The bond rows are read
+straight from the Bond tab's keep-stake calculation, so the two always
+agree.
+
+This is a closed-form **estimate**. Adding or growing a winner shifts
+the clearing price itself, so the real answer is approximately this
+much, often a touch more. Treat the figure as a floor and confirm the
+exact bid with **Simulate**, which re-runs the real auction. The
+simulation panel lets you try the static bid AND the three commissions
+(inflation, MEV, block rewards) together — lowering a commission lifts
+your non-bid revenue and can clear the level without raising the bid at
+all, so it's worth trying both knobs before committing to a top-up. If
+a country or ASO concentration cap is the binding limit, the section
+says so plainly — raising the bid or lowering commissions alone will
+not get you in until that cap frees up.
+
+<a id="next-epoch-stake"></a>
+### Getting stake next epoch
+
+Being in the auction set is not the same as receiving stake. The
+re-delegation budget is handed out greedily by total PMPE, highest
+first, until it runs out. The lowest total PMPE among validators that
+got their full below-target top-up this run is the **priority frontier PMPE**
+(`priorityFrontierPmpe`). The "Get stake delegated next epoch" section
+estimates the bid that would put you at or above that threshold:
+
+```
+targetTotalPmpePriority = priorityFrontierPmpe
+targetBidPmpe           = max(0, targetTotalPmpePriority − nonBidPmpe)
+bidIncrease             = max(0, targetBidPmpe − currentStaticBidPmpe)
+```
+
+This is a **heuristic**, not a guarantee. Raising your bid reorders
+the queue and moves the threshold itself, so the number is an estimate —
+always verify it in **Simulate**. When the budget is large enough to
+reach every below-target winner, there is no binding priority frontier and the
+section says so.
+
+The section also shows the two inputs the queue order is read from:
+your **priority rank** — your position when the budget is handed out,
+total PMPE highest first — and your **bid gap**, your static bid minus
+the auction clearing price. The bid gap is context only at settlement
+— you only ever pay the clearing rate — but your full static bid does
+count toward your total PMPE, so a larger gap pushes you up the queue.
+
 <a id="psr"></a>
 ### Protected Staking Rewards (PSR)
 
-PSR is the user-facing guarantee: if a validator under-delivers (downtime,
-commission hike, etc.), the affected stakers are made whole from the validator's
-bond. If the bond is insufficient, Marinade's backstop covers the remainder —
-which is *also* why under-collateralized bonds are penalised (see
-[Bond Risk Fee](#bond-risk-fee)).
+PSR is the user-facing guarantee: if a validator under-delivers — extended
+downtime ("LowCredits") or a mid-epoch commission increase
+("CommissionIncrease") — the affected stakers are made whole from the
+validator's bond. If the bond is insufficient, Marinade's backstop covers
+the remainder — which is *also* why under-collateralized bonds are
+penalised (see [Bond Risk Fee](#bond-risk-fee)).
+
+A 1% grace period applies before either trigger fires. For downtime, the
+validator's bond covers the rewards lost on uptime between 50% and 99%;
+Marinade absorbs the lower-than-50% tier.
 
 The Protected Events tab shows the history of every PSR settlement, including
 which were paid by the validator's bond vs Marinade's backstop.
 
 _See [How Protected Staking Rewards work — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/protected-staking-rewards#how-protected-staking-rewards-work) for the protection guarantee, settlement flow, and bond requirements._
 
+<a id="sfdp"></a>
+### SFDP — Solana Foundation Delegation Programme
+
+SFDP is the Solana Foundation's own delegation programme. Meeting its criteria earns a validator a small stake boost inside Marinade's auction — the foundation's tick of approval acts as a quality signal the auction weights slightly higher.
+
+Requirements are maintained by the foundation and include uptime thresholds, commission limits, and identity verification. Whether a validator meets the criteria is shown in the SAM table as a small tag on their row.
+
+_See [Solana Foundation Delegation Programme](https://solana.org/delegation-program) for the official eligibility requirements._
+
+<a id="stake-wanted"></a>
+### Max Stake Wanted
+
+Each validator sets a self-imposed cap on how much Marinade stake they will accept. The auction will never award stake beyond that cap — even if the validator's bid and bond would otherwise qualify for more.
+
+Setting this too low leaves stake on the table. If the cap is the binding constraint rather than bid or bond, the Next Step tip in the table will say so, and topping up your bond or raising your bid would not help until the cap is raised.
+
+<a id="bid-distribution"></a>
+### Bid Distribution
+
+The bid-distribution chart shows where a validator's static bid PMPE sits relative to everyone else currently bidding. It answers "am I well above the pack, roughly in the middle, or barely over the clearing price?"
+
+A large gap between your bid and the clearing price means you have auction headroom — you could lower your bid and still win stake. A gap close to zero means one new entrant with a higher bid could push you out of the winning set.
+
+<a id="concentration"></a>
+### Concentration Limits (Countries and ASOs)
+
+Marinade caps the fraction of auction stake that can go to validators in a single country or from a single Autonomous System Operator (ASO — the hosting provider or network operator). The default cap is 30% per country and 30% per ASO. A separate per-validator cap of 15% of TVL also applies. These caps protect the pool against correlated failures: if one cloud provider or jurisdiction has an outage, the impact on Marinade's stake is bounded.
+
+When a country or ASO hits its cap, validators there are cut — even if their bid is high enough to win. The "Top Countries" and "Top ASOs" tiles on the SAM page show the current fill level for each group and mark capped entries in red.
+
 ---
+
+<!-- page: screens | Screens & Panels -->
 
 <a id="auction-table"></a>
 ## Auction Table Columns
@@ -341,9 +486,12 @@ The validator's position in the auction order, sorted by max APY by default.
 
 ### `Validator` — Identity
 
-Validator name, vote-account address (truncated, click to copy), and a small
-red dot if the validator currently has an active alert (depleted bond, blacklist
-flag, large bid drop, etc.).
+Validator name, vote-account address (truncated, click to copy), plus inline
+**penalty badges** that surface active settlement charges this epoch:
+**Bid-too-low**, **Blacklisted**, **Bond-risk-fee** (each appears only when
+the corresponding penalty fires). A small notification dot may also appear
+if the validator has an active operational alert (depleted bond, blacklist
+flag, etc.).
 
 ### `Max APY` — Maximum APY to stakers
 
@@ -361,16 +509,18 @@ bid and commissions. This is what the auction sorts by.
 A compact summary of the validator's bond:
 
 - **Health pill** — colour-coded status:
+  - **No bond** (red) — no bond posted at all; the validator cannot win
+    any stake until one is created and funded to the minimum.
+  - **Adequate** (muted) — bond covers current stake but not the ideal
+    target; validator is fine but not eligible for more stake.
   - **Healthy** (green) — bond comfortably above ideal coverage.
-  - **OK** (muted) — bond covers current stake but not the ideal target;
-    validator is fine but not eligible for more stake.
   - **Watch** (yellow) — bond can no longer back the validator's current
     stake; some stake will be undelegated unless the bond is topped up.
   - **Critical** (red) — bond is below the penalty threshold. The bond
     risk fee is being charged this epoch. See [Bond Risk Fee](#bond-risk-fee).
 - **Balance** — bond size in SOL.
 - **Runway** — `(Nep)` shows how many epochs the bond will last at the current
-  burn rate (CPMPE bid + risk fee). `(0ep)` or "Depleted" means out of money
+  burn rate (Cost PMPE bid + risk fee). `(0ep)` or "Depleted" means out of money
   imminently.
 - **Health bar** — remaining-runway gauge above the minimum threshold.
   Full bar = runway well above minimum; partially filled = approaching
@@ -378,13 +528,13 @@ A compact summary of the validator's bond:
   which the bond risk fee fires and forced undelegation begins. Bar
   colour matches the health pill.
 
-### `Stake / Next Δ` — Active and projected stake
+### `Stake / Next change` — Active and projected stake
 
 Two numbers stacked:
 
 - **Top:** currently active SAM stake (SOL).
-- **Bottom (Δ):** projected stake change next epoch — driven by the
-  validator's auction outcome (bond, bid, max-stake-wanted), capped
+- **Bottom (Next change):** projected stake change next epoch — driven by the
+  validator's auction outcome (bond, bid, `maxStakeWanted`), capped
   by the redelegation budget.
   - **Positive (green)** — the auction set a target above the current
     active stake; the bond and bid support more.
@@ -398,15 +548,23 @@ gap to target.
 ### `Next Step` — Plain-language tip
 
 What's currently the binding constraint on this validator and the single
-action that would help most:
+action that would help most. Strings come verbatim from
+`src/services/tip-engine.ts`. Examples:
 
-- "Top up bond by N SOL to reach ideal coverage" (bond constraint)
-- "Lower commission by X% to clear winning APY" (rank constraint)
-- "Raise stake bid to Y PMPE" (bid constraint)
-- "Raise your max-stake-wanted to qualify for more" (want constraint —
-  the validator's own self-imposed cap is the binding limit; topping
-  up bond or raising bid would not help)
-- "Nothing — you're winning comfortably" (no constraint)
+- "Top up X to avoid the bond risk fee." (bond constraint)
+- "Top up bond to X SOL to win stake." (bond below minimum)
+- "Top up X to grow stake." (adequate bond — bond covers stake, not ideal)
+- "Top up X to keep your stake." (watch bond)
+- "Bid too low. Raise it to qualify for stake." (out of set, bond fine)
+- "Raise bid or pay a X penalty." (bid-too-low penalty active)
+- "X SOL arriving next epoch." (in-set, stake growing)
+- "Losing X next epoch." (in-set, stake leaking)
+- "At target stake." (in-set, no change)
+- Cap-binding two-liner: e.g. "Germany at country cap\nLosing X until cap frees."
+
+Every bond tip is one short clause carrying the decisive SOL figure.
+The same string appears on the table pill, the validator-detail header
+and the Bond breakdown status banner — they never word it differently.
 
 Tip colour matches the rank cell's severity icon.
 
@@ -419,77 +577,200 @@ _See [Eligibility Criteria — Marinade Docs](https://docs.marinade.finance/mari
 <a id="detail-panel"></a>
 ## Validator Detail Panel
 
-Clicking a row opens the side panel. The four calculation tabs
-(Payments, Bidding, Bond, Bid Penalty) **mirror the same math the
-SAM auction runs server-side** — they recompute the SDK's formulas
-locally so you can see each input and intermediate value. Numbers
-match the protocol's settlement decisions to the SOL.
+Clicking a row opens the side panel. The calculation tabs
+— Payments, Bidding, Bond, Bid Penalty — **mirror the same math the
+SAM auction runs server-side**: they recompute the SDK's formulas
+locally so you can see each input and intermediate value. For settled
+quantities (active stake cost, this-epoch penalties, paid bond risk
+fee), numbers track the protocol's decisions exactly; forward-looking
+rows (target bid to clear next epoch, redelegation estimate) are
+projections and label themselves as such. Two of the tabs answer two
+different questions: the **Bidding tab** answers "what should I bid
+to get into the auction and win stake?", the **Payments tab** answers
+"how much will I pay this epoch?".
 
 ### Overview tab
 
-Five cards:
+A two-column dashboard summarising the validator's situation. The cards
+that have a deeper companion tab — Bond, Expected Payment, APY
+Composition — let you click their title to jump there.
 
-- **Stake** — Active SOL, target SOL, projected next-epoch delta.
-- **Bond** — Balance, coverage status, bid runway in epochs, deep-link
-  to the full Bond tab.
-- **Expected Payment This Epoch** — active-stake bid cost, activating
-  stake cost, and any active penalties (each with a "see breakdown"
-  jump to its tab).
-- **APY Composition** — bar chart of max APY broken into
-  inflation / MEV / block / stake-bid PMPE; Winning APY drawn across.
-- **What-If Simulation** — toggle on, edit commissions or bid; auction
-  re-runs (see [Simulation Mode](#simulation)).
+- **Stake** — three rows: Active Marinade stake (SOL delegated right
+  now), Target Marinade stake (what the auction wants you to have), and
+  Expected change next epoch (signed delta — green for gains, red for
+  losses). Losses come mostly from falling out of the auction; a small
+  share is the natural-turnover share spread pro-rata across all
+  validators.
+- **Bond** — Balance (raw bond SOL; a sub-1 SOL positive bond is shown
+  to 3 decimals so a tiny bond that drives a Critical reserve never
+  reads as "0 SOL"), Reserve (a coverage status label like "Fully
+  covered", "Top up X to keep your stake", or "Top up X to avoid the
+  bond risk fee" — the same canonical CTA shown on the table pill, never
+  re-worded — coloured by health), and Bond runway in epochs ("N epochs" or
+  "Depleted"; shown as "Depleted" whenever the bond is missing or below
+  the minimum, so it agrees with a Critical reserve instead of
+  contradicting it). Click the card title to open the full Bond tab and
+  see the underlying numbers.
+- **Expected payment this epoch** — Active stake cost, Activating stake
+  cost, then a **Penalty** row that totals every penalty, with each
+  contributing penalty broken out below it as a `↳` sub-row
+  (`↳ bid-too-low penalty`, `↳ blacklist penalty`, `↳ bond risk fee`).
+  Click any sub-row label to jump straight to the tab that explains it.
+  The Total at the bottom reconciles with the Payments tab.
+- **Max APY composition** — a stacked bar showing how the validator's
+  total APY splits across Inflation, MEV, Block rewards, and the Stake
+  bid contribution. Each row has its own bar segment, the segment colour
+  matches a tiny swatch on the row, and the rightmost number is that
+  component's APY. The grey line under each label is the commission the
+  validator takes on that source — `0% commission`, `your bid`.
+  - **Winning APY threshold** — the headline figure top-left. This is
+    the minimum total APY the validator must offer to win stake, and it
+    is **rebuilt at this validator's own commission profile** — not a
+    single global number. That makes it an apples-to-apples bar this
+    specific validator has to clear. It is *not* the 7% SAM commission
+    cap; different number, easy to confuse.
+  - **The pill** top-right restates the gap between the validator's
+    total APY and that threshold. Green and `+X%` means above the bar
+    and winning; red and `−X%` means below it — the validator is short
+    and losing stake, so the Total figure also turns red.
+  - The Total bar at the bottom carries a vertical tick at the winning
+    APY threshold, so the shortfall or headroom is visible at a glance.
+- **What-If Simulation** — only visible when you toggle "Simulate" on
+  in the panel header. Edit the validator's bid PMPE or any of the three
+  commissions; the auction recalculates after a brief debounce and the
+  table reshuffles. See [Simulation Mode](#simulation) for details.
 
 ### Notifications tab
 
-Active alerts for this validator from the notifications API: depleted
-bond warnings, blacklist flags, recent protected events. Click an
-alert to jump to the relevant tab.
+Active alerts for this validator pulled from Marinade's notifications
+API — typical examples are depleted bond warnings, blacklist flags,
+and recent protected events.
 
-### Payments tab
+Each notification is a passive card with three pieces:
 
-Sum of every SOL outflow from this validator this epoch.
+- A coloured **priority pill** in the top-left — red for `critical`,
+  orange-yellow for `warning`, blue for `info`. The pill text is the
+  literal priority name in caps.
+- A **title** next to the pill in stronger text.
+- A **body** below the title with the message itself; line breaks in
+  the source message are preserved.
+- An optional **footer** in small italic underneath, used for
+  timestamps or source references.
 
-| Section | Row | Source |
-|---|---|---|
-| Bid costs | Active Stake Cost | `effectiveCost = marinadeActivatedStakeSol × auctionEffectiveBidPmpe / 1000` |
-| Bid costs | Activating Stake Cost | `activatingStakePmpe × max(0, expectedDelta) / 1000` |
-| Penalties | Bid-too-low penalty | conditional — see Bid Penalty tab |
-| Penalties | Blacklist penalty | `blacklistPenaltyPmpe × activatedStake / 1000` |
-| Penalties | Bond risk fee | conditional — computed in the Bond tab |
-| PSR Settlements | per-event row | `fetchPsrEstimatesForValidator(vote)` — funded "from bond" or "from Marinade" |
-| Total | sum of the above | red-accented when any penalty or PSR row is present, green otherwise |
+Notifications stack vertically; older entries don't disappear
+automatically — they fall off when the API marks them as no longer
+relevant. If the validator has none, the tab reads "No notifications
+for this validator."
 
+The cards themselves don't link anywhere — to act on a depleted-bond
+or bid-too-low warning, switch to the Bond, Bid Penalty, or Payments
+tab manually.
+
+<a id="bidding"></a>
 ### Bidding tab
 
-Why the validator pays what they pay. Tracks the bid construction
-side-by-side with the cost.
+Answers one question: **what should I bid to get into the auction and
+win stake?** One card, one table. The status banner at the top is the
+verdict — green "Your bid clears the winning total PMPE — you are in the
+auction", red "Raise your static bid to X PMPE to clear the winning total PMPE
+and get into the auction", or yellow when a concentration cap is the
+binding limit so raising the bid alone will not get you in. Every
+column carries its unit once in the section header — `PMPE` or `SOL` —
+so the row labels stay short.
 
-- **Stake** — Active / Target Marinade stake and the projected
-  next-epoch delta (`selectExpectedStakeChange`).
-- **Commissions** — Inflation, MEV, Block rewards. The percent column
-  is the validator's retained commission; the PMPE column is what flows
-  into the bid (`revShare.inflationPmpe`, `revShare.mevPmpe`,
-  `revShare.blockPmpe`).
-- **Bid** — Static bid PMPE (`revShare.bidPmpe`), auction effective bid
-  PMPE (`revShare.auctionEffectiveBidPmpe` — the clearing price), and
-  the **bid gap** = `max(0, staticBid − effectiveBid)`. A non-zero gap
-  means you bid above clearing and pay an activating-stake fee.
-- **Cost** — Active Stake Cost, Activating Stake Cost, Total (same
-  formulas as the Payments tab Bid Costs section).
+The two advisory estimates are the centerpiece; the sections above them
+are the supporting context that feeds the target-bid math.
 
-An "**Overrides CPMPE**" notice appears if `values.commissions.bidCpmpeOverrideDec`
-is set — the displayed bid is a manual override, not the on-chain value.
+- **Stake position** — Active / Target Marinade stake and the projected
+  next-epoch delta (`selectExpectedStakeChange`), signed and coloured.
+  The delta reads `0 SOL` (not a dash) when it is a real, known zero;
+  it can be zero even when target stake is above active stake, because
+  the redelegation budget went to higher-priority validators or you are
+  cap or bond constrained — the row tooltip says so.
+- **Your bid today** — Inflation, MEV, Block rewards (the number on the
+  left of each row is the commission you retain; the number on the right
+  is the PMPE that flows into the bid — `revShare.inflationPmpe`,
+  `revShare.mevPmpe`, `revShare.blockPmpe`), then **Non-bid revenue**
+  (their sum), the **Static bid** (`revShare.bidPmpe`), and a **Total**.
+  This is the build-up the two target sections below subtract from.
+- **Get into the auction** — receipt-slip math: `Winning total PMPE −
+  Non-bid revenue = Target static bid`, followed by `Your static bid`
+  and the **Bid increase needed**, or a green "already clears"
+  confirmation. Closed-form estimate with a last-price caveat in the
+  section tooltip — see [Getting into the auction](#in-auction).
+- **Get stake delegated next epoch** — same receipt-slip pattern with
+  the **Priority frontier PMPE** in place of the winning total: clearing
+  this puts you at or above the threshold where the redelegation budget
+  reaches you in full. Also lists **Your priority rank** and **Your bid
+  gap** (`max(0, staticBid − effectiveBid)`). Heuristic — the queue
+  reorders as bids change — so the figure is an estimate. See
+  [Getting stake next epoch](#next-epoch-stake).
+
+The PMPE and Cost PMPE units are explained under
+[PMPE / Cost PMPE](#cpmpe). An "**Overrides Cost PMPE**" notice appears above
+the table if `values.commissions.bidCpmpeOverrideDec` is set — the
+displayed bid is a manual override, not the on-chain value. One action
+link in the card footer, "Simulate this bid to confirm the exact figure
+→", turns on simulation mode so you can verify the estimate.
+
+<a id="payments"></a>
+### Payments tab
+
+Answers the other question: **how much will I pay this epoch?** One
+card, one table, purely explanatory — the forward-looking "what should
+I bid" lives in the Bidding tab. The card header carries a one-line
+status banner — green "You will pay X in total this epoch — no
+penalties" or red "You will pay X in total this epoch — including Y in
+penalties" — so you can read the bottom line without scanning the rows.
+Every column carries its `SOL` unit once in the section header.
+
+- **Bid cost** — Active stake cost
+  (`marinadeActivatedStakeSol × auctionEffectiveBidPmpe / 1000`) and
+  Activating stake cost
+  (`activatingStakePmpe × max(0, expectedDelta) / 1000`), then their
+  subtotal **Bid cost**.
+- **Penalties** — Bid-too-low penalty (conditional — see Bid Penalty
+  tab), Blacklist penalty (`blacklistPenaltyPmpe × activatedStake /
+  1000`), Bond risk fee (conditional — computed in the Bond tab). A
+  row showing `—` means that penalty isn't charged this epoch; the row
+  is always rendered so the layout stays stable across validators.
+- **PSR settlements — estimated** — only appears when the PSR estimator
+  API has projected at least one settlement
+  (`fetchPsrEstimatesForValidator(vote)`). Each row reads **from bond**
+  when the validator's own bond funds the payout, or **from Marinade**
+  when Marinade's backstop covers it.
+- **Total payment** — the sum of everything above. Rendered black as a
+  conclusion, not a warning — the status banner already tells you if
+  penalties are in it.
+
+Two action links in the card footer jump straight to the relevant tab:
+"See bid-too-low penalty calculation →" appears only when the
+bid-too-low penalty is active, and "Simulate commission or bid changes
+→" turns on simulation mode.
 
 ### Bond tab
 
-The full bond-coverage calculation in three sections.
+The full bond-coverage calculation in up to four sections. Each row in
+the table is one input or one intermediate value; the section ends in
+either a "Top up X" call to action or a green tick reading "Bond meets
+ideal coverage" / "Bond above the penalty threshold".
+
+The two reasons a bond exists — paying bid costs every epoch and
+backing PSR payouts when something goes wrong — show up directly as
+two line items inside each coverage section: **Held for bid payments**
+covers the bid burn over the coverage window, and **Held for reward
+payouts** covers the rewards a staker is guaranteed under PSR. Their
+sum is the row labelled "Minimum required" or "Ideal required"; that's
+the floor the bond has to clear.
 
 **Rates** — `expectedMaxEffBidPmpe` and `onchainDistributedPmpe`, the
-two PMPE rates that scale the coverage requirements.
+two PMPE rates that scale the bid-payment and reward-payout
+requirements respectively.
 
-**Minimum Coverage** (uses *current* exposed stake) — answers "what
-bond do I need to keep my current stake?":
+**Minimum bond to keep stake** (uses *current* exposed stake) —
+answers "what bond do I need to keep my current stake?". Falling
+below this floor triggers a bond risk fee and starts forced
+undelegation:
 
 ```
 currentExposedStake     = activatedStake − unprotectedStake
@@ -498,9 +779,10 @@ floorBaseKeep           = minUnprotectedReserve
 topUpToKeepStake        = max(0, floorBaseKeep − claimableBondBalance)
 ```
 
-**Ideal Coverage** (uses *current* exposed stake too, but with
-`idealBondPmpe` and `idealUnprotectedReserve`) — answers "what bond
-unlocks more stake?":
+**Ideal bond to grow stake** (uses *current* exposed stake too, but
+with `idealBondPmpe` and `idealUnprotectedReserve`) — answers "what
+bond unlocks more stake?". Below this line the validator stays in the
+auction but the pool won't award additional stake:
 
 ```
 requiredIdealKeep       = idealUnprotectedReserve
@@ -508,16 +790,20 @@ requiredIdealKeep       = idealUnprotectedReserve
 topUpToIdealKeep        = max(0, requiredIdealKeep − bondBalance)
 ```
 
-**Bond Risk** (conditional — only when `bondRiskFeeSol > 0`,
-`topUpToAvoidFee > 0`, or there is carried paid undelegation): uses
-`projectedExposedStake = activatedStake − carriedPaidUndelegation −
-unprotectedStake` (always ≤ current). The penalty trigger threshold is
-`floorBaseProjected`; falling below it fires the SDK's
-`calcBondRiskFee`. See [Bond Risk Fee](#bond-risk-fee).
+**Bond risk fee** (shown whenever the bond is at risk — bond-health
+critical or watch — or a fee or top-up is already outstanding, or
+there is carried paid undelegation, so you can see the threshold and
+the penalty math before a fee is ever charged; the section still
+vanishes for healthy bonds): uses `projectedExposedStake =
+activatedStake − carriedPaidUndelegation − unprotectedStake` — always
+≤ current, because stake already on its way out shouldn't inflate the
+fee. The penalty trigger threshold is `floorBaseProjected`; falling
+below it fires the SDK's `calcBondRiskFee`. See
+[Bond Risk Fee](#bond-risk-fee).
 
-Status colour: critical (red) when top-up-to-avoid-fee > 0; watch
-(yellow) when top-up-to-keep-stake > 0; soft (muted) when only
-top-up-to-ideal > 0; healthy (green) otherwise.
+Status colour at the top of the card: critical (red) when
+top-up-to-avoid-fee > 0; watch (yellow) when top-up-to-keep-stake > 0;
+soft (muted) when only top-up-to-ideal > 0; healthy (green) otherwise.
 
 ### Bid Penalty tab
 
@@ -591,10 +877,10 @@ alone does not clear the simulation.
 
 ## Technical Notes
 
-- Bond data (bid/CPMPE and bond balance) is reloaded periodically by
+- Bond data (bid/Cost PMPE and bond balance) is reloaded periodically by
   Marinade — typically once per hour. Other validator and auction data
   follow their own refresh cadences (see the table at the top).
-- Solana epochs are roughly 2 days (~182 epochs per year).
+- Solana epochs are roughly 2 days (~182.6 epochs per year).
 - The page auto-refreshes its main data once an hour. Manual reload
   forces an immediate refetch.
 - All auction math runs client-side via the SDK. Numbers should match Marinade's

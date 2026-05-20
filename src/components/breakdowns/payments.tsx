@@ -1,7 +1,6 @@
 import React from 'react'
 
-import { cost } from 'src/format'
-import { computeBidPenalty } from 'src/services/bid-penalty'
+import { cost, pmpe, stake } from 'src/format'
 import { computeBidding } from 'src/services/bidding'
 import {
   isProtectedEvent,
@@ -9,10 +8,14 @@ import {
   selectProtectedStakeReason,
 } from 'src/services/protected-events'
 
-import { CalcCard } from './card'
+import {
+  CalcCard,
+  CardStatusTone,
+  withSimAction,
+  type CardStatus,
+} from './card'
 import { CalcRow, SectionHeader } from './row'
 
-import type { DsSamConfig } from '@marinade.finance/ds-sam-sdk'
 import type { ProtectedEvent } from 'src/services/protected-events'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
 
@@ -20,8 +23,6 @@ type Props = {
   title: string
   guideTo?: string
   validator: AugmentedAuctionValidator
-  dsSamConfig: DsSamConfig
-  winningTotalPmpe: number
   bondRiskFeeSol: number
   blacklistPenaltySol: number
   bidTooLowPenaltySol: number
@@ -31,12 +32,17 @@ type Props = {
   onGoToPenalty?: () => void
 }
 
+// "How much will I pay?" — the cost story only. Bid cost (active +
+// activating stake), every penalty, conditional PSR settlements, and the
+// grand total. Forward-looking "what should I bid" lives in the Bidding
+// tab; this tab is purely explanatory. SOL on every value (inline suffix);
+// the activating-stake row carries its PMPE rate in col1 — a single-unit
+// column shared with no other kind. Math comes verbatim from the existing
+// selectors — this component only arranges the rows.
 export const PaymentsBreakdown: React.FC<Props> = ({
   title,
   guideTo,
   validator,
-  dsSamConfig,
-  winningTotalPmpe,
   bondRiskFeeSol,
   blacklistPenaltySol,
   bidTooLowPenaltySol,
@@ -45,57 +51,36 @@ export const PaymentsBreakdown: React.FC<Props> = ({
   onGoToSim,
   onGoToPenalty,
 }) => {
-  const paymentMetrics = computeBidding(validator)
-  const penaltyMetrics = computeBidPenalty(
-    validator,
-    dsSamConfig,
-    winningTotalPmpe,
-  )
+  const m = computeBidding(validator)
+
   const psrTotal = psrEstimates.reduce(
     (sum, estimate) => sum + selectAmount(estimate),
     0,
   )
-  const total =
-    paymentMetrics.total +
-    bidTooLowPenaltySol +
-    blacklistPenaltySol +
-    bondRiskFeeSol +
-    psrTotal
-  const hasPenalty =
-    bidTooLowPenaltySol > 0 ||
-    blacklistPenaltySol > 0 ||
-    bondRiskFeeSol > 0 ||
-    psrTotal > 0
-
   const penaltyTotal =
     bidTooLowPenaltySol + blacklistPenaltySol + bondRiskFeeSol + psrTotal
-  const status: { label: string; tone: 'red' | 'green' | 'yellow' } = {
+  const total = m.total + penaltyTotal
+  const hasPenalty = penaltyTotal > 0
+
+  const baseStatus: Omit<CardStatus, 'action'> = {
     label: hasPenalty
       ? `You will pay ${cost(total)} in total this epoch — including ${cost(penaltyTotal)} in penalties.`
       : `You will pay ${cost(total)} in total this epoch — no penalties.`,
-    tone: hasPenalty ? 'red' : 'green',
+    tone: hasPenalty ? CardStatusTone.RED : CardStatusTone.GREEN,
   }
+  const status: CardStatus = withSimAction(baseStatus, onGoToSim)
 
-  const tip = (
-    <div className="flex flex-col gap-2">
-      {penaltyMetrics.penaltySol > 0 && onGoToPenalty && (
-        <button
-          className="text-xs text-destructive hover:underline text-left"
-          onClick={onGoToPenalty}
-        >
-          See bid-too-low penalty calculation →
-        </button>
-      )}
-      {onGoToSim && (
-        <button
-          className="text-xs text-primary hover:underline text-left"
-          onClick={onGoToSim}
-        >
-          Simulate commission or bid changes →
-        </button>
-      )}
-    </div>
-  )
+  // The penalty-link stays as a `tip` (rendered under the status banner) —
+  // it's a destructive cross-tab affordance, not a sim action.
+  const tip =
+    bidTooLowPenaltySol > 0 && onGoToPenalty ? (
+      <button
+        className="text-xs text-destructive hover:underline text-left"
+        onClick={onGoToPenalty}
+      >
+        See bid-too-low penalty calculation →
+      </button>
+    ) : null
 
   return (
     <CalcCard
@@ -105,33 +90,73 @@ export const PaymentsBreakdown: React.FC<Props> = ({
       status={status}
       tip={tip}
     >
-      <table className="w-full">
+      {m.overrideMsg && (
+        <div className="rounded-lg px-3 py-2 text-xs mb-4 bg-secondary text-secondary-foreground">
+          {m.overrideMsg}
+        </div>
+      )}
+      <table className="w-full max-w-[34rem]">
         <tbody>
-          <SectionHeader title="Bid costs" />
+          {/* Receipt-slip layout: col1 carries PMPE rates only, col2 SOL */}
+          {/* amounts only. Each unit kind lives in its own column. Each */}
+          {/* sub-cost gets its own section header so a reader can scan */}
+          {/* by "where each number came from". The result row echoes the */}
+          {/* rate so multiplication reads left → right on one line. */}
+          <SectionHeader title="Activated stake cost" col1Unit="PMPE" />
+          <CalcRow label="Activated Marinade stake" col2={stake(m.stake)} />
           <CalcRow
-            label="Active stake cost"
-            value={cost(paymentMetrics.cost)}
+            label="× Effective bid"
+            help="The PMPE rate every winner pays this epoch (last-price auction)."
+            col1={pmpe(m.effBid)}
           />
           <CalcRow
-            label="Activating stake cost"
-            value={cost(paymentMetrics.activatingCost)}
+            label="= Activated stake cost"
+            col1={pmpe(m.effBid)}
+            col2={cost(m.cost)}
+            bold
+            separator
           />
-          <SectionHeader title="Penalties" />
+
+          <SectionHeader title="Activating stake cost" col1Unit="PMPE" />
+          <CalcRow label="Activating stake" col2={stake(m.activating)} />
+          <CalcRow
+            label="× Activating-stake bid"
+            help="The PMPE rate applied to newly-activating stake."
+            col1={pmpe(m.activatingStakePmpe)}
+          />
+          <CalcRow
+            label="= Activating stake cost"
+            col1={pmpe(m.activatingStakePmpe)}
+            col2={cost(m.activatingCost)}
+            bold
+            separator
+          />
+
+          <SectionHeader
+            title="Penalties"
+            help="Extra charges on top of the bid cost. Each one fires for a specific reason: dropping your bid below what you previously committed, sitting on Marinade's blacklist while holding stake, or letting the bond fall below its required floor."
+          />
           <CalcRow
             label="Bid-too-low penalty"
-            value={bidTooLowPenaltySol > 0 ? cost(bidTooLowPenaltySol) : '—'}
+            help="Charged when you drop your bid this epoch and your bond doesn't cover what you previously promised stakers."
+            col2={bidTooLowPenaltySol > 0 ? cost(bidTooLowPenaltySol) : '—'}
           />
           <CalcRow
             label="Blacklist penalty"
-            value={blacklistPenaltySol > 0 ? cost(blacklistPenaltySol) : '—'}
+            help="Charged the first epoch your validator gets added to Marinade's blacklist."
+            col2={blacklistPenaltySol > 0 ? cost(blacklistPenaltySol) : '—'}
           />
           <CalcRow
             label="Bond risk fee"
-            value={bondRiskFeeSol > 0 ? cost(bondRiskFeeSol) : '—'}
+            help="Charged when your claimable bond drops below the trigger threshold. Some stake also gets pulled back alongside the fee."
+            col2={bondRiskFeeSol > 0 ? cost(bondRiskFeeSol) : '—'}
           />
           {psrEstimates.length > 0 && (
             <>
-              <SectionHeader title="PSR Settlements (estimated)" />
+              <SectionHeader
+                title="PSR settlements — estimated"
+                help="Payouts to stakers when commission rose unexpectedly, uptime dropped, or rewards fell short of what was promised. Each row says where the money comes from — your bond or Marinade's own pool."
+              />
               {psrEstimates.map((estimate, i) => {
                 const label = isProtectedEvent(estimate.reason)
                   ? selectProtectedStakeReason(estimate)
@@ -140,23 +165,18 @@ export const PaymentsBreakdown: React.FC<Props> = ({
                   <CalcRow
                     key={i}
                     label={String(label)}
-                    secondary={
+                    col1={
                       estimate.meta.funder === 'ValidatorBond'
                         ? 'from bond'
-                        : 'from Marinade'
+                        : 'from Marinade backstop'
                     }
-                    value={cost(selectAmount(estimate))}
+                    col2={cost(selectAmount(estimate))}
                   />
                 )
               })}
             </>
           )}
-          <CalcRow
-            label="Total per epoch"
-            value={cost(total)}
-            total
-            severity={hasPenalty ? 'error' : 'ok'}
-          />
+          <CalcRow label="Total payment" col2={cost(total)} total />
         </tbody>
       </table>
     </CalcCard>

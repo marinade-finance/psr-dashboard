@@ -1,6 +1,10 @@
 import { finite } from 'src/format'
+import { selectPaidUndelegationSol } from 'src/services/sam'
 
-import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
+import type {
+  AuctionValidator,
+  DsSamConfig,
+} from '@marinade.finance/ds-sam-sdk'
 
 export type BondCoverage = {
   minEp: number
@@ -29,29 +33,27 @@ export type BondCoverage = {
   // "Held for bid payments" row that the UI surfaces.
   heldForBidKeep: number
   heldForBidIdeal: number
-  floorBaseKeep: number
+  stakeKeepFloor: number
   topUpToKeepStake: number
   idealCoverageBidKeep: number
-  requiredIdealKeep: number
+  stakeIdealFloor: number
   topUpToIdealKeep: number
   // Risk section (projected basis): SDK penalty trigger
-  floorBaseProjected: number
-  topUpToAvoidFee: number
+  bondRiskFeeFloor: number
+  bondRiskFeeShortfall: number
 }
 
 export function computeBondCoverage(
   v: AuctionValidator,
-  minBondEpochs: number,
-  idealBondEpochs: number,
+  config: DsSamConfig,
   winningTotalPmpe: number,
-  bondRiskFeeMult: number,
 ): BondCoverage {
   const bondBalanceSol = v.bondBalanceSol ?? 0
   const claimableBondBalanceSol = v.claimableBondBalanceSol ?? 0
   const marinadeActivatedStakeSol = v.marinadeActivatedStakeSol
-  const paidUndelegationSol = v.values?.paidUndelegationSol ?? 0
-  const expectedMaxEffBidPmpe = finite(v.revShare?.expectedMaxEffBidPmpe)
-  const onchainDistributedPmpe = finite(v.revShare?.onchainDistributedPmpe)
+  const paidUndelegationSol = selectPaidUndelegationSol(v)
+  const expectedMaxEffBidPmpe = finite(v.revShare.expectedMaxEffBidPmpe)
+  const onchainDistributedPmpe = finite(v.revShare.onchainDistributedPmpe)
   const unprotectedStakeSol = v.unprotectedStakeSol ?? 0
 
   // Strip this cycle's freshly-charged undelegation so the projection isn't
@@ -59,10 +61,10 @@ export function computeBondCoverage(
   // contribution to paidUndelegationSol is min(1, mult) * value (SDK
   // calculations.js:94).
   const freshBondRiskUndel =
-    (v.bondForcedUndelegation?.value ?? 0) * Math.min(1, bondRiskFeeMult)
+    (v.bondForcedUndelegation?.value ?? 0) * Math.min(1, config.bondRiskFeeMult)
   const freshBidTooLowUndel =
     winningTotalPmpe > 0
-      ? ((v.revShare?.bidTooLowPenaltyPmpe ?? 0) * marinadeActivatedStakeSol) /
+      ? ((v.revShare.bidTooLowPenaltyPmpe ?? 0) * marinadeActivatedStakeSol) /
         winningTotalPmpe
       : 0
   const carriedPaidUndelegationSol = Math.max(
@@ -82,8 +84,8 @@ export function computeBondCoverage(
   const minUnprotectedReserveSol = finite(v.minUnprotectedReserve)
   const idealUnprotectedReserveSol = finite(v.idealUnprotectedReserve)
 
-  const minEp = 1 + minBondEpochs
-  const idealEp = 1 + idealBondEpochs
+  const minEp = 1 + config.minBondEpochs
+  const idealEp = 1 + config.idealBondEpochs
 
   const minBondPmpe = finite(v.minBondPmpe)
   const idealBondPmpe = finite(v.idealBondPmpe)
@@ -104,26 +106,26 @@ export function computeBondCoverage(
   // stake portions. Hides the unprotected-vs-exposed split which is 0 for most
   // SAM-delegated validators anyway.
   const heldForBidKeep = minCoverageBidKeep + minUnprotectedReserveSol
-  const floorBaseKeep =
+  const stakeKeepFloor =
     minUnprotectedReserveSol + (minBondPmpe / 1000) * currentExposedStakeSol
-  const topUpToKeepStake = Math.max(0, floorBaseKeep - claimableBondBalanceSol)
+  const topUpToKeepStake = Math.max(0, stakeKeepFloor - claimableBondBalanceSol)
 
   const idealCoverageBidKeep =
     ((idealEp * expectedMaxEffBidPmpe) / 1000) * currentExposedStakeSol
   const rewardsGuaranteeIdeal = rewardsGuaranteeKeep
   const heldForBidIdeal = idealCoverageBidKeep + idealUnprotectedReserveSol
-  const requiredIdealKeep =
+  const stakeIdealFloor =
     idealUnprotectedReserveSol + (idealBondPmpe / 1000) * currentExposedStakeSol
-  const topUpToIdealKeep = Math.max(0, requiredIdealKeep - bondBalanceSol)
+  const topUpToIdealKeep = Math.max(0, stakeIdealFloor - bondBalanceSol)
 
   // Projected basis: post-undelegation. Mirrors the SDK's fee trigger:
   //   claimableBond >= minUnprotectedReserve + projectedExposed * minBondPmpe/1000
   // Used only for the Bond Risk section (top up to avoid the fee).
-  const floorBaseProjected =
+  const bondRiskFeeFloor =
     minUnprotectedReserveSol + (minBondPmpe / 1000) * projectedExposedStakeSol
-  const topUpToAvoidFee = Math.max(
+  const bondRiskFeeShortfall = Math.max(
     0,
-    floorBaseProjected - claimableBondBalanceSol,
+    bondRiskFeeFloor - claimableBondBalanceSol,
   )
 
   return {
@@ -144,12 +146,12 @@ export function computeBondCoverage(
     minCoverageBidKeep,
     heldForBidKeep,
     heldForBidIdeal,
-    floorBaseKeep,
+    stakeKeepFloor,
     topUpToKeepStake,
     idealCoverageBidKeep,
-    requiredIdealKeep,
+    stakeIdealFloor,
     topUpToIdealKeep,
-    floorBaseProjected,
-    topUpToAvoidFee,
+    bondRiskFeeFloor,
+    bondRiskFeeShortfall,
   }
 }

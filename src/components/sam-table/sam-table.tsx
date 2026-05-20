@@ -1,7 +1,9 @@
 import React, { useMemo, useRef, useState } from 'react'
 
 import { cn } from 'src/class_utils'
+import { docsPath } from 'src/components/breakdowns/docs-path'
 import { ConcentrationMetric } from 'src/components/concentration-metric/concentration-metric'
+import { Gauge } from 'src/components/gauge/gauge'
 import { HelpTip } from 'src/components/help-tip/help-tip'
 import { PENALTY_BID_LOW } from 'src/components/icons/penalty-bid-low'
 import { PENALTY_BLACKLIST } from 'src/components/icons/penalty-blacklist'
@@ -18,8 +20,25 @@ import {
 import { Tooltip } from 'src/components/ui/tooltip'
 import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
 import { ValidatorSearch } from 'src/components/validator-search/validator-search'
-import { pct, sol, stake } from 'src/format'
+import {
+  CSS_DESTRUCTIVE,
+  CSS_MUTED,
+  CSS_MUTED_FG,
+  CSS_STATUS_GREEN,
+} from 'src/css'
+import { pct, penalty, sol, stake } from 'src/format'
+import {
+  bidTooLowPenaltySol,
+  blacklistPenaltySol,
+} from 'src/services/bid-penalty'
+import { computeBondCoverage } from 'src/services/bond-coverage'
 import { bondHealthFromAuction } from 'src/services/bond-health'
+import {
+  BOND_CRITICAL_FRAC,
+  bondGaugeScaleMax,
+  bondUtilizationPct,
+  effectiveBondRunway,
+} from 'src/services/calculations'
 import { HELP_TEXT } from 'src/services/help-text'
 import {
   augmentAuctionResult,
@@ -27,6 +46,7 @@ import {
   selectBondSize,
   selectExpectedStakeChange,
   selectMaxAPY,
+  selectRedelegationBudget,
   selectSamDistributedStake,
   selectVoteAccount,
   selectWinningAPY,
@@ -41,9 +61,12 @@ import {
 import {
   getValidatorTip,
   getTipStyle,
-  calculateBondUtilization,
+  getTipIcon,
   nextStakeDeltaCell,
+  NextStakeDeltaTone,
+  TipConstraint,
 } from 'src/services/tip-engine'
+import { assertNever } from 'src/utils/assert-never'
 
 import { UserLevel } from '../navigation/navigation'
 
@@ -52,6 +75,8 @@ import type {
   AuctionValidator,
   DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
+import type { BondCoverage } from 'src/services/bond-coverage'
+import type { BondHealthState } from 'src/services/bond-health'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
 
 export type ValidatorMeta = {
@@ -60,21 +85,34 @@ export type ValidatorMeta = {
   rank?: number
 }
 
-type BondHealthTier = 'healthy' | 'soft' | 'watch' | 'critical'
-
 // Validator with computed bond state
 type ValidatorWithBondState = AugmentedAuctionValidator & {
-  bondHealth: BondHealthTier
+  bondHealth: BondHealthState
+  // Memoised so the per-row pipeline (bondHealth, tip, bond chip) computes
+  // it exactly once instead of repeating the bond-coverage math 2-3× per
+  // validator across ~300 rows.
+  bondCoverage: BondCoverage
 }
 
 const TEXT_MUTED = 'text-muted-foreground'
 const BG_MUTED = 'bg-muted-foreground'
 const DESTRUCTIVE_LIGHT_CHIP = 'bg-destructive-light text-destructive'
+// no-bond and critical share the red chip — they differ only by label.
+const DESTRUCTIVE_CHIP = {
+  chip: DESTRUCTIVE_LIGHT_CHIP,
+  dot: 'bg-destructive',
+  bar: 'bg-destructive',
+  shortText: 'text-destructive',
+}
 
 export const BOND_CHIP: Record<
-  BondHealthTier,
+  BondHealthState,
   { chip: string; dot: string; bar: string; shortText: string; label: string }
 > = {
+  'no-bond': {
+    ...DESTRUCTIVE_CHIP,
+    label: 'No bond',
+  },
   healthy: {
     chip: 'bg-primary-light-10 text-primary',
     dot: 'bg-primary',
@@ -97,10 +135,7 @@ export const BOND_CHIP: Record<
     label: 'Watch',
   },
   critical: {
-    chip: DESTRUCTIVE_LIGHT_CHIP,
-    dot: 'bg-destructive',
-    bar: 'bg-destructive',
-    shortText: 'text-destructive',
+    ...DESTRUCTIVE_CHIP,
     label: 'Critical',
   },
 }
@@ -122,15 +157,13 @@ export type SortDirection = 'asc' | 'desc'
 export function passesTableFilter(
   v: AuctionValidator,
   level: UserLevel,
-  minBondEpochs: number,
+  minBondBalanceSol: number,
 ): boolean {
-  if (!v.bondBalanceSol) return false
+  if ((v.bondBalanceSol ?? 0) < minBondBalanceSol) return false
   if (level === UserLevel.Expert) return true
   const inSetOrStaked =
     v.marinadeActivatedStakeSol > 0 || v.auctionStake.marinadeSamTargetSol > 0
-  if (!inSetOrStaked) return false
-  if ((v.bondGoodForNEpochs ?? 0) < minBondEpochs) return false
-  return true
+  return inSetOrStaked
 }
 
 export function makeCompareFn(
@@ -162,10 +195,17 @@ export function makeCompareFn(
       case 'bond':
         cmp = (a.bondBalanceSol ?? 0) - (b.bondBalanceSol ?? 0)
         break
-      default:
+      case 'nextStep':
+        // Sort by stake target — the simplest proxy for "how much help does
+        // this validator need next". A future SortColumn value would force
+        // a compile error here via assertNever rather than silently land
+        // in the same branch.
         cmp =
           b.auctionStake.marinadeSamTargetSol -
           a.auctionStake.marinadeSamTargetSol
+        break
+      default:
+        cmp = assertNever(col)
     }
     return dir === 'asc' ? cmp : -cmp
   }
@@ -188,6 +228,21 @@ type Props = {
 
 const RANK_MONO = 'font-mono text-xs'
 
+// Module-level singleton so the `simulatedValidators = new Set()` default
+// argument doesn't churn its identity on every render and invalidate
+// downstream memos.
+const EMPTY_SIMULATED_SET: Set<string> = new Set()
+
+// Trim 3+ decimal places in tip text to 2 — keeps the Next Step cell readable
+// without losing the "~" prefix the tip engine uses for estimates.
+const TIP_DECIMAL_RE = /~?\d+\.\d{3,}/g
+const trimTipDecimals = (text: string) =>
+  text.replace(TIP_DECIMAL_RE, numStr => {
+    const num = parseFloat(numStr.replace(/^~/, ''))
+    const prefix = numStr.startsWith('~') ? '~' : ''
+    return `${prefix}${Math.round(num * 100) / 100}`
+  })
+
 type PenaltyKind = 'bidLow' | 'blacklist' | 'risk'
 
 const PENALTY_CLASSES: Record<PenaltyKind, string> = {
@@ -202,24 +257,28 @@ const PENALTY_ICONS: Record<PenaltyKind, React.ReactElement> = {
   risk: PENALTY_RISK,
 }
 
-const PenaltyBadges: React.FC<{ validator: AuctionValidator }> = ({
-  validator,
-}) => {
-  const stakeSol = validator.marinadeActivatedStakeSol
+const PenaltyBadges: React.FC<{
+  validator: AuctionValidator
+  dsSamConfig: DsSamConfig
+  winningTotalPmpe: number
+}> = ({ validator, dsSamConfig, winningTotalPmpe }) => {
   const badges: { label: string; sol: number; kind: PenaltyKind }[] = []
-  const bidLowSol = (stakeSol * validator.revShare.bidTooLowPenaltyPmpe) / 1000
-  const blacklistSol =
-    (stakeSol * validator.revShare.blacklistPenaltyPmpe) / 1000
+  const bidLowSol = bidTooLowPenaltySol(
+    validator,
+    dsSamConfig,
+    winningTotalPmpe,
+  )
+  const blacklistSol = blacklistPenaltySol(validator)
   const bondRiskSol = validator.values?.bondRiskFeeSol ?? 0
   if (bidLowSol > 0)
-    badges.push({ label: 'BidTooLow', sol: bidLowSol, kind: 'bidLow' })
+    badges.push({ label: 'Bid too low', sol: bidLowSol, kind: 'bidLow' })
   if (blacklistSol > 0)
-    badges.push({ label: 'Blacklist', sol: blacklistSol, kind: 'blacklist' })
+    badges.push({ label: 'Blacklisted', sol: blacklistSol, kind: 'blacklist' })
   if (bondRiskSol > 0)
-    badges.push({ label: 'BondRiskFee', sol: bondRiskSol, kind: 'risk' })
+    badges.push({ label: 'Bond risk fee', sol: bondRiskSol, kind: 'risk' })
   if (badges.length === 0) return null
   const tip = badges
-    .map(b => `${b.label}: ${sol(b.sol, 3)} SOL (estimate)`)
+    .map(b => `${b.label}: ~${penalty(b.sol)} estimated`)
     .join('\n')
   return (
     <Tooltip content={<span className="whitespace-pre-line">{tip}</span>}>
@@ -256,35 +315,40 @@ const SortIndicator: React.FC<{
 
 const RankCell: React.FC<{
   rank: number
+  cutoffRank: number
   inSet: boolean
   isGhost: boolean
   isSimulated: boolean
   posColor: string | undefined
   tipColor: string
-  tipIcon: React.ReactNode
   voteAccount: string
   onClearValidator?: (voteAccount: string) => void
 }> = ({
   rank,
-  inSet,
+  cutoffRank,
+  inSet: _inSet,
   isGhost,
   isSimulated,
   posColor,
   tipColor,
-  tipIcon,
   voteAccount,
   onClearValidator,
 }) => {
-  // rank 0 is the marginal winner at the cutoff; +N above, -N below.
-  const rankLabel = rank === 0 ? '#0' : rank < 0 ? `-#${-rank}` : `#${rank}`
-  const rankSubLabel = rank === 0 ? 'at cutoff' : inSet ? 'above' : 'below'
+  // Primary: absolute 1-based stake-priority rank from the top.
+  const rankLabel = `#${rank}`
+  // Sub: cutoff-relative position. No # prefix here — the # lives only on
+  // the primary rank. NBSP binds the count to the word so it never wraps.
+  const cutoffWord =
+    cutoffRank === 0 ? 'at cutoff' : cutoffRank > 0 ? 'above' : 'below'
+  const rankSubLabel =
+    cutoffRank === 0 ? 'at cutoff' : `${Math.abs(cutoffRank)} ${cutoffWord}`
   if (isGhost)
     return (
       <span
         className={`text-muted-foreground ${RANK_MONO} flex flex-col items-center gap-0`}
       >
-        <span>{rankLabel}</span>
-        <span className="text-xs opacity-60 font-normal leading-tight">
+        <span className="text-sm">{rankLabel}</span>
+        <span className="text-2xs opacity-60 font-normal leading-tight">
           {rankSubLabel}
         </span>
       </span>
@@ -293,7 +357,7 @@ const RankCell: React.FC<{
     return (
       <div className="flex flex-col items-center gap-0.5">
         <span
-          className={`font-medium ${RANK_MONO}`}
+          className="font-medium font-mono text-sm"
           style={{ color: posColor ?? 'var(--muted-foreground)' }}
         >
           {rankLabel}
@@ -316,12 +380,9 @@ const RankCell: React.FC<{
       className={`font-medium ${RANK_MONO} flex flex-col items-center gap-0`}
       style={{ color: tipColor }}
     >
-      <span className="flex items-center gap-0.5">
-        <span className="leading-none">{tipIcon}</span>
-        {rankLabel}
-      </span>
-      <span className="text-xs opacity-60 font-normal text-muted-foreground leading-tight">
-        {inSet ? 'above' : 'below'}
+      <span className="text-sm">{rankLabel}</span>
+      <span className="text-2xs opacity-60 font-normal text-muted-foreground leading-tight">
+        {rankSubLabel}
       </span>
     </span>
   )
@@ -333,7 +394,7 @@ export const SamTable: React.FC<Props> = ({
   epochsPerYear,
   dsSamConfig,
   level,
-  simulatedValidators = new Set(),
+  simulatedValidators = EMPTY_SIMULATED_SET,
   isCalculating,
   validatorMeta,
   onValidatorClick,
@@ -386,22 +447,31 @@ export const SamTable: React.FC<Props> = ({
   // Current validators with bond health and expected stake change computed
   const validatorsWithBond: ValidatorWithBondState[] = useMemo(
     () =>
-      augmentAuctionResult(auctionResult)
+      augmentAuctionResult(auctionResult, dsSamConfig.minBondBalanceSol)
         .filter(validator =>
           passesTableFilter(
             validator,
             level ?? UserLevel.Basic,
-            dsSamConfig.minBondEpochs,
+            dsSamConfig.minBondBalanceSol,
           ),
         )
-        .map(validator => ({
-          ...validator,
-          bondHealth: bondHealthFromAuction(
+        .map(validator => {
+          const bondCoverage = computeBondCoverage(
             validator,
             dsSamConfig,
             winningTotalPmpe,
-          ),
-        })),
+          )
+          return {
+            ...validator,
+            bondCoverage,
+            bondHealth: bondHealthFromAuction(
+              validator,
+              dsSamConfig,
+              winningTotalPmpe,
+              bondCoverage,
+            ),
+          }
+        }),
     [auctionResult, dsSamConfig, winningTotalPmpe, level],
   )
 
@@ -486,15 +556,23 @@ export const SamTable: React.FC<Props> = ({
       changedValidators,
       originalAuctionResult,
       originalPositionsMap,
-      orig =>
-        ({
+      orig => {
+        const bondCoverage = computeBondCoverage(
+          orig,
+          dsSamConfig,
+          winningTotalPmpe,
+        )
+        return {
           ...orig,
+          bondCoverage,
           bondHealth: bondHealthFromAuction(
             orig,
             dsSamConfig,
             winningTotalPmpe,
+            bondCoverage,
           ),
-        }) as ValidatorWithBondState,
+        } as ValidatorWithBondState
+      },
     )
   }, [
     sortedValidators,
@@ -503,29 +581,42 @@ export const SamTable: React.FC<Props> = ({
     originalPositionsMap,
   ])
 
-  const winningValidators = allDisplayValidators.filter(
-    row => !row.isGhost && row.validator.auctionStake.marinadeSamTargetSol > 0,
-  )
   // Cutoff partition: who would clear the bid threshold by yield, regardless
   // of whether the auction actually allocated them target stake. Bid-eligible
   // bond-blocked validators belong above the line; only validators whose max
   // APY is below the winning APY belong below.
-  const bidQualifies = (v: AuctionValidator) =>
-    selectMaxAPY(v, epochsPerYear) >= winningAPY
-  const aboveCutoff = allDisplayValidators.filter(
-    row => row.isGhost || bidQualifies(row.validator),
-  )
-  const belowCutoff = allDisplayValidators.filter(
-    row => !row.isGhost && !bidQualifies(row.validator),
-  )
+  const { winningValidators, aboveCutoff, belowCutoff } = useMemo(() => {
+    const winning: typeof allDisplayValidators = []
+    const above: typeof allDisplayValidators = []
+    const below: typeof allDisplayValidators = []
+    for (const row of allDisplayValidators) {
+      if (row.isGhost) {
+        above.push(row)
+        continue
+      }
+      if (row.validator.auctionStake.marinadeSamTargetSol > 0) {
+        winning.push(row)
+      }
+      if (selectMaxAPY(row.validator, epochsPerYear) >= winningAPY) {
+        above.push(row)
+      } else {
+        below.push(row)
+      }
+    }
+    return {
+      winningValidators: winning,
+      aboveCutoff: above,
+      belowCutoff: below,
+    }
+  }, [allDisplayValidators, epochsPerYear, winningAPY])
   const aboveCount = aboveCutoff.filter(row => !row.isGhost).length
+  // Matches psr.marinade.finance: TVL − Σ active = liquid reserve free to
+  // redelegate next epoch (no Solana cooldown wait). Not the SDK's gross
+  // projected inflow — that can exceed the reserve via cooldown reactivation
+  // and would over-state what's actually deployable next epoch.
   const totalRedelegation = useMemo(
-    () =>
-      validatorsWithBond.reduce((sum, validator) => {
-        const change = selectExpectedStakeChange(validator)
-        return change > 0 ? sum + change : sum
-      }, 0),
-    [validatorsWithBond],
+    () => selectRedelegationBudget(auctionResult),
+    [auctionResult],
   )
 
   // Stats for the stats bar
@@ -549,41 +640,49 @@ export const SamTable: React.FC<Props> = ({
     v => v.auctionStake.marinadeSamTargetSol > 0,
   ).length
 
+  const dp = docsPath(level)
+
   const stats: {
     label: string
     value: string
     unit: string
     help: string | undefined
+    guideTo: string
   }[] = [
     {
-      label: 'Total Auction Stake',
-      value: sol(samDistributedStake, 0),
+      label: 'Re-delegation',
+      value: sol(totalRedelegation, 0),
       unit: 'SOL',
-      help: HELP_TEXT.totalAuctionStake,
+      help: 'Roughly how much SOL Marinade will redelegate into under-stake validators next epoch, pushing them toward their target allocation.',
+      guideTo: `${dp}#redelegation`,
     },
     {
       label: 'Winning APY',
       value: pct(winningAPY, 2),
       unit: '',
       help: HELP_TEXT.winningApy,
+      guideTo: `${dp}#last-price`,
     },
     {
       label: 'Projected APY',
       value: pct(projectedApy, 2),
       unit: '',
       help: HELP_TEXT.projectedApy,
+      guideTo: `${dp}#sam`,
     },
     {
       label: 'Winning Validators',
-      value: `${eligibleWinningCount} / ${eligibleCount}`,
-      unit: '',
+      value: `${eligibleWinningCount}`,
+      unit: ` /${eligibleCount}`,
       help: HELP_TEXT.winningValidators,
+      guideTo: `${dp}#sam`,
     },
     {
-      label: 'Re-delegation',
-      value: sol(totalRedelegation, 0),
+      label: 'Total Auction Stake',
+      value: sol(samDistributedStake, 0),
       unit: 'SOL',
-      help: 'Roughly how much SOL Marinade will redelegate into under-stake validators next epoch, pushing them toward their target allocation.',
+      help: HELP_TEXT.totalAuctionStake,
+      guideTo: `${dp}#sam`,
     },
   ]
 
@@ -606,25 +705,29 @@ export const SamTable: React.FC<Props> = ({
       isSimulated && !isGhost ? getPositionChange(origAuctionRank, rank) : null
     const posColor =
       posChange?.direction === 'improved'
-        ? 'var(--status-green)'
+        ? CSS_STATUS_GREEN
         : posChange?.direction === 'worsened'
-          ? 'var(--destructive)'
+          ? CSS_DESTRUCTIVE
           : undefined
 
     // Bond health
-    const bondUtilPct = calculateBondUtilization(
-      validator,
-      dsSamConfig.minBondEpochs,
-    )
-    const bondRunway = validator.bondGoodForNEpochs ?? 0
+    const bondUtilPct = bondUtilizationPct(validator, dsSamConfig.minBondEpochs)
     const bondHealth = validator.bondHealth
     const bondChip = BOND_CHIP[bondHealth]
+    const bondRunway = effectiveBondRunway(validator, bondHealth)
     const hasAlert = bondRunway <= 5 || bondUtilPct >= 85
+    const bondScaleMax = bondGaugeScaleMax(dsSamConfig)
 
     const expectedChange = selectExpectedStakeChange(validator)
 
     // Tip
-    const tip = getValidatorTip(validator, dsSamConfig, winningTotalPmpe)
+    const tip = getValidatorTip(
+      validator,
+      dsSamConfig,
+      winningTotalPmpe,
+      validator.bondCoverage,
+      auctionResult.auctionData.blacklist,
+    )
     const tipStyle = getTipStyle(tip.urgency)
 
     // Max APY
@@ -690,13 +793,13 @@ export const SamTable: React.FC<Props> = ({
         {/* Rank / ✕ */}
         <TableCell className="px-3.5 py-3 text-center w-10">
           <RankCell
-            rank={cutoffRank}
+            rank={rank}
+            cutoffRank={cutoffRank}
             inSet={inSet}
             isGhost={isGhost}
             isSimulated={isSimulated}
             posColor={posColor}
             tipColor={tipStyle.color}
-            tipIcon={tip.icon ?? tipStyle.icon}
             voteAccount={voteAccount}
             onClearValidator={onClearValidator}
           />
@@ -713,7 +816,13 @@ export const SamTable: React.FC<Props> = ({
                 {hasAlert && (
                   <span className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0 animate-pulse" />
                 )}
-                {!isGhost && <PenaltyBadges validator={validator} />}
+                {!isGhost && (
+                  <PenaltyBadges
+                    validator={validator}
+                    dsSamConfig={dsSamConfig}
+                    winningTotalPmpe={winningTotalPmpe}
+                  />
+                )}
               </>
             }
           />
@@ -750,24 +859,27 @@ export const SamTable: React.FC<Props> = ({
             </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="h-[3px] bg-secondary rounded-sm w-14 shrink-0">
-              <div
-                className={cn('h-full rounded-sm', bondChip.bar)}
-                style={{ width: `${Math.max(100 - bondUtilPct, 0)}%` }}
-              />
-            </div>
+            <Gauge
+              size="sm"
+              value={bondRunway}
+              scaleMax={bondScaleMax}
+              marker={BOND_CRITICAL_FRAC}
+              criticalBand={BOND_CRITICAL_FRAC}
+              tone={bondChip.bar}
+            />
             <span
               className={cn(
                 'text-xs opacity-60 font-mono whitespace-nowrap',
                 bondRunway <= 10 ? bondChip.shortText : TEXT_MUTED,
               )}
             >
-              ({Math.round(bondRunway)}ep)
+              ({Math.round(bondRunway) >= 100 ? '>100' : Math.round(bondRunway)}
+              ep)
             </span>
           </div>
         </TableCell>
 
-        {/* Stake / Next Δ */}
+        {/* Stake / Next change */}
         <TableCell className="px-3.5 py-3">
           <div className="flex flex-col gap-0.5">
             <span className="text-muted-foreground text-xs font-mono">
@@ -779,18 +891,18 @@ export const SamTable: React.FC<Props> = ({
                 <span
                   className={cn(
                     'font-mono text-xs',
-                    cell.tone === 'neutral'
+                    cell.tone === NextStakeDeltaTone.NEUTRAL
                       ? TEXT_MUTED
                       : 'font-semibold text-sm',
                   )}
                   style={
-                    cell.tone === 'neutral'
+                    cell.tone === NextStakeDeltaTone.NEUTRAL
                       ? undefined
                       : {
                           color:
-                            cell.tone === 'positive'
-                              ? 'var(--status-green)'
-                              : 'var(--destructive)',
+                            cell.tone === NextStakeDeltaTone.POSITIVE
+                              ? CSS_STATUS_GREEN
+                              : CSS_DESTRUCTIVE,
                         }
                   }
                 >
@@ -802,22 +914,37 @@ export const SamTable: React.FC<Props> = ({
           </div>
         </TableCell>
 
-        {/* Next Step */}
-        <TableCell className="px-3.5 py-3 max-w-[350px]">
-          <div
-            className="inline-flex items-start gap-[5px] text-xs leading-[1.35] px-2.5 py-1 rounded-md"
-            style={{ background: tipStyle.bg, color: tipStyle.color }}
-          >
-            <span className="shrink-0">{tip.icon ?? tipStyle.icon}</span>
-            <span className="break-words">
-              {tip.text.replace(/~?\d+\.\d{3,}/g, numStr => {
-                const num = parseFloat(numStr.replace(/^~/, ''))
-                const prefix = numStr.startsWith('~') ? '~' : ''
-                return `${prefix}${Math.round(num * 100) / 100}`
-              })}
-            </span>
-          </div>
-        </TableCell>
+        {/* Next Step — icon = constraint/direction, color = severity.
+            The contiguous out-of-set "Bid too low" block is an EXPECTED
+            state, not an alarm: render it muted with a 2-word label;
+            the full sentence lives in the detail panel. */}
+        {(() => {
+          const bidTooLow = tip.constraint === TipConstraint.RANK
+          const stepColor = bidTooLow ? CSS_MUTED_FG : tipStyle.color
+          const stepBg = bidTooLow ? CSS_MUTED : tipStyle.bg
+          const stepText = bidTooLow
+            ? 'Bid too low — raise it.'
+            : trimTipDecimals(tip.text)
+          return (
+            <TableCell className="px-3.5 py-3">
+              <div
+                className="inline-flex items-center gap-[5px] text-xs leading-[1.35] px-2.5 py-1 rounded-md max-w-[420px] border"
+                style={{
+                  background: stepBg,
+                  color: stepColor,
+                  borderColor: stepColor,
+                }}
+              >
+                <span className="shrink-0 inline-flex items-center justify-center w-4 h-4">
+                  {getTipIcon(tip)}
+                </span>
+                <span className="break-words whitespace-pre-line">
+                  {stepText}
+                </span>
+              </div>
+            </TableCell>
+          )
+        })()}
 
         {/* Chevron */}
         <TableCell className="px-2.5 py-3 w-10">
@@ -839,13 +966,14 @@ export const SamTable: React.FC<Props> = ({
 
   const inSimulation = simulatedValidators.size > 0
 
+  // Outer simulation ring lives at the PAGE level (so it wraps the broadcast
+  // banner above too — all "what-if" surfaces inside one frame). This
+  // component only renders the inner header bar + the table.
   return (
     <div
       className={cn(
         'w-full',
         isCalculating && 'opacity-70 pointer-events-none',
-        inSimulation &&
-          'ring-4 ring-inset ring-status-yellow rounded-lg overflow-hidden',
       )}
     >
       {inSimulation && (
@@ -854,7 +982,8 @@ export const SamTable: React.FC<Props> = ({
             <span className="inline-block w-2 h-2 rounded-full bg-background animate-pulse" />
             Simulation Mode — what-if numbers, not live (
             {simulatedValidators.size} validator
-            {simulatedValidators.size === 1 ? '' : 's'} modified)
+            {simulatedValidators.size === 1 ? '' : 's'} modified) ·
+            strikethrough = original position
           </span>
           {onResetSimulation && (
             <button
@@ -867,18 +996,25 @@ export const SamTable: React.FC<Props> = ({
         </div>
       )}
       <div className="max-w-[1920px] mx-auto">
-        {/* Stats Bar */}
-        <div className="flex flex-wrap items-start gap-3 mt-3 mb-3 px-4">
+        {/* Headline metrics — single wrappable row. Stat tiles + the two
+            concentration cards share one flex container; on narrow widths
+            the row wraps to multiple lines per min-width tier. */}
+        <div className="flex flex-wrap items-stretch gap-3 mt-3 mb-3 px-4">
           {stats.map(stat => (
             <Card
               key={stat.label}
-              className="px-3 py-3 sm:px-5 sm:py-4 flex-1 min-w-[140px] sm:min-w-[160px] overflow-hidden"
+              className="px-3 py-3 sm:px-5 sm:py-4 flex-1 min-w-[140px] sm:min-w-[160px] overflow-hidden flex flex-col"
             >
               <div className="text-xs uppercase tracking-wider font-medium text-muted-foreground mb-1 flex items-center gap-1">
-                {stat.label}
-                {stat.help && <HelpTip text={stat.help} />}
+                {stat.help ? (
+                  <HelpTip text={stat.help} guideTo={stat.guideTo}>
+                    {stat.label}
+                  </HelpTip>
+                ) : (
+                  stat.label
+                )}
               </div>
-              <div className="flex items-baseline gap-0.5 min-w-0 overflow-hidden">
+              <div className="mt-auto flex items-baseline gap-0.5 min-w-0 overflow-hidden">
                 <span className="text-xl sm:text-2xl font-semibold text-foreground font-mono truncate">
                   {stat.value}
                 </span>
@@ -890,21 +1026,19 @@ export const SamTable: React.FC<Props> = ({
               </div>
             </Card>
           ))}
-        </div>
-
-        {/* Concentration Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3 px-4">
           <ConcentrationMetric
-            label="Top Countries"
+            label="Top Country"
             rows={concentration.countries}
             capPct={concentration.countryCapPct}
-            help="Share of auction-distributed stake by validator country. Bar fills against the per-country cap. (capped) means at least one validator was cut by the cap."
+            help="Share of auction-distributed stake by validator country. Bar fills against the per-country cap. A 'capped' tag means at least one validator was cut by the cap."
+            guideTo={`${dp}#concentration`}
           />
           <ConcentrationMetric
-            label="Top ASOs"
+            label="Top ASO"
             rows={concentration.asos}
             capPct={concentration.asoCapPct}
-            help="Share of auction-distributed stake by ASO (Autonomous System Operator). Bar fills against the per-ASO cap. (capped) means at least one validator was cut by the cap."
+            help="Share of auction-distributed stake by ASO — the Autonomous System Operator hosting the validator. Bar fills against the per-ASO cap. A 'capped' tag means at least one validator was cut by the cap."
+            guideTo={`${dp}#concentration`}
           />
         </div>
 
@@ -961,7 +1095,7 @@ export const SamTable: React.FC<Props> = ({
                       sortColumn={sortColumn}
                       sortDirection={sortDirection}
                     />
-                    <HelpTip text={HELP_TEXT.maxApy} />
+                    <HelpTip text={HELP_TEXT.maxApy} guideTo={`${dp}#cpmpe`} />
                   </div>
                 </TableHead>
                 <TableHead
@@ -975,7 +1109,10 @@ export const SamTable: React.FC<Props> = ({
                       sortColumn={sortColumn}
                       sortDirection={sortDirection}
                     />
-                    <HelpTip text={HELP_TEXT.bondHealth} />
+                    <HelpTip
+                      text={HELP_TEXT.bondHealth}
+                      guideTo={`${dp}#bond`}
+                    />
                   </div>
                 </TableHead>
                 <TableHead
@@ -989,7 +1126,10 @@ export const SamTable: React.FC<Props> = ({
                       sortColumn={sortColumn}
                       sortDirection={sortDirection}
                     />
-                    <HelpTip text="How much stake you have right now, and how much it'll change next epoch. Gains depend on fresh deposits coming in; losses come from regular withdrawals, which Marinade pulls from the most over-stake validators first." />
+                    <HelpTip
+                      text="How much stake you have right now, and how much it'll change next epoch. Gains depend on fresh deposits coming in; losses come from regular withdrawals, which Marinade pulls from the most over-stake validators first."
+                      guideTo={`${dp}#redelegation`}
+                    />
                   </div>
                 </TableHead>
                 <TableHead

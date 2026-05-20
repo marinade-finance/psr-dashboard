@@ -5,7 +5,11 @@ import { cn } from 'src/class_utils'
 import { BidPenaltyBreakdown } from 'src/components/breakdowns/bid-penalty'
 import { BiddingBreakdown } from 'src/components/breakdowns/bidding'
 import { BondCoverageBreakdown } from 'src/components/breakdowns/bond-coverage'
-import { CalcCard } from 'src/components/breakdowns/card'
+import {
+  CalcCard,
+  StatusBanner,
+  tipBannerTone,
+} from 'src/components/breakdowns/card'
 import { docsPath } from 'src/components/breakdowns/docs-path'
 import { PaymentsBreakdown } from 'src/components/breakdowns/payments'
 import { SEPARATOR_DIV_CLASS } from 'src/components/breakdowns/row'
@@ -21,18 +25,25 @@ import {
   CSS_DESTRUCTIVE,
   CSS_PRIMARY_LIGHT,
   CSS_DESTRUCTIVE_LIGHT,
+  CSS_STATUS_GREEN,
   CSS_WARNING,
   CSS_MUTED_FG,
 } from 'src/css'
-import { cost, payCta, stake } from 'src/format'
-import { computeBidPenalty } from 'src/services/bid-penalty'
+import { cost, topUp, stake, signedStake } from 'src/format'
+import {
+  bidTooLowPenaltySol as computeBidTooLowPenaltySol,
+  blacklistPenaltySol as computeBlacklistPenaltySol,
+} from 'src/services/bid-penalty'
 import { computeBidding } from 'src/services/bidding'
 import { computeBondCoverage } from 'src/services/bond-coverage'
 import { bondHealthFromAuction } from 'src/services/bond-health'
+import { BondHealthState } from 'src/services/bond-health'
+import { effectiveBondRunway } from 'src/services/calculations'
 import { HELP_TEXT } from 'src/services/help-text'
 import { fetchPsrEstimatesForValidator } from 'src/services/protected-events-estimator'
 import {
   selectExpectedStakeChange,
+  selectInSet,
   selectVoteAccount,
   selectWinningApyForValidator,
 } from 'src/services/sam'
@@ -40,17 +51,24 @@ import {
   getApyBreakdown,
   getValidatorTip,
   getTipStyle,
+  getTipIcon,
 } from 'src/services/tip-engine'
+import { TipConstraint } from 'src/services/tip-engine'
+import { assertNever } from 'src/utils/assert-never'
 
 import type { AuctionResult, DsSamConfig } from '@marinade.finance/ds-sam-sdk'
 import type { UserLevel } from 'src/components/navigation/navigation'
 import type { BondCoverage } from 'src/services/bond-coverage'
-import type { NotificationSummary } from 'src/services/notifications'
+import type {
+  NotificationPriority,
+  NotificationSummary,
+} from 'src/services/notifications'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
 
 interface ValidatorDetailProps {
   validator: AugmentedAuctionValidator
   auctionResult: AuctionResult
+  originalAuctionResult?: AuctionResult | null
   dsSamConfig: DsSamConfig
   epochsPerYear: number
   nameMap?: Map<string, { name?: string }>
@@ -63,6 +81,7 @@ interface ValidatorDetailProps {
     mevCommission: number | null,
     blockRewardsCommission: number | null,
     bidPmpe: number | null,
+    bondBalanceSol: number | null,
   ) => void
   onClearSimulation?: () => void
   isCalculating: boolean
@@ -72,42 +91,191 @@ interface ValidatorDetailProps {
 type Tab =
   | 'overview'
   | 'notifications'
-  | 'bond'
-  | 'revenue'
-  | 'penalty'
   | 'payments'
+  | 'bidding'
+  | 'bond'
+  | 'penalty'
 
-export type BondHealth = 'healthy' | 'soft' | 'watch' | 'critical'
+const TAB_DEFS: ReadonlyArray<{ id: Tab; label: string }> = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'notifications', label: 'Notifications' },
+  { id: 'payments', label: 'Payments' },
+  { id: 'bidding', label: 'Bidding' },
+  { id: 'bond', label: 'Bond' },
+  { id: 'penalty', label: 'Bid Penalty' },
+]
 
-export function bondCoverageLabel(
-  health: BondHealth,
-  coverage: BondCoverage,
-): string {
-  if (health === 'critical')
-    return coverage.topUpToAvoidFee > 0
-      ? `Top up ${payCta(coverage.topUpToAvoidFee)} to avoid the fee`
-      : 'Critical'
-  if (health === 'watch')
-    return coverage.topUpToKeepStake > 0
-      ? `Top up ${payCta(coverage.topUpToKeepStake)} to keep your stake`
-      : 'Watch'
-  if (health === 'soft')
-    return coverage.topUpToIdealKeep > 0
-      ? `Top up ${payCta(coverage.topUpToIdealKeep)} to qualify for more`
-      : 'Adequate'
-  return 'Fully covered'
+// Attention cue on a tab whose content needs a look. It persists on the
+// active tab too — pulsing — so opening the tab doesn't erase the signal
+// while the issue is unresolved. Same three-level axis as
+// NotificationPriority; aliased so the two stay aligned.
+type AttentionTone = NotificationPriority
+
+const ATTENTION_DOT: Record<AttentionTone, string> = {
+  critical: 'bg-destructive',
+  warning: 'bg-warning',
+  info: 'bg-info',
 }
 
-function bondCoverageColor(health: BondHealth): string {
-  if (health === 'critical') return CSS_DESTRUCTIVE
-  if (health === 'watch') return CSS_WARNING
-  if (health === 'soft') return CSS_MUTED_FG
-  return CSS_PRIMARY
+const ATTENTION_TEXT: Record<AttentionTone, string> = {
+  critical: 'text-destructive',
+  warning: 'text-warning',
+  info: 'text-info',
+}
+
+// Single source for "which tab does this lever live on". Used both by the
+// tab-strip dot in tabAttention and by the header banner's click target —
+// keeps both surfaces in lockstep. Record<TipConstraint, Tab|null> forces
+// an explicit mapping for every enum value (a new lever fails the build
+// until added). 'bid' = in-set penalty → Penalty tab (the math lives
+// there); 'rank' = out-of-set → Bidding tab (raise the static bid);
+// 'cap'/'none' have no dedicated tab (explanation lives in the header).
+const TIP_TAB: Record<TipConstraint, Tab | null> = {
+  [TipConstraint.BOND]: 'bond',
+  [TipConstraint.BID]: 'penalty',
+  [TipConstraint.RANK]: 'bidding',
+  [TipConstraint.CAP]: null,
+  [TipConstraint.NONE]: null,
+}
+
+function TabStrip({
+  tab,
+  setTab,
+  attention,
+}: {
+  tab: Tab
+  setTab: (t: Tab) => void
+  attention: Partial<Record<Tab, AttentionTone>>
+}) {
+  return (
+    <div className="border-b border-border bg-background sticky top-[68px] z-[5]">
+      <div className="flex gap-1 px-4 sm:px-6 overflow-x-auto">
+        {TAB_DEFS.map(t => {
+          const tone = attention[t.id]
+          const active = tab === t.id
+          return (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={cn(
+                'px-3 py-2.5 text-mid font-medium border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5',
+                active
+                  ? 'border-primary text-primary'
+                  : tone
+                    ? cn(
+                        'border-transparent hover:text-foreground',
+                        ATTENTION_TEXT[tone],
+                      )
+                    : 'border-transparent text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {tone && (
+                <span
+                  aria-hidden
+                  className={cn(
+                    'w-1.5 h-1.5 rounded-full shrink-0',
+                    ATTENTION_DOT[tone],
+                    active && 'animate-pulse',
+                  )}
+                />
+              )}
+              {t.label}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// Per-tab attention tones. Each trigger reuses an existing severity source —
+// bond from bondHealthFromAuction, penalty from the breakdown's penaltySol,
+// notifications from the summary the panel already receives — plus a subtle
+// info hint on the tab the header tip points at. No new colour or fetch.
+function tabAttention(args: {
+  bondHealth: BondHealthState
+  bidPenaltySol: number
+  notes: ReadonlyArray<{ priority: NotificationPriority }>
+  tipConstraint: TipConstraint
+}): Partial<Record<Tab, AttentionTone>> {
+  const { bondHealth, bidPenaltySol, notes, tipConstraint } = args
+  const notifTone: AttentionTone | undefined = notes.some(
+    n => n.priority === 'critical',
+  )
+    ? 'critical'
+    : notes.some(n => n.priority === 'warning')
+      ? 'warning'
+      : notes.length > 0
+        ? 'info'
+        : undefined
+  const attention: Partial<Record<Tab, AttentionTone>> = {}
+  if (
+    bondHealth === BondHealthState.CRITICAL ||
+    bondHealth === BondHealthState.NO_BOND
+  ) {
+    attention.bond = 'critical'
+  } else if (bondHealth === BondHealthState.WATCH) {
+    attention.bond = 'warning'
+  }
+  if (bidPenaltySol > 0) attention.penalty = 'critical'
+  if (notifTone) attention.notifications = notifTone
+  const tipTab = TIP_TAB[tipConstraint]
+  if (tipTab && !attention[tipTab]) attention[tipTab] = 'info'
+  return attention
+}
+
+export function bondCoverageLabel(
+  health: BondHealthState,
+  coverage: BondCoverage,
+  expectedStakeDeltaSol = 0,
+): string {
+  switch (health) {
+    case BondHealthState.NO_BOND:
+      return 'No bond'
+    case BondHealthState.CRITICAL:
+      return coverage.bondRiskFeeShortfall > 0
+        ? `Top up ${topUp(coverage.bondRiskFeeShortfall)} to avoid the fee`
+        : 'Critical'
+    case BondHealthState.WATCH:
+      return coverage.topUpToKeepStake > 0
+        ? `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake`
+        : 'Watch'
+    case BondHealthState.SOFT:
+      // "Top up to grow stake" contradicts a positive delta — stake is
+      // already arriving. Match bondCta's guard: the grow-prompt only
+      // makes sense when stake isn't already growing. Otherwise the
+      // bond is doing its job for the current allocation.
+      if (coverage.topUpToIdealKeep > 0 && expectedStakeDeltaSol <= 0) {
+        return `Top up ${topUp(coverage.topUpToIdealKeep)} to grow stake`
+      }
+      return 'Adequate'
+    case BondHealthState.HEALTHY:
+      return 'Healthy'
+    default:
+      return assertNever(health)
+  }
+}
+
+function bondCoverageColor(health: BondHealthState): string {
+  switch (health) {
+    case BondHealthState.NO_BOND:
+    case BondHealthState.CRITICAL:
+      return CSS_DESTRUCTIVE
+    case BondHealthState.WATCH:
+      return CSS_WARNING
+    case BondHealthState.SOFT:
+      return CSS_MUTED_FG
+    case BondHealthState.HEALTHY:
+      return CSS_PRIMARY
+    default:
+      return assertNever(health)
+  }
 }
 
 const MetricRow = ({
   label,
   help,
+  helpGuideTo,
   value,
   valueStyle,
   onSeeBreakdown,
@@ -115,37 +283,45 @@ const MetricRow = ({
 }: {
   label: string
   help?: string
+  helpGuideTo?: string
   value: React.ReactNode
   valueStyle?: React.CSSProperties
   onSeeBreakdown?: () => void
   separator?: boolean
-}) => (
-  <div
-    className={cn(
-      'flex items-center justify-between',
-      separator && SEPARATOR_DIV_CLASS,
-    )}
-  >
-    <span className="text-xs text-muted-foreground flex items-center gap-1">
-      {onSeeBreakdown ? (
-        <Tooltip content="See calculation">
-          <button
-            className="text-xs text-muted-foreground hover:text-primary hover:underline"
-            onClick={onSeeBreakdown}
-          >
-            {label} →
-          </button>
-        </Tooltip>
-      ) : (
-        label
+}) => {
+  const clickable = !!onSeeBreakdown
+  const handleRowClick: React.MouseEventHandler = e => {
+    if (!onSeeBreakdown) return
+    // Don't hijack a HelpTip click or a focused text selection.
+    if ((e.target as HTMLElement).closest('[role="tooltip"], button')) return
+    onSeeBreakdown()
+  }
+  return (
+    <div
+      className={cn(
+        'flex items-center justify-between rounded-md',
+        clickable && 'cursor-pointer hover:bg-muted/50 -mx-2 px-2 py-0.5',
+        separator && SEPARATOR_DIV_CLASS,
       )}
-      {help && <HelpTip text={help} />}
-    </span>
-    <span className="text-sm font-semibold font-mono" style={valueStyle}>
-      {value}
-    </span>
-  </div>
-)
+      onClick={handleRowClick}
+      role={clickable ? 'button' : undefined}
+      tabIndex={clickable ? 0 : undefined}
+    >
+      <span className="text-xs text-muted-foreground flex items-center gap-2 min-w-0">
+        <span
+          className={cn('truncate', clickable && 'hover:underline')}
+          title={clickable ? 'Show calculation' : undefined}
+        >
+          {label}
+        </span>
+        {help && <HelpTip text={help} guideTo={helpGuideTo} />}
+      </span>
+      <span className="text-sm font-semibold font-mono" style={valueStyle}>
+        {value}
+      </span>
+    </div>
+  )
+}
 
 const PenaltyRow = ({
   label,
@@ -158,23 +334,27 @@ const PenaltyRow = ({
   onSeeBreakdown: () => void
   sub?: boolean
 }) => (
-  <div className="flex items-center justify-between gap-2">
-    <Tooltip content="See calculation">
-      <button
-        className={cn(
-          'text-left flex-1',
-          sub
-            ? 'text-[10px] text-muted-foreground'
-            : 'text-xs text-muted-foreground',
-          'hover:text-foreground hover:underline',
-        )}
-        onClick={onSeeBreakdown}
-      >
-        {label} →
-      </button>
-    </Tooltip>
+  <div
+    className="flex items-center justify-between gap-2 rounded-md cursor-pointer hover:bg-muted/50 -mx-2 px-2 py-0.5"
+    role="button"
+    tabIndex={0}
+    onClick={e => {
+      if ((e.target as HTMLElement).closest('button')) return
+      onSeeBreakdown()
+    }}
+  >
     <span
-      className={cn('font-mono', sub ? 'text-[10px]' : 'text-sm font-semibold')}
+      className={cn(
+        'text-muted-foreground text-left flex items-center gap-2 min-w-0',
+        sub ? 'text-mid' : 'text-xs',
+      )}
+    >
+      <span className="truncate hover:underline" title="Show calculation">
+        {label}
+      </span>
+    </span>
+    <span
+      className={cn('font-mono', sub ? 'text-mid' : 'text-sm font-semibold')}
       style={{ color: sub ? CSS_MUTED_FG : CSS_DESTRUCTIVE }}
     >
       {value}
@@ -182,14 +362,165 @@ const PenaltyRow = ({
   </div>
 )
 
+// What-changes block inside the sim panel: shows before → after pairs for
+// values that actually moved. Skips when there's no baseline. Re-uses
+// effectiveBondRunway, selectInSet, bidTooLowPenaltySol, and the cached
+// bondRiskFeeSol — no new derivations.
+function SimDeltas({
+  voteAccount,
+  current,
+  originalAuctionResult,
+  dsSamConfig,
+  winningTotalPmpe,
+  bondHealth,
+}: {
+  voteAccount: string
+  current: AugmentedAuctionValidator
+  originalAuctionResult: AuctionResult
+  dsSamConfig: DsSamConfig
+  winningTotalPmpe: number
+  bondHealth: BondHealthState
+}) {
+  const original = originalAuctionResult.auctionData.validators.find(
+    v => v.voteAccount === voteAccount,
+  )
+  if (!original) return null
+  const origWinningTotalPmpe = originalAuctionResult.winningTotalPmpe
+  const origBondHealth = bondHealthFromAuction(
+    original,
+    dsSamConfig,
+    origWinningTotalPmpe,
+  )
+
+  const runwayBefore = effectiveBondRunway(original, origBondHealth)
+  const runwayAfter = effectiveBondRunway(current, bondHealth)
+  const inSetBefore = selectInSet(original)
+  const inSetAfter = selectInSet(current)
+  const stakeBefore = original.auctionStake.marinadeSamTargetSol
+  const stakeAfter = current.auctionStake.marinadeSamTargetSol
+  const riskBefore = original.values.bondRiskFeeSol ?? 0
+  const riskAfter = current.values.bondRiskFeeSol ?? 0
+  const penaltyBefore = computeBidTooLowPenaltySol(
+    original,
+    dsSamConfig,
+    origWinningTotalPmpe,
+  )
+  const penaltyAfter = computeBidTooLowPenaltySol(
+    current,
+    dsSamConfig,
+    winningTotalPmpe,
+  )
+
+  const rows: Array<{ label: string; node: React.ReactNode }> = []
+
+  if (Math.round(runwayBefore) !== Math.round(runwayAfter)) {
+    const up = runwayAfter > runwayBefore
+    const colour = up ? CSS_STATUS_GREEN : CSS_DESTRUCTIVE
+    const fmt = (n: number) => (n <= 0 ? 'Depleted' : `${Math.round(n)}ep`)
+    rows.push({
+      label: 'Bond runway',
+      node: (
+        <span className="font-mono" style={{ color: colour }}>
+          {fmt(runwayBefore)} → {fmt(runwayAfter)}
+        </span>
+      ),
+    })
+  }
+  if (inSetBefore !== inSetAfter) {
+    rows.push({
+      label: 'Status',
+      node: (
+        <span
+          className="font-mono"
+          style={{ color: inSetAfter ? CSS_STATUS_GREEN : CSS_DESTRUCTIVE }}
+        >
+          {inSetBefore ? 'In set' : 'Out of set'} →{' '}
+          {inSetAfter ? 'In set' : 'Out of set'}
+        </span>
+      ),
+    })
+  }
+  const stakeDelta = stakeAfter - stakeBefore
+  if (Math.abs(stakeDelta) > 1) {
+    rows.push({
+      label: 'Stake target',
+      node: (
+        <span
+          className="font-mono"
+          style={{
+            color: stakeDelta > 0 ? CSS_STATUS_GREEN : CSS_DESTRUCTIVE,
+          }}
+        >
+          {signedStake(stakeDelta)}
+        </span>
+      ),
+    })
+  }
+  const riskDelta = riskAfter - riskBefore
+  if (Math.abs(riskDelta) > 1e-6) {
+    rows.push({
+      label: 'Bond risk fee',
+      node: (
+        <span
+          className="font-mono"
+          style={{
+            color: riskDelta > 0 ? CSS_DESTRUCTIVE : CSS_STATUS_GREEN,
+          }}
+        >
+          {riskDelta > 0 ? '+' : '−'}
+          {cost(Math.abs(riskDelta))}
+        </span>
+      ),
+    })
+  }
+  const penaltyDelta = penaltyAfter - penaltyBefore
+  if (Math.abs(penaltyDelta) > 1e-6) {
+    rows.push({
+      label: 'Bid-too-low penalty',
+      node: (
+        <span
+          className="font-mono"
+          style={{
+            color: penaltyDelta > 0 ? CSS_DESTRUCTIVE : CSS_STATUS_GREEN,
+          }}
+        >
+          {penaltyDelta > 0 ? '+' : '−'}
+          {cost(Math.abs(penaltyDelta))}
+        </span>
+      ),
+    })
+  }
+
+  if (rows.length === 0) return null
+  return (
+    <div className="mt-4 rounded-md border border-status-yellow/40 bg-background p-3">
+      <div className="text-xs font-semibold text-muted-foreground mb-2">
+        What changes
+      </div>
+      <div className="space-y-1.5">
+        {rows.map(r => (
+          <div
+            key={r.label}
+            className="flex items-center justify-between text-xs"
+          >
+            <span className="text-muted-foreground">{r.label}</span>
+            {r.node}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export const ValidatorDetail = ({
   validator,
   auctionResult,
+  originalAuctionResult,
   dsSamConfig,
   epochsPerYear,
   nameMap,
   notificationsMap,
-  rank: _rank,
+  rank,
   isSimulated = false,
   onClose,
   onSimulate,
@@ -207,60 +538,49 @@ export const ValidatorDetail = ({
   )
   const winningTotalPmpe = auctionResult.winningTotalPmpe
   const apyBreakdown = getApyBreakdown(validator, epochsPerYear)
-  const bondRunway = validator.bondGoodForNEpochs ?? 0
   const bondHealth = bondHealthFromAuction(
     validator,
     dsSamConfig,
     winningTotalPmpe,
   )
-  const tip = getValidatorTip(validator, dsSamConfig, winningTotalPmpe)
+  // A no-bond or below-minimum bond sustains zero stake regardless of the
+  // SDK's raw bondGoodForNEpochs, which ignores the below-min gate. Force
+  // the runway to Depleted so Balance, Reserve and Bond runway tell one
+  // coherent story instead of "0 SOL / Critical / 6 epochs".
+  const bondRunway = effectiveBondRunway(validator, bondHealth)
+  const tip = getValidatorTip(
+    validator,
+    dsSamConfig,
+    winningTotalPmpe,
+    undefined,
+    auctionResult.auctionData.blacklist,
+  )
   const tipStyle = getTipStyle(tip.urgency)
   const expectedStakeDelta = selectExpectedStakeChange(validator)
   const [tab, setTab] = useState<Tab>('overview')
 
-  const inSet = validator.auctionStake.marinadeSamTargetSol > 0
-  // Dense rank around the winning cutoff: 0 at cutoff, +N at the Nth distinct
-  // APY tier above, −N below. Computed once in sam.ts; consistent with the
-  // rank cell in sam-table.
+  const inSet = selectInSet(validator)
+  // Dense rank around the winning cutoff: 0 at cutoff, +N above, −N below.
   const posVsWinning = validator.values.cutoffRank ?? 0
   const bondCoverage = useMemo(
-    () =>
-      computeBondCoverage(
-        validator,
-        dsSamConfig.minBondEpochs,
-        dsSamConfig.idealBondEpochs,
-        winningTotalPmpe,
-        dsSamConfig.bondRiskFeeMult,
-      ),
-    [
-      validator,
-      dsSamConfig.minBondEpochs,
-      dsSamConfig.idealBondEpochs,
-      dsSamConfig.bondRiskFeeMult,
-      winningTotalPmpe,
-    ],
+    () => computeBondCoverage(validator, dsSamConfig, winningTotalPmpe),
+    [validator, dsSamConfig, winningTotalPmpe],
   )
   const paymentMetrics = useMemo(() => computeBidding(validator), [validator])
-  const penaltyMetrics = useMemo(
-    () => computeBidPenalty(validator, dsSamConfig, winningTotalPmpe),
-    [
-      validator,
-      dsSamConfig.minBondEpochs,
-      dsSamConfig.bondRiskFeeMult,
-      winningTotalPmpe,
-    ],
-  )
   const { data: psrEstimates = [] } = useQuery({
     queryKey: ['psrEstimates', voteAccount],
     queryFn: () => fetchPsrEstimatesForValidator(voteAccount),
     staleTime: 5 * 60 * 1000,
+    enabled: tab === 'payments',
   })
 
   const bondRiskFeeSol = validator.values.bondRiskFeeSol ?? 0
-  const blacklistPenaltySol =
-    (validator.revShare.blacklistPenaltyPmpe / 1000) *
-    validator.marinadeActivatedStakeSol
-  const bidTooLowPenaltySol = penaltyMetrics.penaltySol
+  const blacklistPenaltySol = computeBlacklistPenaltySol(validator)
+  const bidTooLowPenaltySol = computeBidTooLowPenaltySol(
+    validator,
+    dsSamConfig,
+    winningTotalPmpe,
+  )
 
   const [editBid, setEditBid] = useState(validator.revShare.bidPmpe.toString())
   const [editInflation, setEditInflation] = useState(
@@ -276,9 +596,9 @@ export const ValidatorDetail = ({
       ? (validator.blockRewardsCommissionDec * 100).toString()
       : '',
   )
-  // Caller passes a `key` keyed on the selected validator's vote account, so
-  // each new validator mounts a fresh ValidatorDetail and this initialiser
-  // re-runs. No mirror-prop-into-state useEffect needed.
+  const [editBond, setEditBond] = useState(
+    (validator.bondBalanceSol ?? 0).toString(),
+  )
   const [simEnabled, setSimEnabled] = useState(isSimulated)
 
   // Debounced auto-recalc whenever inputs change while simulation is enabled.
@@ -304,15 +624,17 @@ export const ValidatorDetail = ({
       const inflationValue = parseFloat(editInflation) / 100
       const mevValue = editMev ? parseFloat(editMev) / 100 : null
       const blockValue = editBlock ? parseFloat(editBlock) / 100 : null
+      const bondValue = editBond !== '' ? parseFloat(editBond) : null
       onSimulateRef.current(
         !isNaN(inflationValue) ? inflationValue : null,
         mevValue,
         blockValue,
         !isNaN(bidValue) ? bidValue : null,
+        bondValue !== null && !isNaN(bondValue) ? bondValue : null,
       )
     }, 400)
     return () => clearTimeout(t)
-  }, [simEnabled, editBid, editInflation, editMev, editBlock])
+  }, [simEnabled, editBid, editInflation, editMev, editBlock, editBond])
 
   const handleSimToggle = (enabled: boolean) => {
     setSimEnabled(enabled)
@@ -320,6 +642,34 @@ export const ValidatorDetail = ({
     if (enabled) setTab('overview')
     if (!enabled && onClearSimulation) onClearSimulation()
   }
+
+  const goToSim = () => {
+    setSimEnabled(true)
+    setTab('overview')
+  }
+
+  // Banner tone follows the bond-health axis when the tip is bond-driven,
+  // otherwise tracks the tip's own urgency. Click target reuses the shared
+  // TIP_TAB map so banner-nav and tab-dot can't disagree (previously the
+  // banner's bid → overview contradicted the dot's bid → penalty).
+  const tipTarget = TIP_TAB[tip.constraint]
+
+  const attention = tabAttention({
+    bondHealth,
+    bidPenaltySol: bidTooLowPenaltySol,
+    notes: notificationSummary?.notifications ?? [],
+    tipConstraint: tip.constraint,
+  })
+
+  const penaltyTotal =
+    bidTooLowPenaltySol + blacklistPenaltySol + bondRiskFeeSol
+  const bondBalance = validator.bondBalanceSol ?? 0
+  // A tiny positive bond drives Critical but rounds to "0 SOL" under
+  // whole-SOL stake() — reads as no bond and contradicts the Critical
+  // reserve. Show 3-decimal cost() precision for sub-1 SOL balances so
+  // the row is honest.
+  const bondBalanceDisplay =
+    bondBalance > 0 && bondBalance < 1 ? cost(bondBalance) : stake(bondBalance)
 
   return (
     <Sheet
@@ -333,10 +683,10 @@ export const ValidatorDetail = ({
         title="Validator detail"
         className={cn(
           'w-full max-w-4xl overflow-y-auto p-0',
-          isSimulated && 'border-t-4 border-t-status-yellow',
+          isSimulated && 'ring-4 ring-inset ring-status-yellow',
         )}
       >
-        <div className="flex items-start justify-between px-4 sm:px-6 py-4 border-b border-border sticky top-0 z-10 gap-2 bg-background">
+        <div className="flex items-start justify-between px-4 sm:px-6 py-4 sticky top-0 z-10 gap-2 bg-background">
           <div className="flex flex-col gap-1 min-w-0">
             <button
               className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors self-start"
@@ -360,22 +710,20 @@ export const ValidatorDetail = ({
                   style={{ color: tipStyle.color }}
                 >
                   <span className="text-sm leading-none">
-                    {tip.icon ?? tipStyle.icon}
+                    {getTipIcon(tip)}
                   </span>
-                  {posVsWinning < 0
-                    ? `-#${Math.abs(posVsWinning)}`
-                    : `#${posVsWinning}`}
+                  {`#${rank}`}
                 </span>
                 <span className="text-xs font-mono text-muted-foreground">
-                  {inSet
-                    ? posVsWinning === 0
-                      ? 'at winning edge'
-                      : `${posVsWinning} ${posVsWinning === 1 ? 'place' : 'places'} above winning`
-                    : `${Math.abs(posVsWinning)} ${Math.abs(posVsWinning) === 1 ? 'place' : 'places'} below winning`}
+                  {posVsWinning === 0
+                    ? 'at winning edge'
+                    : posVsWinning > 0
+                      ? `${posVsWinning} ${posVsWinning === 1 ? 'place' : 'places'} above winning`
+                      : `${Math.abs(posVsWinning)} ${Math.abs(posVsWinning) === 1 ? 'place' : 'places'} below winning`}
                 </span>
               </span>
               {validatorName && (
-                <span className="text-sm font-semibold text-foreground">
+                <span className="text-lg font-semibold text-foreground">
                   {validatorName}
                 </span>
               )}
@@ -412,15 +760,16 @@ export const ValidatorDetail = ({
               </label>
             </Tooltip>
             {isSimulated && onClearSimulation && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-destructive hover:bg-destructive/5 h-7 px-2 text-xs"
-                onClick={onClearSimulation}
-                disabled={isCalculating}
-              >
-                Reset
-              </Button>
+              <Tooltip content="Removes only this validator from simulation. To clear every simulated validator, use Reset Simulation on the main table.">
+                <Button
+                  variant="ghost"
+                  className="text-destructive hover:bg-destructive/5"
+                  onClick={onClearSimulation}
+                  disabled={isCalculating}
+                >
+                  Remove from simulation
+                </Button>
+              </Tooltip>
             )}
             <Button
               variant="ghost"
@@ -434,203 +783,155 @@ export const ValidatorDetail = ({
           </div>
         </div>
 
-        {(() => {
-          const tipTarget: Tab | null =
-            tip.constraint === 'bond'
-              ? 'bond'
-              : tip.constraint === 'bid'
-                ? 'overview'
-                : null
-          return (
-            <div
-              className={cn(
-                'px-4 sm:px-6 py-3 flex items-center gap-3',
-                tipTarget && 'cursor-pointer select-none',
-              )}
-              style={{ background: tipStyle.bg }}
-              onClick={tipTarget ? () => setTab(tipTarget) : undefined}
-            >
-              <span
-                className="text-sm font-medium flex-1"
-                style={{ color: tipStyle.color }}
-              >
-                {tip.text}
-              </span>
-              {tipTarget && (
-                <span
-                  className="text-xs font-medium shrink-0 px-2 py-0.5 rounded border whitespace-nowrap bg-card/55"
-                  style={{
-                    color: tipStyle.color,
-                    borderColor: tipStyle.color,
-                  }}
-                >
-                  {tip.constraint === 'bond' ? 'Bond tab →' : 'Simulate →'}
-                </span>
-              )}
+        <StatusBanner
+          className="mx-4 sm:mx-6 my-3"
+          status={{
+            label: tip.text,
+            tone: tipBannerTone(tip, bondHealth),
+            action:
+              tipTarget && tipTarget !== tab
+                ? {
+                    label:
+                      tip.constraint === TipConstraint.BOND
+                        ? 'Bond tab →'
+                        : 'Simulate →',
+                    onClick: () => setTab(tipTarget),
+                  }
+                : undefined,
+          }}
+        />
+
+        {/*
+          Tabs no longer render a tab-level title or Guide link.
+          Uniformity is at the card level: each card inside the body
+          owns its own title + Guide chrome via CalcCard. The Overview
+          tab is a multi-card grid where every sub-card uses CalcCard.
+        */}
+        <>
+          <TabStrip tab={tab} setTab={setTab} attention={attention} />
+
+          {tab === 'bond' && (
+            <div className="p-4 sm:p-6">
+              <BondCoverageBreakdown
+                title="Bond calculation"
+                guideTo={`${docsPath(level)}#bond`}
+                coverage={bondCoverage}
+                bondState={bondHealth}
+                bondRiskFeeSol={bondRiskFeeSol}
+                bondBalanceSol={validator.bondBalanceSol ?? 0}
+                marinadeActivatedStakeSol={validator.marinadeActivatedStakeSol}
+                minBondBalanceSol={dsSamConfig.minBondBalanceSol}
+                expectedStakeDeltaSol={expectedStakeDelta}
+                isSimulated={isSimulated}
+                onGoToSim={goToSim}
+              />
             </div>
-          )
-        })()}
+          )}
+          {tab === 'bidding' && (
+            <div className="p-4 sm:p-6">
+              <BiddingBreakdown
+                title="Bidding"
+                guideTo={`${docsPath(level)}#bidding`}
+                validator={validator}
+                auctionResult={auctionResult}
+                winningTotalPmpe={winningTotalPmpe}
+                coverage={bondCoverage}
+                isSimulated={isSimulated}
+                onGoToSim={goToSim}
+              />
+            </div>
+          )}
+          {tab === 'payments' && (
+            <div className="p-4 sm:p-6">
+              <PaymentsBreakdown
+                title="Payments"
+                guideTo={`${docsPath(level)}#payments`}
+                validator={validator}
+                bondRiskFeeSol={bondRiskFeeSol}
+                blacklistPenaltySol={blacklistPenaltySol}
+                bidTooLowPenaltySol={bidTooLowPenaltySol}
+                psrEstimates={psrEstimates}
+                isSimulated={isSimulated}
+                onGoToSim={goToSim}
+                onGoToPenalty={() => setTab('penalty')}
+              />
+            </div>
+          )}
+          {tab === 'penalty' && (
+            <div className="p-4 sm:p-6">
+              <BidPenaltyBreakdown
+                title="Bid penalty calculation"
+                guideTo={`${docsPath(level)}#bid-penalty`}
+                validator={validator}
+                dsSamConfig={dsSamConfig}
+                winningTotalPmpe={winningTotalPmpe}
+                isSimulated={isSimulated}
+                onGoToSim={goToSim}
+              />
+            </div>
+          )}
 
-        {(() => {
-          const goToSim = () => {
-            setSimEnabled(true)
-            setTab('overview')
-          }
-          // Tabs no longer render a tab-level title or Guide link.
-          // Uniformity is at the card level: each card inside the body
-          // owns its own title + Guide chrome via CalcCard. The Overview
-          // tab is a multi-card grid where every sub-card uses CalcCard.
-          const TAB_DEFS: ReadonlyArray<{ id: Tab; label: string }> = [
-            { id: 'overview', label: 'Overview' },
-            { id: 'notifications', label: 'Notifications' },
-            { id: 'payments', label: 'Payments' },
-            { id: 'revenue', label: 'Bidding' },
-            { id: 'bond', label: 'Bond' },
-            { id: 'penalty', label: 'Bid Penalty' },
-          ]
-
-          return (
-            <>
-              <div className="border-b border-border bg-background sticky top-[68px] z-[5]">
-                <div className="flex gap-1 px-4 sm:px-6 overflow-x-auto">
-                  {TAB_DEFS.map(t => (
-                    <button
-                      key={t.id}
-                      onClick={() => setTab(t.id)}
-                      className={cn(
-                        'px-3 py-2.5 text-[13px] font-medium border-b-2 transition-colors whitespace-nowrap',
-                        tab === t.id
-                          ? 'border-primary text-primary'
-                          : 'border-transparent text-muted-foreground hover:text-foreground',
-                      )}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {tab === 'bond' && (
-                <div className="p-4 sm:p-6">
-                  <BondCoverageBreakdown
-                    title="Bond Calculation"
-                    guideTo={`${docsPath(level)}#bond`}
-                    validator={validator}
-                    dsSamConfig={dsSamConfig}
-                    winningTotalPmpe={winningTotalPmpe}
-                    bondState={bondHealth}
-                    bondRiskFeeSol={bondRiskFeeSol}
-                    isSimulated={isSimulated}
-                    onGoToSim={goToSim}
-                  />
-                </div>
-              )}
-              {tab === 'payments' && (
-                <div className="p-4 sm:p-6 space-y-6">
-                  <PaymentsBreakdown
-                    title="Payments Calculation"
-                    guideTo={`${docsPath(level)}#detail-panel`}
-                    validator={validator}
-                    dsSamConfig={dsSamConfig}
-                    winningTotalPmpe={winningTotalPmpe}
-                    bondRiskFeeSol={bondRiskFeeSol}
-                    blacklistPenaltySol={blacklistPenaltySol}
-                    bidTooLowPenaltySol={bidTooLowPenaltySol}
-                    psrEstimates={psrEstimates}
-                    isSimulated={isSimulated}
-                    onGoToSim={goToSim}
-                    onGoToPenalty={() => setTab('penalty')}
-                  />
-                </div>
-              )}
-              {tab === 'revenue' && (
-                <div className="p-4 sm:p-6">
-                  <BiddingBreakdown
-                    title="Bidding Calculation"
-                    guideTo={`${docsPath(level)}#cpmpe`}
-                    validator={validator}
-                    isSimulated={isSimulated}
-                    onGoToSim={goToSim}
-                  />
-                </div>
-              )}
-              {tab === 'penalty' && (
-                <div className="p-4 sm:p-6">
-                  <BidPenaltyBreakdown
-                    title="Bid Penalty Calculation"
-                    guideTo={`${docsPath(level)}#bid-penalty`}
-                    validator={validator}
-                    dsSamConfig={dsSamConfig}
-                    winningTotalPmpe={winningTotalPmpe}
-                    isSimulated={isSimulated}
-                    onGoToSim={goToSim}
-                  />
-                </div>
-              )}
-
-              {tab === 'notifications' && (
-                <div className="p-4 sm:p-6">
-                  <CalcCard
-                    title="Notifications"
-                    guideTo={`${docsPath(level)}#detail-panel`}
-                    isSimulated={isSimulated}
-                  >
-                    {notificationSummary?.notifications?.length ? (
-                      <div className="space-y-4">
-                        {notificationSummary.notifications.map(notification => {
-                          const tone =
-                            notification.priority === 'critical'
-                              ? 'bg-destructive-light text-destructive'
-                              : notification.priority === 'warning'
-                                ? 'bg-warning-light text-warning'
-                                : 'bg-info-light text-info'
-                          return (
-                            <div
-                              key={notification.id}
-                              className="border-t border-border first:border-t-0 first:pt-0 pt-3"
-                            >
-                              <div className="flex items-center gap-2 mb-1">
-                                <span
-                                  className={cn(
-                                    'px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wide',
-                                    tone,
-                                  )}
-                                >
-                                  {notification.priority}
-                                </span>
-                                {notification.title && (
-                                  <span className="text-sm font-semibold text-foreground">
-                                    {notification.title}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="text-xs text-muted-foreground whitespace-pre-line">
-                                {notification.body}
-                              </div>
-                              {notification.footer && (
-                                <div className="text-[10px] text-muted-foreground italic mt-1.5">
-                                  {notification.footer}
-                                </div>
+          {tab === 'notifications' && (
+            <div className="p-4 sm:p-6">
+              <CalcCard
+                title="Notifications"
+                guideTo={`${docsPath(level)}#detail-panel`}
+                isSimulated={isSimulated}
+              >
+                {notificationSummary?.notifications?.length ? (
+                  <div className="space-y-4">
+                    {notificationSummary.notifications.map(notification => {
+                      const tone =
+                        notification.priority === 'critical'
+                          ? 'bg-destructive-light text-destructive'
+                          : notification.priority === 'warning'
+                            ? 'bg-warning-light text-warning'
+                            : 'bg-info-light text-info'
+                      return (
+                        <div
+                          key={notification.id}
+                          className="border-t border-border first:border-t-0 first:pt-0 pt-3"
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            <span
+                              className={cn(
+                                'px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wide',
+                                tone,
                               )}
+                            >
+                              {notification.priority}
+                            </span>
+                            {notification.title && (
+                              <span className="text-sm font-semibold text-foreground">
+                                {notification.title}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs text-muted-foreground whitespace-pre-line">
+                            {notification.body}
+                          </div>
+                          {notification.footer && (
+                            <div className="text-2xs text-muted-foreground italic mt-1.5">
+                              {notification.footer}
                             </div>
-                          )
-                        })}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        No notifications for this validator.
-                      </p>
-                    )}
-                  </CalcCard>
-                </div>
-              )}
-            </>
-          )
-        })()}
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No notifications for this validator.
+                  </p>
+                )}
+              </CalcCard>
+            </div>
+          )}
+        </>
 
         <div
           className={cn(
-            'grid grid-cols-1 lg:grid-cols-2 gap-6 px-4 sm:px-6 pb-6',
+            'grid grid-cols-1 lg:grid-cols-2 gap-6 px-4 sm:px-6 py-6',
             tab !== 'overview' && 'hidden',
           )}
         >
@@ -642,8 +943,7 @@ export const ValidatorDetail = ({
             >
               <div className="space-y-3">
                 <MetricRow
-                  label="Active Marinade stake"
-                  help="How much SOL Marinade has staked with you right now."
+                  label="Activated Marinade stake"
                   value={stake(validator.marinadeActivatedStakeSol)}
                 />
                 <MetricRow
@@ -653,7 +953,7 @@ export const ValidatorDetail = ({
                 />
                 <MetricRow
                   label="Expected change next epoch"
-                  help="Stake you'll gain or lose next epoch. Losses mostly come from falling out of the auction — your bid was too low or the bond was thin. A small share comes from people pulling SOL out of Marinade, taken from every validator proportionally."
+                  help="Stake you'll gain or lose next epoch. Losses mostly come from falling out of the auction — your bid was too low or the bond was thin. A small share comes from people pulling SOL out of Marinade, taken from every validator proportionally. It can read 0 SOL even when your target stake is above your active stake — the redelegation budget went to higher-priority validators first, or you are cap or bond constrained, so no net inflow is expected."
                   value={
                     expectedStakeDelta > 0
                       ? `+${stake(expectedStakeDelta)}`
@@ -661,6 +961,14 @@ export const ValidatorDetail = ({
                         ? stake(expectedStakeDelta)
                         : stake(0)
                   }
+                  valueStyle={{
+                    color:
+                      expectedStakeDelta > 0
+                        ? CSS_STATUS_GREEN
+                        : expectedStakeDelta < 0
+                          ? CSS_DESTRUCTIVE
+                          : undefined,
+                  }}
                   separator
                 />
               </div>
@@ -673,19 +981,22 @@ export const ValidatorDetail = ({
               onTitleClick={() => setTab('bond')}
             >
               <div className="space-y-3">
-                <MetricRow
-                  label="Balance"
-                  value={stake(validator.bondBalanceSol ?? 0)}
-                />
+                <MetricRow label="Balance" value={bondBalanceDisplay} />
                 <MetricRow
                   label="Reserve"
                   help={HELP_TEXT.bondCoverage}
-                  value={bondCoverageLabel(bondHealth, bondCoverage)}
+                  helpGuideTo={`${docsPath(level)}#bond`}
+                  value={bondCoverageLabel(
+                    bondHealth,
+                    bondCoverage,
+                    expectedStakeDelta,
+                  )}
                   valueStyle={{ color: bondCoverageColor(bondHealth) }}
                 />
                 <MetricRow
-                  label="Bid runway"
+                  label="Bond runway"
                   help={HELP_TEXT.bondRunway}
+                  helpGuideTo={`${docsPath(level)}#bond-risk-fee`}
                   value={
                     bondRunway <= 0
                       ? 'Depleted'
@@ -696,34 +1007,32 @@ export const ValidatorDetail = ({
             </CalcCard>
 
             <CalcCard
-              title="Expected Payment This Epoch"
+              title="Payments"
               guideTo={`${docsPath(level)}#detail-panel`}
               isSimulated={isSimulated}
               onTitleClick={() => setTab('payments')}
             >
               <div className="space-y-3">
                 <MetricRow
-                  label="Active Stake Cost"
+                  label="Activated stake cost"
                   value={cost(paymentMetrics.cost)}
                 />
                 <MetricRow
-                  label="Activating Stake Cost"
+                  label="Activating stake cost"
                   value={cost(paymentMetrics.activatingCost)}
                 />
-                {(() => {
-                  const penaltyTotal =
-                    bidTooLowPenaltySol + blacklistPenaltySol + bondRiskFeeSol
-                  if (penaltyTotal === 0) {
-                    return <MetricRow label="Penalty" value="No penalties" />
-                  }
-                  return (
-                    <MetricRow
-                      label="Penalty"
-                      value={cost(penaltyTotal)}
-                      valueStyle={{ color: CSS_DESTRUCTIVE }}
-                    />
-                  )
-                })()}
+                {penaltyTotal === 0 ? (
+                  <MetricRow label="Penalty" value="No penalties" />
+                ) : (
+                  <MetricRow
+                    label="Penalty"
+                    value={cost(penaltyTotal)}
+                    valueStyle={{ color: CSS_DESTRUCTIVE }}
+                    onSeeBreakdown={() =>
+                      setTab(bidTooLowPenaltySol > 0 ? 'penalty' : 'payments')
+                    }
+                  />
+                )}
                 {bidTooLowPenaltySol > 0 && (
                   <PenaltyRow
                     label="↳ bid-too-low penalty"
@@ -749,7 +1058,7 @@ export const ValidatorDetail = ({
                   />
                 )}
                 <MetricRow
-                  label="Total"
+                  label="Expected payment this epoch"
                   value={cost(
                     paymentMetrics.total +
                       bidTooLowPenaltySol +
@@ -768,20 +1077,25 @@ export const ValidatorDetail = ({
               apyBreakdown={apyBreakdown}
               winningApy={winningApy}
               validator={validator}
-              guideTo={`${docsPath(level)}#detail-panel`}
+              guideTo={`${docsPath(level)}#cpmpe`}
               isSimulated={isSimulated}
+              onGoToBidding={() => setTab('bidding')}
             />
 
             {simEnabled && (
-              <div className="rounded-xl border-2 p-5 border-status-yellow bg-status-yellow-light">
+              <div className="rounded-xl border border-status-yellow p-5 bg-status-yellow-light">
                 <h3 className="text-base font-semibold flex items-center gap-2 text-status-yellow">
-                  What-If Simulation
-                  <HelpTip text={HELP_TEXT.simulation} />
+                  <HelpTip
+                    text={HELP_TEXT.simulation}
+                    guideTo={`${docsPath(level)}#simulation`}
+                  >
+                    What-If Simulation
+                  </HelpTip>
                 </h3>
                 <fieldset className="space-y-3 mt-3">
                   <div className="space-y-1">
                     <label className="text-xs font-medium text-muted-foreground">
-                      Stake Bid (PMPE)
+                      Static bid (PMPE)
                     </label>
                     <Input
                       type="number"
@@ -807,8 +1121,12 @@ export const ValidatorDetail = ({
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-medium text-muted-foreground">
+                    <label className="text-xs font-medium text-muted-foreground inline-flex items-center gap-1">
                       MEV Commission %
+                      <HelpTip
+                        text="MEV (Maximal Extractable Value) — extra tips earned from transaction ordering. Your commission here is the share you keep before passing the rest to stakers."
+                        guideTo={`${docsPath(level)}#bidding`}
+                      />
                     </label>
                     <Input
                       type="number"
@@ -836,7 +1154,31 @@ export const ValidatorDetail = ({
                       className="font-mono"
                     />
                   </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">
+                      Bond (SOL)
+                    </label>
+                    <Input
+                      type="number"
+                      value={editBond}
+                      onChange={e => setEditBond(e.target.value)}
+                      step="1"
+                      min="0"
+                      placeholder="—"
+                      className="font-mono"
+                    />
+                  </div>
                 </fieldset>
+                {originalAuctionResult && isSimulated && (
+                  <SimDeltas
+                    voteAccount={voteAccount}
+                    current={validator}
+                    originalAuctionResult={originalAuctionResult}
+                    dsSamConfig={dsSamConfig}
+                    winningTotalPmpe={winningTotalPmpe}
+                    bondHealth={bondHealth}
+                  />
+                )}
                 <div className="mt-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1.5">
                     {isCalculating ? (

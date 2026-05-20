@@ -1,3 +1,5 @@
+// Tests for findMatches: minimum query length, exact/prefix/substring matching,
+// result ranking order, and MAX_RESULTS cap.
 import { describe, expect, it } from 'vitest'
 
 import { findMatches } from '../validator-search'

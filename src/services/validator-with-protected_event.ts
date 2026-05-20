@@ -94,7 +94,7 @@ export const fetchProtectedEventsWithValidator = async (): Promise<
         epoch,
         amount: amountLamports,
         vote_account: voteAccount,
-        meta: { funder: 'ValidatorBond' as const },
+        meta: { funder: 'ValidatorBond' },
         reason,
       },
       validator: validatorsMap[voteAccount] ?? null,

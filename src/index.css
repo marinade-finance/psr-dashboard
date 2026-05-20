@@ -66,6 +66,26 @@
   --color-sim-to: var(--sim-to);
   --color-sim-tbody: var(--sim-tbody);
   --color-sim-row: var(--sim-row);
+
+  /* Off-scale type tokens — replace ad-hoc text-[10px] / text-[11px] / text-[13px].
+     Tailwind default text-xs stays at 12px. */
+  --text-2xs: 0.625rem; /* 10px — glanceable meta (cell sub-labels, axis ticks) */
+  --text-2xs--line-height: 0.875rem;
+  --text-3xs: 0.6875rem; /* 11px — micro epoch-meter ticks only */
+  --text-3xs--line-height: 0.875rem;
+  --text-mid: 0.8125rem; /* 13px — emphasised secondary / tab labels */
+  --text-mid--line-height: 1.125rem;
+
+  /* Radius tokens — mirror the Marinade app scale so future shadcn primitives
+     stay in step. Existing rounded-md/lg keep their Tailwind defaults; consumers
+     opting in use rounded-{xs,xl,2xl,3xl}. */
+  --radius-xs: 0.125rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
 }
 
 @layer base {
@@ -83,11 +103,11 @@
     --muted-foreground: #6c8383;
     --border: #dde7e8;
     --border-grid: #e7eeef;
-    --primary: #0c9790;
+    --primary: oklch(60% 0.118 184.704);
     --primary-foreground: #f6f9f9;
-    --primary-alpha: rgba(12, 151, 144, 0.15);
-    --primary-light: rgba(12, 151, 144, 0.08);
-    --primary-light-10: rgba(12, 151, 144, 0.1);
+    --primary-alpha: rgba(8, 147, 139, 0.15);
+    --primary-light: rgba(8, 147, 139, 0.08);
+    --primary-light-10: rgba(8, 147, 139, 0.1);
     --destructive-light: rgba(220, 38, 38, 0.1);
     --warning-light: rgba(229, 150, 6, 0.1);
     --info-light: rgba(99, 102, 241, 0.1);
@@ -100,7 +120,7 @@
     --ring: rgba(154, 177, 178, 0.3);
     --shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.05);
     --cell-red: rgba(220, 38, 38, 0.12);
-    --cell-green: rgba(12, 151, 144, 0.12);
+    --cell-green: rgba(8, 147, 139, 0.12);
     --cell-yellow: rgba(229, 150, 6, 0.12);
     --cell-grey: rgba(100, 116, 139, 0.1);
     --status-green: #16a34a;
@@ -117,7 +137,7 @@
     --accent: #e7eeef;
     --accent-foreground: #081211;
     --input: #e7eeef;
-    --chart-1: #0c9790;
+    --chart-1: oklch(60% 0.118 184.704);
     --chart-2: #818cf8;
     --chart-3: #fbbf24;
     --chart-4: #c084fc;
@@ -145,11 +165,11 @@
     --muted: #182120;
     --border: rgba(255, 255, 255, 0.15);
     --border-grid: rgba(255, 255, 255, 0.06);
-    --primary: #179f99;
+    --primary: oklch(70.4% 0.14 182.503);
     --primary-foreground: #042f2e;
-    --primary-alpha: rgba(23, 159, 153, 0.2);
-    --primary-light: rgba(23, 159, 153, 0.08);
-    --primary-light-10: rgba(23, 159, 153, 0.1);
+    --primary-alpha: rgba(28, 168, 161, 0.2);
+    --primary-light: rgba(28, 168, 161, 0.08);
+    --primary-light-10: rgba(28, 168, 161, 0.1);
     --destructive-light: rgba(248, 113, 113, 0.15);
     --warning-light: rgba(251, 146, 60, 0.15);
     --info-light: rgba(129, 140, 248, 0.15);
@@ -283,6 +303,23 @@
     to {
       transform: rotate(360deg);
     }
+  }
+
+  @keyframes anchor-flash {
+    0% {
+      background-color: var(--warning-light);
+    }
+    60% {
+      background-color: var(--warning-light);
+    }
+    100% {
+      background-color: transparent;
+    }
+  }
+
+  .anchor-highlight {
+    animation: anchor-flash 2s ease-out forwards;
+    border-radius: 4px;
   }
 }
 

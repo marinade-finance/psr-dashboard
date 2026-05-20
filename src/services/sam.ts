@@ -8,7 +8,7 @@ import {
 
 import { pct } from 'src/format'
 
-import { bondRunwayEpochs, compoundApy } from './calculations'
+import { annualize, compoundApy } from './calculations'
 import { fetchValidatorsWithEpochs } from './validators'
 
 import type {
@@ -17,6 +17,7 @@ import type {
   DsSamConfig,
   SourceDataOverrides,
 } from '@marinade.finance/ds-sam-sdk'
+import type { AppOverrides } from 'src/services/simulation'
 
 // Solana epoch = 432000 slots × 0.4s/slot = 172800s = 48h exactly
 const EPOCHS_PER_YEAR = (365.25 * 24 * 3600) / 172800
@@ -28,7 +29,7 @@ type SamResult = {
 }
 
 export const loadSam = async (
-  dataOverrides?: SourceDataOverrides | null,
+  dataOverrides?: AppOverrides | null,
 ): Promise<SamResult> => {
   const config = await loadSamConfig()
   const dsSam = new DsSamSDK({
@@ -39,7 +40,22 @@ export const loadSam = async (
     logVerbosity: LogVerbosity.ERROR,
   })
 
-  const auctionResult = await dsSam.runFinalOnly(dataOverrides)
+  const auctionResult = await dsSam.runFinalOnly(dataOverrides?.source)
+
+  // SDK's runFinalOnly only sees commission/bid overrides; bond top-ups are
+  // stamped onto the returned validators here. Local re-derivations
+  // (coverage, health, runway, risk-fee, penalty) pick up the new bond;
+  // SDK-computed revShare.bondObligationPmpe stays against the original.
+  const bondOverrides = dataOverrides?.bondBalanceSol
+  if (bondOverrides && bondOverrides.size > 0) {
+    for (const v of auctionResult.auctionData.validators) {
+      const override = bondOverrides.get(v.voteAccount)
+      if (override !== undefined) {
+        v.bondBalanceSol = override
+        v.claimableBondBalanceSol = override
+      }
+    }
+  }
 
   return {
     auctionResult,
@@ -55,9 +71,9 @@ const FETCHED_EPOCHS = 11
 // AugmentedAuctionValidator: AuctionValidator with derived per-validator fields
 // pre-computed. expectedStakeChangeSol drives the next-epoch delta display and
 // decomposes into three signed components that always sum to it:
-//   paidUndelegationSol (≤0)      outflow paid this epoch
-//   redelegationInflowSol (≥0)    inflow from budget into below-target winners
-//   naturalWithdrawalSol (≤0)     pro-rata redeemer outflow
+//   paidUndelegationSol (≤0)      bond risk penalty outflow (BRRM forced removal)
+//   redelegationInflowSol (≥0)    inflow from the 1% rotation budget
+//   naturalWithdrawalSol (≤0)     rotation outflow (over-target excess, lowest unstakePriority first)
 // cutoffRank is the dense position relative to the auction cutoff: 0 = at the
 // winning total PMPE, +1 = closest distinct tier above (ties share a rank),
 // -1 = closest distinct tier below.
@@ -71,7 +87,7 @@ export type AugmentedAuctionValidator = Omit<AuctionValidator, 'values'> & {
   }
 }
 
-export type ExpectedStakeChange = {
+type ExpectedStakeChange = {
   total: number
   paidUndelegation: number
   redelegationInflow: number
@@ -104,7 +120,7 @@ export const selectSamDistributedStake = (validators: AuctionValidator[]) =>
 export const selectWinningAPY = (
   auctionResult: AuctionResult,
   epochsPerYear: number,
-) => Math.pow(1 + auctionResult.winningTotalPmpe / 1e3, epochsPerYear) - 1
+) => compoundApy(auctionResult.winningTotalPmpe, epochsPerYear)
 
 // Rebuild the winning APY at THIS validator's commission profile: take the
 // marginal winner's bid component and add it to the validator's own
@@ -115,25 +131,14 @@ export function selectWinningApyForValidator(
   auctionResult: AuctionResult,
   epochsPerYear: number,
 ): number {
-  const { winningTotalPmpe } = auctionResult
-  let marginal: AuctionValidator | null = null
-  for (const w of auctionResult.auctionData.validators) {
-    if (w.auctionStake.marinadeSamTargetSol <= 0) continue
-    if (!marginal || w.revShare.totalPmpe < marginal.revShare.totalPmpe)
-      marginal = w
-  }
-  const m = marginal?.revShare
-  const winningBidPmpe = m
+  const { marginalWinner } = allocateRedelegation(auctionResult)
+  const winningBidPmpe = marginalWinner
     ? Math.max(
         0,
-        winningTotalPmpe - m.inflationPmpe - m.mevPmpe - (m.blockPmpe ?? 0),
+        auctionResult.winningTotalPmpe - selectNonBidPmpe(marginalWinner),
       )
     : 0
-  const r = v.revShare
-  return compoundApy(
-    r.inflationPmpe + r.mevPmpe + (r.blockPmpe ?? 0) + winningBidPmpe,
-    epochsPerYear,
-  )
+  return compoundApy(selectNonBidPmpe(v) + winningBidPmpe, epochsPerYear)
 }
 
 const totalProfitPmpe = (v: AuctionValidator) =>
@@ -154,7 +159,7 @@ export const selectProjectedAPY = (
   const profit = selectActiveProfit(auctionResult.auctionData.validators)
   const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
   if (tvl <= 0) return 0
-  return Math.pow(1 + profit / tvl, epochsPerYear) - 1
+  return annualize(profit / tvl, epochsPerYear)
 }
 
 function overridesMessage(
@@ -167,7 +172,7 @@ function overridesMessage(
   }
   const formatted =
     type === 'percentage' ? pct(overrideValue, 0) : String(overrideValue)
-  return `<b>Overrides ${label}: ${formatted}</b><br/>`
+  return `Overrides ${label}: ${formatted}`
 }
 
 export const selectBid = (validator: AuctionValidator) =>
@@ -175,7 +180,7 @@ export const selectBid = (validator: AuctionValidator) =>
 
 export const overridesCpmpeMessage = (validator: AuctionValidator): string =>
   overridesMessage(
-    'CPMPE',
+    'Cost PMPE',
     validator.values?.commissions?.bidCpmpeOverrideDec,
     'number',
   )
@@ -186,39 +191,23 @@ export const selectCommission = (validator: AuctionValidator): number =>
 export const selectCommissionPmpe = (validator: AuctionValidator) =>
   validator.revShare.inflationPmpe
 
-export const selectMevCommission = (
-  validator: AuctionValidator,
-): number | null => validator.mevCommissionDec
-
 export const formattedMevCommission = (validator: AuctionValidator): string => {
-  const dec = selectMevCommission(validator)
+  const dec = validator.mevCommissionDec
   return dec == null ? '-' : pct(dec, 0)
 }
 
 export const selectMevCommissionPmpe = (validator: AuctionValidator) =>
   validator.revShare.mevPmpe
 
-export const selectBlockRewardsCommission = (
-  validator: AuctionValidator,
-): number | null => validator.blockRewardsCommissionDec
-
 export const formattedBlockRewardsCommission = (
   validator: AuctionValidator,
-): string => {
-  const v = selectBlockRewardsCommission(validator)
-  return pct(v ?? 1, 0)
-}
+): string => pct(validator.blockRewardsCommissionDec ?? 1, 0)
 
 export const selectBlockRewardsCommissionPmpe = (validator: AuctionValidator) =>
   validator.revShare.blockPmpe
 
 export const selectBondSize = (validator: AuctionValidator) =>
   validator.bondBalanceSol
-
-export const selectBondHealth = (
-  validator: AuctionValidator,
-  minBondEpochs: number,
-) => bondRunwayEpochs(validator, minBondEpochs)
 
 export const selectMaxAPY = (
   validator: AuctionValidator,
@@ -228,81 +217,148 @@ export const selectMaxAPY = (
 export const selectEffectiveBid = (validator: AuctionValidator) =>
   validator.revShare.auctionEffectiveBidPmpe
 
+export const selectInSet = (v: AuctionValidator): boolean =>
+  v.auctionStake.marinadeSamTargetSol > 0
+
+export const selectPaidUndelegationSol = (v: AuctionValidator): number =>
+  v.values?.paidUndelegationSol ?? 0
+
+export const selectNonBidPmpe = (v: AuctionValidator): number =>
+  v.revShare.inflationPmpe + v.revShare.mevPmpe + (v.revShare.blockPmpe ?? 0)
+
 export const selectEffectiveCost = (validator: AuctionValidator) =>
   (validator.marinadeActivatedStakeSol / 1000) *
   validator.revShare.auctionEffectiveBidPmpe
 
-// ~0.7% of TVL is withdrawn from the pool each epoch by redeemers.
-const WITHDRAWAL_FRACTION_PER_EPOCH = 0.007
+// Natural redelegation-turnover cap: ~1% of TVL redistributed each epoch.
+// Not SDK-exported; maintained here until the SDK exposes it.
+const WITHDRAWAL_FRACTION_PER_EPOCH = 0.01
 
-// Natural withdrawals are drawn pro-rata from over-target validators first;
-// falls back to pro-rata by active stake if nobody is over target.
+// 1%-TVL rotation: sorted by unstakePriority asc (lowest prio unstaked first),
+// takes each validator's over-target excess until the budget is exhausted.
 function computeNaturalWithdrawal(
   validators: AuctionValidator[],
   tvl: number,
 ): Map<string, number> {
   const out = new Map<string, number>()
-  const withdrawal = WITHDRAWAL_FRACTION_PER_EPOCH * tvl
-  if (withdrawal <= 0) return out
-  const excess = validators.map(validator => ({
-    va: validator.voteAccount,
-    x: Math.max(
-      0,
-      validator.marinadeActivatedStakeSol -
-        validator.auctionStake.marinadeSamTargetSol,
-    ),
-  }))
-  const totalExcess = excess.reduce((sum, entry) => sum + entry.x, 0)
-  let remaining = withdrawal
-  if (totalExcess > 0) {
-    for (const { va, x } of excess) {
-      if (x <= 0) continue
-      const share = Math.min(x, (withdrawal * x) / totalExcess)
-      if (share > 0) {
-        out.set(va, share)
-        remaining -= share
-      }
-    }
-    if (remaining <= 1e-9) return out
-  }
-  const totalActive = validators.reduce(
-    (s, v) => s + v.marinadeActivatedStakeSol,
-    0,
+  let remaining = WITHDRAWAL_FRACTION_PER_EPOCH * tvl
+  if (remaining <= 0) return out
+  const sorted = [...validators].sort(
+    (a, b) => a.unstakePriority - b.unstakePriority,
   )
-  if (totalActive <= 0) return out
-  for (const validator of validators) {
-    const add = (remaining * validator.marinadeActivatedStakeSol) / totalActive
-    if (add > 0)
-      out.set(
-        validator.voteAccount,
-        (out.get(validator.voteAccount) ?? 0) + add,
-      )
+  for (const v of sorted) {
+    const excess = Math.max(
+      0,
+      v.marinadeActivatedStakeSol - v.auctionStake.marinadeSamTargetSol,
+    )
+    if (excess <= 0) continue
+    const take = Math.min(excess, remaining)
+    out.set(v.voteAccount, take)
+    remaining -= take
+    if (remaining <= 0) break
   }
   return out
 }
 
-// Paid undelegation is a one-time outflow whose freed capacity returns to
-// the redelegation budget the same epoch (TVL − Σactive grows by exactly
-// Σpaid). Effective post-undelegation active = active − paid; below-target
-// winners (vs that effective active) absorb the augmented budget greedily by
-// totalPmpe. Natural withdrawal (~0.7% TVL) is the only true outflow.
-// SDK truth: calcBondRiskFee uses projectedActivatedStakeSol = max(0, active
-// − paidUndelegationSol) as the post-undelegation baseline; we mirror that.
+type RedelegationAllocation = {
+  // Greedy inflow awarded to each below-target winner, keyed by vote account.
+  inflowByVote: Map<string, number>
+  // Lowest revShare.totalPmpe among winners that received their FULL
+  // below-target delta this run. A validator must clear this to be sure of
+  // full priority allocation. null when the budget covered everyone (or
+  // there was no budget / no below-target winner) — no binding frontier.
+  priorityFrontierPmpe: number | null
+  // 1-based standard rank (ties share the higher position) over ALL validators
+  // sorted by revShare.totalPmpe descending — the exact order the greedy
+  // budget is handed out in.
+  rankByVote: Map<string, number>
+  // Lowest-totalPmpe in-set validator — the auction-clearing winner whose
+  // bid component sets the winningBidPmpe. null when nobody is in set.
+  marginalWinner: AuctionValidator | null
+}
+
+// Shared greedy redelegation allocation. The per-validator expected stake
+// change, the auction-wide priority frontier, the totalPmpe-desc rank used
+// by next-epoch advice, and the marginal-winner reference used by the
+// auction APY math all read from this one pass so they never drift apart.
+// Validators are walked in descending revShare.totalPmpe order; a validator
+// is "fully satisfied" when its entire below-target delta fit before the
+// budget was exhausted.
+//
+// Memoised per AuctionResult identity: called by computeExpectedStakeChanges,
+// selectRedelegationPriorityFrontierPmpe, selectRedelegationPriorityRank,
+// selectWinningApyForValidator, and computeNextEpochStake — same auction
+// would otherwise run the greedy pass once per consumer per detail open.
+const allocationCache = new WeakMap<AuctionResult, RedelegationAllocation>()
+
+function allocateRedelegation(
+  auctionResult: AuctionResult,
+): RedelegationAllocation {
+  const cached = allocationCache.get(auctionResult)
+  if (cached) return cached
+  const validators = auctionResult.auctionData.validators
+  const budget = selectRedelegationBudget(auctionResult)
+  const effectiveActive = (v: AuctionValidator) =>
+    v.marinadeActivatedStakeSol - selectPaidUndelegationSol(v)
+  const rawDelta = (v: AuctionValidator) =>
+    v.auctionStake.marinadeSamTargetSol - effectiveActive(v)
+
+  const sorted = [...validators].sort(
+    (va, vb) => vb.stakePriority - va.stakePriority,
+  )
+  const inflowByVote = new Map<string, number>()
+  const rankByVote = new Map<string, number>()
+  let priorityFrontierPmpe: number | null = null
+  let marginalWinner: AuctionValidator | null = null
+  let prevPmpe: number | null = null
+  let groupRank = 0
+  let remaining = budget
+  sorted.forEach((v, i) => {
+    const pmpe = v.revShare.totalPmpe ?? 0
+    if (pmpe !== prevPmpe) {
+      groupRank = i + 1
+      prevPmpe = pmpe
+    }
+    rankByVote.set(v.voteAccount, groupRank)
+    if (v.auctionStake.marinadeSamTargetSol > 0) {
+      marginalWinner = v
+    }
+    if (budget > 0) {
+      const delta = rawDelta(v)
+      if (delta > 0 && remaining > 0) {
+        const alloc = Math.min(delta, remaining)
+        inflowByVote.set(
+          v.voteAccount,
+          (inflowByVote.get(v.voteAccount) ?? 0) + alloc,
+        )
+        remaining -= alloc
+        if (alloc >= delta) {
+          priorityFrontierPmpe = pmpe
+        }
+      }
+    }
+  })
+  const result = {
+    inflowByVote,
+    priorityFrontierPmpe,
+    rankByVote,
+    marginalWinner,
+  }
+  allocationCache.set(auctionResult, result)
+  return result
+}
+
+// paidUndelegation = SDK's paidUndelegationSol: accumulated bond risk penalty
+// (BRRM forced removal). Sub-min-bond validators lose all stake via this path;
+// they are excluded from inflow and rotation.
 function computeExpectedStakeChanges(
   auctionResult: AuctionResult,
+  minBondBalanceSol: number,
 ): Map<string, ExpectedStakeChange> {
   const validators = auctionResult.auctionData.validators
   const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
-  const paidOf = (v: AuctionValidator) => v.values?.paidUndelegationSol ?? 0
-  const totalPaid = validators.reduce(
-    (sum, validator) => sum + paidOf(validator),
-    0,
-  )
-  const budget = selectRedelegationBudget(auctionResult) + totalPaid
-  const effectiveActive = (v: AuctionValidator) =>
-    v.marinadeActivatedStakeSol - paidOf(v)
-  const rawDelta = (v: AuctionValidator) =>
-    v.auctionStake.marinadeSamTargetSol - effectiveActive(v)
+  const bondBelowMin = (v: AuctionValidator) =>
+    (v.bondBalanceSol ?? 0) < minBondBalanceSol
   const result = new Map<string, ExpectedStakeChange>()
   const get = (va: string): ExpectedStakeChange => {
     let entry = result.get(va)
@@ -319,7 +375,13 @@ function computeExpectedStakeChanges(
   }
 
   for (const validator of validators) {
-    const paid = paidOf(validator)
+    if (bondBelowMin(validator)) {
+      const entry = get(validator.voteAccount)
+      entry.paidUndelegation = -validator.marinadeActivatedStakeSol
+      entry.total = -validator.marinadeActivatedStakeSol
+      continue
+    }
+    const paid = selectPaidUndelegationSol(validator)
     if (paid > 0) {
       const entry = get(validator.voteAccount)
       entry.paidUndelegation = -paid
@@ -327,25 +389,21 @@ function computeExpectedStakeChanges(
     }
   }
 
-  if (budget > 0) {
-    const sorted = [...validators].sort(
-      (va, vb) => (vb.revShare.totalPmpe ?? 0) - (va.revShare.totalPmpe ?? 0),
-    )
-    let remaining = budget
-    for (const validator of sorted) {
-      const delta = rawDelta(validator)
-      if (delta > 0 && remaining > 0) {
-        const alloc = Math.min(delta, remaining)
-        const entry = get(validator.voteAccount)
-        entry.redelegationInflow += alloc
-        entry.total += alloc
-        remaining -= alloc
-      }
-    }
+  const byVote = new Map(validators.map(v => [v.voteAccount, v] as const))
+
+  const { inflowByVote } = allocateRedelegation(auctionResult)
+  for (const [va, alloc] of inflowByVote) {
+    const validator = byVote.get(va)
+    if (validator && bondBelowMin(validator)) continue
+    const entry = get(va)
+    entry.redelegationInflow += alloc
+    entry.total += alloc
   }
 
   const withdrawals = computeNaturalWithdrawal(validators, tvl)
   for (const [va, w] of withdrawals) {
+    const validator = byVote.get(va)
+    if (validator && bondBelowMin(validator)) continue
     const entry = get(va)
     entry.naturalWithdrawal -= w
     entry.total -= w
@@ -354,11 +412,23 @@ function computeExpectedStakeChanges(
   return result
 }
 
+// Memoised per AuctionResult identity. minBondBalanceSol comes from DsSamConfig
+// (stable across the lifetime of a loaded auction), so reusing the prior
+// computation when it matches avoids a per-render rebuild from sam-table.
+const augmentCache = new WeakMap<
+  AuctionResult,
+  { minBondBalanceSol: number; result: AugmentedAuctionValidator[] }
+>()
+
 export function augmentAuctionResult(
   auctionResult: AuctionResult,
+  minBondBalanceSol: number,
 ): AugmentedAuctionValidator[] {
+  const cached = augmentCache.get(auctionResult)
+  if (cached && cached.minBondBalanceSol === minBondBalanceSol)
+    return cached.result
   const validators = auctionResult.auctionData.validators
-  const changes = computeExpectedStakeChanges(auctionResult)
+  const changes = computeExpectedStakeChanges(auctionResult, minBondBalanceSol)
   // Dense rank around the winning total PMPE: ties share a position, the
   // marginal winner sits at 0. Above-cutoff is +1 (closest tier above), below
   // is -1 (closest tier below). Ranking by totalPmpe (not maxApy) avoids the
@@ -372,6 +442,10 @@ export function augmentAuctionResult(
   const below = [...new Set(pmpes.filter(p => p < win - eps))].sort(
     (a, b) => b - a,
   )
+  const aboveRank = new Map<number, number>()
+  for (let i = 0; i < above.length; i++) aboveRank.set(above[i], 1 + i)
+  const belowRank = new Map<number, number>()
+  below.forEach((p, i) => belowRank.set(p, -1 - i))
   const cutoffRanks = new Map<string, number>()
   for (const v of validators) {
     const p = v.revShare.totalPmpe
@@ -379,12 +453,12 @@ export function augmentAuctionResult(
       Math.abs(p - win) < eps
         ? 0
         : p > win
-          ? 1 + above.indexOf(p)
-          : -1 - below.indexOf(p)
+          ? (aboveRank.get(p) ?? 0)
+          : (belowRank.get(p) ?? 0)
     cutoffRanks.set(v.voteAccount, rank)
   }
 
-  return validators.map(validator => {
+  const result = validators.map(validator => {
     const change = changes.get(validator.voteAccount)
     return {
       ...validator,
@@ -398,17 +472,15 @@ export function augmentAuctionResult(
       } as AugmentedAuctionValidator['values'],
     }
   })
+  augmentCache.set(auctionResult, { minBondBalanceSol, result })
+  return result
 }
 
 export const selectExpectedStakeChange = (
   v: AugmentedAuctionValidator,
 ): number => v.values.expectedStakeChangeSol ?? 0
 
-export type ExpectedStakeChangeBreakdown = {
-  paidUndelegation: number
-  redelegationInflow: number
-  naturalWithdrawal: number
-}
+export type ExpectedStakeChangeBreakdown = Omit<ExpectedStakeChange, 'total'>
 
 export const selectExpectedStakeChangeBreakdown = (
   v: AugmentedAuctionValidator,
@@ -497,4 +569,28 @@ export function selectRedelegationBudget(auctionResult: AuctionResult): number {
     0,
   )
   return Math.max(0, tvl - activeTotal)
+}
+
+// Lowest revShare.totalPmpe among winners that got their full below-target
+// delta from this run's greedy redelegation. A validator wanting guaranteed
+// priority inflow next epoch must clear this. Returns 0 when the budget
+// reached everyone (or there was none / no below-target winner) — there is
+// no binding frontier, any in-set validator is already served.
+export function selectRedelegationPriorityFrontierPmpe(
+  auctionResult: AuctionResult,
+): number {
+  return allocateRedelegation(auctionResult).priorityFrontierPmpe ?? 0
+}
+
+// 1-based position of this validator in the exact order the redelegation
+// budget is handed out: revShare.totalPmpe descending — the same sort key
+// the greedy pass uses. Ties share the higher position. This is the true
+// delegation-priority rank, not the maxApy-derived sam-table rank; the
+// greedy pass orders strictly on totalPmpe, so this is the rank that
+// decides whether the budget reaches you before it runs dry.
+export function selectRedelegationPriorityRank(
+  v: AuctionValidator,
+  auctionResult: AuctionResult,
+): number {
+  return allocateRedelegation(auctionResult).rankByVote.get(v.voteAccount) ?? 1
 }

@@ -1,9 +1,9 @@
 import React from 'react'
 
-import { pct, pay, pmpe, stake } from 'src/format'
+import { cost, pct, pmpe, stake } from 'src/format'
 import { computeBidPenalty } from 'src/services/bid-penalty'
 
-import { CalcCard } from './card'
+import { CalcCard, CardStatusTone, type CardStatus } from './card'
 import { CalcRow, OkRow, SectionHeader } from './row'
 
 import type {
@@ -32,26 +32,25 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
 }) => {
   const metrics = computeBidPenalty(validator, dsSamConfig, winningTotalPmpe)
 
-  const status: { label: string; tone: 'red' | 'green' | 'yellow' } = {
+  const baseStatus: Omit<CardStatus, 'action'> = {
     label:
-      metrics.penaltyPmpe > 0
-        ? `Penalty active: ${pmpe(metrics.penaltyPmpe)} PMPE this epoch.`
+      metrics.penaltySol > 0
+        ? `Raise bid or pay a ${cost(metrics.penaltySol)} penalty this epoch.`
         : metrics.isNegativeBiddingChange
           ? 'Bid dropped this epoch but bond obligation covers it — no penalty.'
           : 'Bid did not decrease — no penalty.',
-    tone: metrics.penaltyPmpe > 0 ? 'red' : 'green',
+    tone: metrics.penaltySol > 0 ? CardStatusTone.RED : CardStatusTone.GREEN,
   }
-
-  const tip = onGoToSim ? (
-    <button
-      className="text-xs text-primary hover:underline"
-      onClick={onGoToSim}
-    >
-      {metrics.penaltyPmpe > 0
-        ? `Raise bid to ≥ ${pmpe(metrics.adjustedLimit)} PMPE in simulation →`
-        : 'Simulate bid or commission changes →'}
-    </button>
-  ) : null
+  const status: CardStatus = onGoToSim
+    ? {
+        ...baseStatus,
+        action: {
+          label: metrics.penaltyPmpe > 0 ? 'Raise bid in sim →' : 'Simulate →',
+          tone: CardStatusTone.YELLOW,
+          onClick: onGoToSim,
+        },
+      }
+    : baseStatus
 
   return (
     <CalcCard
@@ -59,25 +58,28 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
       guideTo={guideTo}
       isSimulated={isSimulated}
       status={status}
-      tip={tip}
     >
-      <table className="w-full">
+      <table className="w-full max-w-[34rem]">
         <tbody>
-          <SectionHeader title="Bid history" />
-          <CalcRow
-            label="Last epoch bid PMPE"
-            value={pmpe(metrics.lastEpochBidPmpe)}
+          <SectionHeader
+            title="Bid history"
+            help="Your bid last epoch versus this epoch. If it dropped, the penalty checks whether your bond still covers what you previously promised."
+            unit="PMPE"
           />
           <CalcRow
-            label="This epoch bid PMPE"
-            value={pmpe(metrics.thisEpochBidPmpe)}
+            label="Last epoch bid"
+            col2={pmpe(metrics.lastEpochBidPmpe)}
+          />
+          <CalcRow
+            label="This epoch bid"
+            col2={pmpe(metrics.thisEpochBidPmpe)}
           />
           {(() => {
             const d = metrics.thisEpochBidPmpe - metrics.lastEpochBidPmpe
             return (
               <CalcRow
                 label="Bid change this epoch"
-                value={`${d > 0 ? '+' : d < 0 ? '−' : ''}${pmpe(Math.abs(d))}`}
+                col2={`${d > 0 ? '+' : d < 0 ? '−' : ''}${pmpe(Math.abs(d))}`}
                 severity={
                   metrics.isNegativeBiddingChange
                     ? 'error'
@@ -89,40 +91,53 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
             )
           })()}
 
-          <SectionHeader title="Historical baseline" />
-          <CalcRow
-            label="History window"
-            secondary={`${metrics.historyEpochs} epochs`}
+          <SectionHeader
+            title="Historical baseline"
+            help="The lowest bid you held over the recent window. Your bid can drop, but not below this — or the penalty fires."
+            unit="PMPE"
           />
           <CalcRow
-            label="Worst historical effective participating bid PMPE"
-            value={pmpe(metrics.worstHistoricalPmpe)}
+            label={`Historical bid limit — ${metrics.historyEpochs} epoch window`}
+            help="The lowest effective participating bid PMPE seen across the recent history window. Defines a floor — your bid can't drop below it without triggering the penalty."
+            col2={pmpe(metrics.worstHistoricalPmpe)}
           />
 
-          <SectionHeader title="Threshold" />
-          <CalcRow
-            label="Winning PMPE"
-            value={pmpe(metrics.winningTotalPmpe)}
+          <SectionHeader
+            title="Threshold"
+            help="The level your bond has to clear this epoch. Built from the auction's winning total PMPE and your current participating bid — whichever is lower sets the level."
+            unit="PMPE"
           />
           <CalcRow
-            label="Effective participating bid PMPE"
-            value={pmpe(metrics.effParticipatingBidPmpe)}
+            label="Winning total"
+            help="The lowest total PMPE that still made the winning set this epoch — same metric as the winning total PMPE in the Bidding tab. One of the two inputs to the threshold."
+            col2={pmpe(metrics.winningTotalPmpe)}
           />
           <CalcRow
-            label="Limit — min(effective, worst historical)"
-            value={pmpe(metrics.limit)}
+            label="Effective participating bid"
+            help="The portion of your bid the auction counts toward the threshold this epoch. Lower than your static bid when the auction caps it."
+            col2={pmpe(metrics.effParticipatingBidPmpe)}
+          />
+          <CalcRow
+            label="Effective limit"
+            help="The lower of your current effective participating bid PMPE and the historical bid limit. Whichever is smaller becomes the threshold the penalty checks against."
+            col2={pmpe(metrics.limit)}
           />
           <CalcRow
             label="Adjusted limit after permitted deviation"
-            value={pmpe(metrics.adjustedLimit)}
+            help="The effective limit with a small grace margin subtracted. Your bond obligation is allowed to land below the raw limit, but not below this adjusted level."
+            col2={pmpe(metrics.adjustedLimit)}
           />
           <CalcRow
-            label="Bond obligation PMPE"
-            value={pmpe(metrics.bondObligationPmpe)}
+            label="Bond obligation"
+            help="The per-epoch rate your bond currently backs, expressed as PMPE. The penalty fires when this falls below the adjusted limit above."
+            col2={pmpe(metrics.bondObligationPmpe)}
           />
           <CalcRow
             label="Shortfall"
-            value={pmpe(metrics.shortfall)}
+            help="How far the bond obligation lands below the adjusted limit. Positive only triggers a penalty if you also dropped your bid this epoch."
+            col2={pmpe(metrics.shortfall)}
+            bold
+            separator
             severity={
               metrics.shortfall === 0
                 ? 'ok'
@@ -132,25 +147,44 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
             }
           />
 
-          <SectionHeader title="Penalty" />
+          <SectionHeader
+            title="Penalty coefficient"
+            help="Computed from how far the bond obligation sits below the adjusted limit. Non-zero only when your bid also dropped this epoch."
+          />
           <CalcRow
             label="Penalty coefficient"
-            secondary={pct(metrics.penaltyCoef, 2)}
+            col2={pct(metrics.penaltyCoef, 2)}
+          />
+
+          <SectionHeader
+            title="Penalty rate"
+            help="The per-1000-SOL charge before it is scaled by your stake. Coefficient times penalty base."
+            unit="PMPE"
           />
           <CalcRow
-            label="Base — winning PMPE + effective participating bid PMPE"
-            value={pmpe(metrics.base)}
+            label="Penalty base"
+            help="Winning PMPE plus your effective participating bid PMPE. The penalty coefficient is applied to this sum to size the per-PMPE charge."
+            col2={pmpe(metrics.base)}
           />
           <CalcRow
-            label="Penalty PMPE"
-            value={pmpe(metrics.penaltyPmpe)}
+            label="Penalty"
+            col2={pmpe(metrics.penaltyPmpe)}
             severity={metrics.penaltyPmpe > 0 ? 'error' : undefined}
+            bold
+          />
+
+          <SectionHeader
+            title="Penalty this epoch"
+            help="The actual SOL charge: penalty rate scaled to your Marinade-activated stake. Collected as forced stake undelegation."
+          />
+          <CalcRow
+            label="Activated Marinade stake"
+            col2={stake(metrics.marinadeActivatedStakeSol)}
           />
           {metrics.penaltySol > 0 ? (
             <CalcRow
               label="Penalty this epoch"
-              secondary={stake(metrics.marinadeActivatedStakeSol)}
-              value={pay(metrics.penaltySol)}
+              col2={cost(metrics.penaltySol)}
               total
               severity="error"
             />

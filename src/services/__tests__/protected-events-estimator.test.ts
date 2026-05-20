@@ -1,3 +1,5 @@
+// Regression guards for calculateProtectedEventEstimates: B1 (epoch boundary),
+// B5 (partial payment), B6 (zero-stake edge) fixture scenarios.
 import { describe, it, expect, vi } from 'vitest'
 
 import { isProtectedEvent } from '../protected-events'

@@ -1,6 +1,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import React, { useState, useCallback, useEffect, useMemo } from 'react'
 
+import { cn } from 'src/class_utils'
 import { Banner } from 'src/components/banner/banner'
 import { Loader } from 'src/components/loader/loader'
 import { Navigation } from 'src/components/navigation/navigation'
@@ -21,7 +22,7 @@ import { mergeOverrides, removeFromOverrides } from 'src/services/simulation'
 
 import type { AuctionResult, DsSamConfig } from '@marinade.finance/ds-sam-sdk'
 import type { UserLevel } from 'src/components/navigation/navigation'
-import type { SourceDataOverrides } from 'src/services/sam'
+import type { AppOverrides } from 'src/services/simulation'
 
 type SamResult = {
   auctionResult: AuctionResult
@@ -32,7 +33,7 @@ type SamResult = {
 // Injection points used by /test-* routes to swap in fixture data.
 // Production callers pass nothing; defaults call the real services.
 export type SamDataSources = {
-  loadAuction: (overrides: SourceDataOverrides | null) => Promise<SamResult>
+  loadAuction: (overrides: AppOverrides | null) => Promise<SamResult>
   loadValidatorNames: () => Promise<Map<string, string>>
 }
 
@@ -58,7 +59,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
   const [isCalculating, setIsCalculating] = useState(false)
   const [simulationRunId, setSimulationRunId] = useState(0)
   const [simulationOverrides, setSimulationOverrides] =
-    useState<SourceDataOverrides | null>(null)
+    useState<AppOverrides | null>(null)
   const [simulatedValidators, setSimulatedValidators] = useState<Set<string>>(
     new Set(),
   )
@@ -184,6 +185,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
       mevCommission: number | null,
       blockRewardsCommission: number | null,
       bidPmpe: number | null,
+      bondBalanceSol: number | null,
     ) => {
       if (!selectedValidator || !data) return
       ensureOriginalSaved()
@@ -192,6 +194,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
         mevCommissionDec: mevCommission,
         blockRewardsCommissionDec: blockRewardsCommission,
         bidPmpe,
+        bondBalanceSol,
       })
       setSimulationOverrides(next)
       setSimulatedValidators(prev => new Set([...prev, selectedValidator]))
@@ -205,7 +208,10 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
 
   const sheetValidatorData = useMemo(() => {
     if (!selectedValidator || !displayAuctionResult || !data) return null
-    const augmented = augmentAuctionResult(displayAuctionResult)
+    const augmented = augmentAuctionResult(
+      displayAuctionResult,
+      data.dcSamConfig.minBondBalanceSol,
+    )
     const validators = augmented
       .filter(validator => (selectBondSize(validator) ?? 0) > 0)
       .sort(
@@ -224,36 +230,53 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
     }
   }, [selectedValidator, displayAuctionResult, data])
 
+  // Simulation ring wraps the broadcast banner AND the table together — all
+  // "what-if" surfaces sit inside one frame. Was previously inside SamTable,
+  // which only encircled the table.
+  const inSimulation = simulatedValidators.size > 0
+
   return (
     <div className="bg-background-page">
       <Navigation level={level} />
-      {latestBroadcastNotification && (
-        <div className="px-4 pt-3 pb-0 max-w-[1920px] mx-auto">
-          <Banner
-            key={latestBroadcastNotification.id}
-            title={latestBroadcastNotification.title ?? 'Announcement'}
-            body={latestBroadcastNotification.message}
+      <div
+        className={cn(
+          inSimulation &&
+            'mx-3 my-3 ring-4 ring-inset ring-status-yellow rounded-lg overflow-hidden',
+        )}
+      >
+        {latestBroadcastNotification && (
+          <div
+            className={cn(
+              'max-w-[1920px] mx-auto',
+              inSimulation ? 'px-4 pt-3 pb-3' : 'px-4 pt-3 pb-0',
+            )}
+          >
+            <Banner
+              key={latestBroadcastNotification.id}
+              title={latestBroadcastNotification.title ?? 'Announcement'}
+              body={latestBroadcastNotification.message}
+            />
+          </div>
+        )}
+        {status === 'error' && <p>Error fetching data</p>}
+        {status === 'pending' && <Loader />}
+        {status === 'success' && displayAuctionResult && (
+          <SamTable
+            auctionResult={displayAuctionResult}
+            originalAuctionResult={originalAuctionResult}
+            epochsPerYear={data.epochsPerYear}
+            dsSamConfig={data.dcSamConfig}
+            level={level}
+            simulatedValidators={simulatedValidators}
+            isCalculating={isCalculating}
+            validatorMeta={nameMap}
+            onValidatorClick={handleValidatorClick}
+            onValidatorSearch={handleValidatorClick}
+            onClearValidator={handleClearValidator}
+            onResetSimulation={handleResetSimulation}
           />
-        </div>
-      )}
-      {status === 'error' && <p>Error fetching data</p>}
-      {status === 'pending' && <Loader />}
-      {status === 'success' && displayAuctionResult && (
-        <SamTable
-          auctionResult={displayAuctionResult}
-          originalAuctionResult={originalAuctionResult}
-          epochsPerYear={data.epochsPerYear}
-          dsSamConfig={data.dcSamConfig}
-          level={level}
-          simulatedValidators={simulatedValidators}
-          isCalculating={isCalculating}
-          validatorMeta={nameMap}
-          onValidatorClick={handleValidatorClick}
-          onValidatorSearch={handleValidatorClick}
-          onClearValidator={handleClearValidator}
-          onResetSimulation={handleResetSimulation}
-        />
-      )}
+        )}
+      </div>
       {status === 'success' &&
         displayAuctionResult &&
         sheetValidatorData &&
@@ -262,6 +285,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
             key={selectedValidator ?? 'detail'}
             validator={sheetValidatorData.validator}
             auctionResult={displayAuctionResult}
+            originalAuctionResult={originalAuctionResult}
             dsSamConfig={data.dcSamConfig}
             epochsPerYear={data.epochsPerYear}
             nameMap={nameMap}

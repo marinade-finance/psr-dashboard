@@ -1,6 +1,7 @@
 import React from 'react'
 
 import { cn } from 'src/class_utils'
+import { CardStatusTone } from 'src/components/breakdowns/card'
 import { HelpTip } from 'src/components/help-tip/help-tip'
 
 export const SEPARATOR_DIV_CLASS = 'border-t border-border-grid pt-2 mt-1'
@@ -8,37 +9,65 @@ export const SEPARATOR_DIV_CLASS = 'border-t border-border-grid pt-2 mt-1'
 // top space is what makes the total row breathe — a thin border alone reads
 // as "more rows below" without it.
 export const SEPARATOR_CELL_PAD = 'pt-3 pb-1.5'
-// Total rows get a bit more room above the divider to read as a conclusion.
-export const TOTAL_CELL_PAD = 'pt-4 pb-2'
+// Total rows: slightly tighter top than before so the following
+// SectionHeader breaks cleanly from the conclusion.
+export const TOTAL_CELL_PAD = 'pt-3 pb-2'
 export const NORMAL_CELL_PAD = 'py-1.5'
 
+// `unit` puts a shared column unit (e.g. "PMPE" or "epochs") in the section
+// header instead of repeating it on every row label. SOL and % are NEVER
+// declared here — SOL gets an inline suffix on the value, % is annotated
+// beside the value. `unit` aligns over col2; `col1Unit` aligns over col1
+// for sections where the two columns carry different kinds (e.g. payments:
+// col1 = PMPE rate, col2 = SOL cost).
 export const SectionHeader: React.FC<{
   title: string
   colSpan?: number
   help?: string
-}> = ({ title, colSpan = 3, help }) => (
-  <tr>
-    <td
-      colSpan={colSpan}
-      className="pt-4 pb-1 text-xs uppercase tracking-wider text-muted-foreground border-b border-dashed border-border"
-    >
-      <span className="inline-flex items-center gap-1.5">
-        {title}
-        {help && <HelpTip text={help} />}
-      </span>
-    </td>
-  </tr>
-)
-
-const MARKER_CLASSES: Record<'red' | 'yellow' | 'green', string> = {
-  red: 'bg-destructive',
-  yellow: 'bg-status-yellow',
-  green: 'bg-primary',
+  unit?: string
+  col1Unit?: string
+}> = ({ title, colSpan = 3, help, unit, col1Unit }) => {
+  const headerCellCls =
+    'pt-6 pb-1 text-xs uppercase tracking-wider text-muted-foreground [tr:first-child>&]:pt-0'
+  if (col1Unit) {
+    return (
+      <tr>
+        <td className={cn(headerCellCls, 'pr-2')}>
+          {help ? <HelpTip text={help}>{title}</HelpTip> : <span>{title}</span>}
+        </td>
+        <td className={cn(headerCellCls, 'px-2 text-right font-mono')}>
+          {col1Unit}
+        </td>
+        <td className={cn(headerCellCls, 'pl-2 text-right font-mono')}>
+          {unit ?? ''}
+        </td>
+      </tr>
+    )
+  }
+  return (
+    <tr>
+      <td colSpan={colSpan} className={headerCellCls}>
+        <div className="flex items-center justify-between">
+          {help ? <HelpTip text={help}>{title}</HelpTip> : <span>{title}</span>}
+          {unit && <span className="font-mono normal-case">{unit}</span>}
+        </div>
+      </td>
+    </tr>
+  )
 }
 
-export const Marker: React.FC<{ tone: 'red' | 'yellow' | 'green' }> = ({
-  tone,
-}) => (
+const MARKER_CLASSES: Record<
+  CardStatusTone.RED | CardStatusTone.YELLOW | CardStatusTone.GREEN,
+  string
+> = {
+  [CardStatusTone.RED]: 'bg-destructive',
+  [CardStatusTone.YELLOW]: 'bg-status-yellow',
+  [CardStatusTone.GREEN]: 'bg-primary',
+}
+
+export const Marker: React.FC<{
+  tone: CardStatusTone.RED | CardStatusTone.YELLOW | CardStatusTone.GREEN
+}> = ({ tone }) => (
   <span
     className={cn(
       'inline-block w-1.5 h-1.5 rounded-full mr-2 align-middle',
@@ -49,106 +78,120 @@ export const Marker: React.FC<{ tone: 'red' | 'yellow' | 'green' }> = ({
 
 export type Severity = 'ok' | 'warning' | 'error'
 
-const SEVERITY_TONE: Record<Severity, 'green' | 'yellow' | 'red'> = {
-  ok: 'green',
-  warning: 'yellow',
-  error: 'red',
+const SEVERITY_TONE: Record<
+  Severity,
+  CardStatusTone.GREEN | CardStatusTone.YELLOW | CardStatusTone.RED
+> = {
+  ok: CardStatusTone.GREEN,
+  warning: CardStatusTone.YELLOW,
+  error: CardStatusTone.RED,
 }
 
-// Row visual conventions:
+const TEXT_BASE = 'text-base'
+const TEXT_XS = 'text-xs'
+const BOLD = 'font-semibold'
+const MUTED = 'text-muted-foreground'
+const MID_CELL = 'px-2 text-right font-mono text-xs text-muted-foreground'
+const TONE_TEXT: Record<
+  CardStatusTone.GREEN | CardStatusTone.YELLOW | CardStatusTone.RED,
+  string
+> = {
+  [CardStatusTone.GREEN]: 'text-status-green',
+  [CardStatusTone.YELLOW]: 'text-status-yellow',
+  [CardStatusTone.RED]: 'text-destructive',
+}
+
+// Single shared per-row visual model. CalcRow renders `Label | col1 | col2`
+// for every breakdown table. Padding/divider/weight derive from these flags:
+//
 //   - Plain row: raw input / step. No flags.
 //   - Sub-total / calculated intermediate: pass `severity` only — the dot
 //     carries the signal. Never combine with `bold`; bold is reserved for
 //     section conclusions / totals.
-//   - Section conclusion: `separator` + `bold` + `large`.
+//   - Section conclusion: `separator + bold + large`.
 //   - Total: `total` (implies separator + bold + large + divider above).
+//
+// Each column NEVER mixes value kinds. PMPE / epochs / named non-SOL non-%
+// units are declared once in the SectionHeader; SOL appears as an inline
+// suffix on the value; % appears as an inline annotation on the value.
+function rowStyle(opts: {
+  bold?: boolean
+  large?: boolean
+  separator?: boolean
+  total?: boolean
+}) {
+  const sep = opts.total || opts.separator
+  const bld = opts.total || opts.bold
+  const lg = opts.total || opts.large
+  const cellPad = opts.total
+    ? TOTAL_CELL_PAD
+    : sep
+      ? SEPARATOR_CELL_PAD
+      : NORMAL_CELL_PAD
+  // One subtle hairline for every "= result" row — total or subtotal.
+  // (Previously the subtotal used a heavier `border-t-2` which only added
+  // visual noise; the semantic — "math conclusion above" — is identical.)
+  const sepBorder = sep ? 'border-t border-muted-foreground/30' : false
+  return { sep, bld, lg, cellPad, sepBorder, total: opts.total }
+}
+
 export const CalcRow: React.FC<{
   label: string
   help?: string
-  secondary?: string
-  value?: string
+  col1?: string
+  col2?: string
   bold?: boolean
   large?: boolean
   separator?: boolean
   total?: boolean
   severity?: Severity
-}> = ({
-  label,
-  help,
-  secondary,
-  value = '',
-  bold,
-  large,
-  separator,
-  total,
-  severity,
-}) => {
+}> = ({ label, help, col1, col2, bold, large, separator, total, severity }) => {
   const tone = severity ? SEVERITY_TONE[severity] : undefined
-  const sep = total || separator
-  const bld = total || bold
-  const lg = total || large
-  // The total/separator divider used to live only on the value <td>, which
-  // rendered as a half-width line. Apply the border + padding to all three
-  // cells so it spans the full row width, and tint the row so the section
-  // conclusion is visually anchored.
-  const cellPad = total
-    ? TOTAL_CELL_PAD
-    : sep
-      ? SEPARATOR_CELL_PAD
-      : NORMAL_CELL_PAD
-  const sepBorder = total
-    ? 'border-t border-muted-foreground/30'
-    : sep && 'border-t-2 border-border'
-  const labelColor = total ? 'text-foreground' : 'text-muted-foreground'
+  const { bld, lg, cellPad, sepBorder } = rowStyle({
+    bold,
+    large,
+    separator,
+    total,
+  })
   return (
-    <tr className="border-b border-border-grid/65 last:border-b-0">
+    <tr className="border-b border-border-grid/55 last:border-b-0">
       <td
         className={cn(
           'pr-2',
-          lg ? 'text-base' : 'text-xs',
+          lg ? TEXT_BASE : TEXT_XS,
           cellPad,
-          bld && 'font-semibold',
-          labelColor,
+          bld && BOLD,
+          total ? 'text-foreground' : MUTED,
           sepBorder,
         )}
       >
         {tone && !total && <Marker tone={tone} />}
-        <span className="inline-flex items-center gap-1.5">
-          {label}
-          {help && <HelpTip text={help} />}
-        </span>
+        {help ? <HelpTip text={help}>{label}</HelpTip> : <span>{label}</span>}
       </td>
-      <td
-        className={cn(
-          'px-2 text-right font-mono text-xs text-muted-foreground',
-          cellPad,
-          sepBorder,
-        )}
-      >
-        {secondary ?? ''}
-      </td>
+      <td className={cn(MID_CELL, cellPad, sepBorder)}>{col1 ?? ''}</td>
       <td
         className={cn(
           'pl-2 text-right font-mono',
           cellPad,
-          lg ? 'text-base' : 'text-xs',
-          bld && 'font-semibold',
-          total ? 'tabular-nums text-foreground' : 'text-muted-foreground',
+          lg ? TEXT_BASE : TEXT_XS,
+          bld && BOLD,
+          total ? 'tabular-nums text-foreground' : MUTED,
           sepBorder,
-          tone === 'red' && 'text-destructive',
-          tone === 'yellow' && 'text-status-yellow',
-          tone === 'green' && 'text-status-green',
+          tone && TONE_TEXT[tone],
         )}
       >
-        {value}
+        {col2 ?? ''}
       </td>
     </tr>
   )
 }
 
-export const OkRow: React.FC<{ message: string }> = ({ message }) => (
+export const OkRow: React.FC<{ message: string; colSpan?: number }> = ({
+  message,
+  colSpan = 2,
+}) => (
   <tr>
-    <td colSpan={2} className="py-1.5 pr-2 text-xs text-muted-foreground">
+    <td colSpan={colSpan} className="py-1.5 pr-2 text-xs text-muted-foreground">
       {message}
     </td>
     <td className="py-1.5 pl-2 text-right font-mono text-xs text-status-green">

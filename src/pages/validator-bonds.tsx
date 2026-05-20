@@ -47,7 +47,25 @@ export const ValidatorBondsPage: React.FC<UserLevelProps> = ({ level }) => {
           />
         )}
       </div>
-      {status === 'error' && <p>Error fetching data</p>}
+      {status === 'error' && (
+        <div className="px-4 py-8 max-w-2xl mx-auto text-center">
+          <p className="text-base font-medium text-destructive">
+            Couldn&apos;t load validator bonds.
+          </p>
+          <p className="text-sm text-muted-foreground mt-2">
+            The bonds API didn&apos;t respond. The page can&apos;t render
+            without it. Try reloading; if the problem persists, check the
+            validator-bonds API status.
+          </p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="mt-4 text-sm text-primary hover:underline"
+          >
+            Reload page
+          </button>
+        </div>
+      )}
       {status === 'pending' && <Loader />}
       {status === 'success' && (
         <ValidatorBondsTable

@@ -1,111 +1,105 @@
 import React from 'react'
 
-import { pay, payCta, pmpe, stake } from 'src/format'
-import { computeBondCoverage } from 'src/services/bond-coverage'
+import { bondSol, pmpe, stake, topUp } from 'src/format'
+import { BondHealthState } from 'src/services/bond-health'
+import { bondAdvice } from 'src/services/tip-engine'
 
-import { CalcCard } from './card'
+import {
+  CalcCard,
+  CardStatusTone,
+  withSimAction,
+  type CardStatus,
+} from './card'
 import { CalcRow, OkRow, SectionHeader } from './row'
 
-import type {
-  AuctionValidator,
-  DsSamConfig,
-} from '@marinade.finance/ds-sam-sdk'
-import type { BondHealthState } from 'src/services/bond-health'
+import type { BondCoverage } from 'src/services/bond-coverage'
 
 type Props = {
   title: string
   guideTo?: string
-  validator: AuctionValidator
-  dsSamConfig: DsSamConfig
-  winningTotalPmpe: number
+  coverage: BondCoverage
   bondState: BondHealthState
   bondRiskFeeSol: number
+  bondBalanceSol: number
+  minBondBalanceSol: number
+  marinadeActivatedStakeSol: number
+  // Signed delta from the auction's redelegation pass. When positive on a
+  // 'soft' bond, the canonical "top up to grow stake" CTA contradicts the
+  // truthful "stake is already arriving" — see statusLine().
+  expectedStakeDeltaSol?: number
   isSimulated?: boolean
   onGoToSim?: () => void
 }
 
+// Banner text is NOT re-worded here — it is the canonical bondAdvice()
+// string, byte-identical to the sam-table Next Step pill and the
+// validator-detail header for the same validator state.
 const statusLine = (
   state: BondHealthState,
-  topUpToAvoidFee: number,
-  topUpToKeepStake: number,
-  topUpToIdealKeep: number,
+  coverage: BondCoverage,
   bondRiskFeeSol: number,
-): { label: string; tone: 'red' | 'yellow' | 'green' } => {
-  if (state === 'critical') {
-    const feeStr =
-      bondRiskFeeSol > 0
-        ? `Estimated bond risk fee: ${pay(bondRiskFeeSol)}.`
-        : 'Bond below penalty threshold.'
-    const topUpStr =
-      topUpToAvoidFee > 0
-        ? ` Top up ${payCta(topUpToAvoidFee)} to avoid the fee.`
-        : ''
-    return { label: `${feeStr}${topUpStr}`, tone: 'red' }
-  } else if (state === 'watch') {
-    const text =
-      topUpToKeepStake > 0
-        ? `Top up ${payCta(topUpToKeepStake)} to keep your stake.`
-        : topUpToIdealKeep > 0
-          ? `Top up ${payCta(topUpToIdealKeep)} for more stake.`
-          : ''
-    if (text) return { label: text, tone: 'yellow' }
-    return { label: 'Bond covers current stake.', tone: 'yellow' }
-  } else if (state === 'soft') {
-    if (topUpToIdealKeep > 0)
-      return {
-        label: `Bond covers current stake. Top up ${payCta(topUpToIdealKeep)} for more.`,
-        tone: 'yellow',
-      }
-    return { label: 'Bond meets ideal coverage.', tone: 'green' }
-  } else {
+  minBondBalanceSol: number,
+  bondBalanceSol: number,
+  marinadeActivatedStakeSol: number,
+  expectedStakeDeltaSol: number,
+): CardStatus => {
+  // Soft bond is advisory. When stake is already arriving the canonical
+  // "top up to grow stake" reads as a contradiction next to the +N SOL on
+  // the Stake card. The truthful banner here is the inflow line — the
+  // ideal top-up still shows in the section table below for users who
+  // want to lift the ceiling.
+  if (state === BondHealthState.SOFT && expectedStakeDeltaSol > 0) {
     return {
-      label: 'Bond has enough coverage. Keep it topped up.',
-      tone: 'green',
+      label: `${stake(expectedStakeDeltaSol)} arriving next epoch — bond covers it.`,
+      tone: CardStatusTone.GREEN,
     }
   }
+  const advice = bondAdvice(
+    coverage,
+    state,
+    bondRiskFeeSol,
+    minBondBalanceSol,
+    bondBalanceSol,
+    marinadeActivatedStakeSol,
+  )
+  return { label: advice.text, tone: advice.tone }
 }
 
 export const BondCoverageBreakdown: React.FC<Props> = ({
   title,
   guideTo,
-  validator,
-  dsSamConfig,
-  winningTotalPmpe,
+  coverage,
   bondState,
   bondRiskFeeSol,
+  bondBalanceSol,
+  minBondBalanceSol,
+  marinadeActivatedStakeSol,
+  expectedStakeDeltaSol = 0,
   isSimulated,
   onGoToSim,
 }) => {
-  const coverage = computeBondCoverage(
-    validator,
-    dsSamConfig.minBondEpochs,
-    dsSamConfig.idealBondEpochs,
-    winningTotalPmpe,
-    dsSamConfig.bondRiskFeeMult,
-  )
-  const status = statusLine(
+  const baseStatus = statusLine(
     bondState,
-    coverage.topUpToAvoidFee,
-    coverage.topUpToKeepStake,
-    coverage.topUpToIdealKeep,
+    coverage,
     bondRiskFeeSol,
+    minBondBalanceSol,
+    bondBalanceSol,
+    marinadeActivatedStakeSol,
+    expectedStakeDeltaSol,
   )
+  const status: CardStatus = withSimAction(baseStatus, onGoToSim)
 
-  // Risk section is informational; show only when the projected basis matters
-  // (some undelegation already queued) or a fee/top-up is actually outstanding.
+  // Show the penalty math whenever the bond is at risk (critical/watch) so
+  // the user can SEE the threshold, how the fee is computed and the top-up
+  // to avoid it — not only once a fee is already outstanding. Also keep it
+  // visible if a fee/top-up is live or the projected basis matters
+  // (undelegation already queued).
   const showRiskSection =
+    bondState === BondHealthState.CRITICAL ||
+    bondState === BondHealthState.WATCH ||
     bondRiskFeeSol > 0 ||
-    coverage.topUpToAvoidFee > 0 ||
+    coverage.bondRiskFeeShortfall > 0 ||
     coverage.carriedPaidUndelegationSol > 0
-
-  const tip = onGoToSim ? (
-    <button
-      className="text-xs text-primary hover:underline"
-      onClick={onGoToSim}
-    >
-      Simulate commission or bid changes →
-    </button>
-  ) : null
 
   return (
     <CalcCard
@@ -113,55 +107,129 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
       guideTo={guideTo}
       isSimulated={isSimulated}
       status={status}
-      tip={tip}
     >
-      <table className="w-full">
+      <table className="w-full max-w-[34rem]">
         <tbody>
-          <SectionHeader title="Rates" />
-          <CalcRow
-            label="Expected max effective bid PMPE"
-            secondary={pmpe(coverage.expectedMaxEffBidPmpe)}
+          {showRiskSection && (
+            <>
+              <SectionHeader
+                title="Bond risk fee"
+                help="The fee starts when your claimable bond falls below the trigger threshold. Below: the threshold and its parts, the bond it is measured against, and the top-up that clears it."
+              />
+              {coverage.carriedPaidUndelegationSol > 0 && (
+                <>
+                  <CalcRow
+                    label="Paid undelegation pending"
+                    help="Stake the protocol has already decided to pull back from this validator next epoch. It still counts as exposed today, but the projected threshold below subtracts it."
+                    col1={stake(coverage.carriedPaidUndelegationSol)}
+                  />
+                  <CalcRow
+                    label="Projected exposed stake"
+                    help="Current exposed stake minus the paid undelegation already scheduled. The penalty threshold uses this projected stake, not today's stake."
+                    col1={stake(coverage.projectedExposedStakeSol)}
+                  />
+                </>
+              )}
+              <CalcRow
+                label="Minimum unprotected reserve"
+                help="A fixed reserve included in the trigger threshold on top of the stake-sized requirement. Below the threshold, the fee fires."
+                col2={bondSol(coverage.minUnprotectedReserveSol)}
+              />
+              <CalcRow
+                label="Minimum bond on projected stake"
+                help="Projected exposed stake times the minimum bond rate — the stake-sized part of the threshold."
+                col2={bondSol(
+                  coverage.bondRiskFeeFloor - coverage.minUnprotectedReserveSol,
+                )}
+              />
+              <CalcRow
+                label="Penalty trigger threshold"
+                help="Threshold where bond risk fee starts: reserve plus required bond."
+                col2={bondSol(coverage.bondRiskFeeFloor)}
+                bold
+              />
+              <CalcRow
+                label="Claimable bond balance"
+                help="The bond the protocol can draw against right now. The fee triggers when this falls below the threshold above."
+                col2={bondSol(coverage.claimableBondBalanceSol)}
+                bold
+              />
+              {coverage.bondRiskFeeShortfall > 0 && (
+                <CalcRow
+                  label="Top up to avoid the fee"
+                  col2={topUp(coverage.bondRiskFeeShortfall)}
+                  total
+                  severity="error"
+                />
+              )}
+              {bondRiskFeeSol > 0 && (
+                <CalcRow
+                  label="Estimated bond risk fee this epoch"
+                  help="Charged when the bond is below the threshold. The amount scales with the shortfall and the protocol's bond-risk rate."
+                  col2={bondSol(bondRiskFeeSol)}
+                  bold
+                  severity="error"
+                />
+              )}
+              {coverage.bondRiskFeeShortfall === 0 && bondRiskFeeSol === 0 && (
+                <OkRow message="Claimable bond is above the penalty threshold." />
+              )}
+            </>
+          )}
+
+          <SectionHeader
+            title="Rates"
+            help="Two per-epoch rates that size the bond. The bid rate is what winners pay this epoch. The rewards rate is what your validator hands stakers from its own block rewards. Both are quoted per 1000 SOL of stake."
+            unit="PMPE"
           />
           <CalcRow
-            label="On-chain distributed rewards PMPE"
-            secondary={pmpe(coverage.onchainDistributedPmpe)}
+            label="Expected max effective bid"
+            help="The highest per-epoch bid winners are expected to pay this epoch. The bond must hold enough to cover this rate against your stake."
+            col2={pmpe(coverage.expectedMaxEffBidPmpe)}
+          />
+          <CalcRow
+            label="On-chain distributed rewards"
+            help="The rewards your validator pays stakers directly each epoch. The bond must hold enough to make stakers whole if you ever skip this payout."
+            col2={pmpe(coverage.onchainDistributedPmpe)}
           />
 
           <SectionHeader
             title={`Minimum bond to keep stake — ${coverage.minEp} epochs`}
-            help={`What the bond needs to keep your stake for the next ${coverage.minEp} epochs. Fall short — you pay a bond risk fee AND are scheduled to lose stake immediately.`}
+            help={`What the bond needs to keep your stake for the next ${coverage.minEp} epochs. Fall short and the protocol pulls stake back to a size your bond can cover.`}
           />
           <CalcRow
             label="Claimable bond balance"
             help="The bond SOL the protocol can draw against right now to cover fees or shortfalls. Excludes amounts locked in pending operations."
-            value={pay(coverage.claimableBondBalanceSol)}
+            col2={bondSol(coverage.claimableBondBalanceSol)}
             bold
           />
           <CalcRow
-            label="Active Marinade stake"
-            secondary={stake(coverage.marinadeActivatedStakeSol)}
+            label="Activated Marinade stake"
+            col1={stake(coverage.marinadeActivatedStakeSol)}
           />
           <CalcRow
             label="Current exposed stake"
-            secondary={stake(coverage.currentExposedStakeSol)}
+            col1={stake(coverage.currentExposedStakeSol)}
           />
           <CalcRow
-            label="Held for bid payments"
-            value={pay(coverage.heldForBidKeep)}
+            label="Bond held for bid payments"
+            help="Bid times exposed stake over the covered window, plus a fixed reserve for the unprotected slice."
+            col2={bondSol(coverage.heldForBidKeep)}
           />
           <CalcRow
-            label="Held for reward payouts"
-            value={pay(coverage.rewardsGuaranteeKeep)}
+            label="Bond held for reward payouts"
+            help="One epoch of stakers' rewards, reserved so the bid-payments slice stays untouched if a payout is missed."
+            col2={bondSol(coverage.rewardsGuaranteeKeep)}
           />
           <CalcRow
-            label="Minimum required"
-            value={pay(coverage.floorBaseKeep)}
+            label="Minimum bond required"
+            col2={bondSol(coverage.stakeKeepFloor)}
             bold
           />
           {coverage.topUpToKeepStake > 0 ? (
             <CalcRow
               label="Top up to keep your stake"
-              value={payCta(coverage.topUpToKeepStake)}
+              col2={topUp(coverage.topUpToKeepStake)}
               total
               severity="warning"
             />
@@ -177,81 +245,37 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           />
           <CalcRow
             label="Bond balance"
-            help="Total SOL you've deposited as bond — gross, before subtracting amounts locked in pending operations."
-            value={pay(coverage.bondBalanceSol)}
+            col2={bondSol(coverage.bondBalanceSol)}
             bold
           />
           <CalcRow
             label="Current exposed stake"
-            secondary={stake(coverage.currentExposedStakeSol)}
+            col1={stake(coverage.currentExposedStakeSol)}
           />
           <CalcRow
-            label="Held for bid payments"
-            value={pay(coverage.heldForBidIdeal)}
+            label="Bond held for bid payments"
+            help="Bid times exposed stake over the longer ideal window, plus a fixed reserve for the unprotected slice."
+            col2={bondSol(coverage.heldForBidIdeal)}
           />
           <CalcRow
-            label="Held for reward payouts"
-            value={pay(coverage.rewardsGuaranteeIdeal)}
+            label="Bond held for reward payouts"
+            help="One epoch of stakers' rewards — currently the same size as the keep-stake reserve (see bugs.md #1: the ideal reserve isn't yet scaled to the ideal window)."
+            col2={bondSol(coverage.rewardsGuaranteeIdeal)}
           />
           <CalcRow
-            label="Ideal required"
-            value={pay(coverage.requiredIdealKeep)}
+            label="Ideal bond required"
+            col2={bondSol(coverage.stakeIdealFloor)}
             bold
           />
           {coverage.topUpToIdealKeep > 0 ? (
             <CalcRow
-              label="Top up for more stake"
-              value={payCta(coverage.topUpToIdealKeep)}
+              label="Top up to grow stake"
+              col2={topUp(coverage.topUpToIdealKeep)}
               total
               severity="warning"
             />
           ) : (
             <OkRow message="Bond meets ideal coverage." />
-          )}
-
-          {showRiskSection && (
-            <>
-              <SectionHeader
-                title="Bond risk fee"
-                help="How much bond-risk fee gets charged this epoch, and the top-up needed to avoid it."
-              />
-              {coverage.carriedPaidUndelegationSol > 0 && (
-                <>
-                  <CalcRow
-                    label="Paid undelegation pending"
-                    secondary={stake(coverage.carriedPaidUndelegationSol)}
-                  />
-                  <CalcRow
-                    label="Projected exposed stake — after undelegation"
-                    secondary={stake(coverage.projectedExposedStakeSol)}
-                  />
-                </>
-              )}
-              <CalcRow
-                label="Penalty trigger threshold"
-                value={pay(coverage.floorBaseProjected)}
-                bold
-              />
-              {coverage.topUpToAvoidFee > 0 && (
-                <CalcRow
-                  label="Top up to avoid the fee"
-                  value={payCta(coverage.topUpToAvoidFee)}
-                  total
-                  severity="error"
-                />
-              )}
-              {bondRiskFeeSol > 0 && (
-                <CalcRow
-                  label="Estimated bond risk fee this epoch"
-                  value={pay(bondRiskFeeSol)}
-                  bold
-                  severity="error"
-                />
-              )}
-              {coverage.topUpToAvoidFee === 0 && bondRiskFeeSol === 0 && (
-                <OkRow message="Bond above the penalty threshold." />
-              )}
-            </>
           )}
         </tbody>
       </table>

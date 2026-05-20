@@ -1,153 +1,121 @@
+import { AuctionConstraintType } from '@marinade.finance/ds-sam-sdk'
 import React from 'react'
 
-import { cn } from 'src/class_utils'
-import { cost, pmpe, stake } from 'src/format'
+import { pmpe } from 'src/format'
 import { computeBidding } from 'src/services/bidding'
+import { computeInAuctionTarget } from 'src/services/in-auction-target'
+import { computeNextEpochStake } from 'src/services/next-epoch-stake'
 
-import { CalcCard } from './card'
 import {
-  Marker,
-  NORMAL_CELL_PAD,
-  SectionHeader,
-  SEPARATOR_CELL_PAD,
-  type Severity,
-  TOTAL_CELL_PAD,
-} from './row'
+  CalcCard,
+  CardStatusTone,
+  withSimAction,
+  type CardStatus,
+} from './card'
+import { CalcRow, OkRow, SectionHeader } from './row'
 
+import type { AuctionResult } from '@marinade.finance/ds-sam-sdk'
+import type { BondCoverage } from 'src/services/bond-coverage'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
 
 type Props = {
   title: string
   guideTo?: string
   validator: AugmentedAuctionValidator
+  auctionResult: AuctionResult
+  winningTotalPmpe: number
+  coverage: BondCoverage
   isSimulated?: boolean
   onGoToSim?: () => void
 }
 
-const SEVERITY_TONE: Record<Severity, 'green' | 'yellow' | 'red'> = {
-  ok: 'green',
-  warning: 'yellow',
-  error: 'red',
-}
+const STATIC_BID_HELP =
+  'The fixed Cost PMPE you configure on-chain — the same number the Simulate ' +
+  'input shows. Different from the effective bid, which is the ' +
+  'clearing price every winner actually pays.'
 
-// 4-column row unique to revenue breakdown (pct | pmpe | sol)
-const RevRow: React.FC<{
-  label: string
-  pct?: string
-  pmpe?: string
-  value?: string
-  bold?: boolean
-  large?: boolean
-  separator?: boolean
-  total?: boolean
-  severity?: Severity
-}> = ({
-  label,
-  pct,
-  pmpe: pmpeStr,
-  value = '',
-  bold,
-  large,
-  separator,
-  total,
-  severity,
-}) => {
-  const tone = severity ? SEVERITY_TONE[severity] : undefined
-  const sep = total || separator
-  const bld = total || bold
-  const lg = total || large
-  const cellPad = total
-    ? TOTAL_CELL_PAD
-    : sep
-      ? SEPARATOR_CELL_PAD
-      : NORMAL_CELL_PAD
-  const sepBorder = total
-    ? 'border-t border-muted-foreground/30'
-    : sep && 'border-t-2 border-border'
-  const labelColor = total ? 'text-foreground' : 'text-muted-foreground'
-  return (
-    <tr className="border-b border-border-grid/65 last:border-b-0">
-      <td
-        className={cn(
-          'pr-2',
-          lg ? 'text-base' : 'text-xs',
-          cellPad,
-          bld && 'font-semibold',
-          labelColor,
-          sepBorder,
-        )}
-      >
-        {tone && !total && <Marker tone={tone} />}
-        {label}
-      </td>
-      <td
-        className={cn(
-          'px-2 text-right font-mono text-xs text-muted-foreground',
-          cellPad,
-          sepBorder,
-        )}
-      >
-        {pct ?? ''}
-      </td>
-      <td
-        className={cn(
-          'px-2 text-right font-mono text-xs text-muted-foreground',
-          cellPad,
-          sepBorder,
-        )}
-      >
-        {pmpeStr ?? ''}
-      </td>
-      <td
-        className={cn(
-          'pl-2 text-right font-mono',
-          lg ? 'text-base' : 'text-xs',
-          cellPad,
-          bld && 'font-semibold',
-          total ? 'tabular-nums text-foreground' : 'text-muted-foreground',
-          sepBorder,
-          tone === 'green' && 'text-status-green',
-          tone === 'yellow' && 'text-status-yellow',
-          tone === 'red' && 'text-destructive',
-        )}
-      >
-        {value}
-      </td>
-    </tr>
-  )
-}
+const NON_BID_HELP =
+  'Your inflation + MEV + block-rewards PMPE — the revenue you bring ' +
+  'before any bid. The target bid below is the winning total PMPE minus this.'
 
+const IN_AUCTION_HELP =
+  'Closed-form estimate. Adding or growing this winner shifts the clearing ' +
+  'price, so treat it as a floor and confirm in Simulate. Country and ' +
+  'ASO (Autonomous System Operator — the hosting provider) caps can also ' +
+  'block you regardless of bid.'
+
+const NEXT_EPOCH_HELP =
+  'Being in the set is not the same as receiving stake. The redelegation ' +
+  'budget is handed out greedily by total PMPE, highest first, until it ' +
+  'runs out. Raising your bid reorders the queue and moves the level — this ' +
+  'is a heuristic, verify in Simulate.'
+
+const PRIORITY_RANK_HELP =
+  'Where you sit when the budget is handed out: validators are served in ' +
+  'total PMPE order, highest first. A smaller number means the budget ' +
+  'reaches you sooner.'
+
+const BID_GAP_HELP =
+  "Static bid minus the auction's clearing rate. You only ever pay the " +
+  'clearing rate, but your full static bid counts toward your total PMPE — ' +
+  'so bidding above the clearing rate does push you up the priority queue, ' +
+  'at no extra cost at settlement.'
+
+// "What should I bid to get into the auction and win stake?" — the
+// actionable story, two parallel goals: get IN, get STAKE. Each section
+// has a PMPE build-up; the bond requirement (SOL) for "Get into the
+// auction" lives in its own SOL sub-section so no column ever mixes
+// units. Math comes verbatim from the existing selectors — this
+// component only arranges the rows.
 export const BiddingBreakdown: React.FC<Props> = ({
   title,
   guideTo,
   validator,
+  auctionResult,
+  winningTotalPmpe,
+  coverage,
   isSimulated,
   onGoToSim,
 }) => {
-  const metrics = computeBidding(validator)
-  const deltaSeverity: Severity | undefined =
-    metrics.delta > 0 ? 'ok' : metrics.delta < 0 ? 'error' : undefined
-  const deltaText =
-    metrics.delta === 0
-      ? '—'
-      : `${metrics.delta > 0 ? '+' : ''}${stake(metrics.delta)}`
+  const m = computeBidding(validator)
+  const inAuction = computeInAuctionTarget(
+    validator,
+    winningTotalPmpe,
+    coverage,
+  )
+  const nextEpoch = computeNextEpochStake(validator, auctionResult)
+  const noFrontier = nextEpoch.priorityFrontierPmpe <= 0
 
-  const status = {
-    label:
-      metrics.total > 0
-        ? `Estimated ${cost(metrics.total)} payment to Marinade this epoch.`
-        : 'No bid cost this epoch.',
-    tone: 'green' as const,
-  }
+  // Cap label. Country/ASO names are meaningful — show them. VALIDATOR's
+  // "name" is the vote account → omit. WANT/other → generic.
+  const capName = inAuction.capConstraintName
+  const capLabel =
+    inAuction.capConstraintType === AuctionConstraintType.COUNTRY
+      ? `Country cap is at the limit${capName ? ` — ${capName}` : ''}`
+      : inAuction.capConstraintType === AuctionConstraintType.ASO
+        ? `ASO cap is at the limit${capName ? ` — ${capName}` : ''}`
+        : inAuction.capConstraintType === AuctionConstraintType.VALIDATOR
+          ? 'Per-validator cap is at the limit'
+          : inAuction.capConstraintType === AuctionConstraintType.WANT
+            ? 'At your `maxStakeWanted` setting'
+            : 'A concentration cap is at the limit'
 
-  const tip = onGoToSim ? (
-    <button
-      className="text-xs text-primary hover:underline"
-      onClick={onGoToSim}
-    >
-      Simulate commission or bid changes →
-    </button>
-  ) : null
+  const clears = inAuction.bidIncrease <= 0 && !inAuction.capConstrained
+  const baseStatus: Omit<CardStatus, 'action'> = inAuction.capConstrained
+    ? {
+        label: `${capLabel} — raising your bid alone will not get you in.`,
+        tone: CardStatusTone.YELLOW,
+      }
+    : clears
+      ? {
+          label: `Already clears — keep your static bid at or above ${pmpe(inAuction.targetBidPmpe)} PMPE.`,
+          tone: CardStatusTone.GREEN,
+        }
+      : {
+          label: `Bid ${pmpe(inAuction.currentBidPmpe)} → ${pmpe(inAuction.targetBidPmpe)} PMPE to clear the winning total PMPE.`,
+          tone: CardStatusTone.RED,
+        }
+  const status: CardStatus = withSimAction(baseStatus, onGoToSim)
 
   return (
     <CalcCard
@@ -155,77 +123,166 @@ export const BiddingBreakdown: React.FC<Props> = ({
       guideTo={guideTo}
       isSimulated={isSimulated}
       status={status}
-      tip={tip}
     >
-      {metrics.overrideMsg && (
+      {m.overrideMsg && (
         <div className="rounded-lg px-3 py-2 text-xs mb-4 bg-secondary text-secondary-foreground">
-          {metrics.overrideMsg}
+          {m.overrideMsg}
         </div>
       )}
-      <table className="w-full">
+      <table className="w-full max-w-[34rem]">
         <tbody>
-          <SectionHeader title="Stake" colSpan={4} />
-          <RevRow
-            label="Active Marinade stake"
-            value={stake(metrics.active)}
-            bold
+          <SectionHeader
+            title="Your bid today"
+            help="What you bring to the auction this epoch: non-bid revenue (inflation + MEV + block rewards PMPE you bring at your commissions) plus your static bid. The two target sections below subtract your non-bid revenue from each threshold to size the bid."
+            unit="PMPE"
           />
-          <RevRow label="Target Marinade stake" value={stake(metrics.target)} />
-          <RevRow
-            label="Expected change next epoch"
-            value={deltaText}
-            severity={deltaSeverity}
-          />
-
-          <SectionHeader title="Active stake cost PMPE" colSpan={4} />
-          <RevRow
+          <CalcRow
             label="Inflation"
-            pct={metrics.inflPct}
-            pmpe={pmpe(metrics.inflPmpe)}
+            help="Your inflation commission and epoch PMPE per 1000 SOL."
+            col1={m.inflPct}
+            col2={pmpe(m.inflPmpe)}
           />
-          <RevRow
+          <CalcRow
             label="MEV"
-            pct={metrics.mevPct}
-            pmpe={pmpe(metrics.mevPmpe)}
+            help="MEV (Maximal Extractable Value) — extra tips from transaction ordering. Shows your MEV commission and epoch PMPE per 1000 SOL."
+            col1={m.mevPct}
+            col2={pmpe(m.mevPmpe)}
           />
-          <RevRow
+          <CalcRow
             label="Block rewards"
-            pct={metrics.blkPct}
-            pmpe={pmpe(metrics.blkPmpe)}
+            help="Your block-reward share and epoch PMPE per 1000 SOL."
+            col1={m.blkPct}
+            col2={pmpe(m.blkPmpe)}
           />
-          <RevRow label="Static bid PMPE" pmpe={pmpe(metrics.bid)} />
-          <RevRow
-            label="Total"
-            pmpe={pmpe(
-              metrics.inflPmpe +
-                metrics.mevPmpe +
-                metrics.blkPmpe +
-                metrics.bid,
-            )}
+          <CalcRow
+            label="Non-bid revenue"
+            help={NON_BID_HELP}
+            col2={pmpe(inAuction.nonBidPmpe)}
             bold
           />
-
-          <SectionHeader title="Bid gap" colSpan={4} />
-          <RevRow label="Static bid PMPE" pmpe={pmpe(metrics.bid)} />
-          <RevRow
-            label="Auction effective bid PMPE"
-            pmpe={pmpe(metrics.effBid)}
+          <CalcRow
+            label="Static bid"
+            help={STATIC_BID_HELP}
+            col2={pmpe(inAuction.currentBidPmpe)}
           />
-          <RevRow label="Resulting bid gap" pmpe={pmpe(metrics.bidGap)} bold />
-
-          <SectionHeader title="Cost" colSpan={4} />
-          <RevRow label="Active stake cost" value={cost(metrics.cost)} />
-          <RevRow
-            label="Activating stake cost"
-            pmpe={pmpe(metrics.activatingStakePmpe)}
-            value={cost(metrics.activatingCost)}
-          />
-          <RevRow
+          <CalcRow
             label="Total"
-            value={cost(metrics.total)}
-            total
-            severity="ok"
+            col2={pmpe(inAuction.nonBidPmpe + inAuction.currentBidPmpe)}
+            bold
+            separator
           />
+
+          <SectionHeader
+            title="Get into the auction"
+            help={IN_AUCTION_HELP}
+            unit="PMPE"
+          />
+          <CalcRow
+            label="Winning total"
+            help="The lowest total PMPE that still makes the winning set this epoch. Beat it and you are in, fall short and you are out."
+            col2={pmpe(inAuction.winningTotalPmpe)}
+          />
+          <CalcRow
+            label="− Non-bid revenue"
+            help={NON_BID_HELP}
+            col2={pmpe(inAuction.nonBidPmpe)}
+          />
+          <CalcRow
+            label="= Target static bid"
+            col2={pmpe(inAuction.targetBidPmpe)}
+            bold
+            separator
+          />
+          <CalcRow
+            label="Your static bid"
+            help={STATIC_BID_HELP}
+            col2={pmpe(inAuction.currentBidPmpe)}
+          />
+          {inAuction.capConstrained ? (
+            <CalcRow label={capLabel} col2="blocked" severity="error" bold />
+          ) : inAuction.bidIncrease > 0 ? (
+            <CalcRow
+              label="Bid increase needed"
+              col2={pmpe(inAuction.bidIncrease)}
+              severity="warning"
+              bold
+              separator
+            />
+          ) : (
+            <OkRow
+              message="Your bid already clears the winning total PMPE."
+              colSpan={2}
+            />
+          )}
+
+          <SectionHeader
+            title="Get stake delegated next epoch"
+            help={NEXT_EPOCH_HELP}
+            unit="PMPE"
+          />
+          {noFrontier ? (
+            <OkRow
+              message="No binding priority frontier PMPE this run — every winner gets served."
+              colSpan={2}
+            />
+          ) : nextEpoch.bidIncreaseForPriority <= 0 ? (
+            // Already clears the frontier — the target-derivation rows
+            // (Priority frontier / − Non-bid / = Target bid) describe a bid
+            // the validator would never need to make. Skip them; show only
+            // the green confirmation and the two context rows so a reader
+            // can still verify their position.
+            <>
+              <OkRow
+                message={`Clears the priority frontier (${pmpe(nextEpoch.priorityFrontierPmpe)} PMPE).`}
+                colSpan={2}
+              />
+              <CalcRow
+                label="Your priority rank"
+                help={PRIORITY_RANK_HELP}
+                col2={`#${nextEpoch.priorityRank}`}
+              />
+              <CalcRow
+                label="Your bid gap"
+                help={BID_GAP_HELP}
+                col2={pmpe(nextEpoch.bidGapPmpe)}
+              />
+            </>
+          ) : (
+            <>
+              <CalcRow
+                label="Priority frontier"
+                help="Lowest total PMPE still fully funded by the redelegation budget."
+                col2={pmpe(nextEpoch.priorityFrontierPmpe)}
+              />
+              <CalcRow
+                label="− Non-bid revenue"
+                help={NON_BID_HELP}
+                col2={pmpe(inAuction.nonBidPmpe)}
+              />
+              <CalcRow
+                label="= Target static bid"
+                col2={pmpe(nextEpoch.targetBidPmpePriority)}
+                bold
+                separator
+              />
+              <CalcRow
+                label="Bid increase needed"
+                col2={pmpe(nextEpoch.bidIncreaseForPriority)}
+                severity="warning"
+                bold
+              />
+              <CalcRow
+                label="Your priority rank"
+                help={PRIORITY_RANK_HELP}
+                col2={`#${nextEpoch.priorityRank}`}
+              />
+              <CalcRow
+                label="Your bid gap"
+                help={BID_GAP_HELP}
+                col2={pmpe(nextEpoch.bidGapPmpe)}
+              />
+            </>
+          )}
         </tbody>
       </table>
     </CalcCard>

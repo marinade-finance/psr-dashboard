@@ -30,22 +30,38 @@ export const finite = (x: number | null | undefined): number =>
   typeof x === 'number' && Number.isFinite(x) ? x : 0
 
 export const pmpe = (x: number) => x.toFixed(5)
-export const stake = (n: number) => `${sol(n, 0)} SOL`
-export const pay = (n: number) => `${sol(n, 0)} SOL`
-export const penalty = (n: number) => `${sol(n, 3)} SOL`
+// NBSP ( ) between number and unit so "19,866 SOL" never wraps across
+// a line break. Applies to every "<n> SOL" output below.
+export const stake = (n: number) => `${sol(n, 0)} SOL`
+export const pay = (n: number) => `${sol(n, 0)} SOL`
+export const penalty = (n: number) => `${sol(n, 3)} SOL`
 // Cost rows need 3-decimal precision — per-epoch bid costs are often
 // sub-1 SOL and rounding them to "0" or "1" reads as wrong.
-export const cost = (n: number) => `${sol(n, 3)} SOL`
+export const cost = (n: number) => `${sol(n, 3)} SOL`
 
-// Top-up CTAs: never claim "Top up 0 SOL". Sub-1-SOL values show "<1 SOL".
-export const stakeCta = (n: number): string => {
-  if (n > 0 && n < 0.5) return '<1 SOL'
-  return stake(n)
-}
-export const payCta = (n: number): string => {
-  if (n > 0 && n < 0.5) return '<1 SOL'
-  return pay(n)
-}
+// Signed stake delta — "+1,234 SOL" / "−1,234 SOL" / "0 SOL". Uses the
+// minus-sign unicode (−) for the negative case so the typography matches
+// "+" in width; zero falls through to stake() with no sign.
+export const signedStake = (n: number) =>
+  n === 0 ? stake(0) : `${n > 0 ? '+' : '−'}${stake(Math.abs(n))}`
+
+// Bond balances and bond-side floor amounts — 1 decimal place, rounded
+// DOWN. Always understate what's held (never overstate available bond)
+// so the user can't be misled into thinking they have more cover than
+// they do. Used for: bond balances, claimable bond, minimum bond
+// required, bond held for bid payments, bond held for reward payouts.
+export const bondSol = (n: number) =>
+  `${(Math.floor(n * 10) / 10).toLocaleString(undefined, {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  })} SOL`
+
+// Top-up advice — SOL the user is told to deposit into their bond.
+// ALWAYS rounds UP (ceil): advising a rounded-down top-up would leave the
+// bond short, so the validator stays under-collateralised and the advice
+// is wrong. Any n > 0 yields at least "1 SOL" (never "0 SOL" / "<1 SOL").
+// Callers guard with `> 0`; n <= 0 is never displayed.
+export const topUp = (n: number) => `${Math.ceil(n)} SOL`
 
 export const lamportsToSol = (lamports: string) =>
   lamports.padStart(10, '0').replace(/(.{9})$/, '.$1')

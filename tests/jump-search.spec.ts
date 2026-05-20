@@ -87,7 +87,7 @@ test.describe('jump-search — selection opens the detail sheet', () => {
   }) => {
     // 'Test: Out of Set' is the canonical "outside the auction set" fixture.
     // In Basic mode it would be hidden, but the search must still find it.
-    await page.goto('/')
+    await page.goto('/test-')
     await page.waitForSelector('tbody tr', { timeout: 30000 })
     await searchInput(page).fill('Test')
     // If the live api.har fixture lacks matching names, skip — but for the

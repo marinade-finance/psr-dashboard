@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 
 import { cn } from 'src/class_utils'
+import { HelpTip } from 'src/components/help-tip/help-tip'
+import { Card } from 'src/components/ui/card'
 import { pct, sol } from 'src/format'
 
 import type { ConcentrationRow } from 'src/services/sam'
@@ -10,87 +12,124 @@ type Props = {
   rows: ConcentrationRow[]
   capPct: number
   help?: string
+  guideTo?: string
 }
 
-const TOP_N = 3
 const TOOLTIP_N = 15
 
-const BAR_TONES = ['bg-chart-1', 'bg-chart-2', 'bg-chart-3']
+const BAR_TONE_DEFAULT = 'bg-chart-1'
+const BAR_TONES = [BAR_TONE_DEFAULT, 'bg-chart-2', 'bg-chart-3']
 
+// Rows 0-2 keep their identity hue (matches the top-3 mini view). Rows 3+
+// are a single fading tail: one hue not used by the top-3 (chart-5), with
+// opacity decaying every row so a long list trails off into the background.
+// A floor keeps the longest tails faintly visible.
+// Bars sit ~30% lighter than the text so the value stays the focus; no
+// Tailwind step lands on 0.175, so the arbitrary value is intentional.
+const BAR_OPACITY_BASE = 'opacity-[0.175]'
+const TAIL_TONE = 'bg-chart-5'
+const TAIL_OPACITY = [
+  'opacity-[0.155]',
+  'opacity-[0.135]',
+  'opacity-[0.115]',
+  'opacity-[0.1]',
+  'opacity-[0.085]',
+  'opacity-[0.07]',
+  'opacity-[0.055]',
+]
+
+const barTone = (i: number): { tone: string; opacity: string } => {
+  if (i < BAR_TONES.length)
+    return { tone: BAR_TONES[i], opacity: BAR_OPACITY_BASE }
+  const t = i - BAR_TONES.length
+  return {
+    tone: TAIL_TONE,
+    opacity: TAIL_OPACITY[Math.min(t, TAIL_OPACITY.length - 1)],
+  }
+}
+
+// Inline view matches the stat-tile chrome (label + big value + unit), so
+// the headline row reads as one consistent set of metrics. The full bar
+// list with cap marker lives only inside the hover popover, which keeps
+// its original wider layout regardless of the tile's collapsed width.
 export const ConcentrationMetric: React.FC<Props> = ({
   label,
   rows,
   capPct,
   help,
+  guideTo,
 }) => {
   const [open, setOpen] = useState(false)
-  const top = rows.slice(0, TOP_N)
+  const top = rows.length > 0 ? rows[0] : null
+  const anyCapped = rows.some(r => r.atCap)
   const tipRows = rows.slice(0, TOOLTIP_N)
   const remaining = rows.length - tipRows.length
 
+  // Absolute share scale (not cap-relative): the track runs 0..scale where
+  // scale leaves headroom past whichever is larger, the cap or the biggest
+  // entry. This puts the cap marker at a real interior position and lets an
+  // over-cap entry visibly extend PAST it (cap-relative scaling would pin
+  // the marker to the right edge and clamp overflow).
+  const maxShare = top?.pctOfTotal ?? 0
+  const scale = Math.max(maxShare, capPct) * 1.12
+  const barPct = (v: number) => (scale > 0 ? (v / scale) * 100 : 0)
+  const capLeft = barPct(capPct)
+
+  const nameClass = cn(
+    'text-xs font-mono truncate leading-tight mb-0.5',
+    anyCapped ? 'text-destructive font-semibold' : 'text-muted-foreground',
+  )
+  const shareClass = cn(
+    'text-xl sm:text-2xl font-semibold font-mono shrink-0',
+    anyCapped ? 'text-destructive' : 'text-foreground',
+  )
+
   return (
-    <div
-      className="relative flex flex-col gap-1.5 px-3 py-2 bg-card rounded-md border border-border-grid"
+    <Card
+      className="relative px-3 py-3 sm:px-5 sm:py-4 flex-1 min-w-[140px] sm:min-w-[160px] overflow-visible flex flex-col"
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
     >
-      <div className="flex items-center justify-between gap-1">
-        <span className="text-xs text-muted-foreground">{label}</span>
-        {help && (
-          <span className="text-[10px] text-muted-foreground/60" title={help}>
-            ?
-          </span>
+      <div className="text-xs uppercase tracking-wider font-medium text-muted-foreground mb-1 flex items-center gap-1">
+        {help ? (
+          <HelpTip text={help} guideTo={guideTo}>
+            {label}
+          </HelpTip>
+        ) : (
+          label
         )}
       </div>
-      <div className="flex flex-col gap-0.5">
-        {top.map((r, i) => {
-          const fill = capPct > 0 ? Math.min(r.pctOfTotal / capPct, 1) * 100 : 0
-          const barClass = r.atCap
-            ? 'bg-destructive'
-            : (BAR_TONES[i] ?? 'bg-chart-1')
-          const textClass = r.atCap
-            ? 'text-destructive font-semibold'
-            : 'text-foreground'
-          return (
-            <div
-              key={r.key}
-              className="relative h-5 flex items-center text-[13px]"
-            >
-              <span
-                className={cn(
-                  'absolute inset-y-0 left-0 rounded-sm opacity-25',
-                  barClass,
-                )}
-                style={{ width: `${fill}%` }}
-                aria-hidden
-              />
-              <span
-                className={cn('relative truncate pl-1 pr-2 flex-1', textClass)}
-                title={r.key}
-              >
-                {r.key}
-                {r.atCap && <span className="ml-1.5 font-bold">(capped)</span>}
-              </span>
-              <span
-                className={cn(
-                  'relative font-mono text-xs pr-1',
-                  r.atCap ? 'text-destructive' : 'text-muted-foreground',
-                )}
-              >
-                {pct(r.pctOfTotal)}
-              </span>
-            </div>
-          )
-        })}
-      </div>
+      {top ? (
+        <div className="mt-auto min-w-0">
+          <div className={nameClass} title={top.key}>
+            {top.key}
+            {anyCapped && (
+              <span className="ml-1 text-2xs font-bold">(capped)</span>
+            )}
+          </div>
+          <div className="flex items-baseline min-w-0 overflow-hidden">
+            <span className={shareClass}>{pct(top.pctOfTotal)}</span>
+            <span className="text-sm text-muted-foreground font-mono shrink-0">
+              {' '}/{pct(capPct)}
+            </span>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-auto flex items-baseline gap-1 min-w-0 overflow-hidden">
+          <span className="text-xl sm:text-2xl font-semibold text-muted-foreground font-mono">
+            —
+          </span>
+        </div>
+      )}
 
       {open && rows.length > 0 && (
-        <div className="absolute z-30 top-full left-0 mt-1 w-[min(520px,90vw)] max-h-[60vh] overflow-y-auto bg-card border border-border rounded-md shadow-xl p-3 text-xs">
+        <div className="absolute z-30 top-full right-0 mt-1 w-[640px] max-w-[calc(100vw-3rem)] max-h-[60vh] overflow-y-auto bg-card border border-border rounded-md shadow-xl p-3 text-xs">
           <div className="text-muted-foreground mb-2 leading-snug">
-            Cap: {pct(capPct)} of network stake. Bar fills against the cap.
+            Cap: {pct(capPct)} of network stake. The marker shows the cap; bars
+            past it are over.
           </div>
           <table className="w-full">
-            <thead className="text-muted-foreground/70 uppercase tracking-wide text-[10px]">
+            <thead className="text-muted-foreground/70 uppercase tracking-wide text-2xs">
               <tr>
                 <th className="text-left py-1 font-medium">Name</th>
                 <th className="text-right py-1 font-medium">Share</th>
@@ -100,24 +139,56 @@ export const ConcentrationMetric: React.FC<Props> = ({
             </thead>
             <tbody>
               {tipRows.map((r, i) => {
-                const swatch = r.atCap
-                  ? 'bg-destructive'
-                  : (BAR_TONES[i] ?? 'bg-chart-1')
+                const fill = barPct(r.pctOfTotal)
+                const { tone, opacity } = barTone(i)
+                const swatch = r.atCap ? 'bg-destructive' : tone
+                const barOpacity = r.atCap ? BAR_OPACITY_BASE : opacity
                 return (
                   <tr
                     key={r.key}
                     className={r.atCap ? 'text-destructive font-semibold' : ''}
                   >
-                    <td className="py-0.5 flex items-center gap-1.5">
+                    <td className="relative py-0.5 pr-2">
                       <span
                         className={cn(
-                          'inline-block w-[3px] h-3 rounded-sm shrink-0',
+                          'absolute inset-y-0 left-0 rounded-sm',
+                          barOpacity,
                           swatch,
                         )}
+                        style={{ width: `${fill}%` }}
+                        aria-hidden
                       />
-                      <span className="truncate">{r.key}</span>
-                      <span className="text-muted-foreground/60 ml-1">
-                        ({r.validatorCount})
+                      {capLeft > 0 && capLeft <= 100 && (
+                        <>
+                          <span
+                            className="absolute inset-y-0 w-0.5 rounded-full bg-foreground/50 pointer-events-none"
+                            style={{ left: `${capLeft}%` }}
+                            aria-hidden
+                          />
+                          {i === 0 && (
+                            <span
+                              className="absolute top-[-13px] text-2xs font-mono text-muted-foreground pointer-events-none"
+                              style={{
+                                left: `${capLeft}%`,
+                                transform: 'translateX(-50%)',
+                              }}
+                            >
+                              {pct(capPct)}
+                            </span>
+                          )}
+                        </>
+                      )}
+                      <span className="relative flex items-center gap-1.5">
+                        <span
+                          className={cn(
+                            'inline-block w-[3px] h-3 rounded-sm shrink-0',
+                            swatch,
+                          )}
+                        />
+                        <span className="truncate">{r.key}</span>
+                        <span className="text-muted-foreground/60 ml-1">
+                          ({r.validatorCount})
+                        </span>
                       </span>
                     </td>
                     <td className="text-right font-mono py-0.5">
@@ -147,6 +218,6 @@ export const ConcentrationMetric: React.FC<Props> = ({
           )}
         </div>
       )}
-    </div>
+    </Card>
   )
 }

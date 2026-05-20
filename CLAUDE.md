@@ -29,9 +29,32 @@ pnpm vitest run path/to/file.test.ts    # run a single test file
 Pre-commit hooks run lint-staged (eslint --fix + prettier) via husky.
 First run may reformat — retry commit once if it fails.
 
+## Scratch files (untracked)
+
+`bugs.md`, `ISSUES.md`, `differences.md`, `docs/` are local-only review
+queues / audit notes — untracked, not part of the doc contract below.
+Append findings here during audits; the user prioritises and prunes.
+
+## Planned and queued work
+
+All planned work lives in `specs/` — see `specs/index.md` for the master list.
+`TODO.md` is a redirect stub; do NOT accumulate a queue there.
+
+**New item:** open the relevant spec file in `specs/1/` (or create a new
+`specs/1/N-topic.md`) and add the item as a named section. If no existing spec
+fits, create a new file. Add a row to `specs/index.md`.
+
+**Shipped item:** set `status: shipped` in the spec frontmatter, trim the
+section to WHY + code pointers (drop HOW), update `specs/index.md` status.
+
+Lifecycle: `planned` → `partial` → `shipped`.
+
+During audits, record bugs in `bugs.md`; record design intent and queued
+features in the relevant spec file.
+
 ## Live root docs
 
-Three repo-root files are live documentation. **Each must be updated in
+Four repo-root files are live documentation. **Each must be updated in
 the same commit as the change that affects it.** They are the contract
 between code and reviewers; if they drift, neither reviewer nor onboarding
 maintainer can trust them.
@@ -41,6 +64,11 @@ maintainer can trust them.
   on the validator detail panel, changing a default sort / tier threshold
   / status label / token, moving a route, replacing a badge style,
   adding a card.
+- **`VISUALS.md`** — the visual-language alphabet: surfaces, status
+  families, bond tiers, charts, simulation tokens, typography, component
+  primitives, inline-style escape hatch. Update when: adding / removing
+  / renaming a token, status family, or shared primitive; changing a
+  tier threshold; changing a typography or shadow scale.
 - **`ARCHITECTURE.md`** — top-level layout, routes, components, services,
   state and data flow, build/test, conventions. Update when: adding /
   removing a top-level dir, adding a service module or page route,
@@ -79,16 +107,49 @@ thin wrappers around the real page components that swap in fixture data
 so Playwright snapshots stay deterministic. Don't add prod logic to the
 test pages; they exist only to feed fixtures.
 
+### Writing rules
+
+- **Never use "bar" as a UI metaphor** ("winning bar", "priority bar",
+  "the bar your bond has to clear"). The word is unknown jargon to
+  novice readers. The underlying field is `winningTotalPmpe` /
+  `priorityFrontierPmpe` — use "Winning total" / "Priority frontier" /
+  "the level …" / "the threshold …" instead. Applies to labels,
+  tooltips, banner copy, breakdown rows, and the GUIDE.md prose.
+
+### Testing rules
+
+- **Use `/test-*` routes for every e2e test that doesn't specifically need
+  network data.** Don't invent a parallel mock-API infrastructure;
+  `/test-`, `/test-bonds`, `/test-protected-events` already wrap each page
+  with a `QueryClient` pre-seeded from `src/fixtures/*`.
+- **No expert test routes.** Don't add `/expert-test-*`. Don't write
+  Playwright tests that hit any `/expert-*` route. Expert mode is exercised
+  by the same fixture data that powers basic — there's nothing route-
+  specific to test beyond UI presence, which is covered indirectly.
+- **Mobile is not supported.** The app shows a "Mobile view is not supported"
+  banner (`src/components/navigation/navigation.tsx`) below 640px. Don't add
+  mobile viewport variants in tests; don't ship CSS that tries to make
+  pages usable on a phone. If a user opens it on mobile, the banner tells
+  them to widen the window.
+
 ### Key Files
 
-- `src/services/sam.ts` — auction data loading, metric selectors, sensitivity
-  analysis (`runAlt` pattern: mutate aggregated data, re-run auction)
+- `src/services/sam.ts` — auction data loading, metric selectors,
+  `selectRedelegationBudget` / `selectRedelegationPriorityFrontierPmpe`
+  (shared greedy `allocateRedelegation` pass — no SDK `runAlt`; the only
+  rerun path is the async `loadSam(overrides)` simulation flow)
 - `src/services/bidding.ts` — `computeBidding` (per-validator stake/bid/cost row)
 - `src/services/bond-coverage.ts` — `computeBondCoverage` (keep-stake and
   avoid-fee top-ups)
 - `src/services/bond-health.ts` — `bondHealthFromAuction` (returns
   `'healthy'|'soft'|'watch'|'critical'`)
 - `src/services/bid-penalty.ts` — `computeBidPenalty`
+- `src/services/in-auction-target.ts` — `computeInAuctionTarget` (Table A:
+  closed-form bid to clear the winning total + bond floor from memoised
+  `BondCoverage`; last-price-coupling caveat, verify in Simulate)
+- `src/services/next-epoch-stake.ts` — `computeNextEpochStake` (Table B:
+  heuristic bid to clear the redelegation priority frontier; estimate,
+  verify in Simulate)
 - `src/services/tip-engine.ts` — `getValidatorTip` (urgency + text + constraint),
   `getTipStyle` (color/bg/icon per urgency), `getBondHealthStyle`
 - `src/components/sam-table/sam-table.tsx` — main auction table with
@@ -134,82 +195,67 @@ maps passed to `dsSam.runFinalOnly(overrides)`.
 
 ## Visual Language
 
-All colour and layout tokens live in `src/index.css` and are exposed to
-Tailwind via the `@theme` block. **Use the semantic class — never inline
-`var(...)`, never raw hex/rgb/hsl, never arbitrary `text-[var(--…)]`.**
-Adding a new colour means: define the CSS var in `:root`, override in
-`.dark` only if the dark value actually differs, then expose it as
-`--color-…` inside `@theme`. After that, Tailwind generates `bg-…`,
-`text-…`, `border-…` automatically. Don't duplicate byte-identical vars
-across `:root` and `.dark` — `.dark` inherits from `:root`.
+Visual language — tokens, status families, typography, component primitives — is documented in `VISUALS.md`. Key rules for code-touching agents:
 
-### Surfaces
+### Two orthogonal axes: severity vs lever
 
-| Class                    | Use                                                  |
-|--------------------------|------------------------------------------------------|
-| `bg-background`          | App background                                       |
-| `bg-background-page`     | Outer page wrapper (slightly tinted)                 |
-| `bg-card`                | Card / panel surface                                 |
-| `bg-muted`               | Muted block (callouts, empty states)                 |
-| `bg-secondary` / `accent`| Hover & subtle surfaces                              |
-| `text-foreground`        | Primary text                                         |
-| `text-muted-foreground`  | Secondary / meta text                                |
-| `border-border`          | Standard divider                                     |
-| `border-border-grid`     | Internal table grid lines                            |
+Two independent encodings, never collapsed into one. Enforced at the
+source — one CTA helper per lever in `src/services/tip-engine.ts`
+(`bondCta`, `bidCta`, `outOfSetCta`, `capCta`, `deltaCta`); `selectTip`
+picks the highest-severity candidate, with `LEVER_ORDER` (bond →
+bid/rank → cap → none) breaking ties at the same severity.
 
-### Status & intent
+- **Colour = severity.** `getTipStyle(urgency)` maps
+  `TipUrgency.CRITICAL`→destructive, `WARNING`→warning, `INFO`→info,
+  `POSITIVE`→primary, `NEUTRAL`→muted. Same axis the breakdown banner
+  uses (`tone: red|yellow|green`); `bondAdvice()` emits both so they
+  agree by construction.
+- **Glyph = the lever** (which knob to turn).
+  `TipConstraint.BOND`→ICON_BOND, `BID`→ICON_BID, `RANK`→ICON_BID (same
+  lever — raise the bid, so same glyph), `CAP`→ICON_CAP. Only
+  `TipConstraint.NONE` (in-set, no binding constraint) gets a
+  directional glyph — up/down/right keyed off the real signed `delta`
+  so it cannot lie. `getTipIcon` in `src/services/tip-engine.ts`.
+- **Octagon alert is the ONLY severity-driven glyph.** `ICON_ALERT`
+  (stop-sign octagon) overrides the lever glyph for exactly one state:
+  an estimated bond risk fee this epoch (`tip.alert === true`). Plain
+  below-min / no-bond stay critical-red but keep their constraint glyph
+  — no escalation. `src/components/icons/icon-alert.tsx`.
 
-Use **one** of these three families consistently. Don't mix `warning` and
-`status-yellow` in the same view — they're different shades.
+### Tip glyph set
 
-| Family       | Solid                | Tinted background          | Meaning                          |
-|--------------|----------------------|----------------------------|----------------------------------|
-| Primary      | `text-primary`       | `bg-primary-light(-10)`    | Brand / good / healthy           |
-| Destructive  | `text-destructive`   | `bg-destructive-light`     | Critical / error                 |
-| Warning      | `text-warning`       | `bg-warning-light`         | Watch / caution (orange-yellow)  |
-| Info         | `text-info`          | `bg-info-light`            | Neutral hint (indigo)            |
-| Status green | `text-status-green`  | `bg-status-green-light`    | Indicator dot / accent (true green) |
-| Status yellow| `text-status-yellow` | `bg-status-yellow-light`   | Indicator dot / "Simulated" pill |
+7 glyphs, all `viewBox 0 0 12 12`, uniform **14.4px**: bond, bid, cap,
+alert, up, down, right. `src/components/icons/icon-*.tsx`. No `rank`
+glyph — `TipConstraint.RANK` reuses ICON_BID (same lever).
 
-### Bond coverage tiers
+### Phantom icon slot
 
-`bg-bond-{none,low,mid,high,full}` — used by the bonds heatmap tiles only.
+Every tip pill renders its glyph inside a fixed `w-4 h-4` centred box
+(`shrink-0 inline-flex items-center justify-center`) so glyph variance
+never shifts pill margins or breaks column alignment.
+`src/components/sam-table/sam-table.tsx` (Next Step cell).
 
-### Charts
+### Bond gauge
 
-`bg-chart-1 … bg-chart-5` — fixed sequence for stacked bars / pie segments.
+`scaleMax = bondGaugeScaleMax(config) = minBondEpochs / BOND_CRITICAL_FRAC`
+(= `5 × minBondEpochs`). Both `marker` and `criticalBand` are the
+constant `BOND_CRITICAL_FRAC = 0.2`. `src/services/calculations.ts`.
 
-### Inline style escape hatch
+### Breakdown table grammar — one 3-col model
 
-Where colour is chosen at runtime from JS state and a Tailwind class
-won't reach, import a `CSS_*` constant from `src/lib/utils.ts`
-(`CSS_PRIMARY`, `CSS_DESTRUCTIVE`, `CSS_WARNING`, …). These resolve to
-`var(--…)` strings — they never carry a hex fallback.
+One uniform column model per `<table>`; never mix `CalcRow` (3-col) and
+`RevRow` (4-col). Unit rules: PMPE / epochs → declared once in
+`SectionHeader` `unit`, no suffix on rows; SOL → inline suffix, NEVER a
+header; % → inline annotation, NEVER a header. A column never mixes
+value kinds. `src/components/breakdowns/row.tsx`.
 
-### Typography scale
+### Attention dot persistence
 
-- `text-[10px]` — secondary info you don't need to read at a glance
-- `text-xs` (12px) — meta labels, table cells
-- `text-[13px]` — emphasised secondary
-- `text-sm` (14px) — primary body / row text
-- `text-base` and up — headings
-Avoid `text-[11px]` and other off-scale arbitrary sizes for primary or
-interactive content.
+Per-tab attention dot (`w-1.5 h-1.5 rounded-full`) **persists on the
+active tab and pulses** (`active && 'animate-pulse'`).
+`src/components/validator-detail/validator-detail.tsx`.
 
-### Components
+### Decorative borders
 
-- `src/components/ui/*` — shadcn primitives (`Button`, `Card`, `Switch`,
-  `Sheet`, `Input`, `Label`, `Tooltip`, `Select`, `Badge`, `Table`,
-  `EpochRangePicker`). Customised primitives (e.g. `Switch` with the
-  Marinade yellow checked state) live here as standalone files so they're
-  testable in isolation. All primitives are plain `function` exports —
-  no `React.forwardRef` (refs aren't needed for the way we compose them).
-- `src/components/breakdowns/shared.tsx` — `CalcCard`, `CalcRow`, `OkRow`,
-  `SectionHeader`. The summary/total row of a breakdown gets `separator`
-  + `bold` + `large` to render as the section conclusion.
-- Inline `<button>` styled `text-xs text-primary hover:underline` is the
-  "see more →" link pattern — keep raw, don't reach for shadcn `Button`
-  for these.
-
-No CSS Modules. `src/index.css` only holds tokens, the global transition
-rule, and keyframe animations.
+NEVER `border-l` / left-border accent bands on any element. Status is
+carried by colour token + dot + glyph, not by a coloured edge.

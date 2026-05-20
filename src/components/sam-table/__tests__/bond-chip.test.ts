@@ -1,3 +1,5 @@
+// Regression guard for BOND_CHIP label mapping: soft tier must render "Adequate", not "OK".
+// Tests bondCoverageLabel and BOND_CHIP display text per health tier.
 import { describe, expect, it } from 'vitest'
 
 import { bondCoverageLabel } from '../../validator-detail/validator-detail'

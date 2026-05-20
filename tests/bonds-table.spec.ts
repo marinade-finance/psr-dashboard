@@ -1,6 +1,6 @@
 // Bonds table: columns, default sort, sorting interactions, ValidatorIdentity
 // cell, expert-only Max protectable column. Spec source is SCREENS.md.
-import { test, expect } from './fixtures/mock-api'
+import { test, expect } from '@playwright/test'
 
 import type { Page } from '@playwright/test'
 
@@ -87,8 +87,12 @@ test.describe('Bonds table sort interactions', () => {
   test('clicking Bond Balance header sorts by that column', async ({
     page,
   }) => {
-    // Bond Balance header (column index 3 in data → th nth-child(4) with #).
-    await page.getByRole('button', { name: /Bond Balance/i }).first().click()
+    // Headers are <th> (not <button>); they sort on click.
+    await page
+      .locator('thead th')
+      .filter({ hasText: /Bond Balance/i })
+      .first()
+      .click()
     // Whichever direction the click picks, the column must be sorted.
     const cells = page.locator('table tbody tr td:nth-child(4)')
     const count = await cells.count()
@@ -106,7 +110,11 @@ test.describe('Bonds table sort interactions', () => {
   })
 
   test('clicking Coverage header sorts by coverage ratio', async ({ page }) => {
-    await page.getByRole('button', { name: /Coverage/i }).first().click()
+    await page
+      .locator('thead th')
+      .filter({ hasText: /Coverage/i })
+      .first()
+      .click()
     // Coverage cell text contains "NN%" — read it back as a number.
     const cells = page.locator('table tbody tr td:nth-child(6)')
     const count = await cells.count()
@@ -182,33 +190,3 @@ test.describe('Bonds coverage hero', () => {
   })
 })
 
-test.describe('Bonds expert table', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/expert-bonds')
-    await waitForBonds(page)
-  })
-
-  test('Max protectable column is the rightmost data column', async ({
-    page,
-  }) => {
-    const headers = await page.locator('table thead th').allInnerTexts()
-    // Last header should be Max protectable per SCREENS.md
-    expect(headers[headers.length - 1]).toMatch(/Max protectable/i)
-  })
-
-  test('Max protectable chip visible on the hero', async ({ page }) => {
-    await expect(page.getByText(/Max protectable/i).first()).toBeVisible()
-  })
-
-  test('expert mode keeps the basic-mode columns in the same order', async ({
-    page,
-  }) => {
-    const headers = await page.locator('table thead th').allInnerTexts()
-    const idx = (re: RegExp) => headers.findIndex(h => re.test(h))
-    expect(idx(/Validator/)).toBeLessThan(idx(/Marinade Stake/))
-    expect(idx(/Marinade Stake/)).toBeLessThan(idx(/Bond Balance/))
-    expect(idx(/Bond Balance/)).toBeLessThan(idx(/Protected Stake/))
-    expect(idx(/Protected Stake/)).toBeLessThan(idx(/Coverage/))
-    expect(idx(/Coverage/)).toBeLessThan(idx(/Max protectable/))
-  })
-})

@@ -1,87 +1,41 @@
-// Visual smoke tests: verify all pages render with content (no blank/crash).
-// Checks structural integrity without repeating functional assertions from
-// page-specific test files.
-import { test, expect } from './fixtures/mock-api'
+// Visual smoke tests: each basic route renders without crash and without
+// console errors. Expert routes are not tested (see CLAUDE.md).
+import { test, expect } from '@playwright/test'
 
-test('no console errors on SAM page', async ({ page }) => {
-  const errors: string[] = []
-  page.on('console', m => {
-    if (m.type() === 'error') errors.push(m.text())
-  })
-  await page.goto('/')
-  await page.waitForSelector('tbody tr', { timeout: 50000 })
-  // Filter out known non-critical network errors from HAR not found
-  const real = errors.filter(
-    e => !e.includes('Failed to load resource') && !e.includes('net::'),
-  )
-  expect(real).toHaveLength(0)
-})
+const ROUTES = [
+  { path: '/test-', wait: 'tbody tr' },
+  { path: '/test-bonds', wait: 'table' },
+  { path: '/test-protected-events', wait: 'table' },
+] as const
 
-test('all main routes render without crash', async ({ page }) => {
-  const routes = [
-    { path: '/', wait: 'tbody tr' },
-    { path: '/bonds', wait: 'table' },
-    { path: '/protected-events', wait: 'table' },
-    { path: '/expert-', wait: 'tbody tr' },
-    { path: '/expert-bonds', wait: 'table' },
-    { path: '/expert-protected-events', wait: 'table' },
-  ]
-  for (const { path, wait } of routes) {
+test('basic routes render without crash', async ({ page }) => {
+  for (const { path, wait } of ROUTES) {
     await page.goto(path)
-    await page.waitForSelector(wait, { timeout: 90000 })
+    await page.waitForSelector(wait, { timeout: 60000 })
     await expect(page.getByText('Error fetching data')).not.toBeVisible()
   }
 })
 
-test('/docs renders guide content', async ({ page }) => {
+test('no console errors across basic routes', async ({ page }) => {
+  const errors: string[] = []
+  page.on('console', m => {
+    if (m.type() === 'error') errors.push(m.text())
+  })
+  for (const { path, wait } of ROUTES) {
+    await page.goto(path)
+    await page.waitForSelector(wait, { timeout: 60000 })
+  }
+  // Resource-load errors aren't surfaced via test routes (no network calls)
+  // but filter defensively for any environment quirks.
+  const real = errors.filter(
+    e => !e.includes('Failed to load resource') && !e.includes('net::'),
+  )
+  expect(real).toHaveLength(0)
+})
+
+test('/docs renders the guide content', async ({ page }) => {
   await page.goto('/docs')
   await expect(
     page.getByRole('heading', { name: 'PSR Dashboard Guide' }),
   ).toBeVisible()
-})
-
-test('/expert-docs renders expert guide content', async ({ page }) => {
-  await page.goto('/expert-docs')
-  await expect(
-    page.getByRole('heading', { name: /Expert View/ }),
-  ).toBeVisible()
-})
-
-test('no console errors on expert SAM page', async ({ page }) => {
-  const errors: string[] = []
-  page.on('console', m => {
-    if (m.type() === 'error') errors.push(m.text())
-  })
-  await page.goto('/expert-')
-  await page.waitForSelector('tbody tr', { timeout: 50000 })
-  const real = errors.filter(
-    e => !e.includes('Failed to load resource') && !e.includes('net::'),
-  )
-  expect(real).toHaveLength(0)
-})
-
-test('no console errors on expert bonds page', async ({ page }) => {
-  const errors: string[] = []
-  page.on('console', m => {
-    if (m.type() === 'error') errors.push(m.text())
-  })
-  await page.goto('/expert-bonds')
-  await page.waitForSelector('table', { timeout: 90000 })
-  const real = errors.filter(
-    e => !e.includes('Failed to load resource') && !e.includes('net::'),
-  )
-  expect(real).toHaveLength(0)
-})
-
-test('no console errors on expert protected-events page', async ({ page }) => {
-  const errors: string[] = []
-  page.on('console', m => {
-    if (m.type() === 'error') errors.push(m.text())
-  })
-  await page.goto('/expert-protected-events')
-  await page.waitForSelector('table tbody tr', { timeout: 90000 })
-  const real = errors.filter(
-    e => !e.includes('Failed to load resource') && !e.includes('net::'),
-  )
-  expect(real).toHaveLength(0)
 })

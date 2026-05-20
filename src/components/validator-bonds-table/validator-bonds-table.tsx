@@ -1,6 +1,7 @@
 import React from 'react'
 
 import { cn } from 'src/class_utils'
+import { docsPath } from 'src/components/breakdowns/docs-path'
 import { UserLevel } from 'src/components/navigation/navigation'
 import { HtmlTooltip } from 'src/components/ui/tooltip'
 import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
@@ -131,7 +132,7 @@ const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
             >
               {/* Stake tier label */}
               <div
-                className="flex items-center justify-center shrink-0 text-[10px] text-muted-foreground font-mono"
+                className="flex items-center justify-center shrink-0 text-2xs text-muted-foreground font-mono"
                 style={{ width: 56, minHeight: 40 }}
               >
                 {tier.label}
@@ -176,7 +177,7 @@ const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
                         {size >= 36 && (
                           <div className="flex-1 px-1.5 pt-1 overflow-hidden">
                             <div
-                              className="text-[10px] font-bold leading-tight truncate"
+                              className="text-2xs font-bold leading-tight truncate"
                               style={{
                                 color: 'rgba(255,255,255,0.95)',
                                 textShadow: '0 1px 2px rgba(0,0,0,0.5)',
@@ -323,6 +324,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
   const expertColumns: {
     header: string
     headerHelp?: string
+    headerGuideTo?: string
     render: (entry: ValidatorWithBond) => JSX.Element
     compare: (a: ValidatorWithBond, b: ValidatorWithBond) => number
     alignment: Alignment
@@ -333,6 +335,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
             header: 'Max protectable [SOL]',
             headerHelp:
               'The most stake this bond could ever reimburse if it were stretched to its limit. A bigger bond pushes this number up.',
+            headerGuideTo: `${docsPath(level)}#bond`,
             render: (entry: ValidatorWithBond) => (
               <>{sol(selectMaxProtectedStake(entry))}</>
             ),
@@ -478,6 +481,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
                 header: 'Marinade Stake [SOL]',
                 headerHelp:
                   'All the SOL Marinade has staked with this validator — both directly staked SOL and SOL backing mSOL.',
+                headerGuideTo: `${docsPath(level)}#bond`,
                 render: ({ validator }) => (
                   <HtmlTooltip
                     html={`Native: ${sol(selectNativeMarinadeStake(validator))}, Liquid: ${sol(selectLiquidMarinadeStake(validator))}`}
@@ -494,6 +498,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
                 header: 'Bond Balance [SOL]',
                 headerHelp:
                   'How much SOL the validator has in its safety deposit, ready to reimburse stakers if something goes wrong.',
+                headerGuideTo: `${docsPath(level)}#bond`,
                 render: ({ bond }) => (
                   <>
                     {sol(
@@ -514,6 +519,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
                 header: 'Protected Stake [SOL]',
                 headerHelp:
                   "The slice of this validator's Marinade stake that the bond is big enough to reimburse if needed.",
+                headerGuideTo: `${docsPath(level)}#bond`,
                 render: entry => <>{sol(selectProtectedStake(entry))}</>,
                 compare: (a, b) =>
                   selectProtectedStake(a) - selectProtectedStake(b),
@@ -523,6 +529,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
                 header: 'Coverage',
                 headerHelp:
                   "What share of this validator's Marinade stake the bond can fully cover. 100% means everything is protected.",
+                headerGuideTo: `${docsPath(level)}#bond`,
                 render: entry => {
                   const stake = selectTotalMarinadeStake(entry.validator)
                   const coveredStake = selectProtectedStake(entry)

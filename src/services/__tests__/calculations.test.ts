@@ -1,3 +1,5 @@
+// Tests for core auction math: compoundApy, bondRunwayEpochs, bondUtilizationPct,
+// apyBreakdown composition, and bondGaugeScaleMax scaling.
 import { describe, it, expect, vi } from 'vitest'
 
 import {

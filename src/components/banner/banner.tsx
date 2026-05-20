@@ -51,7 +51,11 @@ export const Banner: React.FC<Props> = ({ title, body }) => {
   }
 
   return (
-    <div className="relative px-5 py-4 bg-card border border-info/20 text-sm leading-relaxed text-foreground shadow-card [&_a]:text-primary [&_a]:no-underline [&_a:hover]:underline [&_p]:my-2 rounded-lg">
+    <div
+      role="status"
+      aria-live="polite"
+      className="relative px-5 py-4 bg-card border border-info/20 text-sm leading-relaxed text-foreground shadow-card [&_a]:text-primary [&_a]:no-underline [&_a:hover]:underline [&_p]:my-2 rounded-lg"
+    >
       <div className="font-semibold text-base mb-1">{title}</div>
       <div className="text-muted-foreground">
         {typeof body === 'string' ? (

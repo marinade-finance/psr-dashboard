@@ -1,3 +1,5 @@
+<!-- page: expert | Expert Mode -->
+
 # Expert View
 
 Expert mode is reached via the `/expert-…` URL prefix or by toggling the docs
@@ -32,8 +34,10 @@ Two extras appear on the Validator Bonds page:
   stake *could* be protected if every existing bond were fully utilized. This is
   always ≥ the currently-protected percentage; the gap shows headroom.
 - **Table column: "Max protectable [SOL]"** — per-validator maximum bond-only
-  protection capacity. Computed from bond effective amount and the validator's
-  configured `cpmpe` × the protection horizon.
+  protection capacity. Computed as `bondEffectiveAmount ÷ ((inflationPmpe +
+  mevPmpe + effParticipatingBidPmpe) ÷ 1000)` — bond divided by the
+  participating-total PMPE rate per 1000 SOL of stake, i.e. how much stake one
+  epoch's commitments would just cover. No horizon multiplier.
 
 These are useful for asking "how much more stake could this validator absorb
 before their bond becomes the binding constraint?".
@@ -47,6 +51,34 @@ One extra metric tile at the top of the Protected Events page:
   protected-event payouts; this tile adds the routine bid revenue stream.)
 
 ---
+
+<!-- page: expert-concepts | Expert Concepts -->
+
+## Additional Concepts
+
+<a id="sfdp"></a>
+### SFDP — Solana Foundation Delegation Programme
+
+Validators meeting the foundation's uptime, commission, and identity criteria receive a minor stake-weight uplift in the SAM auction. The boolean is read from the validators API and treated as a static score component — it does not interact with the bid or bond math.
+
+<a id="stake-wanted"></a>
+### Max Stake Wanted
+
+Validator-set upper bound on Marinade delegation. The SDK caps `marinadeSamTargetSol` at `maxStakeWanted`; the constraint shows up in the Next Step tip as "At your `maxStakeWanted` setting". Bond and bid improvements are inert while `maxStakeWanted` is binding.
+
+<a id="bid-distribution"></a>
+### Bid Distribution
+
+The bid-distribution histogram plots each validator's static Cost PMPE bid in quantile buckets. Useful for gauging whether a given bid is at the top, middle, or tail of the current field. The clearing price (`winningTotalPmpe − onchainDistributedPmpe`) sets the practical floor; bids below it lose stake regardless of absolute size.
+
+<a id="concentration"></a>
+### Concentration Limits
+
+Per-country and per-ASO stake caps are enforced as a post-ranking filter: the SDK iterates winners in APY order and skips any validator whose group is already at the cap (`countryCapPct`, `asoCapPct` in `DsSamConfig`, both defaulting to 30%). A per-validator cap of 15% of TVL applies in parallel. Capped validators show in the Top Countries / Top ASOs tiles with a red marker. In expert mode, capped validators that would otherwise win appear below the cutoff line because the cap, not their bid, is the binding constraint.
+
+---
+
+<!-- page: expert -->
 
 ## Notes
 
