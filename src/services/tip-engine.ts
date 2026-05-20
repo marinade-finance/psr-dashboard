@@ -38,23 +38,21 @@ import type {
 } from '@marinade.finance/ds-sam-sdk'
 import type React from 'react'
 
-export const TipUrgency = {
-  CRITICAL: 'critical',
-  WARNING: 'warning',
-  INFO: 'info',
-  POSITIVE: 'positive',
-  NEUTRAL: 'neutral',
-} as const
-export type TipUrgency = (typeof TipUrgency)[keyof typeof TipUrgency]
+export enum TipUrgency {
+  CRITICAL = 'critical',
+  WARNING = 'warning',
+  INFO = 'info',
+  POSITIVE = 'positive',
+  NEUTRAL = 'neutral',
+}
 
-export const TipConstraint = {
-  RANK: 'rank',
-  BOND: 'bond',
-  BID: 'bid',
-  CAP: 'cap',
-  NONE: 'none',
-} as const
-export type TipConstraint = (typeof TipConstraint)[keyof typeof TipConstraint]
+export enum TipConstraint {
+  RANK = 'rank',
+  BOND = 'bond',
+  BID = 'bid',
+  CAP = 'cap',
+  NONE = 'none',
+}
 
 export interface ValidatorTip {
   text: string

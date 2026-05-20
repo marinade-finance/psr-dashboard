@@ -18,6 +18,8 @@ import {
   getTipStyle,
   getTipIcon,
   nextStakeDeltaCell,
+  TipUrgency,
+  TipConstraint,
 } from '../tip-engine'
 
 import type { ProtectedEvent } from '../protected-events'
@@ -118,33 +120,33 @@ describe('getApyBreakdown', () => {
 
 describe('getTipStyle', () => {
   it('critical → destructive', () => {
-    expect(getTipStyle('critical').color).toContain('destructive')
+    expect(getTipStyle(TipUrgency.CRITICAL).color).toContain('destructive')
   })
 
   it('warning → warning', () => {
-    expect(getTipStyle('warning').color).toContain('warning')
+    expect(getTipStyle(TipUrgency.WARNING).color).toContain('warning')
   })
 
   it('info → info', () => {
-    expect(getTipStyle('info').color).toContain('info')
+    expect(getTipStyle(TipUrgency.INFO).color).toContain('info')
   })
 
   it('positive → primary', () => {
-    expect(getTipStyle('positive').color).toContain('primary')
+    expect(getTipStyle(TipUrgency.POSITIVE).color).toContain('primary')
   })
 
   it('neutral → muted', () => {
-    expect(getTipStyle('neutral').color).toContain('muted')
+    expect(getTipStyle(TipUrgency.NEUTRAL).color).toContain('muted')
   })
 
   it('getTipStyle returns color and bg fields, no icon', () => {
     const urgencies = [
-      'critical',
-      'warning',
-      'info',
-      'positive',
-      'neutral',
-    ] as const
+      TipUrgency.CRITICAL,
+      TipUrgency.WARNING,
+      TipUrgency.INFO,
+      TipUrgency.POSITIVE,
+      TipUrgency.NEUTRAL,
+    ]
     for (const u of urgencies) {
       expect('icon' in getTipStyle(u)).toBe(false)
     }
@@ -156,45 +158,61 @@ describe('getTipStyle', () => {
 describe('getTipIcon', () => {
   const tip = (over: Partial<ValidatorTip>): ValidatorTip => ({
     text: '',
-    urgency: 'warning',
-    constraint: 'none',
+    urgency: TipUrgency.WARNING,
+    constraint: TipConstraint.NONE,
     delta: 0,
     ...over,
   })
 
   it('constraint:bond → fixed non-directional bond glyph', () => {
-    expect(getTipIcon(tip({ constraint: 'bond' }))).toBe(ICON_BOND)
+    expect(getTipIcon(tip({ constraint: TipConstraint.BOND }))).toBe(ICON_BOND)
   })
 
   it('constraint:bid → fixed non-directional bid glyph', () => {
-    expect(getTipIcon(tip({ constraint: 'bid' }))).toBe(ICON_BID)
+    expect(getTipIcon(tip({ constraint: TipConstraint.BID }))).toBe(ICON_BID)
   })
 
   it('constraint:rank → fixed non-directional rank glyph', () => {
-    expect(getTipIcon(tip({ constraint: 'rank' }))).toBe(ICON_BID)
+    expect(getTipIcon(tip({ constraint: TipConstraint.RANK }))).toBe(ICON_BID)
   })
 
   it('constraint:cap → fixed non-directional cap glyph', () => {
-    expect(getTipIcon(tip({ constraint: 'cap' }))).toBe(ICON_CAP)
+    expect(getTipIcon(tip({ constraint: TipConstraint.CAP }))).toBe(ICON_CAP)
   })
 
   it('constraint:none — delta>0 → up, delta<0 → down, delta=0 → right', () => {
-    expect(getTipIcon(tip({ constraint: 'none', delta: 100 }))).toBe(ICON_UP)
-    expect(getTipIcon(tip({ constraint: 'none', delta: -100 }))).toBe(ICON_DOWN)
-    expect(getTipIcon(tip({ constraint: 'none', delta: 0 }))).toBe(ICON_RIGHT)
+    expect(
+      getTipIcon(tip({ constraint: TipConstraint.NONE, delta: 100 })),
+    ).toBe(ICON_UP)
+    expect(
+      getTipIcon(tip({ constraint: TipConstraint.NONE, delta: -100 })),
+    ).toBe(ICON_DOWN)
+    expect(getTipIcon(tip({ constraint: TipConstraint.NONE, delta: 0 }))).toBe(
+      ICON_RIGHT,
+    )
   })
 
   it('bond/bid/rank constraint → glyph is never ICON_UP even when losing stake', () => {
-    // The bug: warning-urgency bond/bid/rank tips rendered ICON_UP via the
-    // old urgency→icon map, putting a "gain" arrow on blocked/losing rows.
-    for (const c of ['bond', 'bid', 'rank'] as const) {
-      const losing = tip({ constraint: c, urgency: 'warning', delta: -5000 })
+    for (const c of [
+      TipConstraint.BOND,
+      TipConstraint.BID,
+      TipConstraint.RANK,
+    ]) {
+      const losing = tip({
+        constraint: c,
+        urgency: TipUrgency.WARNING,
+        delta: -5000,
+      })
       expect(getTipIcon(losing)).not.toBe(ICON_UP)
     }
   })
 
   it('constraint NONE + delta < 0 → ICON_DOWN', () => {
-    const losing = tip({ constraint: 'none', urgency: 'warning', delta: -5000 })
+    const losing = tip({
+      constraint: TipConstraint.NONE,
+      urgency: TipUrgency.WARNING,
+      delta: -5000,
+    })
     expect(getTipIcon(losing)).toBe(ICON_DOWN)
     expect(getTipIcon(losing)).not.toBe(ICON_UP)
   })
