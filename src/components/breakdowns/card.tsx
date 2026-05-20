@@ -9,7 +9,12 @@ import {
 } from 'src/services/tip-engine'
 import { assertNever } from 'src/utils/assert-never'
 
-export type CardStatusTone = 'red' | 'yellow' | 'green' | 'grey'
+export enum CardStatusTone {
+  RED = 'red',
+  YELLOW = 'yellow',
+  GREEN = 'green',
+  GREY = 'grey',
+}
 export type CardStatusAction = {
   label: string
   onClick: () => void
@@ -25,10 +30,10 @@ export type CardStatus = {
 }
 
 const STATUS_CLASSES: Record<CardStatusTone, string> = {
-  red: 'bg-destructive-light text-destructive',
-  yellow: 'bg-status-yellow-light text-status-yellow',
-  green: 'bg-primary-light text-primary',
-  grey: 'bg-muted text-muted-foreground',
+  [CardStatusTone.RED]: 'bg-destructive-light text-destructive',
+  [CardStatusTone.YELLOW]: 'bg-status-yellow-light text-status-yellow',
+  [CardStatusTone.GREEN]: 'bg-primary-light text-primary',
+  [CardStatusTone.GREY]: 'bg-muted text-muted-foreground',
 }
 
 // Pill border/text per tone — paired with bg-card/55 fill for the action
@@ -36,23 +41,23 @@ const STATUS_CLASSES: Record<CardStatusTone, string> = {
 // validator-detail header banner's "Bond tab →" pill: bg-card/55 + tone-
 // coloured border and text — keeps both surfaces in lockstep.
 const STATUS_ACTION_CLASSES: Record<CardStatusTone, string> = {
-  red: 'border-destructive text-destructive',
-  yellow: 'border-status-yellow text-status-yellow',
-  green: 'border-primary text-primary',
-  grey: 'border-muted-foreground text-muted-foreground',
+  [CardStatusTone.RED]: 'border-destructive text-destructive',
+  [CardStatusTone.YELLOW]: 'border-status-yellow text-status-yellow',
+  [CardStatusTone.GREEN]: 'border-primary text-primary',
+  [CardStatusTone.GREY]: 'border-muted-foreground text-muted-foreground',
 }
 
 const urgencyToTone = (urgency: TipUrgency): CardStatusTone => {
   switch (urgency) {
     case TipUrgency.CRITICAL:
-      return 'red'
+      return CardStatusTone.RED
     case TipUrgency.WARNING:
     case TipUrgency.INFO:
-      return 'yellow'
+      return CardStatusTone.YELLOW
     case TipUrgency.POSITIVE:
-      return 'green'
+      return CardStatusTone.GREEN
     case TipUrgency.NEUTRAL:
-      return 'grey'
+      return CardStatusTone.GREY
     default:
       return assertNever(urgency)
   }
@@ -62,12 +67,12 @@ const bondHealthToTone = (health: BondHealthState): CardStatusTone => {
   switch (health) {
     case BondHealthState.NO_BOND:
     case BondHealthState.CRITICAL:
-      return 'red'
+      return CardStatusTone.RED
     case BondHealthState.WATCH:
     case BondHealthState.SOFT:
-      return 'yellow'
+      return CardStatusTone.YELLOW
     case BondHealthState.HEALTHY:
-      return 'green'
+      return CardStatusTone.GREEN
     default:
       return assertNever(health)
   }
@@ -99,7 +104,11 @@ export function withSimAction(
   return onGoToSim
     ? {
         ...base,
-        action: { label: 'Simulate →', tone: 'yellow', onClick: onGoToSim },
+        action: {
+          label: 'Simulate →',
+          tone: CardStatusTone.YELLOW,
+          onClick: onGoToSim,
+        },
       }
     : base
 }
