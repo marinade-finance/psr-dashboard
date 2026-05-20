@@ -36,7 +36,6 @@ import { bondHealthFromAuction } from 'src/services/bond-health'
 import {
   bondCriticalFrac,
   bondGaugeScaleMax,
-  bondIdealFrac,
   bondUtilizationPct,
   effectiveBondRunway,
 } from 'src/services/calculations'
@@ -732,7 +731,6 @@ export const SamTable: React.FC<Props> = ({
     const hasAlert = bondRunway <= 5 || bondUtilPct >= 85
     const bondScaleMax = bondGaugeScaleMax(dsSamConfig)
     const bondCritical = bondCriticalFrac(dsSamConfig)
-    const bondIdeal = bondIdealFrac(dsSamConfig)
 
     const expectedChange = selectExpectedStakeChange(validator)
 
@@ -880,7 +878,6 @@ export const SamTable: React.FC<Props> = ({
               value={bondRunway}
               scaleMax={bondScaleMax}
               marker={bondCritical}
-              idealMarker={bondIdeal}
               criticalBand={bondCritical}
               tone={bondChip.bar}
             />

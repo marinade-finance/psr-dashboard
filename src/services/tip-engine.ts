@@ -206,7 +206,9 @@ export function bondAdvice(
             : `Estimated bond risk fee ${pay(bondRiskFeeSol)} next epoch.`
           : coverage.bondRiskFeeShortfall > 0
             ? `Top up ${topUp(coverage.bondRiskFeeShortfall)} — bond below the penalty threshold.`
-            : 'Bond too thin — a bond risk fee can be charged.'
+            : coverage.topUpToIdealKeep > 0
+              ? `Top up ${topUp(coverage.topUpToIdealKeep)} — bond near the penalty threshold.`
+              : 'Bond near penalty threshold — add more to build runway.'
       return { text, urgency: TipUrgency.CRITICAL, tone: CardStatusTone.RED }
     }
     case BondHealthState.WATCH: {
