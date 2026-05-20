@@ -73,7 +73,7 @@ const FETCHED_EPOCHS = 11
 // decomposes into three signed components that always sum to it:
 //   paidUndelegationSol (≤0)      bond risk penalty outflow (BRRM forced removal)
 //   redelegationInflowSol (≥0)    inflow from the 1% rotation budget
-//   naturalWithdrawalSol (≤0)     rotation outflow (≈taken from over-target validators)
+//   naturalWithdrawalSol (≤0)     rotation outflow (over-target excess, lowest unstakePriority first)
 // cutoffRank is the dense position relative to the auction cutoff: 0 = at the
 // winning total PMPE, +1 = closest distinct tier above (ties share a rank),
 // -1 = closest distinct tier below.
@@ -234,49 +234,28 @@ export const selectEffectiveCost = (validator: AuctionValidator) =>
 // Not SDK-exported; maintained here until the SDK exposes it.
 const WITHDRAWAL_FRACTION_PER_EPOCH = 0.01
 
-// Approximates the 1%-TVL rotation: takes from over-target validators first
-// (proportional to excess), falls back to pro-rata by active stake.
-// Real SDK rotates by undelegation-priority rank, so this is an estimate.
+// 1%-TVL rotation: sorted by unstakePriority asc (lowest prio unstaked first),
+// takes each validator's over-target excess until the budget is exhausted.
 function computeNaturalWithdrawal(
   validators: AuctionValidator[],
   tvl: number,
 ): Map<string, number> {
   const out = new Map<string, number>()
-  const withdrawal = WITHDRAWAL_FRACTION_PER_EPOCH * tvl
-  if (withdrawal <= 0) return out
-  const excess = validators.map(validator => ({
-    va: validator.voteAccount,
-    x: Math.max(
-      0,
-      validator.marinadeActivatedStakeSol -
-        validator.auctionStake.marinadeSamTargetSol,
-    ),
-  }))
-  const totalExcess = excess.reduce((sum, entry) => sum + entry.x, 0)
-  let remaining = withdrawal
-  if (totalExcess > 0) {
-    for (const { va, x } of excess) {
-      if (x <= 0) continue
-      const share = Math.min(x, (withdrawal * x) / totalExcess)
-      if (share > 0) {
-        out.set(va, share)
-        remaining -= share
-      }
-    }
-    if (remaining <= 1e-9) return out
-  }
-  const totalActive = validators.reduce(
-    (s, v) => s + v.marinadeActivatedStakeSol,
-    0,
+  let remaining = WITHDRAWAL_FRACTION_PER_EPOCH * tvl
+  if (remaining <= 0) return out
+  const sorted = [...validators].sort(
+    (a, b) => a.unstakePriority - b.unstakePriority,
   )
-  if (totalActive <= 0) return out
-  for (const validator of validators) {
-    const add = (remaining * validator.marinadeActivatedStakeSol) / totalActive
-    if (add > 0)
-      out.set(
-        validator.voteAccount,
-        (out.get(validator.voteAccount) ?? 0) + add,
-      )
+  for (const v of sorted) {
+    const excess = Math.max(
+      0,
+      v.marinadeActivatedStakeSol - v.auctionStake.marinadeSamTargetSol,
+    )
+    if (excess <= 0) continue
+    const take = Math.min(excess, remaining)
+    out.set(v.voteAccount, take)
+    remaining -= take
+    if (remaining <= 0) break
   }
   return out
 }
