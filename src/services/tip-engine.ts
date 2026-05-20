@@ -219,8 +219,8 @@ export function bondAdvice(
       // Near threshold, no fee yet — warn, not critical.
       const text =
         coverage.topUpToIdealKeep > 0
-          ? `Top up ${topUp(coverage.topUpToIdealKeep)} to avoid the fee.`
-          : 'Bond near threshold — top up to avoid the fee.'
+          ? `Top up ${topUp(coverage.topUpToIdealKeep)} to avoid future fee.`
+          : 'Bond near threshold — top up to avoid future fee.'
       return { text, urgency: TipUrgency.WARNING, tone: CardStatusTone.YELLOW }
     }
     case BondHealthState.WATCH: {
