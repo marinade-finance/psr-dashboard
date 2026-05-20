@@ -2,6 +2,30 @@
 
 ## Queued — fix on a clean tree, verify, then commit
 
+### Test-page parity: no structural enforcement that /test- matches /
+
+`/test-` routes wrap the same `<SamPage>` / `<ValidatorBondsPage>` /
+`<ProtectedEventsPage>` components, so UI logic can't silently diverge.
+What CAN diverge silently is the `loadAuction` / `loadNotifications`
+implementation inside each test page — those are local reimplementations
+of the real data loaders, not imports of them.
+
+Specific risk today: `src/pages/test-stake-auction-marketplace.tsx` has
+a `hasOverrides` branch (skip SDK rerun when no overrides active) that
+exists only in the test page — the main page never exercises it. If the
+conditional logic introduces a bug it won't be caught.
+
+**Options to solve:**
+1. Make `SamDataSources.loadAuction` in the test page a thin wrapper
+   around the same `loadSam()` factory the main page uses, just with
+   fixture data injected. No bespoke branching.
+2. Add at least one Playwright test that hits `/` (not `/test-`) against
+   a locally-seeded server and runs the same core assertions — proves the
+   main page data path is alive.
+3. Extract the "skip rerun when no overrides" logic into a shared helper
+   (`maybeRerun(overrides, base, rerunFn)`) that both pages import — then
+   the branch is tested wherever the test page is tested.
+
 ### Rounding / decimal-places rule across breakdowns
 
 - **BOND balances → 1 decimal place** (currently 3-dp via `cost()`).
