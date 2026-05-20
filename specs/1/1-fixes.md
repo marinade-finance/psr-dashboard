@@ -81,23 +81,14 @@ arm at line 218, extend to cover this gap).
 
 **Where:** `src/services/tip-engine.ts:213-219` (`bondAdvice()` CRITICAL branch).
 
-## Open: /test- simulation collapses table to 2 rows
+## Shipped: /test- simulation collapses table to 2 rows
 
-**Root cause (browser-verified):** `runSdkRerun` calls `Auction.evaluate()`,
-which overwrites `bondGoodForNEpochs` on every validator with values derived
-from the tiny synthetic bond amounts in the fixture. `passesTableFilter` then
-hides 31 of 33 rows (runway too short). The simulated validator itself
-disappears from the table, so ghost rows never insert. Simulation ring and
-"SIMULATED" badge appear correctly — the wiring is live — but the table is
-effectively empty.
+**Root cause:** `passesTableFilter` used `bondGoodForNEpochs < minBondEpochs`
+as its basic-mode runway filter. `runSdkRerun` calls `Auction.evaluate()` which
+recomputes `bondGoodForNEpochs` from the tiny synthetic bond amounts in the
+fixture, driving it to 0 for nearly all rows.
 
-**Fix:** replace the SDK rerun path with a pure deterministic transform on the
-frozen fixture — patch `cpmpe`, commissions, and `revShare` directly on the
-matching validator object (no `Auction.evaluate()`). The SDK's `bondGoodForNEpochs`
-field is never touched; all other computed fields stay as the fixture baked them.
-
-**Why this approach:** keeps the fixture sealed, avoids the `bondGoodForNEpochs`
-overwrite, and captures every override-driven CTA state in Playwright.
-
-**Where:** `src/pages/test-stake-auction-marketplace.tsx` — replace the
-`runSdkRerun` call in `loadAuction` with the deterministic patch.
+**Fix:** `passesTableFilter` now filters on `bondBalanceSol < minBondBalanceSol`
+— the SDK minimum bond amount (e.g. 5 SOL), not runway. `bondBalanceSol` is
+never mutated by `Auction.evaluate()`, so simulation no longer collapses the
+table. `src/components/sam-table/sam-table.tsx:156`.

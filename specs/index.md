@@ -62,5 +62,4 @@ Code evidence is present but correctness needs a manual check at `/test-` or in 
 
 | Item | Uncertainty |
 | ---- | ----------- |
-| avoid-fee CRITICAL text when `bondRiskFeeSol === 0` | `bondAdvice()` line 215 emits "avoid the fee" when only the threshold was crossed, not when a fee is charged — see `1/1-fixes.md` |
-| `/test-` simulation — table collapses to 2 rows | `runSdkRerun` overwrites `bondGoodForNEpochs` with SDK-derived values from tiny synthetic bonds; `passesTableFilter` hides 31/33 rows. Fix: deterministic fixture patch instead of SDK rerun — see `1/1-fixes.md` |
+| avoid-fee CRITICAL text when `bondRiskFeeSol === 0` | Fixed in `bondAdvice()` — gated on both conditions. Verified by unit tests. |
