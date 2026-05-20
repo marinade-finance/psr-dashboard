@@ -9,7 +9,7 @@ import {
   useRouteError,
 } from 'react-router-dom'
 
-import { UserLevel } from './components/navigation/navigation'
+import { Navigation, UserLevel } from './components/navigation/navigation'
 import { TooltipProvider } from './components/ui/tooltip'
 import { DocsPage } from './pages/docs'
 import { ProtectedEventsPage } from './pages/protected-events'
@@ -32,23 +32,27 @@ const ErrorPage = () => {
   const error = useRouteError() as { statusText?: string; message?: string }
 
   return (
-    <div role="alert" className="p-8 max-w-prose mx-auto">
-      <h1 className="text-xl font-semibold mb-2">Oops!</h1>
-      <p>Sorry, an unexpected error has occurred.</p>
-      <p>
-        <i>{error.statusText ?? error.message}</i>
-      </p>
-    </div>
+    <Navigation>
+      <div role="alert" className="p-8 max-w-prose mx-auto">
+        <h1 className="text-xl font-semibold mb-2">Oops!</h1>
+        <p>Sorry, an unexpected error has occurred.</p>
+        <p>
+          <i>{error.statusText ?? error.message}</i>
+        </p>
+      </div>
+    </Navigation>
   )
 }
 
 // Catch-all for unknown paths so React Router renders the ErrorPage instead
 // of a blank screen. Matches anything not claimed by the routes above.
 const NotFoundPage = () => (
-  <div role="alert" className="p-8 max-w-prose mx-auto">
-    <h1 className="text-xl font-semibold mb-2">Page not found</h1>
-    <p>That route doesn&apos;t exist. Try the navigation above.</p>
-  </div>
+  <Navigation>
+    <div role="alert" className="p-8 max-w-prose mx-auto">
+      <h1 className="text-xl font-semibold mb-2">Page not found</h1>
+      <p>That route doesn&apos;t exist. Use the navigation above.</p>
+    </div>
+  </Navigation>
 )
 
 const router = createBrowserRouter([
