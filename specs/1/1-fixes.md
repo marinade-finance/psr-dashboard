@@ -81,18 +81,23 @@ arm at line 218, extend to cover this gap).
 
 **Where:** `src/services/tip-engine.ts:213-219` (`bondAdvice()` CRITICAL branch).
 
-## Open: /test- page has no working simulation
+## Open: /test- simulation collapses table to 2 rows
 
-**Why:** `test-stake-auction-marketplace.tsx`'s `loadAuction` returns the frozen
-`SAM_RESULT` fixture without a `runFinalOnly` path, so sim-panel edits have no
-effect. Every override-driven CTA state is untestable visually.
+**Root cause (browser-verified):** `runSdkRerun` calls `Auction.evaluate()`,
+which overwrites `bondGoodForNEpochs` on every validator with values derived
+from the tiny synthetic bond amounts in the fixture. `passesTableFilter` then
+hides 31 of 33 rows (runway too short). The simulated validator itself
+disappears from the table, so ghost rows never insert. Simulation ring and
+"SIMULATED" badge appear correctly — the wiring is live — but the table is
+effectively empty.
 
-**Design:** accept a `SourceDataOverrides` and apply a pure deterministic
-transform to the frozen fixture — patch `cpmpe`, commissions, and `revShare` on
-the matching validator object directly (no SDK rerun). The rest of the page
-reads the modified copy unchanged.
+**Fix:** replace the SDK rerun path with a pure deterministic transform on the
+frozen fixture — patch `cpmpe`, commissions, and `revShare` directly on the
+matching validator object (no `Auction.evaluate()`). The SDK's `bondGoodForNEpochs`
+field is never touched; all other computed fields stay as the fixture baked them.
 
-**Why this approach:** keeps `/test-` sealed (no live network), captures every
-override-driven visual state in Playwright, and avoids SDK coupling in fixtures.
+**Why this approach:** keeps the fixture sealed, avoids the `bondGoodForNEpochs`
+overwrite, and captures every override-driven CTA state in Playwright.
 
-**Where:** `src/pages/test-stake-auction-marketplace.tsx`.
+**Where:** `src/pages/test-stake-auction-marketplace.tsx` — replace the
+`runSdkRerun` call in `loadAuction` with the deterministic patch.
