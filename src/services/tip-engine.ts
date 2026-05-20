@@ -584,15 +584,7 @@ function outOfSetCta(
       delta,
     )
   }
-  // Generic fallback — total clears winning, no other branch fired.
-  // Yellow when defending (stake leaving); violet otherwise (growth lever
-  // — adjusting the suspects could let you in).
-  return tip(
-    'Bond-stake capacity may be limiting allocation.',
-    defending ? TipUrgency.WARNING : TipUrgency.INFO,
-    TipConstraint.NONE,
-    delta,
-  )
+  return null
 }
 
 // Cap lever. In-set + losing stake + a binding concentration cap
