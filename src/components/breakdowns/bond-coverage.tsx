@@ -4,7 +4,12 @@ import { bondSol, pmpe, stake, topUp } from 'src/format'
 import { BondHealthState } from 'src/services/bond-health'
 import { bondAdvice } from 'src/services/tip-engine'
 
-import { CalcCard, withSimAction, type CardStatus } from './card'
+import {
+  CalcCard,
+  CardStatusTone,
+  withSimAction,
+  type CardStatus,
+} from './card'
 import { CalcRow, OkRow, SectionHeader } from './row'
 
 import type { BondCoverage } from 'src/services/bond-coverage'
@@ -46,7 +51,7 @@ const statusLine = (
   if (state === BondHealthState.SOFT && expectedStakeDeltaSol > 0) {
     return {
       label: `${stake(expectedStakeDeltaSol)} arriving next epoch — bond covers it.`,
-      tone: 'green',
+      tone: CardStatusTone.GREEN,
     }
   }
   const advice = bondAdvice(

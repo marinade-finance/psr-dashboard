@@ -6,7 +6,12 @@ import { computeBidding } from 'src/services/bidding'
 import { computeInAuctionTarget } from 'src/services/in-auction-target'
 import { computeNextEpochStake } from 'src/services/next-epoch-stake'
 
-import { CalcCard, withSimAction, type CardStatus } from './card'
+import {
+  CalcCard,
+  CardStatusTone,
+  withSimAction,
+  type CardStatus,
+} from './card'
 import { CalcRow, OkRow, SectionHeader } from './row'
 
 import type { AuctionResult } from '@marinade.finance/ds-sam-sdk'
@@ -99,16 +104,16 @@ export const BiddingBreakdown: React.FC<Props> = ({
   const baseStatus: Omit<CardStatus, 'action'> = inAuction.capConstrained
     ? {
         label: `${capLabel} — raising your bid alone will not get you in.`,
-        tone: 'yellow',
+        tone: CardStatusTone.YELLOW,
       }
     : clears
       ? {
           label: `Already clears — keep your static bid at or above ${pmpe(inAuction.targetBidPmpe)} PMPE.`,
-          tone: 'green',
+          tone: CardStatusTone.GREEN,
         }
       : {
           label: `Bid ${pmpe(inAuction.currentBidPmpe)} → ${pmpe(inAuction.targetBidPmpe)} PMPE to clear the winning total PMPE.`,
-          tone: 'red',
+          tone: CardStatusTone.RED,
         }
   const status: CardStatus = withSimAction(baseStatus, onGoToSim)
 

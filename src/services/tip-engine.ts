@@ -1,5 +1,6 @@
 import { AuctionConstraintType } from '@marinade.finance/ds-sam-sdk'
 
+import { CardStatusTone } from 'src/components/breakdowns/card'
 import { ICON_ALERT } from 'src/components/icons/icon-alert'
 import { ICON_BID } from 'src/components/icons/icon-bid'
 import { ICON_BOND } from 'src/components/icons/icon-bond'
@@ -149,7 +150,7 @@ export const getTipIcon = (tip: ValidatorTip): React.ReactNode => {
 export type BondAdvice = {
   text: string
   urgency: TipUrgency
-  tone: 'red' | 'yellow' | 'green' | 'grey'
+  tone: CardStatusTone
 }
 
 // Two thresholds for the severity ladder, hoisted so bondAdvice can also
@@ -183,7 +184,7 @@ export function bondAdvice(
     return {
       text: `Top up bond to ${stake(minBondBalanceSol)} to qualify.`,
       urgency: isCharging ? TipUrgency.CRITICAL : TipUrgency.NEUTRAL,
-      tone: isCharging ? 'red' : 'grey',
+      tone: isCharging ? CardStatusTone.RED : CardStatusTone.GREY,
     }
   }
   switch (health) {
@@ -195,7 +196,7 @@ export function bondAdvice(
       return {
         text: `Post a bond of ${stake(minBondBalanceSol)} to win stake.`,
         urgency: hasRealStake ? TipUrgency.CRITICAL : TipUrgency.NEUTRAL,
-        tone: hasRealStake ? 'red' : 'grey',
+        tone: hasRealStake ? CardStatusTone.RED : CardStatusTone.GREY,
       }
     }
     case BondHealthState.CRITICAL: {
@@ -207,14 +208,14 @@ export function bondAdvice(
           : coverage.topUpToAvoidFee > 0
             ? `Top up ${topUp(coverage.topUpToAvoidFee)} — bond below the penalty threshold.`
             : 'Bond too thin — a bond risk fee can be charged.'
-      return { text, urgency: TipUrgency.CRITICAL, tone: 'red' }
+      return { text, urgency: TipUrgency.CRITICAL, tone: CardStatusTone.RED }
     }
     case BondHealthState.WATCH: {
       const text =
         coverage.topUpToKeepStake > 0
           ? `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake.`
           : 'Bond covers current stake.'
-      return { text, urgency: TipUrgency.WARNING, tone: 'yellow' }
+      return { text, urgency: TipUrgency.WARNING, tone: CardStatusTone.YELLOW }
     }
     case BondHealthState.SOFT: {
       const text =
@@ -224,13 +225,13 @@ export function bondAdvice(
       // Info/indigo — soft is "good enough but room to grow"; visually
       // distinct from watch's warning-yellow so the user reads the chip as
       // optional, not urgent.
-      return { text, urgency: TipUrgency.INFO, tone: 'yellow' }
+      return { text, urgency: TipUrgency.INFO, tone: CardStatusTone.YELLOW }
     }
     case BondHealthState.HEALTHY:
       return {
         text: 'Bond has enough coverage.',
         urgency: TipUrgency.POSITIVE,
-        tone: 'green',
+        tone: CardStatusTone.GREEN,
       }
     default:
       return assertNever(health)
@@ -243,21 +244,21 @@ export function bondAdvice(
 // color = severity, glyph = lever — keep them orthogonal at the source.
 
 const SEVERITY_ORDER: Record<TipUrgency, number> = {
-  critical: 0,
-  warning: 1,
-  info: 2,
-  positive: 3,
-  neutral: 4,
+  [TipUrgency.CRITICAL]: 0,
+  [TipUrgency.WARNING]: 1,
+  [TipUrgency.INFO]: 2,
+  [TipUrgency.POSITIVE]: 3,
+  [TipUrgency.NEUTRAL]: 4,
 }
 // Tiebreak at the same severity. Bond first (most actionable, hardest
 // block), then bid/rank (same lever — raise the bid), then cap, then
 // external block (samBlocked / blacklist), then none (the delta fallback).
 const LEVER_ORDER: Record<TipConstraint, number> = {
-  bond: 0,
-  bid: 1,
-  rank: 1,
-  cap: 2,
-  none: 3,
+  [TipConstraint.BOND]: 0,
+  [TipConstraint.BID]: 1,
+  [TipConstraint.RANK]: 1,
+  [TipConstraint.CAP]: 2,
+  [TipConstraint.NONE]: 3,
 }
 
 function tip(
@@ -760,13 +761,19 @@ export const getApyBreakdown = (
 
 // Used by sam-table's "Stake / Next Δ" cell. Sub-1-SOL deltas are neutral —
 // they round to the same whole-SOL display and aren't actionable.
-export type NextStakeDeltaTone = 'positive' | 'negative' | 'neutral'
+export enum NextStakeDeltaTone {
+  POSITIVE = 'positive',
+  NEGATIVE = 'negative',
+  NEUTRAL = 'neutral',
+}
 export type NextStakeDeltaCell = {
   prefix: '+' | ''
   tone: NextStakeDeltaTone
 }
 export function nextStakeDeltaCell(expectedChange: number): NextStakeDeltaCell {
-  if (Math.abs(expectedChange) < 1) return { prefix: '', tone: 'neutral' }
-  if (expectedChange > 0) return { prefix: '+', tone: 'positive' }
-  return { prefix: '', tone: 'negative' }
+  if (Math.abs(expectedChange) < 1)
+    return { prefix: '', tone: NextStakeDeltaTone.NEUTRAL }
+  if (expectedChange > 0)
+    return { prefix: '+', tone: NextStakeDeltaTone.POSITIVE }
+  return { prefix: '', tone: NextStakeDeltaTone.NEGATIVE }
 }

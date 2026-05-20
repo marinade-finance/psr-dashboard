@@ -1,6 +1,7 @@
 import React from 'react'
 
 import { cn } from 'src/class_utils'
+import { CardStatusTone } from 'src/components/breakdowns/card'
 import { HelpTip } from 'src/components/help-tip/help-tip'
 
 export const SEPARATOR_DIV_CLASS = 'border-t border-border-grid pt-2 mt-1'
@@ -55,15 +56,18 @@ export const SectionHeader: React.FC<{
   )
 }
 
-const MARKER_CLASSES: Record<'red' | 'yellow' | 'green', string> = {
-  red: 'bg-destructive',
-  yellow: 'bg-status-yellow',
-  green: 'bg-primary',
+const MARKER_CLASSES: Record<
+  CardStatusTone.RED | CardStatusTone.YELLOW | CardStatusTone.GREEN,
+  string
+> = {
+  [CardStatusTone.RED]: 'bg-destructive',
+  [CardStatusTone.YELLOW]: 'bg-status-yellow',
+  [CardStatusTone.GREEN]: 'bg-primary',
 }
 
-export const Marker: React.FC<{ tone: 'red' | 'yellow' | 'green' }> = ({
-  tone,
-}) => (
+export const Marker: React.FC<{
+  tone: CardStatusTone.RED | CardStatusTone.YELLOW | CardStatusTone.GREEN
+}> = ({ tone }) => (
   <span
     className={cn(
       'inline-block w-1.5 h-1.5 rounded-full mr-2 align-middle',
@@ -74,10 +78,13 @@ export const Marker: React.FC<{ tone: 'red' | 'yellow' | 'green' }> = ({
 
 export type Severity = 'ok' | 'warning' | 'error'
 
-const SEVERITY_TONE: Record<Severity, 'green' | 'yellow' | 'red'> = {
-  ok: 'green',
-  warning: 'yellow',
-  error: 'red',
+const SEVERITY_TONE: Record<
+  Severity,
+  CardStatusTone.GREEN | CardStatusTone.YELLOW | CardStatusTone.RED
+> = {
+  ok: CardStatusTone.GREEN,
+  warning: CardStatusTone.YELLOW,
+  error: CardStatusTone.RED,
 }
 
 const TEXT_BASE = 'text-base'
@@ -85,10 +92,13 @@ const TEXT_XS = 'text-xs'
 const BOLD = 'font-semibold'
 const MUTED = 'text-muted-foreground'
 const MID_CELL = 'px-2 text-right font-mono text-xs text-muted-foreground'
-const TONE_TEXT: Record<'green' | 'yellow' | 'red', string> = {
-  green: 'text-status-green',
-  yellow: 'text-status-yellow',
-  red: 'text-destructive',
+const TONE_TEXT: Record<
+  CardStatusTone.GREEN | CardStatusTone.YELLOW | CardStatusTone.RED,
+  string
+> = {
+  [CardStatusTone.GREEN]: 'text-status-green',
+  [CardStatusTone.YELLOW]: 'text-status-yellow',
+  [CardStatusTone.RED]: 'text-destructive',
 }
 
 // Single shared per-row visual model. CalcRow renders `Label | col1 | col2`

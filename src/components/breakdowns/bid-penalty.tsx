@@ -3,7 +3,7 @@ import React from 'react'
 import { cost, pct, pmpe, stake } from 'src/format'
 import { computeBidPenalty } from 'src/services/bid-penalty'
 
-import { CalcCard, type CardStatus } from './card'
+import { CalcCard, CardStatusTone, type CardStatus } from './card'
 import { CalcRow, OkRow, SectionHeader } from './row'
 
 import type {
@@ -39,14 +39,14 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
         : metrics.isNegativeBiddingChange
           ? 'Bid dropped this epoch but bond obligation covers it — no penalty.'
           : 'Bid did not decrease — no penalty.',
-    tone: metrics.penaltySol > 0 ? 'red' : 'green',
+    tone: metrics.penaltySol > 0 ? CardStatusTone.RED : CardStatusTone.GREEN,
   }
   const status: CardStatus = onGoToSim
     ? {
         ...baseStatus,
         action: {
           label: metrics.penaltyPmpe > 0 ? 'Raise bid in sim →' : 'Simulate →',
-          tone: 'yellow',
+          tone: CardStatusTone.YELLOW,
           onClick: onGoToSim,
         },
       }

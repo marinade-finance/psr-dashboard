@@ -63,6 +63,7 @@ import {
   getTipStyle,
   getTipIcon,
   nextStakeDeltaCell,
+  NextStakeDeltaTone,
   TipConstraint,
 } from 'src/services/tip-engine'
 import { assertNever } from 'src/utils/assert-never'
@@ -890,16 +891,16 @@ export const SamTable: React.FC<Props> = ({
                 <span
                   className={cn(
                     'font-mono text-xs',
-                    cell.tone === 'neutral'
+                    cell.tone === NextStakeDeltaTone.NEUTRAL
                       ? TEXT_MUTED
                       : 'font-semibold text-sm',
                   )}
                   style={
-                    cell.tone === 'neutral'
+                    cell.tone === NextStakeDeltaTone.NEUTRAL
                       ? undefined
                       : {
                           color:
-                            cell.tone === 'positive'
+                            cell.tone === NextStakeDeltaTone.POSITIVE
                               ? CSS_STATUS_GREEN
                               : CSS_DESTRUCTIVE,
                         }

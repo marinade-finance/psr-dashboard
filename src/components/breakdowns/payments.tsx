@@ -8,7 +8,12 @@ import {
   selectProtectedStakeReason,
 } from 'src/services/protected-events'
 
-import { CalcCard, withSimAction, type CardStatus } from './card'
+import {
+  CalcCard,
+  CardStatusTone,
+  withSimAction,
+  type CardStatus,
+} from './card'
 import { CalcRow, SectionHeader } from './row'
 
 import type { ProtectedEvent } from 'src/services/protected-events'
@@ -61,7 +66,7 @@ export const PaymentsBreakdown: React.FC<Props> = ({
     label: hasPenalty
       ? `You will pay ${cost(total)} in total this epoch — including ${cost(penaltyTotal)} in penalties.`
       : `You will pay ${cost(total)} in total this epoch — no penalties.`,
-    tone: hasPenalty ? 'red' : 'green',
+    tone: hasPenalty ? CardStatusTone.RED : CardStatusTone.GREEN,
   }
   const status: CardStatus = withSimAction(baseStatus, onGoToSim)
 
