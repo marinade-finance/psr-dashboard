@@ -29,7 +29,7 @@ import {
   CSS_WARNING,
   CSS_MUTED_FG,
 } from 'src/css'
-import { cost, topUp, stake } from 'src/format'
+import { cost, topUp, stake, signedStake } from 'src/format'
 import {
   bidTooLowPenaltySol as computeBidTooLowPenaltySol,
   blacklistPenaltySol as computeBlacklistPenaltySol,
@@ -68,6 +68,7 @@ import type { AugmentedAuctionValidator } from 'src/services/sam'
 interface ValidatorDetailProps {
   validator: AugmentedAuctionValidator
   auctionResult: AuctionResult
+  originalAuctionResult?: AuctionResult | null
   dsSamConfig: DsSamConfig
   epochsPerYear: number
   nameMap?: Map<string, { name?: string }>
@@ -80,6 +81,7 @@ interface ValidatorDetailProps {
     mevCommission: number | null,
     blockRewardsCommission: number | null,
     bidPmpe: number | null,
+    bondBalanceSol: number | null,
   ) => void
   onClearSimulation?: () => void
   isCalculating: boolean
@@ -129,11 +131,11 @@ const ATTENTION_TEXT: Record<AttentionTone, string> = {
 // there); 'rank' = out-of-set → Bidding tab (raise the static bid);
 // 'cap'/'none' have no dedicated tab (explanation lives in the header).
 const TIP_TAB: Record<TipConstraint, Tab | null> = {
-  bond: 'bond',
-  bid: 'penalty',
-  rank: 'bidding',
-  cap: null,
-  none: null,
+  [TipConstraint.BOND]: 'bond',
+  [TipConstraint.BID]: 'penalty',
+  [TipConstraint.RANK]: 'bidding',
+  [TipConstraint.CAP]: null,
+  [TipConstraint.NONE]: null,
 }
 
 function TabStrip({
@@ -225,6 +227,7 @@ function tabAttention(args: {
 export function bondCoverageLabel(
   health: BondHealthState,
   coverage: BondCoverage,
+  expectedStakeDeltaSol = 0,
 ): string {
   switch (health) {
     case BondHealthState.NO_BOND:
@@ -238,9 +241,14 @@ export function bondCoverageLabel(
         ? `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake`
         : 'Watch'
     case BondHealthState.SOFT:
-      return coverage.topUpToIdealKeep > 0
-        ? `Top up ${topUp(coverage.topUpToIdealKeep)} to grow stake`
-        : 'Adequate'
+      // "Top up to grow stake" contradicts a positive delta — stake is
+      // already arriving. Match bondCta's guard: the grow-prompt only
+      // makes sense when stake isn't already growing. Otherwise the
+      // bond is doing its job for the current allocation.
+      if (coverage.topUpToIdealKeep > 0 && expectedStakeDeltaSol <= 0) {
+        return `Top up ${topUp(coverage.topUpToIdealKeep)} to grow stake`
+      }
+      return 'Adequate'
     case BondHealthState.HEALTHY:
       return 'Fully covered'
     default:
@@ -354,9 +362,160 @@ const PenaltyRow = ({
   </div>
 )
 
+// What-changes block inside the sim panel: shows before → after pairs for
+// values that actually moved. Skips when there's no baseline. Re-uses
+// effectiveBondRunway, selectInSet, bidTooLowPenaltySol, and the cached
+// bondRiskFeeSol — no new derivations.
+function SimDeltas({
+  voteAccount,
+  current,
+  originalAuctionResult,
+  dsSamConfig,
+  winningTotalPmpe,
+  bondHealth,
+}: {
+  voteAccount: string
+  current: AugmentedAuctionValidator
+  originalAuctionResult: AuctionResult
+  dsSamConfig: DsSamConfig
+  winningTotalPmpe: number
+  bondHealth: BondHealthState
+}) {
+  const original = originalAuctionResult.auctionData.validators.find(
+    v => v.voteAccount === voteAccount,
+  )
+  if (!original) return null
+  const origWinningTotalPmpe = originalAuctionResult.winningTotalPmpe
+  const origBondHealth = bondHealthFromAuction(
+    original,
+    dsSamConfig,
+    origWinningTotalPmpe,
+  )
+
+  const runwayBefore = effectiveBondRunway(original, origBondHealth)
+  const runwayAfter = effectiveBondRunway(current, bondHealth)
+  const inSetBefore = selectInSet(original)
+  const inSetAfter = selectInSet(current)
+  const stakeBefore = original.auctionStake.marinadeSamTargetSol
+  const stakeAfter = current.auctionStake.marinadeSamTargetSol
+  const riskBefore = original.values.bondRiskFeeSol ?? 0
+  const riskAfter = current.values.bondRiskFeeSol ?? 0
+  const penaltyBefore = computeBidTooLowPenaltySol(
+    original,
+    dsSamConfig,
+    origWinningTotalPmpe,
+  )
+  const penaltyAfter = computeBidTooLowPenaltySol(
+    current,
+    dsSamConfig,
+    winningTotalPmpe,
+  )
+
+  const rows: Array<{ label: string; node: React.ReactNode }> = []
+
+  if (Math.round(runwayBefore) !== Math.round(runwayAfter)) {
+    const up = runwayAfter > runwayBefore
+    const colour = up ? CSS_STATUS_GREEN : CSS_DESTRUCTIVE
+    const fmt = (n: number) => (n <= 0 ? 'Depleted' : `${Math.round(n)}ep`)
+    rows.push({
+      label: 'Bond runway',
+      node: (
+        <span className="font-mono" style={{ color: colour }}>
+          {fmt(runwayBefore)} → {fmt(runwayAfter)}
+        </span>
+      ),
+    })
+  }
+  if (inSetBefore !== inSetAfter) {
+    rows.push({
+      label: 'Status',
+      node: (
+        <span
+          className="font-mono"
+          style={{ color: inSetAfter ? CSS_STATUS_GREEN : CSS_DESTRUCTIVE }}
+        >
+          {inSetBefore ? 'In set' : 'Out of set'} →{' '}
+          {inSetAfter ? 'In set' : 'Out of set'}
+        </span>
+      ),
+    })
+  }
+  const stakeDelta = stakeAfter - stakeBefore
+  if (Math.abs(stakeDelta) > 1) {
+    rows.push({
+      label: 'Stake target',
+      node: (
+        <span
+          className="font-mono"
+          style={{
+            color: stakeDelta > 0 ? CSS_STATUS_GREEN : CSS_DESTRUCTIVE,
+          }}
+        >
+          {signedStake(stakeDelta)}
+        </span>
+      ),
+    })
+  }
+  const riskDelta = riskAfter - riskBefore
+  if (Math.abs(riskDelta) > 1e-6) {
+    rows.push({
+      label: 'Bond risk fee',
+      node: (
+        <span
+          className="font-mono"
+          style={{
+            color: riskDelta > 0 ? CSS_DESTRUCTIVE : CSS_STATUS_GREEN,
+          }}
+        >
+          {riskDelta > 0 ? '+' : '−'}
+          {cost(Math.abs(riskDelta))}
+        </span>
+      ),
+    })
+  }
+  const penaltyDelta = penaltyAfter - penaltyBefore
+  if (Math.abs(penaltyDelta) > 1e-6) {
+    rows.push({
+      label: 'Bid-too-low penalty',
+      node: (
+        <span
+          className="font-mono"
+          style={{
+            color: penaltyDelta > 0 ? CSS_DESTRUCTIVE : CSS_STATUS_GREEN,
+          }}
+        >
+          {penaltyDelta > 0 ? '+' : '−'}
+          {cost(Math.abs(penaltyDelta))}
+        </span>
+      ),
+    })
+  }
+
+  if (rows.length === 0) return null
+  return (
+    <div className="mt-4 rounded-md border border-status-yellow/40 bg-background p-3">
+      <div className="text-xs font-semibold text-muted-foreground mb-2">
+        What changes
+      </div>
+      <div className="space-y-1.5">
+        {rows.map(r => (
+          <div
+            key={r.label}
+            className="flex items-center justify-between text-xs"
+          >
+            <span className="text-muted-foreground">{r.label}</span>
+            {r.node}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export const ValidatorDetail = ({
   validator,
   auctionResult,
+  originalAuctionResult,
   dsSamConfig,
   epochsPerYear,
   nameMap,
@@ -437,6 +596,9 @@ export const ValidatorDetail = ({
       ? (validator.blockRewardsCommissionDec * 100).toString()
       : '',
   )
+  const [editBond, setEditBond] = useState(
+    (validator.bondBalanceSol ?? 0).toString(),
+  )
   const [simEnabled, setSimEnabled] = useState(isSimulated)
 
   // Debounced auto-recalc whenever inputs change while simulation is enabled.
@@ -462,15 +624,17 @@ export const ValidatorDetail = ({
       const inflationValue = parseFloat(editInflation) / 100
       const mevValue = editMev ? parseFloat(editMev) / 100 : null
       const blockValue = editBlock ? parseFloat(editBlock) / 100 : null
+      const bondValue = editBond !== '' ? parseFloat(editBond) : null
       onSimulateRef.current(
         !isNaN(inflationValue) ? inflationValue : null,
         mevValue,
         blockValue,
         !isNaN(bidValue) ? bidValue : null,
+        bondValue !== null && !isNaN(bondValue) ? bondValue : null,
       )
     }, 400)
     return () => clearTimeout(t)
-  }, [simEnabled, editBid, editInflation, editMev, editBlock])
+  }, [simEnabled, editBid, editInflation, editMev, editBlock, editBond])
 
   const handleSimToggle = (enabled: boolean) => {
     setSimEnabled(enabled)
@@ -821,7 +985,11 @@ export const ValidatorDetail = ({
                   label="Reserve"
                   help={HELP_TEXT.bondCoverage}
                   helpGuideTo={`${docsPath(level)}#bond`}
-                  value={bondCoverageLabel(bondHealth, bondCoverage)}
+                  value={bondCoverageLabel(
+                    bondHealth,
+                    bondCoverage,
+                    expectedStakeDelta,
+                  )}
                   valueStyle={{ color: bondCoverageColor(bondHealth) }}
                 />
                 <MetricRow
@@ -981,7 +1149,31 @@ export const ValidatorDetail = ({
                       className="font-mono"
                     />
                   </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">
+                      Bond (SOL)
+                    </label>
+                    <Input
+                      type="number"
+                      value={editBond}
+                      onChange={e => setEditBond(e.target.value)}
+                      step="1"
+                      min="0"
+                      placeholder="—"
+                      className="font-mono"
+                    />
+                  </div>
                 </fieldset>
+                {originalAuctionResult && isSimulated && (
+                  <SimDeltas
+                    voteAccount={voteAccount}
+                    current={validator}
+                    originalAuctionResult={originalAuctionResult}
+                    dsSamConfig={dsSamConfig}
+                    winningTotalPmpe={winningTotalPmpe}
+                    bondHealth={bondHealth}
+                  />
+                )}
                 <div className="mt-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1.5">
                     {isCalculating ? (

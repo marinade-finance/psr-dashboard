@@ -22,7 +22,7 @@ import { mergeOverrides, removeFromOverrides } from 'src/services/simulation'
 
 import type { AuctionResult, DsSamConfig } from '@marinade.finance/ds-sam-sdk'
 import type { UserLevel } from 'src/components/navigation/navigation'
-import type { SourceDataOverrides } from 'src/services/sam'
+import type { AppOverrides } from 'src/services/simulation'
 
 type SamResult = {
   auctionResult: AuctionResult
@@ -33,7 +33,7 @@ type SamResult = {
 // Injection points used by /test-* routes to swap in fixture data.
 // Production callers pass nothing; defaults call the real services.
 export type SamDataSources = {
-  loadAuction: (overrides: SourceDataOverrides | null) => Promise<SamResult>
+  loadAuction: (overrides: AppOverrides | null) => Promise<SamResult>
   loadValidatorNames: () => Promise<Map<string, string>>
 }
 
@@ -59,7 +59,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
   const [isCalculating, setIsCalculating] = useState(false)
   const [simulationRunId, setSimulationRunId] = useState(0)
   const [simulationOverrides, setSimulationOverrides] =
-    useState<SourceDataOverrides | null>(null)
+    useState<AppOverrides | null>(null)
   const [simulatedValidators, setSimulatedValidators] = useState<Set<string>>(
     new Set(),
   )
@@ -185,6 +185,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
       mevCommission: number | null,
       blockRewardsCommission: number | null,
       bidPmpe: number | null,
+      bondBalanceSol: number | null,
     ) => {
       if (!selectedValidator || !data) return
       ensureOriginalSaved()
@@ -193,6 +194,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
         mevCommissionDec: mevCommission,
         blockRewardsCommissionDec: blockRewardsCommission,
         bidPmpe,
+        bondBalanceSol,
       })
       setSimulationOverrides(next)
       setSimulatedValidators(prev => new Set([...prev, selectedValidator]))
@@ -239,7 +241,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
       <div
         className={cn(
           inSimulation &&
-            'mx-3 mt-3 ring-4 ring-inset ring-status-yellow rounded-lg overflow-hidden',
+            'mx-3 my-3 ring-4 ring-inset ring-status-yellow rounded-lg overflow-hidden',
         )}
       >
         {latestBroadcastNotification && (
@@ -283,6 +285,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
             key={selectedValidator ?? 'detail'}
             validator={sheetValidatorData.validator}
             auctionResult={displayAuctionResult}
+            originalAuctionResult={originalAuctionResult}
             dsSamConfig={data.dcSamConfig}
             epochsPerYear={data.epochsPerYear}
             nameMap={nameMap}

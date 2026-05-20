@@ -1054,6 +1054,312 @@ const s24 = stateValidator('FiXtUREvbOUTsoftgrowccccccccccccccccccccccll', {
   aso: ASO_TERASWITCH,
 })
 
+// ───── outOfSetCta coverage fixtures (o-row) ─────────────────────────────────
+//
+// One validator per branch of outOfSetCta in src/services/tip-engine.ts so
+// /test- renders every CTA-text variant. Every o-row is out-of-set
+// (marinadeSamTargetSol=0) with totalPmpe (7.5) > WINNING_PMPE (6.0) so
+// outOfSetCta fires instead of bidCta's "Bid too low" rank branch. Severity
+// branches on marinadeActivatedStakeSol > 10_000 (NON_TRIVIAL_STAKE_SOL).
+//
+// NOTE: rows with bondBalanceSol=null (o02, o09) are structurally filtered
+// out of the SAM table (passesTableFilter short-circuits on !bondBalanceSol),
+// but kept here for completeness of CTA-branch coverage — they surface in
+// any future surface that doesn't apply that filter, and the data shape
+// covers the "no bond posted" eligibility branch.
+
+function outOfSetBase(
+  voteAccount: string,
+  opts: {
+    marinadeActivatedStakeSol: number
+    bondBalanceSol?: number | null
+    maxStakeWanted?: number | null
+    country?: string
+    aso?: string
+  },
+): Omit<
+  AuctionValidator,
+  | 'samEligible'
+  | 'samBlocked'
+  | 'lastCapConstraint'
+  | 'revShare'
+  | 'bidTooLowPenalty'
+  | 'bondForcedUndelegation'
+  | 'auctionStake'
+  | 'stakePriority'
+  | 'unstakePriority'
+  | 'maxBondDelegation'
+  | 'bondSamStakeCapSol'
+  | 'unprotectedStakeCapSol'
+  | 'unprotectedStakeSol'
+  | 'minBondPmpe'
+  | 'idealBondPmpe'
+  | 'minUnprotectedReserve'
+  | 'idealUnprotectedReserve'
+  | 'bondGoodForNEpochs'
+  | 'bondSamHealth'
+  | 'backstopEligible'
+  | 'values'
+> {
+  // bondBalanceSol may be null — override the numeric default in makeBase.
+  const baseBond = opts.bondBalanceSol ?? 100
+  const base = makeBase(voteAccount, {
+    marinadeActivatedStakeSol: opts.marinadeActivatedStakeSol,
+    bondBalanceSol: baseBond,
+    claimableBondBalanceSol: baseBond,
+    bidCpmpe: 2.5, // → totalPmpe 7.5 > winning 6.0
+    maxStakeWanted: opts.maxStakeWanted,
+    country: opts.country,
+    aso: opts.aso,
+  })
+  return {
+    ...base,
+    bondBalanceSol:
+      opts.bondBalanceSol === undefined ? baseBond : opts.bondBalanceSol,
+    lastBondBalanceSol:
+      opts.bondBalanceSol === undefined ? baseBond : opts.bondBalanceSol,
+  }
+}
+
+function outOfSetValues(active: number, bondBalance: number | null) {
+  return makeValues({
+    bondBalanceSol: bondBalance ?? 0,
+    marinadeActivatedStakeSol: active,
+  })
+}
+
+const O_COMMON = {
+  bidTooLowPenalty: { coef: 0, base: 0 },
+  bondForcedUndelegation: { coef: 0, base: 0, value: 0 },
+  backstopEligible: false,
+  auctionStake: { externalActivatedSol: 500_000, marinadeSamTargetSol: 0 },
+  stakePriority: 0,
+  unstakePriority: 1,
+  maxBondDelegation: 250_000,
+  bondSamStakeCapSol: 250_000,
+  unprotectedStakeCapSol: 0,
+  unprotectedStakeSol: 0,
+  minBondPmpe: 1.0,
+  idealBondPmpe: 0.5,
+  minUnprotectedReserve: 0,
+  idealUnprotectedReserve: 0,
+  bondGoodForNEpochs: 20,
+  bondSamHealth: 1,
+  revShare: makeRevShare(2.5),
+} as const
+
+// o01. samBlocked, high stake → CRITICAL "Blocked from SAM this epoch."
+const o01: AuctionValidator = {
+  ...outOfSetBase('FiXtUREvoSAMBLOCKEDhi1111111111111111111111aa', {
+    marinadeActivatedStakeSol: 80_000,
+    country: C_US,
+    aso: ASO_AWS,
+  }),
+  ...O_COMMON,
+  samEligible: true,
+  samBlocked: true,
+  lastCapConstraint: null,
+  values: outOfSetValues(80_000, 100),
+}
+
+// o02. samEligible=false + bondBalanceSol=null → CRITICAL "No bond posted."
+const o02: AuctionValidator = {
+  ...outOfSetBase('FiXtUREvoNOBONDhi2222222222222222222222222bb', {
+    marinadeActivatedStakeSol: 70_000,
+    bondBalanceSol: null,
+    country: C_FR,
+    aso: ASO_OVH,
+  }),
+  ...O_COMMON,
+  samEligible: false,
+  samBlocked: false,
+  lastCapConstraint: null,
+  values: outOfSetValues(70_000, null),
+}
+
+// o03. Blacklisted (voteAccount added to blacklist set), high stake →
+//   CRITICAL "Blacklisted by Marinade."
+const O03_VOTE = 'FiXtUREvoBLACKLISTEDhi33333333333333333333cc'
+const o03: AuctionValidator = {
+  ...outOfSetBase(O03_VOTE, {
+    marinadeActivatedStakeSol: 60_000,
+    country: C_GB,
+    aso: ASO_CHERRY,
+  }),
+  ...O_COMMON,
+  samEligible: false,
+  samBlocked: false,
+  lastCapConstraint: null,
+  values: outOfSetValues(60_000, 100),
+}
+
+// o04. samEligible=false, bond present, not blacklisted → CRITICAL
+//   "Not eligible — check client version and vote credits."
+const o04: AuctionValidator = {
+  ...outOfSetBase('FiXtUREvoCLIENThi4444444444444444444444444dd', {
+    marinadeActivatedStakeSol: 55_000,
+    country: 'Japan',
+    aso: ASO_EQUINIX,
+  }),
+  ...O_COMMON,
+  samEligible: false,
+  samBlocked: false,
+  lastCapConstraint: null,
+  values: outOfSetValues(55_000, 100),
+}
+
+// o05. Cap COUNTRY, high stake → WARNING "{country} at country cap — out of set."
+const o05: AuctionValidator = {
+  ...outOfSetBase('FiXtUREvoCAPCOUNTRYhi555555555555555555555ee', {
+    marinadeActivatedStakeSol: 65_000,
+    country: 'Czechia',
+    aso: ASO_LATITUDE,
+  }),
+  ...O_COMMON,
+  samEligible: true,
+  samBlocked: false,
+  lastCapConstraint: {
+    constraintType: AuctionConstraintType.COUNTRY,
+    constraintName: 'Czechia',
+    totalStakeSol: 500_000,
+    totalLeftToCapSol: 0,
+    marinadeStakeSol: 500_000,
+    marinadeLeftToCapSol: 0,
+    validators: [],
+  },
+  values: outOfSetValues(65_000, 100),
+}
+
+// o06. Cap ASO, high stake → WARNING "{aso} at ASO cap — out of set."
+const o06: AuctionValidator = {
+  ...outOfSetBase('FiXtUREvoCAPASOhi6666666666666666666666666ff', {
+    marinadeActivatedStakeSol: 75_000,
+    country: C_NL,
+    aso: ASO_OVH,
+  }),
+  ...O_COMMON,
+  samEligible: true,
+  samBlocked: false,
+  lastCapConstraint: {
+    constraintType: AuctionConstraintType.ASO,
+    constraintName: ASO_OVH,
+    totalStakeSol: 600_000,
+    totalLeftToCapSol: 0,
+    marinadeStakeSol: 600_000,
+    marinadeLeftToCapSol: 0,
+    validators: [],
+  },
+  values: outOfSetValues(75_000, 100),
+}
+
+// o07. Generic fallthrough — eligible, no cap, no opt-out, not blocked, but
+//   out-of-set (marinadeSamTargetSol forced to 0). →
+//   "Out of set — bid is high enough, another constraint binds."
+const o07: AuctionValidator = {
+  ...outOfSetBase('FiXtUREvoGENERIChi7777777777777777777777777gg', {
+    marinadeActivatedStakeSol: 45_000,
+    country: 'Australia',
+    aso: ASO_CONTABO,
+  }),
+  ...O_COMMON,
+  samEligible: true,
+  samBlocked: false,
+  lastCapConstraint: null,
+  values: outOfSetValues(45_000, 100),
+}
+
+// o08. samBlocked + low stake (≤10k) → NEUTRAL/grey tone.
+const o08: AuctionValidator = {
+  ...outOfSetBase('FiXtUREvoSAMBLOCKEDlo888888888888888888888hh', {
+    marinadeActivatedStakeSol: 0,
+    country: C_DE,
+    aso: ASO_HETZNER,
+  }),
+  ...O_COMMON,
+  samEligible: true,
+  samBlocked: true,
+  lastCapConstraint: null,
+  values: outOfSetValues(0, 100),
+}
+
+// o09. No bond + low stake (≤10k) → NEUTRAL/grey tone, BOND lever icon.
+const o09: AuctionValidator = {
+  ...outOfSetBase('FiXtUREvoNOBONDlo999999999999999999999999ii', {
+    marinadeActivatedStakeSol: 0,
+    bondBalanceSol: null,
+    country: C_US,
+    aso: ASO_VULTR,
+  }),
+  ...O_COMMON,
+  samEligible: false,
+  samBlocked: false,
+  lastCapConstraint: null,
+  values: outOfSetValues(0, null),
+}
+
+// o10. maxStakeWanted=0 → INFO "Max-stake-wanted set to 0 — opted out."
+//   (Severity locked to INFO regardless of stake.)
+const o10: AuctionValidator = {
+  ...outOfSetBase('FiXtUREvoOPTEDOUTaaaaaaaaaaaaaaaaaaaaaaaajj', {
+    marinadeActivatedStakeSol: 40_000,
+    maxStakeWanted: 0,
+    country: C_FR,
+    aso: ASO_OVH,
+  }),
+  ...O_COMMON,
+  samEligible: true,
+  samBlocked: false,
+  lastCapConstraint: null,
+  values: outOfSetValues(40_000, 100),
+}
+
+// o11. Cap VALIDATOR (constraintName is the vote account, omitted in copy).
+//   Mid-stake → WARNING tone via outOfSetCta cap branch.
+const o11: AuctionValidator = {
+  ...outOfSetBase('FiXtUREvoCAPVALIDATORbbbbbbbbbbbbbbbbbbbbbkk', {
+    marinadeActivatedStakeSol: 50_000,
+    country: C_GB,
+    aso: ASO_TERASWITCH,
+  }),
+  ...O_COMMON,
+  samEligible: true,
+  samBlocked: false,
+  lastCapConstraint: {
+    constraintType: AuctionConstraintType.VALIDATOR,
+    constraintName: 'FiXtUREvoCAPVALIDATORbbbbbbbbbbbbbbbbbbbbbkk',
+    totalStakeSol: 200_000,
+    totalLeftToCapSol: 0,
+    marinadeStakeSol: 200_000,
+    marinadeLeftToCapSol: 0,
+    validators: [],
+  },
+  values: outOfSetValues(50_000, 100),
+}
+
+// o12. Cap WANT (validator's own stake-wanted cap reached but not opted out).
+//   Mid-stake → WARNING tone.
+const o12: AuctionValidator = {
+  ...outOfSetBase('FiXtUREvoCAPWANTccccccccccccccccccccccccccll', {
+    marinadeActivatedStakeSol: 50_000,
+    maxStakeWanted: 50_000,
+    country: 'Finland',
+    aso: ASO_GCP,
+  }),
+  ...O_COMMON,
+  samEligible: true,
+  samBlocked: false,
+  lastCapConstraint: {
+    constraintType: AuctionConstraintType.WANT,
+    constraintName: '',
+    totalStakeSol: 50_000,
+    totalLeftToCapSol: 0,
+    marinadeStakeSol: 50_000,
+    marinadeLeftToCapSol: 0,
+    validators: [],
+  },
+  values: outOfSetValues(50_000, 100),
+}
+
 export const TEST_VALIDATORS: AuctionValidator[] = [
   v01,
   v02,
@@ -1080,6 +1386,18 @@ export const TEST_VALIDATORS: AuctionValidator[] = [
   s22,
   s23,
   s24,
+  o01,
+  o02,
+  o03,
+  o04,
+  o05,
+  o06,
+  o07,
+  o08,
+  o09,
+  o10,
+  o11,
+  o12,
 ]
 
 export const TEST_AUCTION_RESULT: AuctionResult = {
@@ -1097,7 +1415,7 @@ export const TEST_AUCTION_RESULT: AuctionResult = {
       marinadeSamTvlSol: TVL,
       marinadeRemainingSamSol: 300_000,
     },
-    blacklist: new Set<string>(),
+    blacklist: new Set<string>([O03_VOTE]),
   },
 }
 
@@ -1200,4 +1518,37 @@ export const TEST_VALIDATOR_NAMES = new Map<string, string>([
     'CTA: Out-of-Set Bid Too Low',
   ],
   ['FiXtUREvbOUTsoftgrowccccccccccccccccccccccll', 'CTA: Out-of-Set Soft Grow'],
+  [
+    'FiXtUREvoSAMBLOCKEDhi1111111111111111111111aa',
+    'Test: samBlocked (real stake)',
+  ],
+  [
+    'FiXtUREvoNOBONDhi2222222222222222222222222bb',
+    'Test: No bond (real stake)',
+  ],
+  [
+    'FiXtUREvoBLACKLISTEDhi33333333333333333333cc',
+    'Test: Blacklisted (real stake)',
+  ],
+  [
+    'FiXtUREvoCLIENThi4444444444444444444444444dd',
+    'Test: Client/credits (real stake)',
+  ],
+  [
+    'FiXtUREvoCAPCOUNTRYhi555555555555555555555ee',
+    'Test: Cap COUNTRY (real stake)',
+  ],
+  [
+    'FiXtUREvoCAPASOhi6666666666666666666666666ff',
+    'Test: Cap ASO (real stake)',
+  ],
+  ['FiXtUREvoGENERIChi7777777777777777777777777gg', 'Test: Generic out-of-set'],
+  [
+    'FiXtUREvoSAMBLOCKEDlo888888888888888888888hh',
+    'Test: samBlocked (no stake)',
+  ],
+  ['FiXtUREvoNOBONDlo999999999999999999999999ii', 'Test: No bond (no stake)'],
+  ['FiXtUREvoOPTEDOUTaaaaaaaaaaaaaaaaaaaaaaaajj', 'Test: Opted out'],
+  ['FiXtUREvoCAPVALIDATORbbbbbbbbbbbbbbbbbbbbbkk', 'Test: Cap VALIDATOR'],
+  ['FiXtUREvoCAPWANTccccccccccccccccccccccccccll', 'Test: Cap WANT'],
 ])

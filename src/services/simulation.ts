@@ -4,6 +4,14 @@ import type {
   SourceDataOverrides,
 } from '@marinade.finance/ds-sam-sdk'
 
+// SDK's SourceDataOverrides only knows about the four commission/bid maps.
+// Bond balance overrides are applied post-rerun (live) or as a mutation
+// before evaluate() (test), so we carry them alongside via this local type.
+export type AppOverrides = {
+  source: SourceDataOverrides
+  bondBalanceSol: Map<string, number>
+}
+
 export type PendingEdits = {
   inflationCommission?: string
   mevCommission?: string
@@ -104,7 +112,8 @@ export function detectChangedValidators(
       orig.inflationCommissionDec !== cur.inflationCommissionDec ||
       orig.mevCommissionDec !== cur.mevCommissionDec ||
       orig.blockRewardsCommissionDec !== cur.blockRewardsCommissionDec ||
-      orig.revShare.bidPmpe !== cur.revShare.bidPmpe
+      orig.revShare.bidPmpe !== cur.revShare.bidPmpe ||
+      orig.bondBalanceSol !== cur.bondBalanceSol
     ) {
       changed.add(voteAccount)
     }
@@ -157,51 +166,61 @@ export function insertGhostRows<T extends { voteAccount: string }>(
 }
 
 export function mergeOverrides(
-  existing: SourceDataOverrides | null,
+  existing: AppOverrides | null,
   voteAccount: string,
   values: {
     inflationCommissionDec: number | null
     mevCommissionDec: number | null
     blockRewardsCommissionDec: number | null
     bidPmpe: number | null
+    bondBalanceSol: number | null
   },
-): SourceDataOverrides {
+): AppOverrides {
   const merged = cloneOverrides(existing)
   if (values.inflationCommissionDec !== null)
-    merged.inflationCommissionsDec.set(
+    merged.source.inflationCommissionsDec.set(
       voteAccount,
       values.inflationCommissionDec,
     )
   if (values.mevCommissionDec !== null)
-    merged.mevCommissionsDec.set(voteAccount, values.mevCommissionDec)
+    merged.source.mevCommissionsDec.set(voteAccount, values.mevCommissionDec)
   if (values.blockRewardsCommissionDec !== null)
-    merged.blockRewardsCommissionsDec.set(
+    merged.source.blockRewardsCommissionsDec.set(
       voteAccount,
       values.blockRewardsCommissionDec,
     )
-  if (values.bidPmpe !== null) merged.cpmpesDec.set(voteAccount, values.bidPmpe)
+  if (values.bidPmpe !== null)
+    merged.source.cpmpesDec.set(voteAccount, values.bidPmpe)
+  if (values.bondBalanceSol !== null)
+    merged.bondBalanceSol.set(voteAccount, values.bondBalanceSol)
   return merged
 }
 
 export function removeFromOverrides(
-  existing: SourceDataOverrides | null,
+  existing: AppOverrides | null,
   voteAccount: string,
-): SourceDataOverrides {
+): AppOverrides {
   const result = cloneOverrides(existing)
-  result.inflationCommissionsDec.delete(voteAccount)
-  result.mevCommissionsDec.delete(voteAccount)
-  result.blockRewardsCommissionsDec.delete(voteAccount)
-  result.cpmpesDec.delete(voteAccount)
+  result.source.inflationCommissionsDec.delete(voteAccount)
+  result.source.mevCommissionsDec.delete(voteAccount)
+  result.source.blockRewardsCommissionsDec.delete(voteAccount)
+  result.source.cpmpesDec.delete(voteAccount)
+  result.bondBalanceSol.delete(voteAccount)
   return result
 }
 
-function cloneOverrides(
-  existing: SourceDataOverrides | null,
-): SourceDataOverrides {
+function cloneOverrides(existing: AppOverrides | null): AppOverrides {
   return {
-    inflationCommissionsDec: new Map(existing?.inflationCommissionsDec),
-    mevCommissionsDec: new Map(existing?.mevCommissionsDec),
-    blockRewardsCommissionsDec: new Map(existing?.blockRewardsCommissionsDec),
-    cpmpesDec: new Map(existing?.cpmpesDec),
+    source: {
+      inflationCommissionsDec: new Map(
+        existing?.source.inflationCommissionsDec,
+      ),
+      mevCommissionsDec: new Map(existing?.source.mevCommissionsDec),
+      blockRewardsCommissionsDec: new Map(
+        existing?.source.blockRewardsCommissionsDec,
+      ),
+      cpmpesDec: new Map(existing?.source.cpmpesDec),
+    },
+    bondBalanceSol: new Map(existing?.bondBalanceSol),
   }
 }

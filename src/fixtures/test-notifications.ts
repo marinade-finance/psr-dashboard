@@ -19,13 +19,8 @@ export const TEST_BROADCAST_NOTIFICATION: ValidatorNotification = {
   priority: 'info',
   title: 'Deterministic test view — synthetic auction data',
   message:
-    'This is the /test- view. Every row is a hand-built synthetic state, ' +
-    'not live data — use the cutoff divider to read winners (above the ' +
-    'line) versus below-line validators that lose stake next epoch.\n\n' +
-    'Fixture config: clearing price 6.0 pmpe (total = 5.0 base + bid). ' +
-    'Bond floor 5 SOL minimum; runway min 1 epoch, ideal 13 epochs. ' +
-    'Concentration caps 30% per country and 30% per ASO (DE and Hetzner ' +
-    'are deliberately over the cap). SAM TVL 6,000,000 SOL.',
+    'Hand-built fixtures, not live data — every row demonstrates a specific CTA. ' +
+    'Cutoff divider separates winners from losers.',
   data: {},
   notification_id: null,
   relevance_until: RELEVANCE_UNTIL,

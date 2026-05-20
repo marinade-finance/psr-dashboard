@@ -188,25 +188,44 @@ critical band & threshold marker scale with the track, fill scales with
 the value range — never couple them. Bond pill derives geometry from
 live SDK config via `bondGaugeScaleMax(config) = minBondEpochs /
 BOND_CRITICAL_FRAC` (`= 5 × minBondEpochs`), with
-`marker = criticalBand = BOND_CRITICAL_FRAC = 0.2`.
-`src/components/gauge/gauge.tsx`,
-`src/services/calculations.ts`; call site
-`src/components/sam-table/sam-table.tsx`.
+`marker = criticalBand = BOND_CRITICAL_FRAC = 0.2` — confirmed in the
+rendered DOM: track `56×4 px`, critical band child `width: 20%`
+(`bg-destructive/15`), marker child `left: 20% / w-0.5 / inset-y-[-2px]`
+spans `2×8 px` vertically beyond the track, fill `width: <pct>%`. Used
+ONLY in the SAM-table bond pill and the epoch-meter today — concentration
+tiles do NOT route through `Gauge`, they render a coloured value text
+only. `src/components/gauge/gauge.tsx`,
+`src/services/calculations.ts`; call sites
+`src/components/sam-table/sam-table.tsx`,
+`src/components/epoch-meter/epoch-meter.tsx`.
 
 ### Bond chip
 `BOND_CHIP[state]` → `{chip, dot, bar, shortText, label}`, keyed by the
 `BondHealthState` enum (`src/services/bond-health.ts`:
 `NO_BOND`/`CRITICAL`/`WATCH`/`SOFT`/`HEALTHY`). Tones: `NO_BOND` and
-`CRITICAL` = destructive ("No bond" / "Critical"), `WATCH` = warning
-("Watch"), `SOFT` = secondary+muted ("Adequate"), `HEALTHY` = primary
-("Healthy"). **Rule:** chip, dot, gauge bar and runway all derive from
-the single `bondHealth` tier — they can never contradict.
+`CRITICAL` = destructive (`bg-destructive-light text-destructive`, dot
+`bg-destructive`, gauge fill `bg-destructive`), `WATCH` = warning
+(`bg-warning-light text-warning`, dot/fill `bg-warning`), `SOFT` =
+secondary+muted (`bg-secondary text-muted-foreground`, dot/fill
+`bg-muted-foreground`, label "Adequate"), `HEALTHY` = primary
+(`bg-primary-light-10 text-primary`, dot/fill `bg-primary`). The chip dot
+is `w-[7px] h-[7px]` — slightly larger than the 6px attention/marker dot
+elsewhere — so chip and gauge tone read together at a glance. **Rule:**
+chip, dot, gauge fill and runway all derive from the single `bondHealth`
+tier — they can never contradict.
 `src/components/sam-table/sam-table.tsx`.
 
 ### Bond-coverage heatmap tiers
-`bg-bond-{none,low,mid,high,full}`. **Rule:** these five fixed HSL tiles
-are the bonds-page heatmap ONLY — do not reuse for status. Defined
-`src/index.css`.
+Five fixed HSL tokens — `--bond-none` / `--bond-low` / `--bond-mid` /
+`--bond-high` / `--bond-full` — applied via inline `style={{ background:
+'var(--bond-…)' }}` on the heatmap tiles and legend swatches. The
+matching `--color-bond-*` aliases are exposed to Tailwind in `@theme` but
+the heatmap does NOT use `bg-bond-*` classes; tile sizing varies per
+stake, so the colour ships inline alongside `width`/`height`. **Rule:**
+these five tiles are the bonds-page heatmap ONLY — do not reuse for
+status. Tokens in `src/index.css`; call site
+`src/components/validator-bonds-table/validator-bonds-table.tsx`
+(`tileColor()` + the legend swatches).
 
 ### Breakdown 3-col table grammar
 `CalcRow` (label | meta | value) and `RevRow` (label | pct | pmpe |
@@ -234,16 +253,20 @@ exclusive with bold (bold is reserved for conclusions/totals).
 `src/components/breakdowns/row.tsx`.
 
 ### Attention dot (detail tabs)
-`w-1.5 h-1.5 rounded-full` — critical=destructive, warning=warning,
-info=info. **Rule:** persists on the active tab AND pulses
-(`active && 'animate-pulse'`); never vanishes on open. Each tone reuses
-an existing severity source (no new colour, no new fetch). Dispatch in
-`tabAttention()` is an exhaustive `Record<TipConstraint, Tab | null>`:
-`BOND` → Bond tab, `BID` → Bid Penalty tab (the in-set penalty is the
-"raise the bid" math), `RANK` → Bidding tab (out-of-set "raise the
-static bid to qualify" lever), `CAP`/`NONE` → no dedicated tab.
-A new `TipConstraint` value is a compile error until the map is filled.
-`src/components/validator-detail/validator-detail.tsx`.
+`w-1.5 h-1.5 rounded-full shrink-0` — critical=destructive,
+warning=warning, info=info. The dot renders on every tab whose
+`attention[tab]` tone is set, regardless of which tab is active; on the
+active tab it ALSO gets `animate-pulse` (`active && 'animate-pulse'`) so
+the carrier-tab signal stays visible after the user opens it — confirmed
+in the live tab strip across Bond and Notifications. Each tone reuses an
+existing severity source (no new colour, no new fetch). The six tabs
+served are Overview, Notifications, Payments, Bidding, Bond, Bid Penalty
+— attention is populated by `tabAttention()` from four independent
+triggers: bondHealth → Bond, bidPenaltySol > 0 → Bid Penalty,
+notifTone → Notifications, then the header tip's `TipConstraint` adds a
+soft info dot on the matching tab (`BOND` → Bond, `BID` → Bid Penalty,
+`RANK` → Bidding, `CAP`/`NONE` → no dedicated tab) if that tab has no
+stronger tone already. `src/components/validator-detail/validator-detail.tsx`.
 
 ### Alert/pulse dot (table row)
 `w-1.5 h-1.5 rounded-full bg-destructive animate-pulse` trailing the
@@ -252,11 +275,17 @@ pulse idiom as the detail tab dot — a present-danger signal, not
 decorative. `src/components/sam-table/sam-table.tsx`.
 
 ### StatusBanner (shared primitive)
-`StatusBanner` in `src/components/breakdowns/card.tsx` — rounded pill,
-status text on the left, optional action pill on the right
-(`bg-card/55` fill + tone-coloured border/text). Used both by every
-`CalcCard`'s status slot AND by the validator-detail header tip banner;
-both surfaces are byte-aligned. `CardStatusAction.tone` can override the
+`StatusBanner` in `src/components/breakdowns/card.tsx` — `rounded-lg
+px-3 py-2 text-sm` row, tone fill `bg-{tone}-light text-{tone}` (red →
+`bg-destructive-light` at `rgba(248,113,113,0.15)`, yellow →
+`bg-warning-light` at `rgba(251,146,60,0.15)`, green →
+`bg-primary-light-10`, grey → `bg-muted/40`), status text on the left,
+optional action pill on the right (`bg-card/55` fill + tone-coloured
+border/text). Used both by every `CalcCard`'s status slot AND by the
+validator-detail header tip banner; both surfaces are byte-aligned —
+confirmed by inspecting the rendered DOM (same class list, same
+computed `background-color` / `border-radius` on a banner shown in the
+detail header vs the same banner re-emitted inside the breakdown card). `CardStatusAction.tone` can override the
 pill colour independently — sim-jump pills pin to yellow across all
 banner tones, so the simulation affordance reads consistently. **Rule:**
 never render a bespoke status pill inline — route through
@@ -300,22 +329,57 @@ now / live"; do not use it decoratively. Keyframes in `src/index.css`.
 
 ---
 
-## Honesty notes (could not fully confirm in committed code)
+## Honesty notes (rendered-browser audit)
 
-- **Attention-dot persistence** lives in
-  `validator-detail.tsx` (detail-panel TabStrip), confirmed in committed
-  code (lines 141–149: `active && 'animate-pulse'`). The brief mentioned
-  the nav; the committed `src/components/navigation/navigation.tsx` has
-  **no** attention dots — the persist+pulse rule applies to the
-  validator-detail tab strip only. (`navigation.tsx` is modified in the
-  working tree per `git status`; this doc reflects committed HEAD.)
+Verified against the live preview server (`pnpm preview` on `/test-` and
+`/test-bonds`, viewport 1440×900, dark mode) — quoted values are
+computed-style readings, not source-level assertions.
+
+- **Attention dot persists AND pulses on the active tab** — confirmed.
+  Clicked Bond and Notifications; both rendered the dot as
+  `w-1.5 h-1.5 rounded-full shrink-0 bg-destructive animate-pulse` while
+  active, dropping the `animate-pulse` class once another tab was
+  selected. The dot renders on every attention-flagged tab regardless of
+  active state — only the pulse is active-only.
+- **Tip glyph sizing** — confirmed `width="14.4" height="14.4"
+  viewBox="0 0 12 12"` across every tip-pill `svg` in the SAM table.
+  Other SVGs on the page (the Marinade logo, the chevron, the `?` help
+  glyph) use different sizes and viewboxes; the 14.4px rule applies to
+  the seven tip glyphs only.
+- **Bond gauge geometry** — track `56 × 4 px`, critical band 11/56 ≈
+  20%, marker at `left: 20%` with `inset-y-[-2px] w-0.5` (i.e. 2×8 px),
+  fill swings between `4%` (Critical) and `100%` (Healthy/Watch/Soft).
+  Confirms `BOND_CRITICAL_FRAC = 0.2` and the clamp.
+- **Bond chip dot is 7px, not 6px** — `w-[7px] h-[7px]`. The detail-tab
+  attention dot and the SAM-row alert dot are `w-1.5 h-1.5` (6px). Two
+  sibling primitives, deliberately different — flagged in the bond-chip
+  entry.
+- **Bond heatmap uses inline `var(--bond-*)` background, NOT
+  `bg-bond-*` classes** — the heatmap tiles render with computed bg
+  `rgb(115, 38, 38)` (low) / `rgb(66, 69, 77)` (none), supplied by
+  `tileColor()` in `validator-bonds-table.tsx`. The Tailwind aliases
+  exist in `@theme` but no element on the bonds page uses them. Entry
+  rewritten to reflect that.
+- **Concentration tiles do NOT use the `Gauge` primitive** — Top
+  Country / Top ASO render `text-destructive` numeric value + capped
+  marker text, no track/fill geometry. The shared Gauge ships in the
+  SAM-table bond pill and the epoch-meter only.
+- **StatusBanner shape** — confirmed identical class list and computed
+  styles when shown in the validator-detail header AND when re-emitted
+  via `withSimAction()` inside a breakdown card (same `rounded-lg px-3
+  py-2 text-sm`, same `bg-destructive-light` at
+  `rgba(248,113,113,0.15)`).
+- **Simulation surface** — could NOT trigger sim from the deterministic
+  `/test-` fixtures (no commission/bid editors render with default
+  state, no `?sim=1` URL hook). The `ring-2 ring-inset
+  ring-status-yellow`, `header-glow` keyframe, and `--sim-*` tokens are
+  defined in source (`sam-table.tsx`, `sam-table.module.css`,
+  `src/index.css`) and the entry stands on that evidence; visual proof
+  of the inset ring + ghost rows would need an e2e flow that enters
+  simulation mode.
 - **CSS_* constants** are in `src/css.ts`, **not** `src/lib/utils.ts`
-  (that path does not exist). `src/css.ts` exports no `CSS_STATUS_GREEN`
-  inline-light variant beyond what's listed; `getBondAdviceStyle` uses
-  `CSS_STATUS_YELLOW` + `CSS_STATUS_YELLOW_LIGHT`.
-- "No left-border accent" is enforced by the memory rule; no committed
-  decorative `border-l` was found to contradict it (the only `border-l*`
-  uses are table grid lines / dividers, not status accents).
-- The "14.4px / viewBox 0 0 12 12" icon sizing is confirmed across the
-  seven tip glyphs (`icon-bond`, `icon-bid`, `icon-cap`, `icon-alert`,
-  `icon-up`, `icon-down`, `icon-right`).
+  (that path does not exist). `src/css.ts` exports no
+  `CSS_STATUS_GREEN` inline-light variant beyond what's listed;
+  `getBondAdviceStyle` uses `CSS_STATUS_YELLOW` + `CSS_STATUS_YELLOW_LIGHT`.
+- **No `border-l` accent** — none observed in any rendered surface; the
+  rule holds.

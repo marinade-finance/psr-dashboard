@@ -683,8 +683,18 @@ function deltaCta(
         : 'At target stake.'
     return tip(text, TipUrgency.NEUTRAL, TipConstraint.NONE, delta)
   }
+  // Reaching deltaCta with delta<0 + no higher lever firing means natural
+  // withdrawal (pool-wide redeemer outflow) is the only realistic cause in
+  // production. Penalty-undelegation would have escalated to bond/bid CTA
+  // before this branch. The residual non-natural case is over-target drift
+  // (active > target, cooldown converging) — exotic, mostly seen on hand-
+  // crafted test fixtures; leave it generic rather than guess a cause.
+  const naturalOut = Math.abs(
+    validator.values.expectedStakeNaturalWithdrawalSol ?? 0,
+  )
+  const cause = naturalOut > 0 ? ' — pool withdrawals.' : '.'
   return tip(
-    `Losing ${stake(Math.abs(delta))} next epoch.`,
+    `Losing ${stake(Math.abs(delta))} next epoch${cause}`,
     TipUrgency.WARNING,
     TipConstraint.NONE,
     delta,

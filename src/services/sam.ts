@@ -17,6 +17,7 @@ import type {
   DsSamConfig,
   SourceDataOverrides,
 } from '@marinade.finance/ds-sam-sdk'
+import type { AppOverrides } from 'src/services/simulation'
 
 // Solana epoch = 432000 slots × 0.4s/slot = 172800s = 48h exactly
 const EPOCHS_PER_YEAR = (365.25 * 24 * 3600) / 172800
@@ -28,7 +29,7 @@ type SamResult = {
 }
 
 export const loadSam = async (
-  dataOverrides?: SourceDataOverrides | null,
+  dataOverrides?: AppOverrides | null,
 ): Promise<SamResult> => {
   const config = await loadSamConfig()
   const dsSam = new DsSamSDK({
@@ -39,7 +40,22 @@ export const loadSam = async (
     logVerbosity: LogVerbosity.ERROR,
   })
 
-  const auctionResult = await dsSam.runFinalOnly(dataOverrides)
+  const auctionResult = await dsSam.runFinalOnly(dataOverrides?.source)
+
+  // SDK's runFinalOnly only sees commission/bid overrides; bond top-ups are
+  // stamped onto the returned validators here. Local re-derivations
+  // (coverage, health, runway, risk-fee, penalty) pick up the new bond;
+  // SDK-computed revShare.bondObligationPmpe stays against the original.
+  const bondOverrides = dataOverrides?.bondBalanceSol
+  if (bondOverrides && bondOverrides.size > 0) {
+    for (const v of auctionResult.auctionData.validators) {
+      const override = bondOverrides.get(v.voteAccount)
+      if (override !== undefined) {
+        v.bondBalanceSol = override
+        v.claimableBondBalanceSol = override
+      }
+    }
+  }
 
   return {
     auctionResult,
