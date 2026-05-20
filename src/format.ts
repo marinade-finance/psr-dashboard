@@ -33,7 +33,7 @@ export const pmpe = (x: number) => x.toFixed(5)
 // NBSP ( ) between number and unit so "19,866 SOL" never wraps across
 // a line break. Applies to every "<n> SOL" output below.
 export const stake = (n: number) => `${sol(n, 0)} SOL`
-export const pay = (n: number) => `${sol(n, 0)} SOL`
+export const pay = (n: number) => `${sol(Math.ceil(n), 0)} SOL`
 export const penalty = (n: number) => `${sol(n, 3)} SOL`
 // Cost rows need 3-decimal precision — per-epoch bid costs are often
 // sub-1 SOL and rounding them to "0" or "1" reads as wrong.
