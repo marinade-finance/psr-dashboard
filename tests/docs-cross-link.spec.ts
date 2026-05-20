@@ -79,4 +79,36 @@ test.describe('docs cross-links — guide link hrefs from detail sheet', () => {
     const href = await link.getAttribute('href')
     expect(href).toBe('/docs#bond')
   })
+
+  test('Payments tab Guide ↗ link points to /docs#payments', async ({
+    page,
+  }) => {
+    await openSheet(page)
+    await page
+      .locator(SHEET)
+      .getByRole('button', { name: 'Payments', exact: true })
+      .click()
+    const link = page
+      .locator(SHEET)
+      .locator('a:visible', { hasText: /Guide ↗/i })
+      .first()
+    const href = await link.getAttribute('href')
+    expect(href).toBe('/docs#payments')
+  })
+
+  test('Bid Penalty tab Guide ↗ link points to /docs#bid-penalty', async ({
+    page,
+  }) => {
+    await openSheet(page)
+    await page
+      .locator(SHEET)
+      .getByRole('button', { name: 'Bid Penalty', exact: true })
+      .click()
+    const link = page
+      .locator(SHEET)
+      .locator('a:visible', { hasText: /Guide ↗/i })
+      .first()
+    const href = await link.getAttribute('href')
+    expect(href).toBe('/docs#bid-penalty')
+  })
 })
