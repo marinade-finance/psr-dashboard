@@ -3,10 +3,11 @@
 // to produce the state (see src/fixtures/test-validators.ts).
 import { test, expect } from '@playwright/test'
 
-const V02 = 'FiXtUREv2222222222222222222222222222222222bb' // In-Set Losing (Hetzner ASO cap)
 const V04 = 'FiXtUREv4444444444444444444444444444444444dd' // Critical Bond (Low Epochs)
 const V06 = 'FiXtUREv6666666666666666666666666666666666ff' // Bid-Too-Low Penalty
 const V08 = 'FiXtUREv8888888888888888888888888888888888hh' // Out of Set
+// Out-of-set validator at ASO cap — outOfSetCta surfaces the cap-binding CTA.
+const VCAP = 'FiXtUREvoCAPASOhi6666666666666666666666666ff'
 const SHEET = '[role="dialog"]'
 
 test.beforeEach(async ({ page }) => {
@@ -67,17 +68,16 @@ test('V06 detail sheet Next-Step tip points at the Bidding lever', async ({
   ).toBeVisible()
 })
 
-test('V02 (Hetzner ASO at cap) row tip names the binding constraint', async ({
+test('VCAP (out-of-set at ASO cap) row tip names the binding constraint', async ({
   page,
 }) => {
-  const row = page.locator(`tbody tr[data-vote-account="${V02}"]`).first()
+  const row = page.locator(`tbody tr[data-vote-account="${VCAP}"]`).first()
   await expect(row).toBeVisible()
-  // The Next Step cell surfaces the cap-binding CTA — "<ASO name> ASO at
-  // cap — losing N SOL until cap frees." — instead of the generic "Losing
-  // N SOL next epoch.". Match on the cap-CTA suffix; the SOL figure is
-  // delta-dependent.
+  // outOfSetCta fires for out-of-set validators and surfaces the cap-binding
+  // cause line: "<ASO name> at ASO cap." — instead of the generic bid/rank
+  // message. This confirms the cap constraint overrides the rank CTA.
   await expect(
-    row.getByText(/Hetzner Online GmbH at ASO cap[\s\S]*until cap frees/i).first(),
+    row.getByText(/OVH SAS at ASO cap/i).first(),
   ).toBeVisible()
 })
 
