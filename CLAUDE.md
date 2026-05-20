@@ -175,7 +175,7 @@ test pages; they exist only to feed fixtures.
 - `src/components/banner/banner.tsx` — dismissible announcement card;
   dismissed state persisted in localStorage keyed by title
 - `src/services/validators.ts` — validator API client
-- `src/format.ts` — number formatting utilities
+- `src/format.ts` — number formatting utilities. `pay()` always **rounds up** (ceil) — fee and penalty amounts shown to users are never understated. On-chain values are exact to the lamport; the ceiling is display-only.
 
 ### SDK Integration
 

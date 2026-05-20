@@ -25,8 +25,9 @@ describe('sol', () => {
 describe('pay / stake', () => {
   // NBSP ( ) between number and unit so "1,234 SOL" never wraps across
   // a line break — see comment in format.ts.
-  it('pay formats whole-SOL with NBSP + SOL suffix', () => {
-    expect(pay(0.17)).toBe('0 SOL')
+  it('pay formats whole-SOL with NBSP + SOL suffix (ceiling)', () => {
+    expect(pay(0.17)).toBe('1 SOL')
+    expect(pay(1.4)).toBe('2 SOL')
     expect(pay(1.7)).toBe('2 SOL')
   })
 
