@@ -41,7 +41,9 @@ export const computeInAuctionTarget = (
     bidIncrease: pmpeGap,
     bondFloorToBack: coverage.stakeKeepFloor,
     bondTopUp: coverage.topUpToKeepStake,
-    capConstrained: v.lastCapConstraint != null,
+    capConstrained:
+      v.lastCapConstraint != null &&
+      v.lastCapConstraint.totalLeftToCapSol === 0,
     capConstraintName: v.lastCapConstraint?.constraintName ?? null,
     capConstraintType: v.lastCapConstraint?.constraintType ?? null,
   }

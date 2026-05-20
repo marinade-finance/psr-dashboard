@@ -98,7 +98,9 @@ export const BiddingBreakdown: React.FC<Props> = ({
           ? 'Per-validator cap is at the limit'
           : inAuction.capConstraintType === AuctionConstraintType.WANT
             ? 'At your `maxStakeWanted` setting'
-            : 'A concentration cap is at the limit'
+            : capName
+              ? `${capName} concentration cap is at the limit`
+              : 'A concentration cap is at the limit'
 
   const clears = inAuction.bidIncrease <= 0 && !inAuction.capConstrained
   const baseStatus: Omit<CardStatus, 'action'> = inAuction.capConstrained
