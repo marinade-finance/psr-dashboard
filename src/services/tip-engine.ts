@@ -206,7 +206,7 @@ export function bondAdvice(
         const text =
           coverage.bondRiskFeeShortfall > 0
             ? `Top up ${topUp(coverage.bondRiskFeeShortfall)} to avoid the fee.`
-            : `Bond fee ${pay(bondRiskFeeSol)} charged this epoch.`
+            : `Bond fee ${pay(bondRiskFeeSol)} estimated next epoch.`
         return { text, urgency: TipUrgency.CRITICAL, tone: CardStatusTone.RED }
       }
       if (coverage.bondRiskFeeShortfall > 0) {
@@ -330,16 +330,13 @@ function bondCta(
   // doesn't need.
   if (bondBalance < dsSamConfig.minBondBalanceSol) {
     if (bondRiskFeeSol > 0) {
-      // Fee top-up alone may not clear the below-min block — pin the CTA to
-      // whichever number is bigger so it covers both.
+      // Need to clear both the penalty shortfall and the below-min block.
       const topUpAmt = Math.max(
         coverage.bondRiskFeeShortfall,
         dsSamConfig.minBondBalanceSol - bondBalance,
       )
       return tip(
-        topUpAmt > 0
-          ? `Top up ${topUp(topUpAmt)} to avoid the fee and re-qualify.`
-          : `Bond fee ${pay(bondRiskFeeSol)} charged this epoch.`,
+        `Top up ${topUp(topUpAmt)} to avoid next epoch fee and re-qualify.`,
         TipUrgency.CRITICAL,
         TipConstraint.BOND,
         delta,
