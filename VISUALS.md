@@ -137,13 +137,12 @@ status. Tokens in `src/index.css`; call site
 (`tileColor()` + the legend swatches).
 
 ### Breakdown 3-col table grammar
-`CalcRow` (label | meta | value) and `RevRow` (label | pct | pmpe |
-value) share `rowStyle`. **Rule, one model per `<table>`:**
+`CalcRow` (label | meta | value) — one model per `<table>`. **Rules:**
 - PMPE / epochs / named units → `SectionHeader` `unit` (declared once,
   right-aligned over the value column); rows carry no suffix.
 - SOL → inline suffix on the value, never a header.
 - % → inline annotation, never a header.
-- One column never mixes value kinds; never mix `CalcRow` with `RevRow`.
+- One column never mixes value kinds.
 
 Row weight grammar: plain = no flags; sub-total = `severity` only (the
 `Marker` dot carries the signal, never combined with `bold`); section
@@ -244,60 +243,3 @@ coloured edge. (No committed `border-l` accent found — rule holds.)
 (deep-link target, warning-light fade), `header-glow` (simulation
 header), sheet slide/fade (detail panel). **Rule:** `pulse` means "act
 now / live"; do not use it decoratively. Keyframes in `src/index.css`.
-
----
-
-## Honesty notes (rendered-browser audit)
-
-Verified against the live preview server (`pnpm preview` on `/test-` and
-`/test-bonds`, viewport 1440×900, dark mode) — quoted values are
-computed-style readings, not source-level assertions.
-
-- **Attention dot persists AND pulses on the active tab** — confirmed.
-  Clicked Bond and Notifications; both rendered the dot as
-  `w-1.5 h-1.5 rounded-full shrink-0 bg-destructive animate-pulse` while
-  active, dropping the `animate-pulse` class once another tab was
-  selected. The dot renders on every attention-flagged tab regardless of
-  active state — only the pulse is active-only.
-- **Tip glyph sizing** — confirmed `width="14.4" height="14.4"
-  viewBox="0 0 12 12"` across every tip-pill `svg` in the SAM table.
-  Other SVGs on the page (the Marinade logo, the chevron, the `?` help
-  glyph) use different sizes and viewboxes; the 14.4px rule applies to
-  the seven tip glyphs only.
-- **Bond gauge geometry** — track `56 × 4 px`, critical band 11/56 ≈
-  20%, marker at `left: 20%` with `inset-y-[-2px] w-0.5` (i.e. 2×8 px),
-  fill swings between `4%` (Critical) and `100%` (Healthy/Watch/Soft).
-  Confirms `BOND_CRITICAL_FRAC = 0.2` and the clamp.
-- **Bond chip dot is 7px, not 6px** — `w-[7px] h-[7px]`. The detail-tab
-  attention dot and the SAM-row alert dot are `w-1.5 h-1.5` (6px). Two
-  sibling primitives, deliberately different — flagged in the bond-chip
-  entry.
-- **Bond heatmap uses inline `var(--bond-*)` background, NOT
-  `bg-bond-*` classes** — the heatmap tiles render with computed bg
-  `rgb(115, 38, 38)` (low) / `rgb(66, 69, 77)` (none), supplied by
-  `tileColor()` in `validator-bonds-table.tsx`. The Tailwind aliases
-  exist in `@theme` but no element on the bonds page uses them. Entry
-  rewritten to reflect that.
-- **Concentration tiles do NOT use the `Gauge` primitive** — Top
-  Country / Top ASO render `text-destructive` numeric value + capped
-  marker text, no track/fill geometry. The shared Gauge ships in the
-  SAM-table bond pill and the epoch-meter only.
-- **StatusBanner shape** — confirmed identical class list and computed
-  styles when shown in the validator-detail header AND when re-emitted
-  via `withSimAction()` inside a breakdown card (same `rounded-lg px-3
-  py-2 text-sm`, same `bg-destructive-light` at
-  `rgba(248,113,113,0.15)`).
-- **Simulation surface** — could NOT trigger sim from the deterministic
-  `/test-` fixtures (no commission/bid editors render with default
-  state, no `?sim=1` URL hook). The `ring-2 ring-inset
-  ring-status-yellow`, `header-glow` keyframe, and `--sim-*` tokens are
-  defined in source (`sam-table.tsx`, `sam-table.module.css`,
-  `src/index.css`) and the entry stands on that evidence; visual proof
-  of the inset ring + ghost rows would need an e2e flow that enters
-  simulation mode.
-- **CSS_* constants** are in `src/css.ts`, **not** `src/lib/utils.ts`
-  (that path does not exist). `src/css.ts` exports no
-  `CSS_STATUS_GREEN` inline-light variant beyond what's listed;
-  `getBondAdviceStyle` uses `CSS_STATUS_YELLOW` + `CSS_STATUS_YELLOW_LIGHT`.
-- **No `border-l` accent** — none observed in any rendered surface; the
-  rule holds.
