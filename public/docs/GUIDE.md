@@ -344,7 +344,7 @@ bounded amount of SOL:
 
 - **Re-delegation budget** — undeployed deposits and stake withdrawn from
   over-target validators are routed to validators whose auction target exceeds
-  their active stake. Under normal conditions, roughly 0.7% of total TVL can
+  their active stake. Under normal conditions, roughly 1% of total TVL can
   be rebalanced per epoch; the rate accelerates when a validator poses a high
   risk of not delivering rewards or loses eligibility.
 - **Withdrawal priority** — when natural turnover pulls SOL from the pool, it

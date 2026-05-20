@@ -230,8 +230,9 @@ export const selectEffectiveCost = (validator: AuctionValidator) =>
   (validator.marinadeActivatedStakeSol / 1000) *
   validator.revShare.auctionEffectiveBidPmpe
 
-// ~0.7% of TVL is withdrawn from the pool each epoch by redeemers.
-const WITHDRAWAL_FRACTION_PER_EPOCH = 0.007
+// Natural redelegation-turnover cap: ~1% of TVL redistributed each epoch.
+// Not SDK-exported; maintained here until the SDK exposes it.
+const WITHDRAWAL_FRACTION_PER_EPOCH = 0.01
 
 // Natural withdrawals are drawn pro-rata from over-target validators first;
 // falls back to pro-rata by active stake if nobody is over target.
@@ -374,7 +375,7 @@ function allocateRedelegation(
 // true budget. Per-validator demand uses projectedActive = active − paid
 // (mirroring the SDK's calcBondRiskFee), so a validator losing P this
 // epoch shows a (target − active + paid) gap and competes for the budget
-// at its totalPmpe rank. Natural withdrawal (~0.7% TVL) is a separate
+// at its totalPmpe rank. Natural withdrawal (~1% TVL) is a separate
 // pro-rata outflow to redeemers.
 // Bond below SDK's minBondBalanceSol: clipBondStakeCap returns 0, so the
 // validator loses ALL current stake regardless of bid (mirrors the

@@ -67,4 +67,3 @@ Code evidence is present but correctness needs a manual check at `/test-` or in 
 | Tip-engine WANT/VALIDATOR/COUNTRY/ASO branches | Branches exist; verify tip text renders correctly for each cap type |
 | Test fixture redelegation budget + clearing cutoff | o01–o12 exist; confirm budget > 0 and auction produces winners + losers |
 | CPMPE term review | Oracle consultation pending (usage limit hit 2026-05-13) — see `1/6-content.md` |
-| 0.7% natural turnover framing | GUIDE updated; model comment not confirmed against SDK design — see `1/6-content.md` |

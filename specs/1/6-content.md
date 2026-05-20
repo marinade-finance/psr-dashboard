@@ -35,15 +35,11 @@ retry). If the term stays, update the GUIDE gloss only; no rename.
 
 **References:** `public/docs/GUIDE.md:128-142`, `src/services/sam.ts:132`.
 
-## Verify: 0.7% natural turnover framing
+## Natural turnover rate (shipped)
 
-**Why:** `WITHDRAWAL_FRACTION_PER_EPOCH = 0.007` at `src/services/sam.ts:209`
-is commented as "0.7% of TVL withdrawn by redeemers." If it's actually a
-redelegation-turnover cap (not net outflow), total stake shouldn't drop — just
-redistribute. Affects `computeNaturalWithdrawal`.
-
-**Action:** confirm what 0.7% represents in the SDK / SAM design doc, then
-either fix the model or fix the comment.
+`WITHDRAWAL_FRACTION_PER_EPOCH = 0.01` (`src/services/sam.ts`) — 1%
+redelegation-turnover cap per epoch. Not SDK-exported; comment notes this
+until the SDK exposes it. `GUIDE.md` updated to match.
 
 ## Docs hygiene: ≤120-char line length
 
