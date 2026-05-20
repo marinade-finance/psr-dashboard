@@ -12,8 +12,9 @@
   "scripts": {
     "start:dev": "vite",
     "dev": "vite",
-    "play": "playwright test --ui",
-    "test:play": "playwright test --ui",
+    "play": "pnpm test:play",
+    "play:ui": "playwright test --ui",
+    "test:play": "playwright test",
     "build": "vite build",
     "preview": "vite preview --port 8080",
     "lint": "eslint './src/**/*.{ts,tsx,js,jsx}'",
