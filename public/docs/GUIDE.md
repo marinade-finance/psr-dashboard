@@ -271,7 +271,8 @@ projected exposed stake at the minimum-bond rate.
   with the validator's revenue rate (`onchainDistributed + auctionEffectiveBid`
   PMPE). The SDK also forces a matching paid undelegation. The in-app
   **Bond** tab shows the exact figures via "See full bond coverage
-  breakdown".
+  breakdown". Fee amounts shown in the dashboard are rounded up to the
+  nearest SOL for display; the on-chain charge is exact to the lamport.
 
 _See [Stronger Bond Signals and a New Risk Fee in SAM — Marinade Blog](https://marinade.finance/blog/stronger-bond-signals-and-a-new-risk-fee-in-sam) for context._
 
