@@ -309,7 +309,7 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
-    expect(tip.text).toContain('to avoid the bond risk fee')
+    expect(tip.text).toContain('to avoid the fee')
     expect(tip.alert).toBe(true)
   })
 
@@ -445,6 +445,27 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.constraint).toBe('cap')
     expect(tip.text).toContain('Germany at country cap')
+  })
+
+  it('delta === 0 + binding ASO cap → info/cap "stake can\'t grow" (Velox case)', () => {
+    // In-set validator blocked by a concentration cap: target > active but
+    // delta=0 because the cap prevents inflow. capCta now fires for delta<=0.
+    const validator = makeValidator({
+      values: { expectedStakeChangeSol: 0 },
+      lastCapConstraint: {
+        constraintType: 'ASO',
+        constraintName: 'Hetzner Online GmbH',
+        totalStakeSol: 1_000_000,
+        totalLeftToCapSol: 0,
+        marinadeStakeSol: 1_000_000,
+        marinadeLeftToCapSol: 0,
+        validators: [],
+      },
+    })
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
+    expect(tip.constraint).toBe('cap')
+    expect(tip.urgency).toBe('info')
+    expect(tip.text).toContain("can't grow")
   })
 
   it('lastCapConstraint with headroom (totalLeftToCapSol > 0) → no cap CTA', () => {
@@ -665,7 +686,7 @@ describe('bondAdvice — canonical CTA contract', () => {
       if (
         text.startsWith('Top up') ||
         text.includes('required') ||
-        text.includes('bond risk fee ')
+        text.includes('bond fee ')
       ) {
         expect(text).toMatch(/\d[\d,]*\s*SOL/)
       }

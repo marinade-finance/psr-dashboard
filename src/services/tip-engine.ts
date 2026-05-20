@@ -202,13 +202,13 @@ export function bondAdvice(
       const text =
         bondRiskFeeSol > 0
           ? coverage.bondRiskFeeShortfall > 0
-            ? `Top up ${topUp(coverage.bondRiskFeeShortfall)} to avoid the bond risk fee.`
-            : `Estimated bond risk fee ${pay(bondRiskFeeSol)} next epoch.`
+            ? `Top up ${topUp(coverage.bondRiskFeeShortfall)} to avoid the fee.`
+            : `Estimated bond fee ${pay(bondRiskFeeSol)} next epoch.`
           : coverage.bondRiskFeeShortfall > 0
             ? `Top up ${topUp(coverage.bondRiskFeeShortfall)} — bond below the penalty threshold.`
             : coverage.topUpToIdealKeep > 0
-              ? `Top up ${topUp(coverage.topUpToIdealKeep)} to avoid undelegation and fee.`
-              : 'Bond near threshold — top up to avoid undelegation and fee.'
+              ? `Top up ${topUp(coverage.topUpToIdealKeep)} to avoid the fee.`
+              : 'Bond near threshold — top up to avoid the fee.'
       return { text, urgency: TipUrgency.CRITICAL, tone: CardStatusTone.RED }
     }
     case BondHealthState.WATCH: {
@@ -618,13 +618,14 @@ function capCta(
   delta: number,
 ): ValidatorTip | null {
   const cap = validator.lastCapConstraint
-  if (delta >= 0 || cap == null || cap.totalLeftToCapSol !== 0) return null
-  // Two-line CTA: cause on line 1, consequence on line 2. The pill in
-  // sam-table.tsx renders with `whitespace-pre-line` so \n is honoured.
+  // Fire for delta <= 0: losing stake (delta < 0) or blocked from growing
+  // (delta === 0) by a binding cap. Skip when delta > 0 — stake is arriving,
+  // cap is not the constraint this epoch.
+  if (delta > 0 || cap == null || cap.totalLeftToCapSol !== 0) return null
   // Severity follows the global ladder:
   //   grey   — WANT cap (user-set).
   //   yellow — other cap AND defending (meaningful stake leaving).
-  //   violet — other cap but the loss is novelty-scale (informational).
+  //   violet — other cap, no meaningful loss (informational).
   const urgency =
     cap.constraintType === AuctionConstraintType.WANT
       ? TipUrgency.NEUTRAL
@@ -632,12 +633,12 @@ function capCta(
         ? TipUrgency.WARNING
         : TipUrgency.INFO
   const cause = capCauseLine(cap.constraintType, cap.constraintName)
-  return tip(
-    `${cause}\nLosing ${stake(Math.abs(delta))} until cap frees.`,
-    urgency,
-    TipConstraint.CAP,
-    delta,
-  )
+  // Two-line when actively losing stake; single line when just blocked.
+  const text =
+    delta < 0
+      ? `${cause}\nLosing ${stake(Math.abs(delta))} until cap frees.`
+      : `${cause} — stake can't grow until cap frees.`
+  return tip(text, urgency, TipConstraint.CAP, delta)
 }
 
 // Delta lever — the "stake trajectory" fallback. Always emits something
