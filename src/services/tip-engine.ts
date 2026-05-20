@@ -401,17 +401,8 @@ function bidCta(
   winningTotalPmpe: number,
   delta: number,
 ): ValidatorTip | null {
-  // No auction history → penaltyCoef structurally zero (isNegativeBiddingChange
-  // checks against a non-existent lastEpochBidPmpe). Skip the reduce + math
-  // for the common new-validator/missing-history rows.
-  const hasHistory = (validator.auctions?.length ?? 0) > 0
-  const metrics = hasHistory
-    ? computeBidPenalty(validator, dsSamConfig, winningTotalPmpe)
-    : null
-  // Penalty is real money charged this epoch — red + octagon (cost lever
-  // = red + alert glyph everywhere in the engine). Fires for in-set OR
-  // out-of-set; bid history drives it, not current in/out status.
-  if (metrics && metrics.penaltyPmpe > 0) {
+  const metrics = computeBidPenalty(validator, dsSamConfig, winningTotalPmpe)
+  if (metrics.penaltyPmpe > 0) {
     return tip(
       `Raise bid or pay a ${pay(metrics.penaltySol)} penalty.`,
       TipUrgency.CRITICAL,
