@@ -513,20 +513,7 @@ function outOfSetCta(
       true,
     )
   }
-  // Opt-out is the most informative explanation when both apply — check
-  // before cap so 'maxStakeWanted=0 + cap binding' shows the user's choice,
-  // not the cap symptom.
-  if (validator.maxStakeWanted === 0) {
-    // User's own choice — grey when not losing meaningful stake. When
-    // defending (meaningful active stake leaving), escalate to yellow so
-    // this message outranks deltaCta's "Losing N SOL" and names the cause.
-    return tip(
-      'Max-stake-wanted set to 0 — opted out.',
-      defending ? TipUrgency.WARNING : TipUrgency.NEUTRAL,
-      TipConstraint.NONE,
-      delta,
-    )
-  }
+
   // Gate on === false so an undefined samEligible (SDK pre-auction state)
   // doesn't route through the "not eligible" fallback by accident.
   if (validator.samEligible === false) {
@@ -601,7 +588,7 @@ function outOfSetCta(
   // Yellow when defending (stake leaving); violet otherwise (growth lever
   // — adjusting the suspects could let you in).
   return tip(
-    'Check `maxStakeWanted` and bond-stake capacity.',
+    'Bond-stake capacity may be limiting allocation.',
     defending ? TipUrgency.WARNING : TipUrgency.INFO,
     TipConstraint.NONE,
     delta,
