@@ -1,8 +1,8 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React, { useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import TagManager from 'react-gtm-module'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import {
   createBrowserRouter,
   RouterProvider,

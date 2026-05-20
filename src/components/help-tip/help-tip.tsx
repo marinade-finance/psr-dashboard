@@ -86,6 +86,7 @@ export const HelpTip: React.FC<Props> = ({ html, text, guideTo, children }) => {
           target="_blank"
           rel="noopener noreferrer"
           className="text-primary hover:underline text-xs font-medium mt-0.5"
+          onPointerDown={e => e.stopPropagation()}
           onClick={e => e.stopPropagation()}
         >
           Learn more ↗
