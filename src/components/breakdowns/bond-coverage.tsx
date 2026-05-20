@@ -1,13 +1,13 @@
 import React from 'react'
 
 import { bondSol, pmpe, stake, topUp } from 'src/format'
+import { BondHealthState } from 'src/services/bond-health'
 import { bondAdvice } from 'src/services/tip-engine'
 
-import { CalcCard, type CardStatus } from './card'
+import { CalcCard, withSimAction, type CardStatus } from './card'
 import { CalcRow, OkRow, SectionHeader } from './row'
 
 import type { BondCoverage } from 'src/services/bond-coverage'
-import type { BondHealthState } from 'src/services/bond-health'
 
 type Props = {
   title: string
@@ -41,7 +41,7 @@ const statusLine = (
   // the Stake card. The truthful banner here is the inflow line — the
   // ideal top-up still shows in the section table below for users who
   // want to lift the ceiling.
-  if (state === 'soft' && expectedStakeDeltaSol > 0) {
+  if (state === BondHealthState.SOFT && expectedStakeDeltaSol > 0) {
     return {
       label: `${stake(expectedStakeDeltaSol)} arriving next epoch — bond covers it.`,
       tone: 'green',
@@ -77,12 +77,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
     bondBalanceSol,
     expectedStakeDeltaSol,
   )
-  const status: CardStatus = onGoToSim
-    ? {
-        ...baseStatus,
-        action: { label: 'Simulate →', tone: 'yellow', onClick: onGoToSim },
-      }
-    : baseStatus
+  const status: CardStatus = withSimAction(baseStatus, onGoToSim)
 
   // Show the penalty math whenever the bond is at risk (critical/watch) so
   // the user can SEE the threshold, how the fee is computed and the top-up
@@ -90,8 +85,8 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
   // visible if a fee/top-up is live or the projected basis matters
   // (undelegation already queued).
   const showRiskSection =
-    bondState === 'critical' ||
-    bondState === 'watch' ||
+    bondState === BondHealthState.CRITICAL ||
+    bondState === BondHealthState.WATCH ||
     bondRiskFeeSol > 0 ||
     coverage.topUpToAvoidFee > 0 ||
     coverage.carriedPaidUndelegationSol > 0

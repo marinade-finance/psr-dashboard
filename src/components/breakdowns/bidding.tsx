@@ -6,7 +6,7 @@ import { computeBidding } from 'src/services/bidding'
 import { computeInAuctionTarget } from 'src/services/in-auction-target'
 import { computeNextEpochStake } from 'src/services/next-epoch-stake'
 
-import { CalcCard, type CardStatus } from './card'
+import { CalcCard, withSimAction, type CardStatus } from './card'
 import { CalcRow, OkRow, SectionHeader } from './row'
 
 import type { AuctionResult } from '@marinade.finance/ds-sam-sdk'
@@ -108,12 +108,7 @@ export const BiddingBreakdown: React.FC<Props> = ({
           label: `Bid ${pmpe(inAuction.currentBidPmpe)} → ${pmpe(inAuction.targetBidPmpe)} PMPE to clear the winning total PMPE.`,
           tone: 'red',
         }
-  const status: CardStatus = onGoToSim
-    ? {
-        ...baseStatus,
-        action: { label: 'Simulate →', tone: 'yellow', onClick: onGoToSim },
-      }
-    : baseStatus
+  const status: CardStatus = withSimAction(baseStatus, onGoToSim)
 
   return (
     <CalcCard

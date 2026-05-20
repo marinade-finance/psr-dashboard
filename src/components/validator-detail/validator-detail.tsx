@@ -488,7 +488,6 @@ export const ValidatorDetail = ({
   // otherwise tracks the tip's own urgency. Click target reuses the shared
   // TIP_TAB map so banner-nav and tab-dot can't disagree (previously the
   // banner's bid → overview contradicted the dot's bid → penalty).
-  const isBondTip = tip.constraint === TipConstraint.BOND
   const tipTarget = TIP_TAB[tip.constraint]
 
   const attention = tabAttention({
@@ -628,7 +627,10 @@ export const ValidatorDetail = ({
             action:
               tipTarget && tipTarget !== tab
                 ? {
-                    label: isBondTip ? 'Bond tab →' : 'Simulate →',
+                    label:
+                      tip.constraint === TipConstraint.BOND
+                        ? 'Bond tab →'
+                        : 'Simulate →',
                     onClick: () => setTab(tipTarget),
                   }
                 : undefined,

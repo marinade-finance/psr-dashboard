@@ -2,7 +2,11 @@ import React from 'react'
 
 import { cn } from 'src/class_utils'
 import { BondHealthState } from 'src/services/bond-health'
-import { TipUrgency, type ValidatorTip } from 'src/services/tip-engine'
+import {
+  TipConstraint,
+  TipUrgency,
+  type ValidatorTip,
+} from 'src/services/tip-engine'
 import { assertNever } from 'src/utils/assert-never'
 
 export type CardStatusTone = 'red' | 'yellow' | 'green' | 'grey'
@@ -76,7 +80,10 @@ export const tipBannerTone = (
   tip: ValidatorTip,
   bondHealth: BondHealthState,
 ): CardStatusTone => {
-  if (tip.constraint === 'bond' && tip.urgency !== TipUrgency.NEUTRAL) {
+  if (
+    tip.constraint === TipConstraint.BOND &&
+    tip.urgency !== TipUrgency.NEUTRAL
+  ) {
     return bondHealthToTone(bondHealth)
   }
   return urgencyToTone(tip.urgency)
@@ -85,6 +92,18 @@ export const tipBannerTone = (
 // Shared status banner — rounded pill with status text on the left and an
 // optional action pill on the right. Used by CalcCard's status slot AND by
 // the validator-detail header tip banner so they stay byte-aligned.
+export function withSimAction(
+  base: Omit<CardStatus, 'action'>,
+  onGoToSim?: () => void,
+): CardStatus {
+  return onGoToSim
+    ? {
+        ...base,
+        action: { label: 'Simulate →', tone: 'yellow', onClick: onGoToSim },
+      }
+    : base
+}
+
 export const StatusBanner: React.FC<{
   status: CardStatus
   className?: string

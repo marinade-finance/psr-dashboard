@@ -8,7 +8,7 @@ import {
   selectProtectedStakeReason,
 } from 'src/services/protected-events'
 
-import { CalcCard, type CardStatus } from './card'
+import { CalcCard, withSimAction, type CardStatus } from './card'
 import { CalcRow, SectionHeader } from './row'
 
 import type { ProtectedEvent } from 'src/services/protected-events'
@@ -63,12 +63,7 @@ export const PaymentsBreakdown: React.FC<Props> = ({
       : `You will pay ${cost(total)} in total this epoch — no penalties.`,
     tone: hasPenalty ? 'red' : 'green',
   }
-  const status: CardStatus = onGoToSim
-    ? {
-        ...baseStatus,
-        action: { label: 'Simulate →', tone: 'yellow', onClick: onGoToSim },
-      }
-    : baseStatus
+  const status: CardStatus = withSimAction(baseStatus, onGoToSim)
 
   // The penalty-link stays as a `tip` (rendered under the status banner) —
   // it's a destructive cross-tab affordance, not a sim action.
