@@ -1,23 +1,7 @@
-// Table B — "Get stake next epoch". Being in the auction set is NOT the
-// same as receiving stake: next-epoch redelegation budget is handed out
-// greedily by revShare.totalPmpe descending until it runs out. The
-// "priority frontier" is the lowest totalPmpe among winners that were
-// fully served this run — a validator wanting guaranteed priority inflow
-// has to clear it.
-//
-// HEURISTIC (greedy reorders): raising this validator's bid changes the
-// ordering and the frontier itself, so this is an estimate, not a
-// guarantee. The copy and the guide must say "estimate — verify in
-// Simulate". The Simulate flow does a real auction rerun.
-//
-// Bid basis is revShare.bidPmpe (the static bid the sim input shows).
-//
-// Bid gap and priority rank are CONTEXT, not target inputs. The greedy
-// pass orders recipients strictly by revShare.totalPmpe descending, so
-// the target bid is derived from the frontier totalPmpe alone. Bid gap
-// (static bid over the clearing price) does not move that order, and the
-// rank is a monotonic restatement of totalPmpe — surfacing both lets the
-// user see the real inputs without re-deriving the target off them.
+// Table B — "Get stake next epoch". Redelegation budget is handed out greedily
+// by revShare.totalPmpe descending; the priority frontier is the lowest totalPmpe
+// among fully-served winners. Raising the bid reorders the pass, so this is an
+// estimate — verify in Simulate.
 import {
   selectEffectiveBid,
   selectRedelegationPriorityFrontierPmpe,
@@ -28,17 +12,11 @@ import type { AuctionResult } from '@marinade.finance/ds-sam-sdk'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
 
 export type NextEpochStake = {
-  // 0 when the budget reached everyone — no binding frontier this run.
-  priorityFrontierPmpe: number
-  // static bid PMPE that would close the gap to the frontier.
+  priorityFrontierPmpe: number // 0 when budget reached everyone
   targetBidPmpePriority: number
   bidIncreaseForPriority: number
-  // Context only — inputs the greedy order is read from, not target maths.
-  // Static bid minus the auction clearing price, clamped at 0.
-  bidGapPmpe: number
-  // 1-based position in revShare.totalPmpe descending — the exact order
-  // the budget is handed out in.
-  priorityRank: number
+  bidGapPmpe: number // static bid minus clearing price, clamped at 0
+  priorityRank: number // 1-based position in totalPmpe descending order
 }
 
 export const computeNextEpochStake = (
@@ -47,10 +25,8 @@ export const computeNextEpochStake = (
 ): NextEpochStake => {
   const priorityFrontierPmpe =
     selectRedelegationPriorityFrontierPmpe(auctionResult)
-  // Comparison uses revShare.totalPmpe (the SDK's authoritative ranking
-  // value) — mirrors in-auction-target.ts. Reconstructing total from
-  // non-bid + static bid diverges when the SDK clips auctionEffectiveBidPmpe
-  // below the static bid. No binding frontier → 0.
+  // Uses revShare.totalPmpe (SDK ranking) — reconstructing from non-bid + static
+  // bid diverges when the SDK clips auctionEffectiveBidPmpe below the static bid.
   const totalGap =
     priorityFrontierPmpe > 0
       ? Math.max(0, priorityFrontierPmpe - v.revShare.totalPmpe)
