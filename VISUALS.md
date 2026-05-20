@@ -95,15 +95,14 @@ column alignment — reserve identical space regardless of glyph.
 fractions of the **track** (0..1), independent of fill. **Rule:**
 critical band & threshold marker scale with the track, fill scales with
 the value range — never couple them. Bond pill derives geometry from
-live SDK config via `bondGaugeScaleMax(config) = minBondEpochs /
-BOND_CRITICAL_FRAC` (`= 5 × minBondEpochs`), with
-`marker = criticalBand = BOND_CRITICAL_FRAC = 0.2` — confirmed in the
-rendered DOM: track `56×4 px`, critical band child `width: 20%`
-(`bg-destructive/15`), marker child `left: 20% / w-0.5 / inset-y-[-2px]`
-spans `2×8 px` vertically beyond the track, fill `width: <pct>%`. Used
-ONLY in the SAM-table bond pill and the epoch-meter today — concentration
-tiles do NOT route through `Gauge`, they render a coloured value text
-only. `src/components/gauge/gauge.tsx`,
+live SDK config: `bondGaugeScaleMax(config) = 4 × idealBondEpochs`;
+`marker = criticalBand = bondCriticalFrac(config) = minBondEpochs /
+bondGaugeScaleMax(config)` (the fraction of the track where the
+penalty threshold sits). Rendered DOM: track `56×4 px`, critical band
+`width: bondCriticalFrac%` (`bg-destructive/15`), marker tick at same
+fraction, fill `width: <pct>%`. Used ONLY in the SAM-table bond pill
+and the epoch-meter — concentration tiles do NOT route through `Gauge`.
+`src/components/gauge/gauge.tsx`,
 `src/services/calculations.ts`; call sites
 `src/components/sam-table/sam-table.tsx`,
 `src/components/epoch-meter/epoch-meter.tsx`.
@@ -111,18 +110,17 @@ only. `src/components/gauge/gauge.tsx`,
 ### Bond chip
 `BOND_CHIP[state]` → `{chip, dot, bar, shortText, label}`, keyed by the
 `BondHealthState` enum (`src/services/bond-health.ts`:
-`NO_BOND`/`CRITICAL`/`WATCH`/`SOFT`/`HEALTHY`). Tones: `NO_BOND` and
-`CRITICAL` = destructive (`bg-destructive-light text-destructive`, dot
-`bg-destructive`, gauge fill `bg-destructive`), `WATCH` = warning
-(`bg-warning-light text-warning`, dot/fill `bg-warning`), `SOFT` =
-secondary+muted (`bg-secondary text-muted-foreground`, dot/fill
-`bg-muted-foreground`, label "Adequate"), `HEALTHY` = primary
-(`bg-primary-light-10 text-primary`, dot/fill `bg-primary`). The chip dot
-is `w-[7px] h-[7px]` — slightly larger than the 6px attention/marker dot
-elsewhere — so chip and gauge tone read together at a glance. **Rule:**
-chip, dot, gauge fill and runway all derive from the single `bondHealth`
-tier — they can never contradict.
-`src/components/sam-table/sam-table.tsx`.
+`NO_BOND`/`CRITICAL`/`WATCH`/`HEALTHY` — 4 tiers, no `SOFT`).
+Health ladder (runway = `bondGoodForNEpochs`):
+`NO_BOND` → no bond balance; `CRITICAL` → fee shortfall > 0 OR
+runway ≤ `minBondEpochs + BOND_URGENT_EPOCHS` (3); `WATCH` →
+runway < `idealBondEpochs`; `HEALTHY` → runway ≥ `idealBondEpochs`.
+Tones: `NO_BOND`/`CRITICAL` = destructive, `WATCH` = warning,
+`HEALTHY` = primary. The chip dot is `w-[7px] h-[7px]` — slightly
+larger than the 6px attention dot elsewhere — so chip and gauge tone
+read together at a glance. **Rule:** chip, dot, gauge fill and runway
+all derive from the single `bondHealth` tier — they can never
+contradict. `src/components/sam-table/sam-table.tsx`.
 
 ### Bond-coverage heatmap tiers
 Five fixed HSL tokens — `--bond-none` / `--bond-low` / `--bond-mid` /

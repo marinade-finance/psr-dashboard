@@ -237,9 +237,28 @@ never shifts pill margins or breaks column alignment.
 
 ### Bond gauge
 
-`scaleMax = bondGaugeScaleMax(config) = minBondEpochs / BOND_CRITICAL_FRAC`
-(= `5 × minBondEpochs`). Both `marker` and `criticalBand` are the
-constant `BOND_CRITICAL_FRAC = 0.2`. `src/services/calculations.ts`.
+`scaleMax = bondGaugeScaleMax(config) = 4 × idealBondEpochs`.
+`marker = criticalBand = bondCriticalFrac(config) = minBondEpochs /
+bondGaugeScaleMax(config)` (fraction where penalty threshold sits).
+Health ladder: `NO_BOND` → no balance; `CRITICAL` → fee shortfall > 0
+OR runway ≤ `minBondEpochs + BOND_URGENT_EPOCHS` (3); `WATCH` →
+runway < `idealBondEpochs`; `HEALTHY` → runway ≥ `idealBondEpochs`.
+4 tiers — no `SOFT`. `src/services/calculations.ts`,
+`src/services/bond-health.ts`.
+
+### CTA message rules
+
+Every CTA string must be: **imperative verb phrase, sentence-case,
+period-terminated, ≤ 60 chars, no parentheses, no em-dash in the
+middle**. It carries either the decisive SOL figure OR a clear
+consequence — never vague ("Bond too thin", "can be charged").
+Pattern: `"Verb [object] to [outcome]."` or `"Verb [object]."`.
+
+Good: `"Top up 12 SOL to avoid undelegation and fee."`
+Good: `"Raise bid to get more stake."`
+Good: `"Raise bid to qualify for stake."`
+Bad: `"Bond too thin — a bond risk fee can be charged."` (no amount, vague future)
+Bad: `"Stake won't change next epoch."` (symptom without lever)
 
 ### Breakdown table grammar — one 3-col model
 

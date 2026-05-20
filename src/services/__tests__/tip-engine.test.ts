@@ -230,7 +230,7 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('info')
     expect(tip.constraint).toBe('rank')
-    expect(tip.text).toContain('Bid too low')
+    expect(tip.text).toContain('Raise bid')
   })
 
   it('out-of-set + bid penalty firing → critical/bid (penalty outranks rank)', () => {
@@ -371,12 +371,14 @@ describe('getValidatorTip', () => {
     expect(tip.text).toContain('At target')
   })
 
-  it('delta === 0 + active << target → neutral "won’t change next epoch"', () => {
+  it('delta === 0 + active << target → info/rank raise-bid (budget ran out before this validator)', () => {
+    // makeValidator: active=10000, target=15000 → belowTarget=true, delta=0
+    // Budget depleted by higher-priority validators; lever is the bid.
     const validator = makeValidator({ values: { expectedStakeChangeSol: 0 } })
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
-    expect(tip.urgency).toBe('neutral')
-    expect(tip.constraint).toBe('none')
-    expect(tip.text).toContain('won’t change')
+    expect(tip.urgency).toBe('info')
+    expect(tip.constraint).toBe('rank')
+    expect(tip.text).toBe('Raise bid to get more stake.')
   })
 
   it('delta < 0 + defending + healthy bond → warning, losing stake message', () => {

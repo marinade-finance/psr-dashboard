@@ -207,8 +207,8 @@ export function bondAdvice(
           : coverage.bondRiskFeeShortfall > 0
             ? `Top up ${topUp(coverage.bondRiskFeeShortfall)} — bond below the penalty threshold.`
             : coverage.topUpToIdealKeep > 0
-              ? `Top up ${topUp(coverage.topUpToIdealKeep)} — bond near the penalty threshold.`
-              : 'Bond near penalty threshold — add more to build runway.'
+              ? `Top up ${topUp(coverage.topUpToIdealKeep)} to avoid undelegation and fee.`
+              : 'Bond near threshold — top up to avoid undelegation and fee.'
       return { text, urgency: TipUrgency.CRITICAL, tone: CardStatusTone.RED }
     }
     case BondHealthState.WATCH: {
@@ -446,7 +446,7 @@ function bidCta(
     // escalates to defend lever (yellow) when meaningful stake is leaving
     // so it outranks the generic "Losing N" delta narrative.
     return tip(
-      'Bid too low. Raise it to qualify for stake.',
+      'Raise bid to qualify for stake.',
       isDefending(validator, delta) ? TipUrgency.WARNING : TipUrgency.INFO,
       TipConstraint.RANK,
       delta,
@@ -670,12 +670,31 @@ function deltaCta(
     const active = validator.marinadeActivatedStakeSol
     const atOwnCap = wanted != null && target >= wanted - 1e-9
     const belowTarget = target > 0 && active < target * 0.99
-    const text = atOwnCap
-      ? 'At your `maxStakeWanted` setting.'
-      : belowTarget
-        ? 'Stake won’t change next epoch.'
-        : 'At target stake.'
-    return tip(text, TipUrgency.NEUTRAL, TipConstraint.NONE, delta)
+    if (atOwnCap) {
+      return tip(
+        'At your `maxStakeWanted` setting.',
+        TipUrgency.NEUTRAL,
+        TipConstraint.NONE,
+        delta,
+      )
+    }
+    // delta===0 with active well below target: redistribution budget ran out
+    // before reaching this validator. Higher bid → higher stakePriority →
+    // served sooner in the greedy allocation pass.
+    if (belowTarget && !capBinding) {
+      return tip(
+        'Raise bid to get more stake.',
+        TipUrgency.INFO,
+        TipConstraint.RANK,
+        delta,
+      )
+    }
+    return tip(
+      'At target stake.',
+      TipUrgency.NEUTRAL,
+      TipConstraint.NONE,
+      delta,
+    )
   }
   // Yellow only when the loss is meaningful (isDefending). Sub-threshold
   // losses (< 1k SOL or < 10k active) stay violet so a specific-reason
