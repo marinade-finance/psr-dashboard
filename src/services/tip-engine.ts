@@ -366,6 +366,20 @@ function bondCta(
       coverage.topUpToIdealKeep > 0 &&
       delta <= 0)
   if (!fires) return null
+  // SOFT + defending: the standard "grow stake" advisory fires at INFO, which
+  // selectTip ranks below deltaCta's WARNING. Escalate to WARNING and use
+  // keep-stake framing so the actionable bond advice beats the symptom message.
+  if (health === BondHealthState.SOFT && isDefending(validator, delta)) {
+    const topUpAmt = coverage.topUpToIdealKeep
+    return tip(
+      topUpAmt > 0
+        ? `Top up ${topUp(topUpAmt)} to keep your stake.`
+        : 'Top up bond to keep your stake.',
+      TipUrgency.WARNING,
+      TipConstraint.BOND,
+      delta,
+    )
+  }
   const advice = bondAdvice(
     coverage,
     health,

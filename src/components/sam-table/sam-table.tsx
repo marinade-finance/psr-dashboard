@@ -1063,155 +1063,166 @@ export const SamTable: React.FC<Props> = ({
           />
         </div>
 
-        {/* Search row — sits above the table, aligned with validator column */}
-        {onValidatorSearch && (
-          <div className="px-4 mb-4 flex">
-            <ValidatorSearch
-              validators={validators}
-              nameMap={validatorMeta ?? new Map()}
-              onSelect={onValidatorSearch}
-              className="w-full max-w-sm"
-            />
-          </div>
-        )}
-
-        {/* Table */}
+        {/* Ring wraps only search + table — not the metrics above */}
         <div
-          ref={tableRef}
-          className="mx-4 bg-card rounded-xl border border-border shadow-card overflow-hidden overflow-x-auto"
+          className={cn(
+            'mx-4 mb-4',
+            inSimulation && 'ring-4 ring-inset ring-status-yellow rounded-xl',
+          )}
         >
-          <ShadTable className="font-sans text-sm">
-            <TableHeader>
-              <TableRow className="border-b border-border-grid">
-                <TableHead
-                  className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-10 text-center cursor-pointer hover:text-primary"
-                  onClick={() => handleSort('rank')}
-                >
-                  #
-                  <SortIndicator
-                    column="rank"
-                    sortColumn={sortColumn}
-                    sortDirection={sortDirection}
-                  />
-                </TableHead>
-                <TableHead
-                  className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted min-w-[150px] cursor-pointer hover:text-primary"
-                  onClick={() => handleSort('validator')}
-                >
-                  Validator
-                  <SortIndicator
-                    column="validator"
-                    sortColumn={sortColumn}
-                    sortDirection={sortDirection}
-                  />
-                </TableHead>
-                <TableHead
-                  className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-[100px] cursor-pointer hover:text-primary whitespace-nowrap"
-                  onClick={() => handleSort('maxApy')}
-                >
-                  <div className="flex items-center gap-1">
-                    Max APY
-                    <SortIndicator
-                      column="maxApy"
-                      sortColumn={sortColumn}
-                      sortDirection={sortDirection}
-                    />
-                    <HelpTip text={HELP_TEXT.maxApy} guideTo={`${dp}#cpmpe`} />
-                  </div>
-                </TableHead>
-                <TableHead
-                  className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-40 cursor-pointer hover:text-primary whitespace-nowrap"
-                  onClick={() => handleSort('bond')}
-                >
-                  <div className="flex items-center gap-1">
-                    Bond
-                    <SortIndicator
-                      column="bond"
-                      sortColumn={sortColumn}
-                      sortDirection={sortDirection}
-                    />
-                    <HelpTip
-                      text={HELP_TEXT.bondHealth}
-                      guideTo={`${dp}#bond`}
-                    />
-                  </div>
-                </TableHead>
-                <TableHead
-                  className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-[140px] cursor-pointer hover:text-primary whitespace-nowrap"
-                  onClick={() => handleSort('stakeDelta')}
-                >
-                  <div className="flex items-center gap-1">
-                    Stake / Next change
-                    <SortIndicator
-                      column="stakeDelta"
-                      sortColumn={sortColumn}
-                      sortDirection={sortDirection}
-                    />
-                    <HelpTip
-                      text="How much stake you have right now, and how much it'll change next epoch. Gains depend on fresh deposits coming in; losses come from regular withdrawals, which Marinade pulls from the most over-stake validators first."
-                      guideTo={`${dp}#redelegation`}
-                    />
-                  </div>
-                </TableHead>
-                <TableHead
-                  className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted min-w-[200px] cursor-pointer hover:text-primary"
-                  onClick={() => handleSort('nextStep')}
-                >
-                  Next Step
-                  <SortIndicator
-                    column="nextStep"
-                    sortColumn={sortColumn}
-                    sortDirection={sortDirection}
-                  />
-                </TableHead>
-                <TableHead className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-10"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {aboveCutoff.map((row, i) =>
-                renderRow(row.validator, i, row.isGhost),
-              )}
+          {/* Search row — sits above the table, aligned with validator column */}
+          {onValidatorSearch && (
+            <div className={cn('mb-4 flex', inSimulation ? 'px-0 pt-2' : '')}>
+              <ValidatorSearch
+                validators={validators}
+                nameMap={validatorMeta ?? new Map()}
+                onSelect={onValidatorSearch}
+                className="w-full max-w-sm"
+              />
+            </div>
+          )}
 
-              {/* Winning Set Cutoff Divider — only meaningful when sorted by default APY rank */}
-              {belowCutoff.length > 0 && sortColumn === 'maxApy' && (
-                <TableRow>
-                  <TableCell colSpan={7} className="p-0">
-                    <div className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-primary-light-10 via-primary-light to-primary-light-10 border-y-2 border-primary">
-                      <div className="flex items-center gap-1.5">
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 16 16"
-                          fill="none"
-                        >
-                          <path
-                            d="M8 2L10 6H14L11 9L12 13L8 10.5L4 13L5 9L2 6H6L8 2Z"
-                            fill="var(--primary)"
-                            opacity="0.8"
-                          />
-                        </svg>
-                        <span className="text-xs font-semibold text-primary">
-                          Winning Set Cutoff
+          {/* Table */}
+          <div
+            ref={tableRef}
+            className="bg-card rounded-xl border border-border shadow-card overflow-hidden overflow-x-auto"
+          >
+            <ShadTable className="font-sans text-sm">
+              <TableHeader>
+                <TableRow className="border-b border-border-grid">
+                  <TableHead
+                    className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-10 text-center cursor-pointer hover:text-primary"
+                    onClick={() => handleSort('rank')}
+                  >
+                    #
+                    <SortIndicator
+                      column="rank"
+                      sortColumn={sortColumn}
+                      sortDirection={sortDirection}
+                    />
+                  </TableHead>
+                  <TableHead
+                    className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted min-w-[150px] cursor-pointer hover:text-primary"
+                    onClick={() => handleSort('validator')}
+                  >
+                    Validator
+                    <SortIndicator
+                      column="validator"
+                      sortColumn={sortColumn}
+                      sortDirection={sortDirection}
+                    />
+                  </TableHead>
+                  <TableHead
+                    className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-[100px] cursor-pointer hover:text-primary whitespace-nowrap"
+                    onClick={() => handleSort('maxApy')}
+                  >
+                    <div className="flex items-center gap-1">
+                      Max APY
+                      <SortIndicator
+                        column="maxApy"
+                        sortColumn={sortColumn}
+                        sortDirection={sortDirection}
+                      />
+                      <HelpTip
+                        text={HELP_TEXT.maxApy}
+                        guideTo={`${dp}#cpmpe`}
+                      />
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-40 cursor-pointer hover:text-primary whitespace-nowrap"
+                    onClick={() => handleSort('bond')}
+                  >
+                    <div className="flex items-center gap-1">
+                      Bond
+                      <SortIndicator
+                        column="bond"
+                        sortColumn={sortColumn}
+                        sortDirection={sortDirection}
+                      />
+                      <HelpTip
+                        text={HELP_TEXT.bondHealth}
+                        guideTo={`${dp}#bond`}
+                      />
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-[140px] cursor-pointer hover:text-primary whitespace-nowrap"
+                    onClick={() => handleSort('stakeDelta')}
+                  >
+                    <div className="flex items-center gap-1">
+                      Stake / Next change
+                      <SortIndicator
+                        column="stakeDelta"
+                        sortColumn={sortColumn}
+                        sortDirection={sortDirection}
+                      />
+                      <HelpTip
+                        text="How much stake you have right now, and how much it'll change next epoch. Gains depend on fresh deposits coming in; losses come from regular withdrawals, which Marinade pulls from the most over-stake validators first."
+                        guideTo={`${dp}#redelegation`}
+                      />
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted min-w-[200px] cursor-pointer hover:text-primary"
+                    onClick={() => handleSort('nextStep')}
+                  >
+                    Next Step
+                    <SortIndicator
+                      column="nextStep"
+                      sortColumn={sortColumn}
+                      sortDirection={sortDirection}
+                    />
+                  </TableHead>
+                  <TableHead className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-10"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {aboveCutoff.map((row, i) =>
+                  renderRow(row.validator, i, row.isGhost),
+                )}
+
+                {/* Winning Set Cutoff Divider — only meaningful when sorted by default APY rank */}
+                {belowCutoff.length > 0 && sortColumn === 'maxApy' && (
+                  <TableRow>
+                    <TableCell colSpan={7} className="p-0">
+                      <div className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-primary-light-10 via-primary-light to-primary-light-10 border-y-2 border-primary">
+                        <div className="flex items-center gap-1.5">
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 16 16"
+                            fill="none"
+                          >
+                            <path
+                              d="M8 2L10 6H14L11 9L12 13L8 10.5L4 13L5 9L2 6H6L8 2Z"
+                              fill="var(--primary)"
+                              opacity="0.8"
+                            />
+                          </svg>
+                          <span className="text-xs font-semibold text-primary">
+                            Winning Set Cutoff
+                          </span>
+                        </div>
+                        <div className="flex-1 h-px bg-primary opacity-20" />
+                        <span className="text-xs text-primary font-mono font-semibold">
+                          Winning APY: {pct(winningAPY, 2)}
+                        </span>
+                        <div className="flex-1 h-px bg-primary opacity-20" />
+                        <span className="text-xs text-muted-foreground">
+                          {aboveCount} bid-eligible · {winningCount} winning
                         </span>
                       </div>
-                      <div className="flex-1 h-px bg-primary opacity-20" />
-                      <span className="text-xs text-primary font-mono font-semibold">
-                        Winning APY: {pct(winningAPY, 2)}
-                      </span>
-                      <div className="flex-1 h-px bg-primary opacity-20" />
-                      <span className="text-xs text-muted-foreground">
-                        {aboveCount} bid-eligible · {winningCount} winning
-                      </span>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )}
+                    </TableCell>
+                  </TableRow>
+                )}
 
-              {belowCutoff.map((row, i) =>
-                renderRow(row.validator, aboveCount + i, row.isGhost),
-              )}
-            </TableBody>
-          </ShadTable>
+                {belowCutoff.map((row, i) =>
+                  renderRow(row.validator, aboveCount + i, row.isGhost),
+                )}
+              </TableBody>
+            </ShadTable>
+          </div>
         </div>
       </div>
     </div>

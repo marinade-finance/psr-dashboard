@@ -377,8 +377,12 @@ describe('getValidatorTip', () => {
     expect(tip.text).toContain('won’t change')
   })
 
-  it('delta < 0 + defending → warning, losing stake message', () => {
+  it('delta < 0 + defending + healthy bond → warning, losing stake message', () => {
+    // stakeIdealFloor = (6/1000)*50000 = 300 → bond=400 gives topUpToIdealKeep=0 → HEALTHY
+    // Ensures deltaCta owns the warning, not bondCta.
     const validator = makeValidator({
+      bondBalanceSol: 400,
+      claimableBondBalanceSol: 400,
       marinadeActivatedStakeSol: 50_000, // > NON_TRIVIAL_STAKE_SOL
       values: { expectedStakeChangeSol: -5000 }, // > NON_TRIVIAL_LOSS_SOL
     })
@@ -479,7 +483,7 @@ describe('getValidatorTip', () => {
 // --- B8: getValidatorTip soft health gets bond CTA ---
 
 describe('getValidatorTip soft health', () => {
-  it('soft health with topUpToIdealKeep > 0 → info/bond tip (growth lever)', () => {
+  it('soft health with topUpToIdealKeep > 0, delta=0 → info/bond tip (growth lever)', () => {
     // bondBalanceSol=50 < idealBondPmpe/1000 * stake = (6/1000)*10000 = 60
     // claimableBondBalanceSol=50 >= minBondPmpe/1000 * stake = (1/1000)*10000 = 10
     // → topUpToAvoidFee=0, topUpToKeepStake=0, topUpToIdealKeep=10 → 'soft'
@@ -493,6 +497,26 @@ describe('getValidatorTip soft health', () => {
     expect(tip.constraint).toBe('bond')
     expect(tip.urgency).toBe('info')
     expect(tip.text).toContain('SOL')
+  })
+
+  it('soft health + defending (large loss) → warning/bond "keep your stake" (beats deltaCta)', () => {
+    // SOFT shape with marinadeActivatedStakeSol=50000, claimable=100:
+    //   stakeKeepFloor   = (1/1000)*50000 = 50  → topUpToKeepStake   = max(0,50-100)=0
+    //   bondRiskFeeFloor = (1/1000)*50000 = 50  → bondRiskFeeShortfall = 0
+    //   stakeIdealFloor  = (6/1000)*50000 = 300 → topUpToIdealKeep   = max(0,300-100)=200>0 → SOFT
+    // delta=-33000 with active=50000 → isDefending=true.
+    // bondCta escalates to WARNING so it outranks deltaCta's WARNING via
+    // LEVER_ORDER (bond=0 beats none=3) and the text reflects keeping, not growing.
+    const validator = makeValidator({
+      bondBalanceSol: 100,
+      claimableBondBalanceSol: 100,
+      marinadeActivatedStakeSol: 50000,
+      values: { expectedStakeChangeSol: -33000 },
+    })
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
+    expect(tip.constraint).toBe('bond')
+    expect(tip.urgency).toBe('warning')
+    expect(tip.text).toContain('keep your stake')
   })
 })
 
