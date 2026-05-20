@@ -71,9 +71,9 @@ const FETCHED_EPOCHS = 11
 // AugmentedAuctionValidator: AuctionValidator with derived per-validator fields
 // pre-computed. expectedStakeChangeSol drives the next-epoch delta display and
 // decomposes into three signed components that always sum to it:
-//   paidUndelegationSol (≤0)      outflow paid this epoch
-//   redelegationInflowSol (≥0)    inflow from budget into below-target winners
-//   naturalWithdrawalSol (≤0)     pro-rata redeemer outflow
+//   paidUndelegationSol (≤0)      bond risk penalty outflow (BRRM forced removal)
+//   redelegationInflowSol (≥0)    inflow from the 1% rotation budget
+//   naturalWithdrawalSol (≤0)     rotation outflow (≈taken from over-target validators)
 // cutoffRank is the dense position relative to the auction cutoff: 0 = at the
 // winning total PMPE, +1 = closest distinct tier above (ties share a rank),
 // -1 = closest distinct tier below.
@@ -234,8 +234,9 @@ export const selectEffectiveCost = (validator: AuctionValidator) =>
 // Not SDK-exported; maintained here until the SDK exposes it.
 const WITHDRAWAL_FRACTION_PER_EPOCH = 0.01
 
-// Natural withdrawals are drawn pro-rata from over-target validators first;
-// falls back to pro-rata by active stake if nobody is over target.
+// Approximates the 1%-TVL rotation: takes from over-target validators first
+// (proportional to excess), falls back to pro-rata by active stake.
+// Real SDK rotates by undelegation-priority rank, so this is an estimate.
 function computeNaturalWithdrawal(
   validators: AuctionValidator[],
   tvl: number,
@@ -368,21 +369,9 @@ function allocateRedelegation(
   return result
 }
 
-// Paid undelegation settles mSOL redemptions (and bond-funded payouts) —
-// the stake leaves the pool to redeemers, it does NOT recycle into the
-// next-epoch redelegation budget. TVL drops by Σpaid alongside Σactive,
-// so max(0, TVL − Σactive) is invariant across paid undeleg and IS the
-// true budget. Per-validator demand uses projectedActive = active − paid
-// (mirroring the SDK's calcBondRiskFee), so a validator losing P this
-// epoch shows a (target − active + paid) gap and competes for the budget
-// at its totalPmpe rank. Natural withdrawal (~1% TVL) is a separate
-// pro-rata outflow to redeemers.
-// Bond below SDK's minBondBalanceSol: clipBondStakeCap returns 0, so the
-// validator loses ALL current stake regardless of bid (mirrors the
-// tip-engine cascade). The full outflow is attributed to paid undelegation
-// (forced removal), redelegation inflow is zeroed (a sub-min-bond validator
-// cannot receive budget), natural withdrawal is suppressed so the three
-// signed components still sum exactly to expectedStakeChangeSol.
+// paidUndelegation = SDK's paidUndelegationSol: accumulated bond risk penalty
+// (BRRM forced removal). Sub-min-bond validators lose all stake via this path;
+// they are excluded from inflow and rotation.
 function computeExpectedStakeChanges(
   auctionResult: AuctionResult,
   minBondBalanceSol: number,
