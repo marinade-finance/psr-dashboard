@@ -52,6 +52,7 @@ const statusLine = (
   if (
     state === BondHealthState.WATCH &&
     coverage.topUpToKeepStake === 0 &&
+    !nearFeeThreshold &&
     expectedStakeDeltaSol > 0
   ) {
     return {

@@ -44,7 +44,13 @@ export const computeInAuctionTarget = (
     capConstrained:
       v.lastCapConstraint != null &&
       v.lastCapConstraint.totalLeftToCapSol === 0,
-    capConstraintName: v.lastCapConstraint?.constraintName ?? null,
-    capConstraintType: v.lastCapConstraint?.constraintType ?? null,
+    capConstraintName:
+      v.lastCapConstraint?.totalLeftToCapSol === 0
+        ? (v.lastCapConstraint.constraintName ?? null)
+        : null,
+    capConstraintType:
+      v.lastCapConstraint?.totalLeftToCapSol === 0
+        ? (v.lastCapConstraint.constraintType ?? null)
+        : null,
   }
 }
