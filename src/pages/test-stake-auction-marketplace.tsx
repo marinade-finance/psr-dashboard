@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { loadLiveSnapshot } from 'src/fixtures/snapshot-loader'
 import { TEST_BONDS_DATA } from 'src/fixtures/test-bonds'
@@ -69,6 +69,37 @@ export const TestSamPage: React.FC<UserLevelProps> = ({ level }) => {
       }),
   )
 
+  const seedQueryClient = useCallback(
+    (
+      samResult: (typeof samResultRef)['current'],
+      validatorNames: Map<string, string>,
+    ) => {
+      queryClient.setQueryData(['sam', 0], samResult)
+      queryClient.setQueryData(['protected-events'], TEST_PROTECTED_EVENTS)
+      queryClient.setQueryData(['bonds'], TEST_BONDS_DATA)
+      queryClient.setQueryData(['validator-names'], validatorNames)
+      queryClient.setQueryData(
+        ['notifications-broadcast'],
+        TEST_BROADCAST_NOTIFICATION,
+      )
+      queryClient.setQueryData(
+        ['notifications-all', 'sam_auction'],
+        TEST_NOTIFICATIONS_MAP,
+      )
+      // psrEstimates fires per-validator when the Payments tab opens.
+      for (const voteAccount of validatorNames.keys()) {
+        queryClient.setQueryData(['psrEstimates', voteAccount], [])
+      }
+      for (const voteAccount of TEST_VALIDATOR_NAMES.keys()) {
+        queryClient.setQueryData(['psrEstimates', voteAccount], [])
+      }
+      ;(window as typeof window & { snapshotMeta: unknown }).snapshotMeta = {
+        validatorCount: samResult.auctionResult.auctionData.validators.length,
+      }
+    },
+    [queryClient],
+  )
+
   useEffect(() => {
     // Try to augment with live snapshot — if absent (CI / fresh checkout)
     // fall back to synthetic-only. A 404 rejects fetchJson quickly.
@@ -83,55 +114,29 @@ export const TestSamPage: React.FC<UserLevelProps> = ({ level }) => {
     loadLiveSnapshot(scale)
       .then(snapshot => {
         const merged = mergeWithSynthetic(snapshot.auctionResult)
-        samResultRef.current = {
+        const samResult = {
           auctionResult: merged,
           epochsPerYear: TEST_EPOCHS_PER_YEAR,
           dcSamConfig: TEST_DS_SAM_CONFIG,
         }
+        samResultRef.current = samResult
         // Merge: real names first, synthetic edge-case names appended so
         // tests that search "Test" / "Watch Bond" still find their targets.
-        setState({
-          ready: true,
-          validatorNames: new Map([
-            ...snapshot.validatorNames,
-            ...TEST_VALIDATOR_NAMES,
-          ]),
-        })
+        const validatorNames = new Map([
+          ...snapshot.validatorNames,
+          ...TEST_VALIDATOR_NAMES,
+        ])
+        // Seed cache BEFORE setState so SamPage mounts with warm queries —
+        // avoids a race where tbody tr appears before nameMap is populated.
+        seedQueryClient(samResult, validatorNames)
+        setState({ ready: true, validatorNames })
       })
       .catch(() => {
         // No snapshot — synthetic only
+        seedQueryClient(SYNTHETIC_SAM_RESULT, TEST_VALIDATOR_NAMES)
         setState({ ready: true, validatorNames: TEST_VALIDATOR_NAMES })
       })
-  }, [])
-
-  // Seed all query keys after data is resolved
-  useEffect(() => {
-    if (!state.ready) return
-    const samResult = samResultRef.current
-    queryClient.setQueryData(['sam', 0], samResult)
-    queryClient.setQueryData(['protected-events'], TEST_PROTECTED_EVENTS)
-    queryClient.setQueryData(['bonds'], TEST_BONDS_DATA)
-    queryClient.setQueryData(['validator-names'], state.validatorNames)
-    queryClient.setQueryData(
-      ['notifications-broadcast'],
-      TEST_BROADCAST_NOTIFICATION,
-    )
-    queryClient.setQueryData(
-      ['notifications-all', 'sam_auction'],
-      TEST_NOTIFICATIONS_MAP,
-    )
-    // psrEstimates fires per-validator when the Payments tab opens.
-    for (const voteAccount of state.validatorNames.keys()) {
-      queryClient.setQueryData(['psrEstimates', voteAccount], [])
-    }
-    for (const voteAccount of TEST_VALIDATOR_NAMES.keys()) {
-      queryClient.setQueryData(['psrEstimates', voteAccount], [])
-    }
-    // Expose for Playwright assertions
-    ;(window as typeof window & { snapshotMeta: unknown }).snapshotMeta = {
-      validatorCount: samResult.auctionResult.auctionData.validators.length,
-    }
-  }, [state, queryClient])
+  }, [seedQueryClient])
 
   const dataSources = useMemo<SamDataSources>(
     () => ({
