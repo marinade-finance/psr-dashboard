@@ -63,9 +63,15 @@ test.describe('HelpTip — Learn more link', () => {
     await expect(tooltip).toBeVisible({ timeout: 5000 })
     const learnMore = tooltip.getByText('Learn more')
     await expect(learnMore).toBeVisible()
+    // The sticky thead can sit above the tooltip at the "Bond" header's
+    // viewport position. Coordinate-based clicks (even force:true) dispatch
+    // pointerdown at those coordinates, which land on the <th>, triggering
+    // the HelpTip outside-click handler and dismissing the tooltip before
+    // the <a> can receive the click. `evaluate` calls HTMLAnchorElement.click()
+    // directly on the DOM node, skipping coordinate dispatch entirely.
     const [newPage] = await Promise.all([
       context.waitForEvent('page'),
-      learnMore.click(),
+      learnMore.evaluate(el => (el as HTMLAnchorElement).click()),
     ])
     await newPage.waitForLoadState('domcontentloaded')
     expect(newPage.url()).toMatch(/\/docs/)

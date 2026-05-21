@@ -906,6 +906,8 @@ export const SamTable: React.FC<Props> = ({
               const cell = nextStakeDeltaCell(expectedChange)
               return (
                 <span
+                  data-testid="stake-delta"
+                  data-value={Math.round(expectedChange)}
                   className={cn(
                     'font-mono text-xs',
                     cell.tone === NextStakeDeltaTone.NEUTRAL

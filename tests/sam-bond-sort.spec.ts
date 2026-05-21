@@ -87,6 +87,21 @@ test.describe('SAM table — Bond column sort', () => {
   })
 })
 
+async function readStakeDeltaColumn(page: Page) {
+  // Read the numeric sort key from [data-value] on the delta span — this is
+  // the actual value the sort comparator uses, not the displayed active stake.
+  const spans = page.locator(
+    `tbody tr:not([data-divider]):not([data-ghost="true"]) td:nth-child(5) [data-testid="stake-delta"]`,
+  )
+  const n = await spans.count()
+  const vals: number[] = []
+  for (let i = 0; i < n; i++) {
+    const v = Number(await spans.nth(i).getAttribute('data-value'))
+    if (!isNaN(v)) vals.push(v)
+  }
+  return vals
+}
+
 test.describe('SAM table — Stake / Next Δ column sort', () => {
   test('clicking Stake header reorders rows by stake delta', async ({
     page,
@@ -94,10 +109,7 @@ test.describe('SAM table — Stake / Next Δ column sort', () => {
     await gotoSam(page)
     const h = page.locator('thead th').filter({ hasText: /Stake/ }).first()
     await h.click({ position: { x: 10, y: 10 } })
-    // Stake cell carries "<active SOL> / <±delta SOL>" — parseNum picks up
-    // the first token (active stake). Stake delta is also sortable; either
-    // is monotonic after a sort.
-    const vals = await readColumn(page, 5)
+    const vals = await readStakeDeltaColumn(page)
     expect(vals.length).toBeGreaterThan(1)
     const sorted = isSortedAsc(vals) || isSortedDesc(vals)
     expect(sorted).toBe(true)
@@ -109,10 +121,10 @@ test.describe('SAM table — Stake / Next Δ column sort', () => {
     await gotoSam(page)
     const h = page.locator('thead th').filter({ hasText: /Stake/ }).first()
     await h.click({ position: { x: 10, y: 10 } })
-    const firstOrder = (await readColumn(page, 5)).join(',')
+    const firstOrder = (await readStakeDeltaColumn(page)).join(',')
     const firstIndicator = (await h.innerText()).includes('↑') ? '↑' : '↓'
     await h.click({ position: { x: 10, y: 10 } })
-    const secondOrder = (await readColumn(page, 5)).join(',')
+    const secondOrder = (await readStakeDeltaColumn(page)).join(',')
     const secondIndicator = (await h.innerText()).includes('↑') ? '↑' : '↓'
     expect(firstOrder).not.toBe(secondOrder)
     expect(firstIndicator).not.toBe(secondIndicator)
