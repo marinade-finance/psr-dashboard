@@ -13,6 +13,7 @@ import {
   TEST_EPOCHS_PER_YEAR,
 } from 'src/fixtures/test-validators'
 import { ValidatorBondsPage } from 'src/pages/validator-bonds'
+import { selectEffectiveAmount } from 'src/services/bonds'
 
 import type { UserLevelProps } from 'src/components/navigation/navigation'
 
@@ -36,7 +37,13 @@ export const TestBondsPage: React.FC<UserLevelProps> = ({ level }) => {
         },
       },
     })
-    queryClient.setQueryData(['bonds'], TEST_BONDS_DATA)
+    // fetchValidatorsWithBonds returns BondsResult — wrap fixture to match.
+    const bonds = TEST_BONDS_DATA.flatMap(v => (v.bond ? [v.bond] : []))
+    queryClient.setQueryData(['bonds'], {
+      entries: TEST_BONDS_DATA,
+      totalFundedBonds: bonds.filter(b => selectEffectiveAmount(b) > 0).length,
+      totalBondBalance: bonds.reduce((s, b) => s + selectEffectiveAmount(b), 0),
+    })
     // EpochMeter (in nav) reads ['sam', 0] and ['protected-events']; nav
     // hover prefetches ['protected-events']. Seed both so nothing leaks.
     queryClient.setQueryData(['sam', 0], SAM_RESULT)

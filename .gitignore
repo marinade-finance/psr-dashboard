@@ -49,6 +49,10 @@ lerna-debug.log*
 # Local
 *.local.json
 
+# Live API snapshots (captured with scripts/capture-fixtures.js, too large to commit)
+/src/fixtures/snapshot/
+/public/snapshot/
+
 # Shipping artifacts (ephemeral)
 /.ship
 
