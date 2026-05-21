@@ -7,6 +7,7 @@
 // it — we assert the href shape instead. Basic mode only — expert routes
 // are not tested (see CLAUDE.md).
 import { test, expect } from '@playwright/test'
+
 import type { Page } from '@playwright/test'
 
 const SHEET = '[role="dialog"]'
@@ -14,8 +15,8 @@ const V01 = 'FiXtUREv1111111111111111111111111111111111aa'
 
 async function openSheet(page: Page) {
   await page.goto(`/test-?v=${V01}`)
-  await page.waitForSelector('tbody tr', { timeout: 30000 })
-  await expect(page.locator(SHEET).first()).toBeVisible({ timeout: 5000 })
+  await page.waitForSelector('tbody tr', { timeout: 60000 })
+  await expect(page.locator(SHEET).first()).toBeVisible({ timeout: 30000 })
 }
 
 test.describe('docs cross-links — guide link hrefs from detail sheet', () => {

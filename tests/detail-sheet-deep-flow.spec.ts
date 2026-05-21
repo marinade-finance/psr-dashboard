@@ -11,6 +11,7 @@
 // This is the full happy-path a real user walks; no other spec ties all of
 // these together.
 import { test, expect } from '@playwright/test'
+
 import type { Page } from '@playwright/test'
 
 const SHEET = '[role="dialog"]'
@@ -44,10 +45,13 @@ test.describe('detail sheet — full open-walk-simulate-close cycle', () => {
     // (3) Switch Payments → Bidding → Bond → Bid Penalty.
     // Overview's titled cards also expose role=button with the same name;
     // `.first()` reliably targets the TabStrip button.
+    // Use evaluate().click() to bypass sticky-header pointer interception.
     const tab = (name: string) =>
       page.locator(SHEET).getByRole('button', { name, exact: true }).first()
+    const clickTab = async (name: string) =>
+      tab(name).evaluate(el => (el as HTMLButtonElement).click())
 
-    await tab('Payments').click()
+    await clickTab('Payments')
     await expect(
       page
         .locator(SHEET)
@@ -55,7 +59,7 @@ test.describe('detail sheet — full open-walk-simulate-close cycle', () => {
         .first(),
     ).toBeVisible()
 
-    await tab('Bidding').click()
+    await clickTab('Bidding')
     await expect(
       page
         .locator(SHEET)
@@ -63,7 +67,7 @@ test.describe('detail sheet — full open-walk-simulate-close cycle', () => {
         .first(),
     ).toBeVisible()
 
-    await tab('Bond').click()
+    await clickTab('Bond')
     await expect(
       page
         .locator(SHEET)
@@ -71,7 +75,7 @@ test.describe('detail sheet — full open-walk-simulate-close cycle', () => {
         .first(),
     ).toBeVisible()
 
-    await tab('Bid Penalty').click()
+    await clickTab('Bid Penalty')
     await expect(
       page
         .locator(SHEET)

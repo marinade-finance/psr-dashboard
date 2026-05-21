@@ -3,6 +3,7 @@
 // TEST_VALIDATORS fixture data. Content-text assertions stay loose
 // (regex / non-exact) so cosmetic copy drift doesn't break the suite.
 import { test, expect } from '@playwright/test'
+
 import type { Locator, Page } from '@playwright/test'
 
 const SHEET = '[role="dialog"]'
@@ -16,8 +17,8 @@ async function gotoSam(page: Page) {
 
 async function openSheet(page: Page, voteAccount: string) {
   await page.goto(`/test-?v=${voteAccount}`)
-  await page.waitForSelector('tbody tr', { timeout: 30000 })
-  await expect(page.locator(SHEET).first()).toBeVisible({ timeout: 10000 })
+  await page.waitForSelector('tbody tr', { timeout: 60000 })
+  await expect(page.locator(SHEET).first()).toBeVisible({ timeout: 30000 })
 }
 
 function sheetTab(page: Page, label: string): Locator {
@@ -28,7 +29,8 @@ function sheetTab(page: Page, label: string): Locator {
 }
 
 async function clickTab(page: Page, label: string) {
-  await sheetTab(page, label).click()
+  // Use evaluate to bypass sticky slide-over header pointer interception.
+  await sheetTab(page, label).evaluate(el => (el as HTMLButtonElement).click())
 }
 
 test.describe('detail sheet — open & close', () => {

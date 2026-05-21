@@ -508,7 +508,9 @@ const v07: AuctionValidator = {
   }),
 }
 
-// 8. Eligible but bid below the winning price → zero target, loses all stake
+// 8. Eligible but bid below the winning price → zero target, loses all stake.
+// totalPmpe intentionally set well below 0.3 so this validator stays out-of-set
+// even when merged with real snapshot data (real winning PMPE ~0.35).
 const v08: AuctionValidator = {
   ...makeBase('FiXtUREv8888888888888888888888888888888888hh', {
     marinadeActivatedStakeSol: 50_000,
@@ -516,11 +518,14 @@ const v08: AuctionValidator = {
     // "Bid too low" rank CTA isn't shadowed by a bond CTA.
     bondBalanceSol: 80,
     claimableBondBalanceSol: 80,
-    bidCpmpe: 0.8, // totalPmpe 5.8 < winning 6.0 → below the line
+    bidCpmpe: 0.01, // totalPmpe 0.09 < real winning ~0.35 → always below the line
     country: C_US,
     aso: ASO_AWS,
   }),
-  revShare: makeRevShare(0.8),
+  revShare: {
+    ...makeRevShare(0.01, 0, 0.05, 0.03),
+    totalPmpe: 0.09,
+  },
   bidTooLowPenalty: { coef: 0, base: 0 },
   bondForcedUndelegation: { coef: 0, base: 0, value: 0 },
   samEligible: true,

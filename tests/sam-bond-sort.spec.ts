@@ -3,6 +3,7 @@
 // reorders the visible rows. Uses the deterministic /test- route so the
 // underlying values are known.
 import { test, expect } from '@playwright/test'
+
 import type { Page } from '@playwright/test'
 
 async function gotoSam(page: Page) {
@@ -10,24 +11,18 @@ async function gotoSam(page: Page) {
   await page.waitForSelector('tbody tr', { timeout: 30000 })
 }
 
-function parseNum(s: string): number {
-  // First numeric token in the cell text — handles "(12ep)" suffix etc.
-  const m = s.match(/-?[\d,]+(?:\.\d+)?/)
-  if (!m) return NaN
-  return parseFloat(m[0].replace(/,/g, ''))
-}
-
 async function readColumn(page: Page, nthChild: number) {
-  const cells = page.locator(
+  return page.$$eval(
     `tbody tr:not([data-divider]):not([data-ghost="true"]) td:nth-child(${nthChild})`,
+    cells =>
+      cells
+        .map(c => {
+          const m = (c.textContent ?? '').match(/-?[\d,]+(?:\.\d+)?/)
+          if (!m) return NaN
+          return parseFloat(m[0].replace(/,/g, ''))
+        })
+        .filter(v => !isNaN(v)),
   )
-  const n = await cells.count()
-  const vals: number[] = []
-  for (let i = 0; i < n; i++) {
-    const v = parseNum(await cells.nth(i).innerText())
-    if (!isNaN(v)) vals.push(v)
-  }
-  return vals
 }
 
 // The SAM table renders two segments by default: above-cutoff (winners +
@@ -88,18 +83,14 @@ test.describe('SAM table — Bond column sort', () => {
 })
 
 async function readStakeDeltaColumn(page: Page) {
-  // Read the numeric sort key from [data-value] on the delta span — this is
-  // the actual value the sort comparator uses, not the displayed active stake.
-  const spans = page.locator(
-    `tbody tr:not([data-divider]):not([data-ghost="true"]) td:nth-child(5) [data-testid="stake-delta"]`,
+  // Read all data-value attributes in one JS call to avoid per-row round-trips.
+  return page.$$eval(
+    'tbody tr:not([data-divider]):not([data-ghost="true"]) td:nth-child(5) [data-testid="stake-delta"]',
+    spans =>
+      spans
+        .map(s => Number((s as HTMLElement).dataset.value))
+        .filter(v => !isNaN(v)),
   )
-  const n = await spans.count()
-  const vals: number[] = []
-  for (let i = 0; i < n; i++) {
-    const v = Number(await spans.nth(i).getAttribute('data-value'))
-    if (!isNaN(v)) vals.push(v)
-  }
-  return vals
 }
 
 test.describe('SAM table — Stake / Next Δ column sort', () => {
