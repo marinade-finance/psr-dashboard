@@ -117,7 +117,21 @@ const router = createBrowserRouter([
   },
 ])
 
-const queryClient = new QueryClient()
+// Defaults tuned for a long-dwell dashboard whose underlying data updates
+// per Solana epoch (~48h). Stock v5 defaults (`staleTime: 0`,
+// `refetchOnWindowFocus: true`, `retry: 3`) would refetch the heavy
+// `loadSam` path on every tab focus and amplify transient failures into
+// minutes of retry storms.
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+})
 
 const Root = () => {
   // Prefetch all tab data so navigation is instant. Running here (not at
