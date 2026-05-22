@@ -1,5 +1,9 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import React from 'react'
+import {
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
+import React, { useMemo } from 'react'
 
 import { Banner } from 'src/components/banner/banner'
 import { Loader } from 'src/components/loader/loader'
@@ -15,25 +19,40 @@ import { selectTotalMarinadeStake } from 'src/services/validators'
 import type { UserLevelProps } from 'src/components/navigation/navigation'
 
 export const ValidatorBondsPage: React.FC<UserLevelProps> = ({ level }) => {
+  const queryClient = useQueryClient()
   const { data, status } = useQuery({
     queryKey: ['bonds'],
-    queryFn: fetchValidatorsWithBonds,
-    staleTime: 5 * 60 * 1000,
+    queryFn: ({ signal }) => fetchValidatorsWithBonds(queryClient, signal),
     refetchInterval: 60 * 60 * 1000,
     placeholderData: keepPreviousData,
   })
   const { data: latestBroadcastNotification } = useQuery({
     queryKey: ['notifications-broadcast'],
-    queryFn: fetchLatestSamAuctionBroadcastNotification,
+    queryFn: ({ signal }) => fetchLatestSamAuctionBroadcastNotification(signal),
     refetchInterval: 5 * 60 * 1000,
     placeholderData: keepPreviousData,
   })
   const { data: notificationsMap } = useQuery({
     queryKey: ['notifications-all', 'sam_auction'],
-    queryFn: () => fetchAllNotifications('sam_auction'),
+    queryFn: ({ signal }) => fetchAllNotifications('sam_auction', signal),
     refetchInterval: 5 * 60 * 1000,
     placeholderData: keepPreviousData,
   })
+
+  // Filter once per `data` change instead of on every parent re-render.
+  // Notifications and broadcasts refetch on intervals; without this useMemo
+  // the .filter ran every interval tick over the full validator list.
+  const filteredData = useMemo(
+    () =>
+      data
+        ? data.filter(
+            ({ validator, bond }) =>
+              selectTotalMarinadeStake(validator) > 0 ||
+              Number(bond?.effective_amount) > 0,
+          )
+        : [],
+    [data],
+  )
 
   return (
     <div className="bg-background-page">
@@ -69,11 +88,7 @@ export const ValidatorBondsPage: React.FC<UserLevelProps> = ({ level }) => {
       {status === 'pending' && <Loader />}
       {status === 'success' && (
         <ValidatorBondsTable
-          data={data.filter(
-            ({ validator, bond }) =>
-              selectTotalMarinadeStake(validator) > 0 ||
-              Number(bond?.effective_amount) > 0,
-          )}
+          data={filteredData}
           level={level}
           notificationsMap={notificationsMap}
         />

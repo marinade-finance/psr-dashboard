@@ -1,13 +1,5 @@
 import { AuctionConstraintType } from '@marinade.finance/ds-sam-sdk'
 
-import { CardStatusTone } from 'src/components/breakdowns/card'
-import { ICON_ALERT } from 'src/components/icons/icon-alert'
-import { ICON_BID } from 'src/components/icons/icon-bid'
-import { ICON_BOND } from 'src/components/icons/icon-bond'
-import { ICON_CAP } from 'src/components/icons/icon-cap'
-import { ICON_DOWN } from 'src/components/icons/icon-down'
-import { ICON_RIGHT } from 'src/components/icons/icon-right'
-import { ICON_UP } from 'src/components/icons/icon-up'
 import {
   CSS_DESTRUCTIVE,
   CSS_DESTRUCTIVE_LIGHT,
@@ -33,6 +25,7 @@ import {
   bondHealthFromAuction,
 } from './bond-health'
 import { apyBreakdown } from './calculations'
+import { CardStatusTone } from './card-status'
 import { selectInSet } from './sam'
 
 import type { BondCoverage } from './bond-coverage'
@@ -41,7 +34,11 @@ import type {
   AuctionValidator,
   DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
-import type React from 'react'
+
+// Discriminator returned by getTipIcon. Component layer maps these to actual
+// icon components (see src/components/icons/tip-icons.ts) — the service layer
+// stays framework-agnostic.
+export type TipIcon = 'alert' | 'bond' | 'bid' | 'cap' | 'up' | 'down' | 'right'
 
 export enum TipUrgency {
   CRITICAL = 'critical',
@@ -123,20 +120,20 @@ export const getTipStyle = (urgency: TipUrgency): TipStyle => {
 // non-directional glyph; only constraint:'none' (in-set, the only lever
 // left is the stake trajectory) gets a directional arrow, keyed off the
 // real signed delta so it can never lie.
-export const getTipIcon = (tip: ValidatorTip): React.ReactNode => {
-  if (tip.alert) return ICON_ALERT
+export const getTipIcon = (tip: ValidatorTip): TipIcon => {
+  if (tip.alert) return 'alert'
   switch (tip.constraint) {
     case TipConstraint.BOND:
-      return ICON_BOND
+      return 'bond'
     case TipConstraint.BID:
     case TipConstraint.RANK:
-      return ICON_BID
+      return 'bid'
     case TipConstraint.CAP:
-      return ICON_CAP
+      return 'cap'
     case TipConstraint.NONE:
-      if (tip.delta > 0) return ICON_UP
-      if (tip.delta < 0) return ICON_DOWN
-      return ICON_RIGHT
+      if (tip.delta > 0) return 'up'
+      if (tip.delta < 0) return 'down'
+      return 'right'
     default:
       return assertNever(tip.constraint)
   }

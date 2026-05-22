@@ -12,14 +12,14 @@
     "paths": { "src/*": ["./src/*"] },
     "incremental": true,
     "skipLibCheck": true,
-    "strictNullChecks": true,
-    "noImplicitAny": true,
-    "strictBindCallApply": true,
+    "strict": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": false,
     "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false,
+    "noFallthroughCasesInSwitch": true,
     "jsx": "react-jsx",
     "lib": ["esnext", "dom", "dom.iterable"],
-    "types": ["node"]
+    "types": ["node", "vite/client"]
   },
   "include": ["src/**/*", "tests/**/*"],
   "exclude": ["vite.config.ts"]

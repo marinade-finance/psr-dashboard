@@ -43,9 +43,6 @@ export default defineConfig({
   resolve: {
     alias: { src: path.resolve(__dirname, 'src') },
   },
-  define: {
-    'process.env': {},
-  },
   build: { outDir: 'build' },
   appType: 'mpa',
   test: {

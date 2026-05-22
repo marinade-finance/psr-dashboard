@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 
 import { cn } from 'src/class_utils'
 import { docsPath } from 'src/components/breakdowns/docs-path'
@@ -296,25 +296,40 @@ export const ValidatorBondsTable: React.FC<Props> = ({
   level,
   notificationsMap,
 }) => {
-  const totalMarinadeStake = data.reduce(
-    (sum, { validator }) => sum + selectTotalMarinadeStake(validator),
-    0,
-  )
-  const totalProtectedStake = data.reduce(
-    (sum, validatorWithBond) => sum + selectProtectedStake(validatorWithBond),
-    0,
-  )
-  const totalMaxProtectedStake = data.reduce(
-    (sum, entry) => sum + selectMaxProtectedStake(entry),
-    0,
-  )
-  const effectiveBalance = data.reduce(
-    (sum, { bond }) => sum + (bond ? selectEffectiveAmount(bond) : 0),
-    0,
-  )
-  const totalFundedBonds = data.filter(
-    ({ bond }) => (bond ? selectEffectiveAmount(bond) : 0) > 0,
-  ).length
+  // One-pass aggregation: build every dataset-wide total in a single sweep.
+  // Previously each total was an independent `.reduce()` / `.filter()` running
+  // on every render — 5 traversals × ~700 validators. Memoised here, so they
+  // only recompute when the upstream cache changes.
+  const aggregates = useMemo(() => {
+    let totalMarinadeStake = 0
+    let totalProtectedStake = 0
+    let totalMaxProtectedStake = 0
+    let effectiveBalance = 0
+    let totalFundedBonds = 0
+    for (const entry of data) {
+      const { validator, bond } = entry
+      totalMarinadeStake += selectTotalMarinadeStake(validator)
+      totalProtectedStake += selectProtectedStake(entry)
+      totalMaxProtectedStake += selectMaxProtectedStake(entry)
+      const bondAmount = bond ? selectEffectiveAmount(bond) : 0
+      effectiveBalance += bondAmount
+      if (bondAmount > 0) totalFundedBonds += 1
+    }
+    return {
+      totalMarinadeStake,
+      totalProtectedStake,
+      totalMaxProtectedStake,
+      effectiveBalance,
+      totalFundedBonds,
+    }
+  }, [data])
+  const {
+    totalMarinadeStake,
+    totalProtectedStake,
+    totalMaxProtectedStake,
+    effectiveBalance,
+    totalFundedBonds,
+  } = aggregates
 
   const coveredRatio =
     totalMarinadeStake > 0 ? totalProtectedStake / totalMarinadeStake : 0

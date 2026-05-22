@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import React, { useEffect } from 'react'
+import React from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import TagManager from 'react-gtm-module'
@@ -18,15 +18,34 @@ import { TestBondsPage } from './pages/test-bonds'
 import { TestProtectedEventsPage } from './pages/test-protected-events'
 import { TestSamPage } from './pages/test-stake-auction-marketplace'
 import { ValidatorBondsPage } from './pages/validator-bonds'
-import { loadSam } from './services/sam'
-import { fetchValidatorsWithBonds } from './services/validator-with-bond'
-import { fetchProtectedEventsWithValidator } from './services/validator-with-protected_event'
+import { ErrorBoundary, initSentry } from './sentry'
+
+initSentry()
 
 const tagManagerArgs = {
   gtmId: 'GTM-TTZLQF7',
 }
 
 TagManager.initialize(tagManagerArgs)
+
+// Last-resort fallback rendered by the top-level ErrorBoundary when a thrown
+// error escapes every route's errorElement. Plain HTML — no React-router or
+// react-query in scope, so it always renders even if those providers crashed
+// during init.
+const FatalError: React.FC<{ resetError: () => void }> = ({ resetError }) => (
+  <div
+    role="alert"
+    style={{ padding: '2rem', maxWidth: '40rem', margin: 'auto' }}
+  >
+    <h1>Something broke.</h1>
+    <p>
+      An unexpected error took down the dashboard. The error has been logged.
+    </p>
+    <button type="button" onClick={resetError}>
+      Try again
+    </button>
+  </div>
+)
 
 const ErrorPage = () => {
   const error = useRouteError() as { statusText?: string; message?: string }
@@ -117,45 +136,41 @@ const router = createBrowserRouter([
   },
 ])
 
-const queryClient = new QueryClient()
+// Defaults tuned for a long-dwell dashboard whose underlying data updates
+// per Solana epoch (~48h). Stock v5 defaults (`staleTime: 0`,
+// `refetchOnWindowFocus: true`, `retry: 3`) would refetch the heavy
+// `loadSam` path on every tab focus and amplify transient failures into
+// minutes of retry storms.
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+})
 
-const Root = () => {
-  // Prefetch all tab data so navigation is instant. Running here (not at
-  // module top-level) means a rejection bubbles to the route's error
-  // boundary instead of being silently swallowed before React mounts.
-  // Test routes bring their own QueryClient seeded with fixtures and must
-  // never touch the network — skip the prefetch so we don't fire upstream
-  // calls before the test wrapper mounts.
-  useEffect(() => {
-    if (window.location.pathname.startsWith('/test-')) return
-    void queryClient.prefetchQuery({
-      queryKey: ['sam', 0],
-      queryFn: () => loadSam(null),
-    })
-    void queryClient.prefetchQuery({
-      queryKey: ['bonds'],
-      queryFn: fetchValidatorsWithBonds,
-    })
-    void queryClient.prefetchQuery({
-      queryKey: ['protected-events'],
-      queryFn: fetchProtectedEventsWithValidator,
-    })
-  }, [])
-
-  return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <RouterProvider router={router} />
-      </TooltipProvider>
-    </QueryClientProvider>
-  )
-}
+const Root = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <RouterProvider router={router} />
+    </TooltipProvider>
+  </QueryClientProvider>
+)
 
 const rootElement = document.getElementById('root')
 if (!rootElement) throw new Error('Root element #root not found')
 
 createRoot(rootElement).render(
   <React.StrictMode>
-    <Root />
+    <ErrorBoundary
+      fallback={fallbackProps => (
+        <FatalError resetError={() => fallbackProps.resetError()} />
+      )}
+    >
+      <Root />
+    </ErrorBoundary>
   </React.StrictMode>,
 )

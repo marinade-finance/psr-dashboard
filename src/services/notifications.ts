@@ -38,6 +38,7 @@ const TOOLTIP_MAX_NOTIFICATIONS = 10
 
 export async function fetchAllNotifications(
   notificationType?: string,
+  signal?: AbortSignal,
 ): Promise<Record<string, NotificationSummary>> {
   const result: Record<string, NotificationSummary> = {}
 
@@ -51,7 +52,7 @@ export async function fetchAllNotifications(
       url.searchParams.set('limit', String(PAGE_SIZE))
       url.searchParams.set('offset', String(page * PAGE_SIZE))
 
-      const res = await fetch(url.toString())
+      const res = await fetch(url.toString(), { signal })
       if (!res.ok) break
 
       const notifications = (await res.json()) as ValidatorNotification[]
@@ -80,12 +81,14 @@ export async function fetchAllNotifications(
   return result
 }
 
-export async function fetchLatestSamAuctionBroadcastNotification(): Promise<ValidatorNotification | null> {
+export async function fetchLatestSamAuctionBroadcastNotification(
+  signal?: AbortSignal,
+): Promise<ValidatorNotification | null> {
   try {
     const url = new URL('/v1/notifications/broadcast', NOTIFICATIONS_API_URL)
     url.searchParams.set('notification_type', 'sam_auction')
     url.searchParams.set('limit', '10')
-    const res = await fetch(url.toString())
+    const res = await fetch(url.toString(), { signal })
     if (!res.ok) return null
     const notifications = (await res.json()) as ValidatorNotification[]
     if (notifications.length === 0) return null

@@ -39,10 +39,12 @@ export const TestSamPage: React.FC<UserLevelProps> = ({ level }) => {
         },
       },
     })
-    // EpochMeter inside the navigation reads ['sam', 0] and
-    // ['protected-events']; nav hover prefetches ['bonds']. Seed all three
-    // so the test page never reaches upstream APIs.
-    queryClient.setQueryData(['sam', 0], SAM_RESULT)
+    // SamPage subscribes to the canonical ['sam'] queryKey; the bonds and
+    // protected-events service functions read from the same key via
+    // queryClient.ensureQueryData (see the library-native-refactor branch).
+    // EpochMeter shares the same cache entry. Seed every active consumer so
+    // the test page never reaches upstream APIs.
+    queryClient.setQueryData(['sam'], SAM_RESULT)
     queryClient.setQueryData(['protected-events'], TEST_PROTECTED_EVENTS)
     queryClient.setQueryData(['bonds'], TEST_BONDS_DATA)
     queryClient.setQueryData(['validator-names'], TEST_VALIDATOR_NAMES)
@@ -54,11 +56,10 @@ export const TestSamPage: React.FC<UserLevelProps> = ({ level }) => {
       ['notifications-all', 'sam_auction'],
       TEST_NOTIFICATIONS_MAP,
     )
-    // psrEstimates fires per-validator when the Payments tab opens. Seed an
-    // empty array for every fixture vote account; the tab still renders.
-    for (const voteAccount of TEST_VALIDATOR_NAMES.keys()) {
-      queryClient.setQueryData(['psrEstimates', voteAccount], [])
-    }
+    // The Payments tab in validator-detail now uses a single shared query
+    // `['psr-estimates-all']` (was per-validator). Seed an empty array; the
+    // tab still renders the empty state without firing a fetch.
+    queryClient.setQueryData(['psr-estimates-all'], [])
     return queryClient
   })
   const dataSources = useMemo<SamDataSources>(

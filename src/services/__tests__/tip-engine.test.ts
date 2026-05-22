@@ -2,13 +2,6 @@
 // (bond/bid/cap/delta CTAs, severity ordering), bondAdvice contract, and nextStakeDeltaCell.
 import { describe, it, expect } from 'vitest'
 
-import { ICON_BID } from 'src/components/icons/icon-bid'
-import { ICON_BOND } from 'src/components/icons/icon-bond'
-import { ICON_CAP } from 'src/components/icons/icon-cap'
-import { ICON_DOWN } from 'src/components/icons/icon-down'
-import { ICON_RIGHT } from 'src/components/icons/icon-right'
-import { ICON_UP } from 'src/components/icons/icon-up'
-
 import { computeBondCoverage } from '../bond-coverage'
 import { bondHealthFromAuction } from '../bond-health'
 import { bondUtilizationPct } from '../calculations'
@@ -166,35 +159,35 @@ describe('getTipIcon', () => {
     ...over,
   })
 
-  it('constraint:bond → fixed non-directional bond glyph', () => {
-    expect(getTipIcon(tip({ constraint: TipConstraint.BOND }))).toBe(ICON_BOND)
+  it('constraint:bond → bond glyph', () => {
+    expect(getTipIcon(tip({ constraint: TipConstraint.BOND }))).toBe('bond')
   })
 
-  it('constraint:bid → fixed non-directional bid glyph', () => {
-    expect(getTipIcon(tip({ constraint: TipConstraint.BID }))).toBe(ICON_BID)
+  it('constraint:bid → bid glyph', () => {
+    expect(getTipIcon(tip({ constraint: TipConstraint.BID }))).toBe('bid')
   })
 
-  it('constraint:rank → fixed non-directional rank glyph', () => {
-    expect(getTipIcon(tip({ constraint: TipConstraint.RANK }))).toBe(ICON_BID)
+  it('constraint:rank → bid glyph', () => {
+    expect(getTipIcon(tip({ constraint: TipConstraint.RANK }))).toBe('bid')
   })
 
-  it('constraint:cap → fixed non-directional cap glyph', () => {
-    expect(getTipIcon(tip({ constraint: TipConstraint.CAP }))).toBe(ICON_CAP)
+  it('constraint:cap → cap glyph', () => {
+    expect(getTipIcon(tip({ constraint: TipConstraint.CAP }))).toBe('cap')
   })
 
   it('constraint:none — delta>0 → up, delta<0 → down, delta=0 → right', () => {
     expect(
       getTipIcon(tip({ constraint: TipConstraint.NONE, delta: 100 })),
-    ).toBe(ICON_UP)
+    ).toBe('up')
     expect(
       getTipIcon(tip({ constraint: TipConstraint.NONE, delta: -100 })),
-    ).toBe(ICON_DOWN)
+    ).toBe('down')
     expect(getTipIcon(tip({ constraint: TipConstraint.NONE, delta: 0 }))).toBe(
-      ICON_RIGHT,
+      'right',
     )
   })
 
-  it('bond/bid/rank constraint → glyph is never ICON_UP even when losing stake', () => {
+  it('bond/bid/rank constraint → glyph is never "up" even when losing stake', () => {
     for (const c of [
       TipConstraint.BOND,
       TipConstraint.BID,
@@ -205,18 +198,18 @@ describe('getTipIcon', () => {
         urgency: TipUrgency.WARNING,
         delta: -5000,
       })
-      expect(getTipIcon(losing)).not.toBe(ICON_UP)
+      expect(getTipIcon(losing)).not.toBe('up')
     }
   })
 
-  it('constraint NONE + delta < 0 → ICON_DOWN', () => {
+  it('constraint NONE + delta < 0 → "down"', () => {
     const losing = tip({
       constraint: TipConstraint.NONE,
       urgency: TipUrgency.WARNING,
       delta: -5000,
     })
-    expect(getTipIcon(losing)).toBe(ICON_DOWN)
-    expect(getTipIcon(losing)).not.toBe(ICON_UP)
+    expect(getTipIcon(losing)).toBe('down')
+    expect(getTipIcon(losing)).not.toBe('up')
   })
 })
 

@@ -1,5 +1,11 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import React, { useState, useCallback, useEffect, useMemo } from 'react'
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
+import React, { useState, useCallback, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 import { Banner } from 'src/components/banner/banner'
 import { Loader } from 'src/components/loader/loader'
@@ -41,22 +47,17 @@ type Props = {
   dataSources?: SamDataSources
 }
 
-// Read the validator vote-account from the URL `?v=...` query so the detail
-// sheet survives a page reload and the browser back button.
-const readValidatorFromUrl = (): string | null => {
-  if (typeof window === 'undefined') return null
-  return new URLSearchParams(window.location.search).get('v')
-}
-
 export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
   const loadAuction = dataSources?.loadAuction ?? loadSam
   const loadValidatorNames =
     dataSources?.loadValidatorNames ?? fetchValidatorNames
-  const [selectedValidator, setSelectedValidator] = useState<string | null>(
-    readValidatorFromUrl,
-  )
-  const [isCalculating, setIsCalculating] = useState(false)
-  const [simulationRunId, setSimulationRunId] = useState(0)
+  const queryClient = useQueryClient()
+
+  // The selected validator lives in the URL (`?v=...`) so deep links, page
+  // reloads, browser back/forward, and in-app navigation all work without
+  // manual history bookkeeping. react-router owns the synchronisation.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const selectedValidator = searchParams.get('v')
   const [simulationOverrides, setSimulationOverrides] =
     useState<AppOverrides | null>(null)
   const [simulatedValidators, setSimulatedValidators] = useState<Set<string>>(
@@ -65,18 +66,31 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
   const [originalAuctionResult, setOriginalAuctionResult] =
     useState<AuctionResult | null>(null)
 
-  const { data, status, fetchStatus } = useQuery({
-    queryKey: ['sam', simulationRunId],
-    queryFn: () => loadAuction(simulationOverrides),
+  // Base data: no overrides. The cache is shared with EpochMeter, bonds, and
+  // protected-events service functions via the canonical ['sam'] queryKey.
+  const { data, status } = useQuery({
+    queryKey: ['sam'],
+    queryFn: () => loadAuction(null),
     placeholderData: keepPreviousData,
     refetchInterval: 60 * 60 * 1000,
   })
 
-  // v5 removed onSettled from useQuery; replicate by watching the fetch
-  // settle (fetchStatus returning to 'idle' after a run).
-  useEffect(() => {
-    if (fetchStatus === 'idle') setIsCalculating(false)
-  }, [fetchStatus])
+  // Simulation reruns are an imperative action — useMutation is the
+  // library-native primitive. On success the result overwrites the ['sam']
+  // cache so SamTable and ValidatorDetail re-render against the simulated
+  // auction without us managing a parallel state.
+  //
+  // Destructure rather than capturing the whole mutation object: react-query
+  // v5 only guarantees referential stability for `mutate` / `mutateAsync` /
+  // `reset` (wrapped in useCallback inside the hook); the wrapper object
+  // itself is a new reference every render. Including it in useCallback deps
+  // below would defeat the memoisation.
+  const { mutate: runSimulation, isPending: isCalculating } = useMutation({
+    mutationFn: (overrides: AppOverrides) => loadAuction(overrides),
+    onSuccess: result => {
+      queryClient.setQueryData(['sam'], result)
+    },
+  })
 
   const { data: validatorNames } = useQuery({
     queryKey: ['validator-names'],
@@ -86,14 +100,14 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
 
   const { data: notificationsMap } = useQuery({
     queryKey: ['notifications-all', 'sam_auction'],
-    queryFn: () => fetchAllNotifications('sam_auction'),
+    queryFn: ({ signal }) => fetchAllNotifications('sam_auction', signal),
     refetchInterval: 5 * 60 * 1000,
     placeholderData: keepPreviousData,
   })
 
   const { data: latestBroadcastNotification } = useQuery({
     queryKey: ['notifications-broadcast'],
-    queryFn: fetchLatestSamAuctionBroadcastNotification,
+    queryFn: ({ signal }) => fetchLatestSamAuctionBroadcastNotification(signal),
     refetchInterval: 5 * 60 * 1000,
     placeholderData: keepPreviousData,
   })
@@ -119,68 +133,63 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
     setSimulationOverrides(null)
     setSimulatedValidators(new Set())
     setOriginalAuctionResult(null)
-    setIsCalculating(true)
-    setSimulationRunId(prev => prev + 1)
-  }, [])
+    // Invalidate forces a refetch of the base (no-override) auction so all
+    // consumers re-render against fresh data.
+    void queryClient.invalidateQueries({ queryKey: ['sam'] })
+  }, [queryClient])
 
   const handleClearValidator = useCallback(
     (voteAccount: string) => {
-      const next = removeFromOverrides(simulationOverrides, voteAccount)
-      setSimulationOverrides(next)
-      setSimulatedValidators(prev => {
-        const selected = new Set(prev)
-        selected.delete(voteAccount)
-        if (selected.size === 0) {
-          // All cleared — full reset
-          setOriginalAuctionResult(null)
-          setSimulationOverrides(null)
-        }
-        return selected
-      })
-      setIsCalculating(true)
-      setSimulationRunId(prev => prev + 1)
+      const nextOverrides = removeFromOverrides(
+        simulationOverrides,
+        voteAccount,
+      )
+      const nextSet = new Set(simulatedValidators)
+      nextSet.delete(voteAccount)
+
+      setSimulatedValidators(nextSet)
+
+      if (nextSet.size === 0) {
+        // All cleared — drop overrides and refetch base auction.
+        setSimulationOverrides(null)
+        setOriginalAuctionResult(null)
+        void queryClient.invalidateQueries({ queryKey: ['sam'] })
+      } else {
+        setSimulationOverrides(nextOverrides)
+        if (nextOverrides) runSimulation(nextOverrides)
+      }
     },
-    [simulationOverrides],
+    [simulationOverrides, simulatedValidators, queryClient, runSimulation],
   )
 
   const handleClearSelectedValidator = useCallback(() => {
     if (selectedValidator) handleClearValidator(selectedValidator)
   }, [selectedValidator, handleClearValidator])
 
-  const handleValidatorClick = useCallback((voteAccount: string) => {
-    setSelectedValidator(prev => {
-      const url = new URL(window.location.href)
-      url.searchParams.set('v', voteAccount)
-      if (prev === null) {
-        // Opening — push so browser-back closes the sheet
-        window.history.pushState({ v: voteAccount }, '', url)
-      } else {
-        // Switching between validators — replace, no extra back step
-        window.history.replaceState({ v: voteAccount }, '', url)
-      }
-      return voteAccount
-    })
-  }, [])
+  const handleValidatorClick = useCallback(
+    (voteAccount: string) => {
+      setSearchParams(
+        prev => {
+          const next = new URLSearchParams(prev)
+          next.set('v', voteAccount)
+          return next
+        },
+        // Opening the sheet pushes a history entry so browser-back closes it.
+        // Switching between validators while the sheet is already open
+        // replaces in place — no extra back step.
+        { replace: selectedValidator !== null },
+      )
+    },
+    [setSearchParams, selectedValidator],
+  )
 
   const handleBack = useCallback(() => {
-    const state = window.history.state as { v?: string } | null
-    if (state?.v) {
-      window.history.back()
-    } else {
-      // No pushed state to pop (e.g. opened via deep link); strip the param.
-      const url = new URL(window.location.href)
-      url.searchParams.delete('v')
-      window.history.replaceState(null, '', url)
-      setSelectedValidator(null)
-    }
-  }, [])
-
-  // Keep state in sync with the URL when the user uses the browser back/forward.
-  useEffect(() => {
-    const onPop = () => setSelectedValidator(readValidatorFromUrl())
-    window.addEventListener('popstate', onPop)
-    return () => window.removeEventListener('popstate', onPop)
-  }, [])
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.delete('v')
+      return next
+    })
+  }, [setSearchParams])
 
   const handleDetailSimulate = useCallback(
     (
@@ -200,11 +209,19 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
         bondBalanceSol,
       })
       setSimulationOverrides(next)
-      setSimulatedValidators(prev => new Set([...prev, selectedValidator]))
-      setIsCalculating(true)
-      setSimulationRunId(prev => prev + 1)
+      setSimulatedValidators(
+        new Set([...simulatedValidators, selectedValidator]),
+      )
+      runSimulation(next)
     },
-    [selectedValidator, data, simulationOverrides, ensureOriginalSaved],
+    [
+      selectedValidator,
+      data,
+      simulationOverrides,
+      simulatedValidators,
+      ensureOriginalSaved,
+      runSimulation,
+    ],
   )
 
   const displayAuctionResult = data?.auctionResult

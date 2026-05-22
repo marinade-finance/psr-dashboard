@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 
 import { docsPath } from 'src/components/breakdowns/docs-path'
 import { Badge } from 'src/components/ui/badge'
@@ -79,18 +79,41 @@ type Props = {
 }
 
 export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
-  const minEpoch = data.reduce(
-    (epoch, { protectedEvent }) => Math.min(protectedEvent.epoch, epoch),
-    9999,
-  )
-  const maxEpoch = data.reduce(
-    (epoch, { protectedEvent }) => Math.max(protectedEvent.epoch, epoch),
-    0,
-  )
-
-  const allEpochs = Array.from(
-    new Set(data.map(({ protectedEvent }) => protectedEvent.epoch)),
-  ).sort((a, b) => a - b)
+  // One-pass scan over `data` to derive every dataset-wide aggregate at once.
+  // Previously each was an independent `.reduce()` running on every render —
+  // ~10 traversals × thousands of rows. With memoisation keyed on `data`,
+  // these only re-run when the upstream cache changes.
+  const datasetAggregates = useMemo(() => {
+    let minEpoch = 9999
+    let maxEpoch = 0
+    let lastSettledEpoch = 0
+    let validatorBondTotal = 0
+    let marinadePaidTotal = 0
+    const epochSet = new Set<number>()
+    for (const { protectedEvent, status } of data) {
+      const { epoch, meta } = protectedEvent
+      if (epoch < minEpoch) minEpoch = epoch
+      if (epoch > maxEpoch) maxEpoch = epoch
+      epochSet.add(epoch)
+      if (status === ProtectedEventStatus.FACT && epoch > lastSettledEpoch) {
+        lastSettledEpoch = epoch
+      }
+      const amount = selectAmount(protectedEvent)
+      if (meta.funder === 'ValidatorBond') validatorBondTotal += amount
+      else if (meta.funder === 'Marinade') marinadePaidTotal += amount
+    }
+    const allEpochs = [...epochSet].sort((a, b) => a - b)
+    return {
+      minEpoch,
+      maxEpoch,
+      allEpochs,
+      lastSettledEpoch,
+      validatorBondTotal,
+      marinadePaidTotal,
+      totalAmount: validatorBondTotal + marinadePaidTotal,
+    }
+  }, [data])
+  const { minEpoch, maxEpoch, allEpochs, lastSettledEpoch } = datasetAggregates
 
   const [validatorFilter, setValidatorFilter] = useState('')
   const [minEpochFilter, setMinEpochFilter] = useState(minEpoch)
@@ -107,67 +130,70 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
     setMaxEpochFilter(maxEpoch)
   }, [minEpoch, maxEpoch])
 
-  const preFilteredData = data.filter(({ protectedEvent, validator }) => {
+  // Filtered subsets memoised on the inputs that actually change them.
+  const preFilteredData = useMemo(() => {
     const lowerCaseValidatorFilter = validatorFilter.toLocaleLowerCase()
-    const matchesValidator =
-      protectedEvent.vote_account
-        .toLowerCase()
-        .includes(lowerCaseValidatorFilter) ||
-      validator?.info_name
-        ?.toLocaleLowerCase()
-        .includes(lowerCaseValidatorFilter)
-    const matchesEpoch =
-      (minEpochFilter ?? minEpoch) <= protectedEvent.epoch &&
-      protectedEvent.epoch <= (maxEpochFilter ?? maxEpoch)
-    return matchesEpoch && matchesValidator
-  })
-  const filteredData = preFilteredData.filter(({ protectedEvent }) => {
-    if (protectedEvent.reason === 'Bidding') return false
-    if (
-      protectedEvent.reason === 'PriorityFee' &&
-      selectAmount(protectedEvent) < 0.01
-    )
-      return false
-    return true
-  })
-  const lastSettledEpoch = data.reduce(
-    (epoch, { protectedEvent, status }) =>
-      status === ProtectedEventStatus.FACT
-        ? Math.max(epoch, protectedEvent.epoch)
-        : epoch,
-    0,
+    const lo = minEpochFilter ?? minEpoch
+    const hi = maxEpochFilter ?? maxEpoch
+    return data.filter(({ protectedEvent, validator }) => {
+      const matchesValidator =
+        protectedEvent.vote_account
+          .toLowerCase()
+          .includes(lowerCaseValidatorFilter) ||
+        validator?.info_name
+          ?.toLocaleLowerCase()
+          .includes(lowerCaseValidatorFilter)
+      const matchesEpoch =
+        lo <= protectedEvent.epoch && protectedEvent.epoch <= hi
+      return matchesEpoch && matchesValidator
+    })
+  }, [
+    data,
+    validatorFilter,
+    minEpochFilter,
+    maxEpochFilter,
+    minEpoch,
+    maxEpoch,
+  ])
+
+  const filteredData = useMemo(
+    () =>
+      preFilteredData.filter(({ protectedEvent }) => {
+        if (protectedEvent.reason === 'Bidding') return false
+        if (
+          protectedEvent.reason === 'PriorityFee' &&
+          selectAmount(protectedEvent) < 0.01
+        )
+          return false
+        return true
+      }),
+    [preFilteredData],
   )
+
+  // Filtered aggregates — also one-pass for the same reason.
+  const filteredAggregates = useMemo(() => {
+    let filteredAmount = 0
+    let lastEpochBids = 0
+    for (const { protectedEvent } of filteredData) {
+      filteredAmount += selectAmount(protectedEvent)
+    }
+    for (const { protectedEvent } of preFilteredData) {
+      if (
+        protectedEvent.epoch === lastSettledEpoch &&
+        protectedEvent.reason === 'Bidding'
+      ) {
+        lastEpochBids += selectAmount(protectedEvent)
+      }
+    }
+    return { filteredAmount, lastEpochBids }
+  }, [filteredData, preFilteredData, lastSettledEpoch])
+
+  const { validatorBondTotal, marinadePaidTotal, totalAmount } =
+    datasetAggregates
+  const { filteredAmount, lastEpochBids } = filteredAggregates
 
   const totalEvents = data.length
   const filteredEvents = filteredData.length
-
-  const sumAmount = (rows: ProtectedEventWithValidator[]) =>
-    rows.reduce(
-      (sum, { protectedEvent }) => sum + selectAmount(protectedEvent),
-      0,
-    )
-  const sumByFunder = (rows: ProtectedEventWithValidator[], funder: string) =>
-    rows.reduce(
-      (sum, { protectedEvent }) =>
-        protectedEvent.meta.funder === funder
-          ? sum + selectAmount(protectedEvent)
-          : sum,
-      0,
-    )
-
-  const validatorBondTotal = sumByFunder(data, 'ValidatorBond')
-  const marinadePaidTotal = sumByFunder(data, 'Marinade')
-  const totalAmount = validatorBondTotal + marinadePaidTotal
-  const filteredAmount = sumAmount(filteredData)
-
-  const lastEpochBids = preFilteredData
-    .filter(
-      ({ protectedEvent }) =>
-        protectedEvent.epoch === lastSettledEpoch &&
-        protectedEvent.reason === 'Bidding',
-    )
-    .reduce((sum, { protectedEvent }) => sum + selectAmount(protectedEvent), 0)
-
   const filtered = preFilteredData.length !== data.length
   const bondRatio = totalAmount > 0 ? validatorBondTotal / totalAmount : 0
   // Integer-by-construction; only fed into CSS widths.
@@ -256,6 +282,9 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
             className={TABLE_SHELL_HOVER}
             data={filteredData}
             showRowNumber
+            virtualize
+            virtualizeRowHeight={48}
+            virtualizeMaxHeight="75vh"
             columns={[
               {
                 header: 'Validator',

@@ -6,6 +6,7 @@ import { fetchValidatorsWithEpochs } from './validators'
 
 import type { ProtectedEvent, SettlementReason } from './protected-events'
 import type { Validator } from './validators'
+import type { QueryClient } from '@tanstack/react-query'
 
 export enum ProtectedEventStatus {
   DRYRUN,
@@ -20,24 +21,33 @@ export type ProtectedEventWithValidator = {
 
 const LAST_DRYRUN_EPOCH = 608
 
-export const fetchProtectedEventsWithValidator = async (): Promise<
-  ProtectedEventWithValidator[]
-  // eslint-disable-next-line complexity
-> => {
+// Takes a QueryClient so the shared loadSam() result is read from the canonical
+// ['sam'] cache via ensureQueryData — see fetchValidatorsWithBonds.
+export const fetchProtectedEventsWithValidator = async (
+  qc: QueryClient,
+  signal?: AbortSignal,
+): Promise<ProtectedEventWithValidator[]> => {
   const [
     { validators },
     { protected_events: protectedEvents },
     scoring,
     { auctionResult },
   ] = await Promise.all([
-    fetchValidatorsWithEpochs(3),
-    fetchProtectedEvents(),
-    fetchScoring(),
-    loadSam(),
+    // Canonical cache key shared with the validator-detail Payments tab, so the
+    // 3-epoch validator payload (multi-MB) is fetched at most once.
+    qc.ensureQueryData({
+      queryKey: ['validators-with-epochs', 3],
+      queryFn: ({ signal: s }) => fetchValidatorsWithEpochs(3, s),
+    }),
+    fetchProtectedEvents(signal),
+    fetchScoring(signal),
+    qc.ensureQueryData({ queryKey: ['sam'], queryFn: () => loadSam(null) }),
   ])
 
-  const estimatedProtectedEvents =
-    await calculateProtectedEventEstimates(validators)
+  const estimatedProtectedEvents = await calculateProtectedEventEstimates(
+    validators,
+    signal,
+  )
 
   const validatorsMap: Record<string, Validator> = {}
   for (const validator of validators) {

@@ -1,7 +1,6 @@
 import { lamportsToSol } from 'src/format'
 
 import { fetchRewards } from './rewards'
-import { fetchValidatorsWithEpochs } from './validators'
 
 import type { ProtectedEvent, SettlementMeta } from './protected-events'
 import type { EpochRewards } from './rewards'
@@ -338,8 +337,10 @@ const buildEprCalculators = (
 
 export const calculateProtectedEventEstimates = async (
   validators: Validator[],
+  signal?: AbortSignal,
 ): Promise<ProtectedEvent[]> => {
-  const { rewards_inflation_est: rewardsInflationEst } = await fetchRewards()
+  const { rewards_inflation_est: rewardsInflationEst } =
+    await fetchRewards(signal)
   const stakeByEpoch = calcStakeByEpoch(validators)
   const eprCalculators = buildEprCalculators(stakeByEpoch, rewardsInflationEst)
 
@@ -347,12 +348,4 @@ export const calculateProtectedEventEstimates = async (
     ...calculateLowCreditsEstimates(validators, eprCalculators),
     ...calculateCommissionIncreaseEstimates(validators, eprCalculators),
   ]
-}
-
-export const fetchPsrEstimatesForValidator = async (
-  voteAccount: string,
-): Promise<ProtectedEvent[]> => {
-  const { validators } = await fetchValidatorsWithEpochs(3)
-  const all = await calculateProtectedEventEstimates(validators)
-  return all.filter(event => event.vote_account === voteAccount)
 }

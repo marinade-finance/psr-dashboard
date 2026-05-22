@@ -8,6 +8,7 @@ import { HelpTip } from 'src/components/help-tip/help-tip'
 import { PENALTY_BID_LOW } from 'src/components/icons/penalty-bid-low'
 import { PENALTY_BLACKLIST } from 'src/components/icons/penalty-blacklist'
 import { PENALTY_RISK } from 'src/components/icons/penalty-risk'
+import { TIP_ICONS } from 'src/components/icons/tip-icons'
 import { Card } from 'src/components/ui/card'
 import {
   ShadTable,
@@ -954,7 +955,7 @@ export const SamTable: React.FC<Props> = ({
                 }}
               >
                 <span className="shrink-0 inline-flex items-center justify-center w-4 h-4">
-                  {getTipIcon(tip)}
+                  {TIP_ICONS[getTipIcon(tip)]}
                 </span>
                 <span className="break-words whitespace-pre-line">
                   {stepText}
