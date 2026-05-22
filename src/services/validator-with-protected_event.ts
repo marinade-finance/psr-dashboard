@@ -6,6 +6,7 @@ import { fetchValidatorsWithEpochs } from './validators'
 
 import type { ProtectedEvent, SettlementReason } from './protected-events'
 import type { Validator } from './validators'
+import type { QueryClient } from '@tanstack/react-query'
 
 export enum ProtectedEventStatus {
   DRYRUN,
@@ -20,10 +21,11 @@ export type ProtectedEventWithValidator = {
 
 const LAST_DRYRUN_EPOCH = 608
 
-export const fetchProtectedEventsWithValidator = async (): Promise<
-  ProtectedEventWithValidator[]
-  // eslint-disable-next-line complexity
-> => {
+// Takes a QueryClient so the shared loadSam() result is read from the canonical
+// ['sam'] cache via ensureQueryData — see fetchValidatorsWithBonds.
+export const fetchProtectedEventsWithValidator = async (
+  qc: QueryClient,
+): Promise<ProtectedEventWithValidator[]> => {
   const [
     { validators },
     { protected_events: protectedEvents },
@@ -33,7 +35,7 @@ export const fetchProtectedEventsWithValidator = async (): Promise<
     fetchValidatorsWithEpochs(3),
     fetchProtectedEvents(),
     fetchScoring(),
-    loadSam(),
+    qc.ensureQueryData({ queryKey: ['sam'], queryFn: () => loadSam(null) }),
   ])
 
   const estimatedProtectedEvents =

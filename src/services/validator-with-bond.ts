@@ -8,6 +8,7 @@ import {
 import type { BondRecord } from './bonds'
 import type { Validator } from './validators'
 import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
+import type { QueryClient } from '@tanstack/react-query'
 
 export type ValidatorWithBond = {
   validator: Validator
@@ -35,13 +36,17 @@ export const selectProtectedStake = (entry: ValidatorWithBond) =>
     selectTotalMarinadeStake(entry.validator),
   )
 
-export const fetchValidatorsWithBonds = async (): Promise<
-  ValidatorWithBond[]
-> => {
+// Takes a QueryClient so the shared loadSam() result is read from the canonical
+// ['sam'] cache via ensureQueryData — if SamPage / EpochMeter / another consumer
+// is already fetching or has fetched it, this is a free cache read instead of
+// a duplicate in-browser SDK run.
+export const fetchValidatorsWithBonds = async (
+  qc: QueryClient,
+): Promise<ValidatorWithBond[]> => {
   const [{ validators }, { bonds }, { auctionResult }] = await Promise.all([
     fetchValidatorsWithEpochs(0),
     fetchBonds(),
-    loadSam(),
+    qc.ensureQueryData({ queryKey: ['sam'], queryFn: () => loadSam(null) }),
   ])
 
   const auctionByVoteAccount = new Map<string, AuctionValidator>()

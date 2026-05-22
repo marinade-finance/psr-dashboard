@@ -1,4 +1,8 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import {
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import React from 'react'
 
 import { Banner } from 'src/components/banner/banner'
@@ -11,10 +15,10 @@ import { fetchProtectedEventsWithValidator } from 'src/services/validator-with-p
 import type { UserLevelProps } from 'src/components/navigation/navigation'
 
 export const ProtectedEventsPage: React.FC<UserLevelProps> = ({ level }) => {
+  const queryClient = useQueryClient()
   const { data, status } = useQuery({
     queryKey: ['protected-events'],
-    queryFn: fetchProtectedEventsWithValidator,
-    staleTime: 5 * 60 * 1000,
+    queryFn: () => fetchProtectedEventsWithValidator(queryClient),
     refetchInterval: 60 * 60 * 1000,
     placeholderData: keepPreviousData,
   })

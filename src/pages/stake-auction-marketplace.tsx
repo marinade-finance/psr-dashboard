@@ -1,4 +1,9 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import React, { useState, useCallback, useEffect, useMemo } from 'react'
 
 import { Banner } from 'src/components/banner/banner'
@@ -52,11 +57,10 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
   const loadAuction = dataSources?.loadAuction ?? loadSam
   const loadValidatorNames =
     dataSources?.loadValidatorNames ?? fetchValidatorNames
+  const queryClient = useQueryClient()
   const [selectedValidator, setSelectedValidator] = useState<string | null>(
     readValidatorFromUrl,
   )
-  const [isCalculating, setIsCalculating] = useState(false)
-  const [simulationRunId, setSimulationRunId] = useState(0)
   const [simulationOverrides, setSimulationOverrides] =
     useState<AppOverrides | null>(null)
   const [simulatedValidators, setSimulatedValidators] = useState<Set<string>>(
@@ -65,18 +69,31 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
   const [originalAuctionResult, setOriginalAuctionResult] =
     useState<AuctionResult | null>(null)
 
-  const { data, status, fetchStatus } = useQuery({
-    queryKey: ['sam', simulationRunId],
-    queryFn: () => loadAuction(simulationOverrides),
+  // Base data: no overrides. The cache is shared with EpochMeter, bonds, and
+  // protected-events service functions via the canonical ['sam'] queryKey.
+  const { data, status } = useQuery({
+    queryKey: ['sam'],
+    queryFn: () => loadAuction(null),
     placeholderData: keepPreviousData,
     refetchInterval: 60 * 60 * 1000,
   })
 
-  // v5 removed onSettled from useQuery; replicate by watching the fetch
-  // settle (fetchStatus returning to 'idle' after a run).
-  useEffect(() => {
-    if (fetchStatus === 'idle') setIsCalculating(false)
-  }, [fetchStatus])
+  // Simulation reruns are an imperative action — useMutation is the
+  // library-native primitive. On success the result overwrites the ['sam']
+  // cache so SamTable and ValidatorDetail re-render against the simulated
+  // auction without us managing a parallel state.
+  //
+  // Destructure rather than capturing the whole mutation object: react-query
+  // v5 only guarantees referential stability for `mutate` / `mutateAsync` /
+  // `reset` (wrapped in useCallback inside the hook); the wrapper object
+  // itself is a new reference every render. Including it in useCallback deps
+  // below would defeat the memoisation.
+  const { mutate: runSimulation, isPending: isCalculating } = useMutation({
+    mutationFn: (overrides: AppOverrides) => loadAuction(overrides),
+    onSuccess: result => {
+      queryClient.setQueryData(['sam'], result)
+    },
+  })
 
   const { data: validatorNames } = useQuery({
     queryKey: ['validator-names'],
@@ -119,28 +136,33 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
     setSimulationOverrides(null)
     setSimulatedValidators(new Set())
     setOriginalAuctionResult(null)
-    setIsCalculating(true)
-    setSimulationRunId(prev => prev + 1)
-  }, [])
+    // Invalidate forces a refetch of the base (no-override) auction so all
+    // consumers re-render against fresh data.
+    void queryClient.invalidateQueries({ queryKey: ['sam'] })
+  }, [queryClient])
 
   const handleClearValidator = useCallback(
     (voteAccount: string) => {
-      const next = removeFromOverrides(simulationOverrides, voteAccount)
-      setSimulationOverrides(next)
-      setSimulatedValidators(prev => {
-        const selected = new Set(prev)
-        selected.delete(voteAccount)
-        if (selected.size === 0) {
-          // All cleared — full reset
-          setOriginalAuctionResult(null)
-          setSimulationOverrides(null)
-        }
-        return selected
-      })
-      setIsCalculating(true)
-      setSimulationRunId(prev => prev + 1)
+      const nextOverrides = removeFromOverrides(
+        simulationOverrides,
+        voteAccount,
+      )
+      const nextSet = new Set(simulatedValidators)
+      nextSet.delete(voteAccount)
+
+      setSimulatedValidators(nextSet)
+
+      if (nextSet.size === 0) {
+        // All cleared — drop overrides and refetch base auction.
+        setSimulationOverrides(null)
+        setOriginalAuctionResult(null)
+        void queryClient.invalidateQueries({ queryKey: ['sam'] })
+      } else {
+        setSimulationOverrides(nextOverrides)
+        if (nextOverrides) runSimulation(nextOverrides)
+      }
     },
-    [simulationOverrides],
+    [simulationOverrides, simulatedValidators, queryClient, runSimulation],
   )
 
   const handleClearSelectedValidator = useCallback(() => {
@@ -200,11 +222,19 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
         bondBalanceSol,
       })
       setSimulationOverrides(next)
-      setSimulatedValidators(prev => new Set([...prev, selectedValidator]))
-      setIsCalculating(true)
-      setSimulationRunId(prev => prev + 1)
+      setSimulatedValidators(
+        new Set([...simulatedValidators, selectedValidator]),
+      )
+      runSimulation(next)
     },
-    [selectedValidator, data, simulationOverrides, ensureOriginalSaved],
+    [
+      selectedValidator,
+      data,
+      simulationOverrides,
+      simulatedValidators,
+      ensureOriginalSaved,
+      runSimulation,
+    ],
   )
 
   const displayAuctionResult = data?.auctionResult
