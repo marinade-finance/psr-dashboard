@@ -4,12 +4,13 @@
 // The component layer maps the enum to CSS classes; the data layer doesn't
 // know or care.
 
-export enum CardStatusTone {
-  RED = 'red',
-  YELLOW = 'yellow',
-  GREEN = 'green',
-  GREY = 'grey',
-}
+export const CardStatusTone = {
+  RED: 'red',
+  YELLOW: 'yellow',
+  GREEN: 'green',
+  GREY: 'grey',
+} as const
+export type CardStatusTone = (typeof CardStatusTone)[keyof typeof CardStatusTone]
 
 export type CardStatusAction = {
   label: string

@@ -56,18 +56,15 @@ export const SectionHeader: React.FC<{
   )
 }
 
-const MARKER_CLASSES: Record<
-  CardStatusTone.RED | CardStatusTone.YELLOW | CardStatusTone.GREEN,
-  string
-> = {
+type ColoredTone = Exclude<CardStatusTone, 'grey'>
+
+const MARKER_CLASSES: Record<ColoredTone, string> = {
   [CardStatusTone.RED]: 'bg-destructive',
   [CardStatusTone.YELLOW]: 'bg-status-yellow',
   [CardStatusTone.GREEN]: 'bg-primary',
 }
 
-export const Marker: React.FC<{
-  tone: CardStatusTone.RED | CardStatusTone.YELLOW | CardStatusTone.GREEN
-}> = ({ tone }) => (
+export const Marker: React.FC<{ tone: ColoredTone }> = ({ tone }) => (
   <span
     className={cn(
       'inline-block w-1.5 h-1.5 rounded-full mr-2 align-middle',
@@ -78,10 +75,7 @@ export const Marker: React.FC<{
 
 export type Severity = 'ok' | 'warning' | 'error'
 
-const SEVERITY_TONE: Record<
-  Severity,
-  CardStatusTone.GREEN | CardStatusTone.YELLOW | CardStatusTone.RED
-> = {
+const SEVERITY_TONE: Record<Severity, ColoredTone> = {
   ok: CardStatusTone.GREEN,
   warning: CardStatusTone.YELLOW,
   error: CardStatusTone.RED,
@@ -92,10 +86,7 @@ const TEXT_XS = 'text-xs'
 const BOLD = 'font-semibold'
 const MUTED = 'text-muted-foreground'
 const MID_CELL = 'px-2 text-right font-mono text-xs text-muted-foreground'
-const TONE_TEXT: Record<
-  CardStatusTone.GREEN | CardStatusTone.YELLOW | CardStatusTone.RED,
-  string
-> = {
+const TONE_TEXT: Record<ColoredTone, string> = {
   [CardStatusTone.GREEN]: 'text-status-green',
   [CardStatusTone.YELLOW]: 'text-status-yellow',
   [CardStatusTone.RED]: 'text-destructive',
