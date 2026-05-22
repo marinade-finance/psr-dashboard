@@ -24,13 +24,6 @@ export function compoundApy(pmpe: number, epochsPerYear: number): number {
   return annualize(pmpe / 1e3, epochsPerYear)
 }
 
-export function bondRunwayEpochs(
-  validator: AuctionValidator,
-  minBondEpochs: number,
-): number {
-  return validator.bondGoodForNEpochs - minBondEpochs
-}
-
 // The runway the UI surfaces. A no-bond or below-minimum bond (→ 'critical')
 // sustains zero stake regardless of the SDK's raw bondGoodForNEpochs, which
 // ignores the below-min gate — so it reads 0. Single source: the bond chip
@@ -64,12 +57,6 @@ export function bondGaugeScaleMax(config: DsSamConfig): number {
 export function bondCriticalFrac(config: DsSamConfig): number {
   const max = bondGaugeScaleMax(config)
   return max > 0 ? config.minBondEpochs / max : 0.2
-}
-
-// Fraction of the gauge track where the ideal threshold (idealBondEpochs) sits.
-export function bondIdealFrac(config: DsSamConfig): number {
-  const max = bondGaugeScaleMax(config)
-  return max > 0 ? config.idealBondEpochs / max : 0.25
 }
 
 // Bond utilization 0..100. 0 = bond fully covers, 100 = depleted relative to

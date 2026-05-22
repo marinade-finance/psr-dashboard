@@ -188,8 +188,5 @@ export const CalcCard: React.FC<{
       </div>
     )}
     {children}
-    {!status && tip && (
-      <div className="mt-4 pt-3 border-t border-border">{tip}</div>
-    )}
   </div>
 )

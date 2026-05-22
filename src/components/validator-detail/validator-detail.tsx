@@ -228,7 +228,7 @@ function tabAttention(args: {
   return attention
 }
 
-export function bondCoverageLabel(
+function bondCoverageLabel(
   health: BondHealthState,
   coverage: BondCoverage,
   expectedStakeDeltaSol = 0,
@@ -620,6 +620,7 @@ export const ValidatorDetail = ({
     (validator.bondBalanceSol ?? 0).toString(),
   )
   const [simEnabled, setSimEnabled] = useState(isSimulated)
+  useEffect(() => { setSimEnabled(isSimulated) }, [isSimulated])
 
   // Debounced auto-recalc whenever inputs change while simulation is enabled.
   // 400ms covers fast number-input arrow clicking without thrashing the SDK.

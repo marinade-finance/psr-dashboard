@@ -44,8 +44,8 @@ export const EpochRangePicker: React.FC<Props> = ({
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    setDraft({ start: min, end: max })
-  }, [min, max])
+    if (!open) setDraft({ start: min, end: max })
+  }, [min, max, open])
 
   useEffect(() => {
     if (!open) return undefined

@@ -478,20 +478,20 @@ export function augmentAuctionResult(
 
 export const selectExpectedStakeChange = (
   v: AugmentedAuctionValidator,
-): number => v.values.expectedStakeChangeSol ?? 0
+): number => v.values.expectedStakeChangeSol
 
 export type ExpectedStakeChangeBreakdown = Omit<ExpectedStakeChange, 'total'>
 
 export const selectExpectedStakeChangeBreakdown = (
   v: AugmentedAuctionValidator,
 ): ExpectedStakeChangeBreakdown => ({
-  paidUndelegation: v.values.expectedStakePaidUndelegationSol ?? 0,
-  redelegationInflow: v.values.expectedStakeRedelegationInflowSol ?? 0,
-  naturalWithdrawal: v.values.expectedStakeNaturalWithdrawalSol ?? 0,
+  paidUndelegation: v.values.expectedStakePaidUndelegationSol,
+  redelegationInflow: v.values.expectedStakeRedelegationInflowSol,
+  naturalWithdrawal: v.values.expectedStakeNaturalWithdrawalSol,
 })
 
 export const selectCutoffRank = (v: AugmentedAuctionValidator): number =>
-  v.values.cutoffRank ?? 0
+  v.values.cutoffRank
 
 export type ConcentrationRow = {
   key: string

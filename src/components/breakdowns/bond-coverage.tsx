@@ -8,7 +8,6 @@ import {
   CalcCard,
   withSimAction,
   type CardStatus,
-  type CardStatusTone,
 } from './card'
 import { CalcRow, OkRow, SectionHeader } from './row'
 

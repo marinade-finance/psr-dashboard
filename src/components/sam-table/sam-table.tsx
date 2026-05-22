@@ -80,8 +80,6 @@ import type { AugmentedAuctionValidator } from 'src/services/sam'
 
 export type ValidatorMeta = {
   name?: string
-  countryIso?: string | null
-  rank?: number
 }
 
 // Validator with computed bond state
@@ -226,6 +224,8 @@ const RANK_MONO = 'font-mono text-xs'
 // downstream memos.
 const EMPTY_SIMULATED_SET: Set<string> = new Set()
 
+const EMPTY_NAME_MAP: Map<string, ValidatorMeta> = new Map()
+
 // Trim 3+ decimal places in tip text to 2 — keeps the Next Step cell readable
 // without losing the "~" prefix the tip engine uses for estimates.
 const TIP_DECIMAL_RE = /~?\d+\.\d{3,}/g
@@ -309,7 +309,6 @@ const SortIndicator: React.FC<{
 const RankCell: React.FC<{
   rank: number
   cutoffRank: number
-  inSet: boolean
   isGhost: boolean
   isSimulated: boolean
   posColor: string | undefined
@@ -319,7 +318,6 @@ const RankCell: React.FC<{
 }> = ({
   rank,
   cutoffRank,
-  inSet: _inSet,
   isGhost,
   isSimulated,
   posColor,
@@ -774,7 +772,6 @@ export const SamTable: React.FC<Props> = ({
       <TableRow
         key={isGhost ? `${voteAccount}-ghost` : voteAccount}
         className={rowClasses}
-        style={posColor ? { borderLeftColor: posColor } : undefined}
         data-vote-account={voteAccount}
         data-ghost={isGhost ? 'true' : undefined}
         role={isGhost ? (ghostHasTarget ? 'button' : undefined) : 'button'}
@@ -810,7 +807,6 @@ export const SamTable: React.FC<Props> = ({
           <RankCell
             rank={rank}
             cutoffRank={cutoffRank}
-            inSet={inSet}
             isGhost={isGhost}
             isSimulated={isSimulated}
             posColor={posColor}
@@ -1071,7 +1067,7 @@ export const SamTable: React.FC<Props> = ({
             <div className={cn('mb-4 flex', inSimulation ? 'px-0 pt-2' : '')}>
               <ValidatorSearch
                 validators={validators}
-                nameMap={validatorMeta ?? new Map()}
+                nameMap={validatorMeta ?? EMPTY_NAME_MAP}
                 onSelect={onValidatorSearch}
                 className="w-full max-w-sm"
               />

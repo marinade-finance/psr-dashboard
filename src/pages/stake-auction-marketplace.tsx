@@ -98,7 +98,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
   })
 
   const nameMap = useMemo(() => {
-    const map = new Map<string, { name?: string; countryIso?: string | null }>()
+    const map = new Map<string, { name?: string }>()
     if (!validatorNames) return map
     for (const [vote, name] of validatorNames) {
       map.set(vote, { name })
@@ -194,19 +194,10 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
         bondBalanceSol,
       })
       setSimulationOverrides(next)
-      setSimulatedValidators(
-        new Set([...simulatedValidators, selectedValidator]),
-      )
+      setSimulatedValidators(prev => new Set([...prev, selectedValidator]))
       runSimulation(next)
     },
-    [
-      selectedValidator,
-      data,
-      simulationOverrides,
-      simulatedValidators,
-      ensureOriginalSaved,
-      runSimulation,
-    ],
+    [selectedValidator, data, simulationOverrides, ensureOriginalSaved, runSimulation],
   )
 
   const displayAuctionResult = data?.auctionResult

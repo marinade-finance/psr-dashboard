@@ -37,7 +37,7 @@ export const selectVoteAccount = (validator: Validator) =>
 
 export const selectName = (validator: Validator) => validator.info_name ?? '---'
 
-export type ValidatorsResponse = {
+type ValidatorsResponse = {
   validators: Validator[]
 }
 

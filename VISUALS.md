@@ -22,11 +22,13 @@ never arbitrary `text-[var(--…)]`.
 
 ### CSS\_\* escape hatch
 
-`CSS_PRIMARY`, `CSS_DESTRUCTIVE`, `CSS_WARNING`, `CSS_INFO`,
-`CSS_STATUS_YELLOW`, `CSS_MUTED`, … — bare `var(--…)` strings, no hex
-fallback. **Rule:** use ONLY when the colour is chosen at runtime from
-JS state and a Tailwind class can't reach (inline `style`). Source:
-`src/css.ts` (note: not `src/lib/utils.ts`).
+`CSS_PRIMARY`, `CSS_PRIMARY_LIGHT`, `CSS_PRIMARY_LIGHT_10`,
+`CSS_DESTRUCTIVE`, `CSS_DESTRUCTIVE_LIGHT`, `CSS_WARNING`,
+`CSS_WARNING_LIGHT`, `CSS_INFO`, `CSS_INFO_LIGHT`, `CSS_MUTED`,
+`CSS_MUTED_FG` — bare `var(--…)` strings, no hex fallback. **Rule:**
+use ONLY when the colour is chosen at runtime from JS state and a
+Tailwind class can't reach (inline `style`). Source: `src/css.ts`
+(note: not `src/lib/utils.ts`).
 
 ### Severity axis (colour)
 

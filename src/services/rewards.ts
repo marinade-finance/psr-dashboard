@@ -3,7 +3,7 @@ import { fetchJson } from 'src/services/fetch-utils'
 
 export type EpochRewards = [number, number]
 
-export type RewardsResponse = {
+type RewardsResponse = {
   rewards_mev: EpochRewards[]
   rewards_inflation_est: EpochRewards[]
 }

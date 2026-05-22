@@ -178,17 +178,16 @@ Detection of refetch completion watches `fetchStatus === 'idle'`.
 
 ### Bond chip
 
-Five tiers, `BOND_CHIP` record in `sam-table.tsx`, keyed by the shared `BondHealthState` enum from `src/services/bond-health.ts` (`NO_BOND` / `CRITICAL` / `WATCH` / `SOFT` / `HEALTHY`):
+Four tiers, `BOND_CHIP` record in `sam-table.tsx`, keyed by the shared `BondHealthState` enum from `src/services/bond-health.ts` (`NO_BOND` / `CRITICAL` / `WATCH` / `HEALTHY`):
 
-| Tier                | Style                                   | Meaning                                                                                                |
-| ------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `no-bond`           | `bg-destructive-light text-destructive` | no bond posted at all (`bondBalanceSol ≤ 0`); red, label "No bond"                                     |
-| `critical`          | `bg-destructive-light text-destructive` | below penalty threshold, bond risk fee charged, OR bond below the SDK `minBondBalanceSol` minimum; red |
-| `watch`             | `bg-warning-light text-warning`         | can't keep current stake; some will be undelegated                                                     |
-| `soft` ("Adequate") | `bg-secondary text-muted-foreground`    | covers current stake but not ideal target                                                              |
-| `healthy`           | `bg-primary-light-10 text-primary`      | bond exceeds ideal coverage                                                                            |
+| Tier       | Style                                   | Meaning                                                                                                |
+| ---------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `no-bond`  | `bg-destructive-light text-destructive` | no bond posted at all (`bondBalanceSol ≤ 0`); red, label "No bond"                                     |
+| `critical` | `bg-destructive-light text-destructive` | below penalty threshold, bond risk fee charged, OR bond below the SDK `minBondBalanceSol` minimum; red |
+| `watch`    | `bg-warning-light text-warning`         | can't keep current stake; some will be undelegated                                                     |
+| `healthy`  | `bg-primary-light-10 text-primary`      | bond exceeds ideal coverage                                                                            |
 
-Below-minimum bond reads red ONLY when a bond risk fee is pending — `bondHealthFromAuction` returns `critical` when `bondBalanceSol < minBondBalanceSol`, but `bondAdvice`/`bondCta` downgrade to `TipUrgency.NEUTRAL` + grey tone when no fee is charged (eligibility, not urgency: "Top up bond to X to qualify."). A validator with no bond at all is `no-bond` ("No bond") — distinct from `soft` ("Adequate"). Both `no-bond` and `critical` resolve to the same red chip via the shared `DESTRUCTIVE_CHIP` style; only the label differs. `tipBannerTone` (in `breakdowns/card.tsx`) routes the bond-NEUTRAL case to the `grey` banner tone so the header tip banner agrees with the pill colour.
+Below-minimum bond reads red ONLY when a bond risk fee is pending — `bondHealthFromAuction` returns `critical` when `bondBalanceSol < minBondBalanceSol`, but `bondAdvice`/`bondCta` downgrade to `TipUrgency.NEUTRAL` + grey tone when no fee is charged (eligibility, not urgency: "Top up bond to X to qualify."). Both `no-bond` and `critical` resolve to the same red chip via the shared `DESTRUCTIVE_CHIP` style; only the label differs. `tipBannerTone` (in `breakdowns/card.tsx`) routes the bond-NEUTRAL case to the `grey` banner tone so the header tip banner agrees with the pill colour.
 
 ### Validator detail sheet
 

@@ -8,7 +8,7 @@ import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
 
 type Props = {
   validators: AuctionValidator[]
-  nameMap: Map<string, { name?: string; countryIso?: string | null }>
+  nameMap: Map<string, { name?: string }>
   onSelect: (voteAccount: string) => void
   className?: string
 }

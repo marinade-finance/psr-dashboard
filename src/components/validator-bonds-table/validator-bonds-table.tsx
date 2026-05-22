@@ -334,23 +334,26 @@ export const ValidatorBondsTable: React.FC<Props> = ({
     render: (entry: ValidatorWithBond) => React.ReactElement
     compare: (a: ValidatorWithBond, b: ValidatorWithBond) => number
     alignment: Alignment
-  }[] =
-    level === 'expert'
-      ? [
-          {
-            header: 'Max protectable [SOL]',
-            headerHelp:
-              'The most stake this bond could ever reimburse if it were stretched to its limit. A bigger bond pushes this number up.',
-            headerGuideTo: `${docsPath(level)}#bond`,
-            render: (entry: ValidatorWithBond) => (
-              <>{sol(selectMaxProtectedStake(entry))}</>
-            ),
-            compare: (a: ValidatorWithBond, b: ValidatorWithBond) =>
-              selectMaxProtectedStake(a) - selectMaxProtectedStake(b),
-            alignment: 'right',
-          },
-        ]
-      : []
+  }[] = useMemo(
+    () =>
+      level === 'expert'
+        ? [
+            {
+              header: 'Max protectable [SOL]',
+              headerHelp:
+                'The most stake this bond could ever reimburse if it were stretched to its limit. A bigger bond pushes this number up.',
+              headerGuideTo: `${docsPath(level)}#bond`,
+              render: (entry: ValidatorWithBond) => (
+                <>{sol(selectMaxProtectedStake(entry))}</>
+              ),
+              compare: (a: ValidatorWithBond, b: ValidatorWithBond) =>
+                selectMaxProtectedStake(a) - selectMaxProtectedStake(b),
+              alignment: 'right' as Alignment,
+            },
+          ]
+        : [],
+    [level],
+  )
 
   return (
     <div className="relative">

@@ -17,7 +17,7 @@ export const Card = React.forwardRef<
 ))
 Card.displayName = 'Card'
 
-export const CardHeader = React.forwardRef<
+const CardHeader = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
@@ -29,7 +29,7 @@ export const CardHeader = React.forwardRef<
 ))
 CardHeader.displayName = 'CardHeader'
 
-export const CardContent = React.forwardRef<
+const CardContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
