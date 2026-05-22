@@ -188,10 +188,6 @@ function makeComponents(
 
 export const DocsPage: React.FC<Props> = ({ level }) => {
   const isExpert = level === UserLevel.Expert
-  // `hash` is reactive — react-router updates it on browser back/forward,
-  // in-app navigation, and any history mutation. Drops the previous manual
-  // `hashchange` listener + `hashTick` counter (was a workaround for not
-  // having reactive URL state).
   const { hash } = useLocation()
   const hashName = hash.startsWith('#') ? hash.slice(1) : hash
 

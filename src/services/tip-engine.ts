@@ -35,9 +35,6 @@ import type {
   DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
 
-// Discriminator returned by getTipIcon. Component layer maps these to actual
-// icon components (see src/components/icons/tip-icons.ts) — the service layer
-// stays framework-agnostic.
 export type TipIcon = 'alert' | 'bond' | 'bid' | 'cap' | 'up' | 'down' | 'right'
 
 export enum TipUrgency {

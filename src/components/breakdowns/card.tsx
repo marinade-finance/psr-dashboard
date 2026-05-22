@@ -12,8 +12,6 @@ import { assertNever } from 'src/utils/assert-never'
 
 import type { CardStatus, CardStatusAction } from 'src/services/card-status'
 
-// Re-export for existing import paths (this file used to own these types).
-// New code should import directly from 'src/services/card-status'.
 export { CardStatusTone }
 export type { CardStatus, CardStatusAction }
 

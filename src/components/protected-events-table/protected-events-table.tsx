@@ -79,10 +79,6 @@ type Props = {
 }
 
 export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
-  // One-pass scan over `data` to derive every dataset-wide aggregate at once.
-  // Previously each was an independent `.reduce()` running on every render —
-  // ~10 traversals × thousands of rows. With memoisation keyed on `data`,
-  // these only re-run when the upstream cache changes.
   const datasetAggregates = useMemo(() => {
     let minEpoch = 9999
     let maxEpoch = 0

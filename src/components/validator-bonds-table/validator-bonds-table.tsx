@@ -296,10 +296,6 @@ export const ValidatorBondsTable: React.FC<Props> = ({
   level,
   notificationsMap,
 }) => {
-  // One-pass aggregation: build every dataset-wide total in a single sweep.
-  // Previously each total was an independent `.reduce()` / `.filter()` running
-  // on every render — 5 traversals × ~700 validators. Memoised here, so they
-  // only recompute when the upstream cache changes.
   const aggregates = useMemo(() => {
     let totalMarinadeStake = 0
     let totalProtectedStake = 0

@@ -22,9 +22,6 @@ import { fetchProtectedEventsWithValidator } from 'src/services/validator-with-p
 // next-auction), each anchored to its concrete epoch.
 export const EpochMeter: React.FC = () => {
   const queryClient = useQueryClient()
-  // Subscribe to the canonical ['sam'] cache shared with SamPage and the
-  // *WithBonds / *WithProtectedEvents service functions. One SDK run, four
-  // consumers.
   const { data: sam } = useQuery({
     queryKey: ['sam'],
     queryFn: () => loadSam(null),

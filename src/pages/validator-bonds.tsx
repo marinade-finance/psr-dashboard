@@ -39,9 +39,6 @@ export const ValidatorBondsPage: React.FC<UserLevelProps> = ({ level }) => {
     placeholderData: keepPreviousData,
   })
 
-  // Filter once per `data` change instead of on every parent re-render.
-  // Notifications and broadcasts refetch on intervals; without this useMemo
-  // the .filter ran every interval tick over the full validator list.
   const filteredData = useMemo(
     () =>
       data

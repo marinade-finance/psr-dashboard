@@ -578,11 +578,6 @@ export const ValidatorDetail = ({
     [validator, dsSamConfig, winningTotalPmpe],
   )
   const paymentMetrics = useMemo(() => computeBidding(validator), [validator])
-  // Shared per-page query: fetches all validators with 3 epochs once and
-  // derives every validator's PSR estimates from it. Previously this query
-  // was keyed per voteAccount, so clicking through N validators triggered
-  // N independent fetches of the multi-MB validators payload + N runs of
-  // calculateProtectedEventEstimates. Now: one fetch, one run, pure filter.
   const queryClient = useQueryClient()
   const { data: allPsrEstimates = [] } = useQuery({
     queryKey: ['psr-estimates-all'],

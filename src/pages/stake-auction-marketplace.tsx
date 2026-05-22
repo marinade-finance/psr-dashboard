@@ -53,9 +53,6 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
     dataSources?.loadValidatorNames ?? fetchValidatorNames
   const queryClient = useQueryClient()
 
-  // The selected validator lives in the URL (`?v=...`) so deep links, page
-  // reloads, browser back/forward, and in-app navigation all work without
-  // manual history bookkeeping. react-router owns the synchronisation.
   const [searchParams, setSearchParams] = useSearchParams()
   const selectedValidator = searchParams.get('v')
   const [simulationOverrides, setSimulationOverrides] =
@@ -66,8 +63,6 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
   const [originalAuctionResult, setOriginalAuctionResult] =
     useState<AuctionResult | null>(null)
 
-  // Base data: no overrides. The cache is shared with EpochMeter, bonds, and
-  // protected-events service functions via the canonical ['sam'] queryKey.
   const { data, status } = useQuery({
     queryKey: ['sam'],
     queryFn: () => loadAuction(null),
@@ -75,16 +70,6 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
     refetchInterval: 60 * 60 * 1000,
   })
 
-  // Simulation reruns are an imperative action — useMutation is the
-  // library-native primitive. On success the result overwrites the ['sam']
-  // cache so SamTable and ValidatorDetail re-render against the simulated
-  // auction without us managing a parallel state.
-  //
-  // Destructure rather than capturing the whole mutation object: react-query
-  // v5 only guarantees referential stability for `mutate` / `mutateAsync` /
-  // `reset` (wrapped in useCallback inside the hook); the wrapper object
-  // itself is a new reference every render. Including it in useCallback deps
-  // below would defeat the memoisation.
   const { mutate: runSimulation, isPending: isCalculating } = useMutation({
     mutationFn: (overrides: AppOverrides) => loadAuction(overrides),
     onSuccess: result => {
