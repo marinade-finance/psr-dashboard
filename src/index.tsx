@@ -18,12 +18,34 @@ import { TestBondsPage } from './pages/test-bonds'
 import { TestProtectedEventsPage } from './pages/test-protected-events'
 import { TestSamPage } from './pages/test-stake-auction-marketplace'
 import { ValidatorBondsPage } from './pages/validator-bonds'
+import { ErrorBoundary, initSentry } from './sentry'
+
+initSentry()
 
 const tagManagerArgs = {
   gtmId: 'GTM-TTZLQF7',
 }
 
 TagManager.initialize(tagManagerArgs)
+
+// Last-resort fallback rendered by the top-level ErrorBoundary when a thrown
+// error escapes every route's errorElement. Plain HTML — no React-router or
+// react-query in scope, so it always renders even if those providers crashed
+// during init.
+const FatalError: React.FC<{ resetError: () => void }> = ({ resetError }) => (
+  <div
+    role="alert"
+    style={{ padding: '2rem', maxWidth: '40rem', margin: 'auto' }}
+  >
+    <h1>Something broke.</h1>
+    <p>
+      An unexpected error took down the dashboard. The error has been logged.
+    </p>
+    <button type="button" onClick={resetError}>
+      Try again
+    </button>
+  </div>
+)
 
 const ErrorPage = () => {
   const error = useRouteError() as { statusText?: string; message?: string }
@@ -143,6 +165,12 @@ if (!rootElement) throw new Error('Root element #root not found')
 
 createRoot(rootElement).render(
   <React.StrictMode>
-    <Root />
+    <ErrorBoundary
+      fallback={fallbackProps => (
+        <FatalError resetError={() => fallbackProps.resetError()} />
+      )}
+    >
+      <Root />
+    </ErrorBoundary>
   </React.StrictMode>,
 )
