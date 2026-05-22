@@ -37,11 +37,9 @@ import {
 } from 'src/services/bid-penalty'
 import { computeBidding } from 'src/services/bidding'
 import { computeBondCoverage } from 'src/services/bond-coverage'
-import {
-  BOND_URGENT_EPOCHS,
-  BondHealthState,
-  bondHealthFromAuction,
-} from 'src/services/bond-health'
+import { BOND_URGENT_EPOCHS, bondHealthFromAuction } from 'src/services/bond-health'
+
+import type { BondHealthState } from 'src/services/bond-health'
 import { effectiveBondRunway } from 'src/services/calculations'
 import { HELP_TEXT } from 'src/services/help-text'
 import { calculateProtectedEventEstimates } from 'src/services/protected-events-estimator'
@@ -132,7 +130,7 @@ const ATTENTION_TEXT: Record<AttentionTone, string> = {
 // Single source for "which tab does this lever live on". Used both by the
 // tab-strip dot in tabAttention and by the header banner's click target —
 // keeps both surfaces in lockstep. Record<TipConstraint, Tab|null> forces
-// an explicit mapping for every enum value (a new lever fails the build
+// an explicit mapping for every union member (a new lever fails the build
 // until added). 'bid' = in-set penalty → Penalty tab (the math lives
 // there); 'rank' = out-of-set → Bidding tab (raise the static bid);
 // 'cap'/'none' have no dedicated tab (explanation lives in the header).

@@ -21,12 +21,7 @@ import {
 } from 'src/services/validators'
 
 import { BellIcon } from '../icons/bell-icon'
-import {
-  OrderDirection,
-  TABLE_SHELL_HOVER,
-  Table,
-  TableShell,
-} from '../table/table'
+import { TABLE_SHELL_HOVER, Table, TableShell } from '../table/table'
 import type { Alignment } from '../table/table'
 
 import type { NotificationSummary } from 'src/services/notifications'
@@ -576,7 +571,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
               },
               ...expertColumns,
             ]}
-            defaultOrder={[[1, OrderDirection.DESC]]}
+            defaultOrder={[[1, 'desc']]}
           />
         </TableShell>
       </div>

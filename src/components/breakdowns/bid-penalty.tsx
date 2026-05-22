@@ -3,7 +3,7 @@ import React from 'react'
 import { cost, pct, pmpe, stake } from 'src/format'
 import { computeBidPenalty } from 'src/services/bid-penalty'
 
-import { CalcCard, type CardStatus, type CardStatusTone } from './card'
+import { CalcCard, type CardStatus } from './card'
 import { CalcRow, OkRow, SectionHeader } from './row'
 
 import type {

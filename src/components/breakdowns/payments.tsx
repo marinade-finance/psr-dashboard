@@ -12,7 +12,6 @@ import {
   CalcCard,
   withSimAction,
   type CardStatus,
-  type CardStatusTone,
 } from './card'
 import { CalcRow, SectionHeader } from './row'
 

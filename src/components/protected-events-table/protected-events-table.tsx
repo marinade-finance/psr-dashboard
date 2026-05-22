@@ -17,12 +17,7 @@ import { selectName } from 'src/services/validators'
 
 import { Metric } from '../metric/metric'
 import type { UserLevel } from '../navigation/navigation'
-import {
-  OrderDirection,
-  TABLE_SHELL_HOVER,
-  Table,
-  TableShell,
-} from '../table/table'
+import { TABLE_SHELL_HOVER, Table, TableShell } from '../table/table'
 
 import type { ProtectedEvent } from 'src/services/protected-events'
 import type { ProtectedEventWithValidator } from 'src/services/validator-with-protected_event'
@@ -346,7 +341,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
                   ),
               },
             ]}
-            defaultOrder={[[1, OrderDirection.DESC]]}
+            defaultOrder={[[1, 'desc']]}
           />
         </TableShell>
       </div>

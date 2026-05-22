@@ -42,10 +42,7 @@ export function TableShell({
   )
 }
 
-export const enum OrderDirection {
-  ASC,
-  DESC,
-}
+export type OrderDirection = 'asc' | 'desc'
 
 export type Order = [number, OrderDirection]
 
@@ -113,9 +110,9 @@ function renderHeader<Item>(
         const isDefaultSorted = !userOrder && defaultOrderColumn === i
         let indicator = ''
         if (isUserSorted) {
-          indicator = userOrderDirection === OrderDirection.ASC ? '▲' : '▼'
+          indicator = userOrderDirection === 'asc' ? '▲' : '▼'
         } else if (isDefaultSorted) {
-          indicator = defaultOrderDirection === OrderDirection.ASC ? '▲' : '▼'
+          indicator = defaultOrderDirection === 'asc' ? '▲' : '▼'
         }
         const isSortable = column.sortable !== false && !!column.compare
 
@@ -267,7 +264,7 @@ export const Table: <Item>(props: Props<Item>) => React.ReactElement = ({
         if (compareResult !== undefined && compareResult !== 0) {
           if (compareResult === Infinity) return 1
           if (compareResult === -Infinity) return -1
-          return orderDirection === OrderDirection.ASC
+          return orderDirection === 'asc'
             ? compareResult
             : -compareResult
         }
@@ -282,13 +279,13 @@ export const Table: <Item>(props: Props<Item>) => React.ReactElement = ({
     if (column.sortable === false || !column.compare) return
     const [prevColumn, prevOrder] = userOrder ?? [null, null]
     if (columnIndex === prevColumn) {
-      if (prevOrder === OrderDirection.ASC) {
-        setUserOrder([columnIndex, OrderDirection.DESC])
+      if (prevOrder === 'asc') {
+        setUserOrder([columnIndex, 'desc'])
       } else {
         setUserOrder(null)
       }
     } else {
-      setUserOrder([columnIndex, OrderDirection.ASC])
+      setUserOrder([columnIndex, 'asc'])
     }
   }
 
