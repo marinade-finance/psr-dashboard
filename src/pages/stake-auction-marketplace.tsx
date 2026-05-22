@@ -103,14 +103,14 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
 
   const { data: notificationsMap } = useQuery({
     queryKey: ['notifications-all', 'sam_auction'],
-    queryFn: () => fetchAllNotifications('sam_auction'),
+    queryFn: ({ signal }) => fetchAllNotifications('sam_auction', signal),
     refetchInterval: 5 * 60 * 1000,
     placeholderData: keepPreviousData,
   })
 
   const { data: latestBroadcastNotification } = useQuery({
     queryKey: ['notifications-broadcast'],
-    queryFn: fetchLatestSamAuctionBroadcastNotification,
+    queryFn: ({ signal }) => fetchLatestSamAuctionBroadcastNotification(signal),
     refetchInterval: 5 * 60 * 1000,
     placeholderData: keepPreviousData,
   })

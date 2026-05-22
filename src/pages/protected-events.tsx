@@ -18,13 +18,14 @@ export const ProtectedEventsPage: React.FC<UserLevelProps> = ({ level }) => {
   const queryClient = useQueryClient()
   const { data, status } = useQuery({
     queryKey: ['protected-events'],
-    queryFn: () => fetchProtectedEventsWithValidator(queryClient),
+    queryFn: ({ signal }) =>
+      fetchProtectedEventsWithValidator(queryClient, signal),
     refetchInterval: 60 * 60 * 1000,
     placeholderData: keepPreviousData,
   })
   const { data: latestBroadcastNotification } = useQuery({
     queryKey: ['notifications-broadcast'],
-    queryFn: fetchLatestSamAuctionBroadcastNotification,
+    queryFn: ({ signal }) => fetchLatestSamAuctionBroadcastNotification(signal),
     refetchInterval: 5 * 60 * 1000,
     placeholderData: keepPreviousData,
   })

@@ -22,19 +22,19 @@ export const ValidatorBondsPage: React.FC<UserLevelProps> = ({ level }) => {
   const queryClient = useQueryClient()
   const { data, status } = useQuery({
     queryKey: ['bonds'],
-    queryFn: () => fetchValidatorsWithBonds(queryClient),
+    queryFn: ({ signal }) => fetchValidatorsWithBonds(queryClient, signal),
     refetchInterval: 60 * 60 * 1000,
     placeholderData: keepPreviousData,
   })
   const { data: latestBroadcastNotification } = useQuery({
     queryKey: ['notifications-broadcast'],
-    queryFn: fetchLatestSamAuctionBroadcastNotification,
+    queryFn: ({ signal }) => fetchLatestSamAuctionBroadcastNotification(signal),
     refetchInterval: 5 * 60 * 1000,
     placeholderData: keepPreviousData,
   })
   const { data: notificationsMap } = useQuery({
     queryKey: ['notifications-all', 'sam_auction'],
-    queryFn: () => fetchAllNotifications('sam_auction'),
+    queryFn: ({ signal }) => fetchAllNotifications('sam_auction', signal),
     refetchInterval: 5 * 60 * 1000,
     placeholderData: keepPreviousData,
   })

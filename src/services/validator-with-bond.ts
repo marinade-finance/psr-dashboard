@@ -42,10 +42,11 @@ export const selectProtectedStake = (entry: ValidatorWithBond) =>
 // a duplicate in-browser SDK run.
 export const fetchValidatorsWithBonds = async (
   qc: QueryClient,
+  signal?: AbortSignal,
 ): Promise<ValidatorWithBond[]> => {
   const [{ validators }, { bonds }, { auctionResult }] = await Promise.all([
-    fetchValidatorsWithEpochs(0),
-    fetchBonds(),
+    fetchValidatorsWithEpochs(0, signal),
+    fetchBonds(signal),
     qc.ensureQueryData({ queryKey: ['sam'], queryFn: () => loadSam(null) }),
   ])
 

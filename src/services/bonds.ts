@@ -26,5 +26,5 @@ export type BondsResponse = {
   bonds: BondRecord[]
 }
 
-export const fetchBonds = (): Promise<BondsResponse> =>
-  fetchJson<BondsResponse>(`${VALIDATOR_BONDS_API_URL}/bonds`)
+export const fetchBonds = (signal?: AbortSignal): Promise<BondsResponse> =>
+  fetchJson<BondsResponse>(`${VALIDATOR_BONDS_API_URL}/bonds`, signal)

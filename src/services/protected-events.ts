@@ -140,7 +140,10 @@ export const selectProtectedStakeReason = (protectedEvent: ProtectedEvent) => {
 export const selectAmount = (protectedEvent: ProtectedEvent) =>
   Number(protectedEvent.amount / 1e9)
 
-export const fetchProtectedEvents = (): Promise<ProtectedEventsResponse> =>
+export const fetchProtectedEvents = (
+  signal?: AbortSignal,
+): Promise<ProtectedEventsResponse> =>
   fetchJson<ProtectedEventsResponse>(
     `${VALIDATOR_BONDS_API_URL}/protected-events`,
+    signal,
   )

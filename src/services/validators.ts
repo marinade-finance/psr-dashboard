@@ -43,9 +43,11 @@ export type ValidatorsResponse = {
 
 export const fetchValidatorsWithEpochs = (
   epochs: number,
+  signal?: AbortSignal,
 ): Promise<ValidatorsResponse> =>
   fetchJson<ValidatorsResponse>(
     `${VALIDATORS_API_URL}/validators?limit=9999&epochs=${epochs}`,
+    signal,
   ).then(data => ({
     validators: data.validators.filter(
       validator =>

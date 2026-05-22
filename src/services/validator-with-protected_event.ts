@@ -25,6 +25,7 @@ const LAST_DRYRUN_EPOCH = 608
 // ['sam'] cache via ensureQueryData — see fetchValidatorsWithBonds.
 export const fetchProtectedEventsWithValidator = async (
   qc: QueryClient,
+  signal?: AbortSignal,
 ): Promise<ProtectedEventWithValidator[]> => {
   const [
     { validators },
@@ -32,9 +33,9 @@ export const fetchProtectedEventsWithValidator = async (
     scoring,
     { auctionResult },
   ] = await Promise.all([
-    fetchValidatorsWithEpochs(3),
-    fetchProtectedEvents(),
-    fetchScoring(),
+    fetchValidatorsWithEpochs(3, signal),
+    fetchProtectedEvents(signal),
+    fetchScoring(signal),
     qc.ensureQueryData({ queryKey: ['sam'], queryFn: () => loadSam(null) }),
   ])
 
