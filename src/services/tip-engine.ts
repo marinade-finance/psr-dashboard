@@ -59,24 +59,6 @@ export interface TipStyle {
   bg: string
 }
 
-// Single severity source for bond advice. The header bond tip and the Bond
-// tab status banner must agree on tone; the banner colours off bond-health
-// (red/yellow/green axis via card.tsx STATUS_CLASSES), so the header does
-// too — never off tip.urgency, whose `info` indigo for soft bond is exactly
-// the conflicting second colour c4fe245a removed the duplicate to avoid.
-export const getBondAdviceStyle = (health: BondHealthState): TipStyle => {
-  switch (health) {
-    case 'no-bond':
-    case 'critical':
-      return { color: CSS_DESTRUCTIVE, bg: CSS_DESTRUCTIVE_LIGHT }
-    case 'watch':
-      return { color: CSS_STATUS_YELLOW, bg: CSS_STATUS_YELLOW_LIGHT }
-    case 'healthy':
-      return { color: CSS_PRIMARY, bg: CSS_PRIMARY_LIGHT_10 }
-    default:
-      return assertNever(health)
-  }
-}
 
 // Color carries severity. Glyph carries the lever — except a critical
 // alarm also swaps to the alert glyph; see getTipIcon.

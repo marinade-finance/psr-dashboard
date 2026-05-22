@@ -59,13 +59,3 @@ export const expectObject = (
   return value as Record<string, unknown>
 }
 
-export const expectKey = (
-  obj: Record<string, unknown>,
-  key: string,
-  label: string,
-): unknown => {
-  if (!(key in obj)) {
-    throw new Error(`Missing key '${key}' in ${label}`)
-  }
-  return obj[key]
-}

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -e
+set -u
 
 SPEC_DIR="src/schemas/openapi"
 OUT_DIR="src/schemas/generated"
