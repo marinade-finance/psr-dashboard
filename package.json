@@ -10,6 +10,7 @@
     "pnpm": ">=9.12.0"
   },
   "scripts": {
+    "generate": "bash scripts/generate-schemas.sh",
     "start:dev": "vite",
     "dev": "vite",
     "play": "pnpm test:play",
@@ -42,6 +43,7 @@
     "husky": "9.1.7",
     "jsdom": "29.1.1",
     "lint-staged": "16.4.0",
+    "openapi-zod-client": "^1.18.3",
     "prettier": "3.8.3",
     "tailwindcss": "4.3.0",
     "typescript": "6.0.3",
