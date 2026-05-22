@@ -282,6 +282,9 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
             className={TABLE_SHELL_HOVER}
             data={filteredData}
             showRowNumber
+            virtualize
+            virtualizeRowHeight={48}
+            virtualizeMaxHeight="75vh"
             columns={[
               {
                 header: 'Validator',
