@@ -64,6 +64,13 @@ const TABLE_BASE = [
   '[&_thead_th:last-child]:rounded-tr-xl',
   '[&_tbody]:bg-card',
   '[&_tbody_tr]:bg-card',
+  // content-visibility: auto lets the browser skip layout/paint of off-screen
+  // rows entirely (Chrome 85+/Safari 18+). Combined with contain-intrinsic-size
+  // it reserves space so scroll height stays accurate. For tables with 1000+
+  // rows (protected-events) this cuts the synchronous layout cost on mount
+  // from hundreds of ms to ~zero — the browser only lays out what's visible.
+  '[&_tbody_tr]:[content-visibility:auto]',
+  '[&_tbody_tr]:[contain-intrinsic-size:auto_44px]',
   '[&_th]:relative [&_th]:px-3.5 [&_th]:py-[11px] [&_th]:whitespace-nowrap [&_th]:text-xs [&_th]:font-medium [&_th]:tracking-[0.06em] [&_th]:text-muted-foreground',
   '[&_td]:relative [&_td]:px-3.5 [&_td]:py-3 [&_td]:whitespace-nowrap [&_td]:align-top',
   '[&_tbody_tr:hover]:bg-primary-light',

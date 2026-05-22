@@ -3,7 +3,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
-import React from 'react'
+import React, { useMemo } from 'react'
 
 import { Banner } from 'src/components/banner/banner'
 import { Loader } from 'src/components/loader/loader'
@@ -39,6 +39,21 @@ export const ValidatorBondsPage: React.FC<UserLevelProps> = ({ level }) => {
     placeholderData: keepPreviousData,
   })
 
+  // Filter once per `data` change instead of on every parent re-render.
+  // Notifications and broadcasts refetch on intervals; without this useMemo
+  // the .filter ran every interval tick over the full validator list.
+  const filteredData = useMemo(
+    () =>
+      data
+        ? data.filter(
+            ({ validator, bond }) =>
+              selectTotalMarinadeStake(validator) > 0 ||
+              Number(bond?.effective_amount) > 0,
+          )
+        : [],
+    [data],
+  )
+
   return (
     <div className="bg-background-page">
       <Navigation level={level} />
@@ -73,11 +88,7 @@ export const ValidatorBondsPage: React.FC<UserLevelProps> = ({ level }) => {
       {status === 'pending' && <Loader />}
       {status === 'success' && (
         <ValidatorBondsTable
-          data={data.filter(
-            ({ validator, bond }) =>
-              selectTotalMarinadeStake(validator) > 0 ||
-              Number(bond?.effective_amount) > 0,
-          )}
+          data={filteredData}
           level={level}
           notificationsMap={notificationsMap}
         />
