@@ -227,17 +227,7 @@ type Props<Item> = {
     index: number,
   ) => HTMLAttributes<HTMLTableRowElement>
   className?: string
-  /**
-   * Opt-in virtualised tbody. When set, only the rows visible inside
-   * `virtualizeMaxHeight` are actually rendered + a small overscan buffer;
-   * everything else is replaced by two tall spacer rows that reserve the
-   * correct scroll height. For tables with thousands of rows (protected-
-   * events with 3k+) this turns a 900ms+ synchronous render into ~30ms.
-   *
-   * Off by default — small tables (bonds, ~80 rows) keep the simpler
-   * fully-rendered path because virtualisation adds a scroll container
-   * that subtly changes the page layout.
-   */
+  /** Off by default — adds a scroll container that subtly changes page layout. */
   virtualize?: boolean
   /** Estimated row height in px. Only used when `virtualize` is true. */
   virtualizeRowHeight?: number
