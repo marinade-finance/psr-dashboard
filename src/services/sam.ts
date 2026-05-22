@@ -28,29 +28,9 @@ type SamResult = {
   dcSamConfig: DsSamConfig
 }
 
-// Deduplicates concurrent no-override loadSam() calls (Root prefetches
-// sam + bonds + protected-events simultaneously, each calling loadSam).
-// Without this: N concurrent SDK runs = N×7 API requests at startup.
-let samPromise: Promise<SamResult> | null = null
-let samExpiry = 0
-const SAM_CACHE_TTL = 5 * 60 * 1000
-
 export const loadSam = async (
   dataOverrides?: AppOverrides | null,
 ): Promise<SamResult> => {
-  if (!dataOverrides) {
-    if (samPromise && Date.now() < samExpiry) return samPromise
-    samExpiry = Date.now() + SAM_CACHE_TTL
-    samPromise = runSam(null).catch(err => {
-      samPromise = null
-      throw err
-    })
-    return samPromise
-  }
-  return runSam(dataOverrides)
-}
-
-async function runSam(dataOverrides: AppOverrides | null): Promise<SamResult> {
   const config = await loadSamConfig()
   const dsSam = new DsSamSDK({
     ...config,
