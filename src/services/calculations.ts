@@ -1,4 +1,4 @@
-import { BondHealthState } from './bond-health'
+import type { BondHealthState } from './bond-health'
 
 import type {
   AuctionValidator,
@@ -41,8 +41,8 @@ export function effectiveBondRunway(
   bondHealth: BondHealthState,
 ): number {
   if (
-    bondHealth === BondHealthState.NO_BOND ||
-    bondHealth === BondHealthState.CRITICAL
+    bondHealth === 'no-bond' ||
+    bondHealth === 'critical'
   )
     return 0
   // Clamp at 0 so `(Nep)` can never render a negative epoch count — the

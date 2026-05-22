@@ -21,11 +21,12 @@ import { computeBidPenalty } from './bid-penalty'
 import { computeBondCoverage } from './bond-coverage'
 import {
   BOND_URGENT_EPOCHS,
-  BondHealthState,
   bondHealthFromAuction,
 } from './bond-health'
 import { apyBreakdown } from './calculations'
-import { CardStatusTone } from './card-status'
+
+import type { BondHealthState } from './bond-health'
+import type { CardStatusTone } from './card-status'
 import { selectInSet } from './sam'
 
 import type { BondCoverage } from './bond-coverage'
@@ -65,12 +66,12 @@ export interface TipStyle {
 // the conflicting second colour c4fe245a removed the duplicate to avoid.
 export const getBondAdviceStyle = (health: BondHealthState): TipStyle => {
   switch (health) {
-    case BondHealthState.NO_BOND:
-    case BondHealthState.CRITICAL:
+    case 'no-bond':
+    case 'critical':
       return { color: CSS_DESTRUCTIVE, bg: CSS_DESTRUCTIVE_LIGHT }
-    case BondHealthState.WATCH:
+    case 'watch':
       return { color: CSS_STATUS_YELLOW, bg: CSS_STATUS_YELLOW_LIGHT }
-    case BondHealthState.HEALTHY:
+    case 'healthy':
       return { color: CSS_PRIMARY, bg: CSS_PRIMARY_LIGHT_10 }
     default:
       return assertNever(health)
@@ -165,18 +166,18 @@ export function bondAdvice(
   // tier (typically no-bond/critical) gets the actionable wording.
   if (
     bondBalanceSol < minBondBalanceSol &&
-    health !== BondHealthState.NO_BOND
+    health !== 'no-bond'
   ) {
     // Below-min without a pending fee is eligibility, not urgency — grey.
     const isCharging = bondRiskFeeSol > 0
     return {
       text: `Top up bond to ${stake(minBondBalanceSol)} to qualify.`,
       urgency: isCharging ? 'critical' : 'neutral',
-      tone: isCharging ? CardStatusTone.RED : CardStatusTone.GREY,
+      tone: isCharging ? 'red' : 'grey',
     }
   }
   switch (health) {
-    case BondHealthState.NO_BOND: {
+    case 'no-bond': {
       // Novelty validators (active < 10k SOL) are effectively outside the
       // auction already — surface the CTA muted/grey. Only escalate to red
       // when there's real stake at risk of being pulled.
@@ -184,10 +185,10 @@ export function bondAdvice(
       return {
         text: `Post a bond of ${stake(minBondBalanceSol)} to win stake.`,
         urgency: hasRealStake ? 'critical' : 'neutral',
-        tone: hasRealStake ? CardStatusTone.RED : CardStatusTone.GREY,
+        tone: hasRealStake ? 'red' : 'grey',
       }
     }
-    case BondHealthState.CRITICAL: {
+    case 'critical': {
       // Fee is actually being charged OR bond is already below the penalty
       // threshold → red/critical. Runway-only CRITICAL (no fee, above
       // threshold) → yellow/warning: the fee is approaching but not here yet.
@@ -196,27 +197,27 @@ export function bondAdvice(
           coverage.bondRiskFeeShortfall > 0
             ? `Top up ${topUp(coverage.bondRiskFeeShortfall)} or pay ${pay(bondRiskFeeSol)} bond fee.`
             : `Bond fee ${pay(bondRiskFeeSol)} estimated next epoch.`
-        return { text, urgency: 'critical', tone: CardStatusTone.RED }
+        return { text, urgency: 'critical', tone: 'red' }
       }
       if (coverage.bondRiskFeeShortfall > 0) {
         return {
           text: `Top up ${topUp(coverage.bondRiskFeeShortfall)} — bond below the penalty threshold.`,
           urgency: 'critical',
-          tone: CardStatusTone.RED,
+          tone: 'red',
         }
       }
       return {
         text: 'Bond below minimum — top up to maintain eligibility.',
         urgency: 'critical',
-        tone: CardStatusTone.RED,
+        tone: 'red',
       }
     }
-    case BondHealthState.WATCH: {
+    case 'watch': {
       if (coverage.topUpToKeepStake > 0) {
         return {
           text: `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake.`,
           urgency: 'warning',
-          tone: CardStatusTone.YELLOW,
+          tone: 'yellow',
         }
       }
       if (nearFeeThreshold) {
@@ -226,27 +227,27 @@ export function bondAdvice(
               ? `Top up ${topUp(coverage.topUpToIdealKeep)} to avoid bond fee.`
               : 'Bond near threshold — top up to avoid bond fee.',
           urgency: 'warning',
-          tone: CardStatusTone.YELLOW,
+          tone: 'yellow',
         }
       }
       if (coverage.topUpToIdealKeep > 0) {
         return {
           text: `Top up ${topUp(coverage.topUpToIdealKeep)} to grow stake.`,
           urgency: 'info',
-          tone: CardStatusTone.YELLOW,
+          tone: 'yellow',
         }
       }
       return {
         text: 'Bond covers current stake.',
         urgency: 'info',
-        tone: CardStatusTone.YELLOW,
+        tone: 'yellow',
       }
     }
-    case BondHealthState.HEALTHY:
+    case 'healthy':
       return {
         text: 'Bond has enough coverage.',
         urgency: 'positive',
-        tone: CardStatusTone.GREEN,
+        tone: 'green',
       }
     default:
       return assertNever(health)
@@ -370,13 +371,13 @@ function bondCta(
   )
   const runway = validator.bondGoodForNEpochs ?? 0
   const nearFeeThreshold =
-    health === BondHealthState.WATCH &&
+    health === 'watch' &&
     runway <= dsSamConfig.minBondEpochs + BOND_URGENT_EPOCHS &&
     coverage.bondRiskFeeShortfall === 0
   const fires =
-    health === BondHealthState.CRITICAL ||
+    health === 'critical' ||
     (inSet &&
-      health === BondHealthState.WATCH &&
+      health === 'watch' &&
       (coverage.topUpToKeepStake > 0 ||
         nearFeeThreshold ||
         (coverage.topUpToIdealKeep > 0 && delta <= 0)))
@@ -385,7 +386,7 @@ function bondCta(
   // INFO, which selectTip ranks below deltaCta's WARNING. Escalate to WARNING
   // so the actionable bond advice beats the symptom message.
   if (
-    health === BondHealthState.WATCH &&
+    health === 'watch' &&
     coverage.topUpToKeepStake === 0 &&
     !nearFeeThreshold &&
     isDefending(validator, delta)
@@ -417,7 +418,7 @@ function bondCta(
     advice.urgency,
     'bond',
     delta,
-    health === BondHealthState.CRITICAL && bondRiskFeeSol > 0,
+    health === 'critical' && bondRiskFeeSol > 0,
   )
 }
 
@@ -776,19 +777,15 @@ export const getApyBreakdown = (
 
 // Used by sam-table's "Stake / Next Δ" cell. Sub-1-SOL deltas are neutral —
 // they round to the same whole-SOL display and aren't actionable.
-export enum NextStakeDeltaTone {
-  POSITIVE = 'positive',
-  NEGATIVE = 'negative',
-  NEUTRAL = 'neutral',
-}
+export type NextStakeDeltaTone = 'positive' | 'negative' | 'neutral'
 export type NextStakeDeltaCell = {
   prefix: '+' | ''
   tone: NextStakeDeltaTone
 }
 export function nextStakeDeltaCell(expectedChange: number): NextStakeDeltaCell {
   if (Math.abs(expectedChange) < 1)
-    return { prefix: '', tone: NextStakeDeltaTone.NEUTRAL }
+    return { prefix: '', tone: 'neutral' }
   if (expectedChange > 0)
-    return { prefix: '+', tone: NextStakeDeltaTone.POSITIVE }
-  return { prefix: '', tone: NextStakeDeltaTone.NEGATIVE }
+    return { prefix: '+', tone: 'positive' }
+  return { prefix: '', tone: 'negative' }
 }

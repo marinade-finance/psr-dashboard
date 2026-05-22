@@ -216,11 +216,11 @@ function tabAttention(args: {
         : undefined
   const attention: Partial<Record<Tab, AttentionTone>> = {}
   if (
-    bondHealth === BondHealthState.CRITICAL ||
-    bondHealth === BondHealthState.NO_BOND
+    bondHealth === 'critical' ||
+    bondHealth === 'no-bond'
   ) {
     attention.bond = 'critical'
-  } else if (bondHealth === BondHealthState.WATCH) {
+  } else if (bondHealth === 'watch') {
     attention.bond = 'warning'
   }
   if (bidPenaltySol > 0) attention.penalty = 'critical'
@@ -237,13 +237,13 @@ export function bondCoverageLabel(
   nearFeeThreshold = false,
 ): string {
   switch (health) {
-    case BondHealthState.NO_BOND:
+    case 'no-bond':
       return 'No bond'
-    case BondHealthState.CRITICAL:
+    case 'critical':
       return coverage.bondRiskFeeShortfall > 0
         ? `Top up ${topUp(coverage.bondRiskFeeShortfall)} to avoid the fee`
         : 'Critical'
-    case BondHealthState.WATCH:
+    case 'watch':
       // Route through bondAdvice — the canonical CTA source — strip trailing period.
       // WATCH implies bondRiskFeeSol=0 (fee→CRITICAL) and above minBondBalance (below-min→CRITICAL).
       if (
@@ -253,7 +253,7 @@ export function bondCoverageLabel(
       ) {
         return bondAdvice(
           coverage,
-          BondHealthState.WATCH,
+          'watch',
           0,
           0,
           coverage.bondBalanceSol,
@@ -262,7 +262,7 @@ export function bondCoverageLabel(
         ).text.replace(/\.$/, '')
       }
       return 'Watch'
-    case BondHealthState.HEALTHY:
+    case 'healthy':
       return 'Healthy'
     default:
       return assertNever(health)
@@ -271,12 +271,12 @@ export function bondCoverageLabel(
 
 function bondCoverageColor(health: BondHealthState): string {
   switch (health) {
-    case BondHealthState.NO_BOND:
-    case BondHealthState.CRITICAL:
+    case 'no-bond':
+    case 'critical':
       return CSS_DESTRUCTIVE
-    case BondHealthState.WATCH:
+    case 'watch':
       return CSS_WARNING
-    case BondHealthState.HEALTHY:
+    case 'healthy':
       return CSS_PRIMARY
     default:
       return assertNever(health)
@@ -845,7 +845,7 @@ export const ValidatorDetail = ({
                 minBondBalanceSol={dsSamConfig.minBondBalanceSol}
                 expectedStakeDeltaSol={expectedStakeDelta}
                 nearFeeThreshold={
-                  bondHealth === BondHealthState.WATCH &&
+                  bondHealth === 'watch' &&
                   (validator.bondGoodForNEpochs ?? 0) <=
                     dsSamConfig.minBondEpochs + BOND_URGENT_EPOCHS &&
                   bondCoverage.bondRiskFeeShortfall === 0
@@ -1018,7 +1018,7 @@ export const ValidatorDetail = ({
                     bondHealth,
                     bondCoverage,
                     expectedStakeDelta,
-                    bondHealth === BondHealthState.WATCH &&
+                    bondHealth === 'watch' &&
                       (validator.bondGoodForNEpochs ?? 0) <=
                         dsSamConfig.minBondEpochs + BOND_URGENT_EPOCHS &&
                       bondCoverage.bondRiskFeeShortfall === 0,

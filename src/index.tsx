@@ -9,7 +9,7 @@ import {
   useRouteError,
 } from 'react-router-dom'
 
-import { Navigation, UserLevel } from './components/navigation/navigation'
+import { Navigation } from './components/navigation/navigation'
 import { TooltipProvider } from './components/ui/tooltip'
 import { DocsPage } from './pages/docs'
 import { ProtectedEventsPage } from './pages/protected-events'
@@ -77,7 +77,7 @@ const NotFoundPage = () => (
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <SamPage level={UserLevel.Basic} />,
+    element: <SamPage level={'basic'} />,
     errorElement: <ErrorPage />,
   },
   {
@@ -92,42 +92,42 @@ const router = createBrowserRouter([
   },
   {
     path: '/expert-',
-    element: <SamPage level={UserLevel.Expert} />,
+    element: <SamPage level={'expert'} />,
     errorElement: <ErrorPage />,
   },
   {
     path: '/expert-bonds',
-    element: <ValidatorBondsPage level={UserLevel.Expert} />,
+    element: <ValidatorBondsPage level={'expert'} />,
     errorElement: <ErrorPage />,
   },
   {
     path: '/expert-protected-events',
-    element: <ProtectedEventsPage level={UserLevel.Expert} />,
+    element: <ProtectedEventsPage level={'expert'} />,
     errorElement: <ErrorPage />,
   },
   {
     path: '/test-',
-    element: <TestSamPage level={UserLevel.Basic} />,
+    element: <TestSamPage level={'basic'} />,
     errorElement: <ErrorPage />,
   },
   {
     path: '/test-bonds',
-    element: <TestBondsPage level={UserLevel.Basic} />,
+    element: <TestBondsPage level={'basic'} />,
     errorElement: <ErrorPage />,
   },
   {
     path: '/test-protected-events',
-    element: <TestProtectedEventsPage level={UserLevel.Basic} />,
+    element: <TestProtectedEventsPage level={'basic'} />,
     errorElement: <ErrorPage />,
   },
   {
     path: '/docs',
-    element: <DocsPage level={UserLevel.Basic} />,
+    element: <DocsPage level={'basic'} />,
     errorElement: <ErrorPage />,
   },
   {
     path: '/expert-docs',
-    element: <DocsPage level={UserLevel.Expert} />,
+    element: <DocsPage level={'expert'} />,
     errorElement: <ErrorPage />,
   },
   {

@@ -1,7 +1,7 @@
 import React from 'react'
 
 import { cn } from 'src/class_utils'
-import { CardStatusTone } from 'src/components/breakdowns/card'
+import type { CardStatusTone } from 'src/components/breakdowns/card'
 import { HelpTip } from 'src/components/help-tip/help-tip'
 
 export const SEPARATOR_DIV_CLASS = 'border-t border-border-grid pt-2 mt-1'
@@ -59,9 +59,9 @@ export const SectionHeader: React.FC<{
 type ColoredTone = Exclude<CardStatusTone, 'grey'>
 
 const MARKER_CLASSES: Record<ColoredTone, string> = {
-  [CardStatusTone.RED]: 'bg-destructive',
-  [CardStatusTone.YELLOW]: 'bg-status-yellow',
-  [CardStatusTone.GREEN]: 'bg-primary',
+  ['red']: 'bg-destructive',
+  ['yellow']: 'bg-status-yellow',
+  ['green']: 'bg-primary',
 }
 
 export const Marker: React.FC<{ tone: ColoredTone }> = ({ tone }) => (
@@ -76,9 +76,9 @@ export const Marker: React.FC<{ tone: ColoredTone }> = ({ tone }) => (
 export type Severity = 'ok' | 'warning' | 'error'
 
 const SEVERITY_TONE: Record<Severity, ColoredTone> = {
-  ok: CardStatusTone.GREEN,
-  warning: CardStatusTone.YELLOW,
-  error: CardStatusTone.RED,
+  ok: 'green',
+  warning: 'yellow',
+  error: 'red',
 }
 
 const TEXT_BASE = 'text-base'
@@ -87,9 +87,9 @@ const BOLD = 'font-semibold'
 const MUTED = 'text-muted-foreground'
 const MID_CELL = 'px-2 text-right font-mono text-xs text-muted-foreground'
 const TONE_TEXT: Record<ColoredTone, string> = {
-  [CardStatusTone.GREEN]: 'text-status-green',
-  [CardStatusTone.YELLOW]: 'text-status-yellow',
-  [CardStatusTone.RED]: 'text-destructive',
+  ['green']: 'text-status-green',
+  ['yellow']: 'text-status-yellow',
+  ['red']: 'text-destructive',
 }
 
 // Single shared per-row visual model. CalcRow renders `Label | col1 | col2`

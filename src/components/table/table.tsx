@@ -11,11 +11,10 @@ import {
   TableRow,
   Table as UiTable,
 } from 'src/components/ui/table'
-import { Color } from 'src/services/types'
-
 import type { HTMLAttributes, ReactNode } from 'react'
+import type { Color } from 'src/services/types'
 
-export { Color }
+export type { Color }
 
 // Canonical card chrome for any page that drops a generic Table inside a
 // content section. Bundles the outer surface (rounded card, border, shadow),
@@ -50,10 +49,7 @@ export const enum OrderDirection {
 
 export type Order = [number, OrderDirection]
 
-export enum Alignment {
-  LEFT,
-  RIGHT,
-}
+export type Alignment = 'left' | 'right'
 
 const TABLE_BASE = [
   'relative border-separate [border-spacing:0]',
@@ -78,18 +74,18 @@ const TABLE_BASE = [
 ].join(' ')
 
 function alignmentClassName(alignment?: Alignment): string {
-  return alignment === Alignment.RIGHT ? 'text-right' : 'text-left'
+  return alignment === 'right' ? 'text-right' : 'text-left'
 }
 
 function colorClassName(color?: Color): string {
   switch (color) {
-    case Color.RED:
+    case 'red':
       return 'bg-cell-red'
-    case Color.GREEN:
+    case 'green':
       return 'bg-cell-green'
-    case Color.YELLOW:
+    case 'yellow':
       return 'bg-cell-yellow'
-    case Color.GREY:
+    case 'grey':
       return 'bg-cell-grey'
     default:
       return ''

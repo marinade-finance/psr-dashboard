@@ -64,11 +64,10 @@ import {
   getTipStyle,
   getTipIcon,
   nextStakeDeltaCell,
-  NextStakeDeltaTone,
 } from 'src/services/tip-engine'
 import { assertNever } from 'src/utils/assert-never'
 
-import { UserLevel } from '../navigation/navigation'
+import type { UserLevel } from '../navigation/navigation'
 
 import type {
   AuctionResult,
@@ -152,7 +151,7 @@ export function passesTableFilter(
   minBondBalanceSol: number,
 ): boolean {
   if ((v.bondBalanceSol ?? 0) < minBondBalanceSol) return false
-  if (level === UserLevel.Expert) return true
+  if (level === 'expert') return true
   const inSetOrStaked =
     v.marinadeActivatedStakeSol > 0 || v.auctionStake.marinadeSamTargetSol > 0
   return inSetOrStaked
@@ -457,7 +456,7 @@ export const SamTable: React.FC<Props> = ({
         .filter(validator =>
           passesTableFilter(
             validator,
-            level ?? UserLevel.Basic,
+            level ?? 'basic',
             dsSamConfig.minBondBalanceSol,
           ),
         )
@@ -909,16 +908,16 @@ export const SamTable: React.FC<Props> = ({
                 <span
                   className={cn(
                     'font-mono text-xs',
-                    cell.tone === NextStakeDeltaTone.NEUTRAL
+                    cell.tone === 'neutral'
                       ? TEXT_MUTED
                       : 'font-semibold text-sm',
                   )}
                   style={
-                    cell.tone === NextStakeDeltaTone.NEUTRAL
+                    cell.tone === 'neutral'
                       ? undefined
                       : {
                           color:
-                            cell.tone === NextStakeDeltaTone.POSITIVE
+                            cell.tone === 'positive'
                               ? CSS_STATUS_GREEN
                               : CSS_DESTRUCTIVE,
                         }

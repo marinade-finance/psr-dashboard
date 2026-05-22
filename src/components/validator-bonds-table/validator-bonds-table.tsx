@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 
 import { cn } from 'src/class_utils'
 import { docsPath } from 'src/components/breakdowns/docs-path'
-import { UserLevel } from 'src/components/navigation/navigation'
+import type { UserLevel } from 'src/components/navigation/navigation'
 import { HtmlTooltip } from 'src/components/ui/tooltip'
 import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
 import { pct, sol, lamportsToSol } from 'src/format'
@@ -22,12 +22,12 @@ import {
 
 import { BellIcon } from '../icons/bell-icon'
 import {
-  Alignment,
   OrderDirection,
   TABLE_SHELL_HOVER,
   Table,
   TableShell,
 } from '../table/table'
+import type { Alignment } from '../table/table'
 
 import type { NotificationSummary } from 'src/services/notifications'
 import type { ValidatorWithBond } from 'src/services/validator-with-bond'
@@ -340,7 +340,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
     compare: (a: ValidatorWithBond, b: ValidatorWithBond) => number
     alignment: Alignment
   }[] =
-    level === UserLevel.Expert
+    level === 'expert'
       ? [
           {
             header: 'Max protectable [SOL]',
@@ -352,7 +352,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
             ),
             compare: (a: ValidatorWithBond, b: ValidatorWithBond) =>
               selectMaxProtectedStake(a) - selectMaxProtectedStake(b),
-            alignment: Alignment.RIGHT,
+            alignment: 'right',
           },
         ]
       : []
@@ -430,7 +430,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
                 </strong>
               </span>
             </HtmlTooltip>
-            {level === UserLevel.Expert && (
+            {level === 'expert' && (
               <HtmlTooltip html="If every bond stretched as far as it could, this is the share of Marinade's stake that would be covered.">
                 <span className="text-muted-foreground">
                   Max protectable:{' '}
@@ -503,7 +503,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
                 compare: (a, b) =>
                   selectTotalMarinadeStake(a.validator) -
                   selectTotalMarinadeStake(b.validator),
-                alignment: Alignment.RIGHT,
+                alignment: 'right',
               },
               {
                 header: 'Bond Balance [SOL]',
@@ -524,7 +524,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
                 compare: (a, b) =>
                   Number(a.bond?.effective_amount ?? 0) -
                   Number(b.bond?.effective_amount ?? 0),
-                alignment: Alignment.RIGHT,
+                alignment: 'right',
               },
               {
                 header: 'Protected Stake [SOL]',
@@ -534,7 +534,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
                 render: entry => <>{sol(selectProtectedStake(entry))}</>,
                 compare: (a, b) =>
                   selectProtectedStake(a) - selectProtectedStake(b),
-                alignment: Alignment.RIGHT,
+                alignment: 'right',
               },
               {
                 header: 'Coverage',
@@ -572,7 +572,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
                     stakeB > 0 ? selectProtectedStake(b) / stakeB : 0
                   return ratioA - ratioB
                 },
-                alignment: Alignment.RIGHT,
+                alignment: 'right',
               },
               ...expertColumns,
             ]}

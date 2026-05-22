@@ -10,9 +10,9 @@ import {
   selectLatestAuctionSettled,
   selectLatestPaymentSettled,
   selectNetworkEpoch,
-  TimelineStage,
   type EpochMeterModel,
   type EpochProgress,
+  type TimelineStage,
 } from 'src/services/epoch'
 import { loadSam } from 'src/services/sam'
 import { fetchProtectedEventsWithValidator } from 'src/services/validator-with-protected_event'
@@ -125,10 +125,10 @@ function ProgressRing({ percent, size }: RingProps) {
 }
 
 const STAGE_LABEL: Record<TimelineStage, string> = {
-  [TimelineStage.PAYMENT]: 'payments settled',
-  [TimelineStage.AUCTION]: 'auction settled',
-  [TimelineStage.LIVE]: 'live',
-  [TimelineStage.NEXT]: 'next auction',
+  ['payment']: 'payments settled',
+  ['auction']: 'auction settled',
+  ['live']: 'live',
+  ['next']: 'next auction',
 }
 
 function nodeLabel(stages: TimelineStage[]): string {
@@ -150,7 +150,7 @@ function TimelineCard({
     <div className="flex flex-col items-center gap-2 py-1 px-1">
       <div className="flex items-stretch">
         {timeline.map((n, i) => {
-          const isLive = n.stages.includes(TimelineStage.LIVE)
+          const isLive = n.stages.includes('live')
           return (
             <React.Fragment key={n.epoch}>
               {i > 0 && (
@@ -209,13 +209,13 @@ function TimelineDot({
   stages: TimelineStage[]
   percent: number
 }) {
-  if (stages.includes(TimelineStage.LIVE)) {
+  if (stages.includes('live')) {
     return <ProgressRing percent={percent} size={22} />
   }
-  if (stages.includes(TimelineStage.PAYMENT)) {
+  if (stages.includes('payment')) {
     return <span className="w-3 h-3 rounded-full bg-foreground inline-block" />
   }
-  if (stages.includes(TimelineStage.AUCTION)) {
+  if (stages.includes('auction')) {
     return (
       <span className="w-3 h-3 rounded-full bg-muted-foreground inline-block" />
     )

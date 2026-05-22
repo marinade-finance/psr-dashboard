@@ -1,14 +1,14 @@
 import React from 'react'
 
 import { bondSol, pmpe, stake, topUp } from 'src/format'
-import { BondHealthState } from 'src/services/bond-health'
+import type { BondHealthState } from 'src/services/bond-health'
 import { bondAdvice } from 'src/services/tip-engine'
 
 import {
   CalcCard,
-  CardStatusTone,
   withSimAction,
   type CardStatus,
+  type CardStatusTone,
 } from './card'
 import { CalcRow, OkRow, SectionHeader } from './row'
 
@@ -50,14 +50,14 @@ const statusLine = (
   // is already arriving. Surface the inflow line instead — the ideal top-up
   // still shows in the section table below.
   if (
-    state === BondHealthState.WATCH &&
+    state === 'watch' &&
     coverage.topUpToKeepStake === 0 &&
     !nearFeeThreshold &&
     expectedStakeDeltaSol > 0
   ) {
     return {
       label: `${stake(expectedStakeDeltaSol)} arriving next epoch — bond covers it.`,
-      tone: CardStatusTone.GREEN,
+      tone: 'green',
     }
   }
   const advice = bondAdvice(
@@ -104,8 +104,8 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
   // visible if a fee/top-up is live or the projected basis matters
   // (undelegation already queued).
   const showRiskSection =
-    bondState === BondHealthState.CRITICAL ||
-    bondState === BondHealthState.WATCH ||
+    bondState === 'critical' ||
+    bondState === 'watch' ||
     bondRiskFeeSol > 0 ||
     coverage.bondRiskFeeShortfall > 0 ||
     coverage.carriedPaidUndelegationSol > 0

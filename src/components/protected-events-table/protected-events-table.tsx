@@ -12,13 +12,12 @@ import {
   selectAmount,
   selectProtectedStakeReason,
 } from 'src/services/protected-events'
-import { ProtectedEventStatus } from 'src/services/validator-with-protected_event'
+import type { ProtectedEventStatus } from 'src/services/validator-with-protected_event'
 import { selectName } from 'src/services/validators'
 
 import { Metric } from '../metric/metric'
-import { UserLevel } from '../navigation/navigation'
+import type { UserLevel } from '../navigation/navigation'
 import {
-  Alignment,
   OrderDirection,
   TABLE_SHELL_HOVER,
   Table,
@@ -30,7 +29,7 @@ import type { ProtectedEventWithValidator } from 'src/services/validator-with-pr
 
 const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
   switch (status) {
-    case ProtectedEventStatus.DRYRUN:
+    case 'dryrun':
       return (
         <HtmlTooltip html="This was logged during a test run — no money actually changes hands.">
           <Badge variant="secondary" className="badge cursor-help float-left">
@@ -38,7 +37,7 @@ const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
           </Badge>
         </HtmlTooltip>
       )
-    case ProtectedEventStatus.ESTIMATE:
+    case 'estimate':
       return (
         <HtmlTooltip html="An early estimate from live data. The final number gets locked in at the end of the epoch and may shift before then.">
           <Badge variant="default" className="badge cursor-help float-left">
@@ -91,7 +90,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
       if (epoch < minEpoch) minEpoch = epoch
       if (epoch > maxEpoch) maxEpoch = epoch
       epochSet.add(epoch)
-      if (status === ProtectedEventStatus.FACT && epoch > lastSettledEpoch) {
+      if (status === 'fact' && epoch > lastSettledEpoch) {
         lastSettledEpoch = epoch
       }
       const amount = selectAmount(protectedEvent)
@@ -242,7 +241,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
           label="Last settled epoch"
           value={lastSettledEpoch > 0 ? lastSettledEpoch.toLocaleString() : '—'}
           subline={
-            level === UserLevel.Expert && lastEpochBids > 0
+            level === 'expert' && lastEpochBids > 0
               ? `${sol(lastEpochBids)} SOL bids`
               : undefined
           }
@@ -303,7 +302,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
                 render: ({ protectedEvent }) => <>{protectedEvent.epoch}</>,
                 compare: (a, b) =>
                   a.protectedEvent.epoch - b.protectedEvent.epoch,
-                alignment: Alignment.RIGHT,
+                alignment: 'right',
               },
               {
                 header: 'Reason',
@@ -332,7 +331,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
                 compare: (a, b) =>
                   selectAmount(a.protectedEvent) -
                   selectAmount(b.protectedEvent),
-                alignment: Alignment.RIGHT,
+                alignment: 'right',
               },
               {
                 header: 'Funded by',
