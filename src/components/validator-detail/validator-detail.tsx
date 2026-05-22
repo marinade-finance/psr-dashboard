@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 
 import { cn } from 'src/class_utils'
@@ -43,7 +43,7 @@ import {
 } from 'src/services/bond-health'
 import { effectiveBondRunway } from 'src/services/calculations'
 import { HELP_TEXT } from 'src/services/help-text'
-import { fetchPsrEstimatesForValidator } from 'src/services/protected-events-estimator'
+import { calculateProtectedEventEstimates } from 'src/services/protected-events-estimator'
 import {
   selectExpectedStakeChange,
   selectInSet,
@@ -58,6 +58,7 @@ import {
   getTipIcon,
 } from 'src/services/tip-engine'
 import { TipConstraint } from 'src/services/tip-engine'
+import { fetchValidatorsWithEpochs } from 'src/services/validators'
 import { assertNever } from 'src/utils/assert-never'
 
 import type { AuctionResult, DsSamConfig } from '@marinade.finance/ds-sam-sdk'
@@ -576,12 +577,28 @@ export const ValidatorDetail = ({
     [validator, dsSamConfig, winningTotalPmpe],
   )
   const paymentMetrics = useMemo(() => computeBidding(validator), [validator])
-  const { data: psrEstimates = [] } = useQuery({
-    queryKey: ['psrEstimates', voteAccount],
-    queryFn: () => fetchPsrEstimatesForValidator(voteAccount),
-    staleTime: 5 * 60 * 1000,
+  // Shared per-page query: fetches all validators with 3 epochs once and
+  // derives every validator's PSR estimates from it. Previously this query
+  // was keyed per voteAccount, so clicking through N validators triggered
+  // N independent fetches of the multi-MB validators payload + N runs of
+  // calculateProtectedEventEstimates. Now: one fetch, one run, pure filter.
+  const queryClient = useQueryClient()
+  const { data: allPsrEstimates = [] } = useQuery({
+    queryKey: ['psr-estimates-all'],
+    queryFn: async ({ signal }) => {
+      const { validators } = await queryClient.ensureQueryData({
+        queryKey: ['validators-with-epochs', 3],
+        queryFn: (ctx: { signal: AbortSignal }) =>
+          fetchValidatorsWithEpochs(3, ctx.signal),
+      })
+      return calculateProtectedEventEstimates(validators, signal)
+    },
     enabled: tab === 'payments',
   })
+  const psrEstimates = useMemo(
+    () => allPsrEstimates.filter(e => e.vote_account === voteAccount),
+    [allPsrEstimates, voteAccount],
+  )
 
   const bondRiskFeeSol = validator.values.bondRiskFeeSol ?? 0
   const blacklistPenaltySol = computeBlacklistPenaltySol(validator)

@@ -33,14 +33,21 @@ export const fetchProtectedEventsWithValidator = async (
     scoring,
     { auctionResult },
   ] = await Promise.all([
-    fetchValidatorsWithEpochs(3, signal),
+    // Canonical cache key shared with the validator-detail Payments tab, so the
+    // 3-epoch validator payload (multi-MB) is fetched at most once.
+    qc.ensureQueryData({
+      queryKey: ['validators-with-epochs', 3],
+      queryFn: ({ signal: s }) => fetchValidatorsWithEpochs(3, s),
+    }),
     fetchProtectedEvents(signal),
     fetchScoring(signal),
     qc.ensureQueryData({ queryKey: ['sam'], queryFn: () => loadSam(null) }),
   ])
 
-  const estimatedProtectedEvents =
-    await calculateProtectedEventEstimates(validators)
+  const estimatedProtectedEvents = await calculateProtectedEventEstimates(
+    validators,
+    signal,
+  )
 
   const validatorsMap: Record<string, Validator> = {}
   for (const validator of validators) {
