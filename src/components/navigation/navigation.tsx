@@ -1,13 +1,10 @@
-import { useQueryClient } from '@tanstack/react-query'
-import React, { useCallback } from 'react'
+import React from 'react'
 import { Link, NavLink } from 'react-router-dom'
 
 import { cn } from 'src/class_utils'
 import { EpochMeter } from 'src/components/epoch-meter/epoch-meter'
 import { MarinadeLogo } from 'src/components/icons/marinade-logo'
 import { ThemeToggle } from 'src/components/theme-toggle/theme-toggle'
-import { fetchValidatorsWithBonds } from 'src/services/validator-with-bond'
-import { fetchProtectedEventsWithValidator } from 'src/services/validator-with-protected_event'
 
 export enum UserLevel {
   Basic = 'basic',
@@ -17,9 +14,6 @@ export enum UserLevel {
 export type UserLevelProps = {
   level?: UserLevel
 }
-
-const PROTECTED_EVENTS = 'protected-events'
-const BONDS = 'bonds'
 
 const tab =
   'px-3.5 py-2 rounded-lg text-sm font-medium transition-all text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer border-none no-underline inline-block whitespace-nowrap'
@@ -32,26 +26,6 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
 }) => {
   const isExpert = level === UserLevel.Expert
   const prefix = isExpert ? 'expert-' : ''
-  const queryClient = useQueryClient()
-
-  const prefetch = useCallback(
-    (route: string) => {
-      if (route === PROTECTED_EVENTS) {
-        void queryClient.prefetchQuery({
-          queryKey: [PROTECTED_EVENTS],
-          queryFn: fetchProtectedEventsWithValidator,
-          staleTime: 5 * 60 * 1000,
-        })
-      } else if (route === BONDS) {
-        void queryClient.prefetchQuery({
-          queryKey: [BONDS],
-          queryFn: fetchValidatorsWithBonds,
-          staleTime: 5 * 60 * 1000,
-        })
-      }
-    },
-    [queryClient],
-  )
 
   return (
     <>
@@ -90,10 +64,7 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
               </div>
             )}
           </NavLink>
-          <NavLink
-            to={`/${prefix}protected-events`}
-            onMouseEnter={() => prefetch(PROTECTED_EVENTS)}
-          >
+          <NavLink to={`/${prefix}protected-events`}>
             {({ isActive }) => (
               <div className={cn(tab, isActive && tabActive)}>
                 <span className="hidden sm:inline">Protected Events</span>
@@ -101,7 +72,7 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
               </div>
             )}
           </NavLink>
-          <NavLink to={`/${prefix}bonds`} onMouseEnter={() => prefetch(BONDS)}>
+          <NavLink to={`/${prefix}bonds`}>
             {({ isActive }) => (
               <div className={cn(tab, isActive && tabActive)}>
                 <span className="hidden sm:inline">Validator Bonds</span>
