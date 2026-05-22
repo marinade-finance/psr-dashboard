@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import React, { useEffect, useMemo, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
+import { useLocation } from 'react-router-dom'
 import rehypeRaw from 'rehype-raw'
 import remarkGfm from 'remark-gfm'
 
@@ -187,25 +188,27 @@ function makeComponents(
 
 export const DocsPage: React.FC<Props> = ({ level }) => {
   const isExpert = level === UserLevel.Expert
+  // `hash` is reactive — react-router updates it on browser back/forward,
+  // in-app navigation, and any history mutation. Drops the previous manual
+  // `hashchange` listener + `hashTick` counter (was a workaround for not
+  // having reactive URL state).
+  const { hash } = useLocation()
+  const hashName = hash.startsWith('#') ? hash.slice(1) : hash
+
   // The active document. Direct hash links (e.g. a breakdown "Guide ↗")
   // target anchors that live in GUIDE; default to GUIDE when a hash is
   // present so the scroll target resolves regardless of expert mode.
   const [activeDoc, setActiveDoc] = useState<Doc>(
-    isExpert && !window.location.hash ? 'GUIDE-EXPERT' : 'GUIDE',
+    isExpert && !hashName ? 'GUIDE-EXPERT' : 'GUIDE',
   )
   const [pageId, setPageId] = useState<string | null>(null)
-  // Bumped on browser hash navigation so the page resolver re-reads the
-  // hash and jumps to whichever page now owns the anchor.
-  const [hashTick, setHashTick] = useState(0)
 
+  // Reset the user's explicit page selection whenever the URL hash changes
+  // (browser back/forward or in-app anchor link) so the anchor resolution
+  // below takes over.
   useEffect(() => {
-    const onHash = () => {
-      setPageId(null)
-      setHashTick(t => t + 1)
-    }
-    window.addEventListener('hashchange', onHash)
-    return () => window.removeEventListener('hashchange', onHash)
-  }, [])
+    setPageId(null)
+  }, [hashName])
 
   const { data, status } = useQuery({
     queryKey: ['doc', activeDoc],
@@ -236,13 +239,12 @@ export const DocsPage: React.FC<Props> = ({ level }) => {
   const activePage = useMemo(() => {
     if (!pages.length) return null
     if (pageId) return pages.find(p => p.id === pageId) ?? pages[0]
-    const hash = window.location.hash.slice(1)
-    if (hash) {
-      const owner = anchorToPage.get(hash)
+    if (hashName) {
+      const owner = anchorToPage.get(hashName)
       if (owner) return pages.find(p => p.id === owner) ?? pages[0]
     }
     return pages[0]
-  }, [pages, pageId, anchorToPage, hashTick])
+  }, [pages, pageId, anchorToPage, hashName])
 
   // Scroll to the URL hash anchor once the owning page has rendered, and
   // flash a brief highlight. Re-runs on page switch and on hash changes
@@ -250,11 +252,10 @@ export const DocsPage: React.FC<Props> = ({ level }) => {
   // we flash both so the eye lands on something visible.
   useEffect(() => {
     if (status !== 'success' || !activePage) return undefined
-    const hash = window.location.hash.slice(1)
-    if (!hash || DOCS.includes(hash as Doc)) return undefined
-    if (!activePage.anchors.includes(hash)) return undefined
+    if (!hashName || DOCS.includes(hashName as Doc)) return undefined
+    if (!activePage.anchors.includes(hashName)) return undefined
     const id = requestAnimationFrame(() => {
-      const el = document.getElementById(hash)
+      const el = document.getElementById(hashName)
       if (!el) return
       el.scrollIntoView({ behavior: 'smooth', block: 'start' })
       const targets: Element[] = [el]
@@ -268,7 +269,7 @@ export const DocsPage: React.FC<Props> = ({ level }) => {
     return () => {
       cancelAnimationFrame(id)
     }
-  }, [status, activePage, hashTick])
+  }, [status, activePage, hashName])
 
   const selectPage = (id: string) => {
     setPageId(id)

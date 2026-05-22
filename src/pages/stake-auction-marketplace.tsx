@@ -4,7 +4,8 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
-import React, { useState, useCallback, useEffect, useMemo } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 import { Banner } from 'src/components/banner/banner'
 import { Loader } from 'src/components/loader/loader'
@@ -46,21 +47,17 @@ type Props = {
   dataSources?: SamDataSources
 }
 
-// Read the validator vote-account from the URL `?v=...` query so the detail
-// sheet survives a page reload and the browser back button.
-const readValidatorFromUrl = (): string | null => {
-  if (typeof window === 'undefined') return null
-  return new URLSearchParams(window.location.search).get('v')
-}
-
 export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
   const loadAuction = dataSources?.loadAuction ?? loadSam
   const loadValidatorNames =
     dataSources?.loadValidatorNames ?? fetchValidatorNames
   const queryClient = useQueryClient()
-  const [selectedValidator, setSelectedValidator] = useState<string | null>(
-    readValidatorFromUrl,
-  )
+
+  // The selected validator lives in the URL (`?v=...`) so deep links, page
+  // reloads, browser back/forward, and in-app navigation all work without
+  // manual history bookkeeping. react-router owns the synchronisation.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const selectedValidator = searchParams.get('v')
   const [simulationOverrides, setSimulationOverrides] =
     useState<AppOverrides | null>(null)
   const [simulatedValidators, setSimulatedValidators] = useState<Set<string>>(
@@ -169,40 +166,30 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
     if (selectedValidator) handleClearValidator(selectedValidator)
   }, [selectedValidator, handleClearValidator])
 
-  const handleValidatorClick = useCallback((voteAccount: string) => {
-    setSelectedValidator(prev => {
-      const url = new URL(window.location.href)
-      url.searchParams.set('v', voteAccount)
-      if (prev === null) {
-        // Opening — push so browser-back closes the sheet
-        window.history.pushState({ v: voteAccount }, '', url)
-      } else {
-        // Switching between validators — replace, no extra back step
-        window.history.replaceState({ v: voteAccount }, '', url)
-      }
-      return voteAccount
-    })
-  }, [])
+  const handleValidatorClick = useCallback(
+    (voteAccount: string) => {
+      setSearchParams(
+        prev => {
+          const next = new URLSearchParams(prev)
+          next.set('v', voteAccount)
+          return next
+        },
+        // Opening the sheet pushes a history entry so browser-back closes it.
+        // Switching between validators while the sheet is already open
+        // replaces in place — no extra back step.
+        { replace: selectedValidator !== null },
+      )
+    },
+    [setSearchParams, selectedValidator],
+  )
 
   const handleBack = useCallback(() => {
-    const state = window.history.state as { v?: string } | null
-    if (state?.v) {
-      window.history.back()
-    } else {
-      // No pushed state to pop (e.g. opened via deep link); strip the param.
-      const url = new URL(window.location.href)
-      url.searchParams.delete('v')
-      window.history.replaceState(null, '', url)
-      setSelectedValidator(null)
-    }
-  }, [])
-
-  // Keep state in sync with the URL when the user uses the browser back/forward.
-  useEffect(() => {
-    const onPop = () => setSelectedValidator(readValidatorFromUrl())
-    window.addEventListener('popstate', onPop)
-    return () => window.removeEventListener('popstate', onPop)
-  }, [])
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.delete('v')
+      return next
+    })
+  }, [setSearchParams])
 
   const handleDetailSimulate = useCallback(
     (
