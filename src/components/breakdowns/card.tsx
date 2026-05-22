@@ -3,11 +3,7 @@ import React from 'react'
 import { cn } from 'src/class_utils'
 import { BondHealthState } from 'src/services/bond-health'
 import { CardStatusTone } from 'src/services/card-status'
-import {
-  TipConstraint,
-  TipUrgency,
-  type ValidatorTip,
-} from 'src/services/tip-engine'
+import { type TipUrgency, type ValidatorTip } from 'src/services/tip-engine'
 import { assertNever } from 'src/utils/assert-never'
 
 import type { CardStatus, CardStatusAction } from 'src/services/card-status'
@@ -35,14 +31,14 @@ const STATUS_ACTION_CLASSES: Record<CardStatusTone, string> = {
 
 const urgencyToTone = (urgency: TipUrgency): CardStatusTone => {
   switch (urgency) {
-    case TipUrgency.CRITICAL:
+    case 'critical':
       return CardStatusTone.RED
-    case TipUrgency.WARNING:
-    case TipUrgency.INFO:
+    case 'warning':
+    case 'info':
       return CardStatusTone.YELLOW
-    case TipUrgency.POSITIVE:
+    case 'positive':
       return CardStatusTone.GREEN
-    case TipUrgency.NEUTRAL:
+    case 'neutral':
       return CardStatusTone.GREY
     default:
       return assertNever(urgency)
@@ -71,8 +67,8 @@ export const tipBannerTone = (
   bondHealth: BondHealthState,
 ): CardStatusTone => {
   if (
-    tip.constraint === TipConstraint.BOND &&
-    tip.urgency !== TipUrgency.NEUTRAL
+    tip.constraint === 'bond' &&
+    tip.urgency !== 'neutral'
   ) {
     return bondHealthToTone(bondHealth)
   }

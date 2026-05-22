@@ -58,7 +58,6 @@ import {
   getTipStyle,
   getTipIcon,
 } from 'src/services/tip-engine'
-import { TipConstraint } from 'src/services/tip-engine'
 import { fetchValidatorsWithEpochs } from 'src/services/validators'
 import { assertNever } from 'src/utils/assert-never'
 
@@ -70,6 +69,7 @@ import type {
   NotificationSummary,
 } from 'src/services/notifications'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
+import type { TipConstraint } from 'src/services/tip-engine'
 
 interface ValidatorDetailProps {
   validator: AugmentedAuctionValidator
@@ -137,11 +137,11 @@ const ATTENTION_TEXT: Record<AttentionTone, string> = {
 // there); 'rank' = out-of-set → Bidding tab (raise the static bid);
 // 'cap'/'none' have no dedicated tab (explanation lives in the header).
 const TIP_TAB: Record<TipConstraint, Tab | null> = {
-  [TipConstraint.BOND]: 'bond',
-  [TipConstraint.BID]: 'penalty',
-  [TipConstraint.RANK]: 'bidding',
-  [TipConstraint.CAP]: null,
-  [TipConstraint.NONE]: null,
+  bond: 'bond',
+  bid: 'penalty',
+  rank: 'bidding',
+  cap: null,
+  none: null,
 }
 
 function TabStrip({
@@ -814,7 +814,7 @@ export const ValidatorDetail = ({
               tipTarget && tipTarget !== tab
                 ? {
                     label:
-                      tip.constraint === TipConstraint.BOND
+                      tip.constraint === 'bond'
                         ? 'Bond tab →'
                         : 'Simulate →',
                     onClick: () => setTab(tipTarget),

@@ -37,23 +37,8 @@ import type {
 
 export type TipIcon = 'alert' | 'bond' | 'bid' | 'cap' | 'up' | 'down' | 'right'
 
-export const TipUrgency = {
-  CRITICAL: 'critical',
-  WARNING: 'warning',
-  INFO: 'info',
-  POSITIVE: 'positive',
-  NEUTRAL: 'neutral',
-} as const
-export type TipUrgency = (typeof TipUrgency)[keyof typeof TipUrgency]
-
-export const TipConstraint = {
-  RANK: 'rank',
-  BOND: 'bond',
-  BID: 'bid',
-  CAP: 'cap',
-  NONE: 'none',
-} as const
-export type TipConstraint = (typeof TipConstraint)[keyof typeof TipConstraint]
+export type TipUrgency = 'critical' | 'warning' | 'info' | 'positive' | 'neutral'
+export type TipConstraint = 'rank' | 'bond' | 'bid' | 'cap' | 'none'
 
 export interface ValidatorTip {
   text: string
@@ -96,15 +81,15 @@ export const getBondAdviceStyle = (health: BondHealthState): TipStyle => {
 // alarm also swaps to the alert glyph; see getTipIcon.
 export const getTipStyle = (urgency: TipUrgency): TipStyle => {
   switch (urgency) {
-    case TipUrgency.CRITICAL:
+    case 'critical':
       return { color: CSS_DESTRUCTIVE, bg: CSS_DESTRUCTIVE_LIGHT }
-    case TipUrgency.WARNING:
+    case 'warning':
       return { color: CSS_WARNING, bg: CSS_WARNING_LIGHT }
-    case TipUrgency.INFO:
+    case 'info':
       return { color: CSS_INFO, bg: CSS_INFO_LIGHT }
-    case TipUrgency.POSITIVE:
+    case 'positive':
       return { color: CSS_PRIMARY, bg: CSS_PRIMARY_LIGHT_10 }
-    case TipUrgency.NEUTRAL:
+    case 'neutral':
       return { color: CSS_MUTED_FG, bg: CSS_MUTED }
     default:
       return assertNever(urgency)
@@ -122,14 +107,14 @@ export const getTipStyle = (urgency: TipUrgency): TipStyle => {
 export const getTipIcon = (tip: ValidatorTip): TipIcon => {
   if (tip.alert) return 'alert'
   switch (tip.constraint) {
-    case TipConstraint.BOND:
+    case 'bond':
       return 'bond'
-    case TipConstraint.BID:
-    case TipConstraint.RANK:
+    case 'bid':
+    case 'rank':
       return 'bid'
-    case TipConstraint.CAP:
+    case 'cap':
       return 'cap'
-    case TipConstraint.NONE:
+    case 'none':
       if (tip.delta > 0) return 'up'
       if (tip.delta < 0) return 'down'
       return 'right'
@@ -186,7 +171,7 @@ export function bondAdvice(
     const isCharging = bondRiskFeeSol > 0
     return {
       text: `Top up bond to ${stake(minBondBalanceSol)} to qualify.`,
-      urgency: isCharging ? TipUrgency.CRITICAL : TipUrgency.NEUTRAL,
+      urgency: isCharging ? 'critical' : 'neutral',
       tone: isCharging ? CardStatusTone.RED : CardStatusTone.GREY,
     }
   }
@@ -198,7 +183,7 @@ export function bondAdvice(
       const hasRealStake = marinadeActivatedStakeSol > NON_TRIVIAL_STAKE_SOL
       return {
         text: `Post a bond of ${stake(minBondBalanceSol)} to win stake.`,
-        urgency: hasRealStake ? TipUrgency.CRITICAL : TipUrgency.NEUTRAL,
+        urgency: hasRealStake ? 'critical' : 'neutral',
         tone: hasRealStake ? CardStatusTone.RED : CardStatusTone.GREY,
       }
     }
@@ -211,18 +196,18 @@ export function bondAdvice(
           coverage.bondRiskFeeShortfall > 0
             ? `Top up ${topUp(coverage.bondRiskFeeShortfall)} or pay ${pay(bondRiskFeeSol)} bond fee.`
             : `Bond fee ${pay(bondRiskFeeSol)} estimated next epoch.`
-        return { text, urgency: TipUrgency.CRITICAL, tone: CardStatusTone.RED }
+        return { text, urgency: 'critical', tone: CardStatusTone.RED }
       }
       if (coverage.bondRiskFeeShortfall > 0) {
         return {
           text: `Top up ${topUp(coverage.bondRiskFeeShortfall)} — bond below the penalty threshold.`,
-          urgency: TipUrgency.CRITICAL,
+          urgency: 'critical',
           tone: CardStatusTone.RED,
         }
       }
       return {
         text: 'Bond below minimum — top up to maintain eligibility.',
-        urgency: TipUrgency.CRITICAL,
+        urgency: 'critical',
         tone: CardStatusTone.RED,
       }
     }
@@ -230,7 +215,7 @@ export function bondAdvice(
       if (coverage.topUpToKeepStake > 0) {
         return {
           text: `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake.`,
-          urgency: TipUrgency.WARNING,
+          urgency: 'warning',
           tone: CardStatusTone.YELLOW,
         }
       }
@@ -240,27 +225,27 @@ export function bondAdvice(
             coverage.topUpToIdealKeep > 0
               ? `Top up ${topUp(coverage.topUpToIdealKeep)} to avoid bond fee.`
               : 'Bond near threshold — top up to avoid bond fee.',
-          urgency: TipUrgency.WARNING,
+          urgency: 'warning',
           tone: CardStatusTone.YELLOW,
         }
       }
       if (coverage.topUpToIdealKeep > 0) {
         return {
           text: `Top up ${topUp(coverage.topUpToIdealKeep)} to grow stake.`,
-          urgency: TipUrgency.INFO,
+          urgency: 'info',
           tone: CardStatusTone.YELLOW,
         }
       }
       return {
         text: 'Bond covers current stake.',
-        urgency: TipUrgency.INFO,
+        urgency: 'info',
         tone: CardStatusTone.YELLOW,
       }
     }
     case BondHealthState.HEALTHY:
       return {
         text: 'Bond has enough coverage.',
-        urgency: TipUrgency.POSITIVE,
+        urgency: 'positive',
         tone: CardStatusTone.GREEN,
       }
     default:
@@ -274,21 +259,21 @@ export function bondAdvice(
 // color = severity, glyph = lever — keep them orthogonal at the source.
 
 const SEVERITY_ORDER: Record<TipUrgency, number> = {
-  [TipUrgency.CRITICAL]: 0,
-  [TipUrgency.WARNING]: 1,
-  [TipUrgency.INFO]: 2,
-  [TipUrgency.POSITIVE]: 3,
-  [TipUrgency.NEUTRAL]: 4,
+  critical: 0,
+  warning: 1,
+  info: 2,
+  positive: 3,
+  neutral: 4,
 }
 // Tiebreak at the same severity. Bond first (most actionable, hardest
 // block), then bid/rank (same lever — raise the bid), then cap, then
 // external block (samBlocked / blacklist), then none (the delta fallback).
 const LEVER_ORDER: Record<TipConstraint, number> = {
-  [TipConstraint.BOND]: 0,
-  [TipConstraint.BID]: 1,
-  [TipConstraint.RANK]: 1,
-  [TipConstraint.CAP]: 2,
-  [TipConstraint.NONE]: 3,
+  bond: 0,
+  bid: 1,
+  rank: 1,
+  cap: 2,
+  none: 3,
 }
 
 function tip(
@@ -350,8 +335,8 @@ function bondCta(
       )
       return tip(
         `Top up ${topUp(topUpAmt)} to avoid next epoch bond fee and re-qualify.`,
-        TipUrgency.CRITICAL,
-        TipConstraint.BOND,
+        'critical',
+        'bond',
         delta,
         true,
       )
@@ -363,8 +348,8 @@ function bondCta(
       bondBalance <= 0
         ? `Post a bond of ${stake(dsSamConfig.minBondBalanceSol)} to qualify.`
         : `Top up bond to ${stake(dsSamConfig.minBondBalanceSol)} to qualify.`,
-      isDefending(validator, delta) ? TipUrgency.WARNING : TipUrgency.NEUTRAL,
-      TipConstraint.BOND,
+      isDefending(validator, delta) ? 'warning' : 'neutral',
+      'bond',
       delta,
     )
   }
@@ -410,8 +395,8 @@ function bondCta(
       topUpAmt > 0
         ? `Top up ${topUp(topUpAmt)} to keep your stake.`
         : 'Top up bond to keep your stake.',
-      TipUrgency.WARNING,
-      TipConstraint.BOND,
+      'warning',
+      'bond',
       delta,
     )
   }
@@ -430,7 +415,7 @@ function bondCta(
   return tip(
     advice.text,
     advice.urgency,
-    TipConstraint.BOND,
+    'bond',
     delta,
     health === BondHealthState.CRITICAL && bondRiskFeeSol > 0,
   )
@@ -455,8 +440,8 @@ function bidCta(
   if (metrics.penaltyPmpe > 0) {
     return tip(
       `Raise bid or pay a ${pay(metrics.penaltySol)} penalty.`,
-      TipUrgency.CRITICAL,
-      TipConstraint.BID,
+      'critical',
+      'bid',
       delta,
       true,
     )
@@ -477,8 +462,8 @@ function bidCta(
     // so it outranks the generic "Losing N" delta narrative.
     return tip(
       'Raise bid to qualify for stake.',
-      isDefending(validator, delta) ? TipUrgency.WARNING : TipUrgency.INFO,
-      TipConstraint.RANK,
+      isDefending(validator, delta) ? 'warning' : 'info',
+      'rank',
       delta,
     )
   }
@@ -557,8 +542,8 @@ function outOfSetCta(
     // worth the conditional-severity logic the other branches need.
     return tip(
       'Blocked from SAM this epoch.',
-      TipUrgency.CRITICAL,
-      TipConstraint.NONE,
+      'critical',
+      'none',
       delta,
       true,
     )
@@ -576,8 +561,8 @@ function outOfSetCta(
       // Growth lever — post a bond and you can win stake. Violet.
       return tip(
         'No bond posted. Add a bond to qualify.',
-        TipUrgency.INFO,
-        TipConstraint.BOND,
+        'info',
+        'bond',
         delta,
       )
     }
@@ -592,8 +577,8 @@ function outOfSetCta(
           (penaltyPmpe / 1000) * (validator.marinadeActivatedStakeSol ?? 0)
         return tip(
           `Blacklisted — ${pay(penaltySol)} penalty this epoch.`,
-          TipUrgency.CRITICAL,
-          TipConstraint.NONE,
+          'critical',
+          'none',
           delta,
           true,
         )
@@ -601,8 +586,8 @@ function outOfSetCta(
       // Yellow when defending so this message outranks deltaCta's symptom.
       return tip(
         'Blacklisted by Marinade.',
-        defending ? TipUrgency.WARNING : TipUrgency.NEUTRAL,
-        TipConstraint.NONE,
+        defending ? 'warning' : 'neutral',
+        'none',
         delta,
       )
     }
@@ -611,8 +596,8 @@ function outOfSetCta(
     // letting deltaCta's "Losing N SOL" win the severity sort.
     return tip(
       'Not eligible — check client version and vote credits.',
-      defending ? TipUrgency.WARNING : TipUrgency.INFO,
-      TipConstraint.NONE,
+      defending ? 'warning' : 'info',
+      'none',
       delta,
     )
   }
@@ -623,14 +608,14 @@ function outOfSetCta(
     // amounts, else violet (informational, no immediate loss).
     const capUrgency =
       cap.constraintType === AuctionConstraintType.WANT
-        ? TipUrgency.NEUTRAL
+        ? 'neutral'
         : defending
-          ? TipUrgency.WARNING
-          : TipUrgency.INFO
+          ? 'warning'
+          : 'info'
     return tip(
       `${capCauseLine(cap.constraintType, cap.constraintName)}.`,
       capUrgency,
-      TipConstraint.CAP,
+      'cap',
       delta,
     )
   }
@@ -658,17 +643,17 @@ function capCta(
   //   violet — other cap, no meaningful loss (informational).
   const urgency =
     cap.constraintType === AuctionConstraintType.WANT
-      ? TipUrgency.NEUTRAL
+      ? 'neutral'
       : isDefending(validator, delta)
-        ? TipUrgency.WARNING
-        : TipUrgency.INFO
+        ? 'warning'
+        : 'info'
   const cause = capCauseLine(cap.constraintType, cap.constraintName)
   // Two-line when actively losing stake; single line when just blocked.
   const text =
     delta < 0
       ? `${cause}\nLosing ${stake(Math.abs(delta))} until cap frees.`
       : `${cause} — stake can't grow until cap frees.`
-  return tip(text, urgency, TipConstraint.CAP, delta)
+  return tip(text, urgency, 'cap', delta)
 }
 
 // Delta lever — the "stake trajectory" fallback. Always emits something
@@ -682,8 +667,8 @@ function deltaCta(
   if (delta > 0) {
     return tip(
       `${stake(delta)} arriving next epoch.`,
-      TipUrgency.POSITIVE,
-      TipConstraint.NONE,
+      'positive',
+      'none',
       delta,
     )
   }
@@ -704,8 +689,8 @@ function deltaCta(
     if (atOwnCap) {
       return tip(
         'At your `maxStakeWanted` setting.',
-        TipUrgency.NEUTRAL,
-        TipConstraint.NONE,
+        'neutral',
+        'none',
         delta,
       )
     }
@@ -715,15 +700,15 @@ function deltaCta(
     if (belowTarget && !capBinding) {
       return tip(
         'Raise bid to get more stake.',
-        TipUrgency.INFO,
-        TipConstraint.RANK,
+        'info',
+        'rank',
         delta,
       )
     }
     return tip(
       'At target stake.',
-      TipUrgency.NEUTRAL,
-      TipConstraint.NONE,
+      'neutral',
+      'none',
       delta,
     )
   }
@@ -732,8 +717,8 @@ function deltaCta(
   // CTA at INFO level (bid too low, not-eligible) can outrank the symptom.
   return tip(
     `Losing ${stake(Math.abs(delta))} next epoch.`,
-    isDefending(validator, delta) ? TipUrgency.WARNING : TipUrgency.INFO,
-    TipConstraint.NONE,
+    isDefending(validator, delta) ? 'warning' : 'info',
+    'none',
     delta,
   )
 }

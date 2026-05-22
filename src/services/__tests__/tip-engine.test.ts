@@ -13,13 +13,11 @@ import {
   getTipStyle,
   getTipIcon,
   nextStakeDeltaCell,
-  TipUrgency,
-  TipConstraint,
 } from '../tip-engine'
 
 import type { ProtectedEvent } from '../protected-events'
 import type { AugmentedAuctionValidator } from '../sam'
-import type { ValidatorTip } from '../tip-engine'
+import type { TipConstraint, TipUrgency, ValidatorTip } from '../tip-engine'
 import type { DsSamConfig } from '@marinade.finance/ds-sam-sdk'
 
 function makeValidator(
@@ -115,32 +113,32 @@ describe('getApyBreakdown', () => {
 
 describe('getTipStyle', () => {
   it('critical → destructive', () => {
-    expect(getTipStyle(TipUrgency.CRITICAL).color).toContain('destructive')
+    expect(getTipStyle('critical').color).toContain('destructive')
   })
 
   it('warning → warning', () => {
-    expect(getTipStyle(TipUrgency.WARNING).color).toContain('warning')
+    expect(getTipStyle('warning').color).toContain('warning')
   })
 
   it('info → info', () => {
-    expect(getTipStyle(TipUrgency.INFO).color).toContain('info')
+    expect(getTipStyle('info').color).toContain('info')
   })
 
   it('positive → primary', () => {
-    expect(getTipStyle(TipUrgency.POSITIVE).color).toContain('primary')
+    expect(getTipStyle('positive').color).toContain('primary')
   })
 
   it('neutral → muted', () => {
-    expect(getTipStyle(TipUrgency.NEUTRAL).color).toContain('muted')
+    expect(getTipStyle('neutral').color).toContain('muted')
   })
 
   it('getTipStyle returns color and bg fields, no icon', () => {
-    const urgencies = [
-      TipUrgency.CRITICAL,
-      TipUrgency.WARNING,
-      TipUrgency.INFO,
-      TipUrgency.POSITIVE,
-      TipUrgency.NEUTRAL,
+    const urgencies: TipUrgency[] = [
+      'critical',
+      'warning',
+      'info',
+      'positive',
+      'neutral',
     ]
     for (const u of urgencies) {
       expect('icon' in getTipStyle(u)).toBe(false)
@@ -153,49 +151,45 @@ describe('getTipStyle', () => {
 describe('getTipIcon', () => {
   const tip = (over: Partial<ValidatorTip>): ValidatorTip => ({
     text: '',
-    urgency: TipUrgency.WARNING,
-    constraint: TipConstraint.NONE,
+    urgency: 'warning',
+    constraint: 'none',
     delta: 0,
     ...over,
   })
 
   it('constraint:bond → bond glyph', () => {
-    expect(getTipIcon(tip({ constraint: TipConstraint.BOND }))).toBe('bond')
+    expect(getTipIcon(tip({ constraint: 'bond' }))).toBe('bond')
   })
 
   it('constraint:bid → bid glyph', () => {
-    expect(getTipIcon(tip({ constraint: TipConstraint.BID }))).toBe('bid')
+    expect(getTipIcon(tip({ constraint: 'bid' }))).toBe('bid')
   })
 
   it('constraint:rank → bid glyph', () => {
-    expect(getTipIcon(tip({ constraint: TipConstraint.RANK }))).toBe('bid')
+    expect(getTipIcon(tip({ constraint: 'rank' }))).toBe('bid')
   })
 
   it('constraint:cap → cap glyph', () => {
-    expect(getTipIcon(tip({ constraint: TipConstraint.CAP }))).toBe('cap')
+    expect(getTipIcon(tip({ constraint: 'cap' }))).toBe('cap')
   })
 
   it('constraint:none — delta>0 → up, delta<0 → down, delta=0 → right', () => {
     expect(
-      getTipIcon(tip({ constraint: TipConstraint.NONE, delta: 100 })),
+      getTipIcon(tip({ constraint: 'none', delta: 100 })),
     ).toBe('up')
     expect(
-      getTipIcon(tip({ constraint: TipConstraint.NONE, delta: -100 })),
+      getTipIcon(tip({ constraint: 'none', delta: -100 })),
     ).toBe('down')
-    expect(getTipIcon(tip({ constraint: TipConstraint.NONE, delta: 0 }))).toBe(
+    expect(getTipIcon(tip({ constraint: 'none', delta: 0 }))).toBe(
       'right',
     )
   })
 
   it('bond/bid/rank constraint → glyph is never "up" even when losing stake', () => {
-    for (const c of [
-      TipConstraint.BOND,
-      TipConstraint.BID,
-      TipConstraint.RANK,
-    ]) {
+    for (const c of ['bond', 'bid', 'rank'] as TipConstraint[]) {
       const losing = tip({
         constraint: c,
-        urgency: TipUrgency.WARNING,
+        urgency: 'warning',
         delta: -5000,
       })
       expect(getTipIcon(losing)).not.toBe('up')
@@ -204,8 +198,8 @@ describe('getTipIcon', () => {
 
   it('constraint NONE + delta < 0 → "down"', () => {
     const losing = tip({
-      constraint: TipConstraint.NONE,
-      urgency: TipUrgency.WARNING,
+      constraint: 'none',
+      urgency: 'warning',
       delta: -5000,
     })
     expect(getTipIcon(losing)).toBe('down')
