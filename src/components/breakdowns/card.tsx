@@ -2,6 +2,7 @@ import React from 'react'
 
 import { cn } from 'src/class_utils'
 import { BondHealthState } from 'src/services/bond-health'
+import { CardStatusTone } from 'src/services/card-status'
 import {
   TipConstraint,
   TipUrgency,
@@ -9,25 +10,12 @@ import {
 } from 'src/services/tip-engine'
 import { assertNever } from 'src/utils/assert-never'
 
-export enum CardStatusTone {
-  RED = 'red',
-  YELLOW = 'yellow',
-  GREEN = 'green',
-  GREY = 'grey',
-}
-export type CardStatusAction = {
-  label: string
-  onClick: () => void
-  // Pill colour. Defaults to the banner's own tone (e.g. red status with a
-  // red "Bond tab →" pill). Override to 'yellow' for sim-jump pills so the
-  // simulation affordance reads consistently across tones.
-  tone?: CardStatusTone
-}
-export type CardStatus = {
-  label: string
-  tone: CardStatusTone
-  action?: CardStatusAction
-}
+import type { CardStatus, CardStatusAction } from 'src/services/card-status'
+
+// Re-export for existing import paths (this file used to own these types).
+// New code should import directly from 'src/services/card-status'.
+export { CardStatusTone }
+export type { CardStatus, CardStatusAction }
 
 const STATUS_CLASSES: Record<CardStatusTone, string> = {
   [CardStatusTone.RED]: 'bg-destructive-light text-destructive',

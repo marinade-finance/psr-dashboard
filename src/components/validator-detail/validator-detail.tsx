@@ -14,6 +14,7 @@ import { docsPath } from 'src/components/breakdowns/docs-path'
 import { PaymentsBreakdown } from 'src/components/breakdowns/payments'
 import { SEPARATOR_DIV_CLASS } from 'src/components/breakdowns/row'
 import { HelpTip } from 'src/components/help-tip/help-tip'
+import { TIP_ICONS } from 'src/components/icons/tip-icons'
 import { Button } from 'src/components/ui/button'
 import { Input } from 'src/components/ui/input'
 import { Sheet, SheetContent } from 'src/components/ui/sheet'
@@ -736,7 +737,7 @@ export const ValidatorDetail = ({
                   style={{ color: tipStyle.color }}
                 >
                   <span className="text-sm leading-none">
-                    {getTipIcon(tip)}
+                    {TIP_ICONS[getTipIcon(tip)]}
                   </span>
                   {`#${rank}`}
                 </span>
