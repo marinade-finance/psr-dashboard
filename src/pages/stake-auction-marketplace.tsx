@@ -4,7 +4,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState, useCallback, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import { Banner } from 'src/components/banner/banner'
@@ -25,6 +25,7 @@ import {
   selectMaxAPY,
 } from 'src/services/sam'
 import { mergeOverrides, removeFromOverrides } from 'src/services/simulation'
+import { runSdkRerun } from 'src/services/sdk-rerun'
 
 import type { AuctionResult, DsSamConfig } from '@marinade.finance/ds-sam-sdk'
 import type { UserLevel } from 'src/components/navigation/navigation'
@@ -64,6 +65,9 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
   )
   const [originalAuctionResult, setOriginalAuctionResult] =
     useState<AuctionResult | null>(null)
+  // Ref keeps the base auction data accessible inside mutation callbacks
+  // without stale-closure issues from React's batched state updates.
+  const originalAuctionDataRef = useRef<AuctionResult | null>(null)
 
   const { data, status } = useQuery({
     queryKey: ['sam'],
@@ -73,7 +77,14 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
   })
 
   const { mutate: runSimulation, isPending: isCalculating } = useMutation({
-    mutationFn: (overrides: AppOverrides) => loadAuction(overrides),
+    mutationFn: async (overrides: AppOverrides): Promise<SamResult> => {
+      const current = queryClient.getQueryData<SamResult>(['sam'])
+      if (!current) throw new Error('No auction data')
+      const baseAuctionData =
+        originalAuctionDataRef.current?.auctionData ?? current.auctionResult.auctionData
+      const result = runSdkRerun(baseAuctionData, current.dcSamConfig, overrides)
+      return { auctionResult: result, epochsPerYear: current.epochsPerYear, dcSamConfig: current.dcSamConfig }
+    },
     onSuccess: result => {
       queryClient.setQueryData(['sam'], result)
     },
@@ -111,6 +122,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
   const ensureOriginalSaved = useCallback(() => {
     if (!originalAuctionResult && data?.auctionResult) {
       setOriginalAuctionResult(data.auctionResult)
+      originalAuctionDataRef.current = data.auctionResult
       return data.auctionResult
     }
     return originalAuctionResult
@@ -120,6 +132,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
     setSimulationOverrides(null)
     setSimulatedValidators(new Set())
     setOriginalAuctionResult(null)
+    originalAuctionDataRef.current = null
     // Invalidate forces a refetch of the base (no-override) auction so all
     // consumers re-render against fresh data.
     void queryClient.invalidateQueries({ queryKey: ['sam'] })
@@ -140,6 +153,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
         // All cleared — drop overrides and refetch base auction.
         setSimulationOverrides(null)
         setOriginalAuctionResult(null)
+        originalAuctionDataRef.current = null
         void queryClient.invalidateQueries({ queryKey: ['sam'] })
       } else {
         setSimulationOverrides(nextOverrides)
