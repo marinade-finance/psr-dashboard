@@ -66,8 +66,6 @@ import {
   getTipIcon,
   nextStakeDeltaCell,
 } from 'src/services/tip-engine'
-import { ICON_DOWN } from 'src/components/icons/icon-down'
-import { ICON_UP } from 'src/components/icons/icon-up'
 import { assertNever } from 'src/utils/assert-never'
 
 import type { UserLevel } from '../navigation/navigation'
@@ -95,6 +93,26 @@ type ValidatorWithBondState = AugmentedAuctionValidator & {
 }
 
 const TEXT_MUTED = 'text-muted-foreground'
+
+// Compact stake-delta arrows: same diagonal path as ICON_UP/ICON_DOWN, smaller.
+const ARROW_UP_SM = (
+  <svg width="9" height="9" viewBox="0 0 12 12" stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M2 10L10 2M4 2h6v6" />
+  </svg>
+)
+const ARROW_DOWN_SM = (
+  <svg width="9" height="9" viewBox="0 0 12 12" stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M2 2L10 10M10 4v6H4" />
+  </svg>
+)
+// 1 arrow < 5k SOL, 2 arrows < 25k, 3 arrows ≥ 25k
+function stakeArrowCount(delta: number): number {
+  const abs = Math.abs(delta)
+  if (abs < 1) return 0
+  if (abs < 5_000) return 1
+  if (abs < 25_000) return 2
+  return 3
+}
 const DESTRUCTIVE_LIGHT_CHIP = 'bg-destructive-light text-destructive'
 // no-bond and critical share the red chip — they differ only by label.
 const DESTRUCTIVE_CHIP = {
@@ -909,25 +927,35 @@ export const SamTable: React.FC<Props> = ({
 
         {/* Stake / Next change */}
         <TableCell className="px-3.5 py-3">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-muted-foreground text-xs font-mono">
-              {stake(validator.marinadeActivatedStakeSol)}
-            </span>
-            {isCompact ? (
-              (() => {
-                if (Math.abs(expectedChange) < 1) return null
+          {isCompact ? (
+            <div className="flex items-center gap-1">
+              <span className="text-muted-foreground text-xs font-mono">
+                {stake(validator.marinadeActivatedStakeSol)}
+              </span>
+              {(() => {
+                const count = stakeArrowCount(expectedChange)
+                if (count === 0) return null
                 const isUp = expectedChange > 0
                 return (
                   <span
-                    className="inline-flex items-center"
+                    className="inline-flex items-center gap-[1px]"
                     style={{ color: isUp ? CSS_STATUS_GREEN : CSS_DESTRUCTIVE }}
                   >
-                    {isUp ? ICON_UP : ICON_DOWN}
+                    {Array.from({ length: count }, (_, i) => (
+                      <span key={i} className="inline-flex">
+                        {isUp ? ARROW_UP_SM : ARROW_DOWN_SM}
+                      </span>
+                    ))}
                   </span>
                 )
-              })()
-            ) : (
-              (() => {
+              })()}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-0.5">
+              <span className="text-muted-foreground text-xs font-mono">
+                {stake(validator.marinadeActivatedStakeSol)}
+              </span>
+              {(() => {
                 const cell = nextStakeDeltaCell(expectedChange)
                 return (
                   <span
@@ -952,9 +980,9 @@ export const SamTable: React.FC<Props> = ({
                     {stake(expectedChange)}
                   </span>
                 )
-              })()
-            )}
-          </div>
+              })()}
+            </div>
+          )}
         </TableCell>
 
         {/* Next Step — icon = constraint/direction, color = severity.
