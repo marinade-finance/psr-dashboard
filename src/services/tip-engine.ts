@@ -661,6 +661,11 @@ function deltaCta(
   priorityFrontierPmpe = 0,
 ): ValidatorTip {
   if (delta > 0) {
+    // Validator is receiving scraps from leftover budget — below the priority
+    // frontier. Raising bid to clear the frontier gets them full allocation.
+    if (priorityFrontierPmpe > 0 && validator.revShare.totalPmpe < priorityFrontierPmpe) {
+      return tip('Raise bid to get more stake next epoch.', 'info', 'rank', delta)
+    }
     return tip(
       `${stake(delta)} arriving next epoch.`,
       'positive',

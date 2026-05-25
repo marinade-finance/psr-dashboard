@@ -346,6 +346,33 @@ describe('getValidatorTip', () => {
     expect(tip.text).toContain('arriving next epoch')
   })
 
+  it('delta > 0 + below priority frontier → info/rank raise-bid for more', () => {
+    // Validator is getting scraps from the leftover budget (delta > 0) but sits
+    // below the priority frontier. Raising bid to clear the frontier gets them
+    // full target-delta allocation instead of the partial crumb.
+    const validator = makeValidator({
+      values: { expectedStakeChangeSol: 28 },
+      revShare: { totalPmpe: 28 },
+    })
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 20, undefined, undefined, 50)
+    expect(tip.urgency).toBe('info')
+    expect(tip.constraint).toBe('rank')
+    expect(tip.text).toBe('Raise bid to get more stake next epoch.')
+  })
+
+  it('delta > 0 + at/above priority frontier → positive arriving message', () => {
+    // Validator clears the frontier — already in the priority group. Small positive
+    // delta reflects a remaining gap to target, not leftover scraps.
+    const validator = makeValidator({
+      values: { expectedStakeChangeSol: 28 },
+      revShare: { totalPmpe: 28 },
+    })
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 20, undefined, undefined, 10)
+    expect(tip.urgency).toBe('positive')
+    expect(tip.constraint).toBe('none')
+    expect(tip.text).toContain('arriving next epoch')
+  })
+
   it('delta === 0 + active ≈ target → neutral "At target stake"', () => {
     const validator = makeValidator({
       marinadeActivatedStakeSol: 15000,
@@ -365,7 +392,7 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('info')
     expect(tip.constraint).toBe('rank')
-    expect(tip.text).toBe('Raise bid to get more stake.')
+    expect(tip.text).toBe('Raise bid to grow stake.')
   })
 
   it('delta < 0 + defending + healthy bond → warning, losing stake message', () => {
