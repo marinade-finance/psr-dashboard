@@ -186,7 +186,7 @@ export function bondAdvice(
       }
       // Runway ≤ minBondEpochs + BOND_URGENT_EPOCHS: no fee yet but runway
       // is critically short. Show the keep-stake amount if available,
-      // otherwise flag the approaching penalty floor.
+      // then the ideal top-up, otherwise a generic runway warning.
       if (coverage.topUpToKeepStake > 0) {
         return {
           text: `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake.`,
@@ -194,8 +194,15 @@ export function bondAdvice(
           tone: 'red',
         }
       }
+      if (coverage.topUpToIdealKeep > 0) {
+        return {
+          text: `Top up ${topUp(coverage.topUpToIdealKeep)} to extend runway.`,
+          urgency: 'critical',
+          tone: 'red',
+        }
+      }
       return {
-        text: 'Top up bond to stay above the penalty floor.',
+        text: 'Top up bond to extend runway.',
         urgency: 'critical',
         tone: 'red',
       }

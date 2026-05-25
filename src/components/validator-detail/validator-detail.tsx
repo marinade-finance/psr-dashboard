@@ -242,6 +242,8 @@ function bondCoverageLabel(
         return `Top up ${topUp(coverage.bondRiskFeeShortfall)} to avoid the fee`
       if (coverage.topUpToKeepStake > 0)
         return `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake`
+      if (coverage.topUpToIdealKeep > 0)
+        return `Top up ${topUp(coverage.topUpToIdealKeep)} to extend runway`
       return 'Critical'
     case 'watch':
       // Route through bondAdvice — the canonical CTA source — strip trailing period.
