@@ -175,6 +175,17 @@ test pages; they exist only to feed fixtures.
 - `src/components/banner/banner.tsx` — dismissible announcement card;
   dismissed state persisted in localStorage keyed by title
 - `src/services/validators.ts` — validator API client
+- `src/services/scoring.ts` — scoring API client; fetches `bondRiskFeeSol` per
+  validator (estimated risk fee for the current epoch). Wire-format validated at
+  the boundary so a backend field rename throws rather than silently producing NaN.
+- `src/services/epoch.ts` — `EPOCH_DURATION_MS = 48 * 60 * 60 * 1000` (48 h);
+  `EpochProgress`, `TimelineStage`, `EpochMeterModel` types; `selectNetworkEpoch`
+- `src/services/card-status.ts` — `CardStatus`, `CardStatusTone`, `CardStatusAction`
+  types. These live in the service layer (not `src/components/`) to avoid circular
+  imports when `tip-engine.ts` builds status values.
+- `src/services/simulation.ts` — `AppOverrides` wraps SDK `SourceDataOverrides`
+  and adds a `bondBalanceSol: Map<string, number>` for bond overrides;
+  `PositionChange` and `buildOriginalPositionsMap` for ghost-row grading
 - `src/format.ts` — number formatting utilities. `pay()` always **rounds up** (ceil) — fee and penalty amounts shown to users are never understated. On-chain values are exact to the lamport; the ceiling is display-only.
 
 ### SDK Integration
@@ -189,10 +200,14 @@ validators gain eligibility fields (`samEligible`, `samBlocked`).
 
 ### Simulation Mode
 
-SAM page has a simulation mode where users edit validator commissions/bids.
-Produces ghost rows (original position, strikethrough) and simulated rows
-(new position, graded green/red by move severity). Uses `SourceDataOverrides`
-maps passed to `dsSam.runFinalOnly(overrides)`.
+SAM page has a simulation mode where users edit validator commissions/bids and
+bond balance. Produces ghost rows (original position, strikethrough) and
+simulated rows (new position, graded green/red by move severity). The local
+`AppOverrides` type (`src/services/simulation.ts`) wraps SDK
+`SourceDataOverrides` and carries `bondBalanceSol` overrides alongside it.
+Bond balance overrides are applied post-rerun in live mode and as a pre-evaluate
+mutation in test mode; commission/bid overrides flow through
+`dsSam.runFinalOnly(overrides.source)`.
 
 ## Visual Language
 
