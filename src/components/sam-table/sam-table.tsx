@@ -215,7 +215,6 @@ type Props = {
   onValidatorClick: (voteAccount: string) => void
   onValidatorSearch?: (voteAccount: string) => void
   onClearValidator?: (voteAccount: string) => void
-  onResetSimulation?: () => void
 }
 
 const RANK_MONO = 'font-mono text-xs'
@@ -392,7 +391,6 @@ export const SamTable: React.FC<Props> = ({
   onValidatorClick,
   onValidatorSearch,
   onClearValidator,
-  onResetSimulation,
 }) => {
   const winningTotalPmpe = auctionResult.winningTotalPmpe
   const priorityFrontierPmpe = selectRedelegationPriorityFrontierPmpe(auctionResult)
@@ -982,9 +980,6 @@ export const SamTable: React.FC<Props> = ({
 
   const inSimulation = simulatedValidators.size > 0
 
-  // Outer simulation ring lives at the PAGE level (so it wraps the broadcast
-  // banner above too — all "what-if" surfaces inside one frame). This
-  // component only renders the inner header bar + the table.
   return (
     <div
       className={cn(
@@ -992,25 +987,6 @@ export const SamTable: React.FC<Props> = ({
         isCalculating && 'opacity-70 pointer-events-none',
       )}
     >
-      {inSimulation && (
-        <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-status-yellow text-background font-semibold text-sm uppercase tracking-wide rounded-t-md">
-          <span className="flex items-center gap-2">
-            <span className="inline-block w-2 h-2 rounded-full bg-background animate-pulse" />
-            Simulation Mode — what-if numbers, not live (
-            {simulatedValidators.size} validator
-            {simulatedValidators.size === 1 ? '' : 's'} modified) ·
-            strikethrough = original position
-          </span>
-          {onResetSimulation && (
-            <button
-              onClick={onResetSimulation}
-              className="px-3 py-1 rounded bg-background text-status-yellow text-xs font-bold hover:bg-background/90 transition-colors"
-            >
-              Reset Simulation
-            </button>
-          )}
-        </div>
-      )}
       <div className="max-w-[1920px] mx-auto">
         {/* Headline metrics — single wrappable row. Stat tiles + the two
             concentration cards share one flex container; on narrow widths
