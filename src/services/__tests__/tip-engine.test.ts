@@ -513,7 +513,7 @@ describe('getValidatorTip watch health (bond top-up lever)', () => {
     expect(tip.text).toContain('SOL')
   })
 
-  it('watch health + defending (large loss) → warning/bond "keep your stake" (beats deltaCta)', () => {
+  it('watch health + defending (large loss) → warning/bond "keep stake" (beats deltaCta)', () => {
     // WATCH shape with marinadeActivatedStakeSol=50000, claimable=100:
     //   stakeKeepFloor   = (1/1000)*50000 = 50  → topUpToKeepStake   = max(0,50-100)=0
     //   bondRiskFeeFloor = (1/1000)*50000 = 50  → bondRiskFeeShortfall = 0
@@ -532,7 +532,7 @@ describe('getValidatorTip watch health (bond top-up lever)', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.constraint).toBe('bond')
     expect(tip.urgency).toBe('warning')
-    expect(tip.text).toContain('keep your stake')
+    expect(tip.text).toContain('keep stake')
   })
 })
 
@@ -587,7 +587,7 @@ describe('getValidatorTip — positive delta vs bond top-up precedence', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('warning')
     expect(tip.constraint).toBe('bond')
-    expect(tip.text).toContain('keep your stake')
+    expect(tip.text).toContain('keep stake')
     expect(tip.delta).toBe(7500)
   })
 

@@ -48,6 +48,7 @@ import {
   selectExpectedStakeChange,
   selectMaxAPY,
   selectRedelegationBudget,
+  selectRedelegationPriorityFrontierPmpe,
   selectSamDistributedStake,
   selectVoteAccount,
   selectWinningAPY,
@@ -394,6 +395,7 @@ export const SamTable: React.FC<Props> = ({
   onResetSimulation,
 }) => {
   const winningTotalPmpe = auctionResult.winningTotalPmpe
+  const priorityFrontierPmpe = selectRedelegationPriorityFrontierPmpe(auctionResult)
   const {
     auctionData: { validators },
   } = auctionResult
@@ -740,6 +742,7 @@ export const SamTable: React.FC<Props> = ({
       winningTotalPmpe,
       validator.bondCoverage,
       auctionResult.auctionData.blacklist,
+      priorityFrontierPmpe,
     )
     const tipStyle = getTipStyle(tip.urgency)
 

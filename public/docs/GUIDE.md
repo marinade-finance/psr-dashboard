@@ -574,7 +574,7 @@ action that would help most. Strings come verbatim from
 - "Top up X to grow stake." (adequate bond — bond covers stake, not ideal)
 - "Top up X to extend runway." (CRITICAL or WATCH bond — runway short, bond above floors)
 - "Top up bond to extend runway." (same, no ideal top-up amount available)
-- "Top up X to keep your stake." (watch bond)
+- "Top up X to keep stake." (watch bond)
 - "Bid too low. Raise it to qualify for stake." (out of set, bond fine)
 - "Raise bid or pay a X penalty." (bid-too-low penalty active)
 - "X SOL arriving next epoch." (in-set, stake growing)
@@ -625,13 +625,11 @@ Composition — let you click their title to jump there.
 - **Bond** — Balance (raw bond SOL; a sub-1 SOL positive bond is shown
   to 3 decimals so a tiny bond that drives a Critical reserve never
   reads as "0 SOL"), Reserve (a coverage status label like "Fully
-  covered", "Top up X to keep your stake", or "Top up X to avoid the
+  covered", "Top up X to keep stake", or "Top up X to avoid the
   bond risk fee" — the same canonical CTA shown on the table pill, never
   re-worded — coloured by health), and Bond runway in epochs ("N epochs" or
-  "Depleted"; shown as "Depleted" whenever the bond is missing or below
-  the minimum, so it agrees with a Critical reserve instead of
-  contradicting it). Click the card title to open the full Bond tab and
-  see the underlying numbers.
+  "Depleted"; shown as "Depleted" only when there is no bond at all).
+  Click the card title to open the full Bond tab and see the underlying numbers.
 - **Expected payment this epoch** — Active stake cost, Activating stake
   cost, then a **Penalty** row that totals every penalty, with each
   contributing penalty broken out below it as a `↳` sub-row

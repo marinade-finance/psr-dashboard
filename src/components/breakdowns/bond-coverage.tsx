@@ -236,7 +236,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           />
           {coverage.topUpToKeepStake > 0 ? (
             <CalcRow
-              label="Top up to keep your stake"
+              label="Top up to keep stake"
               col2={topUp(coverage.topUpToKeepStake)}
               total
               severity="warning"

@@ -46,6 +46,7 @@ import { calculateProtectedEventEstimates } from 'src/services/protected-events-
 import {
   selectExpectedStakeChange,
   selectInSet,
+  selectRedelegationPriorityFrontierPmpe,
   selectVoteAccount,
   selectWinningApyForValidator,
 } from 'src/services/sam'
@@ -241,7 +242,7 @@ function bondCoverageLabel(
       if (coverage.bondRiskFeeShortfall > 0)
         return `Top up ${topUp(coverage.bondRiskFeeShortfall)} to avoid the fee`
       if (coverage.topUpToKeepStake > 0)
-        return `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake`
+        return `Top up ${topUp(coverage.topUpToKeepStake)} to keep stake`
       if (coverage.topUpToIdealKeep > 0)
         return `Top up ${topUp(coverage.topUpToIdealKeep)} to extend runway`
       return 'Critical'
@@ -567,6 +568,7 @@ export const ValidatorDetail = ({
     winningTotalPmpe,
     undefined,
     auctionResult.auctionData.blacklist,
+    selectRedelegationPriorityFrontierPmpe(auctionResult),
   )
   const tipStyle = getTipStyle(tip.urgency)
   const expectedStakeDelta = selectExpectedStakeChange(validator)

@@ -189,7 +189,7 @@ export function bondAdvice(
       // then the ideal top-up, otherwise a generic runway warning.
       if (coverage.topUpToKeepStake > 0) {
         return {
-          text: `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake.`,
+          text: `Top up ${topUp(coverage.topUpToKeepStake)} to keep stake.`,
           urgency: 'critical',
           tone: 'red',
         }
@@ -210,7 +210,7 @@ export function bondAdvice(
     case 'watch': {
       if (coverage.topUpToKeepStake > 0) {
         return {
-          text: `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake.`,
+          text: `Top up ${topUp(coverage.topUpToKeepStake)} to keep stake.`,
           urgency: 'warning',
           tone: 'yellow',
         }
@@ -388,8 +388,8 @@ function bondCta(
     const topUpAmt = coverage.topUpToIdealKeep
     return tip(
       topUpAmt > 0
-        ? `Top up ${topUp(topUpAmt)} to keep your stake.`
-        : 'Top up bond to keep your stake.',
+        ? `Top up ${topUp(topUpAmt)} to keep stake.`
+        : 'Top up bond to keep stake.',
       'warning',
       'bond',
       delta,
@@ -658,6 +658,7 @@ function deltaCta(
   validator: AugmentedAuctionValidator,
   delta: number,
   capBinding: boolean,
+  priorityFrontierPmpe = 0,
 ): ValidatorTip {
   if (delta > 0) {
     return tip(
@@ -692,9 +693,14 @@ function deltaCta(
     // delta===0 with active well below target: redistribution budget ran out
     // before reaching this validator. Higher bid → higher stakePriority →
     // served sooner in the greedy allocation pass.
+    // Exception: if the bid already clears the priority frontier, the bid lever
+    // is exhausted — budget simply ran out; "Raise bid" would be wrong advice.
     if (belowTarget && !capBinding) {
+      if (priorityFrontierPmpe > 0 && validator.revShare.totalPmpe >= priorityFrontierPmpe) {
+        return tip('At target stake.', 'neutral', 'none', delta)
+      }
       return tip(
-        'Raise bid to get more stake.',
+        'Raise bid to grow stake.',
         'info',
         'rank',
         delta,
@@ -729,6 +735,9 @@ export const getValidatorTip = (
   // Optional blacklist set from the auction data — lets outOfSetCta name
   // the specific eligibility failure when blacklist is the cause.
   blacklist?: Set<string>,
+  // Priority frontier PMPE from the redelegation pass. When the validator's
+  // totalPmpe already clears it, "Raise bid" is suppressed.
+  priorityFrontierPmpe = 0,
 ): ValidatorTip => {
   const delta = validator.values.expectedStakeChangeSol ?? 0
   const cap = capCta(validator, delta)
@@ -743,7 +752,7 @@ export const getValidatorTip = (
     bidCta(validator, dsSamConfig, winningTotalPmpe, delta),
     outOfSetCta(validator, winningTotalPmpe, delta, blacklist),
     cap,
-    deltaCta(validator, delta, cap !== null),
+    deltaCta(validator, delta, cap !== null, priorityFrontierPmpe),
   )
 }
 
