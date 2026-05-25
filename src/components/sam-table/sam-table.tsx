@@ -872,7 +872,7 @@ export const SamTable: React.FC<Props> = ({
 
         {/* Max APY */}
         <TableCell className="px-3.5 py-3">
-          <span className="inline-block px-2.5 py-[3px] rounded-md font-semibold text-sm font-mono bg-muted text-foreground">
+          <span className="font-semibold text-sm font-mono text-foreground">
             {pct(maxApy, 2)}
           </span>
         </TableCell>
