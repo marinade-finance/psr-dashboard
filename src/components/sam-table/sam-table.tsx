@@ -884,22 +884,26 @@ export const SamTable: React.FC<Props> = ({
 
         {/* Bond Health */}
         <TableCell className="px-3.5 py-3">
-          <div className="flex items-center gap-1.5 mb-1">
-            <span
-              className={cn(
-                'inline-flex items-center gap-1 px-2 py-[3px] rounded-md text-xs font-medium',
-                bondChip.chip,
-              )}
-            >
+          {isCompact ? (
+            <span className={cn('block w-[7px] h-[7px] rounded-full', bondChip.dot)} />
+          ) : (
+            <div className="flex items-center gap-1.5 mb-1">
               <span
-                className={cn('w-[7px] h-[7px] rounded-full', bondChip.dot)}
-              />
-              {bondChip.label}
-            </span>
-            <span className="text-muted-foreground text-xs font-mono">
-              {stake(selectBondSize(validator) ?? 0)}
-            </span>
-          </div>
+                className={cn(
+                  'inline-flex items-center gap-1 px-2 py-[3px] rounded-md text-xs font-medium',
+                  bondChip.chip,
+                )}
+              >
+                <span
+                  className={cn('w-[7px] h-[7px] rounded-full', bondChip.dot)}
+                />
+                {bondChip.label}
+              </span>
+              <span className="text-muted-foreground text-xs font-mono">
+                {stake(selectBondSize(validator) ?? 0)}
+              </span>
+            </div>
+          )}
           {!isCompact && (
             <div className="flex items-center gap-1.5">
               <Gauge
