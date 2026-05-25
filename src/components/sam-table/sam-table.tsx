@@ -885,12 +885,14 @@ export const SamTable: React.FC<Props> = ({
         {/* Bond Health */}
         <TableCell className="px-3.5 py-3">
           {isCompact ? (
-            <div className="flex items-center gap-1.5">
-              <span className={cn('w-[7px] h-[7px] rounded-full shrink-0', bondChip.dot)} />
-              <span className="text-muted-foreground text-xs font-mono">
-                {stake(selectBondSize(validator) ?? 0)}
-              </span>
-            </div>
+            <Tooltip content={bondChip.label}>
+              <div className="flex items-center gap-1.5 cursor-default">
+                <span className={cn('w-[7px] h-[7px] rounded-full shrink-0', bondChip.dot)} />
+                <span className="text-muted-foreground text-xs font-mono">
+                  {stake(selectBondSize(validator) ?? 0)}
+                </span>
+              </div>
+            </Tooltip>
           ) : (
             <div className="flex items-center gap-1.5 mb-1">
               <span
