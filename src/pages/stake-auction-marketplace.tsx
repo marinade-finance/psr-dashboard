@@ -8,6 +8,7 @@ import React, { useState, useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import { Banner } from 'src/components/banner/banner'
+import { Button } from 'src/components/ui/button'
 import { Loader } from 'src/components/loader/loader'
 import { Navigation } from 'src/components/navigation/navigation'
 import { SamTable } from 'src/components/sam-table/sam-table'
@@ -55,6 +56,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
 
   const [searchParams, setSearchParams] = useSearchParams()
   const selectedValidator = searchParams.get('v')
+  const [isCompact, setIsCompact] = useState(true)
   const [simulationOverrides, setSimulationOverrides] =
     useState<AppOverrides | null>(null)
   const [simulatedValidators, setSimulatedValidators] = useState<Set<string>>(
@@ -228,7 +230,32 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
 
   return (
     <div className="bg-background-page">
-      <Navigation level={level} />
+      <Navigation level={level}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={() => setIsCompact(c => !c)}
+          className="ml-2 rounded-full text-muted-foreground hover:text-foreground"
+          aria-label={isCompact ? 'Switch to detailed view' : 'Switch to compact view'}
+          title={isCompact ? 'Detailed view' : 'Compact view'}
+        >
+          {isCompact ? (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+              <line x1="3" y1="14" x2="21" y2="14" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          ) : (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="5" x2="21" y2="5" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="19" x2="21" y2="19" />
+            </svg>
+          )}
+        </Button>
+      </Navigation>
       {simulatedValidators.size > 0 && (
         <div className="sticky top-[68px] z-[60] flex items-center justify-between gap-3 px-4 py-2.5 bg-status-yellow text-background font-semibold text-sm uppercase tracking-wide">
           <span className="flex items-center gap-2 min-w-0">
@@ -265,6 +292,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
             epochsPerYear={data.epochsPerYear}
             dsSamConfig={data.dcSamConfig}
             level={level}
+            isCompact={isCompact}
             simulatedValidators={simulatedValidators}
             isCalculating={isCalculating}
             validatorMeta={nameMap}

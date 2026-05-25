@@ -66,6 +66,8 @@ import {
   getTipIcon,
   nextStakeDeltaCell,
 } from 'src/services/tip-engine'
+import { ICON_DOWN } from 'src/components/icons/icon-down'
+import { ICON_UP } from 'src/components/icons/icon-up'
 import { assertNever } from 'src/utils/assert-never'
 
 import type { UserLevel } from '../navigation/navigation'
@@ -209,6 +211,7 @@ type Props = {
   epochsPerYear: number
   dsSamConfig: DsSamConfig
   level?: UserLevel
+  isCompact?: boolean
   simulatedValidators?: Set<string>
   isCalculating: boolean
   validatorMeta?: Map<string, ValidatorMeta>
@@ -311,6 +314,7 @@ const RankCell: React.FC<{
   cutoffRank: number
   isGhost: boolean
   isSimulated: boolean
+  isCompact: boolean
   posColor: string | undefined
   tipColor: string
   voteAccount: string
@@ -320,6 +324,7 @@ const RankCell: React.FC<{
   cutoffRank,
   isGhost,
   isSimulated,
+  isCompact,
   posColor,
   tipColor,
   voteAccount,
@@ -339,9 +344,11 @@ const RankCell: React.FC<{
         className={`text-muted-foreground ${RANK_MONO} flex flex-col items-center gap-0`}
       >
         <span className="text-sm">{rankLabel}</span>
-        <span className="text-2xs opacity-60 font-normal leading-tight">
-          {rankSubLabel}
-        </span>
+        {!isCompact && (
+          <span className="text-2xs opacity-60 font-normal leading-tight">
+            {rankSubLabel}
+          </span>
+        )}
       </span>
     )
   if (isSimulated && onClearValidator)
@@ -372,9 +379,11 @@ const RankCell: React.FC<{
       style={{ color: tipColor }}
     >
       <span className="text-sm">{rankLabel}</span>
-      <span className="text-2xs opacity-60 font-normal text-muted-foreground leading-tight">
-        {rankSubLabel}
-      </span>
+      {!isCompact && (
+        <span className="text-2xs opacity-60 font-normal text-muted-foreground leading-tight">
+          {rankSubLabel}
+        </span>
+      )}
     </span>
   )
 }
@@ -385,6 +394,7 @@ export const SamTable: React.FC<Props> = ({
   epochsPerYear,
   dsSamConfig,
   level,
+  isCompact = true,
   simulatedValidators = EMPTY_SIMULATED_SET,
   isCalculating,
   validatorMeta,
@@ -810,6 +820,7 @@ export const SamTable: React.FC<Props> = ({
             cutoffRank={cutoffRank}
             isGhost={isGhost}
             isSimulated={isSimulated}
+            isCompact={isCompact}
             posColor={posColor}
             tipColor={tipStyle.color}
             voteAccount={voteAccount}
@@ -823,6 +834,7 @@ export const SamTable: React.FC<Props> = ({
             name={validatorName}
             voteAccount={voteAccount}
             responsive
+            compact={isCompact}
             trailing={
               <>
                 {hasAlert && (
@@ -870,27 +882,29 @@ export const SamTable: React.FC<Props> = ({
               {stake(selectBondSize(validator) ?? 0)}
             </span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <Gauge
-              size="sm"
-              value={bondRunway}
-              scaleMax={bondScaleMax}
-              marker={bondCritical}
-              criticalBand={bondCritical}
-              tone={bondChip.bar}
-            />
-            <span
-              className={cn(
-                'text-xs opacity-60 font-mono whitespace-nowrap',
-                bondRunway < dsSamConfig.idealBondEpochs
-                  ? bondChip.shortText
-                  : TEXT_MUTED,
-              )}
-            >
-              ({Math.round(bondRunway) >= 100 ? '>100' : Math.round(bondRunway)}
-              ep)
-            </span>
-          </div>
+          {!isCompact && (
+            <div className="flex items-center gap-1.5">
+              <Gauge
+                size="sm"
+                value={bondRunway}
+                scaleMax={bondScaleMax}
+                marker={bondCritical}
+                criticalBand={bondCritical}
+                tone={bondChip.bar}
+              />
+              <span
+                className={cn(
+                  'text-xs opacity-60 font-mono whitespace-nowrap',
+                  bondRunway < dsSamConfig.idealBondEpochs
+                    ? bondChip.shortText
+                    : TEXT_MUTED,
+                )}
+              >
+                ({Math.round(bondRunway) >= 100 ? '>100' : Math.round(bondRunway)}
+                ep)
+              </span>
+            </div>
+          )}
         </TableCell>
 
         {/* Stake / Next change */}
@@ -899,32 +913,47 @@ export const SamTable: React.FC<Props> = ({
             <span className="text-muted-foreground text-xs font-mono">
               {stake(validator.marinadeActivatedStakeSol)}
             </span>
-            {(() => {
-              const cell = nextStakeDeltaCell(expectedChange)
-              return (
-                <span
-                  className={cn(
-                    'font-mono text-xs',
-                    cell.tone === 'neutral'
-                      ? TEXT_MUTED
-                      : 'font-semibold text-sm',
-                  )}
-                  style={
-                    cell.tone === 'neutral'
-                      ? undefined
-                      : {
-                          color:
-                            cell.tone === 'positive'
-                              ? CSS_STATUS_GREEN
-                              : CSS_DESTRUCTIVE,
-                        }
-                  }
-                >
-                  {cell.prefix}
-                  {stake(expectedChange)}
-                </span>
-              )
-            })()}
+            {isCompact ? (
+              (() => {
+                if (Math.abs(expectedChange) < 1) return null
+                const isUp = expectedChange > 0
+                return (
+                  <span
+                    className="inline-flex items-center"
+                    style={{ color: isUp ? CSS_STATUS_GREEN : CSS_DESTRUCTIVE }}
+                  >
+                    {isUp ? ICON_UP : ICON_DOWN}
+                  </span>
+                )
+              })()
+            ) : (
+              (() => {
+                const cell = nextStakeDeltaCell(expectedChange)
+                return (
+                  <span
+                    className={cn(
+                      'font-mono text-xs',
+                      cell.tone === 'neutral'
+                        ? TEXT_MUTED
+                        : 'font-semibold text-sm',
+                    )}
+                    style={
+                      cell.tone === 'neutral'
+                        ? undefined
+                        : {
+                            color:
+                              cell.tone === 'positive'
+                                ? CSS_STATUS_GREEN
+                                : CSS_DESTRUCTIVE,
+                          }
+                    }
+                  >
+                    {cell.prefix}
+                    {stake(expectedChange)}
+                  </span>
+                )
+              })()
+            )}
           </div>
         </TableCell>
 
@@ -1048,7 +1077,7 @@ export const SamTable: React.FC<Props> = ({
                 validators={validators}
                 nameMap={validatorMeta ?? EMPTY_NAME_MAP}
                 onSelect={onValidatorSearch}
-                className="w-full max-w-sm"
+                className="w-full max-w-xl"
               />
             </div>
           )}
