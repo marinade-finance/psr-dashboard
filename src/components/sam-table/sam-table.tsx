@@ -886,12 +886,9 @@ export const SamTable: React.FC<Props> = ({
         <TableCell className="px-3.5 py-3">
           {isCompact ? (
             <Tooltip content={bondChip.label}>
-              <div className="flex items-center gap-1.5 cursor-default">
-                <span className={cn('w-[7px] h-[7px] rounded-full shrink-0', bondChip.dot)} />
-                <span className="text-muted-foreground text-xs font-mono">
-                  {stake(selectBondSize(validator) ?? 0)}
-                </span>
-              </div>
+              <span className={cn('inline-flex items-center px-2 py-[3px] rounded-md text-xs font-medium font-mono cursor-default', bondChip.chip)}>
+                {stake(selectBondSize(validator) ?? 0)}
+              </span>
             </Tooltip>
           ) : (
             <div className="flex items-center gap-1.5 mb-1">
