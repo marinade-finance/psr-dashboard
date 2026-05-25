@@ -872,12 +872,7 @@ export const SamTable: React.FC<Props> = ({
 
         {/* Max APY */}
         <TableCell className="px-3.5 py-3">
-          <span
-            className={cn(
-              'inline-block px-2.5 py-[3px] rounded-md font-semibold text-sm font-mono',
-              inSet ? 'bg-primary-light text-primary' : DESTRUCTIVE_LIGHT_CHIP,
-            )}
-          >
+          <span className="inline-block px-2.5 py-[3px] rounded-md font-semibold text-sm font-mono bg-muted text-foreground">
             {pct(maxApy, 2)}
           </span>
         </TableCell>
@@ -885,11 +880,12 @@ export const SamTable: React.FC<Props> = ({
         {/* Bond Health */}
         <TableCell className="px-3.5 py-3">
           {isCompact ? (
-            <Tooltip content={bondChip.label}>
-              <span className={cn('inline-flex items-center px-2 py-[3px] rounded-md text-xs font-medium font-mono cursor-default', bondChip.chip)}>
-                {stake(selectBondSize(validator) ?? 0)}
-              </span>
-            </Tooltip>
+            <span
+              className={cn('inline-flex items-center px-2 py-[3px] rounded-md text-xs font-medium font-mono cursor-default', bondChip.chip)}
+              title={bondChip.label}
+            >
+              {stake(selectBondSize(validator) ?? 0)}
+            </span>
           ) : (
             <div className="flex items-center gap-1.5 mb-1">
               <span
