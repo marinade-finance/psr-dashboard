@@ -33,14 +33,10 @@ export function effectiveBondRunway(
   validator: AuctionValidator,
   bondHealth: BondHealthState,
 ): number {
-  if (
-    bondHealth === 'no-bond' ||
-    bondHealth === 'critical'
-  )
-    return 0
-  // Clamp at 0 so `(Nep)` can never render a negative epoch count — the
-  // SDK can theoretically expose a negative bondGoodForNEpochs and the
-  // gate above doesn't catch every such case.
+  // No bond → the SDK's runway estimate is meaningless (validator has no
+  // stake coverage at all). Critical by runway still has a real epoch count;
+  // clamp at 0 to guard against negative SDK values but don't force to 0.
+  if (bondHealth === 'no-bond') return 0
   return Math.max(0, validator.bondGoodForNEpochs ?? 0)
 }
 
