@@ -140,18 +140,16 @@ export function bondAdvice(
   // "avoid future bond fee" message in yellow rather than the generic grow CTA.
   nearFeeThreshold?: boolean,
 ): BondAdvice {
-  // Below the SDK minimum (independent of health tier): clipBondStakeCap
-  // → 0, a hard block. Tell the validator what to do — top up to the
-  // minimum. Checked before the health switch so a below-min bond in any
-  // tier (typically no-bond/critical) gets the actionable wording.
+  // Below the SDK minimum. Checked before the health switch so a below-min
+  // bond in any tier gets the actionable wording.
   if (
     bondBalanceSol < minBondBalanceSol &&
     health !== 'no-bond'
   ) {
-    // Below-min without a pending fee is eligibility, not urgency — grey.
+    // Below-min without a pending fee — grey (informational, no stake at risk).
     const isCharging = bondRiskFeeSol > 0
     return {
-      text: `Top up bond to ${stake(minBondBalanceSol)} to qualify.`,
+      text: `Top up bond to ${stake(minBondBalanceSol)} to grow stake.`,
       urgency: isCharging ? 'critical' : 'neutral',
       tone: isCharging ? 'red' : 'grey',
     }
@@ -186,8 +184,9 @@ export function bondAdvice(
           tone: 'red',
         }
       }
-      // Runway ≤ minBondEpochs + BOND_URGENT_EPOCHS: no fee yet but at or past
-      // the threshold. Show the keep-stake amount if available.
+      // Runway ≤ minBondEpochs + BOND_URGENT_EPOCHS: no fee yet but runway
+      // is critically short. Show the keep-stake amount if available,
+      // otherwise flag the approaching penalty floor.
       if (coverage.topUpToKeepStake > 0) {
         return {
           text: `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake.`,
@@ -196,7 +195,7 @@ export function bondAdvice(
         }
       }
       return {
-        text: 'Bond below minimum — top up to maintain eligibility.',
+        text: 'Top up bond to stay above the penalty floor.',
         urgency: 'critical',
         tone: 'red',
       }
@@ -227,7 +226,7 @@ export function bondAdvice(
         }
       }
       return {
-        text: 'Bond covers current stake.',
+        text: 'Top up bond to extend runway.',
         urgency: 'info',
         tone: 'yellow',
       }
@@ -324,7 +323,7 @@ function bondCta(
         dsSamConfig.minBondBalanceSol - bondBalance,
       )
       return tip(
-        `Top up ${topUp(topUpAmt)} to avoid next epoch bond fee and re-qualify.`,
+        `Top up ${topUp(topUpAmt)} to cover the fee and grow stake.`,
         'critical',
         'bond',
         delta,
@@ -336,8 +335,8 @@ function bondCta(
     //   grey   — eligibility-only, novelty validator with no real stake.
     return tip(
       bondBalance <= 0
-        ? `Post a bond of ${stake(dsSamConfig.minBondBalanceSol)} to qualify.`
-        : `Top up bond to ${stake(dsSamConfig.minBondBalanceSol)} to qualify.`,
+        ? `Post a bond of ${stake(dsSamConfig.minBondBalanceSol)} to grow stake.`
+        : `Top up bond to ${stake(dsSamConfig.minBondBalanceSol)} to grow stake.`,
       isDefending(validator, delta) ? 'warning' : 'neutral',
       'bond',
       delta,
@@ -347,10 +346,9 @@ function bondCta(
   // Above-min: emit the unhealthy-bond CTA via bondAdvice. CRITICAL (fee
   // imminent) fires for in-set OR out-of-set — the fee is bond-driven, not
   // rank-driven, so the alert can't be masked by out-of-set status. WATCH
-  // (keep-stake) and SOFT (grow-stake) gate on in-set: when target=0 the
-  // stake is leaving regardless of bond, so the "keep" / "grow" advisories
-  // are misleading. SOFT additionally defers when delta>0 (the inflow is
-  // already arriving — "grow stake" would contradict it).
+  // gates on in-set (when target=0 the stake is leaving regardless of bond)
+  // and defers when delta>0 (inflow is already arriving — bond advice at
+  // INFO would be drowned out by the positive message).
   const inSet = selectInSet(validator)
   const health = bondHealthFromAuction(
     validator,
@@ -369,7 +367,7 @@ function bondCta(
       health === 'watch' &&
       (coverage.topUpToKeepStake > 0 ||
         nearFeeThreshold ||
-        (coverage.topUpToIdealKeep > 0 && delta <= 0)))
+        delta <= 0))
   if (!fires) return null
   // WATCH + no keep-shortfall + defending: the "grow stake" advisory fires at
   // INFO, which selectTip ranks below deltaCta's WARNING. Escalate to WARNING

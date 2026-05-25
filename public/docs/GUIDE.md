@@ -570,8 +570,9 @@ action that would help most. Strings come verbatim from
 `src/services/tip-engine.ts`. Examples:
 
 - "Top up X to avoid the bond risk fee." (bond constraint)
-- "Top up bond to X SOL to win stake." (bond below minimum)
+- "Top up bond to X SOL to grow stake." (bond below minimum)
 - "Top up X to grow stake." (adequate bond — bond covers stake, not ideal)
+- "Top up bond to extend runway." (WATCH bond but amount covers ideal floor)
 - "Top up X to keep your stake." (watch bond)
 - "Bid too low. Raise it to qualify for stake." (out of set, bond fine)
 - "Raise bid or pay a X penalty." (bid-too-low penalty active)

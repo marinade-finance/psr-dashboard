@@ -1009,7 +1009,7 @@ const s21 = stateValidator('FiXtUREvbBELOWMINinset9999999999999999999ii', {
 })
 
 // 22. Below-minimum bond, OUT-OF-SET (critical / bond, "Top up bond to 5 SOL
-//   to qualify."). target 0, bond 2 < 5, still has active stake so it
+//   to grow stake."). target 0, bond 2 < 5, still has active stake so it
 //   survives the Basic table filter. Bond left at 2 (absolute below-min
 //   threshold, not stake-relative — same rationale as s21).
 const s22 = stateValidator('FiXtUREvbBELOWMINoutaaaaaaaaaaaaaaaaaaaaajj', {
