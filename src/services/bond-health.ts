@@ -13,7 +13,7 @@ export const BOND_URGENT_EPOCHS = 3
 
 // Four tiers driving the bond chip color and the page-level CTA:
 //   no-bond  → no bond posted at all (red)
-//   critical → fee charging now, OR runway ≤ minBondEpochs + BOND_URGENT_EPOCHS (red, urgent)
+//   critical → fee charging now, coverage shortfall, OR runway ≤ minBondEpochs + BOND_URGENT_EPOCHS (red)
 //   watch    → runway between urgent threshold and idealBondEpochs (yellow)
 //   healthy  → runway above idealBondEpochs (green)
 export type BondHealthState = 'no-bond' | 'critical' | 'watch' | 'healthy'
@@ -41,10 +41,8 @@ export function bondHealthFromAuction(
     precomputedCoverage ?? computeBondCoverage(v, config, winningTotalPmpe)
   if (coverage.bondRiskFeeShortfall > 0) return 'critical'
   if (v.values.bondRiskFeeSol > 0) return 'critical'
-  // Below ideal coverage → yellow watch. Includes the BOND_URGENT_EPOCHS
-  // near-threshold zone: urgency is expressed through the CTA message
-  // ("avoid future bond fee") not through red chip color, since no fee fires.
   const runway = v.bondGoodForNEpochs ?? 0
+  if (runway <= config.minBondEpochs + BOND_URGENT_EPOCHS) return 'critical'
   if (runway < config.idealBondEpochs) return 'watch'
   return 'healthy'
 }

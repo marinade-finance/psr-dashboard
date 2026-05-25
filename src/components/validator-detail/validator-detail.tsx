@@ -238,9 +238,11 @@ function bondCoverageLabel(
     case 'no-bond':
       return 'No bond'
     case 'critical':
-      return coverage.bondRiskFeeShortfall > 0
-        ? `Top up ${topUp(coverage.bondRiskFeeShortfall)} to avoid the fee`
-        : 'Critical'
+      if (coverage.bondRiskFeeShortfall > 0)
+        return `Top up ${topUp(coverage.bondRiskFeeShortfall)} to avoid the fee`
+      if (coverage.topUpToKeepStake > 0)
+        return `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake`
+      return 'Critical'
     case 'watch':
       // Route through bondAdvice — the canonical CTA source — strip trailing period.
       // WATCH implies bondRiskFeeSol=0 (fee→CRITICAL) and above minBondBalance (below-min→CRITICAL).

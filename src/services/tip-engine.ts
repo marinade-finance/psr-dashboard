@@ -186,6 +186,15 @@ export function bondAdvice(
           tone: 'red',
         }
       }
+      // Runway ≤ minBondEpochs + BOND_URGENT_EPOCHS: no fee yet but at or past
+      // the threshold. Show the keep-stake amount if available.
+      if (coverage.topUpToKeepStake > 0) {
+        return {
+          text: `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake.`,
+          urgency: 'critical',
+          tone: 'red',
+        }
+      }
       return {
         text: 'Bond below minimum — top up to maintain eligibility.',
         urgency: 'critical',
