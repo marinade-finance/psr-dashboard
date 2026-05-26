@@ -361,7 +361,7 @@ const RankCell: React.FC<{
       <span
         className={`text-muted-foreground ${RANK_MONO} flex flex-col items-center gap-0`}
       >
-        <span className="text-sm">{rankLabel}</span>
+        <span className="text-xs">{rankLabel}</span>
         {!isCompact && (
           <span className="text-2xs opacity-60 font-normal leading-tight">
             {rankSubLabel}
@@ -373,7 +373,7 @@ const RankCell: React.FC<{
     return (
       <div className="flex flex-col items-center gap-0.5">
         <span
-          className="font-medium font-mono text-sm"
+          className="font-medium font-mono text-xs"
           style={{ color: posColor ?? 'var(--muted-foreground)' }}
         >
           {rankLabel}
@@ -872,7 +872,7 @@ export const SamTable: React.FC<Props> = ({
 
         {/* Max APY */}
         <TableCell className="px-3.5 py-3">
-          <span className="font-semibold text-sm font-mono text-foreground">
+          <span className="font-normal text-xs font-mono text-foreground">
             {pct(maxApy, 2)}
           </span>
         </TableCell>
@@ -881,7 +881,7 @@ export const SamTable: React.FC<Props> = ({
         <TableCell className="px-3.5 py-3">
           {isCompact ? (
             <span
-              className="inline-flex items-center px-2 py-[3px] rounded-md text-xs font-medium font-mono cursor-default bg-muted text-muted-foreground"
+              className="inline-flex items-center px-2 py-[3px] rounded-md text-base font-medium font-mono cursor-default bg-muted text-muted-foreground"
               title={bondChip.label}
             >
               {stake(selectBondSize(validator) ?? 0)}
@@ -892,7 +892,7 @@ export const SamTable: React.FC<Props> = ({
                 <span className="w-[7px] h-[7px] rounded-full bg-muted-foreground/50" />
                 {bondChip.label}
               </span>
-              <span className="text-muted-foreground text-xs font-mono">
+              <span className="text-muted-foreground text-base font-mono">
                 {stake(selectBondSize(validator) ?? 0)}
               </span>
             </div>
