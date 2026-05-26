@@ -57,13 +57,13 @@ export function bondHealthFromAuction(
   // (clipBondStakeCap → 0). Runway-vs-tiny-stake looks huge, so the
   // coverage-based diagnosis below would mislabel it healthy — gate it red here.
   if (bondBalance < config.minBondBalanceSol) return 'critical'
+  if (v.values.bondRiskFeeSol > 0) return 'critical'
   if (!v.auctionStake.marinadeSamTargetSol && !v.marinadeActivatedStakeSol) {
     return 'healthy'
   }
   const coverage =
     precomputedCoverage ?? computeBondCoverage(v, config, winningTotalPmpe)
   if (coverage.bondRiskFeeShortfall > 0) return 'critical'
-  if (v.values.bondRiskFeeSol > 0) return 'critical'
   const runway = v.bondGoodForNEpochs ?? 0
   if (runway <= config.minBondEpochs + BOND_URGENT_EPOCHS) return 'critical'
   if (runway < config.idealBondEpochs) return 'watch'

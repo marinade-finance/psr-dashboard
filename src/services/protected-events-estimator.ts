@@ -141,6 +141,9 @@ const buildLowCreditsProtectedEvent = (
 
   const expectedRewards = marinadeStake * expectedEpr
   const actualRewards = marinadeStake * actualEpr
+  if (expectedRewards <= 0) {
+    return null
+  }
 
   const eprLossBps = Math.round(10000 * (1 - actualRewards / expectedRewards))
   if (eprLossBps <= config.grace_low_credits_bps) {
@@ -205,6 +208,9 @@ const buildCommissionIncreaseProtectedEvent = (
 
   const expectedRewards = marinadeStake * expectedEpr
   const actualRewards = marinadeStake * actualEpr
+  if (expectedRewards <= 0) {
+    return null
+  }
 
   const eprLossBps = Math.round(10000 * (1 - actualRewards / expectedRewards))
   if (eprLossBps < config.grace_commission_increase * 100) {

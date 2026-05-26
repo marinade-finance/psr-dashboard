@@ -586,6 +586,8 @@ export function selectRedelegationPriorityFrontierPmpe(
 export function selectRedelegationPriorityRank(
   v: AuctionValidator,
   auctionResult: AuctionResult,
-): number {
-  return allocateRedelegation(auctionResult).rankByVote.get(v.voteAccount) ?? 1
+): number | null {
+  return (
+    allocateRedelegation(auctionResult).rankByVote.get(v.voteAccount) ?? null
+  )
 }
