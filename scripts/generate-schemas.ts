@@ -76,6 +76,14 @@ async function generate(name: string) {
   dedupeOperationIds(doc)
   await writeFile(`${SPEC_DIR}/${name}.json`, JSON.stringify(doc))
   await $`npx openapi-zod-client ${SPEC_DIR}/${name}.json -o ${OUT_DIR}/${name}.ts`
+  // Remove the no-baseUrl `export const api = new Zodios(endpoints)` line that
+  // openapi-zod-client emits — it throws at module load without a baseUrl and
+  // is never used (callers use `schemas.*` directly or `createApiClient`).
+  const generated = await Bun.file(`${OUT_DIR}/${name}.ts`).text()
+  await Bun.write(
+    `${OUT_DIR}/${name}.ts`,
+    generated.replace(/^export const api = new Zodios\(endpoints\)\n\n/m, ''),
+  )
 }
 
 await generate('validators')
