@@ -43,6 +43,7 @@ import { bondHealthFromAuction } from 'src/services/bond-health'
 import type { BondHealthState } from 'src/services/bond-health'
 import { effectiveBondRunway } from 'src/services/bond-health'
 import { HELP_TEXT } from 'src/services/help-text'
+import { computePaymentTotal } from 'src/services/payment-total'
 import { calculateProtectedEventEstimates } from 'src/services/protected-events-estimator'
 import {
   selectExpectedStakeChange,
@@ -678,8 +679,13 @@ export const ValidatorDetail = ({
     tipConstraint: tip.constraint,
   })
 
-  const penaltyTotal =
-    bidTooLowPenaltySol + blacklistPenaltySol + bondRiskFeeSol
+  const { penaltyTotal, total: paymentTotal } = computePaymentTotal({
+    biddingTotalSol: paymentMetrics.total,
+    bidTooLowPenaltySol,
+    blacklistPenaltySol,
+    bondRiskFeeSol,
+    psrEstimates,
+  })
   const bondBalance = validator.bondBalanceSol ?? 0
   // A tiny positive bond drives Critical but rounds to "0 SOL" under
   // whole-SOL stake() — reads as no bond and contradicts the Critical
@@ -1057,13 +1063,7 @@ export const ValidatorDetail = ({
                 )}
                 <MetricRow
                   label="Expected payment this epoch"
-                  value={pay(
-                    paymentMetrics.total +
-                      bidTooLowPenaltySol +
-                      blacklistPenaltySol +
-                      bondRiskFeeSol,
-                    3,
-                  )}
+                  value={pay(paymentTotal, 3)}
                   onSeeBreakdown={() => setTab('payments')}
                   separator
                 />

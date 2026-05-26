@@ -2,6 +2,7 @@ import React from 'react'
 
 import { cost, pay, pmpe, stake } from 'src/format'
 import { computeBidding } from 'src/services/bidding'
+import { computePaymentTotal } from 'src/services/payment-total'
 import {
   isProtectedEvent,
   selectAmount,
@@ -47,14 +48,13 @@ export const PaymentsBreakdown: React.FC<Props> = ({
   onGoToPenalty,
 }) => {
   const m = computeBidding(validator)
-
-  const psrTotal = psrEstimates.reduce(
-    (sum, estimate) => sum + selectAmount(estimate),
-    0,
-  )
-  const penaltyTotal =
-    bidTooLowPenaltySol + blacklistPenaltySol + bondRiskFeeSol + psrTotal
-  const total = m.total + penaltyTotal
+  const { penaltyTotal, total } = computePaymentTotal({
+    biddingTotalSol: m.total,
+    bidTooLowPenaltySol,
+    blacklistPenaltySol,
+    bondRiskFeeSol,
+    psrEstimates,
+  })
   const hasPenalty = penaltyTotal > 0
 
   const baseStatus: Omit<CardStatus, 'action'> = {
