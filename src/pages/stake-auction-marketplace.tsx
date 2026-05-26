@@ -43,7 +43,7 @@ type SamResult = {
 // Injection points used by /test-* routes to swap in fixture data.
 // Production callers pass nothing; defaults call the real services.
 export type SamDataSources = {
-  loadAuction: (overrides: AppOverrides | null) => Promise<SamResult>
+  loadAuction: () => Promise<SamResult>
   loadValidatorNames: () => Promise<Map<string, string>>
 }
 
@@ -77,7 +77,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
 
   const { data, status } = useQuery({
     queryKey: ['sam'],
-    queryFn: () => loadAuction(null),
+    queryFn: () => loadAuction(),
     placeholderData: keepPreviousData,
   })
 

@@ -37,7 +37,7 @@ export const fetchProtectedEventsWithValidator = async (
     }),
     fetchProtectedEvents(signal),
     fetchScoring(signal),
-    qc.ensureQueryData({ queryKey: ['sam'], queryFn: () => loadSam(null) }),
+    qc.ensureQueryData({ queryKey: ['sam'], queryFn: () => loadSam() }),
   ])
 
   const estimatedProtectedEvents = await calculateProtectedEventEstimates(

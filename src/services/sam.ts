@@ -19,17 +19,15 @@ import type {
   DsSamConfig,
   SourceDataOverrides,
 } from '@marinade.finance/ds-sam-sdk'
-import type { AppOverrides } from 'src/services/simulation'
-
 type SamResult = {
   auctionResult: AuctionResult
   epochsPerYear: number
   dcSamConfig: DsSamConfig
 }
 
-export const loadSam = async (
-  dataOverrides?: AppOverrides | null,
-): Promise<SamResult> => {
+// Fetches the live auction. Simulation with overrides goes through
+// runSdkRerun (single source of truth); loadSam does not accept overrides.
+export const loadSam = async (): Promise<SamResult> => {
   const config = await loadSamConfig()
   const dsSam = new DsSamSDK({
     ...config,
@@ -39,22 +37,7 @@ export const loadSam = async (
     logVerbosity: LogVerbosity.ERROR,
   })
 
-  const auctionResult = await dsSam.runFinalOnly(dataOverrides?.source)
-
-  // SDK's runFinalOnly only sees commission/bid overrides; bond top-ups are
-  // stamped onto the returned validators here. Local re-derivations
-  // (coverage, health, runway, risk-fee, penalty) pick up the new bond;
-  // SDK-computed revShare.bondObligationPmpe stays against the original.
-  const bondOverrides = dataOverrides?.bondBalanceSol
-  if (bondOverrides && bondOverrides.size > 0) {
-    for (const v of auctionResult.auctionData.validators) {
-      const override = bondOverrides.get(v.voteAccount)
-      if (override !== undefined) {
-        v.bondBalanceSol = override
-        v.claimableBondBalanceSol = override
-      }
-    }
-  }
+  const auctionResult = await dsSam.runFinalOnly()
 
   return {
     auctionResult,

@@ -47,7 +47,7 @@ export const fetchValidatorsWithBonds = async (
   const [{ validators }, { bonds }, { auctionResult }] = await Promise.all([
     fetchValidatorsWithEpochs(0, signal),
     fetchBonds(signal),
-    qc.ensureQueryData({ queryKey: ['sam'], queryFn: () => loadSam(null) }),
+    qc.ensureQueryData({ queryKey: ['sam'], queryFn: () => loadSam() }),
   ])
 
   const auctionByVoteAccount = new Map<string, AuctionValidator>()

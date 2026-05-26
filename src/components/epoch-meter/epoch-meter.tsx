@@ -24,7 +24,7 @@ export const EpochMeter: React.FC = () => {
   const queryClient = useQueryClient()
   const { data: sam } = useQuery({
     queryKey: ['sam'],
-    queryFn: () => loadSam(null),
+    queryFn: () => loadSam(),
   })
   const { data: protectedEvents } = useQuery({
     queryKey: ['protected-events'],

@@ -14,7 +14,6 @@ import {
 } from 'src/fixtures/test-validators'
 import { SamPage } from 'src/pages/stake-auction-marketplace'
 import { EPOCHS_PER_YEAR } from 'src/services/constants'
-import { runSdkRerun } from 'src/services/sdk-rerun'
 
 import type { UserLevelProps } from 'src/components/navigation/navigation'
 import type { SamDataSources } from 'src/pages/stake-auction-marketplace'
@@ -64,30 +63,7 @@ export const TestSamPage: React.FC<UserLevelProps> = ({ level }) => {
   })
   const dataSources = useMemo<SamDataSources>(
     () => ({
-      loadAuction: overrides => {
-        // Skip the SDK rerun when no overrides are active. Fixtures pre-bake
-        // `bondGoodForNEpochs`, `marinadeSamTargetSol`, etc. to specific demo
-        // values; `Auction.evaluate()` overwrites them with SDK-derived ones
-        // — and on synthetic data (intentionally tiny bonds for critical
-        // states) the recomputed runway comes out negative for ~all rows,
-        // tripping `passesTableFilter`'s runway check and hiding the table.
-        // Only rerun the SDK when the user actually simulated something.
-        const hasOverrides =
-          overrides != null &&
-          (overrides.source.inflationCommissionsDec.size > 0 ||
-            overrides.source.mevCommissionsDec.size > 0 ||
-            overrides.source.blockRewardsCommissionsDec.size > 0 ||
-            overrides.source.cpmpesDec.size > 0 ||
-            overrides.bondBalanceSol.size > 0)
-        const auctionResult = hasOverrides
-          ? runSdkRerun(
-              TEST_AUCTION_RESULT.auctionData,
-              TEST_DS_SAM_CONFIG,
-              overrides,
-            )
-          : TEST_AUCTION_RESULT
-        return Promise.resolve({ ...SAM_RESULT, auctionResult })
-      },
+      loadAuction: () => Promise.resolve(SAM_RESULT),
       loadValidatorNames: () => Promise.resolve(TEST_VALIDATOR_NAMES),
     }),
     [],
