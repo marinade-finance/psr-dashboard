@@ -36,7 +36,7 @@ export function SheetContent({
   const base = 'fixed z-50 bg-background shadow-xl overflow-y-auto'
   const sideClass =
     side === 'right'
-      ? 'top-4 bottom-4 right-4 rounded-xl border border-border'
+      ? 'inset-0 border-l border-border md:top-4 md:bottom-4 md:right-4 md:left-auto md:rounded-xl md:border'
       : side === 'left'
         ? 'inset-y-0 left-0 h-full border-r border-border'
         : side === 'top'
@@ -53,7 +53,7 @@ export function SheetContent({
   return (
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay
-        className="fixed inset-0 z-50 bg-black/50 pointer-events-none"
+        className="fixed inset-0 z-50 bg-black/50 md:pointer-events-none"
         style={{ animation: 'sheet-fade-in 150ms ease' }}
       />
       <DialogPrimitive.Content
