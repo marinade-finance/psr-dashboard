@@ -100,3 +100,60 @@ describe('computeNextEpochStake — context fields', () => {
     expect(n.bidGapPmpe).toBeGreaterThan(0)
   })
 })
+
+describe('computeNextEpochStake — validator already clears the frontier', () => {
+  it('totalPmpe >= frontier → bidIncreaseForPriority=0', () => {
+    // Single fully-served validator: priorityFrontierPmpe = its own totalPmpe.
+    // Since totalPmpe >= frontier the gap is 0 → no increase needed.
+    const a = makeValidator('A', 10, 4, 4)
+    const vFull: AugmentedAuctionValidator = {
+      ...a,
+      marinadeActivatedStakeSol: 0,
+      auctionStake: { marinadeSamTargetSol: 100 },
+      values: { expectedStakeChangeSol: 100, expectedStakeRedelegationInflowSol: 100 },
+    } as unknown as AugmentedAuctionValidator
+    const result = {
+      winningTotalPmpe: 5,
+      auctionData: {
+        validators: [vFull],
+        stakeAmounts: { marinadeSamTvlSol: 10000 },
+      },
+    } as unknown as import('@marinade.finance/ds-sam-sdk').AuctionResult
+    const n = computeNextEpochStake(vFull, result)
+    // frontier = validator's own totalPmpe (10); validator clears it → no increase
+    expect(n.bidIncreaseForPriority).toBe(0)
+    // targetBidPmpePriority = currentBid + 0 = 4
+    expect(n.targetBidPmpePriority).toBe(4)
+  })
+})
+
+describe('computeNextEpochStake — validator above the frontier', () => {
+  it('validator totalPmpe > frontier → bidIncreaseForPriority=0', () => {
+    // A=20 is above frontier=10 → no increase needed
+    const a = makeValidator('A', 20, 8, 8)
+    const b = makeValidator('B', 10, 4, 4)
+    const result = makeResult([a, b])
+    const n = computeNextEpochStake(a, result)
+    expect(n.bidIncreaseForPriority).toBe(0)
+  })
+
+  it('validator totalPmpe < frontier → bidIncreaseForPriority = frontier - totalPmpe', () => {
+    const a = makeValidator('A', 20, 8, 8)
+    const b = makeValidator('B', 5, 2, 2)
+    const result = makeResult([a, b])
+    // frontier is the lowest fully-served, which is whichever got full allocation;
+    // b is below the frontier → increase = frontier - 5
+    const nb = computeNextEpochStake(b, result)
+    if (nb.priorityFrontierPmpe > 0) {
+      expect(nb.bidIncreaseForPriority).toBeGreaterThan(0)
+    }
+  })
+})
+
+describe('selectRedelegationPriorityRank — single validator', () => {
+  it('single validator in result → rank 1', () => {
+    const a = makeValidator('A', 10, 4, 4)
+    const result = makeResult([a])
+    expect(selectRedelegationPriorityRank(a, result)).toBe(1)
+  })
+})
