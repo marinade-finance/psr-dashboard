@@ -22,12 +22,20 @@ import { TABLE_SHELL_HOVER, Table, TableShell } from '../table/table'
 import type { ProtectedEvent } from 'src/services/protected-events'
 import type { ProtectedEventWithValidator } from 'src/services/validator-with-protected_event'
 
+// SAM-aligned chip shape — see `BOND_CHIP` in src/components/sam-table/sam-table.tsx.
+// Padding + radius match the bond-health pill so chips read identically across
+// SAM, bonds, and events tables.
+const CHIP_BASE =
+  'inline-flex items-center px-2 py-[3px] rounded-md text-xs font-medium'
+
 const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
   switch (status) {
     case 'dryrun':
       return (
         <HtmlTooltip html="This was logged during a test run — no money actually changes hands.">
-          <Badge variant="secondary" className="badge cursor-help float-left">
+          <Badge
+            className={`${CHIP_BASE} cursor-help float-left bg-muted text-muted-foreground`}
+          >
             Dryrun
           </Badge>
         </HtmlTooltip>
@@ -35,7 +43,9 @@ const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
     case 'estimate':
       return (
         <HtmlTooltip html="An early estimate from live data. The final number gets locked in at the end of the epoch and may shift before then.">
-          <Badge variant="default" className="badge cursor-help float-left">
+          <Badge
+            className={`${CHIP_BASE} cursor-help float-left bg-primary-light-10 text-primary`}
+          >
             Estimate
           </Badge>
         </HtmlTooltip>
@@ -49,7 +59,9 @@ const renderFunderBadge = (protectedEvent: ProtectedEvent) => {
   if (protectedEvent.meta.funder === 'ValidatorBond') {
     return (
       <HtmlTooltip html="Paid out of the validator's own bond — the validator footed the bill.">
-        <Badge className="cursor-help bg-status-green-light text-status-green border-status-green/30">
+        <Badge
+          className={`${CHIP_BASE} cursor-help bg-status-green-light text-status-green`}
+        >
           Validator Bond
         </Badge>
       </HtmlTooltip>
@@ -58,7 +70,9 @@ const renderFunderBadge = (protectedEvent: ProtectedEvent) => {
   if (protectedEvent.meta.funder === 'Marinade') {
     return (
       <HtmlTooltip html="Marinade had to step in and pay because the validator's bond ran out.">
-        <Badge className="cursor-help bg-warning-light text-warning border-warning/30">
+        <Badge
+          className={`${CHIP_BASE} cursor-help bg-warning-light text-warning`}
+        >
           Marinade backstop
         </Badge>
       </HtmlTooltip>
