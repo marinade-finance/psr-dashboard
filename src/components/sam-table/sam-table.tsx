@@ -271,11 +271,11 @@ const PENALTY_ICONS: Record<PenaltyKind, React.ReactElement> = {
   risk: PENALTY_RISK,
 }
 
-const PenaltyBadges: React.FC<{
+const PenaltyBadges = React.memo<{
   validator: AuctionValidator
   dsSamConfig: DsSamConfig
   winningTotalPmpe: number
-}> = ({ validator, dsSamConfig, winningTotalPmpe }) => {
+}>(({ validator, dsSamConfig, winningTotalPmpe }) => {
   const badges: { label: string; sol: number; kind: PenaltyKind }[] = []
   const bidLowSol = bidTooLowPenaltySol(
     validator,
@@ -312,7 +312,7 @@ const PenaltyBadges: React.FC<{
       </span>
     </Tooltip>
   )
-}
+})
 
 const SortIndicator: React.FC<{
   column: SortColumn
@@ -327,7 +327,7 @@ const SortIndicator: React.FC<{
   )
 }
 
-const RankCell: React.FC<{
+const RankCell = React.memo<{
   rank: number
   cutoffRank: number
   isGhost: boolean
@@ -337,7 +337,7 @@ const RankCell: React.FC<{
   tipColor: string
   voteAccount: string
   onClearValidator?: (voteAccount: string) => void
-}> = ({
+}>(({
   rank,
   cutoffRank,
   isGhost,
@@ -403,7 +403,7 @@ const RankCell: React.FC<{
       )}
     </span>
   )
-}
+})
 
 export const SamTable: React.FC<Props> = ({
   auctionResult,
@@ -890,8 +890,8 @@ export const SamTable: React.FC<Props> = ({
               <span className="text-muted-foreground text-sm font-mono">
                 {stake(selectBondSize(validator) ?? 0)}
               </span>
-              <span className="inline-flex items-center gap-1 px-2 py-[3px] rounded-md text-xs font-medium bg-muted">
-                <span className="w-[7px] h-[7px] rounded-full bg-muted-foreground/50" />
+              <span className={cn('inline-flex items-center gap-1 px-2 py-[3px] rounded-md text-xs font-medium', bondChip.chip)}>
+                <span className={cn('w-[7px] h-[7px] rounded-full', bondChip.dot)} />
                 {bondChip.label}
               </span>
             </div>
