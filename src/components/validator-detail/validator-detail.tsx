@@ -163,7 +163,7 @@ function TabStrip({
               key={t.id}
               onClick={() => setTab(t.id)}
               className={cn(
-                'px-3 py-2.5 text-mid font-medium border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5',
+                'px-3 py-2.5 text-mid font-medium border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer',
                 active
                   ? 'border-primary text-primary'
                   : tone
@@ -713,7 +713,7 @@ export const ValidatorDetail = ({
         <div className="flex items-start justify-between px-4 sm:px-6 py-4 sticky top-0 z-10 gap-2 bg-background">
           <div className="flex flex-col gap-1 min-w-0">
             <button
-              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors self-start"
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors self-start cursor-pointer"
               onClick={onClose}
             >
               <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
