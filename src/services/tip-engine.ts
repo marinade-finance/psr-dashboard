@@ -197,14 +197,14 @@ export function bondAdvice(
       if (coverage.topUpToIdealKeep > 0) {
         return {
           text: `Top up ${topUp(coverage.topUpToIdealKeep)} to extend runway.`,
-          urgency: 'critical',
-          tone: 'red',
+          urgency: 'warning',
+          tone: 'yellow',
         }
       }
       return {
         text: 'Top up bond to extend runway.',
-        urgency: 'critical',
-        tone: 'red',
+        urgency: 'warning',
+        tone: 'yellow',
       }
     }
     case 'watch': {

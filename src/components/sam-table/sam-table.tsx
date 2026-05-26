@@ -725,7 +725,7 @@ export const SamTable: React.FC<Props> = ({
     ],
   )
 
-  const renderRow = (
+  const renderRow = useCallback((
     validator: ValidatorWithBondState,
     index: number,
     isGhost = false,
@@ -846,7 +846,7 @@ export const SamTable: React.FC<Props> = ({
         </TableCell>
 
         {/* Validator */}
-        <TableCell className="px-3.5 py-3 min-w-[180px] sm:min-w-[220px]">
+        <TableCell className="px-3.5 py-3 w-[240px]">
           <ValidatorIdentity
             name={validatorName}
             voteAccount={voteAccount}
@@ -1022,7 +1022,22 @@ export const SamTable: React.FC<Props> = ({
         </TableCell>
       </TableRow>
     )
-  }
+  }, [
+    originalAuctionRankMap,
+    auctionRankMap,
+    simulatedValidators,
+    dsSamConfig,
+    winningTotalPmpe,
+    auctionResult,
+    priorityFrontierPmpe,
+    epochsPerYear,
+    validatorMeta,
+    flashId,
+    isCompact,
+    handleGhostClick,
+    onValidatorClick,
+    onClearValidator,
+  ])
 
   const inSimulation = simulatedValidators.size > 0
 
@@ -1092,7 +1107,7 @@ export const SamTable: React.FC<Props> = ({
                 validators={validators}
                 nameMap={validatorMeta ?? EMPTY_NAME_MAP}
                 onSelect={onValidatorSearch}
-                className="w-full max-w-xl"
+                className="w-[240px]"
               />
             </div>
           )}
@@ -1117,7 +1132,7 @@ export const SamTable: React.FC<Props> = ({
                     />
                   </TableHead>
                   <TableHead
-                    className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted min-w-[150px] cursor-pointer hover:text-primary"
+                    className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-[240px] cursor-pointer hover:text-primary"
                     onClick={() => handleSort('validator')}
                   >
                     Validator
