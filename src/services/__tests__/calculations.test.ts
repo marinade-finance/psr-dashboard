@@ -122,6 +122,11 @@ describe('bondUtilizationPct', () => {
     })
     expect(bondUtilizationPct(validator, 4)).toBe(50)
   })
+
+  it('minBondEpochs=0 → 100 (misconfig surfaces as fully depleted)', () => {
+    const v = makeValidator({ bondBalanceSol: 50, bondGoodForNEpochs: 3 })
+    expect(bondUtilizationPct(v, 0)).toBe(100)
+  })
 })
 
 describe('apyBreakdown', () => {
@@ -364,14 +369,5 @@ describe('bondCriticalFrac', () => {
     const cfg = { minBondEpochs: 2, idealBondEpochs: 0 } as DsSamConfig
     // bondGaugeScaleMax=0 → max > 0 is false → 0.2
     expect(bondCriticalFrac(cfg)).toBe(0.2)
-  })
-})
-
-// --- bondUtilizationPct — zero epochs edge case ---
-
-describe('bondUtilizationPct — zero minBondEpochs guard', () => {
-  it('minBondEpochs=0 → 100 (misconfig surfaces as fully depleted)', () => {
-    const v = makeValidator({ bondBalanceSol: 50, bondGoodForNEpochs: 3 })
-    expect(bondUtilizationPct(v, 0)).toBe(100)
   })
 })

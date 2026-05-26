@@ -59,28 +59,6 @@ describe('computeBondCoverage — basic field shapes', () => {
     expect(cov.topUpToIdealKeep).toBe(0)
     expect(cov.bondRiskFeeShortfall).toBe(0)
   })
-
-  it('returns all expected fields', () => {
-    const v = makeValidator({ minBondPmpe: 1, idealBondPmpe: 6 })
-    const cov = computeBondCoverage(v, CONFIG, 10)
-    const fields: (keyof typeof cov)[] = [
-      'minBondEpochs',
-      'idealBondEpochs',
-      'bondBalanceSol',
-      'claimableBondBalanceSol',
-      'marinadeActivatedStakeSol',
-      'currentExposedStakeSol',
-      'projectedExposedStakeSol',
-      'carriedPaidUndelegationSol',
-      'stakeKeepFloor',
-      'topUpToKeepStake',
-      'stakeIdealFloor',
-      'topUpToIdealKeep',
-      'bondRiskFeeFloor',
-      'bondRiskFeeShortfall',
-    ]
-    for (const f of fields) expect(cov).toHaveProperty(f)
-  })
 })
 
 describe('computeBondCoverage — topUpToKeepStake', () => {

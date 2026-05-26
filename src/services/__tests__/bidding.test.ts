@@ -157,7 +157,7 @@ describe('computeBidding — cost arithmetic', () => {
 describe('computeBidding — formatted commission fields', () => {
   it('inflPct is a percentage string derived from inflationCommissionDec', () => {
     const b = computeBidding(makeValidator())
-    expect(b.inflPct).toMatch(/^\d+%$/)
+    expect(b.inflPct).toBe('8%')
   })
 
   it('mevPct is "-" when mevCommissionDec is null', () => {
@@ -167,12 +167,12 @@ describe('computeBidding — formatted commission fields', () => {
 
   it('mevPct is a percentage string when mevCommissionDec is set', () => {
     const b = computeBidding(makeValidator())
-    expect(b.mevPct).toMatch(/^\d+%$/)
+    expect(b.mevPct).toBe('5%')
   })
 
   it('blkPct is a percentage string', () => {
     const b = computeBidding(makeValidator())
-    expect(b.blkPct).toMatch(/^\d+%$/)
+    expect(b.blkPct).toBe('5%')
   })
 })
 

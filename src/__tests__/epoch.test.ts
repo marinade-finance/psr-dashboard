@@ -66,6 +66,20 @@ describe('selectNetworkEpoch', () => {
     expect(selectNetworkEpoch([validator([])])).toBe(null)
     expect(selectNetworkEpoch([])).toBe(null)
   })
+
+  it('single validator, single stat → returns that epoch', () => {
+    expect(selectNetworkEpoch([validator([700])])).toBe(700)
+  })
+
+  it('multiple validators with overlapping epochs → max wins', () => {
+    expect(
+      selectNetworkEpoch([
+        validator([700, 701]),
+        validator([701, 702]),
+        validator([699]),
+      ]),
+    ).toBe(702)
+  })
 })
 
 describe('selectCurrentEpochProgress', () => {
@@ -110,6 +124,36 @@ describe('selectCurrentEpochProgress', () => {
     expect(result?.percent).toBe(100)
     expect(result?.hoursRemaining).toBe(0)
   })
+
+  it('multiple in-progress stats (epoch_end_at null) → uses the highest epoch', () => {
+    const v: Validator = {
+      ...validator([]),
+      epoch_stats: [
+        stat({
+          epoch: 611,
+          epoch_start_at: '2026-05-12T00:00:00Z',
+          epoch_end_at: null, // incorrectly open — lower epoch
+        }),
+        stat({
+          epoch: 612,
+          epoch_start_at: '2026-05-14T00:00:00Z',
+          epoch_end_at: null,
+        }),
+      ],
+    }
+    const result = selectCurrentEpochProgress([v], start)
+    expect(result?.epoch).toBe(612)
+  })
+
+  it('stat with epoch_start_at null → skipped', () => {
+    const v: Validator = {
+      ...validator([]),
+      epoch_stats: [
+        stat({ epoch: 612, epoch_start_at: null, epoch_end_at: null }),
+      ],
+    }
+    expect(selectCurrentEpochProgress([v], start)).toBeNull()
+  })
 })
 
 describe('selectLatestPaymentSettled', () => {
@@ -132,6 +176,11 @@ describe('selectLatestPaymentSettled', () => {
     expect(selectLatestPaymentSettled([pe(612, 'estimate')], 972)).toBe(null)
     expect(selectLatestPaymentSettled([], 972)).toBe(null)
   })
+
+  it('networkEpoch null → no epoch excluded', () => {
+    // When networkEpoch is null the guard is skipped; any past FACT is included.
+    expect(selectLatestPaymentSettled([pe(972, 'fact')], null)).toBe(972)
+  })
 })
 
 describe('selectLatestAuctionSettled', () => {
@@ -153,6 +202,19 @@ describe('selectLatestAuctionSettled', () => {
 
   it('returns null on empty input', () => {
     expect(selectLatestAuctionSettled([], 972)).toBe(null)
+  })
+
+  it('networkEpoch null → no epoch excluded', () => {
+    expect(selectLatestAuctionSettled([pe(972, 'estimate')], null)).toBe(972)
+  })
+
+  it('all events on or after live epoch excluded → null', () => {
+    expect(
+      selectLatestAuctionSettled(
+        [pe(972, 'estimate'), pe(973, 'estimate')],
+        972,
+      ),
+    ).toBeNull()
   })
 })
 
@@ -285,77 +347,5 @@ describe('epochMeterModel', () => {
       auctionSettled: null,
     })
     expect(m.timeline).toEqual([{ epoch: 612, stages: ['live'] }])
-  })
-})
-
-describe('selectNetworkEpoch — edge cases', () => {
-  it('single validator, single stat → returns that epoch', () => {
-    expect(selectNetworkEpoch([validator([700])])).toBe(700)
-  })
-
-  it('multiple validators with overlapping epochs → max wins', () => {
-    expect(
-      selectNetworkEpoch([
-        validator([700, 701]),
-        validator([701, 702]),
-        validator([699]),
-      ]),
-    ).toBe(702)
-  })
-})
-
-describe('selectCurrentEpochProgress — edge cases', () => {
-  const start = Date.parse('2026-05-14T00:00:00Z')
-
-  it('multiple in-progress stats (epoch_end_at null) → uses the highest epoch', () => {
-    const v: Validator = {
-      ...validator([]),
-      epoch_stats: [
-        stat({
-          epoch: 611,
-          epoch_start_at: '2026-05-12T00:00:00Z',
-          epoch_end_at: null, // incorrectly open — lower epoch
-        }),
-        stat({
-          epoch: 612,
-          epoch_start_at: '2026-05-14T00:00:00Z',
-          epoch_end_at: null,
-        }),
-      ],
-    }
-    const result = selectCurrentEpochProgress([v], start)
-    expect(result?.epoch).toBe(612)
-  })
-
-  it('stat with epoch_start_at null → skipped', () => {
-    const v: Validator = {
-      ...validator([]),
-      epoch_stats: [
-        stat({ epoch: 612, epoch_start_at: null, epoch_end_at: null }),
-      ],
-    }
-    expect(selectCurrentEpochProgress([v], start)).toBeNull()
-  })
-})
-
-describe('selectLatestPaymentSettled — edge cases', () => {
-  it('networkEpoch null → no epoch excluded', () => {
-    // When networkEpoch is null the guard is skipped; any past FACT is included.
-    expect(selectLatestPaymentSettled([pe(972, 'fact')], null)).toBe(972)
-  })
-})
-
-describe('selectLatestAuctionSettled — edge cases', () => {
-  it('networkEpoch null → no epoch excluded', () => {
-    expect(selectLatestAuctionSettled([pe(972, 'estimate')], null)).toBe(972)
-  })
-
-  it('all events on or after live epoch excluded → null', () => {
-    expect(
-      selectLatestAuctionSettled(
-        [pe(972, 'estimate'), pe(973, 'estimate')],
-        972,
-      ),
-    ).toBeNull()
   })
 })

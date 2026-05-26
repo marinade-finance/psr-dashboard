@@ -123,7 +123,6 @@ describe('computeBidPenalty — no history sentinel', () => {
 
   it('missing auctions field → treats as empty, no crash', () => {
     const v = makeValidator({ auctions: undefined })
-    expect(() => computeBidPenalty(v, CONFIG, 10)).not.toThrow()
     const r = computeBidPenalty(v, CONFIG, 10)
     expect(r.penaltySol).toBe(0)
   })
