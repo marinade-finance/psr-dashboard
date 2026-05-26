@@ -5,8 +5,8 @@ the same commit as any structural change (new top-level dir, new service
 module, new route, new external dependency, react-query key change,
 state-shape change that affects data flow).
 
-For the user-visible UI surface, see `SCREENS.md`. For visual tokens and
-contributor rules, see `CLAUDE.md`.
+For the user-visible UI surface, see `SCREENS.md`. For visual tokens, see
+`VISUALS.md`. For agent operating rules, see `CLAUDE.md`.
 
 ---
 
@@ -53,15 +53,15 @@ start:dev`), build output to `build/` (`pnpm build`), preview on 8080
 | `src/fixtures/`      | Auction fixtures used by `/test-*` routes.                                                         |
 | `src/index.css`      | Design tokens, dark-mode overrides, `@theme` Tailwind exposure, global transition rule, keyframes. |
 | `src/index.tsx`      | App entry: router, query client, GTM, prefetches.                                                  |
-| `public/docs/*.md`   | `GUIDE.md`, `GUIDE-EXPERT.md` — rendered by the docs page.                                         |
+| `public/docs/*.md`   | `GUIDE.md` — rendered by the docs page.                                                            |
 | `public/_redirects`  | Netlify-style SPA fallback for the deploy host.                                                    |
 | `specs/`             | Design specs — phase-numbered subdirs, `index.md` is the master index.                             |
 | `tests/`             | Playwright e2e specs and `__screenshots__/` baselines.                                             |
 | `.diary/`            | Date-named milestone notes (YYYYMMDD.md), checked in.                                              |
-| `.ship/`             | Ephemeral shipping artifacts, gitignored.                                                          |
 
-`SCREENS.md`, `ARCHITECTURE.md`, `README.md`, `CLAUDE.md`, `TODO.md`,
-`bugs.md` live at repo root.
+`SCREENS.md`, `ARCHITECTURE.md`, `README.md`, `CLAUDE.md`, `VISUALS.md`
+live at repo root. `bugs.md`, `ISSUES.md`, `differences.md`, `docs/` are
+local-only scratch (untracked).
 
 ---
 
@@ -70,23 +70,19 @@ start:dev`), build output to `build/` (`pnpm build`), preview on 8080
 `src/index.tsx` registers the full route table on a single
 `createBrowserRouter` call.
 
-| Route                      | Component                                                         | Level                      |
-| -------------------------- | ----------------------------------------------------------------- | -------------------------- |
-| `/`                        | `SamPage` (`src/pages/stake-auction-marketplace.tsx`)             | Basic                      |
-| `/expert-`                 | `SamPage`                                                         | Expert                     |
-| `/bonds`                   | `ValidatorBondsPage` (`src/pages/validator-bonds.tsx`)            | Basic                      |
-| `/expert-bonds`            | `ValidatorBondsPage`                                              | Expert                     |
-| `/protected-events`        | `ProtectedEventsPage` (`src/pages/protected-events.tsx`)          | Basic                      |
-| `/expert-protected-events` | `ProtectedEventsPage`                                             | Expert                     |
-| `/docs`                    | `DocsPage` (`src/pages/docs.tsx`)                                 | Basic (`GUIDE.md`)         |
-| `/expert-docs`             | `DocsPage`                                                        | Expert (`GUIDE-EXPERT.md`) |
-| `/test-`                   | `TestSamPage` (`src/pages/test-stake-auction-marketplace.tsx`)    | Internal sandbox (fixture) |
-| `/test-bonds`              | `TestBondsPage` (`src/pages/test-bonds.tsx`)                      | Internal sandbox (fixture) |
-| `/test-protected-events`   | `TestProtectedEventsPage` (`src/pages/test-protected-events.tsx`) | Internal sandbox (fixture) |
+| Route                    | Component                                                         | Notes                      |
+| ------------------------ | ----------------------------------------------------------------- | -------------------------- |
+| `/`                      | `SamPage` (`src/pages/stake-auction-marketplace.tsx`)             | SAM auction                |
+| `/bonds`                 | `ValidatorBondsPage` (`src/pages/validator-bonds.tsx`)            | Validator bonds            |
+| `/protected-events`      | `ProtectedEventsPage` (`src/pages/protected-events.tsx`)          | Protected events           |
+| `/docs`                  | `DocsPage` (`src/pages/docs.tsx`)                                 | In-app guide (`GUIDE.md`)  |
+| `/test-`                 | `TestSamPage` (`src/pages/test-stake-auction-marketplace.tsx`)    | Internal sandbox (fixture) |
+| `/test-bonds`            | `TestBondsPage` (`src/pages/test-bonds.tsx`)                      | Internal sandbox (fixture) |
+| `/test-protected-events` | `TestProtectedEventsPage` (`src/pages/test-protected-events.tsx`) | Internal sandbox (fixture) |
 
-`UserLevel` enum lives in `src/components/navigation/navigation.tsx`. The
-`level` prop threads from each route into the page and downstream into
-tables / detail panels.
+`/expert-*` routes still exist in `src/index.tsx` but are deprecated
+and scheduled for removal — see `specs/1/0-next.md`. Don't add new
+expert-only behaviour or document the expert variants here.
 
 ---
 
@@ -155,6 +151,42 @@ UI-free. Pure functions and async fetchers, typed against SDK types where applic
 | `fetch-utils.ts` | `fetchJson<T>(url)` — throws on non-2xx.            |
 | `types.ts`       | Shared `Color` enum.                                |
 | `help-text.ts`   | `HELP_TEXT` map of tooltip strings keyed by metric. |
+| `card-status.ts` | `CardStatus`, `CardStatusTone`, `CardStatusAction` types — live in services (not `components/`) so `tip-engine.ts` can build status values without a cycle. |
+| `sdk-rerun.ts`   | Wraps SDK `Auction.evaluate()` for the live simulation path; applies bond patches that `SourceDataOverrides` does not yet model. |
+
+---
+
+## SDK integration
+
+`@marinade.finance/ds-sam-sdk` provides `DsSamSDK`, `Auction`, `Debug`,
+`AggregatedData`, `AuctionResult`, `AuctionValidator`. SAM is a
+last-price auction — every winner pays the clearing price (effective
+bid). Key types: `AggregatedData` carries `validators:
+AggregatedValidator[]`, `stakeAmounts`, `rewards`, `blacklist`; after
+`transformValidators()` validators gain eligibility fields
+(`samEligible`, `samBlocked`).
+
+`src/services/sam.ts` owns the only rerun path
+(`loadSam(overrides)` → `dsSam.runFinalOnly(overrides.source)`).
+Redelegation allocation runs locally via the shared greedy
+`allocateRedelegation` pass (no SDK `runAlt`).
+
+---
+
+## Simulation mode
+
+`SamPage` lets users edit a validator's commissions, static bid, and
+bond balance. The local `AppOverrides` type (`src/services/simulation.ts`)
+wraps SDK `SourceDataOverrides` and carries a `bondBalanceSol:
+Map<string, number>` for bond overrides. Commission and bid overrides
+flow through `dsSam.runFinalOnly(overrides.source)`; bond overrides are
+applied post-rerun in live mode and as a pre-evaluate mutation in test
+mode (`src/services/sdk-rerun.ts`).
+
+Output: ghost rows (original position, strikethrough) plus simulated
+rows (new position, green/red grading by move severity).
+`PositionChange` and `buildOriginalPositionsMap`
+(`src/services/simulation.ts`) drive the grading.
 
 ---
 
@@ -232,19 +264,5 @@ CI (`.github/workflows/ci.yml`): `pnpm install --frozen-lockfile` →
   `[fix]`, `[chore]`, `[refactor]`, `[specs]`, `[test]`, `[docs]`.
 - Specs land in `specs/<phase>/<n>-name.md`, indexed in `specs/index.md`.
 - `.diary/YYYYMMDD.md` for milestone notes.
-- `tmp/` and `.ship/` for ephemeral artifacts; gitignored.
+- `tmp/` for ephemeral artifacts; gitignored.
 
----
-
-## Maintenance
-
-When the architecture changes, update this file in the same commit:
-
-- Add / remove / rename a top-level dir → update **Top-level layout**.
-- Add a new service module → add a row to **Services layer**.
-- Add a new route file → update **Routes & pages**.
-- Add or remove a react-query key → update **State & data flow**.
-- Bump a major dependency or replace a tool → update **Stack**.
-- Move a file referenced by name above → grep and update every reference.
-
-Prefer rewriting a section over patching it sentence-by-sentence.

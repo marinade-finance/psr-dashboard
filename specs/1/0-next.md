@@ -10,6 +10,26 @@ or moved to `specs/archive/`.
 
 ---
 
+## Remove `/expert-*` routes
+
+**Why:** Expert mode is deprecated. `/expert-`, `/expert-bonds`,
+`/expert-protected-events`, `/expert-docs` still resolve in
+`src/index.tsx` but are undocumented (no row in `README.md`,
+`ARCHITECTURE.md`, or `SCREENS.md` route tables) and no Playwright test
+hits them. The `level: UserLevel` prop drives a Basic-vs-Expert column
+gating inside each page; once routes are dropped, that prop and the
+expert-only columns/metrics go too.
+
+**End state:** `createBrowserRouter` only registers `/`, `/bonds`,
+`/protected-events`, `/docs`, and the `/test-*` sandbox. `UserLevel` is
+removed; pages drop the `level` prop. `public/docs/GUIDE-EXPERT.md`
+already deleted.
+
+**Where:** `src/index.tsx`, `src/pages/*`, `src/components/navigation/`,
+every page that imports `UserLevel`.
+
+---
+
 ## Test-page parity — /test- data path may diverge silently
 
 **Why:** `/test-` routes wrap the same page components, so UI logic can't
@@ -427,8 +447,8 @@ bond breakdown AND a GUIDE explanation.
 and `public/docs/GUIDE.md` have lines 200+ chars (the "Data Sources" table,
 participation-requirements bullet, long-URL rows).
 
-**Scope:** `public/docs/GUIDE.md`, `public/docs/GUIDE-EXPERT.md`, `SCREENS.md`,
-`VISUALS.md`, `ARCHITECTURE.md`, `README.md`, `TODO.md`, `CLAUDE.md`, `bugs.md`.
+**Scope:** `public/docs/GUIDE.md`, `SCREENS.md`, `VISUALS.md`,
+`ARCHITECTURE.md`, `README.md`, `CLAUDE.md`, `bugs.md`.
 
 **Rules:** wrap prose at ≤120 chars; don't break mid-link or mid-codespan.
 Markdown tables with long URLs: use footnote references or accept the table as

@@ -11,9 +11,10 @@ metric, tab, or status badge, update the matching row here in the same
 commit.
 
 All pages share the same shell: `Navigation` → optional `Banner` → page
-content. Routes have a Basic and an Expert variant (`/foo` and
-`/expert-foo`); `level: UserLevel` propagates from the route into the page
-component and downstream.
+content. `level: UserLevel` propagates from the route into the page
+component and downstream. `/expert-*` routes still exist in code but are
+deprecated and undocumented; Basic-vs-Expert column markers below
+describe the surface the `UserLevel` prop gates.
 
 ---
 
@@ -28,18 +29,17 @@ Protected Stake Rewards" wordmark (wordmark hidden below `sm`).
 
 **Tabs**
 
-| Desktop label             | Mobile label | Route                       |
-| ------------------------- | ------------ | --------------------------- |
-| Stake Auction Marketplace | SAM          | `/{prefix}`                 |
-| Protected Events          | Events       | `/{prefix}protected-events` |
-| Validator Bonds           | Bonds        | `/{prefix}bonds`            |
+| Desktop label             | Mobile label | Route               |
+| ------------------------- | ------------ | ------------------- |
+| Stake Auction Marketplace | SAM          | `/`                 |
+| Protected Events          | Events       | `/protected-events` |
+| Validator Bonds           | Bonds        | `/bonds`            |
 
-`prefix = ''` (Basic) or `'expert-'` (Expert). Active tab styled
-`bg-primary text-primary-foreground`. Hovering Events / Bonds prefetches the
-respective query (`staleTime: 5min`).
+Active tab styled `bg-primary text-primary-foreground`. Hovering Events /
+Bonds prefetches the respective query (`staleTime: 5min`).
 
-**Right** — Docs link (→ `/docs` or `/expert-docs` per `level`, hidden
-below `sm`), **Epoch meter**, `ThemeToggle`.
+**Right** — Docs link (→ `/docs`, hidden below `sm`), **Epoch meter**,
+`ThemeToggle`.
 
 ### Epoch meter
 
@@ -58,7 +58,7 @@ lines 2-3 fill in without hovering the Events tab. Never blocks the nav.
 
 ---
 
-## SAM Page (`/`, `/expert-`)
+## SAM Page (`/`)
 
 `src/pages/stake-auction-marketplace.tsx` ·
 `src/components/sam-table/sam-table.tsx`
@@ -383,7 +383,7 @@ one shared `rowStyle()` helper inside `row.tsx`. Conclusion rows pass
 
 ---
 
-## Validator Bonds Page (`/bonds`, `/expert-bonds`)
+## Validator Bonds Page (`/bonds`)
 
 `src/pages/validator-bonds.tsx` ·
 `src/components/validator-bonds-table/validator-bonds-table.tsx`
@@ -449,7 +449,7 @@ sort: Marinade Stake DESC.**
 
 ---
 
-## Protected Events Page (`/protected-events`, `/expert-protected-events`)
+## Protected Events Page (`/protected-events`)
 
 `src/pages/protected-events.tsx` ·
 `src/components/protected-events-table/protected-events-table.tsx`
@@ -505,28 +505,20 @@ Generic `<Table>` inside `<TableShell>` with `TABLE_SHELL_HOVER`,
 
 ---
 
-## Docs Page (`/docs`, `/expert-docs`)
+## Docs Page (`/docs`)
 
 `src/pages/docs.tsx`
 
-Centered `max-w-3xl` column. Renders `public/docs/GUIDE.md` (Basic) or
-`public/docs/GUIDE-EXPERT.md` (Expert) through `react-markdown` with
-`remark-gfm` + `rehype-raw`. Fetched as plain text via `useQuery({
-queryKey: ['doc', activeDoc], staleTime: Infinity })`.
+Centered `max-w-3xl` column. Renders `public/docs/GUIDE.md` through
+`react-markdown` with `remark-gfm` + `rehype-raw`. Fetched as plain text
+via `useQuery({ queryKey: ['doc', activeDoc], staleTime: Infinity })`.
 
-- Expert mode shows a tab strip ("Guide" / "Expert Guide") to switch
-  between the two. When entering the route via a hash (e.g. from a
-  breakdown "Guide →" link), the Expert page still defaults to `GUIDE`
-  so the section anchor exists.
 - Hash anchors work: `<a id="...">` markers in the markdown are
   honoured (via `rehype-raw`) and a `useEffect` scrolls to
   `window.location.hash` after the markdown DOM mounts (deferred one
-  frame via `requestAnimationFrame`). Re-runs on tab switch.
-- Links beginning with `#GUIDE` / `#GUIDE-EXPERT` switch the active doc
-  instead of scrolling. All other external `a` elements open in a new
-  tab.
-- Card "Guide →" links from breakdown cards use
-  `docsPath(level)` to pick `/docs` vs `/expert-docs`, then append a
+  frame via `requestAnimationFrame`). External `a` elements open in a
+  new tab.
+- Card "Guide →" links from breakdown cards route to `/docs` plus the
   section anchor.
 
 ---
@@ -543,15 +535,16 @@ the full UI and interaction surface but bypassing live APIs.
 | `/test-bonds`            | `TestBondsPage` (`src/pages/test-bonds.tsx`)                      | `ValidatorBondsPage`  |
 | `/test-protected-events` | `TestProtectedEventsPage` (`src/pages/test-protected-events.tsx`) | `ProtectedEventsPage` |
 
-Fixtures: `src/fixtures/`, `src/test-validators.ts`, `src/test-bonds.ts`,
-`src/test-protected-events.ts`. Test pages set `refetchInterval: false`
-on the wrapped `QueryClient` queries.
+Fixtures: `src/fixtures/test-validators.ts`,
+`src/fixtures/test-bonds.ts`, `src/fixtures/test-protected-events.ts`,
+`src/fixtures/test-notifications.ts`. Test pages set
+`refetchInterval: false` on the wrapped `QueryClient` queries.
 
 ---
 
 ## Shared visual primitives
 
-Pointer list — for the full design language see CLAUDE.md.
+Pointer list — for the full design language see `VISUALS.md`.
 
 - **`<Card>`** (`src/components/ui/card.tsx`) — `rounded-xl border border-border bg-card shadow-card`.
 - **`<TableShell>` + `TABLE_SHELL_HOVER`** (`src/components/table/table.tsx`) — canonical outer card chrome for any page that drops a generic `<Table>` into a content section. Wraps the table in `bg-card rounded-xl border border-border shadow-card overflow-hidden overflow-x-auto`. Both the bonds and protected-events tables sit inside one. Pair with `TABLE_SHELL_HOVER` on the `<Table>`'s `className` to get the muted `bg-secondary` row-hover (the default `<Table>` hover, `bg-primary-light`, is reserved for SAM, which has its own bespoke wrapper).
