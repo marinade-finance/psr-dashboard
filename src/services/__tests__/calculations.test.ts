@@ -17,6 +17,7 @@ import type * as ValidatorsModule from '../validators'
 import type {
   AuctionValidator,
   AuctionResult,
+  DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
 
 // sam.ts calls loadSam which hits external APIs — mock the module-level fetches
@@ -332,8 +333,6 @@ describe('effectiveBondRunway', () => {
 })
 
 // --- bondGaugeScaleMax ---
-
-import type { DsSamConfig } from '@marinade.finance/ds-sam-sdk'
 
 describe('bondGaugeScaleMax', () => {
   it('scale = 4 × idealBondEpochs', () => {

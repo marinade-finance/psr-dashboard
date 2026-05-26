@@ -3,7 +3,7 @@
 import { describe, it, expect } from 'vitest'
 
 import { computeBondCoverage } from '../bond-coverage'
-import { bondHealthFromAuction, bondUtilizationPct } from '../bond-health'
+import { bondHealthFromAuction } from '../bond-health'
 import { selectProtectedStakeReason } from '../protected-events'
 import {
   getValidatorTip,
@@ -62,23 +62,6 @@ const DS_SAM_CONFIG = {
   bidTooLowPenaltyHistoryEpochs: 10,
   bidTooLowPenaltyPermittedDeviationPmpe: 0.0001,
 } as unknown as DsSamConfig
-
-// --- bondUtilizationPct ---
-
-describe('bondUtilizationPct', () => {
-  it('3 of 4 epochs covered → 25% utilization', () => {
-    const validator = makeValidator({
-      bondGoodForNEpochs: 3,
-      bondBalanceSol: 100,
-    })
-    expect(bondUtilizationPct(validator, 4)).toBe(25)
-  })
-
-  it('zero bond → 100', () => {
-    const validator = makeValidator({ bondBalanceSol: 0 })
-    expect(bondUtilizationPct(validator, 5)).toBe(100)
-  })
-})
 
 // --- getApyBreakdown ---
 

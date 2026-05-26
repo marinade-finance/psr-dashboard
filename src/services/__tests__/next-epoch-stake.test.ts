@@ -143,13 +143,28 @@ describe('computeNextEpochStake — validator above the frontier', () => {
   it('validator totalPmpe < frontier → bidIncreaseForPriority = frontier - totalPmpe', () => {
     const a = makeValidator('A', 20, 8, 8)
     const b = makeValidator('B', 5, 2, 2)
-    const result = makeResult([a, b])
-    // frontier is the lowest fully-served, which is whichever got full allocation;
-    // b is below the frontier → increase = frontier - 5
+    // Budget = tvl − active sum = 150. A is fully served (delta 100, alloc 100,
+    // frontier→20); B gets a partial 50 of its 100 → no frontier update.
+    // Final frontier = 20 (A's totalPmpe), B sits below at 5 → gap = 15.
+    const result = {
+      winningTotalPmpe: 5,
+      auctionData: {
+        validators: [a, b],
+        stakeAmounts: { marinadeSamTvlSol: 150 },
+      },
+    } as unknown as AuctionResult
     const nb = computeNextEpochStake(b, result)
-    if (nb.priorityFrontierPmpe > 0) {
-      expect(nb.bidIncreaseForPriority).toBeGreaterThan(0)
-    }
+    expect(nb.priorityFrontierPmpe).toBeGreaterThan(0)
+    expect(nb.bidIncreaseForPriority).toBeGreaterThan(0)
+  })
+})
+
+describe('selectRedelegationPriorityRank — validator not in rank map', () => {
+  it('synthetic vote account not among validators → null', () => {
+    const a = makeValidator('A', 10, 4, 4)
+    const result = makeResult([a])
+    const ghost = makeValidator('GHOST', 7, 2, 2)
+    expect(selectRedelegationPriorityRank(ghost, result)).toBeNull()
   })
 })
 
