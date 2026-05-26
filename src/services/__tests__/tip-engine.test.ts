@@ -250,10 +250,9 @@ describe('getValidatorTip', () => {
     expect(tip.text).toContain('Raise bid')
   })
 
-  it('out-of-set + above-min + critical bond, no fee yet → below-threshold CTA', () => {
+  it('out-of-set + above-min + critical bond, no fee yet → face-fee-charges CTA', () => {
     // Bond is below the penalty floor (topUpToAvoidFee > 0) but the SDK
-    // has not charged a fee this epoch (bondRiskFeeSol === 0). The honest
-    // text is "below the penalty threshold", not "avoid the fee".
+    // has not charged a fee this epoch (bondRiskFeeSol === 0).
     const validator = makeValidator({
       auctionStake: { marinadeSamTargetSol: 0 },
       bondBalanceSol: 50,
@@ -263,13 +262,12 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
-    expect(tip.text).toContain('below the penalty threshold')
+    expect(tip.text).toContain('face fee charges')
     expect(tip.alert).toBeFalsy()
   })
 
-  it('critical health, claimable below floor, no fee → "below the penalty threshold"', () => {
-    // topUpToAvoidFee > 0 but bondRiskFeeSol === 0 — threshold crossed but
-    // no fee charged yet. Text names the threshold, not the fee.
+  it('critical health, claimable below floor, no fee → "face fee charges"', () => {
+    // topUpToAvoidFee > 0 but bondRiskFeeSol === 0 — threshold crossed but no fee yet.
     const validator = makeValidator({
       bondGoodForNEpochs: 4,
       bondBalanceSol: 0.001,
@@ -279,7 +277,7 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
-    expect(tip.text).toContain('below the penalty threshold')
+    expect(tip.text).toContain('face fee charges')
     expect(tip.alert).toBeFalsy()
   })
 
@@ -300,7 +298,7 @@ describe('getValidatorTip', () => {
     expect(tip.alert).toBe(true)
   })
 
-  it('critical health (epochs > 5), claimable below floor, no fee → threshold CTA', () => {
+  it('critical health (epochs > 5), claimable below floor, no fee → face-fee-charges CTA', () => {
     const validator = makeValidator({
       bondGoodForNEpochs: 8,
       bondBalanceSol: 0.001,
@@ -310,7 +308,7 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
-    expect(tip.text).toContain('below the penalty threshold')
+    expect(tip.text).toContain('face fee charges')
     expect(tip.alert).toBeFalsy()
   })
 
