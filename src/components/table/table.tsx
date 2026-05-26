@@ -264,9 +264,7 @@ export const Table: <Item>(props: Props<Item>) => React.ReactElement = ({
         if (compareResult !== undefined && compareResult !== 0) {
           if (compareResult === Infinity) return 1
           if (compareResult === -Infinity) return -1
-          return orderDirection === 'asc'
-            ? compareResult
-            : -compareResult
+          return orderDirection === 'asc' ? compareResult : -compareResult
         }
       }
       return 0

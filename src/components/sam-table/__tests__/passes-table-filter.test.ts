@@ -37,19 +37,13 @@ describe('passesTableFilter', () => {
       auctionStake: { marinadeSamTargetSol: 0 } as never,
     })
     expect(passesTableFilter(atMin, 'expert', MIN_BOND_SOL)).toBe(true)
-    expect(passesTableFilter(noStake, 'expert', MIN_BOND_SOL)).toBe(
-      true,
-    )
+    expect(passesTableFilter(noStake, 'expert', MIN_BOND_SOL)).toBe(true)
   })
 
   it('bond runway does not drive visibility in either mode', () => {
     const zeroRunway = makeValidator({ bondGoodForNEpochs: 0 })
-    expect(passesTableFilter(zeroRunway, 'expert', MIN_BOND_SOL)).toBe(
-      true,
-    )
-    expect(passesTableFilter(zeroRunway, 'basic', MIN_BOND_SOL)).toBe(
-      true,
-    )
+    expect(passesTableFilter(zeroRunway, 'expert', MIN_BOND_SOL)).toBe(true)
+    expect(passesTableFilter(zeroRunway, 'basic', MIN_BOND_SOL)).toBe(true)
   })
 
   it('basic mode hides validators with no marinade stake', () => {
@@ -57,8 +51,6 @@ describe('passesTableFilter', () => {
       marinadeActivatedStakeSol: 0,
       auctionStake: { marinadeSamTargetSol: 0 } as never,
     })
-    expect(passesTableFilter(noStake, 'basic', MIN_BOND_SOL)).toBe(
-      false,
-    )
+    expect(passesTableFilter(noStake, 'basic', MIN_BOND_SOL)).toBe(false)
   })
 })

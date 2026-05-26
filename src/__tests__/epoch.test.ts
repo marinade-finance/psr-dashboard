@@ -116,11 +116,7 @@ describe('selectLatestPaymentSettled', () => {
   it('returns the max past FACT epoch, ignoring ESTIMATE and DRYRUN', () => {
     expect(
       selectLatestPaymentSettled(
-        [
-          pe(610, 'fact'),
-          pe(611, 'estimate'),
-          pe(612, 'dryrun'),
-        ],
+        [pe(610, 'fact'), pe(611, 'estimate'), pe(612, 'dryrun')],
         972,
       ),
     ).toBe(610)
@@ -128,20 +124,12 @@ describe('selectLatestPaymentSettled', () => {
 
   it('excludes FACT entries on/after the live epoch', () => {
     expect(
-      selectLatestPaymentSettled(
-        [
-          pe(971, 'fact'),
-          pe(972, 'fact'),
-        ],
-        972,
-      ),
+      selectLatestPaymentSettled([pe(971, 'fact'), pe(972, 'fact')], 972),
     ).toBe(971)
   })
 
   it('returns null when no FACT event exists', () => {
-    expect(
-      selectLatestPaymentSettled([pe(612, 'estimate')], 972),
-    ).toBe(null)
+    expect(selectLatestPaymentSettled([pe(612, 'estimate')], 972)).toBe(null)
     expect(selectLatestPaymentSettled([], 972)).toBe(null)
   })
 })
@@ -149,13 +137,7 @@ describe('selectLatestPaymentSettled', () => {
 describe('selectLatestAuctionSettled', () => {
   it('returns the max past epoch across any PE status', () => {
     expect(
-      selectLatestAuctionSettled(
-        [
-          pe(610, 'fact'),
-          pe(612, 'estimate'),
-        ],
-        972,
-      ),
+      selectLatestAuctionSettled([pe(610, 'fact'), pe(612, 'estimate')], 972),
     ).toBe(612)
   })
 
@@ -163,10 +145,7 @@ describe('selectLatestAuctionSettled', () => {
     // Estimator pushes ESTIMATE for in-progress epoch 972; expect 971.
     expect(
       selectLatestAuctionSettled(
-        [
-          pe(971, 'estimate'),
-          pe(972, 'estimate'),
-        ],
+        [pe(971, 'estimate'), pe(972, 'estimate')],
         972,
       ),
     ).toBe(971)
@@ -362,17 +341,13 @@ describe('selectCurrentEpochProgress — edge cases', () => {
 describe('selectLatestPaymentSettled — edge cases', () => {
   it('networkEpoch null → no epoch excluded', () => {
     // When networkEpoch is null the guard is skipped; any past FACT is included.
-    expect(
-      selectLatestPaymentSettled([pe(972, 'fact')], null),
-    ).toBe(972)
+    expect(selectLatestPaymentSettled([pe(972, 'fact')], null)).toBe(972)
   })
 })
 
 describe('selectLatestAuctionSettled — edge cases', () => {
   it('networkEpoch null → no epoch excluded', () => {
-    expect(
-      selectLatestAuctionSettled([pe(972, 'estimate')], null),
-    ).toBe(972)
+    expect(selectLatestAuctionSettled([pe(972, 'estimate')], null)).toBe(972)
   })
 
   it('all events on or after live epoch excluded → null', () => {

@@ -110,7 +110,10 @@ describe('computeNextEpochStake — validator already clears the frontier', () =
       ...a,
       marinadeActivatedStakeSol: 0,
       auctionStake: { marinadeSamTargetSol: 100 },
-      values: { expectedStakeChangeSol: 100, expectedStakeRedelegationInflowSol: 100 },
+      values: {
+        expectedStakeChangeSol: 100,
+        expectedStakeRedelegationInflowSol: 100,
+      },
     } as unknown as AugmentedAuctionValidator
     const result = {
       winningTotalPmpe: 5,
@@ -118,7 +121,7 @@ describe('computeNextEpochStake — validator already clears the frontier', () =
         validators: [vFull],
         stakeAmounts: { marinadeSamTvlSol: 10000 },
       },
-    } as unknown as import('@marinade.finance/ds-sam-sdk').AuctionResult
+    } as unknown as AuctionResult
     const n = computeNextEpochStake(vFull, result)
     // frontier = validator's own totalPmpe (10); validator clears it → no increase
     expect(n.bidIncreaseForPriority).toBe(0)

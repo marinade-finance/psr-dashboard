@@ -5,7 +5,11 @@ import type { BondHealthState } from 'src/services/bond-health'
 import { type TipUrgency, type ValidatorTip } from 'src/services/tip-engine'
 import { assertNever } from 'src/utils/assert-never'
 
-import type { CardStatus, CardStatusAction, CardStatusTone } from 'src/services/card-status'
+import type {
+  CardStatus,
+  CardStatusAction,
+  CardStatusTone,
+} from 'src/services/card-status'
 
 export type { CardStatus, CardStatusAction, CardStatusTone }
 
@@ -64,10 +68,7 @@ export const tipBannerTone = (
   tip: ValidatorTip,
   bondHealth: BondHealthState,
 ): CardStatusTone => {
-  if (
-    tip.constraint === 'bond' &&
-    tip.urgency !== 'neutral'
-  ) {
+  if (tip.constraint === 'bond' && tip.urgency !== 'neutral') {
     return bondHealthToTone(bondHealth)
   }
   return urgencyToTone(tip.urgency)

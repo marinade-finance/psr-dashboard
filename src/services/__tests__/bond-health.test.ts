@@ -5,7 +5,10 @@ import { describe, it, expect, vi } from 'vitest'
 import { bondHealthFromAuction, BOND_URGENT_EPOCHS } from '../bond-health'
 import { computeBondCoverage } from '../bond-coverage'
 
-import type { AuctionValidator, DsSamConfig } from '@marinade.finance/ds-sam-sdk'
+import type {
+  AuctionValidator,
+  DsSamConfig,
+} from '@marinade.finance/ds-sam-sdk'
 
 vi.mock('../validators', async importOriginal => {
   const actual = await importOriginal<Record<string, unknown>>()
@@ -19,7 +22,9 @@ const CONFIG: DsSamConfig = {
   minBondBalanceSol: 1,
 } as unknown as DsSamConfig
 
-function makeValidator(overrides: Record<string, unknown> = {}): AuctionValidator {
+function makeValidator(
+  overrides: Record<string, unknown> = {},
+): AuctionValidator {
   return {
     voteAccount: 'v1',
     bondBalanceSol: 100,
@@ -159,7 +164,9 @@ describe('bondHealthFromAuction — precomputed coverage shortcut', () => {
   it('precomputedCoverage with shortfall > 0 → "critical" without recomputing', () => {
     const v = makeValidator({ bondGoodForNEpochs: 20 })
     // Inject a fake coverage with a shortfall
-    const fakeCoverage = { bondRiskFeeShortfall: 10 } as ReturnType<typeof computeBondCoverage>
+    const fakeCoverage = { bondRiskFeeShortfall: 10 } as ReturnType<
+      typeof computeBondCoverage
+    >
     expect(bondHealthFromAuction(v, CONFIG, 10, fakeCoverage)).toBe('critical')
   })
 })

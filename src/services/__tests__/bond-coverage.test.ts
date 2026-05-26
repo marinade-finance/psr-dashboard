@@ -4,9 +4,10 @@ import { describe, it, expect, vi } from 'vitest'
 
 import { computeBondCoverage } from '../bond-coverage'
 
-import type { AuctionValidator, DsSamConfig } from '@marinade.finance/ds-sam-sdk'
-import type * as SamModule from '../sam'
-
+import type {
+  AuctionValidator,
+  DsSamConfig,
+} from '@marinade.finance/ds-sam-sdk'
 // bond-coverage.ts calls selectPaidUndelegationSol from sam.ts, which imports
 // validators.ts (module-level fetch). Stub validators to prevent network calls.
 vi.mock('../validators', async importOriginal => {
@@ -21,7 +22,9 @@ const CONFIG: DsSamConfig = {
   minBondBalanceSol: 0.01,
 } as unknown as DsSamConfig
 
-function makeValidator(overrides: Record<string, unknown> = {}): AuctionValidator {
+function makeValidator(
+  overrides: Record<string, unknown> = {},
+): AuctionValidator {
   return {
     voteAccount: 'v1',
     bondBalanceSol: 100,
@@ -61,11 +64,20 @@ describe('computeBondCoverage — basic field shapes', () => {
     const v = makeValidator({ minBondPmpe: 1, idealBondPmpe: 6 })
     const cov = computeBondCoverage(v, CONFIG, 10)
     const fields: (keyof typeof cov)[] = [
-      'minEp', 'idealEp', 'bondBalanceSol', 'claimableBondBalanceSol',
-      'marinadeActivatedStakeSol', 'currentExposedStakeSol',
-      'projectedExposedStakeSol', 'carriedPaidUndelegationSol',
-      'stakeKeepFloor', 'topUpToKeepStake', 'stakeIdealFloor',
-      'topUpToIdealKeep', 'bondRiskFeeFloor', 'bondRiskFeeShortfall',
+      'minEp',
+      'idealEp',
+      'bondBalanceSol',
+      'claimableBondBalanceSol',
+      'marinadeActivatedStakeSol',
+      'currentExposedStakeSol',
+      'projectedExposedStakeSol',
+      'carriedPaidUndelegationSol',
+      'stakeKeepFloor',
+      'topUpToKeepStake',
+      'stakeIdealFloor',
+      'topUpToIdealKeep',
+      'bondRiskFeeFloor',
+      'bondRiskFeeShortfall',
     ]
     for (const f of fields) expect(cov).toHaveProperty(f)
   })

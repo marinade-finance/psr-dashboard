@@ -79,7 +79,14 @@ describe('pct', () => {
   })
 })
 
-import { finite, bondSol, penalty, cost, signedStake, lamportsToSol } from '../format'
+import {
+  finite,
+  bondSol,
+  penalty,
+  cost,
+  signedStake,
+  lamportsToSol,
+} from '../format'
 
 describe('finite', () => {
   it('finite number → passes through unchanged', () => {
@@ -98,7 +105,7 @@ describe('finite', () => {
   })
 
   it('null → 0', () => {
-    expect(finite(null as unknown as number)).toBe(0)
+    expect(finite(null)).toBe(0)
   })
 
   it('undefined → 0', () => {

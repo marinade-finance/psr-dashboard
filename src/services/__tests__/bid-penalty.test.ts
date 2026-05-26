@@ -8,7 +8,10 @@ import {
   blacklistPenaltySol,
 } from '../bid-penalty'
 
-import type { AuctionValidator, DsSamConfig } from '@marinade.finance/ds-sam-sdk'
+import type {
+  AuctionValidator,
+  DsSamConfig,
+} from '@marinade.finance/ds-sam-sdk'
 
 const CONFIG = {
   bidTooLowPenaltyHistoryEpochs: 5,
@@ -47,7 +50,13 @@ describe('computeBidPenalty — isNegativeBiddingChange', () => {
   })
 
   it('bid raised → isNegativeBiddingChange false, no penalty', () => {
-    const v = makeValidator({ revShare: { bidPmpe: 8, effParticipatingBidPmpe: 8, bondObligationPmpe: 3 } })
+    const v = makeValidator({
+      revShare: {
+        bidPmpe: 8,
+        effParticipatingBidPmpe: 8,
+        bondObligationPmpe: 3,
+      },
+    })
     const r = computeBidPenalty(v, CONFIG, 10)
     expect(r.isNegativeBiddingChange).toBe(false)
     expect(r.penaltySol).toBe(0)
@@ -56,10 +65,12 @@ describe('computeBidPenalty — isNegativeBiddingChange', () => {
   it('bid dropped below TOL threshold → isNegativeBiddingChange true', () => {
     // last epoch was 10, this epoch is 1 (far below 0.99999 * 10 threshold)
     const v = makeValidator({
-      revShare: { bidPmpe: 1, effParticipatingBidPmpe: 1, bondObligationPmpe: 0 },
-      auctions: [
-        { bidPmpe: 10, effParticipatingBidPmpe: 10 },
-      ],
+      revShare: {
+        bidPmpe: 1,
+        effParticipatingBidPmpe: 1,
+        bondObligationPmpe: 0,
+      },
+      auctions: [{ bidPmpe: 10, effParticipatingBidPmpe: 10 }],
     })
     const r = computeBidPenalty(v, CONFIG, 10)
     expect(r.isNegativeBiddingChange).toBe(true)
@@ -72,10 +83,12 @@ describe('computeBidPenalty — shortfall logic', () => {
   it('bondObligationPmpe >= adjustedLimit → shortfall 0, no penalty', () => {
     // effParticipatingBid=5, bond=10 (covers), bid dropped hard
     const v = makeValidator({
-      revShare: { bidPmpe: 1, effParticipatingBidPmpe: 5, bondObligationPmpe: 10 },
-      auctions: [
-        { bidPmpe: 10, effParticipatingBidPmpe: 5 },
-      ],
+      revShare: {
+        bidPmpe: 1,
+        effParticipatingBidPmpe: 5,
+        bondObligationPmpe: 10,
+      },
+      auctions: [{ bidPmpe: 10, effParticipatingBidPmpe: 5 }],
     })
     const r = computeBidPenalty(v, CONFIG, 10)
     // shortfall = max(0, 5 - 10) = 0
@@ -85,10 +98,12 @@ describe('computeBidPenalty — shortfall logic', () => {
 
   it('bondObligationPmpe < adjustedLimit AND bid dropped → penaltyCoef in (0, 1]', () => {
     const v = makeValidator({
-      revShare: { bidPmpe: 1, effParticipatingBidPmpe: 5, bondObligationPmpe: 0 },
-      auctions: [
-        { bidPmpe: 10, effParticipatingBidPmpe: 5 },
-      ],
+      revShare: {
+        bidPmpe: 1,
+        effParticipatingBidPmpe: 5,
+        bondObligationPmpe: 0,
+      },
+      auctions: [{ bidPmpe: 10, effParticipatingBidPmpe: 5 }],
     })
     const r = computeBidPenalty(v, CONFIG, 10)
     expect(r.shortfall).toBeGreaterThan(0)
@@ -118,7 +133,11 @@ describe('computeBidPenalty — permittedDeviation guard', () => {
   it('permittedDeviationPmpe undefined → treated as 0 (no NaN)', () => {
     const cfg = { bidTooLowPenaltyHistoryEpochs: 5 } as unknown as DsSamConfig
     const v = makeValidator({
-      revShare: { bidPmpe: 1, effParticipatingBidPmpe: 5, bondObligationPmpe: 0 },
+      revShare: {
+        bidPmpe: 1,
+        effParticipatingBidPmpe: 5,
+        bondObligationPmpe: 0,
+      },
       auctions: [{ bidPmpe: 10, effParticipatingBidPmpe: 5 }],
     })
     const r = computeBidPenalty(v, cfg, 10)
@@ -139,12 +158,20 @@ describe('computeBidPenalty — penaltySol scaling', () => {
   it('penaltySol scales proportionally with marinadeActivatedStakeSol', () => {
     const v1 = makeValidator({
       marinadeActivatedStakeSol: 10000,
-      revShare: { bidPmpe: 1, effParticipatingBidPmpe: 5, bondObligationPmpe: 0 },
+      revShare: {
+        bidPmpe: 1,
+        effParticipatingBidPmpe: 5,
+        bondObligationPmpe: 0,
+      },
       auctions: [{ bidPmpe: 10, effParticipatingBidPmpe: 5 }],
     })
     const v2 = makeValidator({
       marinadeActivatedStakeSol: 20000,
-      revShare: { bidPmpe: 1, effParticipatingBidPmpe: 5, bondObligationPmpe: 0 },
+      revShare: {
+        bidPmpe: 1,
+        effParticipatingBidPmpe: 5,
+        bondObligationPmpe: 0,
+      },
       auctions: [{ bidPmpe: 10, effParticipatingBidPmpe: 5 }],
     })
     const r1 = computeBidPenalty(v1, CONFIG, 10)
@@ -156,7 +183,11 @@ describe('computeBidPenalty — penaltySol scaling', () => {
 describe('bidTooLowPenaltySol', () => {
   it('delegates to computeBidPenalty.penaltySol', () => {
     const v = makeValidator({
-      revShare: { bidPmpe: 1, effParticipatingBidPmpe: 5, bondObligationPmpe: 0 },
+      revShare: {
+        bidPmpe: 1,
+        effParticipatingBidPmpe: 5,
+        bondObligationPmpe: 0,
+      },
       auctions: [{ bidPmpe: 10, effParticipatingBidPmpe: 5 }],
     })
     const direct = computeBidPenalty(v, CONFIG, 10).penaltySol
