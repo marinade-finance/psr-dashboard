@@ -250,7 +250,7 @@ describe('epochMeterModel', () => {
     ])
   })
 
-  it('null network: no live node, target shown as next when explicit', () => {
+  it('null network → auction epoch shown as live (fallback)', () => {
     const m = epochMeterModel({
       auctionEpoch: 612,
       networkEpoch: null,
@@ -260,7 +260,7 @@ describe('epochMeterModel', () => {
     expect(m.label).toBe('Epoch 612')
     expect(m.stale).toBe(false)
     expect(m.critical).toBe(false)
-    expect(m.timeline).toEqual([{ epoch: 612, stages: ['next'] }])
+    expect(m.timeline).toEqual([{ epoch: 612, stages: ['live'] }])
   })
 
   it('auction-settled coincides with live: merged stages', () => {
@@ -274,5 +274,113 @@ describe('epochMeterModel', () => {
       { epoch: 611, stages: ['payment'] },
       { epoch: 612, stages: ['auction', 'live'] },
     ])
+  })
+
+  it('null paymentSettled → no payment node in timeline', () => {
+    const m = epochMeterModel({
+      auctionEpoch: 612,
+      networkEpoch: 612,
+      paymentSettled: null,
+      auctionSettled: 611,
+    })
+    const epochs = m.timeline.map(n => n.epoch)
+    expect(epochs).not.toContain(null)
+    expect(m.timeline.find(n => n.stages.includes('payment'))).toBeUndefined()
+  })
+
+  it('null auctionSettled → no auction-only node', () => {
+    const m = epochMeterModel({
+      auctionEpoch: 612,
+      networkEpoch: 612,
+      paymentSettled: 611,
+      auctionSettled: null,
+    })
+    expect(m.timeline.find(n => n.stages.includes('auction'))).toBeUndefined()
+  })
+
+  it('payment and auction both null + networkEpoch → single live node', () => {
+    const m = epochMeterModel({
+      auctionEpoch: 612,
+      networkEpoch: 612,
+      paymentSettled: null,
+      auctionSettled: null,
+    })
+    expect(m.timeline).toEqual([{ epoch: 612, stages: ['live'] }])
+  })
+})
+
+describe('selectNetworkEpoch — edge cases', () => {
+  it('single validator, single stat → returns that epoch', () => {
+    expect(selectNetworkEpoch([validator([700])])).toBe(700)
+  })
+
+  it('multiple validators with overlapping epochs → max wins', () => {
+    expect(
+      selectNetworkEpoch([
+        validator([700, 701]),
+        validator([701, 702]),
+        validator([699]),
+      ]),
+    ).toBe(702)
+  })
+})
+
+describe('selectCurrentEpochProgress — edge cases', () => {
+  const start = Date.parse('2026-05-14T00:00:00Z')
+
+  it('multiple in-progress stats (epoch_end_at null) → uses the highest epoch', () => {
+    const v: Validator = {
+      ...validator([]),
+      epoch_stats: [
+        stat({
+          epoch: 611,
+          epoch_start_at: '2026-05-12T00:00:00Z',
+          epoch_end_at: null, // incorrectly open — lower epoch
+        }),
+        stat({
+          epoch: 612,
+          epoch_start_at: '2026-05-14T00:00:00Z',
+          epoch_end_at: null,
+        }),
+      ],
+    }
+    const result = selectCurrentEpochProgress([v], start)
+    expect(result?.epoch).toBe(612)
+  })
+
+  it('stat with epoch_start_at null → skipped', () => {
+    const v: Validator = {
+      ...validator([]),
+      epoch_stats: [
+        stat({ epoch: 612, epoch_start_at: null, epoch_end_at: null }),
+      ],
+    }
+    expect(selectCurrentEpochProgress([v], start)).toBeNull()
+  })
+})
+
+describe('selectLatestPaymentSettled — edge cases', () => {
+  it('networkEpoch null → no epoch excluded', () => {
+    // When networkEpoch is null the guard is skipped; any past FACT is included.
+    expect(
+      selectLatestPaymentSettled([pe(972, 'fact')], null),
+    ).toBe(972)
+  })
+})
+
+describe('selectLatestAuctionSettled — edge cases', () => {
+  it('networkEpoch null → no epoch excluded', () => {
+    expect(
+      selectLatestAuctionSettled([pe(972, 'estimate')], null),
+    ).toBe(972)
+  })
+
+  it('all events on or after live epoch excluded → null', () => {
+    expect(
+      selectLatestAuctionSettled(
+        [pe(972, 'estimate'), pe(973, 'estimate')],
+        972,
+      ),
+    ).toBeNull()
   })
 })

@@ -127,8 +127,8 @@ export const epochMeterModel = ({
   add(paymentSettled, 'payment')
   if (auctionSettled !== paymentSettled)
     add(auctionSettled, 'auction')
-  add(networkEpoch, 'live')
-  if (auctionEpoch > (networkEpoch ?? -Infinity))
+  add(networkEpoch ?? auctionEpoch, 'live')
+  if (networkEpoch !== null && auctionEpoch > networkEpoch)
     add(auctionEpoch, 'next')
 
   const timeline: TimelineNode[] = [...map.entries()]
