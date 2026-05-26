@@ -22,7 +22,7 @@ export const ValidatorIdentity: React.FC<Props> = ({
 }) => (
   <div className="flex items-center gap-1.5">
     <div className="min-w-0">
-      <div className="font-medium text-sm text-foreground truncate">
+      <div className="font-medium text-base text-foreground truncate">
         {name || '---'}
       </div>
       {!compact && (responsive ? (

@@ -374,7 +374,7 @@ const RankCell: React.FC<{
       <div className="flex flex-col items-center gap-0.5">
         <span
           className="font-medium font-mono text-xs"
-          style={{ color: posColor ?? 'var(--muted-foreground)' }}
+          style={{ color: 'var(--muted-foreground)' }}
         >
           {rankLabel}
         </span>
@@ -393,10 +393,9 @@ const RankCell: React.FC<{
     )
   return (
     <span
-      className={`font-medium ${RANK_MONO} flex flex-col items-center gap-0`}
-      style={{ color: tipColor }}
+      className={`font-medium ${RANK_MONO} flex flex-col items-center gap-0 text-muted-foreground`}
     >
-      <span className="text-sm">{rankLabel}</span>
+      <span className="text-xs">{rankLabel}</span>
       {!isCompact && (
         <span className="text-2xs opacity-60 font-normal text-muted-foreground leading-tight">
           {rankSubLabel}
@@ -881,7 +880,7 @@ export const SamTable: React.FC<Props> = ({
         <TableCell className="px-3.5 py-3">
           {isCompact ? (
             <span
-              className="text-xl font-mono text-muted-foreground cursor-default"
+              className="text-sm font-mono text-muted-foreground cursor-default"
               title={bondChip.label}
             >
               {stake(selectBondSize(validator) ?? 0)}
@@ -892,7 +891,7 @@ export const SamTable: React.FC<Props> = ({
                 <span className="w-[7px] h-[7px] rounded-full bg-muted-foreground/50" />
                 {bondChip.label}
               </span>
-              <span className="text-muted-foreground text-xl font-mono">
+              <span className="text-muted-foreground text-sm font-mono">
                 {stake(selectBondSize(validator) ?? 0)}
               </span>
             </div>
