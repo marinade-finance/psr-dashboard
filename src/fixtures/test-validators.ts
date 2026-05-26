@@ -1658,9 +1658,6 @@ export const TEST_DS_SAM_CONFIG: DsSamConfig = {
   logVerbosity: LogVerbosity.ERROR,
 }
 
-// Epochs per year (same constant as sam.ts)
-export const TEST_EPOCHS_PER_YEAR = (365.25 * 24 * 3600) / 172800
-
 // Human-readable names for each fixture validator
 export const TEST_VALIDATOR_NAMES = new Map<string, string>([
   ['FiXtUREv1111111111111111111111111111111111aa', 'Test: In-Set Gaining'],
@@ -1717,10 +1714,7 @@ export const TEST_VALIDATOR_NAMES = new Map<string, string>([
     'FiXtUREvbCRITICALrunwayOnly26666666666666nn',
     'CTA: Critical (Runway Fallback)',
   ],
-  [
-    'FiXtUREvbBELOWMINfee27777777777777777777oo',
-    'CTA: Below-Min Bond + Fee',
-  ],
+  ['FiXtUREvbBELOWMINfee27777777777777777777oo', 'CTA: Below-Min Bond + Fee'],
   [
     'FiXtUREvbCAPinset28888888888888888888888888pp',
     'CTA: In-Set Cap (no growth)',

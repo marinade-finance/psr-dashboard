@@ -1,3 +1,4 @@
+import { LAST_DRYRUN_EPOCH } from './constants'
 import { fetchProtectedEvents } from './protected-events'
 import { calculateProtectedEventEstimates } from './protected-events-estimator'
 import { loadSam } from './sam'
@@ -15,8 +16,6 @@ export type ProtectedEventWithValidator = {
   protectedEvent: ProtectedEvent
   validator: Validator | null
 }
-
-const LAST_DRYRUN_EPOCH = 608
 
 // Takes a QueryClient so the shared loadSam() result is read from the canonical
 // ['sam'] cache via ensureQueryData — see fetchValidatorsWithBonds.

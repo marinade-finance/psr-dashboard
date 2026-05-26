@@ -10,15 +10,15 @@ import { TEST_PROTECTED_EVENTS } from 'src/fixtures/test-protected-events'
 import {
   TEST_AUCTION_RESULT,
   TEST_DS_SAM_CONFIG,
-  TEST_EPOCHS_PER_YEAR,
 } from 'src/fixtures/test-validators'
 import { ValidatorBondsPage } from 'src/pages/validator-bonds'
+import { EPOCHS_PER_YEAR } from 'src/services/constants'
 
 import type { UserLevelProps } from 'src/components/navigation/navigation'
 
 const SAM_RESULT = {
   auctionResult: TEST_AUCTION_RESULT,
-  epochsPerYear: TEST_EPOCHS_PER_YEAR,
+  epochsPerYear: EPOCHS_PER_YEAR,
   dcSamConfig: TEST_DS_SAM_CONFIG,
 }
 

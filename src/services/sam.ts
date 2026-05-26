@@ -9,6 +9,7 @@ import {
 import { pct } from 'src/format'
 
 import { annualize, compoundApy } from './calculations'
+import { EPOCHS_PER_YEAR } from './constants'
 import { pmpeToSol } from './pmpe'
 import { fetchValidatorsWithEpochs } from './validators'
 
@@ -19,9 +20,6 @@ import type {
   SourceDataOverrides,
 } from '@marinade.finance/ds-sam-sdk'
 import type { AppOverrides } from 'src/services/simulation'
-
-// Solana epoch = 432000 slots × 0.4s/slot = 172800s = 48h exactly
-const EPOCHS_PER_YEAR = (365.25 * 24 * 3600) / 172800
 
 type SamResult = {
   auctionResult: AuctionResult

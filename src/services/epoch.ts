@@ -1,8 +1,10 @@
+import { EPOCH_DURATION_MS } from './constants'
+
 import type { ProtectedEventWithValidator } from 'src/services/validator-with-protected_event'
 
 import type { Validator } from 'src/services/validators'
 
-export const EPOCH_DURATION_MS = 48 * 60 * 60 * 1000
+export { EPOCH_DURATION_MS }
 
 export type EpochProgress = {
   epoch: number
@@ -72,10 +74,7 @@ export const selectLatestPaymentSettled = (
   for (const e of protectedEvents) {
     if (networkEpoch !== null && e.protectedEvent.epoch >= networkEpoch)
       continue
-    if (
-      e.status === 'fact' &&
-      e.protectedEvent.epoch > max
-    ) {
+    if (e.status === 'fact' && e.protectedEvent.epoch > max) {
       max = e.protectedEvent.epoch
     }
   }
@@ -125,8 +124,7 @@ export const epochMeterModel = ({
     map.set(epoch, arr)
   }
   add(paymentSettled, 'payment')
-  if (auctionSettled !== paymentSettled)
-    add(auctionSettled, 'auction')
+  if (auctionSettled !== paymentSettled) add(auctionSettled, 'auction')
   add(networkEpoch ?? auctionEpoch, 'live')
   if (networkEpoch !== null && auctionEpoch > networkEpoch)
     add(auctionEpoch, 'next')
