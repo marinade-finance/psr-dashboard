@@ -77,18 +77,18 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
     placeholderData: keepPreviousData,
   })
 
-  function simulateOverrides(overrides: AppOverrides): SamResult {
+  function simulateOverrides(overrides: AppOverrides): Promise<SamResult> {
     const current = queryClient.getQueryData<SamResult>(['sam'])
-    if (!current) throw new Error('No auction data')
+    if (!current) return Promise.reject(new Error('No auction data'))
     const baseAuctionData =
       originalAuctionDataRef.current?.auctionData ??
       current.auctionResult.auctionData
     const result = runSdkRerun(baseAuctionData, current.dcSamConfig, overrides)
-    return {
+    return Promise.resolve({
       auctionResult: result,
       epochsPerYear: current.epochsPerYear,
       dcSamConfig: current.dcSamConfig,
-    }
+    })
   }
 
   const { mutate: runSimulation, isPending: isCalculating } = useMutation({
@@ -137,12 +137,19 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
   }, [originalAuctionResult, data])
 
   const handleResetSimulation = useCallback(() => {
+    // Restore original data immediately so the table snaps back without
+    // waiting for the background refetch to complete.
+    const orig = originalAuctionDataRef.current
+    if (orig) {
+      const current = queryClient.getQueryData<SamResult>(['sam'])
+      if (current) {
+        queryClient.setQueryData(['sam'], { ...current, auctionResult: orig })
+      }
+    }
     setSimulationOverrides(null)
     setSimulatedValidators(new Set())
     setOriginalAuctionResult(null)
     originalAuctionDataRef.current = null
-    // Invalidate forces a refetch of the base (no-override) auction so all
-    // consumers re-render against fresh data.
     void queryClient.invalidateQueries({ queryKey: ['sam'] })
   }, [queryClient])
 
