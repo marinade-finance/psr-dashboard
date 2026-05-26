@@ -12,3 +12,5 @@
 | [archive/new-ui-features.md](archive/new-ui-features.md)   | shipped | Epoch Status Badge (`EpochMeter`)                |
 | [archive/content.md](archive/content.md)                   | shipped | CPMPE → Cost PMPE rename; natural turnover rate  |
 | [../SCREENS.md](../SCREENS.md)                             | live    | UI inventory (repo root); kept in sync with code |
+| [../ARCHITECTURE.md](../ARCHITECTURE.md)                   | live    | Code layout (repo root); kept in sync with code  |
+| [../VISUALS.md](../VISUALS.md)                             | live    | Visual language (repo root); kept in sync        |
