@@ -881,7 +881,7 @@ export const SamTable: React.FC<Props> = ({
         <TableCell className="px-3.5 py-3">
           {isCompact ? (
             <span
-              className="inline-flex items-center px-2 py-[3px] rounded-md text-base font-medium font-mono cursor-default bg-muted text-muted-foreground"
+              className="text-xl font-mono text-muted-foreground cursor-default"
               title={bondChip.label}
             >
               {stake(selectBondSize(validator) ?? 0)}
@@ -892,7 +892,7 @@ export const SamTable: React.FC<Props> = ({
                 <span className="w-[7px] h-[7px] rounded-full bg-muted-foreground/50" />
                 {bondChip.label}
               </span>
-              <span className="text-muted-foreground text-base font-mono">
+              <span className="text-muted-foreground text-xl font-mono">
                 {stake(selectBondSize(validator) ?? 0)}
               </span>
             </div>
