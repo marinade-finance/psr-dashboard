@@ -4,7 +4,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
-import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react'
+import React, { useState, useCallback, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import { Banner } from 'src/components/banner/banner'
@@ -60,7 +60,6 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
   const [searchParams, setSearchParams] = useSearchParams()
   const selectedValidator = searchParams.get('v')
   const [isCompact, setIsCompact] = useState(true)
-  const [pendingValidator, setPendingValidator] = useState<string | null>(null)
   const [simulationOverrides, setSimulationOverrides] =
     useState<AppOverrides | null>(null)
   const [simulatedValidators, setSimulatedValidators] = useState<Set<string>>(
@@ -175,14 +174,20 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
   const handleValidatorClick = useCallback(
     (voteAccount: string) => {
       if (selectedValidator !== null && selectedValidator !== voteAccount) {
-        // Close the current sheet first, then open the new one so the slide
-        // animation plays cleanly instead of swapping content mid-frame.
-        setPendingValidator(voteAccount)
+        // Close the current sheet, wait one tick for the DOM to clear,
+        // then slide the new one in.
         setSearchParams(prev => {
           const next = new URLSearchParams(prev)
           next.delete('v')
           return next
         })
+        setTimeout(() => {
+          setSearchParams(prev => {
+            const next = new URLSearchParams(prev)
+            next.set('v', voteAccount)
+            return next
+          })
+        }, 150)
       } else {
         setSearchParams(
           prev => {
@@ -190,28 +195,12 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
             next.set('v', voteAccount)
             return next
           },
-          // Opening the sheet pushes a history entry so browser-back closes it.
-          // First open is a push; toggling same validator is a no-op (same key).
-          { replace: false },
+          { replace: selectedValidator !== null },
         )
       }
     },
     [setSearchParams, selectedValidator],
   )
-
-  useEffect(() => {
-    if (selectedValidator === null && pendingValidator !== null) {
-      const id = setTimeout(() => {
-        setSearchParams(prev => {
-          const next = new URLSearchParams(prev)
-          next.set('v', pendingValidator)
-          return next
-        })
-        setPendingValidator(null)
-      }, 50)
-      return () => clearTimeout(id)
-    }
-  }, [selectedValidator, pendingValidator, setSearchParams])
 
   const handleBack = useCallback(() => {
     setSearchParams(prev => {
