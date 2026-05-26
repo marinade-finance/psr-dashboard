@@ -173,30 +173,20 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
 
   const handleValidatorClick = useCallback(
     (voteAccount: string) => {
-      if (selectedValidator !== null && selectedValidator !== voteAccount) {
-        // Close the current sheet, wait one tick for the DOM to clear,
-        // then slide the new one in.
+      if (selectedValidator !== null) {
+        // Any click while the sheet is open dismisses it first.
+        // The user clicks a second time to open the new validator.
         setSearchParams(prev => {
           const next = new URLSearchParams(prev)
           next.delete('v')
           return next
         })
-        setTimeout(() => {
-          setSearchParams(prev => {
-            const next = new URLSearchParams(prev)
-            next.set('v', voteAccount)
-            return next
-          })
-        }, 150)
       } else {
-        setSearchParams(
-          prev => {
-            const next = new URLSearchParams(prev)
-            next.set('v', voteAccount)
-            return next
-          },
-          { replace: selectedValidator !== null },
-        )
+        setSearchParams(prev => {
+          const next = new URLSearchParams(prev)
+          next.set('v', voteAccount)
+          return next
+        })
       }
     },
     [setSearchParams, selectedValidator],
