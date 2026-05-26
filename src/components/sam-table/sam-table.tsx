@@ -37,13 +37,13 @@ import {
   blacklistPenaltySol,
 } from 'src/services/bid-penalty'
 import { computeBondCoverage } from 'src/services/bond-coverage'
-import { bondHealthFromAuction } from 'src/services/bond-health'
 import {
-  bondCriticalFrac,
-  bondGaugeScaleMax,
+  BOND_URGENT_EPOCHS,
+  bondHealthFromAuction,
   bondUtilizationPct,
   effectiveBondRunway,
-} from 'src/services/calculations'
+} from 'src/services/bond-health'
+import { bondCriticalFrac, bondGaugeScaleMax } from 'src/services/calculations'
 import { HELP_TEXT } from 'src/services/help-text'
 import {
   augmentAuctionResult,
@@ -746,15 +746,15 @@ export const SamTable: React.FC<Props> = ({
             ? CSS_DESTRUCTIVE
             : undefined
 
-      // Bond health
       const bondUtilPct = bondUtilizationPct(
         validator,
         dsSamConfig.minBondEpochs,
       )
       const bondHealth = validator.bondHealth
       const bondChip = BOND_CHIP[bondHealth]
-      const bondRunway = effectiveBondRunway(validator, bondHealth)
-      const hasAlert = bondRunway <= 5 || bondUtilPct >= 85
+      const bondRunway = effectiveBondRunway(validator, dsSamConfig)
+      const alertRunwayCeil = dsSamConfig.minBondEpochs + BOND_URGENT_EPOCHS
+      const hasAlert = bondRunway <= alertRunwayCeil || bondUtilPct >= 85
       const bondScaleMax = bondGaugeScaleMax(dsSamConfig)
       const bondCritical = bondCriticalFrac(dsSamConfig)
 

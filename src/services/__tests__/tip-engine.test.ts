@@ -3,8 +3,7 @@
 import { describe, it, expect } from 'vitest'
 
 import { computeBondCoverage } from '../bond-coverage'
-import { bondHealthFromAuction } from '../bond-health'
-import { bondUtilizationPct } from '../calculations'
+import { bondHealthFromAuction, bondUtilizationPct } from '../bond-health'
 import { selectProtectedStakeReason } from '../protected-events'
 import {
   getValidatorTip,
@@ -174,15 +173,9 @@ describe('getTipIcon', () => {
   })
 
   it('constraint:none — delta>0 → up, delta<0 → down, delta=0 → right', () => {
-    expect(
-      getTipIcon(tip({ constraint: 'none', delta: 100 })),
-    ).toBe('up')
-    expect(
-      getTipIcon(tip({ constraint: 'none', delta: -100 })),
-    ).toBe('down')
-    expect(getTipIcon(tip({ constraint: 'none', delta: 0 }))).toBe(
-      'right',
-    )
+    expect(getTipIcon(tip({ constraint: 'none', delta: 100 }))).toBe('up')
+    expect(getTipIcon(tip({ constraint: 'none', delta: -100 }))).toBe('down')
+    expect(getTipIcon(tip({ constraint: 'none', delta: 0 }))).toBe('right')
   })
 
   it('bond/bid/rank constraint → glyph is never "up" even when losing stake', () => {
@@ -352,7 +345,14 @@ describe('getValidatorTip', () => {
       values: { expectedStakeChangeSol: 28 },
       revShare: { totalPmpe: 28 },
     })
-    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 20, undefined, undefined, 50)
+    const tip = getValidatorTip(
+      validator,
+      DS_SAM_CONFIG,
+      20,
+      undefined,
+      undefined,
+      50,
+    )
     expect(tip.urgency).toBe('info')
     expect(tip.constraint).toBe('rank')
     expect(tip.text).toBe('Raise bid to get more stake next epoch.')
@@ -365,7 +365,14 @@ describe('getValidatorTip', () => {
       values: { expectedStakeChangeSol: 28 },
       revShare: { totalPmpe: 28 },
     })
-    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 20, undefined, undefined, 10)
+    const tip = getValidatorTip(
+      validator,
+      DS_SAM_CONFIG,
+      20,
+      undefined,
+      undefined,
+      10,
+    )
     expect(tip.urgency).toBe('positive')
     expect(tip.constraint).toBe('none')
     expect(tip.text).toContain('arriving next epoch')

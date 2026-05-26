@@ -1,5 +1,3 @@
-import type { BondHealthState } from './bond-health'
-
 import type {
   AuctionValidator,
   DsSamConfig,
@@ -24,49 +22,14 @@ export function compoundApy(pmpe: number, epochsPerYear: number): number {
   return annualize(pmpe / 1e3, epochsPerYear)
 }
 
-// The runway the UI surfaces. A no-bond or below-minimum bond (→ 'critical')
-// sustains zero stake regardless of the SDK's raw bondGoodForNEpochs, which
-// ignores the below-min gate — so it reads 0. Single source: the bond chip
-// and the runway display can never contradict. sam-table and validator-detail
-// both consume this instead of re-deriving the override.
-export function effectiveBondRunway(
-  validator: AuctionValidator,
-  bondHealth: BondHealthState,
-): number {
-  // No bond → the SDK's runway estimate is meaningless (validator has no
-  // stake coverage at all). Critical by runway still has a real epoch count;
-  // clamp at 0 to guard against negative SDK values but don't force to 0.
-  if (bondHealth === 'no-bond') return 0
-  return Math.max(0, validator.bondGoodForNEpochs ?? 0)
-}
-
-// Bond gauge geometry. Scale = 4 × idealBondEpochs so the green "safe" zone
-// starts at 25% and saturates well before the end. The red penalty marker
-// (minBondEpochs) sits at its natural position on this scale rather than
-// being forced to a fixed 20%.
-//
+// Gauge scale: 4 × idealBondEpochs puts the green "safe" zone at 25%+.
 export function bondGaugeScaleMax(config: DsSamConfig): number {
   return 4 * config.idealBondEpochs
 }
 
-// Fraction of the gauge track where the penalty threshold (minBondEpochs) sits.
 export function bondCriticalFrac(config: DsSamConfig): number {
   const max = bondGaugeScaleMax(config)
   return max > 0 ? config.minBondEpochs / max : 0.2
-}
-
-// Bond utilization 0..100. 0 = bond fully covers, 100 = depleted relative to
-// the SDK-required minBondEpochs runway. Derives from `bondGoodForNEpochs` so
-// it tracks the protocol params instead of a hard-coded PMPE factor.
-export function bondUtilizationPct(
-  validator: AuctionValidator,
-  minBondEpochs: number,
-): number {
-  if ((validator.bondBalanceSol ?? 0) <= 0) return 100
-  const runway = validator.bondGoodForNEpochs ?? 0
-  if (minBondEpochs <= 0) return 0
-  const used = 1 - runway / minBondEpochs
-  return Math.max(0, Math.min(100, used * 100))
 }
 
 export function apyBreakdown(

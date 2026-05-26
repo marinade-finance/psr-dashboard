@@ -41,7 +41,7 @@ import { computeBondCoverage } from 'src/services/bond-coverage'
 import { bondHealthFromAuction } from 'src/services/bond-health'
 
 import type { BondHealthState } from 'src/services/bond-health'
-import { effectiveBondRunway } from 'src/services/calculations'
+import { effectiveBondRunway } from 'src/services/bond-health'
 import { HELP_TEXT } from 'src/services/help-text'
 import { calculateProtectedEventEstimates } from 'src/services/protected-events-estimator'
 import {
@@ -381,28 +381,21 @@ function SimDeltas({
   originalAuctionResult,
   dsSamConfig,
   winningTotalPmpe,
-  bondHealth,
 }: {
   voteAccount: string
   current: AugmentedAuctionValidator
   originalAuctionResult: AuctionResult
   dsSamConfig: DsSamConfig
   winningTotalPmpe: number
-  bondHealth: BondHealthState
 }) {
   const original = originalAuctionResult.auctionData.validators.find(
     v => v.voteAccount === voteAccount,
   )
   if (!original) return null
   const origWinningTotalPmpe = originalAuctionResult.winningTotalPmpe
-  const origBondHealth = bondHealthFromAuction(
-    original,
-    dsSamConfig,
-    origWinningTotalPmpe,
-  )
 
-  const runwayBefore = effectiveBondRunway(original, origBondHealth)
-  const runwayAfter = effectiveBondRunway(current, bondHealth)
+  const runwayBefore = effectiveBondRunway(original, dsSamConfig)
+  const runwayAfter = effectiveBondRunway(current, dsSamConfig)
   const inSetBefore = selectInSet(original)
   const inSetAfter = selectInSet(current)
   const stakeBefore = original.auctionStake.marinadeSamTargetSol
@@ -556,7 +549,7 @@ export const ValidatorDetail = ({
   // SDK's raw bondGoodForNEpochs, which ignores the below-min gate. Force
   // the runway to Depleted so Balance, Reserve and Bond runway tell one
   // coherent story instead of "0 SOL / Critical / 6 epochs".
-  const bondRunway = effectiveBondRunway(validator, bondHealth)
+  const bondRunway = effectiveBondRunway(validator, dsSamConfig)
   const tip = getValidatorTip(
     validator,
     dsSamConfig,
@@ -1181,7 +1174,6 @@ export const ValidatorDetail = ({
                     originalAuctionResult={originalAuctionResult}
                     dsSamConfig={dsSamConfig}
                     winningTotalPmpe={winningTotalPmpe}
-                    bondHealth={bondHealth}
                   />
                 )}
                 <div className="mt-3 text-xs text-muted-foreground">
