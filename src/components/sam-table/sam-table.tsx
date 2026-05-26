@@ -1051,7 +1051,9 @@ export const SamTable: React.FC<Props> = ({
       <div className="max-w-[1920px] mx-auto">
         {/* Headline metrics — grid: 3 cols → 4 cols → 7 cols (1 row) */}
         <div className="grid grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-3 mt-3 mb-3 px-4">
-          {stats.map(stat => (
+          {stats.filter(stat =>
+            !isCompact || ['Re-delegation', 'Winning APY', 'Total Auction Stake'].includes(stat.label)
+          ).map(stat => (
             <Card
               key={stat.label}
               className="px-3 py-3 sm:px-5 sm:py-4 overflow-hidden flex flex-col"
@@ -1077,20 +1079,20 @@ export const SamTable: React.FC<Props> = ({
               </div>
             </Card>
           ))}
-          <ConcentrationMetric
+          {!isCompact && <ConcentrationMetric
             label="Top Country"
             rows={concentration.countries}
             capPct={concentration.countryCapPct}
             help="Share of auction-distributed stake by validator country. Bar fills against the per-country cap. A 'capped' tag means at least one validator was cut by the cap."
             guideTo={`${dp}#concentration`}
-          />
-          <ConcentrationMetric
+          />}
+          {!isCompact && <ConcentrationMetric
             label="Top ASO"
             rows={concentration.asos}
             capPct={concentration.asoCapPct}
             help="Share of auction-distributed stake by ASO — the Autonomous System Operator hosting the validator. Bar fills against the per-ASO cap. A 'capped' tag means at least one validator was cut by the cap."
             guideTo={`${dp}#concentration`}
-          />
+          />}
         </div>
 
         {/* Ring wraps only search + table — not the metrics above */}
@@ -1107,7 +1109,7 @@ export const SamTable: React.FC<Props> = ({
                 validators={validators}
                 nameMap={validatorMeta ?? EMPTY_NAME_MAP}
                 onSelect={onValidatorSearch}
-                className="w-[240px]"
+                className="min-w-[240px] max-w-sm"
               />
             </div>
           )}

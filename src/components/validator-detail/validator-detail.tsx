@@ -798,15 +798,6 @@ export const ValidatorDetail = ({
                 </Button>
               </Tooltip>
             )}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              aria-label="Close"
-              className="text-muted-foreground hover:text-foreground"
-            >
-              &times;
-            </Button>
           </div>
         </div>
 

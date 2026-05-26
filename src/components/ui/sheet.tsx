@@ -36,7 +36,7 @@ export function SheetContent({
   const base = 'fixed z-50 bg-background shadow-xl overflow-y-auto'
   const sideClass =
     side === 'right'
-      ? 'inset-y-0 right-0 h-full border-l border-border'
+      ? 'top-4 bottom-4 right-4 rounded-xl border border-border'
       : side === 'left'
         ? 'inset-y-0 left-0 h-full border-r border-border'
         : side === 'top'
