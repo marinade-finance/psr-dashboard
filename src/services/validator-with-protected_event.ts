@@ -114,8 +114,8 @@ export const fetchProtectedEventsWithValidators = async (
     )
     if (epochStats == null) continue
     const stake =
-      Number(epochStats.marinade_native_stake ?? '0') +
-      Number(epochStats.marinade_stake ?? '0')
+      Number(epochStats.marinade_native_stake) +
+      Number(epochStats.marinade_stake)
     pushAuctionPenalty(
       entry.voteAccount,
       entry.epoch,
@@ -139,9 +139,7 @@ export const fetchProtectedEventsWithValidators = async (
   if (auctionCoversCurrentEpoch) {
     for (const entry of auctionResult.auctionData.validators) {
       const v = validatorsMap[entry.voteAccount]
-      const stake =
-        Number(v?.marinade_native_stake ?? '0') +
-        Number(v?.marinade_stake ?? '0')
+      const stake = Number(v?.marinade_native_stake) + Number(v?.marinade_stake)
       pushAuctionPenalty(
         entry.voteAccount,
         maxStatsEpoch,

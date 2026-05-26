@@ -297,7 +297,7 @@ function bondCta(
   precomputedCoverage?: BondCoverage,
 ): ValidatorTip | null {
   const bondBalance = validator.bondBalanceSol ?? 0
-  const bondRiskFeeSol = validator.values?.bondRiskFeeSol ?? 0
+  const bondRiskFeeSol = validator.values.bondRiskFeeSol
   const coverage =
     precomputedCoverage ??
     computeBondCoverage(validator, dsSamConfig, winningTotalPmpe)
@@ -702,7 +702,7 @@ export const getValidatorTip = (
   // totalPmpe already clears it, "Raise bid" is suppressed.
   priorityFrontierPmpe = 0,
 ): ValidatorTip => {
-  const delta = validator.values.expectedStakeChangeSol ?? 0
+  const delta = validator.values.expectedStakeChangeSol
   const cap = capCta(validator, delta)
   return selectTip(
     bondCta(

@@ -559,7 +559,7 @@ export const ValidatorDetail = ({
 
   const inSet = selectInSet(validator)
   // Dense rank around the winning cutoff: 0 at cutoff, +N above, −N below.
-  const posVsWinning = validator.values.cutoffRank ?? 0
+  const posVsWinning = validator.values.cutoffRank
   const bondCoverage = useMemo(
     () => computeBondCoverage(validator, dsSamConfig, winningTotalPmpe),
     [validator, dsSamConfig, winningTotalPmpe],

@@ -724,7 +724,7 @@ export const SamTable: React.FC<Props> = ({
       const rank = isGhost
         ? (origAuctionRank ?? index + 1)
         : (auctionRankMap.get(voteAccount) ?? index + 1)
-      const cutoffRank = validator.values.cutoffRank ?? rank
+      const cutoffRank = validator.values.cutoffRank
       const isSimulated = simulatedValidators.has(voteAccount)
 
       const bondUtilPct = bondUtilizationPct(
