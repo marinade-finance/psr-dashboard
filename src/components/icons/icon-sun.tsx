@@ -1,6 +1,5 @@
 export const ICON_SUN = (
   <svg
-    className="transition-transform duration-300 rotate-0"
     width="18"
     height="18"
     viewBox="0 0 24 24"

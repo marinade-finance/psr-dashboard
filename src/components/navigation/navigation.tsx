@@ -86,7 +86,7 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
             rel="noopener noreferrer"
             className={cn(
               tab,
-              'docsButton hidden sm:flex items-center gap-1.5 border border-transparent hover:border-border',
+              'docsButton hidden sm:flex items-center gap-1.5 border border-transparent hover:border-border [&_svg]:opacity-60',
             )}
           >
             {ICON_DOCS}

@@ -1,6 +1,5 @@
 export const ICON_MOON = (
   <svg
-    className="transition-transform duration-300 -rotate-90"
     width="18"
     height="18"
     viewBox="0 0 24 24"

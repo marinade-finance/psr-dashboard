@@ -1239,7 +1239,9 @@ export const SamTable: React.FC<Props> = ({
                     <TableCell colSpan={7} className="p-0">
                       <div className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-primary-light-10 via-primary-light to-primary-light-10 border-y-2 border-primary">
                         <div className="flex items-center gap-1.5">
-                          {ICON_STAR}
+                          <span className="text-primary opacity-80">
+                            {ICON_STAR}
+                          </span>
                           <span className="text-xs font-semibold text-primary">
                             Winning Set Cutoff
                           </span>

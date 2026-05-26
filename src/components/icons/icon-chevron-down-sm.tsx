@@ -3,7 +3,7 @@ export const ICON_CHEVRON_DOWN_SM = (
     <path
       d="M2 3.5L5 6.5L8 3.5"
       stroke="currentColor"
-      strokeWidth="1.3"
+      strokeWidth="1.5"
       strokeLinecap="round"
       strokeLinejoin="round"
     />

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 
+import { cn } from 'src/class_utils'
 import { docsPath } from 'src/components/breakdowns/docs-path'
-import { Badge } from 'src/components/ui/badge'
 import { EpochRangePicker } from 'src/components/ui/epoch-range-picker'
 import { Input } from 'src/components/ui/input'
 import { Label } from 'src/components/ui/label'
@@ -33,21 +33,27 @@ const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
     case 'dryrun':
       return (
         <HtmlTooltip html="This was logged during a test run — no money actually changes hands.">
-          <Badge
-            className={`${CHIP_BASE} cursor-help float-left bg-muted text-muted-foreground`}
+          <span
+            className={cn(
+              CHIP_BASE,
+              'cursor-help float-left bg-muted text-muted-foreground',
+            )}
           >
             Dryrun
-          </Badge>
+          </span>
         </HtmlTooltip>
       )
     case 'estimate':
       return (
         <HtmlTooltip html="An early estimate from live data. The final number gets locked in at the end of the epoch and may shift before then.">
-          <Badge
-            className={`${CHIP_BASE} cursor-help float-left bg-primary-light-10 text-primary`}
+          <span
+            className={cn(
+              CHIP_BASE,
+              'cursor-help float-left bg-primary-light-10 text-primary',
+            )}
           >
             Estimate
-          </Badge>
+          </span>
         </HtmlTooltip>
       )
     default:
@@ -59,22 +65,25 @@ const renderFunderBadge = (protectedEvent: ProtectedEvent) => {
   if (protectedEvent.meta.funder === 'ValidatorBond') {
     return (
       <HtmlTooltip html="Paid out of the validator's own bond — the validator footed the bill.">
-        <Badge
-          className={`${CHIP_BASE} cursor-help bg-status-green-light text-status-green`}
+        <span
+          className={cn(
+            CHIP_BASE,
+            'cursor-help bg-status-green-light text-status-green',
+          )}
         >
           Validator Bond
-        </Badge>
+        </span>
       </HtmlTooltip>
     )
   }
   if (protectedEvent.meta.funder === 'Marinade') {
     return (
       <HtmlTooltip html="Marinade had to step in and pay because the validator's bond ran out.">
-        <Badge
-          className={`${CHIP_BASE} cursor-help bg-warning-light text-warning`}
+        <span
+          className={cn(CHIP_BASE, 'cursor-help bg-warning-light text-warning')}
         >
           Marinade backstop
-        </Badge>
+        </span>
       </HtmlTooltip>
     )
   }

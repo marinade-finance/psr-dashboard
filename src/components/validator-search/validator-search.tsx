@@ -93,15 +93,28 @@ export const ValidatorSearch: React.FC<Props> = ({
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
+      if (e.isComposing) return
+      if (e.ctrlKey || e.metaKey || e.altKey) return
       if (
         e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement
       )
         return
-      if (e.key === '/' || e.key === 's') {
+      if ((e.target as HTMLElement | null)?.isContentEditable) return
+      if (wrapRef.current?.contains(e.target as Node)) return
+      const activate = (): void => {
         e.preventDefault()
         inputRef.current?.focus()
-        setOpen(true)
+      }
+      if (e.key === '/') {
+        activate()
+      } else if (
+        e.key === 's' &&
+        (document.activeElement === document.body ||
+          document.activeElement === null)
+      ) {
+        activate()
       }
     }
     document.addEventListener('keydown', onKey)

@@ -4,7 +4,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
-import React, { useState, useCallback, useMemo, useRef } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import { Banner } from 'src/components/banner/banner'
@@ -52,6 +52,12 @@ type Props = {
   dataSources?: SamDataSources
 }
 
+const SIM_BANNER_CLASS =
+  'sticky top-14 z-[49] flex items-center justify-between gap-3 px-4 py-2.5 bg-status-yellow text-background font-semibold text-sm uppercase tracking-wide'
+
+const SIM_RESET_BTN_CLASS =
+  'shrink-0 px-3 py-1 rounded bg-background text-status-yellow text-xs font-bold hover:bg-background/90 transition-colors'
+
 export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
   const loadAuction = dataSources?.loadAuction ?? loadSam
   const loadValidatorNames =
@@ -68,9 +74,6 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
   )
   const [originalAuctionResult, setOriginalAuctionResult] =
     useState<AuctionResult | null>(null)
-  // Ref keeps the base auction data accessible inside mutation callbacks
-  // without stale-closure issues from React's batched state updates.
-  const originalAuctionDataRef = useRef<AuctionResult | null>(null)
 
   const { data, status } = useQuery({
     queryKey: ['sam'],
@@ -82,8 +85,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
     const current = queryClient.getQueryData<SamResult>(['sam'])
     if (!current) return Promise.reject(new Error('No auction data'))
     const baseAuctionData =
-      originalAuctionDataRef.current?.auctionData ??
-      current.auctionResult.auctionData
+      originalAuctionResult?.auctionData ?? current.auctionResult.auctionData
     const result = runSdkRerun(baseAuctionData, current.dcSamConfig, overrides)
     return Promise.resolve({
       auctionResult: result,
@@ -97,6 +99,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
     onSuccess: result => {
       queryClient.setQueryData(['sam'], result)
     },
+    onError: err => console.error('[sam-sim] failed:', err),
   })
 
   const { data: validatorNames } = useQuery({
@@ -131,28 +134,26 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
   const ensureOriginalSaved = useCallback(() => {
     if (!originalAuctionResult && data?.auctionResult) {
       setOriginalAuctionResult(data.auctionResult)
-      originalAuctionDataRef.current = data.auctionResult
-      return data.auctionResult
     }
-    return originalAuctionResult
   }, [originalAuctionResult, data])
 
   const handleResetSimulation = useCallback(() => {
     // Restore original data immediately so the table snaps back without
     // waiting for the background refetch to complete.
-    const orig = originalAuctionDataRef.current
+    const orig = originalAuctionResult?.auctionData ?? null
     if (orig) {
       const current = queryClient.getQueryData<SamResult>(['sam'])
       if (current) {
-        queryClient.setQueryData(['sam'], { ...current, auctionResult: orig })
+        queryClient.setQueryData(['sam'], {
+          ...current,
+          auctionResult: originalAuctionResult ?? current.auctionResult,
+        })
       }
     }
     setSimulationOverrides(null)
     setSimulatedValidators(new Set())
     setOriginalAuctionResult(null)
-    originalAuctionDataRef.current = null
-    void queryClient.invalidateQueries({ queryKey: ['sam'] })
-  }, [queryClient])
+  }, [queryClient, originalAuctionResult])
 
   const handleClearValidator = useCallback(
     (voteAccount: string) => {
@@ -166,17 +167,28 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
       setSimulatedValidators(nextSet)
 
       if (nextSet.size === 0) {
-        // All cleared — drop overrides and refetch base auction.
+        // All cleared — restore base auction optimistically (mirrors reset).
+        const current = queryClient.getQueryData<SamResult>(['sam'])
+        if (current && originalAuctionResult) {
+          queryClient.setQueryData(['sam'], {
+            ...current,
+            auctionResult: originalAuctionResult,
+          })
+        }
         setSimulationOverrides(null)
         setOriginalAuctionResult(null)
-        originalAuctionDataRef.current = null
-        void queryClient.invalidateQueries({ queryKey: ['sam'] })
       } else {
         setSimulationOverrides(nextOverrides)
         if (nextOverrides) runSimulation(nextOverrides)
       }
     },
-    [simulationOverrides, simulatedValidators, queryClient, runSimulation],
+    [
+      simulationOverrides,
+      simulatedValidators,
+      queryClient,
+      runSimulation,
+      originalAuctionResult,
+    ],
   )
 
   const handleClearSelectedValidator = useCallback(() => {
@@ -286,7 +298,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
         </Button>
       </Navigation>
       {simulatedValidators.size > 0 && (
-        <div className="sticky top-14 z-[49] flex items-center justify-between gap-3 px-4 py-2.5 bg-status-yellow text-background font-semibold text-sm uppercase tracking-wide">
+        <div className={SIM_BANNER_CLASS}>
           <span className="flex items-center gap-2 min-w-0">
             <span className="inline-block w-2 h-2 rounded-full bg-background animate-pulse shrink-0" />
             Simulation Mode — what-if numbers, not live (
@@ -296,7 +308,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
           </span>
           <button
             onClick={handleResetSimulation}
-            className="shrink-0 px-3 py-1 rounded bg-background text-status-yellow text-xs font-bold hover:bg-background/90 transition-colors"
+            className={SIM_RESET_BTN_CLASS}
           >
             Reset Simulation
           </button>

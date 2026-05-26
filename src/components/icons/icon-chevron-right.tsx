@@ -10,7 +10,6 @@ export const ICON_CHEVRON_RIGHT = (
   </svg>
 )
 
-// 12×12 variant used inside the SAM row hover-open affordance.
 export const ICON_CHEVRON_RIGHT_SM = (
   <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
     <path

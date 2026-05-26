@@ -10,11 +10,10 @@ export const ICON_CHEVRON_LEFT = (
   </svg>
 )
 
-// 12×12 variant used in the validator-detail "Back to rankings" button.
 export const ICON_CHEVRON_LEFT_SM = (
-  <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
     <path
-      d="M8.75 10.5L5.25 7L8.75 3.5"
+      d="M7.5 9L4.5 6L7.5 3"
       stroke="currentColor"
       strokeWidth="1.5"
       strokeLinecap="round"

@@ -32,7 +32,9 @@ export function ThemeToggle() {
       className="ml-2 mr-2 rounded-full text-muted-foreground hover:text-foreground"
       aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
     >
-      {dark ? ICON_SUN : ICON_MOON}
+      <span className="transition-transform duration-300">
+        {dark ? ICON_SUN : ICON_MOON}
+      </span>
     </Button>
   )
 }

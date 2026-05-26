@@ -46,7 +46,7 @@ export const ProtectedEventsPage: React.FC<UserLevelProps> = ({ level }) => {
       {status === 'error' && (
         <FetchError
           title="Couldn't load protected events."
-          detail="The protected-events API didn't respond. The page can't render without it. Try reloading; if the problem persists, check the validator-bonds API status."
+          detail="The protected-events API didn't respond. The page can't render without it. Try reloading; if the problem persists, check the protected-events API status."
         />
       )}
       {status === 'pending' && <Loader />}
