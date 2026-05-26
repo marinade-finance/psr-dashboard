@@ -1124,7 +1124,7 @@ export const SamTable: React.FC<Props> = ({
           className={cn(
             'mx-4 mb-4',
             inSimulation &&
-              'shadow-[0_0_0_4px_var(--color-status-yellow)] rounded-xl',
+              'outline outline-[4px] [outline-color:var(--color-status-yellow)] rounded-xl',
           )}
         >
           {/* Search row — sits above the table, aligned with validator column */}
