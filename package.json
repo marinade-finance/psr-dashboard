@@ -74,8 +74,8 @@
   },
   "lint-staged": {
     "./src/**/*.{ts,tsx,js,jsx}": [
-      "eslint --fix",
-      "prettier --write"
+      "node node_modules/eslint/bin/eslint.js --fix",
+      "node node_modules/prettier/bin/prettier.cjs --write"
     ]
   },
   "pnpm": {
