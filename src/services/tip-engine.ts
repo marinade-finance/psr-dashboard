@@ -529,15 +529,6 @@ function outOfSetCta(
     // client-version semver matching and per-epoch vote-credit thresholds
     // need the SDK's internal computation — fall through to a hint that
     // names the remaining suspects.
-    if (validator.bondBalanceSol == null) {
-      // Growth lever — post a bond and you can win stake. Violet.
-      return tip(
-        'No bond posted. Add a bond to qualify.',
-        'info',
-        'bond',
-        delta,
-      )
-    }
     if (blacklist?.has(validator.voteAccount)) {
       // Red ONLY when the blacklist penalty is actively charging this
       // epoch (revShare.blacklistPenaltyPmpe > 0) — real money, octagon.
