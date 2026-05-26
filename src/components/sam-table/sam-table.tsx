@@ -328,73 +328,77 @@ const RankCell = React.memo<{
   tipColor: string
   voteAccount: string
   onClearValidator?: (voteAccount: string) => void
-}>(({
-  rank,
-  cutoffRank,
-  isGhost,
-  isSimulated,
-  isCompact,
-  posColor,
-  tipColor,
-  voteAccount,
-  onClearValidator,
-}) => {
-  // Primary: absolute 1-based stake-priority rank from the top.
-  const rankLabel = `#${rank}`
-  // Sub: cutoff-relative position. No # prefix here — the # lives only on
-  // the primary rank. NBSP binds the count to the word so it never wraps.
-  const cutoffWord =
-    cutoffRank === 0 ? 'at cutoff' : cutoffRank > 0 ? 'above' : 'below'
-  const rankSubLabel =
-    cutoffRank === 0 ? 'at cutoff' : `${Math.abs(cutoffRank)} ${cutoffWord}`
-  if (isGhost)
+}>(
+  ({
+    rank,
+    cutoffRank,
+    isGhost,
+    isSimulated,
+    isCompact,
+    posColor: _posColor,
+    tipColor: _tipColor,
+    voteAccount,
+    onClearValidator,
+  }) => {
+    // Primary: absolute 1-based stake-priority rank from the top.
+    const rankLabel = `#${rank}`
+    // Sub: cutoff-relative position. No # prefix here — the # lives only on
+    // the primary rank. NBSP binds the count to the word so it never wraps.
+    const cutoffWord =
+      cutoffRank === 0 ? 'at cutoff' : cutoffRank > 0 ? 'above' : 'below'
+    const rankSubLabel =
+      cutoffRank === 0 ? 'at cutoff' : `${Math.abs(cutoffRank)} ${cutoffWord}`
+    if (isGhost)
+      return (
+        <span
+          className={`text-muted-foreground ${RANK_MONO} flex flex-col items-center gap-0`}
+        >
+          <span className={isCompact ? 'text-xs' : 'text-base'}>
+            {rankLabel}
+          </span>
+          {!isCompact && (
+            <span className="text-2xs opacity-60 font-normal leading-tight">
+              {rankSubLabel}
+            </span>
+          )}
+        </span>
+      )
+    if (isSimulated && onClearValidator)
+      return (
+        <div className="flex flex-col items-center gap-0.5">
+          <span
+            className={`font-medium font-mono ${isCompact ? 'text-xs' : 'text-base'}`}
+            style={{ color: 'var(--muted-foreground)' }}
+          >
+            {rankLabel}
+          </span>
+          <Tooltip content="Remove from simulation">
+            <button
+              className="text-xs text-muted-foreground hover:text-destructive leading-none cursor-pointer"
+              onClick={e => {
+                e.stopPropagation()
+                onClearValidator(voteAccount)
+              }}
+            >
+              ✕
+            </button>
+          </Tooltip>
+        </div>
+      )
     return (
       <span
-        className={`text-muted-foreground ${RANK_MONO} flex flex-col items-center gap-0`}
+        className={`font-medium ${RANK_MONO} flex flex-col items-center gap-0 text-muted-foreground`}
       >
         <span className={isCompact ? 'text-xs' : 'text-base'}>{rankLabel}</span>
         {!isCompact && (
-          <span className="text-2xs opacity-60 font-normal leading-tight">
+          <span className="text-2xs opacity-60 font-normal text-muted-foreground leading-tight">
             {rankSubLabel}
           </span>
         )}
       </span>
     )
-  if (isSimulated && onClearValidator)
-    return (
-      <div className="flex flex-col items-center gap-0.5">
-        <span
-          className={`font-medium font-mono ${isCompact ? 'text-xs' : 'text-base'}`}
-          style={{ color: 'var(--muted-foreground)' }}
-        >
-          {rankLabel}
-        </span>
-        <Tooltip content="Remove from simulation">
-          <button
-            className="text-xs text-muted-foreground hover:text-destructive leading-none cursor-pointer"
-            onClick={e => {
-              e.stopPropagation()
-              onClearValidator(voteAccount)
-            }}
-          >
-            ✕
-          </button>
-        </Tooltip>
-      </div>
-    )
-  return (
-    <span
-      className={`font-medium ${RANK_MONO} flex flex-col items-center gap-0 text-muted-foreground`}
-    >
-      <span className={isCompact ? 'text-xs' : 'text-base'}>{rankLabel}</span>
-      {!isCompact && (
-        <span className="text-2xs opacity-60 font-normal text-muted-foreground leading-tight">
-          {rankSubLabel}
-        </span>
-      )}
-    </span>
-  )
-})
+  },
+)
 
 export const SamTable: React.FC<Props> = ({
   auctionResult,
@@ -411,7 +415,8 @@ export const SamTable: React.FC<Props> = ({
   onClearValidator,
 }) => {
   const winningTotalPmpe = auctionResult.winningTotalPmpe
-  const priorityFrontierPmpe = selectRedelegationPriorityFrontierPmpe(auctionResult)
+  const priorityFrontierPmpe =
+    selectRedelegationPriorityFrontierPmpe(auctionResult)
   const {
     auctionData: { validators },
   } = auctionResult
@@ -716,319 +721,335 @@ export const SamTable: React.FC<Props> = ({
     ],
   )
 
-  const renderRow = useCallback((
-    validator: ValidatorWithBondState,
-    index: number,
-    isGhost = false,
-  ) => {
-    const voteAccount = selectVoteAccount(validator)
-    const inSet = validator.auctionStake.marinadeSamTargetSol > 0
-    const origAuctionRank = originalAuctionRankMap?.get(voteAccount) ?? null
-    const rank = isGhost
-      ? (origAuctionRank ?? index + 1)
-      : (auctionRankMap.get(voteAccount) ?? index + 1)
-    const cutoffRank = validator.values.cutoffRank ?? rank
-    const isSimulated = simulatedValidators.has(voteAccount)
+  const renderRow = useCallback(
+    (validator: ValidatorWithBondState, index: number, isGhost = false) => {
+      const voteAccount = selectVoteAccount(validator)
+      const inSet = validator.auctionStake.marinadeSamTargetSol > 0
+      const origAuctionRank = originalAuctionRankMap?.get(voteAccount) ?? null
+      const rank = isGhost
+        ? (origAuctionRank ?? index + 1)
+        : (auctionRankMap.get(voteAccount) ?? index + 1)
+      const cutoffRank = validator.values.cutoffRank ?? rank
+      const isSimulated = simulatedValidators.has(voteAccount)
 
-    // Position change for simulated rows — compare original vs new auction rank
-    const posChange =
-      isSimulated && !isGhost ? getPositionChange(origAuctionRank, rank) : null
-    const posColor =
-      posChange?.direction === 'improved'
-        ? CSS_STATUS_GREEN
-        : posChange?.direction === 'worsened'
-          ? CSS_DESTRUCTIVE
-          : undefined
+      // Position change for simulated rows — compare original vs new auction rank
+      const posChange =
+        isSimulated && !isGhost
+          ? getPositionChange(origAuctionRank, rank)
+          : null
+      const posColor =
+        posChange?.direction === 'improved'
+          ? CSS_STATUS_GREEN
+          : posChange?.direction === 'worsened'
+            ? CSS_DESTRUCTIVE
+            : undefined
 
-    // Bond health
-    const bondUtilPct = bondUtilizationPct(validator, dsSamConfig.minBondEpochs)
-    const bondHealth = validator.bondHealth
-    const bondChip = BOND_CHIP[bondHealth]
-    const bondRunway = effectiveBondRunway(validator, bondHealth)
-    const hasAlert = bondRunway <= 5 || bondUtilPct >= 85
-    const bondScaleMax = bondGaugeScaleMax(dsSamConfig)
-    const bondCritical = bondCriticalFrac(dsSamConfig)
+      // Bond health
+      const bondUtilPct = bondUtilizationPct(
+        validator,
+        dsSamConfig.minBondEpochs,
+      )
+      const bondHealth = validator.bondHealth
+      const bondChip = BOND_CHIP[bondHealth]
+      const bondRunway = effectiveBondRunway(validator, bondHealth)
+      const hasAlert = bondRunway <= 5 || bondUtilPct >= 85
+      const bondScaleMax = bondGaugeScaleMax(dsSamConfig)
+      const bondCritical = bondCriticalFrac(dsSamConfig)
 
-    const expectedChange = selectExpectedStakeChange(validator)
+      const expectedChange = selectExpectedStakeChange(validator)
 
-    // Tip
-    const tip = getValidatorTip(
-      validator,
-      dsSamConfig,
-      winningTotalPmpe,
-      validator.bondCoverage,
-      auctionResult.auctionData.blacklist,
-      priorityFrontierPmpe,
-    )
-    const tipStyle = getTipStyle(tip.urgency)
+      // Tip
+      const tip = getValidatorTip(
+        validator,
+        dsSamConfig,
+        winningTotalPmpe,
+        validator.bondCoverage,
+        auctionResult.auctionData.blacklist,
+        priorityFrontierPmpe,
+      )
+      const tipStyle = getTipStyle(tip.urgency)
 
-    // Max APY
-    const maxApy = selectMaxAPY(validator, epochsPerYear)
+      // Max APY
+      const maxApy = selectMaxAPY(validator, epochsPerYear)
 
-    const validatorName =
-      validatorMeta?.get(voteAccount)?.name ?? `${voteAccount.slice(0, 8)}...`
+      const validatorName =
+        validatorMeta?.get(voteAccount)?.name ?? `${voteAccount.slice(0, 8)}...`
 
-    const isFlashing = !isGhost && flashId === voteAccount
-    const ghostHasTarget = isGhost && isSimulated
+      const isFlashing = !isGhost && flashId === voteAccount
+      const ghostHasTarget = isGhost && isSimulated
 
-    const rowClasses = [
-      'group border-b border-border-grid transition-colors duration-[120ms]',
-      isGhost
-        ? ghostHasTarget
-          ? 'opacity-40 line-through bg-muted/30 cursor-pointer hover:opacity-60'
-          : 'opacity-40 line-through bg-muted/30 cursor-default'
-        : 'bg-card cursor-pointer',
-      !isGhost && !inSet && 'bg-destructive/[0.02]',
-      !isGhost && inSet && 'hover:bg-primary-light',
-      !isGhost && !inSet && 'hover:bg-destructive/[0.05]',
-      !isGhost && isSimulated && 'ring-2 ring-inset ring-status-yellow',
-      isFlashing && 'bg-status-yellow-light',
-    ]
-      .filter(Boolean)
-      .join(' ')
+      const rowClasses = [
+        'group border-b border-border-grid transition-colors duration-[120ms]',
+        isGhost
+          ? ghostHasTarget
+            ? 'opacity-40 line-through bg-muted/30 cursor-pointer hover:opacity-60'
+            : 'opacity-40 line-through bg-muted/30 cursor-default'
+          : 'bg-card cursor-pointer',
+        !isGhost && !inSet && 'bg-destructive/[0.02]',
+        !isGhost && inSet && 'hover:bg-primary-light',
+        !isGhost && !inSet && 'hover:bg-destructive/[0.05]',
+        !isGhost && isSimulated && 'ring-2 ring-inset ring-status-yellow',
+        isFlashing && 'bg-status-yellow-light',
+      ]
+        .filter(Boolean)
+        .join(' ')
 
-    return (
-      <TableRow
-        key={isGhost ? `${voteAccount}-ghost` : voteAccount}
-        className={rowClasses}
-        data-vote-account={voteAccount}
-        data-ghost={isGhost ? 'true' : undefined}
-        role={isGhost ? (ghostHasTarget ? 'button' : undefined) : 'button'}
-        tabIndex={isGhost ? (ghostHasTarget ? 0 : -1) : 0}
-        aria-label={
-          isGhost
-            ? ghostHasTarget
-              ? `Scroll to new position of ${validatorName}`
-              : undefined
-            : `Open detail for ${validatorName}`
-        }
-        onClick={() => {
-          if (isGhost) {
-            if (ghostHasTarget) handleGhostClick(voteAccount)
-            return
+      return (
+        <TableRow
+          key={isGhost ? `${voteAccount}-ghost` : voteAccount}
+          className={rowClasses}
+          data-vote-account={voteAccount}
+          data-ghost={isGhost ? 'true' : undefined}
+          role={isGhost ? (ghostHasTarget ? 'button' : undefined) : 'button'}
+          tabIndex={isGhost ? (ghostHasTarget ? 0 : -1) : 0}
+          aria-label={
+            isGhost
+              ? ghostHasTarget
+                ? `Scroll to new position of ${validatorName}`
+                : undefined
+              : `Open detail for ${validatorName}`
           }
-          onValidatorClick(voteAccount)
-        }}
-        onKeyDown={e => {
-          if (e.key !== 'Enter' && e.key !== ' ') return
-          if (isGhost) {
-            if (!ghostHasTarget) return
-            e.preventDefault()
-            handleGhostClick(voteAccount)
-            return
-          }
-          e.preventDefault()
-          onValidatorClick(voteAccount)
-        }}
-      >
-        {/* Rank / ✕ */}
-        <TableCell className="px-3.5 py-3 text-center w-10">
-          <RankCell
-            rank={rank}
-            cutoffRank={cutoffRank}
-            isGhost={isGhost}
-            isSimulated={isSimulated}
-            isCompact={isCompact}
-            posColor={posColor}
-            tipColor={tipStyle.color}
-            voteAccount={voteAccount}
-            onClearValidator={onClearValidator}
-          />
-        </TableCell>
-
-        {/* Validator */}
-        <TableCell className="px-3.5 py-3 w-[240px]">
-          <ValidatorIdentity
-            name={validatorName}
-            voteAccount={voteAccount}
-            responsive
-            compact={isCompact}
-            trailing={
-              <>
-                {hasAlert && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0 animate-pulse" />
-                )}
-                {!isGhost && (
-                  <PenaltyBadges
-                    validator={validator}
-                    dsSamConfig={dsSamConfig}
-                    winningTotalPmpe={winningTotalPmpe}
-                  />
-                )}
-              </>
+          onClick={() => {
+            if (isGhost) {
+              if (ghostHasTarget) handleGhostClick(voteAccount)
+              return
             }
-          />
-        </TableCell>
+            onValidatorClick(voteAccount)
+          }}
+          onKeyDown={e => {
+            if (e.key !== 'Enter' && e.key !== ' ') return
+            if (isGhost) {
+              if (!ghostHasTarget) return
+              e.preventDefault()
+              handleGhostClick(voteAccount)
+              return
+            }
+            e.preventDefault()
+            onValidatorClick(voteAccount)
+          }}
+        >
+          {/* Rank / ✕ */}
+          <TableCell className="px-3.5 py-3 text-center w-10">
+            <RankCell
+              rank={rank}
+              cutoffRank={cutoffRank}
+              isGhost={isGhost}
+              isSimulated={isSimulated}
+              isCompact={isCompact}
+              posColor={posColor}
+              tipColor={tipStyle.color}
+              voteAccount={voteAccount}
+              onClearValidator={onClearValidator}
+            />
+          </TableCell>
 
-        {/* Max APY */}
-        <TableCell className="px-3.5 py-3">
-          <span className="font-normal text-xs font-mono text-foreground">
-            {pct(maxApy, 2)}
-          </span>
-        </TableCell>
+          {/* Validator */}
+          <TableCell className="px-3.5 py-3 w-[240px]">
+            <ValidatorIdentity
+              name={validatorName}
+              voteAccount={voteAccount}
+              responsive
+              compact={isCompact}
+              trailing={
+                <>
+                  {hasAlert && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0 animate-pulse" />
+                  )}
+                  {!isGhost && (
+                    <PenaltyBadges
+                      validator={validator}
+                      dsSamConfig={dsSamConfig}
+                      winningTotalPmpe={winningTotalPmpe}
+                    />
+                  )}
+                </>
+              }
+            />
+          </TableCell>
 
-        {/* Bond Health */}
-        <TableCell className="px-3.5 py-3">
-          {isCompact ? (
-            <span
-              className="text-sm font-mono text-muted-foreground"
-              title={bondChip.label}
-            >
-              {stake(selectBondSize(validator) ?? 0)}
+          {/* Max APY */}
+          <TableCell className="px-3.5 py-3">
+            <span className="font-normal text-xs font-mono text-foreground">
+              {pct(maxApy, 2)}
             </span>
-          ) : (
-            <div className="flex items-center gap-1.5 mb-1">
-              <span className="text-muted-foreground text-sm font-mono">
+          </TableCell>
+
+          {/* Bond Health */}
+          <TableCell className="px-3.5 py-3">
+            {isCompact ? (
+              <span
+                className="text-sm font-mono text-muted-foreground"
+                title={bondChip.label}
+              >
                 {stake(selectBondSize(validator) ?? 0)}
               </span>
-              <span className={cn('inline-flex items-center gap-1 px-2 py-[3px] rounded-md text-xs font-medium', bondChip.chip)}>
-                <span className={cn('w-[7px] h-[7px] rounded-full', bondChip.dot)} />
-                {bondChip.label}
-              </span>
-            </div>
-          )}
-          {!isCompact && (
-            <div className="flex items-center gap-1.5">
-              <Gauge
-                size="sm"
-                value={bondRunway}
-                scaleMax={bondScaleMax}
-                marker={bondCritical}
-                criticalBand={bondCritical}
-                tone="bg-muted-foreground/40"
-              />
-              <span className="text-xs opacity-60 font-mono whitespace-nowrap text-muted-foreground">
-                ({Math.round(bondRunway) >= 100 ? '>100' : Math.round(bondRunway)}
-                ep)
-              </span>
-            </div>
-          )}
-        </TableCell>
-
-        {/* Stake / Next change */}
-        <TableCell className="px-3.5 py-3">
-          {isCompact ? (
-            <div className="flex items-center gap-1">
-              <span className="text-muted-foreground text-xs font-mono">
-                {stake(validator.marinadeActivatedStakeSol)}
-              </span>
-              {(() => {
-                const count = stakeArrowCount(expectedChange)
-                if (count === 0) return null
-                const isUp = expectedChange > 0
-                return (
+            ) : (
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="text-muted-foreground text-sm font-mono">
+                  {stake(selectBondSize(validator) ?? 0)}
+                </span>
+                <span
+                  className={cn(
+                    'inline-flex items-center gap-1 px-2 py-[3px] rounded-md text-xs font-medium',
+                    bondChip.chip,
+                  )}
+                >
                   <span
-                    className="inline-flex items-center gap-[1px]"
-                    style={{ color: isUp ? CSS_STATUS_GREEN : CSS_DESTRUCTIVE }}
-                  >
-                    {Array.from({ length: count }, (_, i) => (
-                      <span key={i} className="inline-flex">
-                        {isUp ? ICON_ARROW_UP_SM : ICON_ARROW_DOWN_SM}
-                      </span>
-                    ))}
-                  </span>
-                )
-              })()}
-            </div>
-          ) : (
-            <div className="flex flex-col gap-0.5">
-              <span className="text-muted-foreground text-xs font-mono">
-                {stake(validator.marinadeActivatedStakeSol)}
-              </span>
-              {(() => {
-                const cell = nextStakeDeltaCell(expectedChange)
-                return (
-                  <span
-                    className={cn(
-                      'font-mono text-xs',
-                      cell.tone === 'neutral'
-                        ? TEXT_MUTED
-                        : 'font-semibold text-sm',
-                    )}
-                    style={
-                      cell.tone === 'neutral'
-                        ? undefined
-                        : {
-                            color:
-                              cell.tone === 'positive'
-                                ? CSS_STATUS_GREEN
-                                : CSS_DESTRUCTIVE,
-                          }
-                    }
-                  >
-                    {cell.prefix}
-                    {stake(expectedChange)}
-                  </span>
-                )
-              })()}
-            </div>
-          )}
-        </TableCell>
+                    className={cn('w-[7px] h-[7px] rounded-full', bondChip.dot)}
+                  />
+                  {bondChip.label}
+                </span>
+              </div>
+            )}
+            {!isCompact && (
+              <div className="flex items-center gap-1.5">
+                <Gauge
+                  size="sm"
+                  value={bondRunway}
+                  scaleMax={bondScaleMax}
+                  marker={bondCritical}
+                  criticalBand={bondCritical}
+                  tone="bg-muted-foreground/40"
+                />
+                <span className="text-xs opacity-60 font-mono whitespace-nowrap text-muted-foreground">
+                  (
+                  {Math.round(bondRunway) >= 100
+                    ? '>100'
+                    : Math.round(bondRunway)}
+                  ep)
+                </span>
+              </div>
+            )}
+          </TableCell>
 
-        {/* Next Step — icon = constraint/direction, color = severity.
+          {/* Stake / Next change */}
+          <TableCell className="px-3.5 py-3">
+            {isCompact ? (
+              <div className="flex items-center gap-1">
+                <span className="text-muted-foreground text-xs font-mono">
+                  {stake(validator.marinadeActivatedStakeSol)}
+                </span>
+                {(() => {
+                  const count = stakeArrowCount(expectedChange)
+                  if (count === 0) return null
+                  const isUp = expectedChange > 0
+                  return (
+                    <span
+                      className="inline-flex items-center gap-[1px]"
+                      style={{
+                        color: isUp ? CSS_STATUS_GREEN : CSS_DESTRUCTIVE,
+                      }}
+                    >
+                      {Array.from({ length: count }, (_, i) => (
+                        <span key={i} className="inline-flex">
+                          {isUp ? ICON_ARROW_UP_SM : ICON_ARROW_DOWN_SM}
+                        </span>
+                      ))}
+                    </span>
+                  )
+                })()}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-0.5">
+                <span className="text-muted-foreground text-xs font-mono">
+                  {stake(validator.marinadeActivatedStakeSol)}
+                </span>
+                {(() => {
+                  const cell = nextStakeDeltaCell(expectedChange)
+                  return (
+                    <span
+                      className={cn(
+                        'font-mono text-xs',
+                        cell.tone === 'neutral'
+                          ? TEXT_MUTED
+                          : 'font-semibold text-sm',
+                      )}
+                      style={
+                        cell.tone === 'neutral'
+                          ? undefined
+                          : {
+                              color:
+                                cell.tone === 'positive'
+                                  ? CSS_STATUS_GREEN
+                                  : CSS_DESTRUCTIVE,
+                            }
+                      }
+                    >
+                      {cell.prefix}
+                      {stake(expectedChange)}
+                    </span>
+                  )
+                })()}
+              </div>
+            )}
+          </TableCell>
+
+          {/* Next Step — icon = constraint/direction, color = severity.
             The contiguous out-of-set "Bid too low" block is an EXPECTED
             state, not an alarm: render it muted with a 2-word label;
             the full sentence lives in the detail panel. */}
-        {(() => {
-          const bidTooLow = tip.constraint === 'rank'
-          const stepColor = bidTooLow ? CSS_MUTED_FG : tipStyle.color
-          const stepBg = bidTooLow ? CSS_MUTED : tipStyle.bg
-          const stepText = bidTooLow
-            ? 'Bid too low — raise it.'
-            : trimTipDecimals(tip.text)
-          return (
-            <TableCell className="px-3.5 py-3">
-              <div
-                className="inline-flex items-center gap-[5px] text-xs leading-[1.35] px-2.5 py-1 rounded-md max-w-[420px] border"
-                style={{
-                  background: stepBg,
-                  color: stepColor,
-                  borderColor: stepColor,
-                }}
-              >
-                <span className="shrink-0 inline-flex items-center justify-center w-4 h-4">
-                  {TIP_ICONS[getTipIcon(tip)]}
-                </span>
-                <span className="break-words whitespace-pre-line">
-                  {stepText}
-                </span>
-              </div>
-            </TableCell>
-          )
-        })()}
+          {(() => {
+            const bidTooLow = tip.constraint === 'rank'
+            const stepColor = bidTooLow ? CSS_MUTED_FG : tipStyle.color
+            const stepBg = bidTooLow ? CSS_MUTED : tipStyle.bg
+            const stepText = bidTooLow
+              ? 'Bid too low — raise it.'
+              : trimTipDecimals(tip.text)
+            return (
+              <TableCell className="px-3.5 py-3">
+                <div
+                  className="inline-flex items-center gap-[5px] text-xs leading-[1.35] px-2.5 py-1 rounded-md max-w-[420px] border"
+                  style={{
+                    background: stepBg,
+                    color: stepColor,
+                    borderColor: stepColor,
+                  }}
+                >
+                  <span className="shrink-0 inline-flex items-center justify-center w-4 h-4">
+                    {TIP_ICONS[getTipIcon(tip)]}
+                  </span>
+                  <span className="break-words whitespace-pre-line">
+                    {stepText}
+                  </span>
+                </div>
+              </TableCell>
+            )
+          })()}
 
-        {/* Chevron */}
-        <TableCell className="px-2.5 py-3 w-10">
-          <div className="w-7 h-7 rounded-[7px] flex items-center justify-center border bg-secondary border-border text-secondary-foreground group-hover:bg-primary-light group-hover:border-primary/30 group-hover:text-primary transition-all duration-[120ms]">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path
-                d="M4.5 3L7.5 6L4.5 9"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
-        </TableCell>
-      </TableRow>
-    )
-  }, [
-    originalAuctionRankMap,
-    auctionRankMap,
-    simulatedValidators,
-    dsSamConfig,
-    winningTotalPmpe,
-    auctionResult,
-    priorityFrontierPmpe,
-    epochsPerYear,
-    validatorMeta,
-    flashId,
-    isCompact,
-    handleGhostClick,
-    onValidatorClick,
-    onClearValidator,
-  ])
+          {/* Chevron */}
+          <TableCell className="px-2.5 py-3 w-10">
+            <div className="w-7 h-7 rounded-[7px] flex items-center justify-center border bg-secondary border-border text-secondary-foreground group-hover:bg-primary-light group-hover:border-primary/30 group-hover:text-primary transition-all duration-[120ms]">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path
+                  d="M4.5 3L7.5 6L4.5 9"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+          </TableCell>
+        </TableRow>
+      )
+    },
+    [
+      originalAuctionRankMap,
+      auctionRankMap,
+      simulatedValidators,
+      dsSamConfig,
+      winningTotalPmpe,
+      auctionResult,
+      priorityFrontierPmpe,
+      epochsPerYear,
+      validatorMeta,
+      flashId,
+      isCompact,
+      handleGhostClick,
+      onValidatorClick,
+      onClearValidator,
+    ],
+  )
 
   const inSimulation = simulatedValidators.size > 0
 
@@ -1042,55 +1063,67 @@ export const SamTable: React.FC<Props> = ({
       <div className="max-w-[1920px] mx-auto">
         {/* Headline metrics — grid: 3 cols → 4 cols → 7 cols (1 row) */}
         <div className="grid grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-3 mt-3 mb-3 px-4">
-          {stats.filter(stat =>
-            !isCompact || ['Re-delegation', 'Winning APY', 'Total Auction Stake'].includes(stat.label)
-          ).map(stat => (
-            <Card
-              key={stat.label}
-              className="px-3 py-3 sm:px-5 sm:py-4 overflow-hidden flex flex-col"
-            >
-              <div className="text-xs uppercase tracking-wider font-medium text-muted-foreground mb-1 flex items-center gap-1">
-                {stat.help ? (
-                  <HelpTip text={stat.help} guideTo={stat.guideTo}>
-                    {stat.label}
-                  </HelpTip>
-                ) : (
-                  stat.label
-                )}
-              </div>
-              <div className="mt-auto flex items-baseline gap-0.5 min-w-0 overflow-hidden">
-                <span className="text-xl sm:text-2xl font-semibold text-foreground font-mono truncate">
-                  {stat.value}
-                </span>
-                {stat.unit && (
-                  <span className="text-sm text-muted-foreground font-mono shrink-0">
-                    {stat.unit}
+          {stats
+            .filter(
+              stat =>
+                !isCompact ||
+                [
+                  'Re-delegation',
+                  'Winning APY',
+                  'Total Auction Stake',
+                ].includes(stat.label),
+            )
+            .map(stat => (
+              <Card
+                key={stat.label}
+                className="px-3 py-3 sm:px-5 sm:py-4 overflow-hidden flex flex-col"
+              >
+                <div className="text-xs uppercase tracking-wider font-medium text-muted-foreground mb-1 flex items-center gap-1">
+                  {stat.help ? (
+                    <HelpTip text={stat.help} guideTo={stat.guideTo}>
+                      {stat.label}
+                    </HelpTip>
+                  ) : (
+                    stat.label
+                  )}
+                </div>
+                <div className="mt-auto flex items-baseline gap-0.5 min-w-0 overflow-hidden">
+                  <span className="text-xl sm:text-2xl font-semibold text-foreground font-mono truncate">
+                    {stat.value}
                   </span>
-                )}
-              </div>
-            </Card>
-          ))}
-          {!isCompact && <ConcentrationMetric
-            label="Top Country"
-            rows={concentration.countries}
-            capPct={concentration.countryCapPct}
-            help="Share of auction-distributed stake by validator country. Bar fills against the per-country cap. A 'capped' tag means at least one validator was cut by the cap."
-            guideTo={`${dp}#concentration`}
-          />}
-          {!isCompact && <ConcentrationMetric
-            label="Top ASO"
-            rows={concentration.asos}
-            capPct={concentration.asoCapPct}
-            help="Share of auction-distributed stake by ASO — the Autonomous System Operator hosting the validator. Bar fills against the per-ASO cap. A 'capped' tag means at least one validator was cut by the cap."
-            guideTo={`${dp}#concentration`}
-          />}
+                  {stat.unit && (
+                    <span className="text-sm text-muted-foreground font-mono shrink-0">
+                      {stat.unit}
+                    </span>
+                  )}
+                </div>
+              </Card>
+            ))}
+          {!isCompact && (
+            <ConcentrationMetric
+              label="Top Country"
+              rows={concentration.countries}
+              capPct={concentration.countryCapPct}
+              help="Share of auction-distributed stake by validator country. Bar fills against the per-country cap. A 'capped' tag means at least one validator was cut by the cap."
+              guideTo={`${dp}#concentration`}
+            />
+          )}
+          {!isCompact && (
+            <ConcentrationMetric
+              label="Top ASO"
+              rows={concentration.asos}
+              capPct={concentration.asoCapPct}
+              help="Share of auction-distributed stake by ASO — the Autonomous System Operator hosting the validator. Bar fills against the per-ASO cap. A 'capped' tag means at least one validator was cut by the cap."
+              guideTo={`${dp}#concentration`}
+            />
+          )}
         </div>
 
         {/* Ring wraps only search + table — not the metrics above */}
         <div
           className={cn(
             'mx-4 mb-4',
-            inSimulation && 'ring-4 ring-inset ring-status-yellow rounded-xl',
+            inSimulation && 'ring-4 ring-status-yellow rounded-xl',
           )}
         >
           {/* Search row — sits above the table, aligned with validator column */}

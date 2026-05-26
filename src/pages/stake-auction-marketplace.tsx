@@ -75,16 +75,20 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
     queryKey: ['sam'],
     queryFn: () => loadAuction(null),
     placeholderData: keepPreviousData,
-    refetchInterval: 60 * 60 * 1000,
   })
 
-  async function simulateOverrides(overrides: AppOverrides): Promise<SamResult> {
+  function simulateOverrides(overrides: AppOverrides): SamResult {
     const current = queryClient.getQueryData<SamResult>(['sam'])
     if (!current) throw new Error('No auction data')
     const baseAuctionData =
-      originalAuctionDataRef.current?.auctionData ?? current.auctionResult.auctionData
+      originalAuctionDataRef.current?.auctionData ??
+      current.auctionResult.auctionData
     const result = runSdkRerun(baseAuctionData, current.dcSamConfig, overrides)
-    return { auctionResult: result, epochsPerYear: current.epochsPerYear, dcSamConfig: current.dcSamConfig }
+    return {
+      auctionResult: result,
+      epochsPerYear: current.epochsPerYear,
+      dcSamConfig: current.dcSamConfig,
+    }
   }
 
   const { mutate: runSimulation, isPending: isCalculating } = useMutation({
@@ -221,7 +225,13 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
       setSimulatedValidators(prev => new Set([...prev, selectedValidator]))
       runSimulation(next)
     },
-    [selectedValidator, data, simulationOverrides, ensureOriginalSaved, runSimulation],
+    [
+      selectedValidator,
+      data,
+      simulationOverrides,
+      ensureOriginalSaved,
+      runSimulation,
+    ],
   )
 
   const displayAuctionResult = data?.auctionResult
@@ -259,7 +269,9 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
           size="icon"
           onClick={() => setIsCompact(c => !c)}
           className="ml-2 rounded-full text-muted-foreground hover:text-foreground"
-          aria-label={isCompact ? 'Switch to detailed view' : 'Switch to compact view'}
+          aria-label={
+            isCompact ? 'Switch to detailed view' : 'Switch to compact view'
+          }
           title={isCompact ? 'Detailed view' : 'Compact view'}
         >
           {isCompact ? ICON_ROWS_COMPACT : ICON_ROWS_DETAILED}
