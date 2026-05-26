@@ -8,6 +8,11 @@ import type { Page } from '@playwright/test'
 async function gotoSam(page: Page) {
   await page.goto('/test-')
   await page.waitForSelector('tbody tr', { timeout: 30000 })
+  // Default view is compact, which hides the stake-delta numeric text in
+  // favour of arrow icons. Switch to detailed so column-text sort assertions
+  // can read both the active stake AND the delta.
+  const toggle = page.getByRole('button', { name: 'Switch to detailed view' })
+  if (await toggle.isVisible().catch(() => false)) await toggle.click()
 }
 
 function parseNum(s: string): number {
@@ -26,6 +31,26 @@ async function readColumn(page: Page, nthChild: number) {
   for (let i = 0; i < n; i++) {
     const v = parseNum(await cells.nth(i).innerText())
     if (!isNaN(v)) vals.push(v)
+  }
+  return vals
+}
+
+// The Stake cell carries TWO numerics: active stake on the first line,
+// signed delta on the second. The Stake header sorts by delta, so the
+// monotonicity check needs the second token (signed) — not the first
+// (active, which is independent of the sort key).
+async function readStakeDeltas(page: Page) {
+  const cells = page.locator(
+    `tbody tr:not([data-divider]):not([data-ghost="true"]) td:nth-child(5)`,
+  )
+  const n = await cells.count()
+  const vals: number[] = []
+  for (let i = 0; i < n; i++) {
+    const text = await cells.nth(i).innerText()
+    const matches = text.match(/-?[\d,]+(?:\.\d+)?/g)
+    if (!matches || matches.length < 2) continue
+    const delta = parseFloat(matches[1].replace(/,/g, ''))
+    if (!isNaN(delta)) vals.push(delta)
   }
   return vals
 }
@@ -94,10 +119,7 @@ test.describe('SAM table — Stake / Next Δ column sort', () => {
     await gotoSam(page)
     const h = page.locator('thead th').filter({ hasText: /Stake/ }).first()
     await h.click({ position: { x: 10, y: 10 } })
-    // Stake cell carries "<active SOL> / <±delta SOL>" — parseNum picks up
-    // the first token (active stake). Stake delta is also sortable; either
-    // is monotonic after a sort.
-    const vals = await readColumn(page, 5)
+    const vals = await readStakeDeltas(page)
     expect(vals.length).toBeGreaterThan(1)
     const sorted = isSortedAsc(vals) || isSortedDesc(vals)
     expect(sorted).toBe(true)
@@ -109,10 +131,10 @@ test.describe('SAM table — Stake / Next Δ column sort', () => {
     await gotoSam(page)
     const h = page.locator('thead th').filter({ hasText: /Stake/ }).first()
     await h.click({ position: { x: 10, y: 10 } })
-    const firstOrder = (await readColumn(page, 5)).join(',')
+    const firstOrder = (await readStakeDeltas(page)).join(',')
     const firstIndicator = (await h.innerText()).includes('↑') ? '↑' : '↓'
     await h.click({ position: { x: 10, y: 10 } })
-    const secondOrder = (await readColumn(page, 5)).join(',')
+    const secondOrder = (await readStakeDeltas(page)).join(',')
     const secondIndicator = (await h.innerText()).includes('↑') ? '↑' : '↓'
     expect(firstOrder).not.toBe(secondOrder)
     expect(firstIndicator).not.toBe(secondIndicator)
