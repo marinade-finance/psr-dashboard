@@ -42,6 +42,21 @@ export async function fetchJson<T>(
   return body as T
 }
 
+// Like schema.parse() but warns instead of throwing when the API drifts from
+// the generated spec. Production should never break over a new optional field
+// or a renamed enum value the dashboard doesn't use.
+export function safeParseLenient<T>(
+  schema: { safeParse: (v: unknown) => { success: boolean; data?: T; error?: { message: string } } },
+  body: unknown,
+): T {
+  const result = schema.safeParse(body)
+  if (!result.success) {
+    console.warn('[schema] validation warning (returning raw body):', result.error?.message)
+    return body as T
+  }
+  return result.data as T
+}
+
 export const expectArray = (value: unknown, label: string): unknown[] => {
   if (!Array.isArray(value)) {
     throw new Error(`Expected ${label} to be an array, got ${typeof value}`)
