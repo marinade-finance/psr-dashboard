@@ -137,8 +137,9 @@ export const selectProtectedStakeReason = (protectedEvent: ProtectedEvent) => {
   }
 }
 
+// `amount` is stored in lamports; expose to callers in SOL.
 export const selectAmount = (protectedEvent: ProtectedEvent) =>
-  Number(protectedEvent.amount / 1e9)
+  protectedEvent.amount / 1e9
 
 export const fetchProtectedEvents = (
   signal?: AbortSignal,

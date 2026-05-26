@@ -1,15 +1,11 @@
 import { lamportsToSol } from 'src/format'
+import { solToLamports } from 'src/services/units'
 
 import { fetchRewards } from './rewards'
 
 import type { ProtectedEvent, SettlementMeta } from './protected-events'
 import type { EpochRewards } from './rewards'
 import type { Validator, ValidatorEpoch } from './validators'
-
-// Internal math runs in SOL; the on-chain `ProtectedEvent.amount` field is
-// in lamports (matches the backend API). Convert at the boundary when
-// constructing the event.
-const SOL_TO_LAMPORTS = 1e9
 
 type LowCreditsSettlementConfig = {
   meta: SettlementMeta
@@ -157,13 +153,13 @@ const buildLowCreditsProtectedEvent = (
     expectedEpr,
     marinadeStake,
   )
-  if (amountSol * SOL_TO_LAMPORTS < config.min_settlement_lamports) {
+  if (solToLamports(amountSol) < config.min_settlement_lamports) {
     return null
   }
 
   return {
     epoch: epochStat.epoch,
-    amount: Math.round(amountSol * SOL_TO_LAMPORTS),
+    amount: Math.round(solToLamports(amountSol)),
     vote_account: validator.vote_account,
     meta: config.meta,
     reason: {
@@ -221,13 +217,13 @@ const buildCommissionIncreaseProtectedEvent = (
     expectedEpr,
     marinadeStake,
   )
-  if (amountSol * SOL_TO_LAMPORTS < config.min_settlement_lamports) {
+  if (solToLamports(amountSol) < config.min_settlement_lamports) {
     return null
   }
 
   return {
     epoch: epochStat.epoch,
-    amount: Math.round(amountSol * SOL_TO_LAMPORTS),
+    amount: Math.round(solToLamports(amountSol)),
     vote_account: validator.vote_account,
     meta: config.meta,
     reason: {

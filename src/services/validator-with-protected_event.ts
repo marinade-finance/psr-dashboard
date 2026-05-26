@@ -2,6 +2,7 @@ import { fetchProtectedEvents } from './protected-events'
 import { calculateProtectedEventEstimates } from './protected-events-estimator'
 import { loadSam } from './sam'
 import { fetchScoring } from './scoring'
+import { solToLamports } from './units'
 import { fetchValidatorsWithEpochs } from './validators'
 
 import type { ProtectedEvent, SettlementReason } from './protected-events'
@@ -54,10 +55,7 @@ export const fetchProtectedEventsWithValidator = async (
   const protectedEventsWithValidator: ProtectedEventWithValidator[] = []
   for (const protectedEvent of protectedEvents) {
     latestProcessedEpoch = Math.max(protectedEvent.epoch, latestProcessedEpoch)
-    const status =
-      protectedEvent.epoch > LAST_DRYRUN_EPOCH
-        ? 'fact'
-        : 'dryrun'
+    const status = protectedEvent.epoch > LAST_DRYRUN_EPOCH ? 'fact' : 'dryrun'
     protectedEventsWithValidator.push({
       status,
       protectedEvent,
@@ -134,7 +132,7 @@ export const fetchProtectedEventsWithValidator = async (
     pushAuctionPenalty(
       entry.voteAccount,
       entry.epoch,
-      Math.round((entry.values?.bondRiskFeeSol ?? 0) * 1e9),
+      Math.round(solToLamports(entry.values?.bondRiskFeeSol ?? 0)),
       'BondRiskFee',
     )
   }
@@ -160,7 +158,7 @@ export const fetchProtectedEventsWithValidator = async (
       pushAuctionPenalty(
         entry.voteAccount,
         maxStatsEpoch,
-        Math.round((entry.values?.bondRiskFeeSol ?? 0) * 1e9),
+        Math.round(solToLamports(entry.values?.bondRiskFeeSol ?? 0)),
         'BondRiskFee',
       )
     }
