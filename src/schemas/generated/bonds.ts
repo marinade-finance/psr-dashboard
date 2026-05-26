@@ -5,7 +5,7 @@ const ValidatorBondRecord = z
   .object({
     authority: z.string(),
     block_commission_bps: z.number().int().nullish(),
-    bond_type: z.string(),
+    bond_type: z.string().optional(),
     cpmpe: z.string(),
     effective_amount: z.number(),
     epoch: z.number().int().gte(0),
@@ -93,6 +93,7 @@ const ProtectedEvent = z.union([
         .passthrough(),
     })
     .passthrough(),
+  z.object({}).passthrough(),
 ])
 const SettlementReason = z.union([
   z.object({ ProtectedEvent: ProtectedEvent }).passthrough(),

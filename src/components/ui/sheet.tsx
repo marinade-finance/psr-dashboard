@@ -53,7 +53,7 @@ export function SheetContent({
   return (
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay
-        className="fixed inset-0 z-50 bg-black/50 md:pointer-events-none"
+        className="fixed inset-0 z-50 bg-black/50 pointer-events-none"
         style={{ animation: 'sheet-fade-in 150ms ease' }}
       />
       <DialogPrimitive.Content
