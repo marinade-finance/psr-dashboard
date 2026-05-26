@@ -33,252 +33,6 @@ type Props = {
   notificationsMap?: Record<string, NotificationSummary>
 }
 
-const MIN_TILE = 28
-const MAX_TILE = 120
-
-const TIER_LARGE = 100_000
-const TIER_HIGH = 50_000
-const TIER_MID = 20_000
-
-function coverageColor(ratio: number, hasBond: boolean): string {
-  if (!hasBond) return 'var(--bond-none)'
-  if (ratio >= 0.95) return 'var(--bond-full)'
-  if (ratio >= 0.7) return 'var(--bond-high)'
-  if (ratio >= 0.4) return 'var(--bond-mid)'
-  return 'var(--bond-low)'
-}
-
-type GradientPair = { from: string; to: string }
-
-// Bar fill uses lightened variants of the tier colors to make the gauge pop
-// against the tile background. Defined here rather than as tokens because
-// they only appear in this one component.
-function coverageBarFill(ratio: number, hasBond: boolean): GradientPair | null {
-  if (!hasBond) return null
-  if (ratio >= 0.95)
-    return { from: 'hsl(168, 55%, 58%)', to: 'hsl(168, 60%, 48%)' }
-  if (ratio >= 0.7)
-    return { from: 'hsl(172, 48%, 52%)', to: 'hsl(172, 52%, 42%)' }
-  if (ratio >= 0.4)
-    return { from: 'hsl(38, 68%, 60%)', to: 'hsl(38, 72%, 50%)' }
-  return { from: 'hsl(0, 54%, 58%)', to: 'hsl(0, 58%, 48%)' }
-}
-
-type TierRow = {
-  label: string
-  entries: ValidatorWithBond[]
-}
-
-function buildTierRows(active: ValidatorWithBond[]): TierRow[] {
-  const totalStake = (entry: ValidatorWithBond) =>
-    selectTotalMarinadeStake(entry.validator)
-  return [
-    {
-      label: '>100k',
-      entries: active.filter(entry => totalStake(entry) >= TIER_LARGE),
-    },
-    {
-      label: '50k–100k',
-      entries: active.filter(
-        entry =>
-          totalStake(entry) >= TIER_HIGH && totalStake(entry) < TIER_LARGE,
-      ),
-    },
-    {
-      label: '20k–50k',
-      entries: active.filter(
-        entry => totalStake(entry) >= TIER_MID && totalStake(entry) < TIER_HIGH,
-      ),
-    },
-    {
-      label: '<20k',
-      entries: active.filter(entry => totalStake(entry) < TIER_MID),
-    },
-  ].filter(tier => tier.entries.length > 0)
-}
-
-const ValidatorBondsTileMap: React.FC<{ data: ValidatorWithBond[] }> = ({
-  data,
-}) => {
-  const active = data
-    .filter(entry => selectTotalMarinadeStake(entry.validator) > 0)
-    .sort(
-      (a, b) =>
-        selectTotalMarinadeStake(b.validator) -
-        selectTotalMarinadeStake(a.validator),
-    )
-
-  const globalMaxStake =
-    active.length > 0 ? selectTotalMarinadeStake(active[0].validator) : 1
-
-  const tiers = buildTierRows(active)
-
-  return (
-    <div className="px-4 pb-4">
-      <div className="bg-card rounded-xl border border-border shadow-card overflow-hidden">
-        {tiers.map((tier, i) => {
-          return (
-            <div
-              key={tier.label}
-              className={cn(
-                'flex items-stretch',
-                i > 0 && 'border-t border-border/40',
-              )}
-            >
-              {/* Stake tier label */}
-              <div
-                className="flex items-center justify-center shrink-0 text-2xs text-muted-foreground font-mono"
-                style={{ width: 56, minHeight: 40 }}
-              >
-                {tier.label}
-              </div>
-              {/* Tiles */}
-              <div className="flex flex-wrap gap-px p-2 flex-1 min-w-0">
-                {tier.entries.map(entry => {
-                  const stake = selectTotalMarinadeStake(entry.validator)
-                  const protectedStake = selectProtectedStake(entry)
-                  const ratio = stake > 0 ? protectedStake / stake : 0
-                  const hasBond = entry.bond !== null
-                  const norm = Math.sqrt(stake / globalMaxStake)
-                  const size = Math.round(
-                    MIN_TILE + norm * (MAX_TILE - MIN_TILE),
-                  )
-                  const name = selectName(entry.validator)
-                  const coveragePct = Math.min(Math.round(ratio * 100), 100)
-                  const tileBg = coverageColor(ratio, hasBond)
-                  const barFill = coverageBarFill(ratio, hasBond)
-                  const fillRadius = coveragePct < 100 ? '0 2px 2px 0' : '0'
-
-                  return (
-                    <HtmlTooltip
-                      key={selectVoteAccount(entry.validator)}
-                      html={
-                        `${name}<br/>` +
-                        `Stake: ${sol(stake)} SOL<br/>` +
-                        `Coverage: ${pct(ratio)}` +
-                        (!hasBond ? '<br/>No bond' : '')
-                      }
-                    >
-                      <div
-                        className="relative flex flex-col rounded-lg overflow-hidden shrink-0 cursor-default"
-                        style={{
-                          width: size,
-                          height: size,
-                          background: tileBg,
-                          boxShadow:
-                            'inset 0 1px 0 rgba(255,255,255,0.10), inset 0 -1px 0 rgba(0,0,0,0.25)',
-                        }}
-                      >
-                        {size >= 36 && (
-                          <div className="flex-1 px-1.5 pt-1 overflow-hidden">
-                            <div
-                              className="text-2xs font-bold leading-tight truncate"
-                              style={{
-                                color: 'rgba(255,255,255,0.95)',
-                                textShadow: '0 1px 2px rgba(0,0,0,0.5)',
-                              }}
-                            >
-                              {name}
-                            </div>
-                            {size >= 56 && (
-                              <div
-                                className="text-[9px] leading-tight truncate mt-0.5 font-medium"
-                                style={{
-                                  color: 'rgba(255,255,255,0.72)',
-                                  textShadow: '0 1px 2px rgba(0,0,0,0.4)',
-                                }}
-                              >
-                                {sol(stake)} SOL
-                              </div>
-                            )}
-                            {size >= 76 && (
-                              <div
-                                className="text-[9px] leading-tight truncate mt-0.5 font-medium"
-                                style={{
-                                  color: 'rgba(255,255,255,0.65)',
-                                  textShadow: '0 1px 2px rgba(0,0,0,0.4)',
-                                }}
-                              >
-                                {pct(ratio, 0)} cov.
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        {/* Coverage bar — always at bottom via mt-auto */}
-                        <div
-                          className="mt-auto shrink-0 w-full"
-                          style={{ height: 10, background: 'rgba(0,0,0,0.40)' }}
-                        >
-                          {barFill && (
-                            <div
-                              style={{
-                                height: '100%',
-                                width: `${coveragePct}%`,
-                                background: `linear-gradient(to right, ${barFill.from}, ${barFill.to})`,
-                                borderRadius: fillRadius,
-                                boxShadow:
-                                  'inset 0 1px 0 rgba(255,255,255,0.20)',
-                              }}
-                            />
-                          )}
-                        </div>
-                      </div>
-                    </HtmlTooltip>
-                  )
-                })}
-              </div>
-            </div>
-          )
-        })}
-      </div>
-      {/* Legend */}
-      <div
-        className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 px-1"
-        style={{ color: 'rgba(255,255,255,0.30)', fontSize: 10 }}
-      >
-        <div className="flex items-center gap-1.5">
-          <div
-            className="rounded-sm shrink-0"
-            style={{ width: 10, height: 10, background: 'var(--bond-none)' }}
-          />
-          <span>No bond</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div
-            className="rounded-sm shrink-0"
-            style={{ width: 10, height: 10, background: 'var(--bond-low)' }}
-          />
-          <span>&lt;40% covered</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div
-            className="rounded-sm shrink-0"
-            style={{ width: 10, height: 10, background: 'var(--bond-mid)' }}
-          />
-          <span>40–70%</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div
-            className="rounded-sm shrink-0"
-            style={{ width: 10, height: 10, background: 'var(--bond-high)' }}
-          />
-          <span>70–95%</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div
-            className="rounded-sm shrink-0"
-            style={{ width: 10, height: 10, background: 'var(--bond-full)' }}
-          />
-          <span>≥95% covered</span>
-        </div>
-        <span className="ml-auto" style={{ color: 'rgba(255,255,255,0.18)' }}>
-          Tile size ∝ √stake (per tier)
-        </span>
-      </div>
-    </div>
-  )
-}
-
 function rowCoverageBarColor(ratio: number, hasBond: boolean): string {
   if (!hasBond) return 'bg-muted-foreground/30'
   if (ratio >= 0.9) return 'bg-status-green'
@@ -348,7 +102,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
               ),
               compare: (a: ValidatorWithBond, b: ValidatorWithBond) =>
                 selectMaxProtectedStake(a) - selectMaxProtectedStake(b),
-              alignment: 'right' as Alignment,
+              alignment: 'right',
             },
           ]
         : [],
@@ -356,7 +110,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
   )
 
   return (
-    <div className="relative">
+    <div className="max-w-[1920px] mx-auto relative">
       {/* Coverage Hero Bar */}
       <div className="px-4 pb-4">
         <div className="metricWrap bg-card rounded-xl border border-border shadow-card p-5">
@@ -445,8 +199,6 @@ export const ValidatorBondsTable: React.FC<Props> = ({
           </div>
         </div>
       </div>
-
-      <ValidatorBondsTileMap data={data} />
 
       <div className="px-4 pb-4">
         <TableShell>

@@ -190,7 +190,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
   const bondPct = Math.round(bondRatio * 100)
 
   return (
-    <div className="relative">
+    <div className="max-w-[1920px] mx-auto relative">
       <div className="metricWrap grid grid-cols-1 sm:grid-cols-3 gap-3 px-4 pb-4">
         <Metric
           label="Events"
