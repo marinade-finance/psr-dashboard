@@ -8,6 +8,7 @@ import React, { useState, useCallback, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import { Banner } from 'src/components/banner/banner'
+import { FetchError } from 'src/components/fetch-error/fetch-error'
 import { ICON_ROWS_COMPACT } from 'src/components/icons/icon-rows-compact'
 import { ICON_ROWS_DETAILED } from 'src/components/icons/icon-rows-detailed'
 import { Button } from 'src/components/ui/button'
@@ -311,7 +312,12 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
             />
           </div>
         )}
-        {status === 'error' && <p>Error fetching data</p>}
+        {status === 'error' && (
+          <FetchError
+            title="Couldn't load auction data."
+            detail="The SAM API didn't respond. Try reloading."
+          />
+        )}
         {status === 'pending' && <Loader />}
         {status === 'success' && displayAuctionResult && (
           <SamTable
