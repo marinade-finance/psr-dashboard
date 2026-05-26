@@ -1,6 +1,7 @@
 import { lamportsToSol } from 'src/format'
 import { VALIDATOR_BONDS_API_URL } from 'src/services/apiUrls'
-import { expectArray, expectObject, fetchJson } from 'src/services/fetch-utils'
+import { fetchJson } from 'src/services/fetch-utils'
+import { schemas } from 'src/schemas/generated/bonds'
 
 export type BondRecord = {
   pubkey: string
@@ -26,21 +27,9 @@ type BondsResponse = {
   bonds: BondRecord[]
 }
 
-const validateBondsResponse = (body: unknown): BondsResponse => {
-  const obj = expectObject(body, 'bonds response')
-  const arr = expectArray(obj['bonds'], 'bonds[]')
-  if (arr.length > 0) {
-    const first = expectObject(arr[0], 'bond entry')
-    if (typeof first['vote_account'] !== 'string') {
-      throw new Error('bond entry missing `vote_account`')
-    }
-  }
-  return { bonds: arr as BondRecord[] }
-}
-
 export const fetchBonds = (signal?: AbortSignal): Promise<BondsResponse> =>
   fetchJson<BondsResponse>(
     `${VALIDATOR_BONDS_API_URL}/bonds`,
     signal,
-    validateBondsResponse,
+    body => schemas.BondsResponse.parse(body) as BondsResponse,
   )

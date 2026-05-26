@@ -1,6 +1,7 @@
 import { lamportsToSol } from 'src/format'
 import { VALIDATORS_API_URL } from 'src/services/apiUrls'
-import { expectArray, expectObject, fetchJson } from 'src/services/fetch-utils'
+import { fetchJson } from 'src/services/fetch-utils'
+import { schemas } from 'src/schemas/generated/validators'
 
 export type ValidatorEpoch = {
   credits: number
@@ -41,18 +42,6 @@ type ValidatorsResponse = {
   validators: Validator[]
 }
 
-const validateValidatorsResponse = (body: unknown): ValidatorsResponse => {
-  const obj = expectObject(body, 'validators response')
-  const arr = expectArray(obj['validators'], 'validators[]')
-  if (arr.length > 0) {
-    const first = expectObject(arr[0], 'validator entry')
-    if (typeof first['vote_account'] !== 'string') {
-      throw new Error('validator entry missing `vote_account`')
-    }
-  }
-  return { validators: arr as Validator[] }
-}
-
 export const fetchValidatorsWithEpochs = (
   epochs: number,
   signal?: AbortSignal,
@@ -60,7 +49,7 @@ export const fetchValidatorsWithEpochs = (
   fetchJson<ValidatorsResponse>(
     `${VALIDATORS_API_URL}/validators?limit=9999&epochs=${epochs}`,
     signal,
-    validateValidatorsResponse,
+    body => schemas.ResponseValidators.parse(body) as ValidatorsResponse,
   ).then(data => ({
     validators: data.validators.filter(
       validator =>

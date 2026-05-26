@@ -5,6 +5,8 @@ import { docsPath } from 'src/components/breakdowns/docs-path'
 import { ConcentrationMetric } from 'src/components/concentration-metric/concentration-metric'
 import { Gauge } from 'src/components/gauge/gauge'
 import { HelpTip } from 'src/components/help-tip/help-tip'
+import { ICON_ARROW_DOWN_SM } from 'src/components/icons/icon-arrow-down-sm'
+import { ICON_ARROW_UP_SM } from 'src/components/icons/icon-arrow-up-sm'
 import { PENALTY_BID_LOW } from 'src/components/icons/penalty-bid-low'
 import { PENALTY_BLACKLIST } from 'src/components/icons/penalty-blacklist'
 import { PENALTY_RISK } from 'src/components/icons/penalty-risk'
@@ -94,17 +96,6 @@ type ValidatorWithBondState = AugmentedAuctionValidator & {
 
 const TEXT_MUTED = 'text-muted-foreground'
 
-// Compact stake-delta arrows: same diagonal path as ICON_UP/ICON_DOWN, smaller.
-const ARROW_UP_SM = (
-  <svg width="9" height="9" viewBox="0 0 12 12" stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M2 10L10 2M4 2h6v6" />
-  </svg>
-)
-const ARROW_DOWN_SM = (
-  <svg width="9" height="9" viewBox="0 0 12 12" stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M2 2L10 10M10 4v6H4" />
-  </svg>
-)
 // 1 arrow < 5k SOL, 2 arrows < 25k, 3 arrows ≥ 25k
 function stakeArrowCount(delta: number): number {
   const abs = Math.abs(delta)
@@ -932,7 +923,7 @@ export const SamTable: React.FC<Props> = ({
                   >
                     {Array.from({ length: count }, (_, i) => (
                       <span key={i} className="inline-flex">
-                        {isUp ? ARROW_UP_SM : ARROW_DOWN_SM}
+                        {isUp ? ICON_ARROW_UP_SM : ICON_ARROW_DOWN_SM}
                       </span>
                     ))}
                   </span>
@@ -1109,7 +1100,7 @@ export const SamTable: React.FC<Props> = ({
                 validators={validators}
                 nameMap={validatorMeta ?? EMPTY_NAME_MAP}
                 onSelect={onValidatorSearch}
-                className="min-w-[240px] max-w-sm"
+                className="min-w-[240px] max-w-xl"
               />
             </div>
           )}
