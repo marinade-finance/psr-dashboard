@@ -29,6 +29,14 @@ Bid-side: `computeInAuctionTarget` / `computeNextEpochStake` carry a
 bid CTAs action-unquantified (`Raise bid or lose M SOL.`) until estimate
 reliability is confirmed or the action is gated behind Simulate.
 
+**Bid CTAs must show the concrete current penalty / winning-total / frontier numbers
+at minimum in the validator detail panel.** The table pill can stay abbreviated;
+the detail Bidding tab must expose the exact SOL penalty and the bid threshold
+the validator needs to clear — currently `computeBidPenalty` has the penalty SOL
+and `computeInAuctionTarget` / `computeNextEpochStake` have the target pmpe.
+Wire these into the Bidding breakdown rows so an operator reading the detail
+panel sees numbers, not just the action verb.
+
 **Where:** `src/services/tip-engine.ts` — `bondAdvice()` and the `Losing` branch
 (~line 326, route by cause). Bond coverage numbers from `computeBondCoverage`.
 

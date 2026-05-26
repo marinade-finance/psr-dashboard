@@ -557,7 +557,7 @@ function outOfSetCta(
       }
       // Yellow when defending so this message outranks deltaCta's symptom.
       return tip(
-        'Blacklisted by Marinade.',
+        'Blacklisted.',
         defending ? 'warning' : 'neutral',
         'none',
         delta,
