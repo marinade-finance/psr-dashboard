@@ -881,22 +881,15 @@ export const SamTable: React.FC<Props> = ({
         <TableCell className="px-3.5 py-3">
           {isCompact ? (
             <span
-              className={cn('inline-flex items-center px-2 py-[3px] rounded-md text-xs font-medium font-mono cursor-default', bondChip.chip)}
+              className="inline-flex items-center px-2 py-[3px] rounded-md text-xs font-medium font-mono cursor-default bg-muted text-muted-foreground"
               title={bondChip.label}
             >
               {stake(selectBondSize(validator) ?? 0)}
             </span>
           ) : (
             <div className="flex items-center gap-1.5 mb-1">
-              <span
-                className={cn(
-                  'inline-flex items-center gap-1 px-2 py-[3px] rounded-md text-xs font-medium',
-                  bondChip.chip,
-                )}
-              >
-                <span
-                  className={cn('w-[7px] h-[7px] rounded-full', bondChip.dot)}
-                />
+              <span className="inline-flex items-center gap-1 px-2 py-[3px] rounded-md text-xs font-medium bg-muted">
+                <span className="w-[7px] h-[7px] rounded-full bg-muted-foreground/50" />
                 {bondChip.label}
               </span>
               <span className="text-muted-foreground text-xs font-mono">
@@ -912,16 +905,9 @@ export const SamTable: React.FC<Props> = ({
                 scaleMax={bondScaleMax}
                 marker={bondCritical}
                 criticalBand={bondCritical}
-                tone={bondChip.bar}
+                tone="bg-muted-foreground/40"
               />
-              <span
-                className={cn(
-                  'text-xs opacity-60 font-mono whitespace-nowrap',
-                  bondRunway < dsSamConfig.idealBondEpochs
-                    ? bondChip.shortText
-                    : TEXT_MUTED,
-                )}
-              >
+              <span className="text-xs opacity-60 font-mono whitespace-nowrap text-muted-foreground">
                 ({Math.round(bondRunway) >= 100 ? '>100' : Math.round(bondRunway)}
                 ep)
               </span>
