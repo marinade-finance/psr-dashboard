@@ -1133,7 +1133,7 @@ export const SamTable: React.FC<Props> = ({
                 validators={validators}
                 nameMap={validatorMeta ?? EMPTY_NAME_MAP}
                 onSelect={onValidatorSearch}
-                className="min-w-[240px] max-w-xl"
+                className="w-[240px]"
               />
             </div>
           )}
