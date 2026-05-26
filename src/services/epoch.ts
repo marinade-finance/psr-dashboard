@@ -20,6 +20,7 @@ export type TimelineNode = {
 export type EpochMeterModel = {
   label: string
   stale: boolean
+  critical: boolean
   timeline: TimelineNode[]
 }
 
@@ -111,6 +112,7 @@ export const epochMeterModel = ({
 }): EpochMeterModel => {
   const differ = networkEpoch !== null && networkEpoch !== auctionEpoch
   const stale = networkEpoch !== null && auctionEpoch < networkEpoch
+  const critical = networkEpoch !== null && networkEpoch - auctionEpoch > 1
   const label = differ
     ? `${networkEpoch} → ${auctionEpoch}`
     : `Epoch ${auctionEpoch}`
@@ -133,5 +135,5 @@ export const epochMeterModel = ({
     .sort(([a], [b]) => a - b)
     .map(([epoch, stages]) => ({ epoch, stages }))
 
-  return { label, stale, timeline }
+  return { label, stale, critical, timeline }
 }

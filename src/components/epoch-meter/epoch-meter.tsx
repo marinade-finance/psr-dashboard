@@ -67,10 +67,20 @@ export const EpochMeter: React.FC = () => {
     <Tooltip content={<TimelineCard model={model} progress={progress} />}>
       <button
         type="button"
-        aria-label={model.stale ? `${model.label} (stale)` : model.label}
+        aria-label={
+          model.critical
+            ? `${model.label} (data stale by more than one epoch)`
+            : model.stale
+              ? `${model.label} (stale)`
+              : model.label
+        }
         className={cn(
-          'text-xs font-mono px-2 py-1 rounded-md bg-muted whitespace-nowrap inline-flex items-center gap-1.5 cursor-default border-none focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-          model.stale ? 'text-warning' : 'text-muted-foreground',
+          'text-xs font-mono px-2 py-1 rounded-md whitespace-nowrap inline-flex items-center gap-1.5 cursor-default border focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors',
+          model.critical
+            ? 'bg-destructive-light text-destructive border-destructive/25'
+            : model.stale
+              ? 'bg-warning-light text-warning border-warning/25'
+              : 'bg-muted text-muted-foreground border-border/50',
         )}
       >
         <ProgressRing percent={ringPercent} size={12} />

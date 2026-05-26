@@ -187,6 +187,7 @@ describe('epochMeterModel', () => {
     })
     expect(m.label).toBe('Epoch 612')
     expect(m.stale).toBe(false)
+    expect(m.critical).toBe(false)
     expect(m.timeline).toEqual([{ epoch: 612, stages: ['payment', 'live'] }])
   })
 
@@ -213,6 +214,7 @@ describe('epochMeterModel', () => {
     })
     expect(m.label).toBe('612 → 613')
     expect(m.stale).toBe(false)
+    expect(m.critical).toBe(false)
     expect(m.timeline).toEqual([
       { epoch: 611, stages: ['payment'] },
       { epoch: 612, stages: ['live'] },
@@ -220,7 +222,18 @@ describe('epochMeterModel', () => {
     ])
   })
 
-  it('stale (auction < network): no next node', () => {
+  it('stale by 1 (auction = network - 1): warning but not critical', () => {
+    const m = epochMeterModel({
+      auctionEpoch: 611,
+      networkEpoch: 612,
+      paymentSettled: 610,
+      auctionSettled: 611,
+    })
+    expect(m.stale).toBe(true)
+    expect(m.critical).toBe(false)
+  })
+
+  it('stale by >1 (auction < network - 1): critical', () => {
     const m = epochMeterModel({
       auctionEpoch: 610,
       networkEpoch: 612,
@@ -229,6 +242,7 @@ describe('epochMeterModel', () => {
     })
     expect(m.label).toBe('612 → 610')
     expect(m.stale).toBe(true)
+    expect(m.critical).toBe(true)
     expect(m.timeline).toEqual([
       { epoch: 610, stages: ['payment'] },
       { epoch: 611, stages: ['auction'] },
@@ -245,6 +259,7 @@ describe('epochMeterModel', () => {
     })
     expect(m.label).toBe('Epoch 612')
     expect(m.stale).toBe(false)
+    expect(m.critical).toBe(false)
     expect(m.timeline).toEqual([{ epoch: 612, stages: ['next'] }])
   })
 
