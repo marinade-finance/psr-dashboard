@@ -1,4 +1,5 @@
 import { pct } from 'src/format'
+import { pmpeToSol } from 'src/services/pmpe'
 import {
   formattedBlockRewardsCommission,
   formattedMevCommission,
@@ -47,7 +48,7 @@ export function computeBidding(v: AugmentedAuctionValidator): Bidding {
   const effBid = selectEffectiveBid(v)
   const cost = selectEffectiveCost(v)
   const activatingStakePmpe = v.revShare.activatingStakePmpe
-  const activatingCost = (activatingStakePmpe * activating) / 1000
+  const activatingCost = pmpeToSol(activatingStakePmpe, activating)
   return {
     active: selectSamActiveStake(v),
     target: selectSamTargetStake(v),

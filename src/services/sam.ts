@@ -9,6 +9,7 @@ import {
 import { pct } from 'src/format'
 
 import { annualize, compoundApy } from './calculations'
+import { pmpeToSol } from './pmpe'
 import { fetchValidatorsWithEpochs } from './validators'
 
 import type {
@@ -148,7 +149,8 @@ const totalProfitPmpe = (v: AuctionValidator) =>
 
 const selectActiveProfit = (validators: AuctionValidator[]) =>
   validators.reduce(
-    (acc, v) => acc + (totalProfitPmpe(v) * v.marinadeActivatedStakeSol) / 1000,
+    (acc, v) =>
+      acc + pmpeToSol(totalProfitPmpe(v), v.marinadeActivatedStakeSol),
     0,
   )
 
@@ -227,8 +229,10 @@ export const selectNonBidPmpe = (v: AuctionValidator): number =>
   v.revShare.inflationPmpe + v.revShare.mevPmpe + (v.revShare.blockPmpe ?? 0)
 
 export const selectEffectiveCost = (validator: AuctionValidator) =>
-  (validator.marinadeActivatedStakeSol / 1000) *
-  validator.revShare.auctionEffectiveBidPmpe
+  pmpeToSol(
+    validator.revShare.auctionEffectiveBidPmpe,
+    validator.marinadeActivatedStakeSol,
+  )
 
 // Natural redelegation-turnover cap: ~1% of TVL redistributed each epoch.
 // Not SDK-exported; maintained here until the SDK exposes it.
@@ -385,11 +389,13 @@ function computeExpectedStakeChanges(
     const paid = selectPaidUndelegationSol(validator)
     if (
       paid > 0 &&
-      validator.auctionStake.marinadeSamTargetSol < validator.marinadeActivatedStakeSol
+      validator.auctionStake.marinadeSamTargetSol <
+        validator.marinadeActivatedStakeSol
     ) {
       // Cap at active−target so the projected stake never undershoots target.
       const maxUndel =
-        validator.marinadeActivatedStakeSol - validator.auctionStake.marinadeSamTargetSol
+        validator.marinadeActivatedStakeSol -
+        validator.auctionStake.marinadeSamTargetSol
       const capped = Math.min(paid, maxUndel)
       const entry = get(validator.voteAccount)
       entry.paidUndelegation = -capped

@@ -1,4 +1,5 @@
 import { finite } from 'src/format'
+import { pmpeToSol } from 'src/services/pmpe'
 import { selectPaidUndelegationSol } from 'src/services/sam'
 
 import type {
@@ -98,31 +99,38 @@ export function computeBondCoverage(
     0,
     marinadeActivatedStakeSol - unprotectedStakeSol,
   )
-  const minCoverageBidKeep =
-    ((minEp * expectedMaxEffBidPmpe) / 1000) * currentExposedStakeSol
-  const rewardsGuaranteeKeep =
-    (onchainDistributedPmpe / 1000) * currentExposedStakeSol
+  const minCoverageBidKeep = pmpeToSol(
+    minEp * expectedMaxEffBidPmpe,
+    currentExposedStakeSol,
+  )
+  const rewardsGuaranteeKeep = pmpeToSol(
+    onchainDistributedPmpe,
+    currentExposedStakeSol,
+  )
   // "Held for bid payments" — bid coverage across both exposed and unprotected
   // stake portions. Hides the unprotected-vs-exposed split which is 0 for most
   // SAM-delegated validators anyway.
   const heldForBidKeep = minCoverageBidKeep + minUnprotectedReserveSol
   const stakeKeepFloor =
-    minUnprotectedReserveSol + (minBondPmpe / 1000) * currentExposedStakeSol
+    minUnprotectedReserveSol + pmpeToSol(minBondPmpe, currentExposedStakeSol)
   const topUpToKeepStake = Math.max(0, stakeKeepFloor - claimableBondBalanceSol)
 
-  const idealCoverageBidKeep =
-    ((idealEp * expectedMaxEffBidPmpe) / 1000) * currentExposedStakeSol
+  const idealCoverageBidKeep = pmpeToSol(
+    idealEp * expectedMaxEffBidPmpe,
+    currentExposedStakeSol,
+  )
   const rewardsGuaranteeIdeal = rewardsGuaranteeKeep
   const heldForBidIdeal = idealCoverageBidKeep + idealUnprotectedReserveSol
   const stakeIdealFloor =
-    idealUnprotectedReserveSol + (idealBondPmpe / 1000) * currentExposedStakeSol
+    idealUnprotectedReserveSol +
+    pmpeToSol(idealBondPmpe, currentExposedStakeSol)
   const topUpToIdealKeep = Math.max(0, stakeIdealFloor - bondBalanceSol)
 
   // Projected basis: post-undelegation. Mirrors the SDK's fee trigger:
   //   claimableBond >= minUnprotectedReserve + projectedExposed * minBondPmpe/1000
   // Used only for the Bond Risk section (top up to avoid the fee).
   const bondRiskFeeFloor =
-    minUnprotectedReserveSol + (minBondPmpe / 1000) * projectedExposedStakeSol
+    minUnprotectedReserveSol + pmpeToSol(minBondPmpe, projectedExposedStakeSol)
   const bondRiskFeeShortfall = Math.max(
     0,
     bondRiskFeeFloor - claimableBondBalanceSol,

@@ -1,4 +1,5 @@
 import { finite } from 'src/format'
+import { pmpeToSol } from 'src/services/pmpe'
 
 import type {
   AuctionValidator,
@@ -68,7 +69,7 @@ export function computeBidPenalty(
 
   const base = winningTotalPmpe + effParticipatingBidPmpe
   const penaltyPmpe = penaltyCoef * base
-  const penaltySol = (penaltyPmpe / 1000) * v.marinadeActivatedStakeSol
+  const penaltySol = pmpeToSol(penaltyPmpe, v.marinadeActivatedStakeSol)
 
   return {
     historyEpochs,
@@ -96,13 +97,6 @@ export function computeBidPenalty(
   }
 }
 
-// A pmpe penalty rate applied to a stake base: lamports-per-1000-stake → SOL.
-// Pure: stake basis is the caller's choice. validator-with-protected_event.ts
-// keeps its own API-epochStats base; the auction surfaces pass active stake.
-function penaltyPmpeToSol(pmpe: number, stakeSol: number): number {
-  return (pmpe / 1000) * stakeSol
-}
-
 // Single home for the bid-too-low penalty in SOL. Sources from the local
 // computeBidPenalty recompute (NOT the SDK-pre-computed
 // `revShare.bidTooLowPenaltyPmpe`) so that under simulation — where the SDK
@@ -121,8 +115,5 @@ export function bidTooLowPenaltySol(
 
 // Blacklist penalty in SOL against the validator's active Marinade stake.
 export function blacklistPenaltySol(v: AuctionValidator): number {
-  return penaltyPmpeToSol(
-    v.revShare.blacklistPenaltyPmpe,
-    v.marinadeActivatedStakeSol,
-  )
+  return pmpeToSol(v.revShare.blacklistPenaltyPmpe, v.marinadeActivatedStakeSol)
 }
