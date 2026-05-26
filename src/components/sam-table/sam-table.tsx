@@ -61,7 +61,6 @@ import {
 import {
   buildOriginalPositionsMap,
   detectChangedValidators,
-  getPositionChange,
   insertGhostRows,
 } from 'src/services/simulation'
 import {
@@ -179,8 +178,6 @@ export function makeCompareFn(
     let cmp = 0
     switch (col) {
       case 'rank':
-        // Rank is built from selectMaxAPY desc (auctionRankMap below). The
-        // base cmp is asc; the dir flip below produces desc on default click.
         cmp = selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
         break
       case 'stakeDelta':
@@ -326,8 +323,6 @@ const RankCell = React.memo<{
   isGhost: boolean
   isSimulated: boolean
   isCompact: boolean
-  posColor: string | undefined
-  tipColor: string
   voteAccount: string
   onClearValidator?: (voteAccount: string) => void
 }>(
@@ -337,8 +332,6 @@ const RankCell = React.memo<{
     isGhost,
     isSimulated,
     isCompact,
-    posColor: _posColor,
-    tipColor: _tipColor,
     voteAccount,
     onClearValidator,
   }) => {
@@ -734,18 +727,6 @@ export const SamTable: React.FC<Props> = ({
       const cutoffRank = validator.values.cutoffRank ?? rank
       const isSimulated = simulatedValidators.has(voteAccount)
 
-      // Position change for simulated rows — compare original vs new auction rank
-      const posChange =
-        isSimulated && !isGhost
-          ? getPositionChange(origAuctionRank, rank)
-          : null
-      const posColor =
-        posChange?.direction === 'improved'
-          ? CSS_STATUS_GREEN
-          : posChange?.direction === 'worsened'
-            ? CSS_DESTRUCTIVE
-            : undefined
-
       const bondUtilPct = bondUtilizationPct(
         validator,
         dsSamConfig.minBondEpochs,
@@ -838,8 +819,6 @@ export const SamTable: React.FC<Props> = ({
               isGhost={isGhost}
               isSimulated={isSimulated}
               isCompact={isCompact}
-              posColor={posColor}
-              tipColor={tipStyle.color}
               voteAccount={voteAccount}
               onClearValidator={onClearValidator}
             />

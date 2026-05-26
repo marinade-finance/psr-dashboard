@@ -5,13 +5,9 @@ import type { BondHealthState } from 'src/services/bond-health'
 import { type TipUrgency, type ValidatorTip } from 'src/services/tip-engine'
 import { assertNever } from 'src/utils/assert-never'
 
-import type {
-  CardStatus,
-  CardStatusAction,
-  CardStatusTone,
-} from 'src/services/card-status'
+import type { CardStatus, CardStatusTone } from 'src/services/card-status'
 
-export type { CardStatus, CardStatusAction, CardStatusTone }
+export type { CardStatus, CardStatusTone }
 
 const STATUS_CLASSES: Record<CardStatusTone, string> = {
   ['red']: 'bg-destructive-light text-destructive',
@@ -125,8 +121,6 @@ export const StatusBanner: React.FC<{
 
 // Internal header for CalcCard — title + optional Guide link, with a
 // "Simulated · " prefix when the card is showing what-if numbers.
-// Uniformity lives at the card level (every detail-panel card uses
-// CalcCard), so this helper has no callers outside this file.
 const CardHeader: React.FC<{
   title: string
   guideTo?: string

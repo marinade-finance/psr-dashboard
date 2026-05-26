@@ -373,9 +373,7 @@ const PenaltyRow = ({
 )
 
 // What-changes block inside the sim panel: shows before → after pairs for
-// values that actually moved. Skips when there's no baseline. Re-uses
-// effectiveBondRunway, selectInSet, bidTooLowPenaltySol, and the cached
-// bondRiskFeeSol — no new derivations.
+// values that actually moved. Skips when there's no baseline.
 function SimDeltas({
   voteAccount,
   current,
@@ -546,10 +544,6 @@ export const ValidatorDetail = ({
     dsSamConfig,
     winningTotalPmpe,
   )
-  // A no-bond or below-minimum bond sustains zero stake regardless of the
-  // SDK's raw bondGoodForNEpochs, which ignores the below-min gate. Force
-  // the runway to Depleted so Balance, Reserve and Bond runway tell one
-  // coherent story instead of "0 SOL / Critical / 6 epochs".
   const bondRunway = effectiveBondRunway(validator, dsSamConfig)
   const tip = getValidatorTip(
     validator,

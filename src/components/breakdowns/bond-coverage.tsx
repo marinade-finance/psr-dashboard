@@ -19,7 +19,7 @@ type Props = {
   minBondBalanceSol: number
   marinadeActivatedStakeSol: number
   // Signed delta from the auction's redelegation pass. When positive on a
-  // 'soft' bond, the canonical "top up to grow stake" CTA contradicts the
+  // 'watch' bond, the canonical "top up to grow stake" CTA contradicts the
   // truthful "stake is already arriving" — see statusLine().
   expectedStakeDeltaSol?: number
   isSimulated?: boolean
