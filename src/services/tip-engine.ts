@@ -347,9 +347,8 @@ function bondCta(
     winningTotalPmpe,
     coverage,
   )
-  // 'watch' implies runway > minBondEpochs + BOND_URGENT_EPOCHS (bondHealthFromAuction
-  // returns 'critical' at or below that threshold), so the old nearFeeThreshold
-  // branch (watch && runway ≤ threshold) was unreachable by construction.
+  // 'watch' implies runway > minBondEpochs + BOND_URGENT_EPOCHS, so any 'watch'
+  // validator is already above the fee threshold.
   const fires =
     health === 'critical' ||
     (inSet &&

@@ -1,8 +1,7 @@
 // Formatting layer. All display rounding lives here — services and
 // components should NEVER `Math.round` a value before handing it to one of
 // these functions. `toLocaleString` and `toFixed` both round half-away-from-
-// zero, which is what we want for monetary display (matches what lodash.round
-// used to do, without the dependency).
+// zero, which is what we want for monetary display.
 
 export const sol = (amount: number, digits = 0) =>
   amount.toLocaleString(undefined, {

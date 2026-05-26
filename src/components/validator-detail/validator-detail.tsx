@@ -666,8 +666,7 @@ export const ValidatorDetail = ({
 
   // Banner tone follows the bond-health axis when the tip is bond-driven,
   // otherwise tracks the tip's own urgency. Click target reuses the shared
-  // TIP_TAB map so banner-nav and tab-dot can't disagree (previously the
-  // banner's bid → overview contradicted the dot's bid → penalty).
+  // TIP_TAB map so banner-nav and tab-dot can't disagree.
   const tipTarget = TIP_TAB[tip.constraint]
 
   const attention = tabAttention({
