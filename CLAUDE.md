@@ -12,14 +12,14 @@ validator bonds. Uses `@marinade.finance/ds-sam-sdk` for auction computation.
 
 ```bash
 pnpm install              # install deps
-pnpm start:dev            # dev server (vite, HMR)
+pnpm start:dev            # dev server (vite, HMR, :3000)
 pnpm build                # production build → build/
 pnpm preview              # serve build/ on :8080 (used by e2e)
 pnpm lint                 # eslint
 pnpm format:check         # prettier check
 pnpm check                # lint + format check
 pnpm test                 # vitest unit tests (src/__tests__)
-pnpm test:e2e             # playwright e2e (tests/)
+pnpm test:e2e             # playwright e2e (auto-starts preview via webServer)
 pnpm test:e2e:ui          # playwright UI mode
 pnpm test:e2e:update      # update playwright snapshots
 npx tsc --noEmit          # type check (no Makefile, run directly)
@@ -211,7 +211,10 @@ mutation in test mode; commission/bid overrides flow through
 
 ## Visual Language
 
-Visual language — tokens, status families, typography, component primitives — is documented in `VISUALS.md`. Key rules for code-touching agents:
+Full visual-language reference (glyph set, phantom icon slot, bond
+gauge, breakdown grammar, attention dot, typography, surfaces, status
+families) lives in `VISUALS.md`. Three rules code-touching agents must
+internalise here:
 
 ### Two orthogonal axes: severity vs lever
 
@@ -238,31 +241,6 @@ bid/rank → cap → none) breaking ties at the same severity.
   below-min / no-bond stay critical-red but keep their constraint glyph
   — no escalation. `src/components/icons/icon-alert.tsx`.
 
-### Tip glyph set
-
-7 glyphs, all `viewBox 0 0 12 12`, uniform **14.4px**: bond, bid, cap,
-alert, up, down, right. `src/components/icons/icon-*.tsx`. No `rank`
-glyph — `TipConstraint.RANK` reuses ICON_BID (same lever).
-
-### Phantom icon slot
-
-Every tip pill renders its glyph inside a fixed `w-4 h-4` centred box
-(`shrink-0 inline-flex items-center justify-center`) so glyph variance
-never shifts pill margins or breaks column alignment.
-`src/components/sam-table/sam-table.tsx` (Next Step cell).
-
-### Bond gauge
-
-`scaleMax = bondGaugeScaleMax(config) = 4 × idealBondEpochs`.
-`marker = criticalBand = bondCriticalFrac(config) = minBondEpochs /
-bondGaugeScaleMax(config)` (fraction where penalty threshold sits).
-Health ladder: `NO_BOND` → no balance; `CRITICAL` → coverage shortfall > 0
-OR estimated fee this epoch (`bondRiskFeeSol > 0`) OR runway ≤
-`minBondEpochs + BOND_URGENT_EPOCHS` (3); `WATCH` →
-runway < `idealBondEpochs`; `HEALTHY` → runway ≥ `idealBondEpochs`.
-4 tiers — no `SOFT`. `src/services/calculations.ts`,
-`src/services/bond-health.ts`.
-
 ### CTA message rules
 
 Every CTA string must be: **imperative verb phrase, sentence-case,
@@ -273,23 +251,8 @@ Pattern: `"Verb [object] to [outcome]."` or `"Verb [object]."`.
 
 Good: `"Top up 12 SOL to avoid undelegation and fee."`
 Good: `"Raise bid to get more stake."`
-Good: `"Raise bid to qualify for stake."`
 Bad: `"Bond too thin — a bond risk fee can be charged."` (no amount, vague future)
 Bad: `"Stake won't change next epoch."` (symptom without lever)
-
-### Breakdown table grammar — one 3-col model
-
-One uniform column model per `<table>`; never mix `CalcRow` (3-col) and
-`RevRow` (4-col). Unit rules: PMPE / epochs → declared once in
-`SectionHeader` `unit`, no suffix on rows; SOL → inline suffix, NEVER a
-header; % → inline annotation, NEVER a header. A column never mixes
-value kinds. `src/components/breakdowns/row.tsx`.
-
-### Attention dot persistence
-
-Per-tab attention dot (`w-1.5 h-1.5 rounded-full`) **persists on the
-active tab and pulses** (`active && 'animate-pulse'`).
-`src/components/validator-detail/validator-detail.tsx`.
 
 ### Decorative borders
 
