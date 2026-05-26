@@ -7,6 +7,8 @@ import { Gauge } from 'src/components/gauge/gauge'
 import { HelpTip } from 'src/components/help-tip/help-tip'
 import { ICON_ARROW_DOWN_SM } from 'src/components/icons/icon-arrow-down-sm'
 import { ICON_ARROW_UP_SM } from 'src/components/icons/icon-arrow-up-sm'
+import { ICON_CHEVRON_RIGHT_SM } from 'src/components/icons/icon-chevron-right'
+import { ICON_STAR } from 'src/components/icons/icon-star'
 import { PENALTY_BID_LOW } from 'src/components/icons/penalty-bid-low'
 import { PENALTY_BLACKLIST } from 'src/components/icons/penalty-blacklist'
 import { PENALTY_RISK } from 'src/components/icons/penalty-risk'
@@ -1019,15 +1021,7 @@ export const SamTable: React.FC<Props> = ({
           {/* Chevron */}
           <TableCell className="px-2.5 py-3 w-10">
             <div className="w-7 h-7 rounded-[7px] flex items-center justify-center border bg-secondary border-border text-secondary-foreground group-hover:bg-primary-light group-hover:border-primary/30 group-hover:text-primary transition-all duration-[120ms]">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path
-                  d="M4.5 3L7.5 6L4.5 9"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              {ICON_CHEVRON_RIGHT_SM}
             </div>
           </TableCell>
         </TableRow>
@@ -1245,18 +1239,7 @@ export const SamTable: React.FC<Props> = ({
                     <TableCell colSpan={7} className="p-0">
                       <div className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-primary-light-10 via-primary-light to-primary-light-10 border-y-2 border-primary">
                         <div className="flex items-center gap-1.5">
-                          <svg
-                            width="14"
-                            height="14"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                          >
-                            <path
-                              d="M8 2L10 6H14L11 9L12 13L8 10.5L4 13L5 9L2 6H6L8 2Z"
-                              fill="var(--primary)"
-                              opacity="0.8"
-                            />
-                          </svg>
+                          {ICON_STAR}
                           <span className="text-xs font-semibold text-primary">
                             Winning Set Cutoff
                           </span>

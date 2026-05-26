@@ -14,6 +14,7 @@ import { docsPath } from 'src/components/breakdowns/docs-path'
 import { PaymentsBreakdown } from 'src/components/breakdowns/payments'
 import { SEPARATOR_DIV_CLASS } from 'src/components/breakdowns/row'
 import { HelpTip } from 'src/components/help-tip/help-tip'
+import { ICON_CHEVRON_LEFT_SM } from 'src/components/icons/icon-chevron-left'
 import { TIP_ICONS } from 'src/components/icons/tip-icons'
 import { Button } from 'src/components/ui/button'
 import { Input } from 'src/components/ui/input'
@@ -214,10 +215,7 @@ function tabAttention(args: {
         ? 'info'
         : undefined
   const attention: Partial<Record<Tab, AttentionTone>> = {}
-  if (
-    bondHealth === 'critical' ||
-    bondHealth === 'no-bond'
-  ) {
+  if (bondHealth === 'critical' || bondHealth === 'no-bond') {
     attention.bond = 'critical'
   } else if (bondHealth === 'watch') {
     attention.bond = 'warning'
@@ -623,7 +621,9 @@ export const ValidatorDetail = ({
     (validator.bondBalanceSol ?? 0).toString(),
   )
   const [simEnabled, setSimEnabled] = useState(isSimulated)
-  useEffect(() => { setSimEnabled(isSimulated) }, [isSimulated])
+  useEffect(() => {
+    setSimEnabled(isSimulated)
+  }, [isSimulated])
 
   // Debounced auto-recalc whenever inputs change while simulation is enabled.
   // 400ms covers fast number-input arrow clicking without thrashing the SDK.
@@ -716,15 +716,7 @@ export const ValidatorDetail = ({
               className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors self-start cursor-pointer"
               onClick={onClose}
             >
-              <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-                <path
-                  d="M8.75 10.5L5.25 7L8.75 3.5"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              {ICON_CHEVRON_LEFT_SM}
               Back to rankings
             </button>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -807,9 +799,7 @@ export const ValidatorDetail = ({
               tipTarget && tipTarget !== tab
                 ? {
                     label:
-                      tip.constraint === 'bond'
-                        ? 'Bond tab →'
-                        : 'Simulate →',
+                      tip.constraint === 'bond' ? 'Bond tab →' : 'Simulate →',
                     onClick: () => setTab(tipTarget),
                   }
                 : undefined,

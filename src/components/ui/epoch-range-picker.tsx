@@ -1,6 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react'
 
 import { cn } from 'src/class_utils'
+import { ICON_CALENDAR } from 'src/components/icons/icon-calendar'
+import { ICON_CHEVRON_DOWN_SM } from 'src/components/icons/icon-chevron-down-sm'
+import { ICON_CHEVRON_LEFT } from 'src/components/icons/icon-chevron-left'
+import { ICON_CHEVRON_RIGHT } from 'src/components/icons/icon-chevron-right'
 
 // How many epochs per panel column × rows
 const PANEL_SIZE = 30 // 6 cols × 5 rows
@@ -213,24 +217,7 @@ export const EpochRangePicker: React.FC<Props> = ({
       >
         {/* Calendar icon */}
         <span className="flex items-center px-3 text-muted-foreground">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <rect
-              x="1"
-              y="2.5"
-              width="12"
-              height="10.5"
-              rx="1.5"
-              stroke="currentColor"
-              strokeWidth="1.2"
-            />
-            <path d="M1 6h12" stroke="currentColor" strokeWidth="1.2" />
-            <path
-              d="M4.5 1v3M9.5 1v3"
-              stroke="currentColor"
-              strokeWidth="1.2"
-              strokeLinecap="round"
-            />
-          </svg>
+          {ICON_CALENDAR}
         </span>
 
         {/* Start slot */}
@@ -280,15 +267,7 @@ export const EpochRangePicker: React.FC<Props> = ({
 
         {/* Chevron */}
         <span className="flex items-center px-2 text-muted-foreground">
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-            <path
-              d="M2 3.5L5 6.5L8 3.5"
-              stroke="currentColor"
-              strokeWidth="1.3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          {ICON_CHEVRON_DOWN_SM}
         </span>
       </button>
 
@@ -339,15 +318,7 @@ export const EpochRangePicker: React.FC<Props> = ({
               onClick={() => setPageStart(p => Math.max(0, p - PANEL_SIZE * 2))}
               className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors px-2 py-1 rounded-md hover:bg-muted"
             >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path
-                  d="M9 11L5 7L9 3"
-                  stroke="currentColor"
-                  strokeWidth="1.3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              {ICON_CHEVRON_LEFT}
               older
             </button>
             <span className="text-2xs text-muted-foreground">
@@ -369,15 +340,7 @@ export const EpochRangePicker: React.FC<Props> = ({
               className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors px-2 py-1 rounded-md hover:bg-muted"
             >
               newer
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path
-                  d="M5 3L9 7L5 11"
-                  stroke="currentColor"
-                  strokeWidth="1.3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              {ICON_CHEVRON_RIGHT}
             </button>
           </div>
         </div>
