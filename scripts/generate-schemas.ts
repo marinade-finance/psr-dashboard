@@ -50,8 +50,31 @@ hoisted['components'] = { ...(hoisted['components'] as object), schemas: schemas
 const fixed = JSON.stringify(hoisted, null, 2).replace(/"#\/\$defs\/([^"]+)"/g, '"#/components/schemas/$1"')
 await writeFile(`${SPEC_DIR}/notifications.json`, fixed)
 
+// Deduplicate operationIds in place — openapi-zod-client uses them as Zodios
+// aliases and throws on the first collision at runtime.
+function dedupeOperationIds(doc: Record<string, unknown>) {
+  const paths = doc['paths'] as Record<string, Record<string, unknown>> | undefined
+  if (!paths) return
+  const seen = new Map<string, number>()
+  for (const methods of Object.values(paths)) {
+    for (const op of Object.values(methods)) {
+      if (op === null || typeof op !== 'object') continue
+      const o = op as Record<string, unknown>
+      const id = o['operationId']
+      if (typeof id !== 'string') continue
+      const n = (seen.get(id) ?? 0) + 1
+      seen.set(id, n)
+      if (n > 1) o['operationId'] = `${id} ${n}`
+    }
+  }
+}
+
 async function generate(name: string) {
   console.log(`Generating ${name}...`)
+  const text = await readFile(`${SPEC_DIR}/${name}.json`, 'utf8')
+  const doc = JSON.parse(text) as Record<string, unknown>
+  dedupeOperationIds(doc)
+  await writeFile(`${SPEC_DIR}/${name}.json`, JSON.stringify(doc))
   await $`npx openapi-zod-client ${SPEC_DIR}/${name}.json -o ${OUT_DIR}/${name}.ts`
 }
 
