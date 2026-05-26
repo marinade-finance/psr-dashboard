@@ -1,27 +1,19 @@
 import React from 'react'
 
 import { cn } from 'src/class_utils'
-import { BondHealthState } from 'src/services/bond-health'
-import { CardStatusTone } from 'src/services/card-status'
-import {
-  TipConstraint,
-  TipUrgency,
-  type ValidatorTip,
-} from 'src/services/tip-engine'
+import type { BondHealthState } from 'src/services/bond-health'
+import { type TipUrgency, type ValidatorTip } from 'src/services/tip-engine'
 import { assertNever } from 'src/utils/assert-never'
 
-import type { CardStatus, CardStatusAction } from 'src/services/card-status'
+import type { CardStatus, CardStatusAction, CardStatusTone } from 'src/services/card-status'
 
-// Re-export for existing import paths (this file used to own these types).
-// New code should import directly from 'src/services/card-status'.
-export { CardStatusTone }
-export type { CardStatus, CardStatusAction }
+export type { CardStatus, CardStatusAction, CardStatusTone }
 
 const STATUS_CLASSES: Record<CardStatusTone, string> = {
-  [CardStatusTone.RED]: 'bg-destructive-light text-destructive',
-  [CardStatusTone.YELLOW]: 'bg-status-yellow-light text-status-yellow',
-  [CardStatusTone.GREEN]: 'bg-primary-light text-primary',
-  [CardStatusTone.GREY]: 'bg-muted text-muted-foreground',
+  ['red']: 'bg-destructive-light text-destructive',
+  ['yellow']: 'bg-status-yellow-light text-status-yellow',
+  ['green']: 'bg-primary-light text-primary',
+  ['grey']: 'bg-muted text-muted-foreground',
 }
 
 // Pill border/text per tone — paired with bg-card/55 fill for the action
@@ -29,23 +21,23 @@ const STATUS_CLASSES: Record<CardStatusTone, string> = {
 // validator-detail header banner's "Bond tab →" pill: bg-card/55 + tone-
 // coloured border and text — keeps both surfaces in lockstep.
 const STATUS_ACTION_CLASSES: Record<CardStatusTone, string> = {
-  [CardStatusTone.RED]: 'border-destructive text-destructive',
-  [CardStatusTone.YELLOW]: 'border-status-yellow text-status-yellow',
-  [CardStatusTone.GREEN]: 'border-primary text-primary',
-  [CardStatusTone.GREY]: 'border-muted-foreground text-muted-foreground',
+  ['red']: 'border-destructive text-destructive',
+  ['yellow']: 'border-status-yellow text-status-yellow',
+  ['green']: 'border-primary text-primary',
+  ['grey']: 'border-muted-foreground text-muted-foreground',
 }
 
 const urgencyToTone = (urgency: TipUrgency): CardStatusTone => {
   switch (urgency) {
-    case TipUrgency.CRITICAL:
-      return CardStatusTone.RED
-    case TipUrgency.WARNING:
-    case TipUrgency.INFO:
-      return CardStatusTone.YELLOW
-    case TipUrgency.POSITIVE:
-      return CardStatusTone.GREEN
-    case TipUrgency.NEUTRAL:
-      return CardStatusTone.GREY
+    case 'critical':
+      return 'red'
+    case 'warning':
+    case 'info':
+      return 'yellow'
+    case 'positive':
+      return 'green'
+    case 'neutral':
+      return 'grey'
     default:
       return assertNever(urgency)
   }
@@ -53,13 +45,13 @@ const urgencyToTone = (urgency: TipUrgency): CardStatusTone => {
 
 const bondHealthToTone = (health: BondHealthState): CardStatusTone => {
   switch (health) {
-    case BondHealthState.NO_BOND:
-    case BondHealthState.CRITICAL:
-      return CardStatusTone.RED
-    case BondHealthState.WATCH:
-      return CardStatusTone.YELLOW
-    case BondHealthState.HEALTHY:
-      return CardStatusTone.GREEN
+    case 'no-bond':
+    case 'critical':
+      return 'red'
+    case 'watch':
+      return 'yellow'
+    case 'healthy':
+      return 'green'
     default:
       return assertNever(health)
   }
@@ -73,8 +65,8 @@ export const tipBannerTone = (
   bondHealth: BondHealthState,
 ): CardStatusTone => {
   if (
-    tip.constraint === TipConstraint.BOND &&
-    tip.urgency !== TipUrgency.NEUTRAL
+    tip.constraint === 'bond' &&
+    tip.urgency !== 'neutral'
   ) {
     return bondHealthToTone(bondHealth)
   }
@@ -93,7 +85,7 @@ export function withSimAction(
         ...base,
         action: {
           label: 'Simulate →',
-          tone: CardStatusTone.YELLOW,
+          tone: 'yellow',
           onClick: onGoToSim,
         },
       }
@@ -196,8 +188,5 @@ export const CalcCard: React.FC<{
       </div>
     )}
     {children}
-    {!status && tip && (
-      <div className="mt-4 pt-3 border-t border-border">{tip}</div>
-    )}
   </div>
 )

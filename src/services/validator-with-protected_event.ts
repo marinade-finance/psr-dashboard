@@ -8,11 +8,7 @@ import type { ProtectedEvent, SettlementReason } from './protected-events'
 import type { Validator } from './validators'
 import type { QueryClient } from '@tanstack/react-query'
 
-export enum ProtectedEventStatus {
-  DRYRUN,
-  ESTIMATE,
-  FACT,
-}
+export type ProtectedEventStatus = 'dryrun' | 'estimate' | 'fact'
 export type ProtectedEventWithValidator = {
   status: ProtectedEventStatus
   protectedEvent: ProtectedEvent
@@ -60,8 +56,8 @@ export const fetchProtectedEventsWithValidator = async (
     latestProcessedEpoch = Math.max(protectedEvent.epoch, latestProcessedEpoch)
     const status =
       protectedEvent.epoch > LAST_DRYRUN_EPOCH
-        ? ProtectedEventStatus.FACT
-        : ProtectedEventStatus.DRYRUN
+        ? 'fact'
+        : 'dryrun'
     protectedEventsWithValidator.push({
       status,
       protectedEvent,
@@ -72,7 +68,7 @@ export const fetchProtectedEventsWithValidator = async (
   for (const protectedEvent of estimatedProtectedEvents) {
     if (protectedEvent.epoch > latestProcessedEpoch) {
       protectedEventsWithValidator.push({
-        status: ProtectedEventStatus.ESTIMATE,
+        status: 'estimate',
         protectedEvent,
         validator: validatorsMap[protectedEvent.vote_account] ?? null,
       })
@@ -99,7 +95,7 @@ export const fetchProtectedEventsWithValidator = async (
   ) => {
     if (amountLamports <= 0) return
     protectedEventsWithValidator.push({
-      status: ProtectedEventStatus.ESTIMATE,
+      status: 'estimate',
       protectedEvent: {
         epoch,
         amount: amountLamports,

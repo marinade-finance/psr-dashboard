@@ -10,7 +10,6 @@ import {
 
 import {
   CalcCard,
-  CardStatusTone,
   withSimAction,
   type CardStatus,
 } from './card'
@@ -66,7 +65,7 @@ export const PaymentsBreakdown: React.FC<Props> = ({
     label: hasPenalty
       ? `You will pay ${cost(total)} in total this epoch — including ${cost(penaltyTotal)} in penalties.`
       : `You will pay ${cost(total)} in total this epoch — no penalties.`,
-    tone: hasPenalty ? CardStatusTone.RED : CardStatusTone.GREEN,
+    tone: hasPenalty ? 'red' : 'green',
   }
   const status: CardStatus = withSimAction(baseStatus, onGoToSim)
 

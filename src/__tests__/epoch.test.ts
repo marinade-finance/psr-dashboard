@@ -10,9 +10,9 @@ import {
   selectLatestPaymentSettled,
   selectNetworkEpoch,
 } from '../services/epoch'
-import {
+import type {
   ProtectedEventStatus,
-  type ProtectedEventWithValidator,
+  ProtectedEventWithValidator,
 } from '../services/validator-with-protected_event'
 
 import type { Validator, ValidatorEpoch } from '../services/validators'
@@ -117,9 +117,9 @@ describe('selectLatestPaymentSettled', () => {
     expect(
       selectLatestPaymentSettled(
         [
-          pe(610, ProtectedEventStatus.FACT),
-          pe(611, ProtectedEventStatus.ESTIMATE),
-          pe(612, ProtectedEventStatus.DRYRUN),
+          pe(610, 'fact'),
+          pe(611, 'estimate'),
+          pe(612, 'dryrun'),
         ],
         972,
       ),
@@ -130,8 +130,8 @@ describe('selectLatestPaymentSettled', () => {
     expect(
       selectLatestPaymentSettled(
         [
-          pe(971, ProtectedEventStatus.FACT),
-          pe(972, ProtectedEventStatus.FACT),
+          pe(971, 'fact'),
+          pe(972, 'fact'),
         ],
         972,
       ),
@@ -140,7 +140,7 @@ describe('selectLatestPaymentSettled', () => {
 
   it('returns null when no FACT event exists', () => {
     expect(
-      selectLatestPaymentSettled([pe(612, ProtectedEventStatus.ESTIMATE)], 972),
+      selectLatestPaymentSettled([pe(612, 'estimate')], 972),
     ).toBe(null)
     expect(selectLatestPaymentSettled([], 972)).toBe(null)
   })
@@ -151,8 +151,8 @@ describe('selectLatestAuctionSettled', () => {
     expect(
       selectLatestAuctionSettled(
         [
-          pe(610, ProtectedEventStatus.FACT),
-          pe(612, ProtectedEventStatus.ESTIMATE),
+          pe(610, 'fact'),
+          pe(612, 'estimate'),
         ],
         972,
       ),
@@ -164,8 +164,8 @@ describe('selectLatestAuctionSettled', () => {
     expect(
       selectLatestAuctionSettled(
         [
-          pe(971, ProtectedEventStatus.ESTIMATE),
-          pe(972, ProtectedEventStatus.ESTIMATE),
+          pe(971, 'estimate'),
+          pe(972, 'estimate'),
         ],
         972,
       ),

@@ -13,13 +13,11 @@ import {
   getTipStyle,
   getTipIcon,
   nextStakeDeltaCell,
-  TipUrgency,
-  TipConstraint,
 } from '../tip-engine'
 
 import type { ProtectedEvent } from '../protected-events'
 import type { AugmentedAuctionValidator } from '../sam'
-import type { ValidatorTip } from '../tip-engine'
+import type { TipConstraint, TipUrgency, ValidatorTip } from '../tip-engine'
 import type { DsSamConfig } from '@marinade.finance/ds-sam-sdk'
 
 function makeValidator(
@@ -115,32 +113,32 @@ describe('getApyBreakdown', () => {
 
 describe('getTipStyle', () => {
   it('critical → destructive', () => {
-    expect(getTipStyle(TipUrgency.CRITICAL).color).toContain('destructive')
+    expect(getTipStyle('critical').color).toContain('destructive')
   })
 
   it('warning → warning', () => {
-    expect(getTipStyle(TipUrgency.WARNING).color).toContain('warning')
+    expect(getTipStyle('warning').color).toContain('warning')
   })
 
   it('info → info', () => {
-    expect(getTipStyle(TipUrgency.INFO).color).toContain('info')
+    expect(getTipStyle('info').color).toContain('info')
   })
 
   it('positive → primary', () => {
-    expect(getTipStyle(TipUrgency.POSITIVE).color).toContain('primary')
+    expect(getTipStyle('positive').color).toContain('primary')
   })
 
   it('neutral → muted', () => {
-    expect(getTipStyle(TipUrgency.NEUTRAL).color).toContain('muted')
+    expect(getTipStyle('neutral').color).toContain('muted')
   })
 
   it('getTipStyle returns color and bg fields, no icon', () => {
-    const urgencies = [
-      TipUrgency.CRITICAL,
-      TipUrgency.WARNING,
-      TipUrgency.INFO,
-      TipUrgency.POSITIVE,
-      TipUrgency.NEUTRAL,
+    const urgencies: TipUrgency[] = [
+      'critical',
+      'warning',
+      'info',
+      'positive',
+      'neutral',
     ]
     for (const u of urgencies) {
       expect('icon' in getTipStyle(u)).toBe(false)
@@ -153,49 +151,45 @@ describe('getTipStyle', () => {
 describe('getTipIcon', () => {
   const tip = (over: Partial<ValidatorTip>): ValidatorTip => ({
     text: '',
-    urgency: TipUrgency.WARNING,
-    constraint: TipConstraint.NONE,
+    urgency: 'warning',
+    constraint: 'none',
     delta: 0,
     ...over,
   })
 
   it('constraint:bond → bond glyph', () => {
-    expect(getTipIcon(tip({ constraint: TipConstraint.BOND }))).toBe('bond')
+    expect(getTipIcon(tip({ constraint: 'bond' }))).toBe('bond')
   })
 
   it('constraint:bid → bid glyph', () => {
-    expect(getTipIcon(tip({ constraint: TipConstraint.BID }))).toBe('bid')
+    expect(getTipIcon(tip({ constraint: 'bid' }))).toBe('bid')
   })
 
   it('constraint:rank → bid glyph', () => {
-    expect(getTipIcon(tip({ constraint: TipConstraint.RANK }))).toBe('bid')
+    expect(getTipIcon(tip({ constraint: 'rank' }))).toBe('bid')
   })
 
   it('constraint:cap → cap glyph', () => {
-    expect(getTipIcon(tip({ constraint: TipConstraint.CAP }))).toBe('cap')
+    expect(getTipIcon(tip({ constraint: 'cap' }))).toBe('cap')
   })
 
   it('constraint:none — delta>0 → up, delta<0 → down, delta=0 → right', () => {
     expect(
-      getTipIcon(tip({ constraint: TipConstraint.NONE, delta: 100 })),
+      getTipIcon(tip({ constraint: 'none', delta: 100 })),
     ).toBe('up')
     expect(
-      getTipIcon(tip({ constraint: TipConstraint.NONE, delta: -100 })),
+      getTipIcon(tip({ constraint: 'none', delta: -100 })),
     ).toBe('down')
-    expect(getTipIcon(tip({ constraint: TipConstraint.NONE, delta: 0 }))).toBe(
+    expect(getTipIcon(tip({ constraint: 'none', delta: 0 }))).toBe(
       'right',
     )
   })
 
   it('bond/bid/rank constraint → glyph is never "up" even when losing stake', () => {
-    for (const c of [
-      TipConstraint.BOND,
-      TipConstraint.BID,
-      TipConstraint.RANK,
-    ]) {
+    for (const c of ['bond', 'bid', 'rank'] as TipConstraint[]) {
       const losing = tip({
         constraint: c,
-        urgency: TipUrgency.WARNING,
+        urgency: 'warning',
         delta: -5000,
       })
       expect(getTipIcon(losing)).not.toBe('up')
@@ -204,8 +198,8 @@ describe('getTipIcon', () => {
 
   it('constraint NONE + delta < 0 → "down"', () => {
     const losing = tip({
-      constraint: TipConstraint.NONE,
-      urgency: TipUrgency.WARNING,
+      constraint: 'none',
+      urgency: 'warning',
       delta: -5000,
     })
     expect(getTipIcon(losing)).toBe('down')
@@ -352,6 +346,33 @@ describe('getValidatorTip', () => {
     expect(tip.text).toContain('arriving next epoch')
   })
 
+  it('delta > 0 + below priority frontier → info/rank raise-bid for more', () => {
+    // Validator is getting scraps from the leftover budget (delta > 0) but sits
+    // below the priority frontier. Raising bid to clear the frontier gets them
+    // full target-delta allocation instead of the partial crumb.
+    const validator = makeValidator({
+      values: { expectedStakeChangeSol: 28 },
+      revShare: { totalPmpe: 28 },
+    })
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 20, undefined, undefined, 50)
+    expect(tip.urgency).toBe('info')
+    expect(tip.constraint).toBe('rank')
+    expect(tip.text).toBe('Raise bid to get more stake next epoch.')
+  })
+
+  it('delta > 0 + at/above priority frontier → positive arriving message', () => {
+    // Validator clears the frontier — already in the priority group. Small positive
+    // delta reflects a remaining gap to target, not leftover scraps.
+    const validator = makeValidator({
+      values: { expectedStakeChangeSol: 28 },
+      revShare: { totalPmpe: 28 },
+    })
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 20, undefined, undefined, 10)
+    expect(tip.urgency).toBe('positive')
+    expect(tip.constraint).toBe('none')
+    expect(tip.text).toContain('arriving next epoch')
+  })
+
   it('delta === 0 + active ≈ target → neutral "At target stake"', () => {
     const validator = makeValidator({
       marinadeActivatedStakeSol: 15000,
@@ -371,7 +392,7 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('info')
     expect(tip.constraint).toBe('rank')
-    expect(tip.text).toBe('Raise bid to get more stake.')
+    expect(tip.text).toBe('Raise bid to grow stake.')
   })
 
   it('delta < 0 + defending + healthy bond → warning, losing stake message', () => {
@@ -519,7 +540,7 @@ describe('getValidatorTip watch health (bond top-up lever)', () => {
     expect(tip.text).toContain('SOL')
   })
 
-  it('watch health + defending (large loss) → warning/bond "keep your stake" (beats deltaCta)', () => {
+  it('watch health + defending (large loss) → warning/bond "keep stake" (beats deltaCta)', () => {
     // WATCH shape with marinadeActivatedStakeSol=50000, claimable=100:
     //   stakeKeepFloor   = (1/1000)*50000 = 50  → topUpToKeepStake   = max(0,50-100)=0
     //   bondRiskFeeFloor = (1/1000)*50000 = 50  → bondRiskFeeShortfall = 0
@@ -538,7 +559,7 @@ describe('getValidatorTip watch health (bond top-up lever)', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.constraint).toBe('bond')
     expect(tip.urgency).toBe('warning')
-    expect(tip.text).toContain('keep your stake')
+    expect(tip.text).toContain('keep stake')
   })
 })
 
@@ -593,7 +614,7 @@ describe('getValidatorTip — positive delta vs bond top-up precedence', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('warning')
     expect(tip.constraint).toBe('bond')
-    expect(tip.text).toContain('keep your stake')
+    expect(tip.text).toContain('keep stake')
     expect(tip.delta).toBe(7500)
   })
 

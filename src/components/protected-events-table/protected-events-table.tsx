@@ -12,25 +12,19 @@ import {
   selectAmount,
   selectProtectedStakeReason,
 } from 'src/services/protected-events'
-import { ProtectedEventStatus } from 'src/services/validator-with-protected_event'
+import type { ProtectedEventStatus } from 'src/services/validator-with-protected_event'
 import { selectName } from 'src/services/validators'
 
 import { Metric } from '../metric/metric'
-import { UserLevel } from '../navigation/navigation'
-import {
-  Alignment,
-  OrderDirection,
-  TABLE_SHELL_HOVER,
-  Table,
-  TableShell,
-} from '../table/table'
+import type { UserLevel } from '../navigation/navigation'
+import { TABLE_SHELL_HOVER, Table, TableShell } from '../table/table'
 
 import type { ProtectedEvent } from 'src/services/protected-events'
 import type { ProtectedEventWithValidator } from 'src/services/validator-with-protected_event'
 
 const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
   switch (status) {
-    case ProtectedEventStatus.DRYRUN:
+    case 'dryrun':
       return (
         <HtmlTooltip html="This was logged during a test run — no money actually changes hands.">
           <Badge variant="secondary" className="badge cursor-help float-left">
@@ -38,7 +32,7 @@ const renderProtectedEventStatus = (status: ProtectedEventStatus) => {
           </Badge>
         </HtmlTooltip>
       )
-    case ProtectedEventStatus.ESTIMATE:
+    case 'estimate':
       return (
         <HtmlTooltip html="An early estimate from live data. The final number gets locked in at the end of the epoch and may shift before then.">
           <Badge variant="default" className="badge cursor-help float-left">
@@ -79,10 +73,6 @@ type Props = {
 }
 
 export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
-  // One-pass scan over `data` to derive every dataset-wide aggregate at once.
-  // Previously each was an independent `.reduce()` running on every render —
-  // ~10 traversals × thousands of rows. With memoisation keyed on `data`,
-  // these only re-run when the upstream cache changes.
   const datasetAggregates = useMemo(() => {
     let minEpoch = 9999
     let maxEpoch = 0
@@ -95,7 +85,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
       if (epoch < minEpoch) minEpoch = epoch
       if (epoch > maxEpoch) maxEpoch = epoch
       epochSet.add(epoch)
-      if (status === ProtectedEventStatus.FACT && epoch > lastSettledEpoch) {
+      if (status === 'fact' && epoch > lastSettledEpoch) {
         lastSettledEpoch = epoch
       }
       const amount = selectAmount(protectedEvent)
@@ -246,7 +236,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
           label="Last settled epoch"
           value={lastSettledEpoch > 0 ? lastSettledEpoch.toLocaleString() : '—'}
           subline={
-            level === UserLevel.Expert && lastEpochBids > 0
+            level === 'expert' && lastEpochBids > 0
               ? `${sol(lastEpochBids)} SOL bids`
               : undefined
           }
@@ -307,7 +297,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
                 render: ({ protectedEvent }) => <>{protectedEvent.epoch}</>,
                 compare: (a, b) =>
                   a.protectedEvent.epoch - b.protectedEvent.epoch,
-                alignment: Alignment.RIGHT,
+                alignment: 'right',
               },
               {
                 header: 'Reason',
@@ -336,7 +326,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
                 compare: (a, b) =>
                   selectAmount(a.protectedEvent) -
                   selectAmount(b.protectedEvent),
-                alignment: Alignment.RIGHT,
+                alignment: 'right',
               },
               {
                 header: 'Funded by',
@@ -351,7 +341,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
                   ),
               },
             ]}
-            defaultOrder={[[1, OrderDirection.DESC]]}
+            defaultOrder={[[1, 'desc']]}
           />
         </TableShell>
       </div>

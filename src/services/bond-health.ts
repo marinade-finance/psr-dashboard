@@ -13,17 +13,10 @@ export const BOND_URGENT_EPOCHS = 3
 
 // Four tiers driving the bond chip color and the page-level CTA:
 //   no-bond  → no bond posted at all (red)
-//   critical → fee charging now, OR runway ≤ minBondEpochs + BOND_URGENT_EPOCHS (red, urgent)
+//   critical → fee charging now, coverage shortfall, OR runway ≤ minBondEpochs + BOND_URGENT_EPOCHS (red)
 //   watch    → runway between urgent threshold and idealBondEpochs (yellow)
 //   healthy  → runway above idealBondEpochs (green)
-export const BondHealthState = {
-  NO_BOND: 'no-bond',
-  CRITICAL: 'critical',
-  WATCH: 'watch',
-  HEALTHY: 'healthy',
-} as const
-export type BondHealthState =
-  (typeof BondHealthState)[keyof typeof BondHealthState]
+export type BondHealthState = 'no-bond' | 'critical' | 'watch' | 'healthy'
 
 export function bondHealthFromAuction(
   v: AuctionValidator,
@@ -36,22 +29,20 @@ export function bondHealthFromAuction(
   precomputedCoverage?: BondCoverage,
 ): BondHealthState {
   const bondBalance = v.bondBalanceSol ?? 0
-  if (bondBalance <= 0) return BondHealthState.NO_BOND
+  if (bondBalance <= 0) return 'no-bond'
   // Below the SDK minimum the validator can win no stake regardless of bid
   // (clipBondStakeCap → 0). Runway-vs-tiny-stake looks huge, so the
   // coverage-based diagnosis below would mislabel it healthy — gate it red here.
-  if (bondBalance < config.minBondBalanceSol) return BondHealthState.CRITICAL
+  if (bondBalance < config.minBondBalanceSol) return 'critical'
   if (!v.auctionStake.marinadeSamTargetSol && !v.marinadeActivatedStakeSol) {
-    return BondHealthState.HEALTHY
+    return 'healthy'
   }
   const coverage =
     precomputedCoverage ?? computeBondCoverage(v, config, winningTotalPmpe)
-  if (coverage.bondRiskFeeShortfall > 0) return BondHealthState.CRITICAL
-  if (v.values.bondRiskFeeSol > 0) return BondHealthState.CRITICAL
-  // Below ideal coverage → yellow watch. Includes the BOND_URGENT_EPOCHS
-  // near-threshold zone: urgency is expressed through the CTA message
-  // ("avoid future bond fee") not through red chip color, since no fee fires.
+  if (coverage.bondRiskFeeShortfall > 0) return 'critical'
+  if (v.values.bondRiskFeeSol > 0) return 'critical'
   const runway = v.bondGoodForNEpochs ?? 0
-  if (runway < config.idealBondEpochs) return BondHealthState.WATCH
-  return BondHealthState.HEALTHY
+  if (runway <= config.minBondEpochs + BOND_URGENT_EPOCHS) return 'critical'
+  if (runway < config.idealBondEpochs) return 'watch'
+  return 'healthy'
 }

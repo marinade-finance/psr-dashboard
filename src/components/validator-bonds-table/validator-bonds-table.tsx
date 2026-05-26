@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 
 import { cn } from 'src/class_utils'
 import { docsPath } from 'src/components/breakdowns/docs-path'
-import { UserLevel } from 'src/components/navigation/navigation'
+import type { UserLevel } from 'src/components/navigation/navigation'
 import { HtmlTooltip } from 'src/components/ui/tooltip'
 import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
 import { pct, sol, lamportsToSol } from 'src/format'
@@ -21,13 +21,8 @@ import {
 } from 'src/services/validators'
 
 import { BellIcon } from '../icons/bell-icon'
-import {
-  Alignment,
-  OrderDirection,
-  TABLE_SHELL_HOVER,
-  Table,
-  TableShell,
-} from '../table/table'
+import { TABLE_SHELL_HOVER, Table, TableShell } from '../table/table'
+import type { Alignment } from '../table/table'
 
 import type { NotificationSummary } from 'src/services/notifications'
 import type { ValidatorWithBond } from 'src/services/validator-with-bond'
@@ -296,10 +291,6 @@ export const ValidatorBondsTable: React.FC<Props> = ({
   level,
   notificationsMap,
 }) => {
-  // One-pass aggregation: build every dataset-wide total in a single sweep.
-  // Previously each total was an independent `.reduce()` / `.filter()` running
-  // on every render — 5 traversals × ~700 validators. Memoised here, so they
-  // only recompute when the upstream cache changes.
   const aggregates = useMemo(() => {
     let totalMarinadeStake = 0
     let totalProtectedStake = 0
@@ -343,23 +334,26 @@ export const ValidatorBondsTable: React.FC<Props> = ({
     render: (entry: ValidatorWithBond) => React.ReactElement
     compare: (a: ValidatorWithBond, b: ValidatorWithBond) => number
     alignment: Alignment
-  }[] =
-    level === UserLevel.Expert
-      ? [
-          {
-            header: 'Max protectable [SOL]',
-            headerHelp:
-              'The most stake this bond could ever reimburse if it were stretched to its limit. A bigger bond pushes this number up.',
-            headerGuideTo: `${docsPath(level)}#bond`,
-            render: (entry: ValidatorWithBond) => (
-              <>{sol(selectMaxProtectedStake(entry))}</>
-            ),
-            compare: (a: ValidatorWithBond, b: ValidatorWithBond) =>
-              selectMaxProtectedStake(a) - selectMaxProtectedStake(b),
-            alignment: Alignment.RIGHT,
-          },
-        ]
-      : []
+  }[] = useMemo(
+    () =>
+      level === 'expert'
+        ? [
+            {
+              header: 'Max protectable [SOL]',
+              headerHelp:
+                'The most stake this bond could ever reimburse if it were stretched to its limit. A bigger bond pushes this number up.',
+              headerGuideTo: `${docsPath(level)}#bond`,
+              render: (entry: ValidatorWithBond) => (
+                <>{sol(selectMaxProtectedStake(entry))}</>
+              ),
+              compare: (a: ValidatorWithBond, b: ValidatorWithBond) =>
+                selectMaxProtectedStake(a) - selectMaxProtectedStake(b),
+              alignment: 'right' as Alignment,
+            },
+          ]
+        : [],
+    [level],
+  )
 
   return (
     <div className="relative">
@@ -434,7 +428,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
                 </strong>
               </span>
             </HtmlTooltip>
-            {level === UserLevel.Expert && (
+            {level === 'expert' && (
               <HtmlTooltip html="If every bond stretched as far as it could, this is the share of Marinade's stake that would be covered.">
                 <span className="text-muted-foreground">
                   Max protectable:{' '}
@@ -507,7 +501,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
                 compare: (a, b) =>
                   selectTotalMarinadeStake(a.validator) -
                   selectTotalMarinadeStake(b.validator),
-                alignment: Alignment.RIGHT,
+                alignment: 'right',
               },
               {
                 header: 'Bond Balance [SOL]',
@@ -528,7 +522,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
                 compare: (a, b) =>
                   Number(a.bond?.effective_amount ?? 0) -
                   Number(b.bond?.effective_amount ?? 0),
-                alignment: Alignment.RIGHT,
+                alignment: 'right',
               },
               {
                 header: 'Protected Stake [SOL]',
@@ -538,7 +532,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
                 render: entry => <>{sol(selectProtectedStake(entry))}</>,
                 compare: (a, b) =>
                   selectProtectedStake(a) - selectProtectedStake(b),
-                alignment: Alignment.RIGHT,
+                alignment: 'right',
               },
               {
                 header: 'Coverage',
@@ -576,11 +570,11 @@ export const ValidatorBondsTable: React.FC<Props> = ({
                     stakeB > 0 ? selectProtectedStake(b) / stakeB : 0
                   return ratioA - ratioB
                 },
-                alignment: Alignment.RIGHT,
+                alignment: 'right',
               },
               ...expertColumns,
             ]}
-            defaultOrder={[[1, OrderDirection.DESC]]}
+            defaultOrder={[[1, 'desc']]}
           />
         </TableShell>
       </div>

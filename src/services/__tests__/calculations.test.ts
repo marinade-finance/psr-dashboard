@@ -1,10 +1,9 @@
-// Tests for core auction math: compoundApy, bondRunwayEpochs, bondUtilizationPct,
+// Tests for core auction math: compoundApy, bondUtilizationPct,
 // apyBreakdown composition, and bondGaugeScaleMax scaling.
 import { describe, it, expect, vi } from 'vitest'
 
 import {
   compoundApy,
-  bondRunwayEpochs,
   bondUtilizationPct,
   apyBreakdown,
 } from '../calculations'
@@ -80,23 +79,6 @@ describe('compoundApy', () => {
 
   it('zero epochs → 0 regardless of pmpe', () => {
     expect(compoundApy(5, 0)).toBe(0)
-  })
-})
-
-describe('bondRunwayEpochs', () => {
-  it('positive runway: goodFor - min', () => {
-    const validator = makeValidator({ bondGoodForNEpochs: 20 })
-    expect(bondRunwayEpochs(validator, 5)).toBe(15)
-  })
-
-  it('zero: exactly depleted', () => {
-    const validator = makeValidator({ bondGoodForNEpochs: 5 })
-    expect(bondRunwayEpochs(validator, 5)).toBe(0)
-  })
-
-  it('negative: overdrawn', () => {
-    const validator = makeValidator({ bondGoodForNEpochs: 3 })
-    expect(bondRunwayEpochs(validator, 5)).toBe(-2)
   })
 })
 

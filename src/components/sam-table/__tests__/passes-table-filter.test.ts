@@ -2,7 +2,6 @@
 // differences, and that bond runway does not drive row visibility.
 import { describe, expect, it } from 'vitest'
 
-import { UserLevel } from '../../navigation/navigation'
 import { passesTableFilter } from '../sam-table'
 
 import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
@@ -25,8 +24,8 @@ describe('passesTableFilter', () => {
   it('drops validators with bond below minimum regardless of level', () => {
     for (const bondBalanceSol of [0, MIN_BOND_SOL - 1]) {
       const v = makeValidator({ bondBalanceSol })
-      expect(passesTableFilter(v, UserLevel.Expert, MIN_BOND_SOL)).toBe(false)
-      expect(passesTableFilter(v, UserLevel.Basic, MIN_BOND_SOL)).toBe(false)
+      expect(passesTableFilter(v, 'expert', MIN_BOND_SOL)).toBe(false)
+      expect(passesTableFilter(v, 'basic', MIN_BOND_SOL)).toBe(false)
     }
   })
 
@@ -37,18 +36,18 @@ describe('passesTableFilter', () => {
       marinadeActivatedStakeSol: 0,
       auctionStake: { marinadeSamTargetSol: 0 } as never,
     })
-    expect(passesTableFilter(atMin, UserLevel.Expert, MIN_BOND_SOL)).toBe(true)
-    expect(passesTableFilter(noStake, UserLevel.Expert, MIN_BOND_SOL)).toBe(
+    expect(passesTableFilter(atMin, 'expert', MIN_BOND_SOL)).toBe(true)
+    expect(passesTableFilter(noStake, 'expert', MIN_BOND_SOL)).toBe(
       true,
     )
   })
 
   it('bond runway does not drive visibility in either mode', () => {
     const zeroRunway = makeValidator({ bondGoodForNEpochs: 0 })
-    expect(passesTableFilter(zeroRunway, UserLevel.Expert, MIN_BOND_SOL)).toBe(
+    expect(passesTableFilter(zeroRunway, 'expert', MIN_BOND_SOL)).toBe(
       true,
     )
-    expect(passesTableFilter(zeroRunway, UserLevel.Basic, MIN_BOND_SOL)).toBe(
+    expect(passesTableFilter(zeroRunway, 'basic', MIN_BOND_SOL)).toBe(
       true,
     )
   })
@@ -58,7 +57,7 @@ describe('passesTableFilter', () => {
       marinadeActivatedStakeSol: 0,
       auctionStake: { marinadeSamTargetSol: 0 } as never,
     })
-    expect(passesTableFilter(noStake, UserLevel.Basic, MIN_BOND_SOL)).toBe(
+    expect(passesTableFilter(noStake, 'basic', MIN_BOND_SOL)).toBe(
       false,
     )
   })

@@ -48,6 +48,7 @@ import {
   selectExpectedStakeChange,
   selectMaxAPY,
   selectRedelegationBudget,
+  selectRedelegationPriorityFrontierPmpe,
   selectSamDistributedStake,
   selectVoteAccount,
   selectWinningAPY,
@@ -64,12 +65,10 @@ import {
   getTipStyle,
   getTipIcon,
   nextStakeDeltaCell,
-  NextStakeDeltaTone,
-  TipConstraint,
 } from 'src/services/tip-engine'
 import { assertNever } from 'src/utils/assert-never'
 
-import { UserLevel } from '../navigation/navigation'
+import type { UserLevel } from '../navigation/navigation'
 
 import type {
   AuctionResult,
@@ -82,8 +81,6 @@ import type { AugmentedAuctionValidator } from 'src/services/sam'
 
 export type ValidatorMeta = {
   name?: string
-  countryIso?: string | null
-  rank?: number
 }
 
 // Validator with computed bond state
@@ -153,7 +150,7 @@ export function passesTableFilter(
   minBondBalanceSol: number,
 ): boolean {
   if ((v.bondBalanceSol ?? 0) < minBondBalanceSol) return false
-  if (level === UserLevel.Expert) return true
+  if (level === 'expert') return true
   const inSetOrStaked =
     v.marinadeActivatedStakeSol > 0 || v.auctionStake.marinadeSamTargetSol > 0
   return inSetOrStaked
@@ -218,7 +215,6 @@ type Props = {
   onValidatorClick: (voteAccount: string) => void
   onValidatorSearch?: (voteAccount: string) => void
   onClearValidator?: (voteAccount: string) => void
-  onResetSimulation?: () => void
 }
 
 const RANK_MONO = 'font-mono text-xs'
@@ -227,6 +223,8 @@ const RANK_MONO = 'font-mono text-xs'
 // argument doesn't churn its identity on every render and invalidate
 // downstream memos.
 const EMPTY_SIMULATED_SET: Set<string> = new Set()
+
+const EMPTY_NAME_MAP: Map<string, ValidatorMeta> = new Map()
 
 // Trim 3+ decimal places in tip text to 2 — keeps the Next Step cell readable
 // without losing the "~" prefix the tip engine uses for estimates.
@@ -311,7 +309,6 @@ const SortIndicator: React.FC<{
 const RankCell: React.FC<{
   rank: number
   cutoffRank: number
-  inSet: boolean
   isGhost: boolean
   isSimulated: boolean
   posColor: string | undefined
@@ -321,7 +318,6 @@ const RankCell: React.FC<{
 }> = ({
   rank,
   cutoffRank,
-  inSet: _inSet,
   isGhost,
   isSimulated,
   posColor,
@@ -395,9 +391,9 @@ export const SamTable: React.FC<Props> = ({
   onValidatorClick,
   onValidatorSearch,
   onClearValidator,
-  onResetSimulation,
 }) => {
   const winningTotalPmpe = auctionResult.winningTotalPmpe
+  const priorityFrontierPmpe = selectRedelegationPriorityFrontierPmpe(auctionResult)
   const {
     auctionData: { validators },
   } = auctionResult
@@ -458,7 +454,7 @@ export const SamTable: React.FC<Props> = ({
         .filter(validator =>
           passesTableFilter(
             validator,
-            level ?? UserLevel.Basic,
+            level ?? 'basic',
             dsSamConfig.minBondBalanceSol,
           ),
         )
@@ -744,6 +740,7 @@ export const SamTable: React.FC<Props> = ({
       winningTotalPmpe,
       validator.bondCoverage,
       auctionResult.auctionData.blacklist,
+      priorityFrontierPmpe,
     )
     const tipStyle = getTipStyle(tip.urgency)
 
@@ -776,7 +773,6 @@ export const SamTable: React.FC<Props> = ({
       <TableRow
         key={isGhost ? `${voteAccount}-ghost` : voteAccount}
         className={rowClasses}
-        style={posColor ? { borderLeftColor: posColor } : undefined}
         data-vote-account={voteAccount}
         data-ghost={isGhost ? 'true' : undefined}
         role={isGhost ? (ghostHasTarget ? 'button' : undefined) : 'button'}
@@ -812,7 +808,6 @@ export const SamTable: React.FC<Props> = ({
           <RankCell
             rank={rank}
             cutoffRank={cutoffRank}
-            inSet={inSet}
             isGhost={isGhost}
             isSimulated={isSimulated}
             posColor={posColor}
@@ -910,16 +905,16 @@ export const SamTable: React.FC<Props> = ({
                 <span
                   className={cn(
                     'font-mono text-xs',
-                    cell.tone === NextStakeDeltaTone.NEUTRAL
+                    cell.tone === 'neutral'
                       ? TEXT_MUTED
                       : 'font-semibold text-sm',
                   )}
                   style={
-                    cell.tone === NextStakeDeltaTone.NEUTRAL
+                    cell.tone === 'neutral'
                       ? undefined
                       : {
                           color:
-                            cell.tone === NextStakeDeltaTone.POSITIVE
+                            cell.tone === 'positive'
                               ? CSS_STATUS_GREEN
                               : CSS_DESTRUCTIVE,
                         }
@@ -938,7 +933,7 @@ export const SamTable: React.FC<Props> = ({
             state, not an alarm: render it muted with a 2-word label;
             the full sentence lives in the detail panel. */}
         {(() => {
-          const bidTooLow = tip.constraint === TipConstraint.RANK
+          const bidTooLow = tip.constraint === 'rank'
           const stepColor = bidTooLow ? CSS_MUTED_FG : tipStyle.color
           const stepBg = bidTooLow ? CSS_MUTED : tipStyle.bg
           const stepText = bidTooLow
@@ -985,9 +980,6 @@ export const SamTable: React.FC<Props> = ({
 
   const inSimulation = simulatedValidators.size > 0
 
-  // Outer simulation ring lives at the PAGE level (so it wraps the broadcast
-  // banner above too — all "what-if" surfaces inside one frame). This
-  // component only renders the inner header bar + the table.
   return (
     <div
       className={cn(
@@ -995,25 +987,6 @@ export const SamTable: React.FC<Props> = ({
         isCalculating && 'opacity-70 pointer-events-none',
       )}
     >
-      {inSimulation && (
-        <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-status-yellow text-background font-semibold text-sm uppercase tracking-wide rounded-t-md">
-          <span className="flex items-center gap-2">
-            <span className="inline-block w-2 h-2 rounded-full bg-background animate-pulse" />
-            Simulation Mode — what-if numbers, not live (
-            {simulatedValidators.size} validator
-            {simulatedValidators.size === 1 ? '' : 's'} modified) ·
-            strikethrough = original position
-          </span>
-          {onResetSimulation && (
-            <button
-              onClick={onResetSimulation}
-              className="px-3 py-1 rounded bg-background text-status-yellow text-xs font-bold hover:bg-background/90 transition-colors"
-            >
-              Reset Simulation
-            </button>
-          )}
-        </div>
-      )}
       <div className="max-w-[1920px] mx-auto">
         {/* Headline metrics — single wrappable row. Stat tiles + the two
             concentration cards share one flex container; on narrow widths
@@ -1073,7 +1046,7 @@ export const SamTable: React.FC<Props> = ({
             <div className={cn('mb-4 flex', inSimulation ? 'px-0 pt-2' : '')}>
               <ValidatorSearch
                 validators={validators}
-                nameMap={validatorMeta ?? new Map()}
+                nameMap={validatorMeta ?? EMPTY_NAME_MAP}
                 onSelect={onValidatorSearch}
                 className="w-full max-w-sm"
               />

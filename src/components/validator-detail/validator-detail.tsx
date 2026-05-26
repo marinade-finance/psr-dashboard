@@ -37,17 +37,16 @@ import {
 } from 'src/services/bid-penalty'
 import { computeBidding } from 'src/services/bidding'
 import { computeBondCoverage } from 'src/services/bond-coverage'
-import {
-  BOND_URGENT_EPOCHS,
-  BondHealthState,
-  bondHealthFromAuction,
-} from 'src/services/bond-health'
+import { BOND_URGENT_EPOCHS, bondHealthFromAuction } from 'src/services/bond-health'
+
+import type { BondHealthState } from 'src/services/bond-health'
 import { effectiveBondRunway } from 'src/services/calculations'
 import { HELP_TEXT } from 'src/services/help-text'
 import { calculateProtectedEventEstimates } from 'src/services/protected-events-estimator'
 import {
   selectExpectedStakeChange,
   selectInSet,
+  selectRedelegationPriorityFrontierPmpe,
   selectVoteAccount,
   selectWinningApyForValidator,
 } from 'src/services/sam'
@@ -58,7 +57,6 @@ import {
   getTipStyle,
   getTipIcon,
 } from 'src/services/tip-engine'
-import { TipConstraint } from 'src/services/tip-engine'
 import { fetchValidatorsWithEpochs } from 'src/services/validators'
 import { assertNever } from 'src/utils/assert-never'
 
@@ -70,6 +68,7 @@ import type {
   NotificationSummary,
 } from 'src/services/notifications'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
+import type { TipConstraint } from 'src/services/tip-engine'
 
 interface ValidatorDetailProps {
   validator: AugmentedAuctionValidator
@@ -132,16 +131,16 @@ const ATTENTION_TEXT: Record<AttentionTone, string> = {
 // Single source for "which tab does this lever live on". Used both by the
 // tab-strip dot in tabAttention and by the header banner's click target —
 // keeps both surfaces in lockstep. Record<TipConstraint, Tab|null> forces
-// an explicit mapping for every enum value (a new lever fails the build
+// an explicit mapping for every union member (a new lever fails the build
 // until added). 'bid' = in-set penalty → Penalty tab (the math lives
 // there); 'rank' = out-of-set → Bidding tab (raise the static bid);
 // 'cap'/'none' have no dedicated tab (explanation lives in the header).
 const TIP_TAB: Record<TipConstraint, Tab | null> = {
-  [TipConstraint.BOND]: 'bond',
-  [TipConstraint.BID]: 'penalty',
-  [TipConstraint.RANK]: 'bidding',
-  [TipConstraint.CAP]: null,
-  [TipConstraint.NONE]: null,
+  bond: 'bond',
+  bid: 'penalty',
+  rank: 'bidding',
+  cap: null,
+  none: null,
 }
 
 function TabStrip({
@@ -216,11 +215,11 @@ function tabAttention(args: {
         : undefined
   const attention: Partial<Record<Tab, AttentionTone>> = {}
   if (
-    bondHealth === BondHealthState.CRITICAL ||
-    bondHealth === BondHealthState.NO_BOND
+    bondHealth === 'critical' ||
+    bondHealth === 'no-bond'
   ) {
     attention.bond = 'critical'
-  } else if (bondHealth === BondHealthState.WATCH) {
+  } else if (bondHealth === 'watch') {
     attention.bond = 'warning'
   }
   if (bidPenaltySol > 0) attention.penalty = 'critical'
@@ -230,20 +229,24 @@ function tabAttention(args: {
   return attention
 }
 
-export function bondCoverageLabel(
+function bondCoverageLabel(
   health: BondHealthState,
   coverage: BondCoverage,
   expectedStakeDeltaSol = 0,
   nearFeeThreshold = false,
 ): string {
   switch (health) {
-    case BondHealthState.NO_BOND:
+    case 'no-bond':
       return 'No bond'
-    case BondHealthState.CRITICAL:
-      return coverage.bondRiskFeeShortfall > 0
-        ? `Top up ${topUp(coverage.bondRiskFeeShortfall)} to avoid the fee`
-        : 'Critical'
-    case BondHealthState.WATCH:
+    case 'critical':
+      if (coverage.bondRiskFeeShortfall > 0)
+        return `Top up ${topUp(coverage.bondRiskFeeShortfall)} to avoid the fee`
+      if (coverage.topUpToKeepStake > 0)
+        return `Top up ${topUp(coverage.topUpToKeepStake)} to keep stake`
+      if (coverage.topUpToIdealKeep > 0)
+        return `Top up ${topUp(coverage.topUpToIdealKeep)} to extend runway`
+      return 'Critical'
+    case 'watch':
       // Route through bondAdvice — the canonical CTA source — strip trailing period.
       // WATCH implies bondRiskFeeSol=0 (fee→CRITICAL) and above minBondBalance (below-min→CRITICAL).
       if (
@@ -253,7 +256,7 @@ export function bondCoverageLabel(
       ) {
         return bondAdvice(
           coverage,
-          BondHealthState.WATCH,
+          'watch',
           0,
           0,
           coverage.bondBalanceSol,
@@ -262,7 +265,7 @@ export function bondCoverageLabel(
         ).text.replace(/\.$/, '')
       }
       return 'Watch'
-    case BondHealthState.HEALTHY:
+    case 'healthy':
       return 'Healthy'
     default:
       return assertNever(health)
@@ -271,12 +274,12 @@ export function bondCoverageLabel(
 
 function bondCoverageColor(health: BondHealthState): string {
   switch (health) {
-    case BondHealthState.NO_BOND:
-    case BondHealthState.CRITICAL:
+    case 'no-bond':
+    case 'critical':
       return CSS_DESTRUCTIVE
-    case BondHealthState.WATCH:
+    case 'watch':
       return CSS_WARNING
-    case BondHealthState.HEALTHY:
+    case 'healthy':
       return CSS_PRIMARY
     default:
       return assertNever(health)
@@ -565,6 +568,7 @@ export const ValidatorDetail = ({
     winningTotalPmpe,
     undefined,
     auctionResult.auctionData.blacklist,
+    selectRedelegationPriorityFrontierPmpe(auctionResult),
   )
   const tipStyle = getTipStyle(tip.urgency)
   const expectedStakeDelta = selectExpectedStakeChange(validator)
@@ -578,11 +582,6 @@ export const ValidatorDetail = ({
     [validator, dsSamConfig, winningTotalPmpe],
   )
   const paymentMetrics = useMemo(() => computeBidding(validator), [validator])
-  // Shared per-page query: fetches all validators with 3 epochs once and
-  // derives every validator's PSR estimates from it. Previously this query
-  // was keyed per voteAccount, so clicking through N validators triggered
-  // N independent fetches of the multi-MB validators payload + N runs of
-  // calculateProtectedEventEstimates. Now: one fetch, one run, pure filter.
   const queryClient = useQueryClient()
   const { data: allPsrEstimates = [] } = useQuery({
     queryKey: ['psr-estimates-all'],
@@ -627,6 +626,7 @@ export const ValidatorDetail = ({
     (validator.bondBalanceSol ?? 0).toString(),
   )
   const [simEnabled, setSimEnabled] = useState(isSimulated)
+  useEffect(() => { setSimEnabled(isSimulated) }, [isSimulated])
 
   // Debounced auto-recalc whenever inputs change while simulation is enabled.
   // 400ms covers fast number-input arrow clicking without thrashing the SDK.
@@ -819,7 +819,7 @@ export const ValidatorDetail = ({
               tipTarget && tipTarget !== tab
                 ? {
                     label:
-                      tip.constraint === TipConstraint.BOND
+                      tip.constraint === 'bond'
                         ? 'Bond tab →'
                         : 'Simulate →',
                     onClick: () => setTab(tipTarget),
@@ -850,7 +850,7 @@ export const ValidatorDetail = ({
                 minBondBalanceSol={dsSamConfig.minBondBalanceSol}
                 expectedStakeDeltaSol={expectedStakeDelta}
                 nearFeeThreshold={
-                  bondHealth === BondHealthState.WATCH &&
+                  bondHealth === 'watch' &&
                   (validator.bondGoodForNEpochs ?? 0) <=
                     dsSamConfig.minBondEpochs + BOND_URGENT_EPOCHS &&
                   bondCoverage.bondRiskFeeShortfall === 0
@@ -1023,7 +1023,7 @@ export const ValidatorDetail = ({
                     bondHealth,
                     bondCoverage,
                     expectedStakeDelta,
-                    bondHealth === BondHealthState.WATCH &&
+                    bondHealth === 'watch' &&
                       (validator.bondGoodForNEpochs ?? 0) <=
                         dsSamConfig.minBondEpochs + BOND_URGENT_EPOCHS &&
                       bondCoverage.bondRiskFeeShortfall === 0,

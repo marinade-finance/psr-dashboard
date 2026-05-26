@@ -53,9 +53,6 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
     dataSources?.loadValidatorNames ?? fetchValidatorNames
   const queryClient = useQueryClient()
 
-  // The selected validator lives in the URL (`?v=...`) so deep links, page
-  // reloads, browser back/forward, and in-app navigation all work without
-  // manual history bookkeeping. react-router owns the synchronisation.
   const [searchParams, setSearchParams] = useSearchParams()
   const selectedValidator = searchParams.get('v')
   const [simulationOverrides, setSimulationOverrides] =
@@ -66,8 +63,6 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
   const [originalAuctionResult, setOriginalAuctionResult] =
     useState<AuctionResult | null>(null)
 
-  // Base data: no overrides. The cache is shared with EpochMeter, bonds, and
-  // protected-events service functions via the canonical ['sam'] queryKey.
   const { data, status } = useQuery({
     queryKey: ['sam'],
     queryFn: () => loadAuction(null),
@@ -75,16 +70,6 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
     refetchInterval: 60 * 60 * 1000,
   })
 
-  // Simulation reruns are an imperative action — useMutation is the
-  // library-native primitive. On success the result overwrites the ['sam']
-  // cache so SamTable and ValidatorDetail re-render against the simulated
-  // auction without us managing a parallel state.
-  //
-  // Destructure rather than capturing the whole mutation object: react-query
-  // v5 only guarantees referential stability for `mutate` / `mutateAsync` /
-  // `reset` (wrapped in useCallback inside the hook); the wrapper object
-  // itself is a new reference every render. Including it in useCallback deps
-  // below would defeat the memoisation.
   const { mutate: runSimulation, isPending: isCalculating } = useMutation({
     mutationFn: (overrides: AppOverrides) => loadAuction(overrides),
     onSuccess: result => {
@@ -113,7 +98,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
   })
 
   const nameMap = useMemo(() => {
-    const map = new Map<string, { name?: string; countryIso?: string | null }>()
+    const map = new Map<string, { name?: string }>()
     if (!validatorNames) return map
     for (const [vote, name] of validatorNames) {
       map.set(vote, { name })
@@ -209,19 +194,10 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
         bondBalanceSol,
       })
       setSimulationOverrides(next)
-      setSimulatedValidators(
-        new Set([...simulatedValidators, selectedValidator]),
-      )
+      setSimulatedValidators(prev => new Set([...prev, selectedValidator]))
       runSimulation(next)
     },
-    [
-      selectedValidator,
-      data,
-      simulationOverrides,
-      simulatedValidators,
-      ensureOriginalSaved,
-      runSimulation,
-    ],
+    [selectedValidator, data, simulationOverrides, ensureOriginalSaved, runSimulation],
   )
 
   const displayAuctionResult = data?.auctionResult
@@ -253,6 +229,23 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
   return (
     <div className="bg-background-page">
       <Navigation level={level} />
+      {simulatedValidators.size > 0 && (
+        <div className="sticky top-[68px] z-[60] flex items-center justify-between gap-3 px-4 py-2.5 bg-status-yellow text-background font-semibold text-sm uppercase tracking-wide">
+          <span className="flex items-center gap-2 min-w-0">
+            <span className="inline-block w-2 h-2 rounded-full bg-background animate-pulse shrink-0" />
+            Simulation Mode — what-if numbers, not live (
+            {simulatedValidators.size} validator
+            {simulatedValidators.size === 1 ? '' : 's'} modified) ·
+            strikethrough = original position
+          </span>
+          <button
+            onClick={handleResetSimulation}
+            className="shrink-0 px-3 py-1 rounded bg-background text-status-yellow text-xs font-bold hover:bg-background/90 transition-colors"
+          >
+            Reset Simulation
+          </button>
+        </div>
+      )}
       <div>
         {latestBroadcastNotification && (
           <div className="max-w-[1920px] mx-auto px-4 pt-3 pb-0">
@@ -278,7 +271,6 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
             onValidatorClick={handleValidatorClick}
             onValidatorSearch={handleValidatorClick}
             onClearValidator={handleClearValidator}
-            onResetSimulation={handleResetSimulation}
           />
         )}
       </div>

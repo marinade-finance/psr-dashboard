@@ -1,5 +1,3 @@
-import React from 'react'
-
 export const ICON_RIGHT = (
   <svg
     viewBox="0 0 12 12"

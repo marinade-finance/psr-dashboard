@@ -8,7 +8,6 @@ import { computeNextEpochStake } from 'src/services/next-epoch-stake'
 
 import {
   CalcCard,
-  CardStatusTone,
   withSimAction,
   type CardStatus,
 } from './card'
@@ -106,16 +105,16 @@ export const BiddingBreakdown: React.FC<Props> = ({
   const baseStatus: Omit<CardStatus, 'action'> = inAuction.capConstrained
     ? {
         label: `${capLabel} — raising your bid alone will not get you in.`,
-        tone: CardStatusTone.YELLOW,
+        tone: 'yellow',
       }
     : clears
       ? {
           label: `Already clears — keep your static bid at or above ${pmpe(inAuction.targetBidPmpe)} PMPE.`,
-          tone: CardStatusTone.GREEN,
+          tone: 'green',
         }
       : {
           label: `Bid ${pmpe(inAuction.currentBidPmpe)} → ${pmpe(inAuction.targetBidPmpe)} PMPE to clear the winning total PMPE.`,
-          tone: CardStatusTone.RED,
+          tone: 'red',
         }
   const status: CardStatus = withSimAction(baseStatus, onGoToSim)
 

@@ -3,6 +3,7 @@ const createSharedConfig = require('@marinade.finance/eslint-config')
 const sharedConfig = createSharedConfig({})
 
 module.exports = [
+  { ignores: ['src/schemas/generated/**'] },
   ...sharedConfig,
   {
     files: ['**/*.css.d.ts'],

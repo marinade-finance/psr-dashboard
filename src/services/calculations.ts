@@ -1,4 +1,4 @@
-import { BondHealthState } from './bond-health'
+import type { BondHealthState } from './bond-health'
 
 import type {
   AuctionValidator,
@@ -24,13 +24,6 @@ export function compoundApy(pmpe: number, epochsPerYear: number): number {
   return annualize(pmpe / 1e3, epochsPerYear)
 }
 
-export function bondRunwayEpochs(
-  validator: AuctionValidator,
-  minBondEpochs: number,
-): number {
-  return validator.bondGoodForNEpochs - minBondEpochs
-}
-
 // The runway the UI surfaces. A no-bond or below-minimum bond (→ 'critical')
 // sustains zero stake regardless of the SDK's raw bondGoodForNEpochs, which
 // ignores the below-min gate — so it reads 0. Single source: the bond chip
@@ -40,14 +33,10 @@ export function effectiveBondRunway(
   validator: AuctionValidator,
   bondHealth: BondHealthState,
 ): number {
-  if (
-    bondHealth === BondHealthState.NO_BOND ||
-    bondHealth === BondHealthState.CRITICAL
-  )
-    return 0
-  // Clamp at 0 so `(Nep)` can never render a negative epoch count — the
-  // SDK can theoretically expose a negative bondGoodForNEpochs and the
-  // gate above doesn't catch every such case.
+  // No bond → the SDK's runway estimate is meaningless (validator has no
+  // stake coverage at all). Critical by runway still has a real epoch count;
+  // clamp at 0 to guard against negative SDK values but don't force to 0.
+  if (bondHealth === 'no-bond') return 0
   return Math.max(0, validator.bondGoodForNEpochs ?? 0)
 }
 
@@ -64,12 +53,6 @@ export function bondGaugeScaleMax(config: DsSamConfig): number {
 export function bondCriticalFrac(config: DsSamConfig): number {
   const max = bondGaugeScaleMax(config)
   return max > 0 ? config.minBondEpochs / max : 0.2
-}
-
-// Fraction of the gauge track where the ideal threshold (idealBondEpochs) sits.
-export function bondIdealFrac(config: DsSamConfig): number {
-  const max = bondGaugeScaleMax(config)
-  return max > 0 ? config.idealBondEpochs / max : 0.25
 }
 
 // Bond utilization 0..100. 0 = bond fully covers, 100 = depleted relative to

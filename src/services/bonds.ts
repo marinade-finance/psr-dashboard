@@ -22,7 +22,7 @@ export type BondRecord = {
 export const selectEffectiveAmount = (bond: BondRecord) =>
   Number(lamportsToSol(bond.effective_amount.toString()))
 
-export type BondsResponse = {
+type BondsResponse = {
   bonds: BondRecord[]
 }
 

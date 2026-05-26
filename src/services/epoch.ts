@@ -1,7 +1,4 @@
-import {
-  ProtectedEventStatus,
-  type ProtectedEventWithValidator,
-} from 'src/services/validator-with-protected_event'
+import type { ProtectedEventWithValidator } from 'src/services/validator-with-protected_event'
 
 import type { Validator } from 'src/services/validators'
 
@@ -13,12 +10,7 @@ export type EpochProgress = {
   hoursRemaining: number
 }
 
-export enum TimelineStage {
-  PAYMENT = 'payment',
-  AUCTION = 'auction',
-  LIVE = 'live',
-  NEXT = 'next',
-}
+export type TimelineStage = 'payment' | 'auction' | 'live' | 'next'
 
 export type TimelineNode = {
   epoch: number
@@ -80,7 +72,7 @@ export const selectLatestPaymentSettled = (
     if (networkEpoch !== null && e.protectedEvent.epoch >= networkEpoch)
       continue
     if (
-      e.status === ProtectedEventStatus.FACT &&
+      e.status === 'fact' &&
       e.protectedEvent.epoch > max
     ) {
       max = e.protectedEvent.epoch
@@ -130,12 +122,12 @@ export const epochMeterModel = ({
     arr.push(stage)
     map.set(epoch, arr)
   }
-  add(paymentSettled, TimelineStage.PAYMENT)
+  add(paymentSettled, 'payment')
   if (auctionSettled !== paymentSettled)
-    add(auctionSettled, TimelineStage.AUCTION)
-  add(networkEpoch, TimelineStage.LIVE)
+    add(auctionSettled, 'auction')
+  add(networkEpoch, 'live')
   if (auctionEpoch > (networkEpoch ?? -Infinity))
-    add(auctionEpoch, TimelineStage.NEXT)
+    add(auctionEpoch, 'next')
 
   const timeline: TimelineNode[] = [...map.entries()]
     .sort(([a], [b]) => a - b)

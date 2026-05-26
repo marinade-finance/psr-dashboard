@@ -99,7 +99,7 @@ export function computeBidPenalty(
 // A pmpe penalty rate applied to a stake base: lamports-per-1000-stake → SOL.
 // Pure: stake basis is the caller's choice. validator-with-protected_event.ts
 // keeps its own API-epochStats base; the auction surfaces pass active stake.
-export function penaltyPmpeToSol(pmpe: number, stakeSol: number): number {
+function penaltyPmpeToSol(pmpe: number, stakeSol: number): number {
   return (pmpe / 1000) * stakeSol
 }
 

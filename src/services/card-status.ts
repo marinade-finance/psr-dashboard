@@ -4,12 +4,7 @@
 // The component layer maps the enum to CSS classes; the data layer doesn't
 // know or care.
 
-export enum CardStatusTone {
-  RED = 'red',
-  YELLOW = 'yellow',
-  GREEN = 'green',
-  GREY = 'grey',
-}
+export type CardStatusTone = 'red' | 'yellow' | 'green' | 'grey'
 
 export type CardStatusAction = {
   label: string

@@ -22,5 +22,5 @@
     "types": ["node", "vite/client"]
   },
   "include": ["src/**/*", "tests/**/*"],
-  "exclude": ["vite.config.ts"]
+  "exclude": ["vite.config.ts", "src/schemas/generated/**"]
 }

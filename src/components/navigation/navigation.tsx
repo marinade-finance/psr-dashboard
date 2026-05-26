@@ -6,10 +6,7 @@ import { EpochMeter } from 'src/components/epoch-meter/epoch-meter'
 import { MarinadeLogo } from 'src/components/icons/marinade-logo'
 import { ThemeToggle } from 'src/components/theme-toggle/theme-toggle'
 
-export enum UserLevel {
-  Basic = 'basic',
-  Expert = 'expert',
-}
+export type UserLevel = 'basic' | 'expert'
 
 export type UserLevelProps = {
   level?: UserLevel
@@ -24,7 +21,7 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
   level,
   children,
 }) => {
-  const isExpert = level === UserLevel.Expert
+  const isExpert = level === 'expert'
   const prefix = isExpert ? 'expert-' : ''
 
   return (

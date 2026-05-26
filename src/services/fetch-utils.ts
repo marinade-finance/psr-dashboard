@@ -1,5 +1,3 @@
-// Typed error preserves status + url so callers (and downstream telemetry)
-// can branch on transport vs application errors without parsing strings.
 export class FetchError extends Error {
   public readonly status: number
   public readonly url: string
@@ -12,16 +10,6 @@ export class FetchError extends Error {
   }
 }
 
-// `signal` is forwarded so react-query's automatic cancellation
-// (passed via the queryFn context) actually aborts the in-flight fetch when
-// a query is invalidated, the component unmounts, or a new query supersedes
-// this one. Without it, react-query thinks it cancelled but the network
-// request lingers and its eventual completion can race the newer one.
-//
-// `validate` is a runtime schema check at the API boundary. The default
-// (`unknown`) preserves the existing trust-the-wire-format behavior; callers
-// SHOULD pass a validator so a backend rename throws here with context
-// instead of cascading `undefined` through downstream math (→ NaN displays).
 export async function fetchJson<T>(
   url: string,
   signal?: AbortSignal,
@@ -54,15 +42,6 @@ export async function fetchJson<T>(
   return body as T
 }
 
-// Small, dependency-free helpers for the most common boundary checks.
-// Throwing inside validate() bubbles up as a FetchError with context.
-//
-// If the validation surface grows past a handful of fields per endpoint —
-// nested shapes, unions, optional/nullable variants, derived types — replace
-// these helpers with `zod` (or `valibot` for a lighter footprint). Both give
-// you composable schemas + inferred TypeScript types + better error messages
-// than what we can hand-roll here. ~10 KB gzipped is a fair price once
-// runtime validation becomes load-bearing.
 export const expectArray = (value: unknown, label: string): unknown[] => {
   if (!Array.isArray(value)) {
     throw new Error(`Expected ${label} to be an array, got ${typeof value}`)
@@ -80,13 +59,3 @@ export const expectObject = (
   return value as Record<string, unknown>
 }
 
-export const expectKey = (
-  obj: Record<string, unknown>,
-  key: string,
-  label: string,
-): unknown => {
-  if (!(key in obj)) {
-    throw new Error(`Missing key '${key}' in ${label}`)
-  }
-  return obj[key]
-}

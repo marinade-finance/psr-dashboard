@@ -71,7 +71,7 @@ const FETCHED_EPOCHS = 11
 // AugmentedAuctionValidator: AuctionValidator with derived per-validator fields
 // pre-computed. expectedStakeChangeSol drives the next-epoch delta display and
 // decomposes into three signed components that always sum to it:
-//   paidUndelegationSol (≤0)      bond risk penalty outflow (BRRM forced removal)
+//   paidUndelegationSol (≤0)      scheduled undelegation outflow (only when target < active)
 //   redelegationInflowSol (≥0)    inflow from the 1% rotation budget
 //   naturalWithdrawalSol (≤0)     rotation outflow (over-target excess, lowest unstakePriority first)
 // cutoffRank is the dense position relative to the auction cutoff: 0 = at the
@@ -348,9 +348,10 @@ function allocateRedelegation(
   return result
 }
 
-// paidUndelegation = SDK's paidUndelegationSol: accumulated bond risk penalty
-// (BRRM forced removal). Sub-min-bond validators lose all stake via this path;
-// they are excluded from inflow and rotation.
+// paidUndelegation = SDK's paidUndelegationSol: scheduled undelegation outflow.
+// Applied as a negative only when target < active — if target ≥ active the
+// undelegation is absorbed by incoming redelegation and the net outflow is zero.
+// Sub-min-bond validators lose all stake and are excluded from inflow/rotation.
 function computeExpectedStakeChanges(
   auctionResult: AuctionResult,
   minBondBalanceSol: number,
@@ -382,7 +383,10 @@ function computeExpectedStakeChanges(
       continue
     }
     const paid = selectPaidUndelegationSol(validator)
-    if (paid > 0) {
+    if (
+      paid > 0 &&
+      validator.auctionStake.marinadeSamTargetSol < validator.marinadeActivatedStakeSol
+    ) {
       const entry = get(validator.voteAccount)
       entry.paidUndelegation = -paid
       entry.total += -paid
@@ -478,20 +482,20 @@ export function augmentAuctionResult(
 
 export const selectExpectedStakeChange = (
   v: AugmentedAuctionValidator,
-): number => v.values.expectedStakeChangeSol ?? 0
+): number => v.values.expectedStakeChangeSol
 
 export type ExpectedStakeChangeBreakdown = Omit<ExpectedStakeChange, 'total'>
 
 export const selectExpectedStakeChangeBreakdown = (
   v: AugmentedAuctionValidator,
 ): ExpectedStakeChangeBreakdown => ({
-  paidUndelegation: v.values.expectedStakePaidUndelegationSol ?? 0,
-  redelegationInflow: v.values.expectedStakeRedelegationInflowSol ?? 0,
-  naturalWithdrawal: v.values.expectedStakeNaturalWithdrawalSol ?? 0,
+  paidUndelegation: v.values.expectedStakePaidUndelegationSol,
+  redelegationInflow: v.values.expectedStakeRedelegationInflowSol,
+  naturalWithdrawal: v.values.expectedStakeNaturalWithdrawalSol,
 })
 
 export const selectCutoffRank = (v: AugmentedAuctionValidator): number =>
-  v.values.cutoffRank ?? 0
+  v.values.cutoffRank
 
 export type ConcentrationRow = {
   key: string

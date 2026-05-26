@@ -8,7 +8,7 @@ import remarkGfm from 'remark-gfm'
 import { cn } from 'src/class_utils'
 import { Loader } from 'src/components/loader/loader'
 import { Navigation } from 'src/components/navigation/navigation'
-import { UserLevel } from 'src/components/navigation/navigation'
+import type { UserLevel } from 'src/components/navigation/navigation'
 
 type Props = {
   level?: UserLevel
@@ -187,11 +187,7 @@ function makeComponents(
 }
 
 export const DocsPage: React.FC<Props> = ({ level }) => {
-  const isExpert = level === UserLevel.Expert
-  // `hash` is reactive — react-router updates it on browser back/forward,
-  // in-app navigation, and any history mutation. Drops the previous manual
-  // `hashchange` listener + `hashTick` counter (was a workaround for not
-  // having reactive URL state).
+  const isExpert = level === 'expert'
   const { hash } = useLocation()
   const hashName = hash.startsWith('#') ? hash.slice(1) : hash
 

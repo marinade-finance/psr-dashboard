@@ -1,18 +1,18 @@
 import React from 'react'
 
 import { cn } from 'src/class_utils'
-import { CardStatusTone } from 'src/components/breakdowns/card'
+import type { CardStatusTone } from 'src/components/breakdowns/card'
 import { HelpTip } from 'src/components/help-tip/help-tip'
 
 export const SEPARATOR_DIV_CLASS = 'border-t border-border-grid pt-2 mt-1'
 // Cell padding for table rows above/below the separator border. The extra
 // top space is what makes the total row breathe — a thin border alone reads
 // as "more rows below" without it.
-export const SEPARATOR_CELL_PAD = 'pt-3 pb-1.5'
+const SEPARATOR_CELL_PAD = 'pt-3 pb-1.5'
 // Total rows: slightly tighter top than before so the following
 // SectionHeader breaks cleanly from the conclusion.
-export const TOTAL_CELL_PAD = 'pt-3 pb-2'
-export const NORMAL_CELL_PAD = 'py-1.5'
+const TOTAL_CELL_PAD = 'pt-3 pb-2'
+const NORMAL_CELL_PAD = 'py-1.5'
 
 // `unit` puts a shared column unit (e.g. "PMPE" or "epochs") in the section
 // header instead of repeating it on every row label. SOL and % are NEVER
@@ -56,18 +56,15 @@ export const SectionHeader: React.FC<{
   )
 }
 
-const MARKER_CLASSES: Record<
-  CardStatusTone.RED | CardStatusTone.YELLOW | CardStatusTone.GREEN,
-  string
-> = {
-  [CardStatusTone.RED]: 'bg-destructive',
-  [CardStatusTone.YELLOW]: 'bg-status-yellow',
-  [CardStatusTone.GREEN]: 'bg-primary',
+type ColoredTone = Exclude<CardStatusTone, 'grey'>
+
+const MARKER_CLASSES: Record<ColoredTone, string> = {
+  ['red']: 'bg-destructive',
+  ['yellow']: 'bg-status-yellow',
+  ['green']: 'bg-primary',
 }
 
-export const Marker: React.FC<{
-  tone: CardStatusTone.RED | CardStatusTone.YELLOW | CardStatusTone.GREEN
-}> = ({ tone }) => (
+const Marker: React.FC<{ tone: ColoredTone }> = ({ tone }) => (
   <span
     className={cn(
       'inline-block w-1.5 h-1.5 rounded-full mr-2 align-middle',
@@ -78,13 +75,10 @@ export const Marker: React.FC<{
 
 export type Severity = 'ok' | 'warning' | 'error'
 
-const SEVERITY_TONE: Record<
-  Severity,
-  CardStatusTone.GREEN | CardStatusTone.YELLOW | CardStatusTone.RED
-> = {
-  ok: CardStatusTone.GREEN,
-  warning: CardStatusTone.YELLOW,
-  error: CardStatusTone.RED,
+const SEVERITY_TONE: Record<Severity, ColoredTone> = {
+  ok: 'green',
+  warning: 'yellow',
+  error: 'red',
 }
 
 const TEXT_BASE = 'text-base'
@@ -92,13 +86,10 @@ const TEXT_XS = 'text-xs'
 const BOLD = 'font-semibold'
 const MUTED = 'text-muted-foreground'
 const MID_CELL = 'px-2 text-right font-mono text-xs text-muted-foreground'
-const TONE_TEXT: Record<
-  CardStatusTone.GREEN | CardStatusTone.YELLOW | CardStatusTone.RED,
-  string
-> = {
-  [CardStatusTone.GREEN]: 'text-status-green',
-  [CardStatusTone.YELLOW]: 'text-status-yellow',
-  [CardStatusTone.RED]: 'text-destructive',
+const TONE_TEXT: Record<ColoredTone, string> = {
+  ['green']: 'text-status-green',
+  ['yellow']: 'text-status-yellow',
+  ['red']: 'text-destructive',
 }
 
 // Single shared per-row visual model. CalcRow renders `Label | col1 | col2`
@@ -108,21 +99,20 @@ const TONE_TEXT: Record<
 //   - Sub-total / calculated intermediate: pass `severity` only — the dot
 //     carries the signal. Never combine with `bold`; bold is reserved for
 //     section conclusions / totals.
-//   - Section conclusion: `separator + bold + large`.
-//   - Total: `total` (implies separator + bold + large + divider above).
+//   - Section conclusion: `separator + bold`.
+//   - Total: `total` (implies separator + bold + larger text + divider above).
 //
 // Each column NEVER mixes value kinds. PMPE / epochs / named non-SOL non-%
 // units are declared once in the SectionHeader; SOL appears as an inline
 // suffix on the value; % appears as an inline annotation on the value.
 function rowStyle(opts: {
   bold?: boolean
-  large?: boolean
   separator?: boolean
   total?: boolean
 }) {
   const sep = opts.total || opts.separator
   const bld = opts.total || opts.bold
-  const lg = opts.total || opts.large
+  const lg = opts.total
   const cellPad = opts.total
     ? TOTAL_CELL_PAD
     : sep
@@ -141,15 +131,13 @@ export const CalcRow: React.FC<{
   col1?: string
   col2?: string
   bold?: boolean
-  large?: boolean
   separator?: boolean
   total?: boolean
   severity?: Severity
-}> = ({ label, help, col1, col2, bold, large, separator, total, severity }) => {
+}> = ({ label, help, col1, col2, bold, separator, total, severity }) => {
   const tone = severity ? SEVERITY_TONE[severity] : undefined
   const { bld, lg, cellPad, sepBorder } = rowStyle({
     bold,
-    large,
     separator,
     total,
   })

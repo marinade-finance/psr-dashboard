@@ -9,8 +9,6 @@ import {
   CSS_MUTED_FG,
   CSS_PRIMARY,
   CSS_PRIMARY_LIGHT_10,
-  CSS_STATUS_YELLOW,
-  CSS_STATUS_YELLOW_LIGHT,
   CSS_WARNING,
   CSS_WARNING_LIGHT,
 } from 'src/css'
@@ -21,11 +19,12 @@ import { computeBidPenalty } from './bid-penalty'
 import { computeBondCoverage } from './bond-coverage'
 import {
   BOND_URGENT_EPOCHS,
-  BondHealthState,
   bondHealthFromAuction,
 } from './bond-health'
 import { apyBreakdown } from './calculations'
-import { CardStatusTone } from './card-status'
+
+import type { BondHealthState } from './bond-health'
+import type { CardStatusTone } from './card-status'
 import { selectInSet } from './sam'
 
 import type { BondCoverage } from './bond-coverage'
@@ -35,26 +34,10 @@ import type {
   DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
 
-// Discriminator returned by getTipIcon. Component layer maps these to actual
-// icon components (see src/components/icons/tip-icons.ts) — the service layer
-// stays framework-agnostic.
 export type TipIcon = 'alert' | 'bond' | 'bid' | 'cap' | 'up' | 'down' | 'right'
 
-export enum TipUrgency {
-  CRITICAL = 'critical',
-  WARNING = 'warning',
-  INFO = 'info',
-  POSITIVE = 'positive',
-  NEUTRAL = 'neutral',
-}
-
-export enum TipConstraint {
-  RANK = 'rank',
-  BOND = 'bond',
-  BID = 'bid',
-  CAP = 'cap',
-  NONE = 'none',
-}
+export type TipUrgency = 'critical' | 'warning' | 'info' | 'positive' | 'neutral'
+export type TipConstraint = 'rank' | 'bond' | 'bid' | 'cap' | 'none'
 
 export interface ValidatorTip {
   text: string
@@ -74,38 +57,20 @@ export interface TipStyle {
   bg: string
 }
 
-// Single severity source for bond advice. The header bond tip and the Bond
-// tab status banner must agree on tone; the banner colours off bond-health
-// (red/yellow/green axis via card.tsx STATUS_CLASSES), so the header does
-// too — never off tip.urgency, whose `info` indigo for soft bond is exactly
-// the conflicting second colour c4fe245a removed the duplicate to avoid.
-export const getBondAdviceStyle = (health: BondHealthState): TipStyle => {
-  switch (health) {
-    case BondHealthState.NO_BOND:
-    case BondHealthState.CRITICAL:
-      return { color: CSS_DESTRUCTIVE, bg: CSS_DESTRUCTIVE_LIGHT }
-    case BondHealthState.WATCH:
-      return { color: CSS_STATUS_YELLOW, bg: CSS_STATUS_YELLOW_LIGHT }
-    case BondHealthState.HEALTHY:
-      return { color: CSS_PRIMARY, bg: CSS_PRIMARY_LIGHT_10 }
-    default:
-      return assertNever(health)
-  }
-}
 
 // Color carries severity. Glyph carries the lever — except a critical
 // alarm also swaps to the alert glyph; see getTipIcon.
 export const getTipStyle = (urgency: TipUrgency): TipStyle => {
   switch (urgency) {
-    case TipUrgency.CRITICAL:
+    case 'critical':
       return { color: CSS_DESTRUCTIVE, bg: CSS_DESTRUCTIVE_LIGHT }
-    case TipUrgency.WARNING:
+    case 'warning':
       return { color: CSS_WARNING, bg: CSS_WARNING_LIGHT }
-    case TipUrgency.INFO:
+    case 'info':
       return { color: CSS_INFO, bg: CSS_INFO_LIGHT }
-    case TipUrgency.POSITIVE:
+    case 'positive':
       return { color: CSS_PRIMARY, bg: CSS_PRIMARY_LIGHT_10 }
-    case TipUrgency.NEUTRAL:
+    case 'neutral':
       return { color: CSS_MUTED_FG, bg: CSS_MUTED }
     default:
       return assertNever(urgency)
@@ -123,14 +88,14 @@ export const getTipStyle = (urgency: TipUrgency): TipStyle => {
 export const getTipIcon = (tip: ValidatorTip): TipIcon => {
   if (tip.alert) return 'alert'
   switch (tip.constraint) {
-    case TipConstraint.BOND:
+    case 'bond':
       return 'bond'
-    case TipConstraint.BID:
-    case TipConstraint.RANK:
+    case 'bid':
+    case 'rank':
       return 'bid'
-    case TipConstraint.CAP:
+    case 'cap':
       return 'cap'
-    case TipConstraint.NONE:
+    case 'none':
       if (tip.delta > 0) return 'up'
       if (tip.delta < 0) return 'down'
       return 'right'
@@ -175,35 +140,33 @@ export function bondAdvice(
   // "avoid future bond fee" message in yellow rather than the generic grow CTA.
   nearFeeThreshold?: boolean,
 ): BondAdvice {
-  // Below the SDK minimum (independent of health tier): clipBondStakeCap
-  // → 0, a hard block. Tell the validator what to do — top up to the
-  // minimum. Checked before the health switch so a below-min bond in any
-  // tier (typically no-bond/critical) gets the actionable wording.
+  // Below the SDK minimum. Checked before the health switch so a below-min
+  // bond in any tier gets the actionable wording.
   if (
     bondBalanceSol < minBondBalanceSol &&
-    health !== BondHealthState.NO_BOND
+    health !== 'no-bond'
   ) {
-    // Below-min without a pending fee is eligibility, not urgency — grey.
+    // Below-min without a pending fee — grey (informational, no stake at risk).
     const isCharging = bondRiskFeeSol > 0
     return {
-      text: `Top up bond to ${stake(minBondBalanceSol)} to qualify.`,
-      urgency: isCharging ? TipUrgency.CRITICAL : TipUrgency.NEUTRAL,
-      tone: isCharging ? CardStatusTone.RED : CardStatusTone.GREY,
+      text: `Top up bond to ${stake(minBondBalanceSol)} to grow stake.`,
+      urgency: isCharging ? 'critical' : 'neutral',
+      tone: isCharging ? 'red' : 'grey',
     }
   }
   switch (health) {
-    case BondHealthState.NO_BOND: {
+    case 'no-bond': {
       // Novelty validators (active < 10k SOL) are effectively outside the
       // auction already — surface the CTA muted/grey. Only escalate to red
       // when there's real stake at risk of being pulled.
       const hasRealStake = marinadeActivatedStakeSol > NON_TRIVIAL_STAKE_SOL
       return {
         text: `Post a bond of ${stake(minBondBalanceSol)} to win stake.`,
-        urgency: hasRealStake ? TipUrgency.CRITICAL : TipUrgency.NEUTRAL,
-        tone: hasRealStake ? CardStatusTone.RED : CardStatusTone.GREY,
+        urgency: hasRealStake ? 'critical' : 'neutral',
+        tone: hasRealStake ? 'red' : 'grey',
       }
     }
-    case BondHealthState.CRITICAL: {
+    case 'critical': {
       // Fee is actually being charged OR bond is already below the penalty
       // threshold → red/critical. Runway-only CRITICAL (no fee, above
       // threshold) → yellow/warning: the fee is approaching but not here yet.
@@ -212,27 +175,44 @@ export function bondAdvice(
           coverage.bondRiskFeeShortfall > 0
             ? `Top up ${topUp(coverage.bondRiskFeeShortfall)} or pay ${pay(bondRiskFeeSol)} bond fee.`
             : `Bond fee ${pay(bondRiskFeeSol)} estimated next epoch.`
-        return { text, urgency: TipUrgency.CRITICAL, tone: CardStatusTone.RED }
+        return { text, urgency: 'critical', tone: 'red' }
       }
       if (coverage.bondRiskFeeShortfall > 0) {
         return {
           text: `Top up ${topUp(coverage.bondRiskFeeShortfall)} — bond below the penalty threshold.`,
-          urgency: TipUrgency.CRITICAL,
-          tone: CardStatusTone.RED,
+          urgency: 'critical',
+          tone: 'red',
+        }
+      }
+      // Runway ≤ minBondEpochs + BOND_URGENT_EPOCHS: no fee yet but runway
+      // is critically short. Show the keep-stake amount if available,
+      // then the ideal top-up, otherwise a generic runway warning.
+      if (coverage.topUpToKeepStake > 0) {
+        return {
+          text: `Top up ${topUp(coverage.topUpToKeepStake)} to keep stake.`,
+          urgency: 'critical',
+          tone: 'red',
+        }
+      }
+      if (coverage.topUpToIdealKeep > 0) {
+        return {
+          text: `Top up ${topUp(coverage.topUpToIdealKeep)} to extend runway.`,
+          urgency: 'critical',
+          tone: 'red',
         }
       }
       return {
-        text: 'Bond below minimum — top up to maintain eligibility.',
-        urgency: TipUrgency.CRITICAL,
-        tone: CardStatusTone.RED,
+        text: 'Top up bond to extend runway.',
+        urgency: 'critical',
+        tone: 'red',
       }
     }
-    case BondHealthState.WATCH: {
+    case 'watch': {
       if (coverage.topUpToKeepStake > 0) {
         return {
-          text: `Top up ${topUp(coverage.topUpToKeepStake)} to keep your stake.`,
-          urgency: TipUrgency.WARNING,
-          tone: CardStatusTone.YELLOW,
+          text: `Top up ${topUp(coverage.topUpToKeepStake)} to keep stake.`,
+          urgency: 'warning',
+          tone: 'yellow',
         }
       }
       if (nearFeeThreshold) {
@@ -241,28 +221,28 @@ export function bondAdvice(
             coverage.topUpToIdealKeep > 0
               ? `Top up ${topUp(coverage.topUpToIdealKeep)} to avoid bond fee.`
               : 'Bond near threshold — top up to avoid bond fee.',
-          urgency: TipUrgency.WARNING,
-          tone: CardStatusTone.YELLOW,
+          urgency: 'warning',
+          tone: 'yellow',
         }
       }
       if (coverage.topUpToIdealKeep > 0) {
         return {
           text: `Top up ${topUp(coverage.topUpToIdealKeep)} to grow stake.`,
-          urgency: TipUrgency.INFO,
-          tone: CardStatusTone.YELLOW,
+          urgency: 'info',
+          tone: 'yellow',
         }
       }
       return {
-        text: 'Bond covers current stake.',
-        urgency: TipUrgency.INFO,
-        tone: CardStatusTone.YELLOW,
+        text: 'Top up bond to extend runway.',
+        urgency: 'info',
+        tone: 'yellow',
       }
     }
-    case BondHealthState.HEALTHY:
+    case 'healthy':
       return {
         text: 'Bond has enough coverage.',
-        urgency: TipUrgency.POSITIVE,
-        tone: CardStatusTone.GREEN,
+        urgency: 'positive',
+        tone: 'green',
       }
     default:
       return assertNever(health)
@@ -275,21 +255,21 @@ export function bondAdvice(
 // color = severity, glyph = lever — keep them orthogonal at the source.
 
 const SEVERITY_ORDER: Record<TipUrgency, number> = {
-  [TipUrgency.CRITICAL]: 0,
-  [TipUrgency.WARNING]: 1,
-  [TipUrgency.INFO]: 2,
-  [TipUrgency.POSITIVE]: 3,
-  [TipUrgency.NEUTRAL]: 4,
+  critical: 0,
+  warning: 1,
+  info: 2,
+  positive: 3,
+  neutral: 4,
 }
 // Tiebreak at the same severity. Bond first (most actionable, hardest
 // block), then bid/rank (same lever — raise the bid), then cap, then
 // external block (samBlocked / blacklist), then none (the delta fallback).
 const LEVER_ORDER: Record<TipConstraint, number> = {
-  [TipConstraint.BOND]: 0,
-  [TipConstraint.BID]: 1,
-  [TipConstraint.RANK]: 1,
-  [TipConstraint.CAP]: 2,
-  [TipConstraint.NONE]: 3,
+  bond: 0,
+  bid: 1,
+  rank: 1,
+  cap: 2,
+  none: 3,
 }
 
 function tip(
@@ -350,9 +330,9 @@ function bondCta(
         dsSamConfig.minBondBalanceSol - bondBalance,
       )
       return tip(
-        `Top up ${topUp(topUpAmt)} to avoid next epoch bond fee and re-qualify.`,
-        TipUrgency.CRITICAL,
-        TipConstraint.BOND,
+        `Top up ${topUp(topUpAmt)} to cover the fee and grow stake.`,
+        'critical',
+        'bond',
         delta,
         true,
       )
@@ -362,10 +342,10 @@ function bondCta(
     //   grey   — eligibility-only, novelty validator with no real stake.
     return tip(
       bondBalance <= 0
-        ? `Post a bond of ${stake(dsSamConfig.minBondBalanceSol)} to qualify.`
-        : `Top up bond to ${stake(dsSamConfig.minBondBalanceSol)} to qualify.`,
-      isDefending(validator, delta) ? TipUrgency.WARNING : TipUrgency.NEUTRAL,
-      TipConstraint.BOND,
+        ? `Post a bond of ${stake(dsSamConfig.minBondBalanceSol)} to grow stake.`
+        : `Top up bond to ${stake(dsSamConfig.minBondBalanceSol)} to grow stake.`,
+      isDefending(validator, delta) ? 'warning' : 'neutral',
+      'bond',
       delta,
     )
   }
@@ -373,10 +353,9 @@ function bondCta(
   // Above-min: emit the unhealthy-bond CTA via bondAdvice. CRITICAL (fee
   // imminent) fires for in-set OR out-of-set — the fee is bond-driven, not
   // rank-driven, so the alert can't be masked by out-of-set status. WATCH
-  // (keep-stake) and SOFT (grow-stake) gate on in-set: when target=0 the
-  // stake is leaving regardless of bond, so the "keep" / "grow" advisories
-  // are misleading. SOFT additionally defers when delta>0 (the inflow is
-  // already arriving — "grow stake" would contradict it).
+  // gates on in-set (when target=0 the stake is leaving regardless of bond)
+  // and defers when delta>0 (inflow is already arriving — bond advice at
+  // INFO would be drowned out by the positive message).
   const inSet = selectInSet(validator)
   const health = bondHealthFromAuction(
     validator,
@@ -386,22 +365,22 @@ function bondCta(
   )
   const runway = validator.bondGoodForNEpochs ?? 0
   const nearFeeThreshold =
-    health === BondHealthState.WATCH &&
+    health === 'watch' &&
     runway <= dsSamConfig.minBondEpochs + BOND_URGENT_EPOCHS &&
     coverage.bondRiskFeeShortfall === 0
   const fires =
-    health === BondHealthState.CRITICAL ||
+    health === 'critical' ||
     (inSet &&
-      health === BondHealthState.WATCH &&
+      health === 'watch' &&
       (coverage.topUpToKeepStake > 0 ||
         nearFeeThreshold ||
-        (coverage.topUpToIdealKeep > 0 && delta <= 0)))
+        delta <= 0))
   if (!fires) return null
   // WATCH + no keep-shortfall + defending: the "grow stake" advisory fires at
   // INFO, which selectTip ranks below deltaCta's WARNING. Escalate to WARNING
   // so the actionable bond advice beats the symptom message.
   if (
-    health === BondHealthState.WATCH &&
+    health === 'watch' &&
     coverage.topUpToKeepStake === 0 &&
     !nearFeeThreshold &&
     isDefending(validator, delta)
@@ -409,10 +388,10 @@ function bondCta(
     const topUpAmt = coverage.topUpToIdealKeep
     return tip(
       topUpAmt > 0
-        ? `Top up ${topUp(topUpAmt)} to keep your stake.`
-        : 'Top up bond to keep your stake.',
-      TipUrgency.WARNING,
-      TipConstraint.BOND,
+        ? `Top up ${topUp(topUpAmt)} to keep stake.`
+        : 'Top up bond to keep stake.',
+      'warning',
+      'bond',
       delta,
     )
   }
@@ -431,9 +410,9 @@ function bondCta(
   return tip(
     advice.text,
     advice.urgency,
-    TipConstraint.BOND,
+    'bond',
     delta,
-    health === BondHealthState.CRITICAL && bondRiskFeeSol > 0,
+    health === 'critical' && bondRiskFeeSol > 0,
   )
 }
 
@@ -456,8 +435,8 @@ function bidCta(
   if (metrics.penaltyPmpe > 0) {
     return tip(
       `Raise bid or pay a ${pay(metrics.penaltySol)} penalty.`,
-      TipUrgency.CRITICAL,
-      TipConstraint.BID,
+      'critical',
+      'bid',
       delta,
       true,
     )
@@ -478,8 +457,8 @@ function bidCta(
     // so it outranks the generic "Losing N" delta narrative.
     return tip(
       'Raise bid to qualify for stake.',
-      isDefending(validator, delta) ? TipUrgency.WARNING : TipUrgency.INFO,
-      TipConstraint.RANK,
+      isDefending(validator, delta) ? 'warning' : 'info',
+      'rank',
       delta,
     )
   }
@@ -558,8 +537,8 @@ function outOfSetCta(
     // worth the conditional-severity logic the other branches need.
     return tip(
       'Blocked from SAM this epoch.',
-      TipUrgency.CRITICAL,
-      TipConstraint.NONE,
+      'critical',
+      'none',
       delta,
       true,
     )
@@ -577,8 +556,8 @@ function outOfSetCta(
       // Growth lever — post a bond and you can win stake. Violet.
       return tip(
         'No bond posted. Add a bond to qualify.',
-        TipUrgency.INFO,
-        TipConstraint.BOND,
+        'info',
+        'bond',
         delta,
       )
     }
@@ -593,8 +572,8 @@ function outOfSetCta(
           (penaltyPmpe / 1000) * (validator.marinadeActivatedStakeSol ?? 0)
         return tip(
           `Blacklisted — ${pay(penaltySol)} penalty this epoch.`,
-          TipUrgency.CRITICAL,
-          TipConstraint.NONE,
+          'critical',
+          'none',
           delta,
           true,
         )
@@ -602,8 +581,8 @@ function outOfSetCta(
       // Yellow when defending so this message outranks deltaCta's symptom.
       return tip(
         'Blacklisted by Marinade.',
-        defending ? TipUrgency.WARNING : TipUrgency.NEUTRAL,
-        TipConstraint.NONE,
+        defending ? 'warning' : 'neutral',
+        'none',
         delta,
       )
     }
@@ -612,8 +591,8 @@ function outOfSetCta(
     // letting deltaCta's "Losing N SOL" win the severity sort.
     return tip(
       'Not eligible — check client version and vote credits.',
-      defending ? TipUrgency.WARNING : TipUrgency.INFO,
-      TipConstraint.NONE,
+      defending ? 'warning' : 'info',
+      'none',
       delta,
     )
   }
@@ -624,14 +603,14 @@ function outOfSetCta(
     // amounts, else violet (informational, no immediate loss).
     const capUrgency =
       cap.constraintType === AuctionConstraintType.WANT
-        ? TipUrgency.NEUTRAL
+        ? 'neutral'
         : defending
-          ? TipUrgency.WARNING
-          : TipUrgency.INFO
+          ? 'warning'
+          : 'info'
     return tip(
       `${capCauseLine(cap.constraintType, cap.constraintName)}.`,
       capUrgency,
-      TipConstraint.CAP,
+      'cap',
       delta,
     )
   }
@@ -659,17 +638,17 @@ function capCta(
   //   violet — other cap, no meaningful loss (informational).
   const urgency =
     cap.constraintType === AuctionConstraintType.WANT
-      ? TipUrgency.NEUTRAL
+      ? 'neutral'
       : isDefending(validator, delta)
-        ? TipUrgency.WARNING
-        : TipUrgency.INFO
+        ? 'warning'
+        : 'info'
   const cause = capCauseLine(cap.constraintType, cap.constraintName)
   // Two-line when actively losing stake; single line when just blocked.
   const text =
     delta < 0
       ? `${cause}\nLosing ${stake(Math.abs(delta))} until cap frees.`
       : `${cause} — stake can't grow until cap frees.`
-  return tip(text, urgency, TipConstraint.CAP, delta)
+  return tip(text, urgency, 'cap', delta)
 }
 
 // Delta lever — the "stake trajectory" fallback. Always emits something
@@ -679,12 +658,18 @@ function deltaCta(
   validator: AugmentedAuctionValidator,
   delta: number,
   capBinding: boolean,
+  priorityFrontierPmpe = 0,
 ): ValidatorTip {
   if (delta > 0) {
+    // Validator is receiving scraps from leftover budget — below the priority
+    // frontier. Raising bid to clear the frontier gets them full allocation.
+    if (priorityFrontierPmpe > 0 && validator.revShare.totalPmpe < priorityFrontierPmpe) {
+      return tip('Raise bid to get more stake next epoch.', 'info', 'rank', delta)
+    }
     return tip(
       `${stake(delta)} arriving next epoch.`,
-      TipUrgency.POSITIVE,
-      TipConstraint.NONE,
+      'positive',
+      'none',
       delta,
     )
   }
@@ -705,26 +690,31 @@ function deltaCta(
     if (atOwnCap) {
       return tip(
         'At your `maxStakeWanted` setting.',
-        TipUrgency.NEUTRAL,
-        TipConstraint.NONE,
+        'neutral',
+        'none',
         delta,
       )
     }
     // delta===0 with active well below target: redistribution budget ran out
     // before reaching this validator. Higher bid → higher stakePriority →
     // served sooner in the greedy allocation pass.
+    // Exception: if the bid already clears the priority frontier, the bid lever
+    // is exhausted — budget simply ran out; "Raise bid" would be wrong advice.
     if (belowTarget && !capBinding) {
+      if (priorityFrontierPmpe > 0 && validator.revShare.totalPmpe >= priorityFrontierPmpe) {
+        return tip('At target stake.', 'neutral', 'none', delta)
+      }
       return tip(
-        'Raise bid to get more stake.',
-        TipUrgency.INFO,
-        TipConstraint.RANK,
+        'Raise bid to grow stake.',
+        'info',
+        'rank',
         delta,
       )
     }
     return tip(
       'At target stake.',
-      TipUrgency.NEUTRAL,
-      TipConstraint.NONE,
+      'neutral',
+      'none',
       delta,
     )
   }
@@ -733,8 +723,8 @@ function deltaCta(
   // CTA at INFO level (bid too low, not-eligible) can outrank the symptom.
   return tip(
     `Losing ${stake(Math.abs(delta))} next epoch.`,
-    isDefending(validator, delta) ? TipUrgency.WARNING : TipUrgency.INFO,
-    TipConstraint.NONE,
+    isDefending(validator, delta) ? 'warning' : 'info',
+    'none',
     delta,
   )
 }
@@ -750,6 +740,9 @@ export const getValidatorTip = (
   // Optional blacklist set from the auction data — lets outOfSetCta name
   // the specific eligibility failure when blacklist is the cause.
   blacklist?: Set<string>,
+  // Priority frontier PMPE from the redelegation pass. When the validator's
+  // totalPmpe already clears it, "Raise bid" is suppressed.
+  priorityFrontierPmpe = 0,
 ): ValidatorTip => {
   const delta = validator.values.expectedStakeChangeSol ?? 0
   const cap = capCta(validator, delta)
@@ -764,7 +757,7 @@ export const getValidatorTip = (
     bidCta(validator, dsSamConfig, winningTotalPmpe, delta),
     outOfSetCta(validator, winningTotalPmpe, delta, blacklist),
     cap,
-    deltaCta(validator, delta, cap !== null),
+    deltaCta(validator, delta, cap !== null, priorityFrontierPmpe),
   )
 }
 
@@ -792,19 +785,15 @@ export const getApyBreakdown = (
 
 // Used by sam-table's "Stake / Next Δ" cell. Sub-1-SOL deltas are neutral —
 // they round to the same whole-SOL display and aren't actionable.
-export enum NextStakeDeltaTone {
-  POSITIVE = 'positive',
-  NEGATIVE = 'negative',
-  NEUTRAL = 'neutral',
-}
+export type NextStakeDeltaTone = 'positive' | 'negative' | 'neutral'
 export type NextStakeDeltaCell = {
   prefix: '+' | ''
   tone: NextStakeDeltaTone
 }
 export function nextStakeDeltaCell(expectedChange: number): NextStakeDeltaCell {
   if (Math.abs(expectedChange) < 1)
-    return { prefix: '', tone: NextStakeDeltaTone.NEUTRAL }
+    return { prefix: '', tone: 'neutral' }
   if (expectedChange > 0)
-    return { prefix: '+', tone: NextStakeDeltaTone.POSITIVE }
-  return { prefix: '', tone: NextStakeDeltaTone.NEGATIVE }
+    return { prefix: '+', tone: 'positive' }
+  return { prefix: '', tone: 'negative' }
 }

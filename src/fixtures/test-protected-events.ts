@@ -1,7 +1,4 @@
-import {
-  ProtectedEventStatus,
-  type ProtectedEventWithValidator,
-} from 'src/services/validator-with-protected_event'
+import type { ProtectedEventWithValidator } from 'src/services/validator-with-protected_event'
 
 import type { Validator } from 'src/services/validators'
 
@@ -30,7 +27,7 @@ const validators = va.map((v, i) => makeValidator(v, `PSR Validator ${i + 1}`))
 export const TEST_PROTECTED_EVENTS: ProtectedEventWithValidator[] = [
   // CommissionIncrease — FACT — ValidatorBond
   {
-    status: ProtectedEventStatus.FACT,
+    status: 'fact',
     protectedEvent: {
       epoch: 695,
       amount: 12.5 * SOL,
@@ -54,7 +51,7 @@ export const TEST_PROTECTED_EVENTS: ProtectedEventWithValidator[] = [
   },
   // LowCredits — FACT — Marinade
   {
-    status: ProtectedEventStatus.FACT,
+    status: 'fact',
     protectedEvent: {
       epoch: 695,
       amount: 8.3 * SOL,
@@ -79,7 +76,7 @@ export const TEST_PROTECTED_EVENTS: ProtectedEventWithValidator[] = [
   },
   // DowntimeRevenueImpact — FACT — ValidatorBond
   {
-    status: ProtectedEventStatus.FACT,
+    status: 'fact',
     protectedEvent: {
       epoch: 696,
       amount: 3.1 * SOL,
@@ -104,7 +101,7 @@ export const TEST_PROTECTED_EVENTS: ProtectedEventWithValidator[] = [
   },
   // CommissionSamIncrease — FACT — Marinade
   {
-    status: ProtectedEventStatus.FACT,
+    status: 'fact',
     protectedEvent: {
       epoch: 696,
       amount: 5.7 * SOL,
@@ -130,7 +127,7 @@ export const TEST_PROTECTED_EVENTS: ProtectedEventWithValidator[] = [
   },
   // Bidding — FACT
   {
-    status: ProtectedEventStatus.FACT,
+    status: 'fact',
     protectedEvent: {
       epoch: 697,
       amount: 22.4 * SOL,
@@ -142,7 +139,7 @@ export const TEST_PROTECTED_EVENTS: ProtectedEventWithValidator[] = [
   },
   // BidTooLowPenalty — FACT
   {
-    status: ProtectedEventStatus.FACT,
+    status: 'fact',
     protectedEvent: {
       epoch: 697,
       amount: 1.8 * SOL,
@@ -154,7 +151,7 @@ export const TEST_PROTECTED_EVENTS: ProtectedEventWithValidator[] = [
   },
   // BlacklistPenalty — FACT
   {
-    status: ProtectedEventStatus.FACT,
+    status: 'fact',
     protectedEvent: {
       epoch: 698,
       amount: 4.2 * SOL,
@@ -166,7 +163,7 @@ export const TEST_PROTECTED_EVENTS: ProtectedEventWithValidator[] = [
   },
   // BondRiskFee — FACT
   {
-    status: ProtectedEventStatus.FACT,
+    status: 'fact',
     protectedEvent: {
       epoch: 698,
       amount: 0.5 * SOL,
@@ -178,7 +175,7 @@ export const TEST_PROTECTED_EVENTS: ProtectedEventWithValidator[] = [
   },
   // ESTIMATE (current epoch)
   {
-    status: ProtectedEventStatus.ESTIMATE,
+    status: 'estimate',
     protectedEvent: {
       epoch: 700,
       amount: 7.9 * SOL,
@@ -203,7 +200,7 @@ export const TEST_PROTECTED_EVENTS: ProtectedEventWithValidator[] = [
   },
   // DRYRUN (historical)
   {
-    status: ProtectedEventStatus.DRYRUN,
+    status: 'dryrun',
     protectedEvent: {
       epoch: 605,
       amount: 2.1 * SOL,
@@ -227,7 +224,7 @@ export const TEST_PROTECTED_EVENTS: ProtectedEventWithValidator[] = [
   },
   // Unknown validator (null)
   {
-    status: ProtectedEventStatus.FACT,
+    status: 'fact',
     protectedEvent: {
       epoch: 699,
       amount: 0.9 * SOL,

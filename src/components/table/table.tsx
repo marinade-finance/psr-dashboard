@@ -11,11 +11,10 @@ import {
   TableRow,
   Table as UiTable,
 } from 'src/components/ui/table'
-import { Color } from 'src/services/types'
-
 import type { HTMLAttributes, ReactNode } from 'react'
+import type { Color } from 'src/services/types'
 
-export { Color }
+export type { Color }
 
 // Canonical card chrome for any page that drops a generic Table inside a
 // content section. Bundles the outer surface (rounded card, border, shadow),
@@ -43,17 +42,11 @@ export function TableShell({
   )
 }
 
-export const enum OrderDirection {
-  ASC,
-  DESC,
-}
+export type OrderDirection = 'asc' | 'desc'
 
 export type Order = [number, OrderDirection]
 
-export enum Alignment {
-  LEFT,
-  RIGHT,
-}
+export type Alignment = 'left' | 'right'
 
 const TABLE_BASE = [
   'relative border-separate [border-spacing:0]',
@@ -78,18 +71,18 @@ const TABLE_BASE = [
 ].join(' ')
 
 function alignmentClassName(alignment?: Alignment): string {
-  return alignment === Alignment.RIGHT ? 'text-right' : 'text-left'
+  return alignment === 'right' ? 'text-right' : 'text-left'
 }
 
 function colorClassName(color?: Color): string {
   switch (color) {
-    case Color.RED:
+    case 'red':
       return 'bg-cell-red'
-    case Color.GREEN:
+    case 'green':
       return 'bg-cell-green'
-    case Color.YELLOW:
+    case 'yellow':
       return 'bg-cell-yellow'
-    case Color.GREY:
+    case 'grey':
       return 'bg-cell-grey'
     default:
       return ''
@@ -117,9 +110,9 @@ function renderHeader<Item>(
         const isDefaultSorted = !userOrder && defaultOrderColumn === i
         let indicator = ''
         if (isUserSorted) {
-          indicator = userOrderDirection === OrderDirection.ASC ? '▲' : '▼'
+          indicator = userOrderDirection === 'asc' ? '▲' : '▼'
         } else if (isDefaultSorted) {
-          indicator = defaultOrderDirection === OrderDirection.ASC ? '▲' : '▼'
+          indicator = defaultOrderDirection === 'asc' ? '▲' : '▼'
         }
         const isSortable = column.sortable !== false && !!column.compare
 
@@ -227,17 +220,7 @@ type Props<Item> = {
     index: number,
   ) => HTMLAttributes<HTMLTableRowElement>
   className?: string
-  /**
-   * Opt-in virtualised tbody. When set, only the rows visible inside
-   * `virtualizeMaxHeight` are actually rendered + a small overscan buffer;
-   * everything else is replaced by two tall spacer rows that reserve the
-   * correct scroll height. For tables with thousands of rows (protected-
-   * events with 3k+) this turns a 900ms+ synchronous render into ~30ms.
-   *
-   * Off by default — small tables (bonds, ~80 rows) keep the simpler
-   * fully-rendered path because virtualisation adds a scroll container
-   * that subtly changes the page layout.
-   */
+  /** Off by default — adds a scroll container that subtly changes page layout. */
   virtualize?: boolean
   /** Estimated row height in px. Only used when `virtualize` is true. */
   virtualizeRowHeight?: number
@@ -281,7 +264,7 @@ export const Table: <Item>(props: Props<Item>) => React.ReactElement = ({
         if (compareResult !== undefined && compareResult !== 0) {
           if (compareResult === Infinity) return 1
           if (compareResult === -Infinity) return -1
-          return orderDirection === OrderDirection.ASC
+          return orderDirection === 'asc'
             ? compareResult
             : -compareResult
         }
@@ -296,13 +279,13 @@ export const Table: <Item>(props: Props<Item>) => React.ReactElement = ({
     if (column.sortable === false || !column.compare) return
     const [prevColumn, prevOrder] = userOrder ?? [null, null]
     if (columnIndex === prevColumn) {
-      if (prevOrder === OrderDirection.ASC) {
-        setUserOrder([columnIndex, OrderDirection.DESC])
+      if (prevOrder === 'asc') {
+        setUserOrder([columnIndex, 'desc'])
       } else {
         setUserOrder(null)
       }
     } else {
-      setUserOrder([columnIndex, OrderDirection.ASC])
+      setUserOrder([columnIndex, 'asc'])
     }
   }
 

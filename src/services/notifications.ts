@@ -55,7 +55,9 @@ export async function fetchAllNotifications(
       const res = await fetch(url.toString(), { signal })
       if (!res.ok) break
 
-      const notifications = (await res.json()) as ValidatorNotification[]
+      const raw = await res.json()
+      if (!Array.isArray(raw)) break
+      const notifications = raw as ValidatorNotification[]
 
       for (const notification of notifications) {
         const existing = result[notification.user_id]
@@ -90,7 +92,9 @@ export async function fetchLatestSamAuctionBroadcastNotification(
     url.searchParams.set('limit', '10')
     const res = await fetch(url.toString(), { signal })
     if (!res.ok) return null
-    const notifications = (await res.json()) as ValidatorNotification[]
+    const raw = await res.json()
+    if (!Array.isArray(raw)) return null
+    const notifications = raw as ValidatorNotification[]
     if (notifications.length === 0) return null
     return notifications.reduce((latest, n) =>
       Date.parse(n.created_at) > Date.parse(latest.created_at) ? n : latest,
