@@ -1,7 +1,6 @@
 import { pct } from 'src/format'
 import { VALIDATOR_BONDS_API_URL } from 'src/services/apiUrls'
-import { fetchJson, safeParseLenient } from 'src/services/fetch-utils'
-import { schemas } from 'src/schemas/generated/bonds'
+import { fetchJson } from 'src/services/fetch-utils'
 
 type SettlementFunder = 'ValidatorBond' | 'Marinade'
 
@@ -147,5 +146,4 @@ export const fetchProtectedEvents = (
   fetchJson<ProtectedEventsResponse>(
     `${VALIDATOR_BONDS_API_URL}/protected-events`,
     signal,
-    body => safeParseLenient(schemas.ProtectedEventsResponse, body) as ProtectedEventsResponse,
   )

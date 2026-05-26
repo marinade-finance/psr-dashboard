@@ -1,7 +1,6 @@
 import { lamportsToSol } from 'src/format'
 import { VALIDATOR_BONDS_API_URL } from 'src/services/apiUrls'
-import { fetchJson, safeParseLenient } from 'src/services/fetch-utils'
-import { schemas } from 'src/schemas/generated/bonds'
+import { fetchJson } from 'src/services/fetch-utils'
 
 export type BondRecord = {
   pubkey: string
@@ -28,8 +27,4 @@ type BondsResponse = {
 }
 
 export const fetchBonds = (signal?: AbortSignal): Promise<BondsResponse> =>
-  fetchJson<BondsResponse>(
-    `${VALIDATOR_BONDS_API_URL}/bonds`,
-    signal,
-    body => safeParseLenient(schemas.BondsResponse, body) as BondsResponse,
-  )
+  fetchJson<BondsResponse>(`${VALIDATOR_BONDS_API_URL}/bonds`, signal)
