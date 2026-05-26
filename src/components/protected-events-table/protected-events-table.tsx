@@ -7,7 +7,7 @@ import { Input } from 'src/components/ui/input'
 import { Label } from 'src/components/ui/label'
 import { HtmlTooltip } from 'src/components/ui/tooltip'
 import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
-import { pct, sol, penalty } from 'src/format'
+import { pct, sol, pay } from 'src/format'
 import {
   selectAmount,
   selectProtectedStakeReason,
@@ -343,7 +343,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
                 render: ({ protectedEvent, status }) => (
                   <>
                     {renderProtectedEventStatus(status)}{' '}
-                    {penalty(selectAmount(protectedEvent))}
+                    {pay(selectAmount(protectedEvent), 3)}
                   </>
                 ),
                 compare: (a, b) =>

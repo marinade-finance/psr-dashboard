@@ -31,7 +31,7 @@ import {
   CSS_MUTED_FG,
   CSS_STATUS_GREEN,
 } from 'src/css'
-import { pct, penalty, sol, stake } from 'src/format'
+import { pct, pay, sol, stake } from 'src/format'
 import {
   bidTooLowPenaltySol,
   blacklistPenaltySol,
@@ -285,7 +285,7 @@ const PenaltyBadges = React.memo<{
     badges.push({ label: 'Bond risk fee', sol: bondRiskSol, kind: 'risk' })
   if (badges.length === 0) return null
   const tip = badges
-    .map(b => `${b.label}: ~${penalty(b.sol)} estimated`)
+    .map(b => `${b.label}: ~${pay(b.sol, 3)} estimated`)
     .join('\n')
   return (
     <Tooltip content={<span className="whitespace-pre-line">{tip}</span>}>

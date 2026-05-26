@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { cost, pmpe, stake } from 'src/format'
+import { cost, pay, pmpe, stake } from 'src/format'
 import { computeBidding } from 'src/services/bidding'
 import {
   isProtectedEvent,
@@ -8,11 +8,7 @@ import {
   selectProtectedStakeReason,
 } from 'src/services/protected-events'
 
-import {
-  CalcCard,
-  withSimAction,
-  type CardStatus,
-} from './card'
+import { CalcCard, withSimAction, type CardStatus } from './card'
 import { CalcRow, SectionHeader } from './row'
 
 import type { ProtectedEvent } from 'src/services/protected-events'
@@ -63,8 +59,8 @@ export const PaymentsBreakdown: React.FC<Props> = ({
 
   const baseStatus: Omit<CardStatus, 'action'> = {
     label: hasPenalty
-      ? `You will pay ${cost(total)} in total this epoch — including ${cost(penaltyTotal)} in penalties.`
-      : `You will pay ${cost(total)} in total this epoch — no penalties.`,
+      ? `You will pay ${pay(total, 3)} in total this epoch — including ${pay(penaltyTotal, 3)} in penalties.`
+      : `You will pay ${pay(total, 3)} in total this epoch — no penalties.`,
     tone: hasPenalty ? 'red' : 'green',
   }
   const status: CardStatus = withSimAction(baseStatus, onGoToSim)
@@ -138,17 +134,17 @@ export const PaymentsBreakdown: React.FC<Props> = ({
           <CalcRow
             label="Bid-too-low penalty"
             help="Charged when you drop your bid this epoch and your bond doesn't cover what you previously promised stakers."
-            col2={bidTooLowPenaltySol > 0 ? cost(bidTooLowPenaltySol) : '—'}
+            col2={bidTooLowPenaltySol > 0 ? pay(bidTooLowPenaltySol, 3) : '—'}
           />
           <CalcRow
             label="Blacklist penalty"
             help="Charged the first epoch your validator gets added to Marinade's blacklist."
-            col2={blacklistPenaltySol > 0 ? cost(blacklistPenaltySol) : '—'}
+            col2={blacklistPenaltySol > 0 ? pay(blacklistPenaltySol, 3) : '—'}
           />
           <CalcRow
             label="Bond risk fee"
             help="Charged when your claimable bond drops below the trigger threshold. Some stake also gets pulled back alongside the fee."
-            col2={bondRiskFeeSol > 0 ? cost(bondRiskFeeSol) : '—'}
+            col2={bondRiskFeeSol > 0 ? pay(bondRiskFeeSol, 3) : '—'}
           />
           {psrEstimates.length > 0 && (
             <>
@@ -169,13 +165,13 @@ export const PaymentsBreakdown: React.FC<Props> = ({
                         ? 'from bond'
                         : 'from Marinade backstop'
                     }
-                    col2={cost(selectAmount(estimate))}
+                    col2={pay(selectAmount(estimate), 3)}
                   />
                 )
               })}
             </>
           )}
-          <CalcRow label="Total payment" col2={cost(total)} total />
+          <CalcRow label="Total payment" col2={pay(total, 3)} total />
         </tbody>
       </table>
     </CalcCard>

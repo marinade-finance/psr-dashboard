@@ -33,7 +33,13 @@ export const pmpe = (x: number) => x.toFixed(5)
 // NBSP ( ) between number and unit so "19,866 SOL" never wraps across
 // a line break. Applies to every "<n> SOL" output below.
 export const stake = (n: number) => `${sol(n, 0)} SOL`
-export const pay = (n: number) => `${sol(Math.ceil(n), 0)} SOL`
+// Fees / penalties / the user's bill. Always rounds UP so the displayed
+// amount is never less than what will actually be charged. Defaults to 0
+// decimals (tip-pill style); pass digits for receipt-precision rendering.
+export const pay = (n: number, digits: number = 0) => {
+  const p = Math.pow(10, digits)
+  return `${sol(Math.ceil(n * p) / p, digits)} SOL`
+}
 export const penalty = (n: number) => `${sol(n, 3)} SOL`
 // Cost rows need 3-decimal precision — per-epoch bid costs are often
 // sub-1 SOL and rounding them to "0" or "1" reads as wrong.

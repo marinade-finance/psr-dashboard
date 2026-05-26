@@ -1,14 +1,10 @@
 import React from 'react'
 
-import { bondSol, pmpe, stake, topUp } from 'src/format'
+import { bondSol, pay, pmpe, stake, topUp } from 'src/format'
 import type { BondHealthState } from 'src/services/bond-health'
 import { bondAdvice } from 'src/services/tip-engine'
 
-import {
-  CalcCard,
-  withSimAction,
-  type CardStatus,
-} from './card'
+import { CalcCard, withSimAction, type CardStatus } from './card'
 import { CalcRow, OkRow, SectionHeader } from './row'
 
 import type { BondCoverage } from 'src/services/bond-coverage'
@@ -168,7 +164,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
                 <CalcRow
                   label="Estimated bond risk fee this epoch"
                   help="Charged when the bond is below the threshold. The amount scales with the shortfall and the protocol's bond-risk rate."
-                  col2={bondSol(bondRiskFeeSol)}
+                  col2={pay(bondRiskFeeSol, 3)}
                   bold
                   severity="error"
                 />

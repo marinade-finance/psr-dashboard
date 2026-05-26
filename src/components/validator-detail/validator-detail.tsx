@@ -31,7 +31,7 @@ import {
   CSS_WARNING,
   CSS_MUTED_FG,
 } from 'src/css'
-import { cost, topUp, stake, signedStake } from 'src/format'
+import { cost, pay, topUp, stake, signedStake } from 'src/format'
 import {
   bidTooLowPenaltySol as computeBidTooLowPenaltySol,
   blacklistPenaltySol as computeBlacklistPenaltySol,
@@ -1024,7 +1024,7 @@ export const ValidatorDetail = ({
                 ) : (
                   <MetricRow
                     label="Penalty"
-                    value={cost(penaltyTotal)}
+                    value={pay(penaltyTotal, 3)}
                     valueStyle={{ color: CSS_DESTRUCTIVE }}
                     onSeeBreakdown={() =>
                       setTab(bidTooLowPenaltySol > 0 ? 'penalty' : 'payments')
@@ -1034,7 +1034,7 @@ export const ValidatorDetail = ({
                 {bidTooLowPenaltySol > 0 && (
                   <PenaltyRow
                     label="↳ bid-too-low penalty"
-                    value={cost(bidTooLowPenaltySol)}
+                    value={pay(bidTooLowPenaltySol, 3)}
                     onSeeBreakdown={() => setTab('penalty')}
                     sub
                   />
@@ -1042,7 +1042,7 @@ export const ValidatorDetail = ({
                 {blacklistPenaltySol > 0 && (
                   <PenaltyRow
                     label="↳ blacklist penalty"
-                    value={cost(blacklistPenaltySol)}
+                    value={pay(blacklistPenaltySol, 3)}
                     onSeeBreakdown={() => setTab('payments')}
                     sub
                   />
@@ -1050,18 +1050,19 @@ export const ValidatorDetail = ({
                 {bondRiskFeeSol > 0 && (
                   <PenaltyRow
                     label="↳ bond risk fee"
-                    value={cost(bondRiskFeeSol)}
+                    value={pay(bondRiskFeeSol, 3)}
                     onSeeBreakdown={() => setTab('bond')}
                     sub
                   />
                 )}
                 <MetricRow
                   label="Expected payment this epoch"
-                  value={cost(
+                  value={pay(
                     paymentMetrics.total +
                       bidTooLowPenaltySol +
                       blacklistPenaltySol +
                       bondRiskFeeSol,
+                    3,
                   )}
                   onSeeBreakdown={() => setTab('payments')}
                   separator
