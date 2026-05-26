@@ -278,7 +278,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
         </Button>
       </Navigation>
       {simulatedValidators.size > 0 && (
-        <div className="sticky top-[68px] z-[60] flex items-center justify-between gap-3 px-4 py-2.5 bg-status-yellow text-background font-semibold text-sm uppercase tracking-wide">
+        <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-status-yellow text-background font-semibold text-sm uppercase tracking-wide">
           <span className="flex items-center gap-2 min-w-0">
             <span className="inline-block w-2 h-2 rounded-full bg-background animate-pulse shrink-0" />
             Simulation Mode — what-if numbers, not live (
