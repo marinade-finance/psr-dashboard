@@ -20,24 +20,23 @@ function buildConstraintsConfig(
   data: AuctionData,
 ): AuctionConstraintsConfig {
   const { networkTotalSol, marinadeSamTvlSol } = data.stakeAmounts
-  const marinadeTotalTvlSol = marinadeSamTvlSol
   return {
     totalCountryStakeCapSol:
       networkTotalSol * config.maxNetworkStakeConcentrationPerCountryDec,
     totalAsoStakeCapSol:
       networkTotalSol * config.maxNetworkStakeConcentrationPerAsoDec,
     marinadeCountryStakeCapSol:
-      marinadeTotalTvlSol * config.maxMarinadeStakeConcentrationPerCountryDec,
+      marinadeSamTvlSol * config.maxMarinadeStakeConcentrationPerCountryDec,
     marinadeAsoStakeCapSol:
-      marinadeTotalTvlSol * config.maxMarinadeStakeConcentrationPerAsoDec,
+      marinadeSamTvlSol * config.maxMarinadeStakeConcentrationPerAsoDec,
     marinadeValidatorStakeCapSol:
-      marinadeTotalTvlSol * config.maxMarinadeTvlSharePerValidatorDec,
+      marinadeSamTvlSol * config.maxMarinadeTvlSharePerValidatorDec,
     minBondBalanceSol: config.minBondBalanceSol,
     minMaxStakeWanted: config.minMaxStakeWanted ?? Infinity,
     minBondEpochs: config.minBondEpochs,
     idealBondEpochs: config.idealBondEpochs,
     unprotectedValidatorStakeCapSol:
-      marinadeTotalTvlSol * config.maxUnprotectedStakePerValidatorDec,
+      marinadeSamTvlSol * config.maxUnprotectedStakePerValidatorDec,
     minUnprotectedStakeToDelegateSol: config.minUnprotectedStakeToDelegateSol,
     unprotectedFoundationStakeDec: config.unprotectedFoundationStakeDec,
     unprotectedDelegatedStakeDec: config.unprotectedDelegatedStakeDec,

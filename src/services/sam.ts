@@ -17,12 +17,11 @@ import type {
   AuctionResult,
   AuctionValidator,
   DsSamConfig,
-  SourceDataOverrides,
 } from '@marinade.finance/ds-sam-sdk'
 type SamResult = {
   auctionResult: AuctionResult
   epochsPerYear: number
-  dcSamConfig: DsSamConfig
+  dsSamConfig: DsSamConfig
 }
 
 // Fetches the live auction. Simulation with overrides goes through
@@ -42,11 +41,9 @@ export const loadSam = async (): Promise<SamResult> => {
   return {
     auctionResult,
     epochsPerYear: EPOCHS_PER_YEAR,
-    dcSamConfig: dsSam.config,
+    dsSamConfig: dsSam.config,
   }
 }
-
-export type { SourceDataOverrides }
 
 const FETCHED_EPOCHS = 11
 

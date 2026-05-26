@@ -21,7 +21,7 @@ import type { SamDataSources } from 'src/pages/stake-auction-marketplace'
 const SAM_RESULT = {
   auctionResult: TEST_AUCTION_RESULT,
   epochsPerYear: EPOCHS_PER_YEAR,
-  dcSamConfig: TEST_DS_SAM_CONFIG,
+  dsSamConfig: TEST_DS_SAM_CONFIG,
 }
 
 export const TestSamPage: React.FC<UserLevelProps> = ({ level }) => {

@@ -37,7 +37,7 @@ import type { AppOverrides } from 'src/services/simulation'
 type SamResult = {
   auctionResult: AuctionResult
   epochsPerYear: number
-  dcSamConfig: DsSamConfig
+  dsSamConfig: DsSamConfig
 }
 
 // Injection points used by /test-* routes to swap in fixture data.
@@ -86,11 +86,11 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
     if (!current) return Promise.reject(new Error('No auction data'))
     const baseAuctionData =
       originalAuctionResult?.auctionData ?? current.auctionResult.auctionData
-    const result = runSdkRerun(baseAuctionData, current.dcSamConfig, overrides)
+    const result = runSdkRerun(baseAuctionData, current.dsSamConfig, overrides)
     return Promise.resolve({
       auctionResult: result,
       epochsPerYear: current.epochsPerYear,
-      dcSamConfig: current.dcSamConfig,
+      dsSamConfig: current.dsSamConfig,
     })
   }
 
@@ -260,7 +260,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
     if (!selectedValidator || !displayAuctionResult || !data) return null
     const augmented = augmentAuctionResult(
       displayAuctionResult,
-      data.dcSamConfig.minBondBalanceSol,
+      data.dsSamConfig.minBondBalanceSol,
     )
     const validators = augmented
       .filter(validator => (selectBondSize(validator) ?? 0) > 0)
@@ -336,7 +336,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
             auctionResult={displayAuctionResult}
             originalAuctionResult={originalAuctionResult}
             epochsPerYear={data.epochsPerYear}
-            dsSamConfig={data.dcSamConfig}
+            dsSamConfig={data.dsSamConfig}
             level={level}
             isCompact={isCompact}
             simulatedValidators={simulatedValidators}
@@ -357,7 +357,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
             validator={sheetValidatorData.validator}
             auctionResult={displayAuctionResult}
             originalAuctionResult={originalAuctionResult}
-            dsSamConfig={data.dcSamConfig}
+            dsSamConfig={data.dsSamConfig}
             epochsPerYear={data.epochsPerYear}
             nameMap={nameMap}
             notificationsMap={notificationsMap}

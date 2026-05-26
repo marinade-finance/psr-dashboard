@@ -1,6 +1,4 @@
-// Tests for core auction math: compoundApy, apyBreakdown,
-// bondGaugeScaleMax/bondCriticalFrac, plus bondUtilizationPct/
-// effectiveBondRunway (now living in bond-health.ts).
+// Tests for compoundApy, apyBreakdown, bondGaugeScaleMax, bondCriticalFrac, bondUtilizationPct, effectiveBondRunway.
 import { describe, it, expect, vi } from 'vitest'
 
 import { bondUtilizationPct, effectiveBondRunway } from '../bond-health'

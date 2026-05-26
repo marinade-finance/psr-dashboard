@@ -16,7 +16,7 @@ import type { UserLevelProps } from 'src/components/navigation/navigation'
 const SAM_RESULT = {
   auctionResult: TEST_AUCTION_RESULT,
   epochsPerYear: EPOCHS_PER_YEAR,
-  dcSamConfig: TEST_DS_SAM_CONFIG,
+  dsSamConfig: TEST_DS_SAM_CONFIG,
 }
 
 export const TestProtectedEventsPage: React.FC<UserLevelProps> = ({
