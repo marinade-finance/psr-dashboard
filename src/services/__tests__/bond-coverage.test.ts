@@ -49,7 +49,7 @@ function makeValidator(
 describe('computeBondCoverage — basic field shapes', () => {
   it('healthy validator → topUpToKeepStake=0 and topUpToIdealKeep=0', () => {
     // bond=100, minBondPmpe=1 → stakeKeepFloor=(1+2)*5/1000*10000=150? No: stakeKeepFloor=minBondPmpe/1000*exposed
-    // With config.minBondEpochs=2, minEp=3, idealEp=11.
+    // With config.minBondEpochs=2, minBondEpochs=3, idealBondEpochs=11.
     // stakeKeepFloor = minUnprotected(0) + (minBondPmpe/1000)*exposed
     // minBondPmpe is not in the config — it comes from v.minBondPmpe.
     // With minBondPmpe=1, stakeKeepFloor = (1/1000)*10000 = 10. claimable=100 → topUpToKeepStake=0.
@@ -64,8 +64,8 @@ describe('computeBondCoverage — basic field shapes', () => {
     const v = makeValidator({ minBondPmpe: 1, idealBondPmpe: 6 })
     const cov = computeBondCoverage(v, CONFIG, 10)
     const fields: (keyof typeof cov)[] = [
-      'minEp',
-      'idealEp',
+      'minBondEpochs',
+      'idealBondEpochs',
       'bondBalanceSol',
       'claimableBondBalanceSol',
       'marinadeActivatedStakeSol',
@@ -191,7 +191,7 @@ describe('computeBondCoverage — unprotected stake reserve', () => {
   })
 
   it('minUnprotectedReserve added to both stake floors', () => {
-    // minBondPmpe=1, stake=10000 → exposed=10000, minCoverageBid component=minEp(3)*5/1000*10000=150
+    // minBondPmpe=1, stake=10000 → exposed=10000, minCoverageBid component=minBondEpochs(3)*5/1000*10000=150
     // stakeKeepFloor = reserve + (minBondPmpe/1000)*exposed = 50 + 10 = 60
     const v = makeValidator({
       minBondPmpe: 1,
@@ -221,11 +221,11 @@ describe('computeBondCoverage — zero stake', () => {
   })
 })
 
-describe('computeBondCoverage — minEp / idealEp derivation', () => {
-  it('minEp = 1 + config.minBondEpochs, idealEp = 1 + config.idealBondEpochs', () => {
+describe('computeBondCoverage — minBondEpochs / idealBondEpochs derivation', () => {
+  it('minBondEpochs = 1 + config.minBondEpochs, idealBondEpochs = 1 + config.idealBondEpochs', () => {
     const v = makeValidator({ minBondPmpe: 1, idealBondPmpe: 6 })
     const cov = computeBondCoverage(v, CONFIG, 10)
-    expect(cov.minEp).toBe(1 + CONFIG.minBondEpochs)
-    expect(cov.idealEp).toBe(1 + CONFIG.idealBondEpochs)
+    expect(cov.minBondEpochs).toBe(1 + CONFIG.minBondEpochs)
+    expect(cov.idealBondEpochs).toBe(1 + CONFIG.idealBondEpochs)
   })
 })

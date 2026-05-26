@@ -19,7 +19,7 @@ export type ProtectedEventWithValidator = {
 
 // Takes a QueryClient so the shared loadSam() result is read from the canonical
 // ['sam'] cache via ensureQueryData — see fetchValidatorsWithBonds.
-export const fetchProtectedEventsWithValidator = async (
+export const fetchProtectedEventsWithValidators = async (
   qc: QueryClient,
   signal?: AbortSignal,
 ): Promise<ProtectedEventWithValidator[]> => {

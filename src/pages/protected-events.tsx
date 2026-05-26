@@ -11,7 +11,7 @@ import { Loader } from 'src/components/loader/loader'
 import { Navigation } from 'src/components/navigation/navigation'
 import { ProtectedEventsTable } from 'src/components/protected-events-table/protected-events-table'
 import { fetchLatestSamAuctionBroadcastNotification } from 'src/services/notifications'
-import { fetchProtectedEventsWithValidator } from 'src/services/validator-with-protected_event'
+import { fetchProtectedEventsWithValidators } from 'src/services/validator-with-protected_event'
 
 import type { UserLevelProps } from 'src/components/navigation/navigation'
 
@@ -20,7 +20,7 @@ export const ProtectedEventsPage: React.FC<UserLevelProps> = ({ level }) => {
   const { data, status } = useQuery({
     queryKey: ['protected-events'],
     queryFn: ({ signal }) =>
-      fetchProtectedEventsWithValidator(queryClient, signal),
+      fetchProtectedEventsWithValidators(queryClient, signal),
     refetchInterval: 60 * 60 * 1000,
     placeholderData: keepPreviousData,
   })

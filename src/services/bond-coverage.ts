@@ -8,8 +8,8 @@ import type {
 } from '@marinade.finance/ds-sam-sdk'
 
 export type BondCoverage = {
-  minEp: number
-  idealEp: number
+  minBondEpochs: number
+  idealBondEpochs: number
   bondBalanceSol: number
   claimableBondBalanceSol: number
   marinadeActivatedStakeSol: number
@@ -85,8 +85,8 @@ export function computeBondCoverage(
   const minUnprotectedReserveSol = finite(v.minUnprotectedReserve)
   const idealUnprotectedReserveSol = finite(v.idealUnprotectedReserve)
 
-  const minEp = 1 + config.minBondEpochs
-  const idealEp = 1 + config.idealBondEpochs
+  const minBondEpochs = 1 + config.minBondEpochs
+  const idealBondEpochs = 1 + config.idealBondEpochs
 
   const minBondPmpe = finite(v.minBondPmpe)
   const idealBondPmpe = finite(v.idealBondPmpe)
@@ -100,7 +100,7 @@ export function computeBondCoverage(
     marinadeActivatedStakeSol - unprotectedStakeSol,
   )
   const minCoverageBidKeep = pmpeToSol(
-    minEp * expectedMaxEffBidPmpe,
+    minBondEpochs * expectedMaxEffBidPmpe,
     currentExposedStakeSol,
   )
   const rewardsGuaranteeKeep = pmpeToSol(
@@ -116,7 +116,7 @@ export function computeBondCoverage(
   const topUpToKeepStake = Math.max(0, stakeKeepFloor - claimableBondBalanceSol)
 
   const idealCoverageBidKeep = pmpeToSol(
-    idealEp * expectedMaxEffBidPmpe,
+    idealBondEpochs * expectedMaxEffBidPmpe,
     currentExposedStakeSol,
   )
   const rewardsGuaranteeIdeal = rewardsGuaranteeKeep
@@ -137,8 +137,8 @@ export function computeBondCoverage(
   )
 
   return {
-    minEp,
-    idealEp,
+    minBondEpochs,
+    idealBondEpochs,
     bondBalanceSol,
     claimableBondBalanceSol,
     marinadeActivatedStakeSol,

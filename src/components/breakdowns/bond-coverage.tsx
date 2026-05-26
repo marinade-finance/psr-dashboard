@@ -192,8 +192,8 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           />
 
           <SectionHeader
-            title={`Minimum bond to keep stake — ${coverage.minEp} epochs`}
-            help={`What the bond needs to keep your stake for the next ${coverage.minEp} epochs. Fall short and the protocol pulls stake back to a size your bond can cover.`}
+            title={`Minimum bond to keep stake — ${coverage.minBondEpochs} epochs`}
+            help={`What the bond needs to keep your stake for the next ${coverage.minBondEpochs} epochs. Fall short and the protocol pulls stake back to a size your bond can cover.`}
           />
           <CalcRow
             label="Claimable bond balance"
@@ -236,7 +236,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           )}
 
           <SectionHeader
-            title={`Ideal bond to grow stake — ${coverage.idealEp} epochs`}
+            title={`Ideal bond to grow stake — ${coverage.idealBondEpochs} epochs`}
             help={
               'What the bond needs for the pool to feel comfortable giving you more stake.'
             }
