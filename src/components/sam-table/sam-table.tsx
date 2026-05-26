@@ -361,7 +361,7 @@ const RankCell: React.FC<{
       <span
         className={`text-muted-foreground ${RANK_MONO} flex flex-col items-center gap-0`}
       >
-        <span className="text-xs">{rankLabel}</span>
+        <span className={isCompact ? 'text-xs' : 'text-base'}>{rankLabel}</span>
         {!isCompact && (
           <span className="text-2xs opacity-60 font-normal leading-tight">
             {rankSubLabel}
@@ -373,7 +373,7 @@ const RankCell: React.FC<{
     return (
       <div className="flex flex-col items-center gap-0.5">
         <span
-          className="font-medium font-mono text-xs"
+          className={`font-medium font-mono ${isCompact ? 'text-xs' : 'text-base'}`}
           style={{ color: 'var(--muted-foreground)' }}
         >
           {rankLabel}
@@ -395,7 +395,7 @@ const RankCell: React.FC<{
     <span
       className={`font-medium ${RANK_MONO} flex flex-col items-center gap-0 text-muted-foreground`}
     >
-      <span className="text-xs">{rankLabel}</span>
+      <span className={isCompact ? 'text-xs' : 'text-base'}>{rankLabel}</span>
       {!isCompact && (
         <span className="text-2xs opacity-60 font-normal text-muted-foreground leading-tight">
           {rankSubLabel}
