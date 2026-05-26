@@ -410,8 +410,10 @@ export const SamTable: React.FC<Props> = ({
   onClearValidator,
 }) => {
   const winningTotalPmpe = auctionResult.winningTotalPmpe
-  const priorityFrontierPmpe =
-    selectRedelegationPriorityFrontierPmpe(auctionResult)
+  const priorityFrontierPmpe = useMemo(
+    () => selectRedelegationPriorityFrontierPmpe(auctionResult),
+    [auctionResult],
+  )
   const {
     auctionData: { validators },
   } = auctionResult

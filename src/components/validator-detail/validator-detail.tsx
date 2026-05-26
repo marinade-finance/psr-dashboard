@@ -608,6 +608,10 @@ export const ValidatorDetail = ({
   const [editBond, setEditBond] = useState(
     (validator.bondBalanceSol ?? 0).toString(),
   )
+  // Mirror is load-bearing: handleSimToggle and goToSim set simEnabled
+  // locally (the parent only learns about it after the debounced onSimulate
+  // fires), so simEnabled can't just be a derived `isSimulated`. The effect
+  // resyncs when the parent flips isSimulated (e.g. on clearSimulation).
   const [simEnabled, setSimEnabled] = useState(isSimulated)
   useEffect(() => {
     setSimEnabled(isSimulated)
