@@ -10,7 +10,7 @@
     "pnpm": ">=9.12.0"
   },
   "scripts": {
-    "generate": "bash scripts/generate-schemas.sh",
+    "generate": "bun scripts/generate-schemas.ts",
     "start:dev": "vite",
     "dev": "vite",
     "play": "pnpm test:play",
