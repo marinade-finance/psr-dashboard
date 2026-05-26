@@ -690,31 +690,6 @@ describe('bondAdvice — canonical CTA contract', () => {
     }, // healthy
   ]
 
-  it('WATCH + nearFeeThreshold=true → warning/yellow "avoid bond fee"', () => {
-    // bondGoodForNEpochs=7 → WATCH; topUpToIdealKeep>0; no fee yet.
-    const v = makeValidator({
-      bondGoodForNEpochs: 7,
-      bondBalanceSol: 50,
-      claimableBondBalanceSol: 50,
-      marinadeActivatedStakeSol: 10000,
-    })
-    const health = bondHealthFromAuction(v, DS_SAM_CONFIG, 100)
-    const coverage = computeBondCoverage(v, DS_SAM_CONFIG, 100)
-    const advice = bondAdvice(
-      coverage,
-      health,
-      0,
-      (DS_SAM_CONFIG as unknown as { minBondBalanceSol: number })
-        .minBondBalanceSol ?? 0,
-      v.bondBalanceSol ?? 0,
-      v.marinadeActivatedStakeSol ?? 0,
-      true,
-    )
-    expect(advice.urgency).toBe('warning')
-    expect(advice.text).toContain('avoid bond fee')
-    expect(advice.tone).toBe('yellow')
-  })
-
   it('every CTA is paren-free, sentence-case, ends with a period', () => {
     for (const s of states) {
       const { text } = adviceFor(s)

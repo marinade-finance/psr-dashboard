@@ -387,9 +387,13 @@ function computeExpectedStakeChanges(
       paid > 0 &&
       validator.auctionStake.marinadeSamTargetSol < validator.marinadeActivatedStakeSol
     ) {
+      // Cap at active−target so the projected stake never undershoots target.
+      const maxUndel =
+        validator.marinadeActivatedStakeSol - validator.auctionStake.marinadeSamTargetSol
+      const capped = Math.min(paid, maxUndel)
       const entry = get(validator.voteAccount)
-      entry.paidUndelegation = -paid
-      entry.total += -paid
+      entry.paidUndelegation = -capped
+      entry.total += -capped
     }
   }
 

@@ -37,7 +37,7 @@ import {
 } from 'src/services/bid-penalty'
 import { computeBidding } from 'src/services/bidding'
 import { computeBondCoverage } from 'src/services/bond-coverage'
-import { BOND_URGENT_EPOCHS, bondHealthFromAuction } from 'src/services/bond-health'
+import { bondHealthFromAuction } from 'src/services/bond-health'
 
 import type { BondHealthState } from 'src/services/bond-health'
 import { effectiveBondRunway } from 'src/services/calculations'
@@ -233,7 +233,6 @@ function bondCoverageLabel(
   health: BondHealthState,
   coverage: BondCoverage,
   expectedStakeDeltaSol = 0,
-  nearFeeThreshold = false,
 ): string {
   switch (health) {
     case 'no-bond':
@@ -251,7 +250,6 @@ function bondCoverageLabel(
       // WATCH implies bondRiskFeeSol=0 (fee→CRITICAL) and above minBondBalance (below-min→CRITICAL).
       if (
         coverage.topUpToKeepStake > 0 ||
-        nearFeeThreshold ||
         (coverage.topUpToIdealKeep > 0 && expectedStakeDeltaSol <= 0)
       ) {
         return bondAdvice(
@@ -261,7 +259,6 @@ function bondCoverageLabel(
           0,
           coverage.bondBalanceSol,
           coverage.marinadeActivatedStakeSol,
-          nearFeeThreshold,
         ).text.replace(/\.$/, '')
       }
       return 'Watch'
@@ -840,12 +837,6 @@ export const ValidatorDetail = ({
                 marinadeActivatedStakeSol={validator.marinadeActivatedStakeSol}
                 minBondBalanceSol={dsSamConfig.minBondBalanceSol}
                 expectedStakeDeltaSol={expectedStakeDelta}
-                nearFeeThreshold={
-                  bondHealth === 'watch' &&
-                  (validator.bondGoodForNEpochs ?? 0) <=
-                    dsSamConfig.minBondEpochs + BOND_URGENT_EPOCHS &&
-                  bondCoverage.bondRiskFeeShortfall === 0
-                }
                 isSimulated={isSimulated}
                 onGoToSim={goToSim}
               />
@@ -1014,10 +1005,6 @@ export const ValidatorDetail = ({
                     bondHealth,
                     bondCoverage,
                     expectedStakeDelta,
-                    bondHealth === 'watch' &&
-                      (validator.bondGoodForNEpochs ?? 0) <=
-                        dsSamConfig.minBondEpochs + BOND_URGENT_EPOCHS &&
-                      bondCoverage.bondRiskFeeShortfall === 0,
                   )}
                   valueStyle={{ color: bondCoverageColor(bondHealth) }}
                 />

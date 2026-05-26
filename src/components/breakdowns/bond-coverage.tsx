@@ -26,7 +26,6 @@ type Props = {
   // 'soft' bond, the canonical "top up to grow stake" CTA contradicts the
   // truthful "stake is already arriving" — see statusLine().
   expectedStakeDeltaSol?: number
-  nearFeeThreshold?: boolean
   isSimulated?: boolean
   onGoToSim?: () => void
 }
@@ -42,7 +41,6 @@ const statusLine = (
   bondBalanceSol: number,
   marinadeActivatedStakeSol: number,
   expectedStakeDeltaSol: number,
-  nearFeeThreshold: boolean,
 ): CardStatus => {
   // WATCH bond with a positive delta: the canonical "top up to grow stake"
   // reads as a contradiction next to the +N SOL on the Stake card when stake
@@ -51,7 +49,6 @@ const statusLine = (
   if (
     state === 'watch' &&
     coverage.topUpToKeepStake === 0 &&
-    !nearFeeThreshold &&
     expectedStakeDeltaSol > 0
   ) {
     return {
@@ -66,7 +63,6 @@ const statusLine = (
     minBondBalanceSol,
     bondBalanceSol,
     marinadeActivatedStakeSol,
-    nearFeeThreshold,
   )
   return { label: advice.text, tone: advice.tone }
 }
@@ -81,7 +77,6 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
   minBondBalanceSol,
   marinadeActivatedStakeSol,
   expectedStakeDeltaSol = 0,
-  nearFeeThreshold = false,
   isSimulated,
   onGoToSim,
 }) => {
@@ -93,7 +88,6 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
     bondBalanceSol,
     marinadeActivatedStakeSol,
     expectedStakeDeltaSol,
-    nearFeeThreshold,
   )
   const status: CardStatus = withSimAction(baseStatus, onGoToSim)
 

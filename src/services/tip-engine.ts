@@ -17,10 +17,7 @@ import { assertNever } from 'src/utils/assert-never'
 
 import { computeBidPenalty } from './bid-penalty'
 import { computeBondCoverage } from './bond-coverage'
-import {
-  BOND_URGENT_EPOCHS,
-  bondHealthFromAuction,
-} from './bond-health'
+import { bondHealthFromAuction } from './bond-health'
 import { apyBreakdown } from './calculations'
 
 import type { BondHealthState } from './bond-health'
@@ -135,10 +132,6 @@ export function bondAdvice(
   minBondBalanceSol: number,
   bondBalanceSol: number,
   marinadeActivatedStakeSol: number,
-  // True when the validator is WATCH but within BOND_URGENT_EPOCHS of the
-  // penalty fee threshold — no fee yet, but approaching. Shows the urgent
-  // "avoid future bond fee" message in yellow rather than the generic grow CTA.
-  nearFeeThreshold?: boolean,
 ): BondAdvice {
   // Below the SDK minimum. Checked before the health switch so a below-min
   // bond in any tier gets the actionable wording.
@@ -211,16 +204,6 @@ export function bondAdvice(
       if (coverage.topUpToKeepStake > 0) {
         return {
           text: `Top up ${topUp(coverage.topUpToKeepStake)} to keep stake.`,
-          urgency: 'warning',
-          tone: 'yellow',
-        }
-      }
-      if (nearFeeThreshold) {
-        return {
-          text:
-            coverage.topUpToIdealKeep > 0
-              ? `Top up ${topUp(coverage.topUpToIdealKeep)} to avoid bond fee.`
-              : 'Bond near threshold — top up to avoid bond fee.',
           urgency: 'warning',
           tone: 'yellow',
         }
@@ -363,18 +346,14 @@ function bondCta(
     winningTotalPmpe,
     coverage,
   )
-  const runway = validator.bondGoodForNEpochs ?? 0
-  const nearFeeThreshold =
-    health === 'watch' &&
-    runway <= dsSamConfig.minBondEpochs + BOND_URGENT_EPOCHS &&
-    coverage.bondRiskFeeShortfall === 0
+  // 'watch' implies runway > minBondEpochs + BOND_URGENT_EPOCHS (bondHealthFromAuction
+  // returns 'critical' at or below that threshold), so the old nearFeeThreshold
+  // branch (watch && runway ≤ threshold) was unreachable by construction.
   const fires =
     health === 'critical' ||
     (inSet &&
       health === 'watch' &&
-      (coverage.topUpToKeepStake > 0 ||
-        nearFeeThreshold ||
-        delta <= 0))
+      (coverage.topUpToKeepStake > 0 || delta <= 0))
   if (!fires) return null
   // WATCH + no keep-shortfall + defending: the "grow stake" advisory fires at
   // INFO, which selectTip ranks below deltaCta's WARNING. Escalate to WARNING
@@ -382,7 +361,6 @@ function bondCta(
   if (
     health === 'watch' &&
     coverage.topUpToKeepStake === 0 &&
-    !nearFeeThreshold &&
     isDefending(validator, delta)
   ) {
     const topUpAmt = coverage.topUpToIdealKeep
@@ -402,7 +380,6 @@ function bondCta(
     dsSamConfig.minBondBalanceSol,
     bondBalance,
     validator.marinadeActivatedStakeSol,
-    nearFeeThreshold,
   )
   // Use bondAdvice's urgency as the canonical source — same severity the
   // breakdown banner uses. Alert (octagon) ONLY when a fee is actually
