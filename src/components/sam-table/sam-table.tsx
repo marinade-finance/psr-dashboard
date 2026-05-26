@@ -1035,14 +1035,12 @@ export const SamTable: React.FC<Props> = ({
       )}
     >
       <div className="max-w-[1920px] mx-auto">
-        {/* Headline metrics — single wrappable row. Stat tiles + the two
-            concentration cards share one flex container; on narrow widths
-            the row wraps to multiple lines per min-width tier. */}
-        <div className="flex flex-wrap items-stretch gap-3 mt-3 mb-3 px-4">
+        {/* Headline metrics — grid: 3 cols → 4 cols → 7 cols (1 row) */}
+        <div className="grid grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-3 mt-3 mb-3 px-4">
           {stats.map(stat => (
             <Card
               key={stat.label}
-              className="px-3 py-3 sm:px-5 sm:py-4 flex-1 min-w-[140px] sm:min-w-[160px] overflow-hidden flex flex-col"
+              className="px-3 py-3 sm:px-5 sm:py-4 overflow-hidden flex flex-col"
             >
               <div className="text-xs uppercase tracking-wider font-medium text-muted-foreground mb-1 flex items-center gap-1">
                 {stat.help ? (
