@@ -131,22 +131,15 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
     return map
   }, [validatorNames])
 
-  const ensureOriginalSaved = useCallback(() => {
-    if (!originalAuctionResult && data?.auctionResult) {
-      setOriginalAuctionResult(data.auctionResult)
-    }
-  }, [originalAuctionResult, data])
-
   const handleResetSimulation = useCallback(() => {
     // Restore original data immediately so the table snaps back without
     // waiting for the background refetch to complete.
-    const orig = originalAuctionResult?.auctionData ?? null
-    if (orig) {
+    if (originalAuctionResult) {
       const current = queryClient.getQueryData<SamResult>(['sam'])
       if (current) {
         queryClient.setQueryData(['sam'], {
           ...current,
-          auctionResult: originalAuctionResult ?? current.auctionResult,
+          auctionResult: originalAuctionResult,
         })
       }
     }
@@ -233,7 +226,9 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
       bondBalanceSol: number | null,
     ) => {
       if (!selectedValidator || !data) return
-      ensureOriginalSaved()
+      if (!originalAuctionResult && data.auctionResult) {
+        setOriginalAuctionResult(data.auctionResult)
+      }
       const next = mergeOverrides(simulationOverrides, selectedValidator, {
         inflationCommissionDec: inflationCommission,
         mevCommissionDec: mevCommission,
@@ -249,7 +244,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
       selectedValidator,
       data,
       simulationOverrides,
-      ensureOriginalSaved,
+      originalAuctionResult,
       runSimulation,
     ],
   )

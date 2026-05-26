@@ -115,7 +115,7 @@ export const ValidatorBondsTable: React.FC<Props> = ({
       <div className="px-4 pb-4">
         <div className="metricWrap bg-card rounded-xl border border-border shadow-card p-5">
           <div className="flex items-baseline gap-2 mb-3">
-            <span className="metric text-3xl font-bold font-mono text-primary">
+            <span className="text-3xl font-bold font-mono text-primary">
               {pct(coveredRatio, 0)}
             </span>
             <span className="text-sm text-muted-foreground">

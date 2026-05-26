@@ -36,8 +36,8 @@ export const TestProtectedEventsPage: React.FC<UserLevelProps> = ({
       },
     })
     queryClient.setQueryData(['protected-events'], TEST_PROTECTED_EVENTS)
-    // EpochMeter (in nav) reads ['sam', 0]; nav hover prefetches ['bonds'].
-    queryClient.setQueryData(['sam', 0], SAM_RESULT)
+    // EpochMeter (in nav) reads ['sam']; nav hover prefetches ['bonds'].
+    queryClient.setQueryData(['sam'], SAM_RESULT)
     queryClient.setQueryData(['bonds'], TEST_BONDS_DATA)
     queryClient.setQueryData(
       ['notifications-broadcast'],

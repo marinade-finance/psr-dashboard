@@ -35,7 +35,7 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
         Mobile view is not supported. Open the dashboard on a screen at least
         640px wide.
       </div>
-      <div className="navigation flex items-center h-14 bg-card border-b border-border shadow-card [&_a]:no-underline overflow-x-auto">
+      <div className="flex items-center h-14 bg-card border-b border-border shadow-card [&_a]:no-underline overflow-x-auto">
         <Link
           to={`/${prefix}`}
           className="flex items-center gap-2.5 mx-3 hover:opacity-80 transition-opacity shrink-0"
@@ -86,7 +86,7 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
             rel="noopener noreferrer"
             className={cn(
               tab,
-              'docsButton hidden sm:flex items-center gap-1.5 border border-transparent hover:border-border [&_svg]:opacity-60',
+              'hidden sm:flex items-center gap-1.5 border border-transparent hover:border-border [&_svg]:opacity-60',
             )}
           >
             {ICON_DOCS}
