@@ -7,7 +7,7 @@ export type BondRecord = {
   pubkey: string
   vote_account: string
   authority: string
-  cpmpe: number
+  cpmpe: string
   updated_at: string
   epoch: number
   funded_amount: number

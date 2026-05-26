@@ -172,7 +172,7 @@ export function bondAdvice(
       }
       if (coverage.bondRiskFeeShortfall > 0) {
         return {
-          text: `Top up ${topUp(coverage.bondRiskFeeShortfall)} — bond below the penalty threshold.`,
+          text: `Top up ${topUp(coverage.bondRiskFeeShortfall)} or face fee charges.`,
           urgency: 'critical',
           tone: 'red',
         }
@@ -313,7 +313,7 @@ function bondCta(
         dsSamConfig.minBondBalanceSol - bondBalance,
       )
       return tip(
-        `Top up ${topUp(topUpAmt)} to cover the fee and grow stake.`,
+        `Top up ${topUp(topUpAmt)} or pay ${pay(bondRiskFeeSol)} bond fee.`,
         'critical',
         'bond',
         delta,
