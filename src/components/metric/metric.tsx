@@ -20,7 +20,7 @@ export const Metric: React.FC<Props> = ({
   tooltipHtml,
   guideTo,
 }) => (
-  <Card className="metric px-3 py-3 sm:px-5 sm:py-4 transition-shadow hover:shadow-hover">
+  <Card className="metric px-3 py-3 sm:px-5 sm:py-4 transition-shadow hover:shadow-hover cursor-default">
     <div className="flex items-center gap-1 sm:whitespace-nowrap text-xs uppercase tracking-wider font-medium text-muted-foreground mb-1">
       {tooltipHtml ? (
         <HelpTip html={tooltipHtml} guideTo={guideTo}>

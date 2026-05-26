@@ -371,7 +371,7 @@ const RankCell = React.memo<{
         </span>
         <Tooltip content="Remove from simulation">
           <button
-            className="text-xs text-muted-foreground hover:text-destructive leading-none"
+            className="text-xs text-muted-foreground hover:text-destructive leading-none cursor-pointer"
             onClick={e => {
               e.stopPropagation()
               onClearValidator(voteAccount)
@@ -871,7 +871,7 @@ export const SamTable: React.FC<Props> = ({
         <TableCell className="px-3.5 py-3">
           {isCompact ? (
             <span
-              className="text-sm font-mono text-muted-foreground cursor-default"
+              className="text-sm font-mono text-muted-foreground"
               title={bondChip.label}
             >
               {stake(selectBondSize(validator) ?? 0)}
