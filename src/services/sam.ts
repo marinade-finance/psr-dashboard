@@ -123,7 +123,8 @@ export function selectWinningApyForValidator(
 const totalProfitPmpe = (v: AuctionValidator) =>
   v.revShare.auctionEffectiveBidPmpe +
   v.revShare.inflationPmpe +
-  v.revShare.mevPmpe
+  v.revShare.mevPmpe +
+  (v.revShare.blockPmpe ?? 0)
 
 const selectActiveProfit = (validators: AuctionValidator[]) =>
   validators.reduce(
