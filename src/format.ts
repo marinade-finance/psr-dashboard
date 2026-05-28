@@ -17,12 +17,13 @@ export const pct = (
   fractionDigits: number = 2,
   maxValue: number = 1e18,
 ): string => {
-  if (amount >= maxValue) {
+  const n = finite(amount)
+  if (n >= maxValue) {
     return `>${pctString(maxValue, fractionDigits)}`
-  } else if (amount <= -maxValue) {
+  } else if (n <= -maxValue) {
     return `<-${pctString(maxValue, fractionDigits)}`
   }
-  return pctString(amount, fractionDigits)
+  return pctString(n, fractionDigits)
 }
 
 export const finite = (x: number | null | undefined): number =>

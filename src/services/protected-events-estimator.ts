@@ -108,6 +108,7 @@ const calcTargetCreditsByEpoch = (validators: Validator[]) => {
 
   const result: Map<number, number> = new Map()
   for (const [epoch, sumOfWeights] of sumOfWeightsPerEpoch) {
+    if (sumOfWeights <= 0) continue
     result.set(
       epoch,
       Math.round((sumOfWeightedCreditsPerEpoch.get(epoch) ?? 0) / sumOfWeights),

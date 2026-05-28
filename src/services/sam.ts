@@ -226,9 +226,9 @@ function computeNaturalWithdrawal(
   const out = new Map<string, number>()
   let remaining = WITHDRAWAL_FRACTION_PER_EPOCH * tvl
   if (remaining <= 0) return out
-  const sorted = [...validators].sort(
-    (a, b) => a.unstakePriority - b.unstakePriority,
-  )
+  const prio = (v: AuctionValidator) =>
+    Number.isFinite(v.unstakePriority) ? v.unstakePriority : Infinity
+  const sorted = [...validators].sort((a, b) => prio(a) - prio(b))
   for (const v of sorted) {
     const excess = Math.max(
       0,
@@ -469,9 +469,8 @@ export function augmentAuctionResult(
   return result
 }
 
-export const selectExpectedStakeChange = (
-  v: AugmentedAuctionValidator,
-): number => v.values.expectedStakeChangeSol
+export const selectExpectedStakeChange = (v: AuctionValidator): number =>
+  (v as AugmentedAuctionValidator).values?.expectedStakeChangeSol ?? 0
 
 export type ExpectedStakeChangeBreakdown = Omit<ExpectedStakeChange, 'total'>
 

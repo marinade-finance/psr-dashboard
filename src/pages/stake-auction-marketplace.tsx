@@ -210,11 +210,14 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
   )
 
   const handleBack = useCallback(() => {
-    setSearchParams(prev => {
-      const next = new URLSearchParams(prev)
-      next.delete('v')
-      return next
-    })
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        next.delete('v')
+        return next
+      },
+      { replace: true },
+    )
   }, [setSearchParams])
 
   const handleDetailSimulate = useCallback(

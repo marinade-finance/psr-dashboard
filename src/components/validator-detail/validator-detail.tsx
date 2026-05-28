@@ -661,6 +661,7 @@ export const ValidatorDetail = ({
 
   const goToSim = () => {
     setSimEnabled(true)
+    firstRun.current = true
     setTab('overview')
   }
 

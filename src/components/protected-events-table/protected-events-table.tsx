@@ -97,16 +97,12 @@ type Props = {
 
 export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
   const datasetAggregates = useMemo(() => {
-    let minEpoch = 9999
-    let maxEpoch = 0
     let lastSettledEpoch = 0
     let validatorBondTotal = 0
     let marinadePaidTotal = 0
     const epochSet = new Set<number>()
     for (const { protectedEvent, status } of data) {
       const { epoch, meta } = protectedEvent
-      if (epoch < minEpoch) minEpoch = epoch
-      if (epoch > maxEpoch) maxEpoch = epoch
       epochSet.add(epoch)
       if (status === 'fact' && epoch > lastSettledEpoch) {
         lastSettledEpoch = epoch
@@ -117,8 +113,9 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
     }
     const allEpochs = [...epochSet].sort((a, b) => a - b)
     return {
-      minEpoch,
-      maxEpoch,
+      hasData: allEpochs.length > 0,
+      minEpoch: allEpochs[0] ?? 0,
+      maxEpoch: allEpochs[allEpochs.length - 1] ?? 0,
       allEpochs,
       lastSettledEpoch,
       validatorBondTotal,
@@ -126,7 +123,8 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
       totalAmount: validatorBondTotal + marinadePaidTotal,
     }
   }, [data])
-  const { minEpoch, maxEpoch, allEpochs, lastSettledEpoch } = datasetAggregates
+  const { hasData, minEpoch, maxEpoch, allEpochs, lastSettledEpoch } =
+    datasetAggregates
 
   const [validatorFilter, setValidatorFilter] = useState('')
   const [minEpochFilter, setMinEpochFilter] = useState(minEpoch)
@@ -137,11 +135,11 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
   const seeded = React.useRef(false)
   useEffect(() => {
     if (seeded.current) return
-    if (minEpoch === 9999 || maxEpoch === 0) return
+    if (!hasData) return
     seeded.current = true
     setMinEpochFilter(minEpoch)
     setMaxEpochFilter(maxEpoch)
-  }, [minEpoch, maxEpoch])
+  }, [hasData, minEpoch, maxEpoch])
 
   // Filtered subsets memoised on the inputs that actually change them.
   const preFilteredData = useMemo(() => {
