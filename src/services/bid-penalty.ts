@@ -50,7 +50,7 @@ export function computeBidPenalty(
   const isNegativeBiddingChange = thisEpochBidPmpe < threshold
 
   const effParticipatingBidPmpe = finite(v.revShare.effParticipatingBidPmpe)
-  // SDK calculations.js:121-123 — uses ?? not ||, so 0 stays 0.
+  // ?? not ||, so a real 0 stays 0 (only missing values fall back to Infinity).
   const worstHistoricalPmpe = auctions
     .slice(0, historyEpochs)
     .reduce(
