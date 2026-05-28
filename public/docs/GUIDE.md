@@ -575,7 +575,7 @@ action that would help most. Strings come verbatim from
 - "Top up X to extend runway." (CRITICAL or WATCH bond — runway short, bond above floors)
 - "Top up bond to extend runway." (same, no ideal top-up amount available)
 - "Top up X to keep stake." (watch bond)
-- "Bid too low. Raise it to qualify for stake." (out of set, bond fine)
+- "Bid below winning price. Raise it to qualify for stake." (out of set, bond fine)
 - "Raise bid or pay a X penalty." (bid-too-low penalty active)
 - "Raise bid to get more stake next epoch." (in-set, getting partial scraps but below priority frontier — raising bid to clear the frontier gets full target-delta allocation)
 - "X SOL arriving next epoch." (in-set, stake growing, bid already at or above priority frontier)

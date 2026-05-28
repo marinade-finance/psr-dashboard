@@ -161,11 +161,11 @@ export function passesTableFilter(
   level: UserLevel,
   minBondBalanceSol: number,
 ): boolean {
-  if ((v.bondBalanceSol ?? 0) < minBondBalanceSol) return false
+  const hasActiveStake = v.marinadeActivatedStakeSol > 0
+  const meetsMinBond = (v.bondBalanceSol ?? 0) >= minBondBalanceSol
+  if (!hasActiveStake && !meetsMinBond) return false
   if (level === 'expert') return true
-  const inSetOrStaked =
-    v.marinadeActivatedStakeSol > 0 || v.auctionStake.marinadeSamTargetSol > 0
-  return inSetOrStaked
+  return hasActiveStake || v.auctionStake.marinadeSamTargetSol > 0
 }
 
 export function makeCompareFn(
@@ -181,9 +181,7 @@ export function makeCompareFn(
         cmp = selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
         break
       case 'stakeDelta':
-        cmp =
-          selectExpectedStakeChange(a as AugmentedAuctionValidator) -
-          selectExpectedStakeChange(b as AugmentedAuctionValidator)
+        cmp = selectExpectedStakeChange(a) - selectExpectedStakeChange(b)
         break
       case 'validator': {
         const nameA = validatorMeta?.get(a.voteAccount)?.name ?? a.voteAccount
@@ -339,8 +337,7 @@ const RankCell = React.memo<{
     const rankLabel = `#${rank}`
     // Sub: cutoff-relative position. No # prefix here — the # lives only on
     // the primary rank. NBSP binds the count to the word so it never wraps.
-    const cutoffWord =
-      cutoffRank === 0 ? 'at cutoff' : cutoffRank > 0 ? 'above' : 'below'
+    const cutoffWord = cutoffRank > 0 ? 'above' : 'below'
     const rankSubLabel =
       cutoffRank === 0 ? 'at cutoff' : `${Math.abs(cutoffRank)} ${cutoffWord}`
     if (isGhost)
@@ -602,6 +599,8 @@ export const SamTable: React.FC<Props> = ({
     changedValidators,
     originalAuctionResult,
     originalPositionsMap,
+    dsSamConfig,
+    winningTotalPmpe,
   ])
 
   // Cutoff partition: who would clear the bid threshold by yield, regardless
@@ -968,15 +967,15 @@ export const SamTable: React.FC<Props> = ({
           </TableCell>
 
           {/* Next Step — icon = constraint/direction, color = severity.
-            The contiguous out-of-set "Bid too low" block is an EXPECTED
-            state, not an alarm: render it muted with a 2-word label;
-            the full sentence lives in the detail panel. */}
+            The contiguous out-of-set "bid below winning price" block is
+            an EXPECTED state, not an alarm: render it muted with a short
+            label; the full sentence lives in the detail panel. */}
           {(() => {
             const bidTooLow = tip.constraint === 'rank'
             const stepColor = bidTooLow ? CSS_MUTED_FG : tipStyle.color
             const stepBg = bidTooLow ? CSS_MUTED : tipStyle.bg
             const stepText = bidTooLow
-              ? 'Bid too low — raise it.'
+              ? 'Bid below winning price.'
               : trimTipDecimals(tip.text)
             return (
               <TableCell className="px-3.5 py-3">
