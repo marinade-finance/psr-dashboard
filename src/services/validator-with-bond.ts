@@ -55,19 +55,23 @@ export const fetchValidatorsWithBonds = async (
     auctionByVoteAccount.set(validator.voteAccount, validator)
   }
 
+  const bondByVoteAccount = new Map<string, BondRecord>()
+  for (const bond of bonds) {
+    bondByVoteAccount.set(bond.vote_account, bond)
+  }
+
   const validatorsWithBonds: Record<string, ValidatorWithBond> = {}
 
   for (const validator of validators) {
+    const hasMarinade =
+      Number(validator.marinade_stake) > 0 ||
+      Number(validator.marinade_native_stake) > 0
+    const hasBond = bondByVoteAccount.has(validator.vote_account)
+    if (!hasMarinade && !hasBond) continue
     validatorsWithBonds[validator.vote_account] = {
       validator,
-      bond: null,
+      bond: bondByVoteAccount.get(validator.vote_account) ?? null,
       auction: auctionByVoteAccount.get(validator.vote_account),
-    }
-  }
-
-  for (const bond of bonds) {
-    if (validatorsWithBonds[bond.vote_account]) {
-      validatorsWithBonds[bond.vote_account].bond = bond
     }
   }
 
