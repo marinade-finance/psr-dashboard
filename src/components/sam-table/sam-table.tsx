@@ -772,7 +772,7 @@ export const SamTable: React.FC<Props> = ({
         !isGhost && !inSet && 'bg-destructive/[0.02]',
         !isGhost && inSet && 'hover:bg-primary-light',
         !isGhost && !inSet && 'hover:bg-destructive/[0.05]',
-        !isGhost && isSimulated && 'ring-2 ring-inset ring-status-yellow',
+        !isGhost && isSimulated && 'bg-status-yellow-light',
         isFlashing && 'bg-status-yellow-light',
       ]
         .filter(Boolean)
