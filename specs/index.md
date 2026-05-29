@@ -26,9 +26,10 @@
 | [2/20-docs-line-length.md](2/20-docs-line-length.md) | planned | Docs hygiene: wrap prose at ≤120-char line length |
 | [2/21-bond-calculator.md](2/21-bond-calculator.md) | planned | Bond Calculator: bid/bond sizing tool for new validators |
 | [2/22-sam-stats-bar.md](2/22-sam-stats-bar.md) | partial | SAM stats bar: importance hierarchy + further tile collapse |
-| [2/23-sam-bill.md](2/23-sam-bill.md) | planned | Marinade SAM Bill: per-validator monthly CSV payment report |
-| [2/24-commissions-summary.md](2/24-commissions-summary.md) | planned | Bid + commissions always visible on row (no hover/click) |
-| [2/25-historical-explorer.md](2/25-historical-explorer.md) | planned | Historical explorer: epoch browser + per-validator time-series |
+| [2/23-sam-bill.md](2/23-sam-bill.md) | draft | Marinade SAM Bill: per-validator monthly CSV payment report |
+| [2/24-commissions-summary.md](2/24-commissions-summary.md) | draft | Bid + commissions always visible on row (no hover/click) |
+| [2/25-epoch-browser.md](2/25-epoch-browser.md) | draft | Epoch browser: full dashboard replay at any past epoch |
+| [2/26-time-series-charts.md](2/26-time-series-charts.md) | draft | Time-series charts: per-validator bond/bid/stake/payments history |
 
 ## Phase 1 — shipped
 

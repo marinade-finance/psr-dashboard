@@ -54,15 +54,22 @@ Append findings here during audits; the user prioritises and prunes.
 All planned work lives in `specs/` — see `specs/index.md` for the
 master list.
 
-**New item:** open the relevant spec file in `specs/1/` (or create a new
-`specs/1/N-topic.md`) and add the item as a named section. If no
-existing spec fits, create a new file. Add a row to `specs/index.md`.
+**New item:** create `specs/2/N-topic.md` (next available N), add a row
+to `specs/index.md`. Default status: `draft`.
+
+**Promoting:** change `draft` → `planned` only when the work is approved
+to start. A `draft` spec must never be implemented — it is an idea under
+consideration, not a commitment.
 
 **Shipped item:** set `status: shipped` in the spec frontmatter, trim
 the section to WHY + code pointers (drop HOW), update `specs/index.md`
 status.
 
-Lifecycle: `planned` → `partial` → `shipped`.
+Lifecycle: `draft` → `planned` → `partial` → `shipped`.
+- `draft` — idea captured; implementation blocked until promoted
+- `planned` — approved; ready to implement
+- `partial` — in progress
+- `shipped` — done
 
 During audits, record bugs in `bugs.md`; record design intent and
 queued features in the relevant spec file.

@@ -1,5 +1,5 @@
 ---
-status: planned
+status: draft
 ---
 
 # Marinade SAM Bill — per-validator monthly payment report

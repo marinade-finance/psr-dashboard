@@ -1,5 +1,5 @@
 ---
-status: planned
+status: draft
 ---
 
 # Commissions summary — bid + commissions always visible on row
