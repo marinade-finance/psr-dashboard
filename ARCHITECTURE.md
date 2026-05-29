@@ -204,7 +204,7 @@ rows (new position, green/red grading by move severity).
 
 | Key                                    | Owner                                                                                      | Notes                                                                                                                                   |
 | -------------------------------------- | ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `['sam']`                              | `SamPage`, `EpochMeter`, `validator-with-bond.ts`, `validator-with-protected_event.ts`     | Single key; simulation writes back via `useMutation` + `setQueryData`. `placeholderData: keepPreviousData`. `staleTime: 5 min` default. |
+| `['sam']`                              | `SamPage`, `EpochMeter`, `validator-with-bond.ts`, `validator-with-protected_event.ts`     | Single key, canonical live auction — read-only for all consumers. Simulation output never written here; it lives in `SamPage` state (see below). `placeholderData: keepPreviousData`. `staleTime: 5 min` default. |
 | `['validator-names']`                  | `SamPage`                                                                                  | `staleTime: Infinity`.                                                                                                                  |
 | `['validators-with-epochs', 3]`        | `ValidatorDetail`, `validator-with-protected_event.ts`                                     | 3-epoch window; shared via `ensureQueryData` so the multi-MB payload is fetched at most once.                                           |
 | `['notifications-all', 'sam_auction']` | `SamPage`, `ValidatorBondsPage`                                                            | Refetch every 5 min.                                                                                                                    |
@@ -219,11 +219,14 @@ rows (new position, green/red grading by move severity).
 Tracked entirely in `SamPage` (`src/pages/stake-auction-marketplace.tsx`):
 
 - `selectedValidator` (URL-synced via `?v=`).
-- `simulationOverrides`, `simulatedValidators`, `originalAuctionResult`,
-  `isCalculating`.
+- `simulationOverrides`, `simulatedValidators`, `simResult`, `isCalculating`.
 - Edits flow detail-panel inputs → `mergeOverrides` → `useMutation`
-  reruns the SDK → `setQueryData(['sam'], result)` → `insertGhostRows`
-  injects originals at their pre-simulation positions.
+  reruns the SDK against the live `['sam']` auction → result stored in the
+  `simResult` state, never the cache. The page renders `simResult ?? liveData`,
+  so the live cache is never clobbered and other `['sam']` consumers stay
+  live. `originalAuctionResult` (the live auction, surfaced only while a sim is
+  active) feeds `insertGhostRows` to inject originals at their pre-simulation
+  positions.
 
 ### URL ↔ sheet sync
 
