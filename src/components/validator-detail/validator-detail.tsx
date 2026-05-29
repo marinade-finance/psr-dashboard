@@ -652,6 +652,16 @@ export const ValidatorDetail = ({
     return () => clearTimeout(t)
   }, [simEnabled, editBid, editInflation, editMev, editBlock, editBond])
 
+  const makeSimWheelHandler =
+    (value: string, setter: (v: string) => void, step: number) =>
+    (e: React.WheelEvent<HTMLInputElement>) => {
+      if (document.activeElement !== e.currentTarget) return
+      e.preventDefault()
+      const current = parseFloat(value) || 0
+      const next = e.deltaY < 0 ? current + step : current - step
+      setter(String(Math.round(next / step) * step))
+    }
+
   const handleSimToggle = (enabled: boolean) => {
     setSimEnabled(enabled)
     firstRun.current = true
@@ -1098,6 +1108,7 @@ export const ValidatorDetail = ({
                       type="number"
                       value={editBid}
                       onChange={e => setEditBid(e.target.value)}
+                      onWheel={makeSimWheelHandler(editBid, setEditBid, 0.001)}
                       step="0.001"
                       min="0"
                       className="font-mono"
@@ -1111,6 +1122,7 @@ export const ValidatorDetail = ({
                       type="number"
                       value={editInflation}
                       onChange={e => setEditInflation(e.target.value)}
+                      onWheel={makeSimWheelHandler(editInflation, setEditInflation, 0.1)}
                       step="0.1"
                       min="0"
                       max="100"
@@ -1129,6 +1141,7 @@ export const ValidatorDetail = ({
                       type="number"
                       value={editMev}
                       onChange={e => setEditMev(e.target.value)}
+                      onWheel={makeSimWheelHandler(editMev, setEditMev, 0.1)}
                       step="0.1"
                       min="0"
                       max="100"
@@ -1144,6 +1157,7 @@ export const ValidatorDetail = ({
                       type="number"
                       value={editBlock}
                       onChange={e => setEditBlock(e.target.value)}
+                      onWheel={makeSimWheelHandler(editBlock, setEditBlock, 0.1)}
                       step="0.1"
                       min="0"
                       max="100"
@@ -1159,6 +1173,7 @@ export const ValidatorDetail = ({
                       type="number"
                       value={editBond}
                       onChange={e => setEditBond(e.target.value)}
+                      onWheel={makeSimWheelHandler(editBond, setEditBond, 1)}
                       step="1"
                       min="0"
                       placeholder="—"
