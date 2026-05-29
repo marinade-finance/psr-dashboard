@@ -3,7 +3,7 @@ import { fetchProtectedEvents } from './protected-events'
 import { calculateProtectedEventEstimates } from './protected-events-estimator'
 import { loadSam } from './sam'
 import { fetchScoring } from './scoring'
-import { solToLamports } from './units'
+import { LAMPORTS_PER_SOL } from './units'
 import { fetchValidatorsWithEpochs } from './validators'
 
 import type { ProtectedEvent, SettlementReason } from './protected-events'
@@ -131,7 +131,7 @@ export const fetchProtectedEventsWithValidators = async (
     pushAuctionPenalty(
       entry.voteAccount,
       entry.epoch,
-      Math.round(solToLamports(entry.values?.bondRiskFeeSol ?? 0)),
+      Math.round(LAMPORTS_PER_SOL * (entry.values?.bondRiskFeeSol ?? 0)),
       'BondRiskFee',
     )
   }
@@ -155,7 +155,7 @@ export const fetchProtectedEventsWithValidators = async (
       pushAuctionPenalty(
         entry.voteAccount,
         maxStatsEpoch,
-        Math.round(solToLamports(entry.values?.bondRiskFeeSol ?? 0)),
+        Math.round(LAMPORTS_PER_SOL * (entry.values?.bondRiskFeeSol ?? 0)),
         'BondRiskFee',
       )
     }

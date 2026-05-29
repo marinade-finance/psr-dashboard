@@ -1,5 +1,5 @@
 import { lamportsToSol } from 'src/format'
-import { solToLamports } from 'src/services/units'
+import { LAMPORTS_PER_SOL } from 'src/services/units'
 
 import { fetchRewards } from './rewards'
 
@@ -157,13 +157,13 @@ const buildLowCreditsProtectedEvent = (
     expectedEpr,
     marinadeStake,
   )
-  if (solToLamports(amountSol) < config.min_settlement_lamports) {
+  if (LAMPORTS_PER_SOL * amountSol < config.min_settlement_lamports) {
     return null
   }
 
   return {
     epoch: epochStat.epoch,
-    amount: Math.round(solToLamports(amountSol)),
+    amount: Math.round(LAMPORTS_PER_SOL * amountSol),
     vote_account: validator.vote_account,
     meta: config.meta,
     reason: {
@@ -224,13 +224,13 @@ const buildCommissionIncreaseProtectedEvent = (
     expectedEpr,
     marinadeStake,
   )
-  if (solToLamports(amountSol) < config.min_settlement_lamports) {
+  if (LAMPORTS_PER_SOL * amountSol < config.min_settlement_lamports) {
     return null
   }
 
   return {
     epoch: epochStat.epoch,
-    amount: Math.round(solToLamports(amountSol)),
+    amount: Math.round(LAMPORTS_PER_SOL * amountSol),
     vote_account: validator.vote_account,
     meta: config.meta,
     reason: {
