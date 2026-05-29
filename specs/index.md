@@ -5,7 +5,7 @@
 | File | Status | Summary |
 | ---- | ------ | ------- |
 | [2/1-remove-expert-routes.md](2/1-remove-expert-routes.md) | planned | Remove deprecated /expert-* routes and UserLevel prop |
-| [2/2-test-page-parity.md](2/2-test-page-parity.md) | planned | /test- data-path divergence risk and fix options |
+| [2/2-test-page-parity.md](2/2-test-page-parity.md) | shipped | /test- data-path divergence resolved (hasOverrides removed) |
 | [2/3-assert-never-ts-common.md](2/3-assert-never-ts-common.md) | planned | Move assertNever into shared ts-common package |
 | [2/4-cta-quantified-consequence.md](2/4-cta-quantified-consequence.md) | planned | CTA family: action + quantified consequence amounts |
 | [2/5-simulation-prefill.md](2/5-simulation-prefill.md) | planned | Pre-fill sim panel from breakdown CTA target values |
