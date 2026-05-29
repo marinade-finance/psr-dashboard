@@ -1,6 +1,6 @@
 import { finite } from 'src/format'
 import { computeBidPenalty } from 'src/services/bid-penalty'
-import { pmpeToSol } from 'src/services/pmpe'
+import { pmpeToSol } from 'src/services/constants'
 import { selectPaidUndelegationSol } from 'src/services/sam'
 
 import type {
