@@ -110,6 +110,37 @@ This file holds only agent-facing rules below.
   640px. Don't add mobile viewport variants in tests; don't ship CSS
   that tries to make pages usable on a phone.
 
+### E2E conventions (Playwright, `tests/`)
+
+- Always `waitForSelector('tbody tr', { timeout: 30000 })` before
+  interacting — fixture data loads async even on `/test-*` routes.
+- Use **loose assertions**: `toContain` / regex over exact strings.
+  Cosmetic copy changes must not break the suite.
+- Define `const SHEET = '[role="dialog"]'` and shared helpers
+  (`gotoSam`, `openSheet`) at the top of each spec file — don't
+  inline navigation or locator magic inline in every test.
+- Deep-link the sheet via `page.goto('/test-?v=VOTE_ACCOUNT')` rather
+  than clicking through the table — faster and deterministic.
+- Selector hooks: bare class tokens (`navigation`, `metric`,
+  `docsButton`, `badge`, `metricValue`) are Playwright selectors.
+  **Grep `tests/` before deleting any CSS class** — it may be the
+  only handle a spec has on that element.
+
+### Unit conventions (Vitest, `src/**/*.test.ts`)
+
+- Define a **factory function** (`makeValidator`, `makeConfig`) that
+  returns a minimal valid object for the type under test. Use
+  `as unknown as SdkType` to satisfy opaque SDK types — don't try to
+  construct them fully.
+- Test config objects: include only properties the function under test
+  reads; omit everything else so the test fails loudly if the function
+  starts reading a new field unexpectedly.
+- One `describe` per logical concern, one `it` per case. Don't merge
+  unrelated assertions into a single `it` to keep failure messages
+  precise.
+- **Test features, not fixes.** A regression caught at runtime →
+  fix the code; only add a test if the feature lacked coverage.
+
 ## Visual language rules (operational)
 
 For the full alphabet of tokens, primitives, and rules see `VISUALS.md`.
