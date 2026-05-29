@@ -305,9 +305,7 @@ Needs the SDK or scoring API to emit `{ voteAccount, blacklistedSinceEpoch }`.
 ### `@marinade.finance/eslint-config` (or project) — add `@zodios/core`
 
 The generated Zod schemas in `src/schemas/generated/` import from `@zodios/core`.
-`@zodios/core@10.9.6` is now listed in `package.json` but still needs `pnpm install`.
-
-**When:** next `pnpm install` run will add it.
+`@zodios/core@10.9.6` is installed.
 
 ---
 

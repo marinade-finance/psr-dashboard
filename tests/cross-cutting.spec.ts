@@ -81,6 +81,15 @@ test('/nonsense renders the NotFoundPage (no blank screen)', async ({
   ).toBeVisible({ timeout: 5000 })
 })
 
+test('/test-error renders the ErrorPage (route error boundary)', async ({
+  page,
+}) => {
+  await page.goto('/test-error')
+  await expect(
+    page.getByRole('heading', { name: /Oops!/i }),
+  ).toBeVisible({ timeout: 5000 })
+})
+
 test('banner element has aria-live="polite" for screen readers', async ({
   page,
 }) => {

@@ -64,6 +64,10 @@ const ErrorPage = () => {
   )
 }
 
+const ThrowOnRender = (): never => {
+  throw new Error('Test error')
+}
+
 const NotFoundPage = () => (
   <>
     <Navigation />
@@ -103,6 +107,11 @@ const router = createBrowserRouter([
   {
     path: '/expert-protected-events',
     element: <ProtectedEventsPage level={'expert'} />,
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: '/test-error',
+    element: <ThrowOnRender />,
     errorElement: <ErrorPage />,
   },
   {
