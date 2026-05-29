@@ -129,6 +129,22 @@ Verification needs access to ds-sam-sdk source in `node_modules`. Add unit test 
 - **Expected:** detect duplicate `(vote_account, epoch, reason, amount)` tuples in the incoming data and surface a visual warning (e.g. a yellow "duplicate" badge or a banner) so users know the double-billing is a known backend issue, not two separate events. Do not silently deduplicate — the data should be visible but flagged.
 - **Note:** fix depends on the backend resolving the root cause. Dashboard change is defensive UX only.
 
+## 41. `passesTableFilter` excludes validators with target stake but no active stake and no bond
+
+- **Where:** `src/components/sam-table/sam-table.tsx:166` (`passesTableFilter`)
+- **Symptom:** the gate `if (!hasActiveStake && !meetsMinBond) return false` excludes validators
+  with `marinadeActivatedStakeSol = 0` AND `bondBalanceSol < minBondBalanceSol`. This is too
+  broad: a validator who has `marinadeSamTargetSol > 0` (about to receive stake, or in the auction
+  winning set) but has not yet posted a bond is invisible in the table. Similarly, a validator who
+  previously had stake, lost their bond, and has `marinadeActivatedStakeSol > 0` should still show.
+  The original intent was to hide pure no-bond-no-stake noise; the fix was too aggressive.
+- **Expected:** gate should be `!hasActiveStake && !hasTargetStake && !meetsMinBond` — only exclude
+  validators with zero active stake, zero SAM target, AND no qualifying bond. Any validator with
+  `marinadeActivatedStakeSol > 0` OR `marinadeSamTargetSol > 0` must remain visible regardless
+  of bond state.
+- **Fix:** change line 166 to also check `v.auctionStake.marinadeSamTargetSol > 0`; the return
+  at line 168 already handles it correctly.
+
 ## 39. Simulation panel number inputs don't respond to mouse wheel
 
 - **Source:** user feedback 2026-05-29
