@@ -1104,12 +1104,12 @@ export const SamTable: React.FC<Props> = ({
         >
           {/* Search row — sits above the table, aligned with validator column */}
           {onValidatorSearch && (
-            <div className={cn('mb-4 flex', inSimulation ? 'px-0 pt-2' : '')}>
+            <div className={cn('mb-4 flex min-w-0', inSimulation ? 'px-0 pt-2' : '')}>
               <ValidatorSearch
                 validators={validators}
                 nameMap={validatorMeta ?? EMPTY_NAME_MAP}
                 onSelect={onValidatorSearch}
-                className="ml-10 w-[540px]"
+                className={cn('ml-10 min-w-0', isCompact ? 'flex-1' : 'w-[540px]')}
               />
             </div>
           )}
