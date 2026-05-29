@@ -242,8 +242,8 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
             }
           />
           <CalcRow
-            label="Bond balance"
-            col2={bondSol(coverage.bondBalanceSol)}
+            label="Claimable bond balance"
+            col2={bondSol(coverage.claimableBondBalanceSol)}
             bold
           />
           <CalcRow
