@@ -32,6 +32,10 @@
 | [2/26-time-series-charts.md](2/26-time-series-charts.md) | draft | Time-series charts: per-validator bond/bid/stake/payments history |
 | [2/27-pmpe-instead-of-apy.md](2/27-pmpe-instead-of-apy.md) | experiment | Show Total PMPE instead of Max APY as primary table column |
 | [2/28-constraint-detail-view.md](2/28-constraint-detail-view.md) | planned | Surface every binding constraint + ranking inputs in detail panel |
+| [2/29-bond-gauge-redesign.md](2/29-bond-gauge-redesign.md) | planned | Bond coverage gauge: legible single-fill + threshold redesign |
+| [2/30-ideal-reward-reserve-scaling.md](2/30-ideal-reward-reserve-scaling.md) | draft | Ideal reward reserve: scale with window or fix tooltip (protocol) |
+| [2/31-redelegation-excludes-sub-min-bond.md](2/31-redelegation-excludes-sub-min-bond.md) | draft | Redelegation budget should skip sub-min-bond validators |
+| [2/32-abort-signal-threading.md](2/32-abort-signal-threading.md) | draft | Thread abort signal through SAM load path (blocked on SDK) |
 
 ## Phase 1 — shipped
 
