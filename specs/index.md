@@ -25,7 +25,7 @@
 | [2/19-guide-gaps.md](2/19-guide-gaps.md) | planned | GUIDE gaps from 2026-04/05 validator support threads |
 | [2/20-docs-line-length.md](2/20-docs-line-length.md) | planned | Docs hygiene: wrap prose at ≤120-char line length |
 | [2/21-bond-calculator.md](2/21-bond-calculator.md) | planned | Bond Calculator: bid/bond sizing tool for new validators |
-| [2/22-sam-stats-bar.md](2/22-sam-stats-bar.md) | planned | SAM stats bar combined-metric tiles (rolled back, retry) |
+| [2/22-sam-stats-bar.md](2/22-sam-stats-bar.md) | partial | SAM stats bar: importance hierarchy + further tile collapse |
 
 ## Phase 1 — shipped
 
