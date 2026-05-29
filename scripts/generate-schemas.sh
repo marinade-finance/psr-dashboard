@@ -20,6 +20,7 @@ fetch "notifications" "https://marinade-notifications.marinade.finance/docs-json
 
 # notifications uses inline $defs (JSON Schema 2020-12); hoist to components/schemas
 # so openapi-zod-client's ref parser can resolve them
+# Requires Python 3 (stdlib only — json, re)
 python3 - << 'PYEOF'
 import json, re
 
@@ -46,7 +47,7 @@ PYEOF
 generate() {
   local name=$1
   echo "Generating $name..."
-  npx openapi-zod-client "$SPEC_DIR/$name.json" -o "$OUT_DIR/$name.ts"
+  pnpm exec openapi-zod-client "$SPEC_DIR/$name.json" -o "$OUT_DIR/$name.ts"
 }
 
 generate "validators"
