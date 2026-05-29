@@ -9,8 +9,7 @@ import {
 import { pct } from 'src/format'
 
 import { annualize, compoundApy } from './calculations'
-import { EPOCHS_PER_YEAR } from './constants'
-import { pmpeToSol } from './pmpe'
+import { EPOCHS_PER_YEAR, pmpeToSol } from './constants'
 import { fetchValidatorsWithEpochs } from './validators'
 
 import type {

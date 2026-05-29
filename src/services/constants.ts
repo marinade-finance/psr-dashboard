@@ -5,3 +5,11 @@ export const EPOCHS_PER_YEAR = (365.25 * 24 * 3600 * 1000) / EPOCH_DURATION_MS
 // Last epoch where settled `ProtectedEvent`s were still emitted in dry-run.
 // Anything after this is treated as a real settlement.
 export const LAST_DRYRUN_EPOCH = 608
+
+export const LAMPORTS_PER_SOL = 1e9
+
+// PMPE = per-mille per epoch: lamports per 1000 SOL per epoch.
+// Output unit follows the stake unit (SOL in → SOL out).
+export function pmpeToSol(pmpe: number, stakeSol: number): number {
+  return (pmpe / 1000) * stakeSol
+}

@@ -1,5 +1,5 @@
 import { lamportsToSol } from 'src/format'
-import { LAMPORTS_PER_SOL } from 'src/services/units'
+import { LAMPORTS_PER_SOL } from 'src/services/constants'
 
 import { fetchRewards } from './rewards'
 

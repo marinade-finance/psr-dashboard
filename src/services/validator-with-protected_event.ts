@@ -1,9 +1,8 @@
-import { LAST_DRYRUN_EPOCH } from './constants'
+import { LAMPORTS_PER_SOL, LAST_DRYRUN_EPOCH } from './constants'
 import { fetchProtectedEvents } from './protected-events'
 import { calculateProtectedEventEstimates } from './protected-events-estimator'
 import { loadSam } from './sam'
 import { fetchScoring } from './scoring'
-import { LAMPORTS_PER_SOL } from './units'
 import { fetchValidatorsWithEpochs } from './validators'
 
 import type { ProtectedEvent, SettlementReason } from './protected-events'
