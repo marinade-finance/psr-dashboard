@@ -44,23 +44,23 @@ start:dev`), build output to `build/` (`pnpm build`), preview on 8080
 
 ## Top-level layout
 
-| Path                 | Purpose                                                                                            |
-| -------------------- | -------------------------------------------------------------------------------------------------- |
-| `src/pages/`         | Route components — one file per page.                                                              |
-| `src/components/`    | All view components, grouped by feature.                                                           |
-| `src/services/`      | Data fetching, computation, types. UI-free.                                                        |
-| `src/utils/`         | Tiny pure helpers shared across services + components (`assert-never.ts`).                         |
-| `src/class_utils.ts` | `cn` helper (`clsx` + `tailwind-merge`).                                                           |
-| `src/css.ts`         | `CSS_*` runtime colour escape hatches (return `var(--…)` strings).                                 |
+| Path                 | Purpose                                                                                                             |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `src/pages/`         | Route components — one file per page.                                                                               |
+| `src/components/`    | All view components, grouped by feature.                                                                            |
+| `src/services/`      | Data fetching, computation, types. UI-free.                                                                         |
+| `src/utils/`         | Tiny pure helpers shared across services + components (`assert-never.ts`).                                          |
+| `src/class_utils.ts` | `cn` helper (`clsx` + `tailwind-merge`).                                                                            |
+| `src/css.ts`         | `CSS_*` runtime colour escape hatches (return `var(--…)` strings).                                                  |
 | `src/format.ts`      | Number / SOL / percentage formatters (`sol`, `stake`, `pct`, `pmpe`, `pay`, `penalty`, `cost`, `bondSol`, `topUp`). |
-| `src/fixtures/`      | Auction fixtures used by `/test-*` routes.                                                         |
-| `src/index.css`      | Design tokens, dark-mode overrides, `@theme` Tailwind exposure, global transition rule, keyframes. |
-| `src/index.tsx`      | App entry: router, query client, GTM, prefetches.                                                  |
-| `public/docs/*.md`   | `GUIDE.md` — rendered by the docs page.                                                            |
-| `public/_redirects`  | Netlify-style SPA fallback for the deploy host.                                                    |
-| `specs/`             | Design specs — phase-numbered subdirs, `index.md` is the master index.                             |
-| `tests/`             | Playwright e2e specs and `__screenshots__/` baselines.                                             |
-| `.diary/`            | Date-named milestone notes (YYYYMMDD.md), checked in.                                              |
+| `src/fixtures/`      | Auction fixtures used by `/test-*` routes.                                                                          |
+| `src/index.css`      | Design tokens, dark-mode overrides, `@theme` Tailwind exposure, global transition rule, keyframes.                  |
+| `src/index.tsx`      | App entry: router, query client, GTM, prefetches.                                                                   |
+| `public/docs/*.md`   | `GUIDE.md` — rendered by the docs page.                                                                             |
+| `public/_redirects`  | Netlify-style SPA fallback for the deploy host.                                                                     |
+| `specs/`             | Design specs — phase-numbered subdirs, `index.md` is the master index.                                              |
+| `tests/`             | Playwright e2e specs and `__screenshots__/` baselines.                                                              |
+| `.diary/`            | Date-named milestone notes (YYYYMMDD.md), checked in.                                                               |
 
 `SCREENS.md`, `ARCHITECTURE.md`, `README.md`, `CLAUDE.md`, `VISUALS.md`
 live at repo root. `bugs.md`, `ISSUES.md`, `differences.md`, `docs/` are
@@ -149,17 +149,17 @@ UI-free. Pure functions and async fetchers, typed against SDK types where applic
 
 ### Plumbing
 
-| File             | What it does                                        |
-| ---------------- | --------------------------------------------------- |
-| `apiUrls.ts`     | Four `*_API_URL` constants, each env-overridable.   |
-| `fetch-utils.ts` | `fetchJson<T>(url)` — throws on non-2xx.            |
-| `types.ts`       | Shared `Color` enum.                                |
-| `help-text.ts`   | `HELP_TEXT` map of tooltip strings keyed by metric. |
-| `constants.ts`   | `EPOCH_DURATION_MS`, `EPOCHS_PER_YEAR`, `LAST_DRYRUN_EPOCH`. |
-| `pmpe.ts`        | `pmpeToSol(pmpe, stakeSol)` — single conversion site. |
-| `units.ts`       | `solToLamports(sol)` — SOL → lamports. |
+| File             | What it does                                                                                                                                                |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apiUrls.ts`     | Four `*_API_URL` constants, each env-overridable.                                                                                                           |
+| `fetch-utils.ts` | `fetchJson<T>(url)` — throws on non-2xx.                                                                                                                    |
+| `types.ts`       | Shared `Color` enum.                                                                                                                                        |
+| `help-text.ts`   | `HELP_TEXT` map of tooltip strings keyed by metric.                                                                                                         |
+| `constants.ts`   | `EPOCH_DURATION_MS`, `EPOCHS_PER_YEAR`, `LAST_DRYRUN_EPOCH`.                                                                                                |
+| `pmpe.ts`        | `pmpeToSol(pmpe, stakeSol)` — single conversion site.                                                                                                       |
+| `units.ts`       | `solToLamports(sol)` — SOL → lamports.                                                                                                                      |
 | `card-status.ts` | `CardStatus`, `CardStatusTone`, `CardStatusAction` types — live in services (not `components/`) so `tip-engine.ts` can build status values without a cycle. |
-| `sdk-rerun.ts`   | Wraps SDK `Auction.evaluate()` for the live simulation path; applies bond patches that `SourceDataOverrides` does not yet model. |
+| `sdk-rerun.ts`   | Wraps SDK `Auction.evaluate()` for the live simulation path; applies bond patches that `SourceDataOverrides` does not yet model.                            |
 
 ---
 
@@ -202,17 +202,17 @@ rows (new position, green/red grading by move severity).
 
 ### react-query keys
 
-| Key                                    | Owner                                                                                      | Notes                                                                                                                                   |
-| -------------------------------------- | ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `['sam']`                              | `SamPage`, `EpochMeter`, `validator-with-bond.ts`, `validator-with-protected_event.ts`     | Single key, canonical live auction — read-only for all consumers. Simulation output never written here; it lives in `SamPage` state (see below). `placeholderData: keepPreviousData`. `staleTime: 5 min` default. |
-| `['validator-names']`                  | `SamPage`                                                                                  | `staleTime: Infinity`.                                                                                                                  |
-| `['validators-with-epochs', 3]`        | `ValidatorDetail`, `validator-with-protected_event.ts`                                     | 3-epoch window; shared via `ensureQueryData` so the multi-MB payload is fetched at most once.                                           |
-| `['notifications-all', 'sam_auction']` | `SamPage`, `ValidatorBondsPage`                                                            | Refetch every 5 min.                                                                                                                    |
-| `['notifications-broadcast']`          | All three top pages                                                                        | Refetch every 5 min.                                                                                                                    |
-| `['bonds']`                            | `ValidatorBondsPage` + `Navigation` hover-prefetch                                         | Refetch every hour; nav-hover uses `staleTime: 5 min`.                                                                                  |
-| `['protected-events']`                 | `ProtectedEventsPage` + `Navigation` hover-prefetch + `EpochMeter`                         | Refetch every hour; nav-hover and `EpochMeter` use `staleTime: 5 min`.                                                                  |
-| `['psr-estimates-all']`                | `ValidatorDetail`                                                                          | All PSR estimates in one query; `staleTime: 5 min`.                                                                                     |
-| `['doc', activeDoc]`                   | `DocsPage`                                                                                 | `staleTime: Infinity`.                                                                                                                  |
+| Key                                    | Owner                                                                                  | Notes                                                                                                                                                                                                             |
+| -------------------------------------- | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `['sam']`                              | `SamPage`, `EpochMeter`, `validator-with-bond.ts`, `validator-with-protected_event.ts` | Single key, canonical live auction — read-only for all consumers. Simulation output never written here; it lives in `SamPage` state (see below). `placeholderData: keepPreviousData`. `staleTime: 5 min` default. |
+| `['validator-names']`                  | `SamPage`                                                                              | `staleTime: Infinity`.                                                                                                                                                                                            |
+| `['validators-with-epochs', 3]`        | `ValidatorDetail`, `validator-with-protected_event.ts`                                 | 3-epoch window; shared via `ensureQueryData` so the multi-MB payload is fetched at most once.                                                                                                                     |
+| `['notifications-all', 'sam_auction']` | `SamPage`, `ValidatorBondsPage`                                                        | Refetch every 5 min.                                                                                                                                                                                              |
+| `['notifications-broadcast']`          | All three top pages                                                                    | Refetch every 5 min.                                                                                                                                                                                              |
+| `['bonds']`                            | `ValidatorBondsPage` + `Navigation` hover-prefetch                                     | Refetch every hour; nav-hover uses `staleTime: 5 min`.                                                                                                                                                            |
+| `['protected-events']`                 | `ProtectedEventsPage` + `Navigation` hover-prefetch + `EpochMeter`                     | Refetch every hour; nav-hover and `EpochMeter` use `staleTime: 5 min`.                                                                                                                                            |
+| `['psr-estimates-all']`                | `ValidatorDetail`                                                                      | All PSR estimates in one query; `staleTime: 5 min`.                                                                                                                                                               |
+| `['doc', activeDoc]`                   | `DocsPage`                                                                             | `staleTime: Infinity`.                                                                                                                                                                                            |
 
 ### SAM page state
 
@@ -276,4 +276,3 @@ CI (`.github/workflows/ci.yml`): `pnpm install --frozen-lockfile` →
 - Specs land in `specs/<phase>/<n>-name.md`, indexed in `specs/index.md`.
 - `.diary/YYYYMMDD.md` for milestone notes.
 - `tmp/` for ephemeral artifacts; gitignored.
-
