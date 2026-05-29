@@ -31,6 +31,7 @@
 | [2/25-epoch-browser.md](2/25-epoch-browser.md) | draft | Epoch browser: full dashboard replay at any past epoch |
 | [2/26-time-series-charts.md](2/26-time-series-charts.md) | draft | Time-series charts: per-validator bond/bid/stake/payments history |
 | [2/27-pmpe-instead-of-apy.md](2/27-pmpe-instead-of-apy.md) | experiment | Show Total PMPE instead of Max APY as primary table column |
+| [2/28-constraint-detail-view.md](2/28-constraint-detail-view.md) | planned | Surface every binding constraint + ranking inputs in detail panel |
 
 ## Phase 1 — shipped
 

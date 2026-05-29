@@ -36,6 +36,7 @@ Review queue. Only open items. Each entry: short title, source file:line, what's
 - **Symptom:** `selectTip` picks the single highest-urgency candidate by `LEVER_ORDER`. `deltaCta` has explicit mutual exclusion at source (commented). `capCta` does not — a validator hitting both a bond fee (critical) and a cap (info) only ever surfaces the bond tip; the cap explanation vanishes. This is reasonable for the header chip but a user comparing rows can't tell whether a capped validator still has a cap issue or only a bond issue.
 - **Expected:** either make cap mutually exclusive with bond at source (and document it), or carry a secondary tip slot so the validator-detail panel can list both. The current state silently picks one.
 - **Audit ref:** bug-hunt sweep 2026-05-19.
+- **Now tracked by `specs/2/28-constraint-detail-view.md`** (planned) — this bug is the narrow symptom; the spec is the P1 feature fix (surface all binding constraints in the detail panel).
 
 ## 9. bond-coverage.ts: `freshBidTooLowUndel` stake-base mismatch
 
