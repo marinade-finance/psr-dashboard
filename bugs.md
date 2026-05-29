@@ -129,7 +129,14 @@ Verification needs access to ds-sam-sdk source in `node_modules`. Add unit test 
 - **Expected:** detect duplicate `(vote_account, epoch, reason, amount)` tuples in the incoming data and surface a visual warning (e.g. a yellow "duplicate" badge or a banner) so users know the double-billing is a known backend issue, not two separate events. Do not silently deduplicate — the data should be visible but flagged.
 - **Note:** fix depends on the backend resolving the root cause. Dashboard change is defensive UX only.
 
-## 39. `topUpToKeepStake` oversized when `maxStakeWanted < marinadeActivatedStakeSol`
+## 39. Simulation panel number inputs don't respond to mouse wheel
+
+- **Source:** user feedback 2026-05-29
+- **Where:** `src/components/validator-detail/validator-detail.tsx` — Simulate tab inputs (bid PMPE, inflation commission, MEV commission, block rewards commission)
+- **Symptom:** scrolling the mouse wheel over a numeric input in the simulation panel does not increment/decrement the value. Validators expect mouse-wheel to work as it does in most numeric inputs (e.g. browser native `<input type="number">` behaviour).
+- **Expected:** mouse wheel up/down adjusts the focused input value by one step; modifier key (Shift?) increases the step size for coarser adjustment.
+
+## 40. `topUpToKeepStake` oversized when `maxStakeWanted < marinadeActivatedStakeSol`
 
 - **Source:** Sec3 user-test (Bug C)
 - **Where:** `src/services/bond-coverage.ts:113` (`topUpToKeepStake`)
