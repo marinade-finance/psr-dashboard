@@ -7,6 +7,8 @@ import {
   selectCutoffRank,
   selectExpectedStakeChange,
   selectExpectedStakeChangeBreakdown,
+  selectRedelegationPriorityFrontierPmpe,
+  selectRedelegationPriorityRank,
 } from '../sam'
 
 import type * as ValidatorsModule from '../validators'
@@ -193,5 +195,64 @@ describe('augmentAuctionResult — bond below minBondBalanceSol', () => {
     expect(
       bd.paidUndelegation + bd.redelegationInflow + bd.naturalWithdrawal,
     ).toBeCloseTo(total, 9)
+  })
+})
+
+function makePrioValidator(
+  voteAccount: string,
+  totalPmpe: number,
+  active: number,
+  target: number,
+): AuctionValidator {
+  return {
+    voteAccount,
+    auctionStake: { marinadeSamTargetSol: target },
+    marinadeActivatedStakeSol: active,
+    bondBalanceSol: 5,
+    values: { paidUndelegationSol: 0 },
+    revShare: { totalPmpe },
+  } as unknown as AuctionValidator
+}
+
+describe('allocateRedelegation — best-first walk by totalPmpe desc', () => {
+  // Two below-target winners; budget only covers one full delta. The greedy
+  // pass must reach the HIGHER-totalPmpe validator first. Input order is
+  // deliberately worst-first to prove the sort reorders it.
+  function tightBudgetResult(): AuctionResult {
+    return makeBondResult(
+      [
+        makePrioValidator('LOW', 8, 0, 1000),
+        makePrioValidator('HIGH', 12, 0, 1000),
+      ],
+      // TVL − Σactive = 1000 budget; each wants 1000, so only one is filled.
+      1000,
+    )
+  }
+
+  it('priority rank 1 is the highest-totalPmpe validator', () => {
+    const result = tightBudgetResult()
+    const high = result.auctionData.validators.find(
+      v => v.voteAccount === 'HIGH',
+    )!
+    const low = result.auctionData.validators.find(
+      v => v.voteAccount === 'LOW',
+    )!
+    expect(selectRedelegationPriorityRank(high, result)).toBe(1)
+    expect(selectRedelegationPriorityRank(low, result)).toBe(2)
+  })
+
+  it('the budget fills the higher-totalPmpe validator first', () => {
+    const result = tightBudgetResult()
+    const augmented = augmentAuctionResult(result, 0)
+    const high = augmented.find(v => v.voteAccount === 'HIGH')!
+    const low = augmented.find(v => v.voteAccount === 'LOW')!
+    expect(selectExpectedStakeChange(high)).toBeCloseTo(1000, 9)
+    expect(selectExpectedStakeChange(low)).toBe(0)
+  })
+
+  it('priority frontier is the lowest fully-served totalPmpe', () => {
+    const result = tightBudgetResult()
+    // Only HIGH (12) is fully served; LOW never gets budget → frontier = 12.
+    expect(selectRedelegationPriorityFrontierPmpe(result)).toBe(12)
   })
 })
