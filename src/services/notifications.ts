@@ -1,5 +1,6 @@
+import { z } from 'zod'
 import { NOTIFICATIONS_API_URL } from './apiUrls'
-import { expectArray, expectObject, fetchJson, FetchError } from './fetch-utils'
+import { fetchJson, FetchError } from './fetch-utils'
 
 export type NotificationPriority = 'critical' | 'warning' | 'info'
 
@@ -31,33 +32,29 @@ export interface NotificationSummary {
   notifications: ParsedNotification[]
 }
 
+const ValidatorNotificationSchema = z
+  .object({
+    id: z.string(),
+    notification_type: z.string(),
+    inner_type: z.string(),
+    user_id: z.string(),
+    scope: z.enum(['broadcast', 'individual']).optional(),
+    priority: z.enum(['critical', 'warning', 'info']),
+    title: z.string().nullable(),
+    message: z.string(),
+    data: z.record(z.unknown()),
+    notification_id: z.string().nullable(),
+    relevance_until: z.string(),
+    created_at: z.string(),
+  })
+  .passthrough()
+const ValidatorNotificationArraySchema = z.array(ValidatorNotificationSchema)
+
 const PAGE_SIZE = 200
 // Safety cap. Assumes fewer than PAGE_SIZE * MAX_PAGES active individual
 // notifications at any time; prevents runaway loops if the API misbehaves.
 const MAX_PAGES = 25
 const TOOLTIP_MAX_NOTIFICATIONS = 10
-
-// Spot-check the wire format at the boundary: a backend rename of `user_id`
-// or `message` would throw a FetchError here instead of letting `undefined`
-// cascade into the tooltip/detail panel as the literal string "undefined".
-// `priority` is left loose because broadcast-only callers don't read it and
-// test mocks send it as a number.
-const validateNotifications = (body: unknown): ValidatorNotification[] => {
-  const arr = expectArray(body, 'notifications response')
-  if (arr.length > 0) {
-    const first = expectObject(arr[0], 'notification entry')
-    if (typeof first['id'] !== 'string') {
-      throw new Error('notification entry missing `id`')
-    }
-    if (typeof first['message'] !== 'string') {
-      throw new Error('notification entry missing `message`')
-    }
-    if (first['title'] !== null && typeof first['title'] !== 'string') {
-      throw new Error('notification entry has non-string `title`')
-    }
-  }
-  return arr as ValidatorNotification[]
-}
 
 export async function fetchAllNotifications(
   notificationType?: string,
@@ -80,7 +77,7 @@ export async function fetchAllNotifications(
         notifications = await fetchJson<ValidatorNotification[]>(
           url.toString(),
           signal,
-          validateNotifications,
+          body => ValidatorNotificationArraySchema.parse(body),
         )
       } catch (err) {
         if (err instanceof FetchError) break
@@ -121,7 +118,7 @@ export async function fetchLatestSamAuctionBroadcastNotification(
     const notifications = await fetchJson<ValidatorNotification[]>(
       url.toString(),
       signal,
-      validateNotifications,
+      body => ValidatorNotificationArraySchema.parse(body),
     )
     if (notifications.length === 0) return null
     return notifications.reduce((latest, n) =>

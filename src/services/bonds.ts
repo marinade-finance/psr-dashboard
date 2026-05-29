@@ -1,4 +1,5 @@
 import { lamportsToSol } from 'src/format'
+import { schemas } from 'src/schemas/generated/bonds'
 import { VALIDATOR_BONDS_API_URL } from 'src/services/apiUrls'
 import { fetchJson } from 'src/services/fetch-utils'
 
@@ -27,4 +28,8 @@ type BondsResponse = {
 }
 
 export const fetchBonds = (signal?: AbortSignal): Promise<BondsResponse> =>
-  fetchJson<BondsResponse>(`${VALIDATOR_BONDS_API_URL}/bonds`, signal)
+  fetchJson<BondsResponse>(
+    `${VALIDATOR_BONDS_API_URL}/bonds`,
+    signal,
+    body => schemas.BondsResponse.parse(body) as BondsResponse,
+  )

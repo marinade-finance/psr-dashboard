@@ -1,5 +1,6 @@
+import { z } from 'zod'
 import { SCORING_API_URL } from './apiUrls'
-import { expectArray, expectObject, fetchJson } from './fetch-utils'
+import { fetchJson } from './fetch-utils'
 
 export type ScoringValidator = {
   epoch: number
@@ -13,23 +14,20 @@ export type ScoringValidator = {
   }
 }
 
-// Spot-check the wire format at the boundary: a backend rename of `voteAccount`
-// or `revShare` would throw a FetchError with context here instead of letting
-// `undefined` cascade through pmpe math (→ NaN displayed values).
-const validateScoring = (body: unknown): ScoringValidator[] => {
-  const arr = expectArray(body, 'scoring response')
-  if (arr.length > 0) {
-    const first = expectObject(arr[0], 'scoring entry')
-    if (typeof first['voteAccount'] !== 'string') {
-      throw new Error('scoring entry missing `voteAccount`')
-    }
-    if (typeof first['epoch'] !== 'number') {
-      throw new Error('scoring entry missing numeric `epoch`')
-    }
-    expectObject(first['revShare'], 'scoring revShare')
-  }
-  return arr as ScoringValidator[]
-}
+const ScoringValidatorSchema = z
+  .object({
+    epoch: z.number(),
+    voteAccount: z.string(),
+    revShare: z
+      .object({
+        bidTooLowPenaltyPmpe: z.number(),
+        blacklistPenaltyPmpe: z.number(),
+      })
+      .passthrough(),
+    values: z.object({ bondRiskFeeSol: z.number() }).passthrough(),
+  })
+  .passthrough()
+const ScoringResponseSchema = z.array(ScoringValidatorSchema)
 
 export const fetchScoring = (
   signal?: AbortSignal,
@@ -37,5 +35,5 @@ export const fetchScoring = (
   fetchJson<ScoringValidator[]>(
     `${SCORING_API_URL}/api/v1/scores/sam?lastEpochs=3`,
     signal,
-    validateScoring,
+    body => ScoringResponseSchema.parse(body),
   )

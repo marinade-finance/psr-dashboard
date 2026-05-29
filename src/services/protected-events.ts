@@ -1,4 +1,5 @@
 import { pct } from 'src/format'
+import { schemas } from 'src/schemas/generated/bonds'
 import { VALIDATOR_BONDS_API_URL } from 'src/services/apiUrls'
 import { fetchJson } from 'src/services/fetch-utils'
 
@@ -147,4 +148,6 @@ export const fetchProtectedEvents = (
   fetchJson<ProtectedEventsResponse>(
     `${VALIDATOR_BONDS_API_URL}/protected-events`,
     signal,
+    body =>
+      schemas.ProtectedEventsResponse.parse(body) as ProtectedEventsResponse,
   )
