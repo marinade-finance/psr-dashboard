@@ -70,6 +70,14 @@ const TABLE_BASE = [
   '[&_tbody_tr:hover]:bg-primary-light',
 ].join(' ')
 
+// Virtualized variant: drop content-visibility (virtualizer already skips
+// off-screen rows; content-visibility on visible rows can collapse their
+// reported width and cause thead/tbody column misalignment during scroll).
+const TABLE_BASE_VIRTUALIZED = TABLE_BASE.replace(
+  '[&_tbody_tr]:[content-visibility:auto] [&_tbody_tr]:[contain-intrinsic-size:auto_44px]',
+  '',
+)
+
 function alignmentClassName(alignment?: Alignment): string {
   return alignment === 'right' ? 'text-right' : 'text-left'
 }
@@ -377,10 +385,10 @@ function VirtualizedTable<Item>({
   return (
     <div
       ref={scrollRef}
-      style={{ maxHeight, overflow: 'auto' }}
+      style={{ maxHeight, overflowY: 'auto', overflowX: 'visible' }}
       className="bg-card"
     >
-      <UiTable className={cn(TABLE_BASE, className)}>
+      <UiTable className={cn(TABLE_BASE_VIRTUALIZED, className)}>
         <TableHeader>
           {renderHeader(
             columns,
