@@ -9,7 +9,10 @@ import {
   selectExpectedStakeChangeBreakdown,
   selectRedelegationPriorityFrontierPmpe,
   selectRedelegationPriorityRank,
+  selectWinningApyForValidator,
 } from '../sam'
+
+import { compoundApy } from '../calculations'
 
 import type * as ValidatorsModule from '../validators'
 import type {
@@ -254,5 +257,43 @@ describe('allocateRedelegation — best-first walk by totalPmpe desc', () => {
     const result = tightBudgetResult()
     // Only HIGH (12) is fully served; LOW never gets budget → frontier = 12.
     expect(selectRedelegationPriorityFrontierPmpe(result)).toBe(12)
+  })
+})
+
+function makeApyValidator(
+  voteAccount: string,
+  totalPmpe: number,
+  nonBid: number,
+  inSet: boolean,
+): AuctionValidator {
+  return {
+    voteAccount,
+    auctionStake: { marinadeSamTargetSol: inSet ? 100 : 0 },
+    marinadeActivatedStakeSol: 0,
+    bondBalanceSol: 5,
+    values: { paidUndelegationSol: 0 },
+    revShare: { totalPmpe, inflationPmpe: nonBid, mevPmpe: 0, blockPmpe: 0 },
+  } as unknown as AuctionValidator
+}
+
+describe('selectWinningApyForValidator — marginal winner', () => {
+  it('rebuilds the bid from the LOWEST-totalPmpe in-set validator', () => {
+    // In-set: HIGH (totalPmpe 12) and MARG (totalPmpe 10, the clearing winner).
+    // OUT (totalPmpe 8) is not in set. The bid component must come from MARG's
+    // non-bid profile (nonBid=3), not HIGH's (nonBid=7) or OUT's. Input order
+    // is worst-first so a worst-first walk would wrongly pick HIGH last.
+    const result = makeResult(10, [
+      makeApyValidator('OUT', 8, 1, false),
+      makeApyValidator('MARG', 10, 3, true),
+      makeApyValidator('HIGH', 12, 7, true),
+    ])
+    const self = makeApyValidator('SELF', 11, 5, true)
+    const epochsPerYear = 160
+    const winningBidPmpe = Math.max(0, 10 - 3) // winningTotalPmpe − MARG nonBid
+    const expected = compoundApy(5 + winningBidPmpe, epochsPerYear)
+    expect(selectWinningApyForValidator(self, result, epochsPerYear)).toBeCloseTo(
+      expected,
+      9,
+    )
   })
 })
