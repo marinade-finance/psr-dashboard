@@ -21,9 +21,6 @@ pnpm test:e2e:update    # refresh visual-regression baselines
 npx tsc --noEmit        # type check
 ```
 
-Pre-commit hooks (husky + lint-staged) run `eslint --fix` + `prettier
---write` on staged TS/TSX. First run may reformat — retry once.
-
 ## Routes
 
 | Route                    | Page                                   |
