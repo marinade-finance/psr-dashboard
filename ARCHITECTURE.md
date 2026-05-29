@@ -202,28 +202,28 @@ rows (new position, green/red grading by move severity).
 
 ### react-query keys
 
-| Key                                    | Owner                                                                                     | Notes                                                                                                                             |
-| -------------------------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `['sam', simulationRunId]`             | `SamPage`                                                                                 | Increments on every simulate/reset → re-runs with `simulationOverrides`. `placeholderData: keepPreviousData`. Refetch every hour. |
-| `['sam', 0]`                           | `index.tsx` prefetch + `EpochMeter`                                                       | Warms the cache on cold load; `EpochMeter` subscribes for the auction epoch.                                                      |
-| `['validator-names']`                  | `SamPage`                                                                                 | `staleTime: Infinity`.                                                                                                            |
-| `['notifications-all', 'sam_auction']` | `SamPage`, `ValidatorBondsPage`                                                           | Refetch every 5 min.                                                                                                              |
-| `['notifications-broadcast']`          | All three top pages                                                                       | Refetch every 5 min.                                                                                                              |
-| `['bonds']`                            | `ValidatorBondsPage` + `Navigation` hover-prefetch + `index.tsx` prefetch                 | Refetch every hour; nav-hover uses `staleTime: 5 min`.                                                                            |
-| `['protected-events']`                 | `ProtectedEventsPage` + `Navigation` hover-prefetch + `index.tsx` prefetch + `EpochMeter` | Refetch every hour; nav-hover and `EpochMeter` use `staleTime: 5 min`.                                                            |
-| `['psrEstimates', voteAccount]`        | `ValidatorDetail`                                                                         | `staleTime: 5 min`, per-validator.                                                                                                |
-| `['doc', activeDoc]`                   | `DocsPage`                                                                                | `staleTime: Infinity`.                                                                                                            |
+| Key                                    | Owner                                                                                      | Notes                                                                                                                                   |
+| -------------------------------------- | ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `['sam']`                              | `SamPage`, `EpochMeter`, `validator-with-bond.ts`, `validator-with-protected_event.ts`     | Single key; simulation writes back via `useMutation` + `setQueryData`. `placeholderData: keepPreviousData`. `staleTime: 5 min` default. |
+| `['validator-names']`                  | `SamPage`                                                                                  | `staleTime: Infinity`.                                                                                                                  |
+| `['validators-with-epochs', 3]`        | `ValidatorDetail`, `validator-with-protected_event.ts`                                     | 3-epoch window; shared via `ensureQueryData` so the multi-MB payload is fetched at most once.                                           |
+| `['notifications-all', 'sam_auction']` | `SamPage`, `ValidatorBondsPage`                                                            | Refetch every 5 min.                                                                                                                    |
+| `['notifications-broadcast']`          | All three top pages                                                                        | Refetch every 5 min.                                                                                                                    |
+| `['bonds']`                            | `ValidatorBondsPage` + `Navigation` hover-prefetch                                         | Refetch every hour; nav-hover uses `staleTime: 5 min`.                                                                                  |
+| `['protected-events']`                 | `ProtectedEventsPage` + `Navigation` hover-prefetch + `EpochMeter`                         | Refetch every hour; nav-hover and `EpochMeter` use `staleTime: 5 min`.                                                                  |
+| `['psr-estimates-all']`                | `ValidatorDetail`                                                                          | All PSR estimates in one query; `staleTime: 5 min`.                                                                                     |
+| `['doc', activeDoc]`                   | `DocsPage`                                                                                 | `staleTime: Infinity`.                                                                                                                  |
 
 ### SAM page state
 
 Tracked entirely in `SamPage` (`src/pages/stake-auction-marketplace.tsx`):
 
 - `selectedValidator` (URL-synced via `?v=`).
-- `simulationRunId`, `simulationOverrides`, `simulatedValidators`,
-  `originalAuctionResult`, `isCalculating`.
-- Edits flow detail-panel inputs → `mergeOverrides` → bump
-  `simulationRunId` → react-query refetch → `insertGhostRows` injects
-  originals at their pre-simulation positions.
+- `simulationOverrides`, `simulatedValidators`, `originalAuctionResult`,
+  `isCalculating`.
+- Edits flow detail-panel inputs → `mergeOverrides` → `useMutation`
+  reruns the SDK → `setQueryData(['sam'], result)` → `insertGhostRows`
+  injects originals at their pre-simulation positions.
 
 ### URL ↔ sheet sync
 
