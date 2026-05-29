@@ -19,8 +19,11 @@ start:dev`), build output to `build/` (`pnpm build`), preview on 8080
   `npx tsc --noEmit` for type checks. `src` alias → `./src`.
 - **UI**: React 18 (`createRoot` from `react-dom/client`, `StrictMode`).
 - **Routing**: `react-router-dom` 6.30 (`createBrowserRouter` +
-  `RouterProvider`). SPA fallback handled by a custom Vite plugin in
-  `vite.config.ts:spaFallback`; deploy-side fallback in `public/_redirects`.
+  `RouterProvider`). SPA fallback is two-layered: `public/_redirects`
+  (`/* /index.html 200`) covers the Netlify CDN in production; the custom
+  `spaFallback` Vite plugin in `vite.config.ts` covers `pnpm dev` and
+  `pnpm preview` locally. Both must stay in sync — `_redirects` is ignored
+  by Vite and `spaFallback` is ignored by Netlify.
 - **Styling**: Tailwind v4 via `@tailwindcss/vite`. All design tokens are
   CSS vars in `src/index.css`, exposed to Tailwind through its `@theme`
   block.
