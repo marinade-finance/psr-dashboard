@@ -67,6 +67,9 @@ status.
 
 Lifecycle: `draft` → `planned` → `partial` → `shipped`.
 - `draft` — idea captured; implementation blocked until promoted
+- `experiment` — live prototype in a preview branch; validates the idea
+  before committing to production. Must not be merged to production until
+  explicitly promoted to `planned` AND any stated gates are cleared.
 - `planned` — approved; ready to implement
 - `partial` — in progress
 - `shipped` — done
