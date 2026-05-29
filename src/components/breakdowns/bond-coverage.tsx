@@ -211,7 +211,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           />
           <CalcRow
             label="Bond held for bid payments"
-            help="Bid times exposed stake over the covered window, plus a fixed reserve for the unprotected slice."
+            help={`Expected max effective bid × exposed stake × ${coverage.minBondEpochs} epochs, plus a fixed reserve for the unprotected slice.`}
             col2={bondSol(coverage.heldForBidKeep)}
           />
           <CalcRow
@@ -252,7 +252,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           />
           <CalcRow
             label="Bond held for bid payments"
-            help="Bid times exposed stake over the longer ideal window, plus a fixed reserve for the unprotected slice."
+            help={`Expected max effective bid × exposed stake × ${coverage.idealBondEpochs} epochs, plus a fixed reserve for the unprotected slice.`}
             col2={bondSol(coverage.heldForBidIdeal)}
           />
           <CalcRow
