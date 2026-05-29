@@ -63,7 +63,8 @@ const claimAmountInLossRange = (
   const claimPerStake =
     Math.min(expectedEpr - actualEpr, maxClaimPerStake) - ignoredClaimPerStake
 
-  return Math.max(stake * claimPerStake, 0)
+  const claim = Math.max(stake * claimPerStake, 0)
+  return Number.isFinite(claim) ? claim : 0
 }
 
 const calcStakeByEpoch = (validators: Validator[]) => {
@@ -157,7 +158,7 @@ const buildLowCreditsProtectedEvent = (
     expectedEpr,
     marinadeStake,
   )
-  if (LAMPORTS_PER_SOL * amountSol < config.min_settlement_lamports) {
+  if (!(LAMPORTS_PER_SOL * amountSol >= config.min_settlement_lamports)) {
     return null
   }
 
@@ -224,7 +225,7 @@ const buildCommissionIncreaseProtectedEvent = (
     expectedEpr,
     marinadeStake,
   )
-  if (LAMPORTS_PER_SOL * amountSol < config.min_settlement_lamports) {
+  if (!(LAMPORTS_PER_SOL * amountSol >= config.min_settlement_lamports)) {
     return null
   }
 

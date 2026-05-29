@@ -38,7 +38,7 @@ export const stake = (n: number) => `${sol(n, 0)} SOL`
 // decimals (tip-pill style); pass digits for receipt-precision rendering.
 export const pay = (n: number, digits: number = 0) => {
   const p = Math.pow(10, digits)
-  return `${sol(Math.ceil(n * p) / p, digits)} SOL`
+  return `${sol(Math.ceil(finite(n) * p) / p, digits)} SOL`
 }
 export const penalty = (n: number) => `${sol(n, 3)} SOL`
 // Cost rows need 3-decimal precision — per-epoch bid costs are often
