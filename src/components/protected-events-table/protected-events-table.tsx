@@ -90,6 +90,24 @@ const renderFunderBadge = (protectedEvent: ProtectedEvent) => {
   return null
 }
 
+// Identity of a settlement row. The backend has emitted exact duplicate
+// settlements for some epochs (known protocol bug, e.g. epoch 977) — two rows
+// with the same validator, epoch, reason, and lamport amount. We surface them
+// as duplicates rather than silently rendering two identical rows; we never
+// deduplicate, since the data is what the API returned.
+const dedupeKey = (e: ProtectedEvent) =>
+  `${e.vote_account}|${e.epoch}|${selectProtectedStakeReason(e)}|${e.amount}`
+
+const renderDuplicateBadge = () => (
+  <HtmlTooltip html="This settlement appears more than once with identical details — a known backend double-settlement bug, not two separate events. The amount may be double-counted until the backend resolves it.">
+    <span
+      className={cn(CHIP_BASE, 'cursor-help ml-2 bg-warning-light text-warning')}
+    >
+      Duplicate
+    </span>
+  </HtmlTooltip>
+)
+
 type Props = {
   data: ProtectedEventWithValidator[]
   level?: UserLevel
@@ -180,6 +198,19 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
       }),
     [preFilteredData],
   )
+
+  // Keys that occur more than once across the filtered rows — flagged as
+  // backend double-settlements in the Reason cell.
+  const duplicateKeys = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const { protectedEvent } of filteredData) {
+      const key = dedupeKey(protectedEvent)
+      counts.set(key, (counts.get(key) ?? 0) + 1)
+    }
+    return new Set(
+      [...counts].filter(([, n]) => n > 1).map(([key]) => key),
+    )
+  }, [filteredData])
 
   // Filtered aggregates — also one-pass for the same reason.
   const filteredAggregates = useMemo(() => {
@@ -326,7 +357,11 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
                   'Why stakers needed reimbursing — the validator hiked its commission, missed too many slots, or went down entirely.',
                 headerGuideTo: `${docsPath(level)}#psr`,
                 render: ({ protectedEvent }) => (
-                  <>{selectProtectedStakeReason(protectedEvent)}</>
+                  <>
+                    {selectProtectedStakeReason(protectedEvent)}
+                    {duplicateKeys.has(dedupeKey(protectedEvent)) &&
+                      renderDuplicateBadge()}
+                  </>
                 ),
                 compare: (a, b) =>
                   selectProtectedStakeReason(a.protectedEvent).localeCompare(
