@@ -206,10 +206,18 @@ independently per validator:
 - **MEV commission** — same, applied to MEV (Jito) tips.
 - **Block-rewards commission** — same, applied to priority-fee revenue.
 
-The **effective commission** the auction reads is the share that flows back to
-stakers across all three streams, weighted by the validator's actual reward mix.
-A validator with high inflation rewards but no MEV will be valued differently
-from a high-MEV validator at the same headline commission.
+The APY the auction assigns each validator is `network-average reward rate ×
+(1 − commission)` for each stream — not the validator's own realized output.
+Two validators at the same inflation commission receive the same `inflationPmpe`
+regardless of their individual block performance or uptime. The rates come from
+the `rewards_inflation_est` and `rewards_mev` series in the validators API;
+both are estimates or trailing averages, not finalized on-chain receipts.
+
+MEV rewards carry an additional lag: Jito batches tip delivery and settles
+multiple epochs after the transactions that earned them. The `rewards_mev`
+figure the auction uses is the trailing on-chain delivery rate — a strong MEV
+week won't lift your `mevPmpe` until those tips land on-chain, typically
+several epochs later.
 
 The dashboard's What-If Simulation lets you tweak each commission independently
 and watch the validator's rank shift; see [Simulation Mode](#simulation).

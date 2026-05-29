@@ -22,10 +22,12 @@
 | [2/16-bond-breakdown-forward-looking.md](2/16-bond-breakdown-forward-looking.md) | planned | Forward-looking ideal bond for SOFT + growing validators |
 | [2/17-notifications-by-epoch.md](2/17-notifications-by-epoch.md) | planned | Notifications tab grouped by epoch number |
 | [2/18-responsive-layout.md](2/18-responsive-layout.md) | planned | Responsive layout for narrow viewports (< 900px) |
-| [2/19-guide-gaps.md](2/19-guide-gaps.md) | planned | GUIDE gaps from 2026-04/05 validator support threads |
+| [2/19-guide-gaps.md](2/19-guide-gaps.md) | planned | GUIDE gaps: support threads + reason labels + APY inaccuracy (item 7 fixed) |
 | [2/20-docs-line-length.md](2/20-docs-line-length.md) | planned | Docs hygiene: wrap prose at ≤120-char line length |
 | [2/21-bond-calculator.md](2/21-bond-calculator.md) | planned | Bond Calculator: bid/bond sizing tool for new validators |
 | [2/22-sam-stats-bar.md](2/22-sam-stats-bar.md) | partial | SAM stats bar: importance hierarchy + further tile collapse |
+| [2/23-payment-history.md](2/23-payment-history.md) | planned | Payment history: Marinade Bill + historical epoch browser |
+| [2/24-commissions-summary.md](2/24-commissions-summary.md) | planned | Bid + commissions inline on table row (tooltip or columns) |
 
 ## Phase 1 — shipped
 
