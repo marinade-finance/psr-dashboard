@@ -56,3 +56,9 @@ generate "scoring"
 generate "notifications"
 
 echo "Done. Schemas in $OUT_DIR/"
+echo
+echo "WARNING: re-apply manual patches not derivable from the OpenAPI spec (bugs.md #42):"
+echo "  bonds.ts ProtectedEvent union — keep the trailing 'z.object({}).passthrough()'"
+echo "    catch-all so an unknown backend reason doesn't throw in protected-events.ts."
+echo "  (bonds cpmpe/bond_type are handled by an override in src/services/bonds.ts —"
+echo "   no generated-file patch needed there.)"

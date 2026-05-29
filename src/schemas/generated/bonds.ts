@@ -5,8 +5,8 @@ const ValidatorBondRecord = z
   .object({
     authority: z.string(),
     block_commission_bps: z.number().int().nullish(),
-    bond_type: z.string().optional(),
-    cpmpe: z.union([z.string(), z.number()]),
+    bond_type: z.string(),
+    cpmpe: z.string(),
     effective_amount: z.number(),
     epoch: z.number().int().gte(0),
     funded_amount: z.number(),
