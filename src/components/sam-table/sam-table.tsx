@@ -162,8 +162,9 @@ export function passesTableFilter(
   minBondBalanceSol: number,
 ): boolean {
   const hasActiveStake = v.marinadeActivatedStakeSol > 0
+  const hasTargetStake = v.auctionStake.marinadeSamTargetSol > 0
   const meetsMinBond = (v.bondBalanceSol ?? 0) >= minBondBalanceSol
-  if (!hasActiveStake && !meetsMinBond) return false
+  if (!hasActiveStake && !hasTargetStake && !meetsMinBond) return false
   if (level === 'expert') return true
   return hasActiveStake || v.auctionStake.marinadeSamTargetSol > 0
 }
