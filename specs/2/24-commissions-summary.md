@@ -2,13 +2,14 @@
 status: planned
 ---
 
-# Commissions summary — bid + commission inline on table row
+# Commissions summary — bid + commissions always visible on row
 
 **Why:** validators in the old dashboard could see static bid, inflation
 commission, MEV commission, and block-rewards commission at a glance on each
 row. Currently this data requires clicking into the validator detail →
 Bidding tab. High-context users comparing multiple validators have to click
-in and out repeatedly.
+in and out repeatedly. The intent is to make these values immediately visible,
+not hidden behind hover or a click — we'll experiment with the best layout.
 
 ## Current state
 
@@ -22,32 +23,30 @@ The Bidding tab breakdown already shows all four values clearly:
 This is accessible but requires a click. The SAM table row shows only
 `Max APY` and `Next Step` — no raw commission figures.
 
-## Options
+## Direction
 
-**A — Tooltip on Max APY cell:** hover on the Max APY cell opens a small
-table with the four commission/PMPE values. No new columns; no layout impact.
-Works well for casual comparison.
+Values must be **immediately visible** on the row — no hover, no click required.
+Exact layout is TBD; experiment on the actual table before deciding:
 
-**B — Expanded columns (non-compact mode):** add Inflation %, MEV %,
-Bid PMPE as sortable columns in full view. Validators who want to sort by
-MEV commission directly can do so. Column count increases from ~10 to ~13 —
-only viable if compact mode hides them.
+- **Inline sub-values under Max APY:** small secondary text under the APY figure
+  showing Inf X% / MEV X% / Bid Y PMPE in a compact two-line cell.
+- **Dedicated columns:** Inflation %, MEV %, Bid PMPE as their own sortable
+  columns (full view only; hidden in compact mode). Sortability is a real
+  advantage here — filtering by MEV commission is a use case.
+- **Secondary row:** a collapsed sub-line per validator row with the three
+  commission percentages. Higher implementation cost, avoids column explosion.
 
-**C — Secondary row (two-row layout):** each validator row gets a collapsed
-sub-line with the three commission figures. Denser but preserves column count.
-Higher implementation cost.
-
-## Recommendation
-
-Option A first — a tooltip on Max APY showing the PMPE breakdown is low-risk
-and covers the comparison use case without layout changes. Option B is a
-follow-on if sorting by commission proves valuable.
+The old dashboard used a dedicated column layout — that's the reference point
+for what validators already expect to see.
 
 ## Acceptance
 
-- Inflation %, MEV %, Block rewards %, Static bid PMPE visible without
-  opening the detail panel.
-- No new required columns in compact mode.
+- Inflation %, MEV %, Block rewards %, Static bid PMPE visible on the row
+  without opening the detail panel or hovering.
+- Compact mode hides commission columns (or the secondary row) — they are
+  secondary context, not primary action signals.
+- Columns are sortable if implemented as dedicated columns.
 
-**Where:** `src/components/sam-table/sam-table.tsx` — Max APY cell;
-`src/components/validator-detail/apy-composition-card.tsx` for reference data.
+**Where:** `src/components/sam-table/sam-table.tsx` — row layout, column
+definitions; `src/components/validator-detail/apy-composition-card.tsx`
+for reference on data shape.

@@ -26,8 +26,9 @@
 | [2/20-docs-line-length.md](2/20-docs-line-length.md) | planned | Docs hygiene: wrap prose at ≤120-char line length |
 | [2/21-bond-calculator.md](2/21-bond-calculator.md) | planned | Bond Calculator: bid/bond sizing tool for new validators |
 | [2/22-sam-stats-bar.md](2/22-sam-stats-bar.md) | partial | SAM stats bar: importance hierarchy + further tile collapse |
-| [2/23-payment-history.md](2/23-payment-history.md) | planned | Payment history: Marinade Bill + historical epoch browser |
-| [2/24-commissions-summary.md](2/24-commissions-summary.md) | planned | Bid + commissions inline on table row (tooltip or columns) |
+| [2/23-sam-bill.md](2/23-sam-bill.md) | planned | Marinade SAM Bill: per-validator monthly CSV payment report |
+| [2/24-commissions-summary.md](2/24-commissions-summary.md) | planned | Bid + commissions always visible on row (no hover/click) |
+| [2/25-historical-explorer.md](2/25-historical-explorer.md) | planned | Historical explorer: epoch browser + per-validator time-series |
 
 ## Phase 1 — shipped
 
