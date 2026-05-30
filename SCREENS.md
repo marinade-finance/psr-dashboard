@@ -503,6 +503,11 @@ Generic `<Table>` inside `<TableShell>` with `TABLE_SHELL_HOVER`,
 | Validator Bond | `bg-status-green-light text-status-green border-status-green/30` |
 | Marinade       | `bg-warning-light text-warning border-warning/30`                |
 
+**Duplicate badge** (Reason column): rows sharing an identical
+`(vote_account, epoch, reason, amount)` tuple get a warning-style `Duplicate`
+chip flagging a known backend double-settlement (e.g. epoch 977). Rows are
+never silently deduplicated — both are shown, flagged.
+
 ---
 
 ## Docs Page (`/docs`)
