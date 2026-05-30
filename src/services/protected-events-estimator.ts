@@ -158,7 +158,7 @@ const buildLowCreditsProtectedEvent = (
     expectedEpr,
     marinadeStake,
   )
-  if (!(LAMPORTS_PER_SOL * amountSol >= config.min_settlement_lamports)) {
+  if (LAMPORTS_PER_SOL * amountSol < config.min_settlement_lamports) {
     return null
   }
 
@@ -225,7 +225,7 @@ const buildCommissionIncreaseProtectedEvent = (
     expectedEpr,
     marinadeStake,
   )
-  if (!(LAMPORTS_PER_SOL * amountSol >= config.min_settlement_lamports)) {
+  if (LAMPORTS_PER_SOL * amountSol < config.min_settlement_lamports) {
     return null
   }
 

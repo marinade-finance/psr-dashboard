@@ -101,7 +101,10 @@ const dedupeKey = (e: ProtectedEvent) =>
 const renderDuplicateBadge = () => (
   <HtmlTooltip html="This settlement appears more than once with identical details — a known backend double-settlement bug, not two separate events. The amount may be double-counted until the backend resolves it.">
     <span
-      className={cn(CHIP_BASE, 'cursor-help ml-2 bg-warning-light text-warning')}
+      className={cn(
+        CHIP_BASE,
+        'cursor-help ml-2 bg-warning-light text-warning',
+      )}
     >
       Duplicate
     </span>
@@ -207,9 +210,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
       const key = dedupeKey(protectedEvent)
       counts.set(key, (counts.get(key) ?? 0) + 1)
     }
-    return new Set(
-      [...counts].filter(([, n]) => n > 1).map(([key]) => key),
-    )
+    return new Set([...counts].filter(([, n]) => n > 1).map(([key]) => key))
   }, [filteredData])
 
   // Filtered aggregates — also one-pass for the same reason.

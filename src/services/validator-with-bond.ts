@@ -66,11 +66,11 @@ export const fetchValidatorsWithBonds = async (
     const hasMarinade =
       Number(validator.marinade_stake) > 0 ||
       Number(validator.marinade_native_stake) > 0
-    const hasBond = bondByVoteAccount.has(validator.vote_account)
-    if (!hasMarinade && !hasBond) continue
+    const bond = bondByVoteAccount.get(validator.vote_account) ?? null
+    if (!hasMarinade && !bond) continue
     validatorsWithBonds[validator.vote_account] = {
       validator,
-      bond: bondByVoteAccount.get(validator.vote_account) ?? null,
+      bond,
       auction: auctionByVoteAccount.get(validator.vote_account),
     }
   }

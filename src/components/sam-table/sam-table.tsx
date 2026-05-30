@@ -166,7 +166,7 @@ export function passesTableFilter(
   const meetsMinBond = (v.bondBalanceSol ?? 0) >= minBondBalanceSol
   if (!hasActiveStake && !hasTargetStake && !meetsMinBond) return false
   if (level === 'expert') return true
-  return hasActiveStake || v.auctionStake.marinadeSamTargetSol > 0
+  return hasActiveStake || hasTargetStake
 }
 
 export function makeCompareFn(
@@ -1104,12 +1104,20 @@ export const SamTable: React.FC<Props> = ({
         >
           {/* Search row — sits above the table, aligned with validator column */}
           {onValidatorSearch && (
-            <div className={cn('mb-4 flex min-w-0', inSimulation ? 'px-0 pt-2' : '')}>
+            <div
+              className={cn(
+                'mb-4 flex min-w-0',
+                inSimulation ? 'px-0 pt-2' : '',
+              )}
+            >
               <ValidatorSearch
                 validators={validators}
                 nameMap={validatorMeta ?? EMPTY_NAME_MAP}
                 onSelect={onValidatorSearch}
-                className={cn('ml-10 min-w-0', isCompact ? 'flex-1' : 'w-[540px]')}
+                className={cn(
+                  'ml-10 min-w-0',
+                  isCompact ? 'flex-1' : 'w-[540px]',
+                )}
               />
             </div>
           )}
