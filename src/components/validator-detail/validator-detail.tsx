@@ -1122,7 +1122,11 @@ export const ValidatorDetail = ({
                       type="number"
                       value={editInflation}
                       onChange={e => setEditInflation(e.target.value)}
-                      onWheel={makeSimWheelHandler(editInflation, setEditInflation, 0.1)}
+                      onWheel={makeSimWheelHandler(
+                        editInflation,
+                        setEditInflation,
+                        0.1,
+                      )}
                       step="0.1"
                       min="0"
                       max="100"
@@ -1157,7 +1161,11 @@ export const ValidatorDetail = ({
                       type="number"
                       value={editBlock}
                       onChange={e => setEditBlock(e.target.value)}
-                      onWheel={makeSimWheelHandler(editBlock, setEditBlock, 0.1)}
+                      onWheel={makeSimWheelHandler(
+                        editBlock,
+                        setEditBlock,
+                        0.1,
+                      )}
                       step="0.1"
                       min="0"
                       max="100"
