@@ -77,7 +77,9 @@ describe('fetchValidatorsWithBonds', () => {
 
     const result = await fetchValidatorsWithBonds(mockQc)
     expect(result.map(r => r.validator.vote_account)).toContain('va1')
-    expect(result.find(r => r.validator.vote_account === 'va1')?.bond).not.toBeNull()
+    expect(
+      result.find(r => r.validator.vote_account === 'va1')?.bond,
+    ).not.toBeNull()
   })
 
   it('drops zero-stake validator with no bond', async () => {

@@ -236,10 +236,11 @@ describe('allocateRedelegation — best-first walk by totalPmpe desc', () => {
     const result = tightBudgetResult()
     const high = result.auctionData.validators.find(
       v => v.voteAccount === 'HIGH',
-    )!
-    const low = result.auctionData.validators.find(
-      v => v.voteAccount === 'LOW',
-    )!
+    )
+    const low = result.auctionData.validators.find(v => v.voteAccount === 'LOW')
+    expect(high).toBeDefined()
+    expect(low).toBeDefined()
+    if (!high || !low) return
     expect(selectRedelegationPriorityRank(high, result)).toBe(1)
     expect(selectRedelegationPriorityRank(low, result)).toBe(2)
   })
@@ -247,8 +248,11 @@ describe('allocateRedelegation — best-first walk by totalPmpe desc', () => {
   it('the budget fills the higher-totalPmpe validator first', () => {
     const result = tightBudgetResult()
     const augmented = augmentAuctionResult(result, 0)
-    const high = augmented.find(v => v.voteAccount === 'HIGH')!
-    const low = augmented.find(v => v.voteAccount === 'LOW')!
+    const high = augmented.find(v => v.voteAccount === 'HIGH')
+    const low = augmented.find(v => v.voteAccount === 'LOW')
+    expect(high).toBeDefined()
+    expect(low).toBeDefined()
+    if (!high || !low) return
     expect(selectExpectedStakeChange(high)).toBeCloseTo(1000, 9)
     expect(selectExpectedStakeChange(low)).toBe(0)
   })
@@ -291,9 +295,8 @@ describe('selectWinningApyForValidator — marginal winner', () => {
     const epochsPerYear = 160
     const winningBidPmpe = Math.max(0, 10 - 3) // winningTotalPmpe − MARG nonBid
     const expected = compoundApy(5 + winningBidPmpe, epochsPerYear)
-    expect(selectWinningApyForValidator(self, result, epochsPerYear)).toBeCloseTo(
-      expected,
-      9,
-    )
+    expect(
+      selectWinningApyForValidator(self, result, epochsPerYear),
+    ).toBeCloseTo(expected, 9)
   })
 })
