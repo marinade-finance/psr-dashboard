@@ -9,7 +9,7 @@ import { ICON_ROWS_DETAILED } from 'src/components/icons/icon-rows-detailed'
 import { Button } from 'src/components/ui/button'
 import { Loader } from 'src/components/loader/loader'
 import { Navigation } from 'src/components/navigation/navigation'
-import { SamTable } from 'src/components/sam-table/sam-table'
+import { SamTable, passesTableFilter } from 'src/components/sam-table/sam-table'
 import { ValidatorDetail } from 'src/components/validator-detail/validator-detail'
 import {
   fetchAllNotifications,
@@ -19,7 +19,6 @@ import {
   augmentAuctionResult,
   fetchValidatorNames,
   loadSam,
-  selectBondSize,
   selectMaxAPY,
 } from 'src/services/sam'
 import { mergeOverrides, removeFromOverrides } from 'src/services/simulation'
@@ -233,7 +232,13 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
       data.dsSamConfig.minBondBalanceSol,
     )
     const validators = augmented
-      .filter(validator => (selectBondSize(validator) ?? 0) > 0)
+      .filter(validator =>
+        passesTableFilter(
+          validator,
+          level ?? 'basic',
+          data.dsSamConfig.minBondBalanceSol,
+        ),
+      )
       .sort(
         (a, b) =>
           selectMaxAPY(b, data.epochsPerYear) -
@@ -248,7 +253,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
       rank: index + 1,
       totalValidators: validators.length,
     }
-  }, [selectedValidator, displayAuctionResult, data])
+  }, [selectedValidator, displayAuctionResult, data, level])
 
   return (
     <div className="bg-background-page">
