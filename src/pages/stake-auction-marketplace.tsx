@@ -255,6 +255,19 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
     }
   }, [selectedValidator, displayAuctionResult, data, level])
 
+  const viewToggle = isCompact
+    ? {
+        label: 'Switch to detailed view',
+        title: 'Detailed view',
+        icon: ICON_ROWS_COMPACT,
+      }
+    : {
+        label: 'Switch to compact view',
+        title: 'Compact view',
+        icon: ICON_ROWS_DETAILED,
+      }
+  const selectedIsSimulated = simulatedValidators.has(selectedValidator ?? '')
+
   return (
     <div className="bg-background-page">
       <Navigation level={level}>
@@ -264,12 +277,10 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
           size="icon"
           onClick={() => setIsCompact(c => !c)}
           className="ml-2 rounded-full text-muted-foreground hover:text-foreground"
-          aria-label={
-            isCompact ? 'Switch to detailed view' : 'Switch to compact view'
-          }
-          title={isCompact ? 'Detailed view' : 'Compact view'}
+          aria-label={viewToggle.label}
+          title={viewToggle.title}
         >
-          {isCompact ? ICON_ROWS_COMPACT : ICON_ROWS_DETAILED}
+          {viewToggle.icon}
         </Button>
       </Navigation>
       {simulatedValidators.size > 0 && (
@@ -337,13 +348,11 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
             nameMap={nameMap}
             notificationsMap={notificationsMap}
             rank={sheetValidatorData.rank}
-            isSimulated={simulatedValidators.has(selectedValidator ?? '')}
+            isSimulated={selectedIsSimulated}
             onClose={handleBack}
             onSimulate={handleDetailSimulate}
             onClearSimulation={
-              simulatedValidators.has(selectedValidator ?? '')
-                ? handleClearSelectedValidator
-                : undefined
+              selectedIsSimulated ? handleClearSelectedValidator : undefined
             }
             isCalculating={isCalculating}
             level={level}
