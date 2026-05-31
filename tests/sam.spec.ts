@@ -6,6 +6,8 @@ import { test, expect } from '@playwright/test'
 test.beforeEach(async ({ page }) => {
   await page.goto('/test-')
   await page.waitForSelector('tbody tr', { timeout: 50000 })
+  const toggle = page.getByRole('button', { name: 'Switch to detailed view' })
+  if (await toggle.isVisible().catch(() => false)) await toggle.click()
 })
 
 test('table loads with rows', async ({ page }) => {

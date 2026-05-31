@@ -13,6 +13,8 @@ const SHEET = '[role="dialog"]'
 test.beforeEach(async ({ page }) => {
   await page.goto('/test-')
   await page.waitForSelector('tbody tr', { timeout: 30000 })
+  const toggle = page.getByRole('button', { name: 'Switch to detailed view' })
+  if (await toggle.isVisible().catch(() => false)) await toggle.click()
 })
 
 test('V08 (Out of Set) rank cell shows a "below" cutoff sub-label', async ({

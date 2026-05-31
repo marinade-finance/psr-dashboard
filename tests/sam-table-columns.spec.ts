@@ -11,6 +11,8 @@ import type { Page } from '@playwright/test'
 async function gotoSam(page: Page) {
   await page.goto('/test-')
   await page.waitForSelector('tbody tr', { timeout: 30000 })
+  const toggle = page.getByRole('button', { name: 'Switch to detailed view' })
+  if (await toggle.isVisible().catch(() => false)) await toggle.click()
 }
 
 function parseNum(s: string): number {
@@ -77,10 +79,12 @@ test.describe('SAM table — sort toggles per column', () => {
     }) => {
       await gotoSam(page)
       const h = page.locator('thead th').filter({ hasText: col.label }).first()
-      await h.click()
+      // Click at top-left to avoid any HelpTip button in the header (which
+      // stops propagation and would swallow the sort click).
+      await h.click({ position: { x: 10, y: 10 } })
       const after1 = (await h.innerText()).includes('↑') ? '↑' : '↓'
       const flipped = after1 === '↑' ? '↓' : '↑'
-      await h.click()
+      await h.click({ position: { x: 10, y: 10 } })
       await expect(h).toContainText(flipped, { timeout: 5000 })
     })
   }
