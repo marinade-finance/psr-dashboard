@@ -288,14 +288,10 @@ const v02: AuctionValidator = {
   }),
 }
 
-// 3. In-set, watch bond (60–84% util, ~15 epoch runway)
+// 3. In-set, watch bond — bondGoodForNEpochs=10 < idealBondEpochs=13 → watch
 const v03: AuctionValidator = {
   ...makeBase('FiXtUREv3333333333333333333333333333333333cc', {
     marinadeActivatedStakeSol: 225_000,
-    // Watch: 90k paid undelegation shrinks projected exposed to 135k, so the
-    // projected floor (135k×1.2/1000 = 162) sits below claimable 200 → no
-    // fee. But the keep floor on the full 225k (×1.2/1000 = 270) exceeds
-    // claimable 200 → topUpToKeepStake > 0 → watch (orange), not critical.
     bondBalanceSol: 200,
     claimableBondBalanceSol: 200,
     bidCpmpe: 2.4,
@@ -323,7 +319,7 @@ const v03: AuctionValidator = {
   idealBondPmpe: 0.6,
   minUnprotectedReserve: 0,
   idealUnprotectedReserve: 0,
-  bondGoodForNEpochs: 16, // runway = bondGoodForNEpochs - minBondEpochs(1) = 15
+  bondGoodForNEpochs: 10, // watch: 10 < idealBondEpochs=13; > minBondEpochs+URGENT(4) → not critical
   bondSamHealth: 0.7,
   values: {
     ...makeValues({
