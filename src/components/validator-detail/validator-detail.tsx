@@ -399,8 +399,19 @@ function SimDeltas({
   const inSetAfter = selectInSet(current)
   const stakeBefore = original.auctionStake.marinadeSamTargetSol
   const stakeAfter = current.auctionStake.marinadeSamTargetSol
-  const riskBefore = original.values.bondRiskFeeSol ?? 0
-  const riskAfter = current.values.bondRiskFeeSol ?? 0
+  // bondRiskFeeSol is pinned from the scoring API and never changes in
+  // simulation. Track bondRiskFeeShortfall instead — it changes when
+  // simulated stake shifts the fee floor.
+  const shortfallBefore = computeBondCoverage(
+    original,
+    dsSamConfig,
+    origWinningTotalPmpe,
+  ).bondRiskFeeShortfall
+  const shortfallAfter = computeBondCoverage(
+    current,
+    dsSamConfig,
+    winningTotalPmpe,
+  ).bondRiskFeeShortfall
   const penaltyBefore = computeBidTooLowPenaltySol(
     original,
     dsSamConfig,
@@ -457,19 +468,19 @@ function SimDeltas({
       ),
     })
   }
-  const riskDelta = riskAfter - riskBefore
-  if (Math.abs(riskDelta) > 1e-6) {
+  const shortfallDelta = shortfallAfter - shortfallBefore
+  if (Math.abs(shortfallDelta) > 1e-6) {
     rows.push({
-      label: 'Bond risk fee',
+      label: 'Fee shortfall',
       node: (
         <span
           className="font-mono"
           style={{
-            color: riskDelta > 0 ? CSS_DESTRUCTIVE : CSS_STATUS_GREEN,
+            color: shortfallDelta > 0 ? CSS_DESTRUCTIVE : CSS_STATUS_GREEN,
           }}
         >
-          {riskDelta > 0 ? '+' : '−'}
-          {cost(Math.abs(riskDelta))}
+          {shortfallDelta > 0 ? '+' : '−'}
+          {cost(Math.abs(shortfallDelta))}
         </span>
       ),
     })
