@@ -12,13 +12,13 @@ For the user-visible UI surface, see `SCREENS.md`. For visual tokens, see
 
 ## Stack
 
-- **Bundler**: Vite 7 (`vite.config.ts`). Dev server on port 3000 (`pnpm
+- **Bundler**: Vite 8 (`vite.config.ts`). Dev server on port 3000 (`pnpm
 start:dev`), build output to `build/` (`pnpm build`), preview on 8080
   (`pnpm preview`).
 - **Language**: TypeScript 5.9. No `tsc` build step — Vite transpiles;
   `npx tsc --noEmit` for type checks. `src` alias → `./src`.
-- **UI**: React 18 (`createRoot` from `react-dom/client`, `StrictMode`).
-- **Routing**: `react-router-dom` 6.30 (`createBrowserRouter` +
+- **UI**: React 19 (`createRoot` from `react-dom/client`, `StrictMode`).
+- **Routing**: `react-router-dom` 7.15 (`createBrowserRouter` +
   `RouterProvider`). SPA fallback is two-layered: `public/_redirects`
   (`/* /index.html 200`) covers the Netlify CDN in production; the custom
   `spaFallback` Vite plugin in `vite.config.ts` covers `pnpm dev` and
@@ -37,8 +37,8 @@ start:dev`), build output to `build/` (`pnpm build`), preview on 8080
 - **Auction algorithm**: `@marinade.finance/ds-sam-sdk` 0.0.51
   (`DsSamSDK`, `loadSamConfig`, `runFinalOnly`).
 - **Analytics**: `react-gtm-module` initialised in `src/index.tsx`.
-- **Testing**: Vitest 3 (unit, `*.test.{ts,tsx}` under `src/`);
-  Playwright 1.59 (e2e, `tests/`).
+- **Testing**: Vitest 4 (unit, `*.test.{ts,tsx}` under `src/`);
+  Playwright 1.60 (e2e, `tests/`).
 
 ---
 

@@ -354,20 +354,20 @@ describe('bondGaugeScaleMax', () => {
 // --- bondCriticalFrac ---
 
 describe('bondCriticalFrac', () => {
-  it('minBondEpochs / (4 × idealBondEpochs)', () => {
+  it('always 0.5 — 2 × idealBondEpochs / (4 × idealBondEpochs)', () => {
     const cfg = { minBondEpochs: 2, idealBondEpochs: 10 } as DsSamConfig
-    // 2 / 40 = 0.05
-    expect(bondCriticalFrac(cfg)).toBeCloseTo(0.05, 9)
+    // 2*10 / 40 = 0.5
+    expect(bondCriticalFrac(cfg)).toBeCloseTo(0.5, 9)
   })
 
-  it('minBondEpochs=0 → 0', () => {
+  it('minBondEpochs does not affect the result', () => {
     const cfg = { minBondEpochs: 0, idealBondEpochs: 10 } as DsSamConfig
-    expect(bondCriticalFrac(cfg)).toBe(0)
+    expect(bondCriticalFrac(cfg)).toBe(0.5)
   })
 
-  it('idealBondEpochs=0 → falls back to 0.2 sentinel', () => {
+  it('idealBondEpochs=0 → falls back to 0.5 sentinel', () => {
     const cfg = { minBondEpochs: 2, idealBondEpochs: 0 } as DsSamConfig
-    // bondGaugeScaleMax=0 → max > 0 is false → 0.2
-    expect(bondCriticalFrac(cfg)).toBe(0.2)
+    // bondGaugeScaleMax=0 → max > 0 is false → 0.5
+    expect(bondCriticalFrac(cfg)).toBe(0.5)
   })
 })

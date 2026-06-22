@@ -892,7 +892,7 @@ export const SamTable: React.FC<Props> = ({
                   scaleMax={bondScaleMax}
                   marker={bondCritical}
                   criticalBand={bondCritical}
-                  tone="bg-muted-foreground/40"
+                  tone={bondChip.bar}
                 />
                 <span className="text-xs opacity-60 font-mono whitespace-nowrap text-muted-foreground">
                   (

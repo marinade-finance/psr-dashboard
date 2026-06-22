@@ -107,9 +107,9 @@ fractions of the **track** (0..1), independent of fill. **Rule:**
 critical band & threshold marker scale with the track, fill scales with
 the value range — never couple them. Bond pill derives geometry from
 live SDK config: `bondGaugeScaleMax(config) = 4 × idealBondEpochs`;
-`marker = criticalBand = bondCriticalFrac(config) = minBondEpochs /
-bondGaugeScaleMax(config)` (the fraction of the track where the
-penalty threshold sits). Rendered DOM: track `56×4 px`, critical band
+`marker = criticalBand = bondCriticalFrac(config) = 2 × idealBondEpochs /
+bondGaugeScaleMax(config) = 0.5` — the leftmost half of the track is the
+danger zone. Rendered DOM: track `56×4 px`, critical band
 `width: bondCriticalFrac%` (`bg-destructive/15`), marker tick at same
 fraction, fill `width: <pct>%`. Used ONLY in the SAM-table bond pill
 and the epoch-meter — concentration tiles do NOT route through `Gauge`.
