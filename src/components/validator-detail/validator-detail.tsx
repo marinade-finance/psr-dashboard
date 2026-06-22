@@ -14,6 +14,7 @@ import { docsPath } from 'src/components/breakdowns/docs-path'
 import { PaymentsBreakdown } from 'src/components/breakdowns/payments'
 import { SEPARATOR_DIV_CLASS } from 'src/components/breakdowns/row'
 import { HelpTip } from 'src/components/help-tip/help-tip'
+import { ICON_CHEVRON_LEFT_SM } from 'src/components/icons/icon-chevron-left'
 import { TIP_ICONS } from 'src/components/icons/tip-icons'
 import { Button } from 'src/components/ui/button'
 import { Input } from 'src/components/ui/input'
@@ -30,18 +31,19 @@ import {
   CSS_WARNING,
   CSS_MUTED_FG,
 } from 'src/css'
-import { cost, topUp, stake, signedStake } from 'src/format'
+import { cost, pay, topUp, stake, signedStake } from 'src/format'
 import {
   bidTooLowPenaltySol as computeBidTooLowPenaltySol,
   blacklistPenaltySol as computeBlacklistPenaltySol,
 } from 'src/services/bid-penalty'
 import { computeBidding } from 'src/services/bidding'
 import { computeBondCoverage } from 'src/services/bond-coverage'
-import { BOND_URGENT_EPOCHS, bondHealthFromAuction } from 'src/services/bond-health'
+import { bondHealthFromAuction } from 'src/services/bond-health'
 
 import type { BondHealthState } from 'src/services/bond-health'
-import { effectiveBondRunway } from 'src/services/calculations'
+import { effectiveBondRunway } from 'src/services/bond-health'
 import { HELP_TEXT } from 'src/services/help-text'
+import { computePaymentTotal } from 'src/services/payment-total'
 import { calculateProtectedEventEstimates } from 'src/services/protected-events-estimator'
 import {
   selectExpectedStakeChange,
@@ -154,7 +156,7 @@ function TabStrip({
 }) {
   return (
     <div className="border-b border-border bg-background sticky top-[68px] z-[5]">
-      <div className="flex gap-1 px-4 sm:px-6 overflow-x-auto">
+      <div className="flex gap-1 px-4 sm:px-6 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {TAB_DEFS.map(t => {
           const tone = attention[t.id]
           const active = tab === t.id
@@ -163,7 +165,7 @@ function TabStrip({
               key={t.id}
               onClick={() => setTab(t.id)}
               className={cn(
-                'px-3 py-2.5 text-mid font-medium border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5',
+                'px-3 py-2.5 text-mid font-medium border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer',
                 active
                   ? 'border-primary text-primary'
                   : tone
@@ -214,10 +216,7 @@ function tabAttention(args: {
         ? 'info'
         : undefined
   const attention: Partial<Record<Tab, AttentionTone>> = {}
-  if (
-    bondHealth === 'critical' ||
-    bondHealth === 'no-bond'
-  ) {
+  if (bondHealth === 'critical' || bondHealth === 'no-bond') {
     attention.bond = 'critical'
   } else if (bondHealth === 'watch') {
     attention.bond = 'warning'
@@ -233,7 +232,6 @@ function bondCoverageLabel(
   health: BondHealthState,
   coverage: BondCoverage,
   expectedStakeDeltaSol = 0,
-  nearFeeThreshold = false,
 ): string {
   switch (health) {
     case 'no-bond':
@@ -251,7 +249,6 @@ function bondCoverageLabel(
       // WATCH implies bondRiskFeeSol=0 (fee→CRITICAL) and above minBondBalance (below-min→CRITICAL).
       if (
         coverage.topUpToKeepStake > 0 ||
-        nearFeeThreshold ||
         (coverage.topUpToIdealKeep > 0 && expectedStakeDeltaSol <= 0)
       ) {
         return bondAdvice(
@@ -261,7 +258,6 @@ function bondCoverageLabel(
           0,
           coverage.bondBalanceSol,
           coverage.marinadeActivatedStakeSol,
-          nearFeeThreshold,
         ).text.replace(/\.$/, '')
       }
       return 'Watch'
@@ -377,43 +373,45 @@ const PenaltyRow = ({
 )
 
 // What-changes block inside the sim panel: shows before → after pairs for
-// values that actually moved. Skips when there's no baseline. Re-uses
-// effectiveBondRunway, selectInSet, bidTooLowPenaltySol, and the cached
-// bondRiskFeeSol — no new derivations.
+// values that actually moved. Skips when there's no baseline.
 function SimDeltas({
   voteAccount,
   current,
   originalAuctionResult,
   dsSamConfig,
   winningTotalPmpe,
-  bondHealth,
 }: {
   voteAccount: string
   current: AugmentedAuctionValidator
   originalAuctionResult: AuctionResult
   dsSamConfig: DsSamConfig
   winningTotalPmpe: number
-  bondHealth: BondHealthState
 }) {
   const original = originalAuctionResult.auctionData.validators.find(
     v => v.voteAccount === voteAccount,
   )
   if (!original) return null
   const origWinningTotalPmpe = originalAuctionResult.winningTotalPmpe
-  const origBondHealth = bondHealthFromAuction(
-    original,
-    dsSamConfig,
-    origWinningTotalPmpe,
-  )
 
-  const runwayBefore = effectiveBondRunway(original, origBondHealth)
-  const runwayAfter = effectiveBondRunway(current, bondHealth)
+  const runwayBefore = effectiveBondRunway(original, dsSamConfig)
+  const runwayAfter = effectiveBondRunway(current, dsSamConfig)
   const inSetBefore = selectInSet(original)
   const inSetAfter = selectInSet(current)
   const stakeBefore = original.auctionStake.marinadeSamTargetSol
   const stakeAfter = current.auctionStake.marinadeSamTargetSol
-  const riskBefore = original.values.bondRiskFeeSol ?? 0
-  const riskAfter = current.values.bondRiskFeeSol ?? 0
+  // bondRiskFeeSol is pinned from the scoring API and never changes in
+  // simulation. Track bondRiskFeeShortfall instead — it changes when
+  // simulated stake shifts the fee floor.
+  const shortfallBefore = computeBondCoverage(
+    original,
+    dsSamConfig,
+    origWinningTotalPmpe,
+  ).bondRiskFeeShortfall
+  const shortfallAfter = computeBondCoverage(
+    current,
+    dsSamConfig,
+    winningTotalPmpe,
+  ).bondRiskFeeShortfall
   const penaltyBefore = computeBidTooLowPenaltySol(
     original,
     dsSamConfig,
@@ -470,19 +468,19 @@ function SimDeltas({
       ),
     })
   }
-  const riskDelta = riskAfter - riskBefore
-  if (Math.abs(riskDelta) > 1e-6) {
+  const shortfallDelta = shortfallAfter - shortfallBefore
+  if (Math.abs(shortfallDelta) > 1e-6) {
     rows.push({
-      label: 'Bond risk fee',
+      label: 'Fee shortfall',
       node: (
         <span
           className="font-mono"
           style={{
-            color: riskDelta > 0 ? CSS_DESTRUCTIVE : CSS_STATUS_GREEN,
+            color: shortfallDelta > 0 ? CSS_DESTRUCTIVE : CSS_STATUS_GREEN,
           }}
         >
-          {riskDelta > 0 ? '+' : '−'}
-          {cost(Math.abs(riskDelta))}
+          {shortfallDelta > 0 ? '+' : '−'}
+          {cost(Math.abs(shortfallDelta))}
         </span>
       ),
     })
@@ -557,11 +555,7 @@ export const ValidatorDetail = ({
     dsSamConfig,
     winningTotalPmpe,
   )
-  // A no-bond or below-minimum bond sustains zero stake regardless of the
-  // SDK's raw bondGoodForNEpochs, which ignores the below-min gate. Force
-  // the runway to Depleted so Balance, Reserve and Bond runway tell one
-  // coherent story instead of "0 SOL / Critical / 6 epochs".
-  const bondRunway = effectiveBondRunway(validator, bondHealth)
+  const bondRunway = effectiveBondRunway(validator, dsSamConfig)
   const tip = getValidatorTip(
     validator,
     dsSamConfig,
@@ -576,7 +570,7 @@ export const ValidatorDetail = ({
 
   const inSet = selectInSet(validator)
   // Dense rank around the winning cutoff: 0 at cutoff, +N above, −N below.
-  const posVsWinning = validator.values.cutoffRank ?? 0
+  const posVsWinning = validator.values.cutoffRank
   const bondCoverage = useMemo(
     () => computeBondCoverage(validator, dsSamConfig, winningTotalPmpe),
     [validator, dsSamConfig, winningTotalPmpe],
@@ -625,8 +619,14 @@ export const ValidatorDetail = ({
   const [editBond, setEditBond] = useState(
     (validator.bondBalanceSol ?? 0).toString(),
   )
+  // Mirror is load-bearing: handleSimToggle and goToSim set simEnabled
+  // locally (the parent only learns about it after the debounced onSimulate
+  // fires), so simEnabled can't just be a derived `isSimulated`. The effect
+  // resyncs when the parent flips isSimulated (e.g. on clearSimulation).
   const [simEnabled, setSimEnabled] = useState(isSimulated)
-  useEffect(() => { setSimEnabled(isSimulated) }, [isSimulated])
+  useEffect(() => {
+    setSimEnabled(isSimulated)
+  }, [isSimulated])
 
   // Debounced auto-recalc whenever inputs change while simulation is enabled.
   // 400ms covers fast number-input arrow clicking without thrashing the SDK.
@@ -663,6 +663,16 @@ export const ValidatorDetail = ({
     return () => clearTimeout(t)
   }, [simEnabled, editBid, editInflation, editMev, editBlock, editBond])
 
+  const makeSimWheelHandler =
+    (value: string, setter: (v: string) => void, step: number) =>
+    (e: React.WheelEvent<HTMLInputElement>) => {
+      if (document.activeElement !== e.currentTarget) return
+      e.preventDefault()
+      const current = parseFloat(value) || 0
+      const next = e.deltaY < 0 ? current + step : current - step
+      setter(String(Math.round(next / step) * step))
+    }
+
   const handleSimToggle = (enabled: boolean) => {
     setSimEnabled(enabled)
     firstRun.current = true
@@ -672,13 +682,13 @@ export const ValidatorDetail = ({
 
   const goToSim = () => {
     setSimEnabled(true)
+    firstRun.current = true
     setTab('overview')
   }
 
   // Banner tone follows the bond-health axis when the tip is bond-driven,
   // otherwise tracks the tip's own urgency. Click target reuses the shared
-  // TIP_TAB map so banner-nav and tab-dot can't disagree (previously the
-  // banner's bid → overview contradicted the dot's bid → penalty).
+  // TIP_TAB map so banner-nav and tab-dot can't disagree.
   const tipTarget = TIP_TAB[tip.constraint]
 
   const attention = tabAttention({
@@ -688,8 +698,13 @@ export const ValidatorDetail = ({
     tipConstraint: tip.constraint,
   })
 
-  const penaltyTotal =
-    bidTooLowPenaltySol + blacklistPenaltySol + bondRiskFeeSol
+  const { penaltyTotal, total: paymentTotal } = computePaymentTotal({
+    biddingTotalSol: paymentMetrics.total,
+    bidTooLowPenaltySol,
+    blacklistPenaltySol,
+    bondRiskFeeSol,
+    psrEstimates,
+  })
   const bondBalance = validator.bondBalanceSol ?? 0
   // A tiny positive bond drives Critical but rounds to "0 SOL" under
   // whole-SOL stake() — reads as no bond and contradicts the Critical
@@ -716,18 +731,10 @@ export const ValidatorDetail = ({
         <div className="flex items-start justify-between px-4 sm:px-6 py-4 sticky top-0 z-10 gap-2 bg-background">
           <div className="flex flex-col gap-1 min-w-0">
             <button
-              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors self-start"
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors self-start cursor-pointer"
               onClick={onClose}
             >
-              <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-                <path
-                  d="M8.75 10.5L5.25 7L8.75 3.5"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              {ICON_CHEVRON_LEFT_SM}
               Back to rankings
             </button>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -798,15 +805,6 @@ export const ValidatorDetail = ({
                 </Button>
               </Tooltip>
             )}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              aria-label="Close"
-              className="text-muted-foreground hover:text-foreground"
-            >
-              &times;
-            </Button>
           </div>
         </div>
 
@@ -819,9 +817,7 @@ export const ValidatorDetail = ({
               tipTarget && tipTarget !== tab
                 ? {
                     label:
-                      tip.constraint === 'bond'
-                        ? 'Bond tab →'
-                        : 'Simulate →',
+                      tip.constraint === 'bond' ? 'Bond tab →' : 'Simulate →',
                     onClick: () => setTab(tipTarget),
                   }
                 : undefined,
@@ -849,12 +845,6 @@ export const ValidatorDetail = ({
                 marinadeActivatedStakeSol={validator.marinadeActivatedStakeSol}
                 minBondBalanceSol={dsSamConfig.minBondBalanceSol}
                 expectedStakeDeltaSol={expectedStakeDelta}
-                nearFeeThreshold={
-                  bondHealth === 'watch' &&
-                  (validator.bondGoodForNEpochs ?? 0) <=
-                    dsSamConfig.minBondEpochs + BOND_URGENT_EPOCHS &&
-                  bondCoverage.bondRiskFeeShortfall === 0
-                }
                 isSimulated={isSimulated}
                 onGoToSim={goToSim}
               />
@@ -1023,10 +1013,6 @@ export const ValidatorDetail = ({
                     bondHealth,
                     bondCoverage,
                     expectedStakeDelta,
-                    bondHealth === 'watch' &&
-                      (validator.bondGoodForNEpochs ?? 0) <=
-                        dsSamConfig.minBondEpochs + BOND_URGENT_EPOCHS &&
-                      bondCoverage.bondRiskFeeShortfall === 0,
                   )}
                   valueStyle={{ color: bondCoverageColor(bondHealth) }}
                 />
@@ -1063,7 +1049,7 @@ export const ValidatorDetail = ({
                 ) : (
                   <MetricRow
                     label="Penalty"
-                    value={cost(penaltyTotal)}
+                    value={pay(penaltyTotal, 3)}
                     valueStyle={{ color: CSS_DESTRUCTIVE }}
                     onSeeBreakdown={() =>
                       setTab(bidTooLowPenaltySol > 0 ? 'penalty' : 'payments')
@@ -1073,7 +1059,7 @@ export const ValidatorDetail = ({
                 {bidTooLowPenaltySol > 0 && (
                   <PenaltyRow
                     label="↳ bid-too-low penalty"
-                    value={cost(bidTooLowPenaltySol)}
+                    value={pay(bidTooLowPenaltySol, 3)}
                     onSeeBreakdown={() => setTab('penalty')}
                     sub
                   />
@@ -1081,7 +1067,7 @@ export const ValidatorDetail = ({
                 {blacklistPenaltySol > 0 && (
                   <PenaltyRow
                     label="↳ blacklist penalty"
-                    value={cost(blacklistPenaltySol)}
+                    value={pay(blacklistPenaltySol, 3)}
                     onSeeBreakdown={() => setTab('payments')}
                     sub
                   />
@@ -1089,19 +1075,14 @@ export const ValidatorDetail = ({
                 {bondRiskFeeSol > 0 && (
                   <PenaltyRow
                     label="↳ bond risk fee"
-                    value={cost(bondRiskFeeSol)}
+                    value={pay(bondRiskFeeSol, 3)}
                     onSeeBreakdown={() => setTab('bond')}
                     sub
                   />
                 )}
                 <MetricRow
                   label="Expected payment this epoch"
-                  value={cost(
-                    paymentMetrics.total +
-                      bidTooLowPenaltySol +
-                      blacklistPenaltySol +
-                      bondRiskFeeSol,
-                  )}
+                  value={pay(paymentTotal, 3)}
                   onSeeBreakdown={() => setTab('payments')}
                   separator
                 />
@@ -1138,6 +1119,7 @@ export const ValidatorDetail = ({
                       type="number"
                       value={editBid}
                       onChange={e => setEditBid(e.target.value)}
+                      onWheel={makeSimWheelHandler(editBid, setEditBid, 0.001)}
                       step="0.001"
                       min="0"
                       className="font-mono"
@@ -1151,6 +1133,11 @@ export const ValidatorDetail = ({
                       type="number"
                       value={editInflation}
                       onChange={e => setEditInflation(e.target.value)}
+                      onWheel={makeSimWheelHandler(
+                        editInflation,
+                        setEditInflation,
+                        0.1,
+                      )}
                       step="0.1"
                       min="0"
                       max="100"
@@ -1169,6 +1156,7 @@ export const ValidatorDetail = ({
                       type="number"
                       value={editMev}
                       onChange={e => setEditMev(e.target.value)}
+                      onWheel={makeSimWheelHandler(editMev, setEditMev, 0.1)}
                       step="0.1"
                       min="0"
                       max="100"
@@ -1184,6 +1172,11 @@ export const ValidatorDetail = ({
                       type="number"
                       value={editBlock}
                       onChange={e => setEditBlock(e.target.value)}
+                      onWheel={makeSimWheelHandler(
+                        editBlock,
+                        setEditBlock,
+                        0.1,
+                      )}
                       step="0.1"
                       min="0"
                       max="100"
@@ -1199,6 +1192,7 @@ export const ValidatorDetail = ({
                       type="number"
                       value={editBond}
                       onChange={e => setEditBond(e.target.value)}
+                      onWheel={makeSimWheelHandler(editBond, setEditBond, 1)}
                       step="1"
                       min="0"
                       placeholder="—"
@@ -1213,7 +1207,6 @@ export const ValidatorDetail = ({
                     originalAuctionResult={originalAuctionResult}
                     dsSamConfig={dsSamConfig}
                     winningTotalPmpe={winningTotalPmpe}
-                    bondHealth={bondHealth}
                   />
                 )}
                 <div className="mt-3 text-xs text-muted-foreground">

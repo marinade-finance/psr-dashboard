@@ -15,12 +15,9 @@ import {
 import { pay, stake, topUp } from 'src/format'
 import { assertNever } from 'src/utils/assert-never'
 
-import { computeBidPenalty } from './bid-penalty'
+import { blacklistPenaltySol, computeBidPenalty } from './bid-penalty'
 import { computeBondCoverage } from './bond-coverage'
-import {
-  BOND_URGENT_EPOCHS,
-  bondHealthFromAuction,
-} from './bond-health'
+import { bondHealthFromAuction } from './bond-health'
 import { apyBreakdown } from './calculations'
 
 import type { BondHealthState } from './bond-health'
@@ -36,7 +33,12 @@ import type {
 
 export type TipIcon = 'alert' | 'bond' | 'bid' | 'cap' | 'up' | 'down' | 'right'
 
-export type TipUrgency = 'critical' | 'warning' | 'info' | 'positive' | 'neutral'
+export type TipUrgency =
+  | 'critical'
+  | 'warning'
+  | 'info'
+  | 'positive'
+  | 'neutral'
 export type TipConstraint = 'rank' | 'bond' | 'bid' | 'cap' | 'none'
 
 export interface ValidatorTip {
@@ -56,7 +58,6 @@ export interface TipStyle {
   color: string
   bg: string
 }
-
 
 // Color carries severity. Glyph carries the lever — except a critical
 // alarm also swaps to the alert glyph; see getTipIcon.
@@ -135,17 +136,10 @@ export function bondAdvice(
   minBondBalanceSol: number,
   bondBalanceSol: number,
   marinadeActivatedStakeSol: number,
-  // True when the validator is WATCH but within BOND_URGENT_EPOCHS of the
-  // penalty fee threshold — no fee yet, but approaching. Shows the urgent
-  // "avoid future bond fee" message in yellow rather than the generic grow CTA.
-  nearFeeThreshold?: boolean,
 ): BondAdvice {
   // Below the SDK minimum. Checked before the health switch so a below-min
   // bond in any tier gets the actionable wording.
-  if (
-    bondBalanceSol < minBondBalanceSol &&
-    health !== 'no-bond'
-  ) {
+  if (bondBalanceSol < minBondBalanceSol && health !== 'no-bond') {
     // Below-min without a pending fee — grey (informational, no stake at risk).
     const isCharging = bondRiskFeeSol > 0
     return {
@@ -179,7 +173,7 @@ export function bondAdvice(
       }
       if (coverage.bondRiskFeeShortfall > 0) {
         return {
-          text: `Top up ${topUp(coverage.bondRiskFeeShortfall)} — bond below the penalty threshold.`,
+          text: `Top up ${topUp(coverage.bondRiskFeeShortfall)} or face fee charges.`,
           urgency: 'critical',
           tone: 'red',
         }
@@ -197,30 +191,20 @@ export function bondAdvice(
       if (coverage.topUpToIdealKeep > 0) {
         return {
           text: `Top up ${topUp(coverage.topUpToIdealKeep)} to extend runway.`,
-          urgency: 'critical',
-          tone: 'red',
+          urgency: 'warning',
+          tone: 'yellow',
         }
       }
       return {
         text: 'Top up bond to extend runway.',
-        urgency: 'critical',
-        tone: 'red',
+        urgency: 'warning',
+        tone: 'yellow',
       }
     }
     case 'watch': {
       if (coverage.topUpToKeepStake > 0) {
         return {
           text: `Top up ${topUp(coverage.topUpToKeepStake)} to keep stake.`,
-          urgency: 'warning',
-          tone: 'yellow',
-        }
-      }
-      if (nearFeeThreshold) {
-        return {
-          text:
-            coverage.topUpToIdealKeep > 0
-              ? `Top up ${topUp(coverage.topUpToIdealKeep)} to avoid bond fee.`
-              : 'Bond near threshold — top up to avoid bond fee.',
           urgency: 'warning',
           tone: 'yellow',
         }
@@ -313,7 +297,7 @@ function bondCta(
   precomputedCoverage?: BondCoverage,
 ): ValidatorTip | null {
   const bondBalance = validator.bondBalanceSol ?? 0
-  const bondRiskFeeSol = validator.values?.bondRiskFeeSol ?? 0
+  const bondRiskFeeSol = validator.values.bondRiskFeeSol
   const coverage =
     precomputedCoverage ??
     computeBondCoverage(validator, dsSamConfig, winningTotalPmpe)
@@ -330,7 +314,7 @@ function bondCta(
         dsSamConfig.minBondBalanceSol - bondBalance,
       )
       return tip(
-        `Top up ${topUp(topUpAmt)} to cover the fee and grow stake.`,
+        `Top up ${topUp(topUpAmt)} or pay ${pay(bondRiskFeeSol)} bond fee.`,
         'critical',
         'bond',
         delta,
@@ -363,18 +347,13 @@ function bondCta(
     winningTotalPmpe,
     coverage,
   )
-  const runway = validator.bondGoodForNEpochs ?? 0
-  const nearFeeThreshold =
-    health === 'watch' &&
-    runway <= dsSamConfig.minBondEpochs + BOND_URGENT_EPOCHS &&
-    coverage.bondRiskFeeShortfall === 0
+  // 'watch' implies runway > minBondEpochs + BOND_URGENT_EPOCHS, so any 'watch'
+  // validator is already above the fee threshold.
   const fires =
     health === 'critical' ||
     (inSet &&
       health === 'watch' &&
-      (coverage.topUpToKeepStake > 0 ||
-        nearFeeThreshold ||
-        delta <= 0))
+      (coverage.topUpToKeepStake > 0 || delta <= 0))
   if (!fires) return null
   // WATCH + no keep-shortfall + defending: the "grow stake" advisory fires at
   // INFO, which selectTip ranks below deltaCta's WARNING. Escalate to WARNING
@@ -382,7 +361,6 @@ function bondCta(
   if (
     health === 'watch' &&
     coverage.topUpToKeepStake === 0 &&
-    !nearFeeThreshold &&
     isDefending(validator, delta)
   ) {
     const topUpAmt = coverage.topUpToIdealKeep
@@ -402,7 +380,6 @@ function bondCta(
     dsSamConfig.minBondBalanceSol,
     bondBalance,
     validator.marinadeActivatedStakeSol,
-    nearFeeThreshold,
   )
   // Use bondAdvice's urgency as the canonical source — same severity the
   // breakdown banner uses. Alert (octagon) ONLY when a fee is actually
@@ -535,13 +512,7 @@ function outOfSetCta(
     // Testing-only state — production traffic shouldn't reach here. Kept
     // red + octagon as a loud "this should never ship live" signal; not
     // worth the conditional-severity logic the other branches need.
-    return tip(
-      'Blocked from SAM this epoch.',
-      'critical',
-      'none',
-      delta,
-      true,
-    )
+    return tip('Blocked from SAM this epoch.', 'critical', 'none', delta, true)
   }
 
   // Gate on === false so an undefined samEligible (SDK pre-auction state)
@@ -552,15 +523,6 @@ function outOfSetCta(
     // client-version semver matching and per-epoch vote-credit thresholds
     // need the SDK's internal computation — fall through to a hint that
     // names the remaining suspects.
-    if (validator.bondBalanceSol == null) {
-      // Growth lever — post a bond and you can win stake. Violet.
-      return tip(
-        'No bond posted. Add a bond to qualify.',
-        'info',
-        'bond',
-        delta,
-      )
-    }
     if (blacklist?.has(validator.voteAccount)) {
       // Red ONLY when the blacklist penalty is actively charging this
       // epoch (revShare.blacklistPenaltyPmpe > 0) — real money, octagon.
@@ -568,8 +530,7 @@ function outOfSetCta(
       // and stays grey regardless of stake size.
       const penaltyPmpe = validator.revShare.blacklistPenaltyPmpe ?? 0
       if (penaltyPmpe > 0) {
-        const penaltySol =
-          (penaltyPmpe / 1000) * (validator.marinadeActivatedStakeSol ?? 0)
+        const penaltySol = blacklistPenaltySol(validator)
         return tip(
           `Blacklisted — ${pay(penaltySol)} penalty this epoch.`,
           'critical',
@@ -580,7 +541,7 @@ function outOfSetCta(
       }
       // Yellow when defending so this message outranks deltaCta's symptom.
       return tip(
-        'Blacklisted by Marinade.',
+        'Blacklisted.',
         defending ? 'warning' : 'neutral',
         'none',
         delta,
@@ -663,8 +624,16 @@ function deltaCta(
   if (delta > 0) {
     // Validator is receiving scraps from leftover budget — below the priority
     // frontier. Raising bid to clear the frontier gets them full allocation.
-    if (priorityFrontierPmpe > 0 && validator.revShare.totalPmpe < priorityFrontierPmpe) {
-      return tip('Raise bid to get more stake next epoch.', 'info', 'rank', delta)
+    if (
+      priorityFrontierPmpe > 0 &&
+      validator.revShare.totalPmpe < priorityFrontierPmpe
+    ) {
+      return tip(
+        'Raise bid to get more stake next epoch.',
+        'info',
+        'rank',
+        delta,
+      )
     }
     return tip(
       `${stake(delta)} arriving next epoch.`,
@@ -688,12 +657,7 @@ function deltaCta(
     const atOwnCap = wanted != null && target >= wanted - 1e-9
     const belowTarget = target > 0 && active < target * 0.99
     if (atOwnCap) {
-      return tip(
-        'At your `maxStakeWanted` setting.',
-        'neutral',
-        'none',
-        delta,
-      )
+      return tip('At your `maxStakeWanted` setting.', 'neutral', 'none', delta)
     }
     // delta===0 with active well below target: redistribution budget ran out
     // before reaching this validator. Higher bid → higher stakePriority →
@@ -701,22 +665,15 @@ function deltaCta(
     // Exception: if the bid already clears the priority frontier, the bid lever
     // is exhausted — budget simply ran out; "Raise bid" would be wrong advice.
     if (belowTarget && !capBinding) {
-      if (priorityFrontierPmpe > 0 && validator.revShare.totalPmpe >= priorityFrontierPmpe) {
+      if (
+        priorityFrontierPmpe > 0 &&
+        validator.revShare.totalPmpe >= priorityFrontierPmpe
+      ) {
         return tip('At target stake.', 'neutral', 'none', delta)
       }
-      return tip(
-        'Raise bid to grow stake.',
-        'info',
-        'rank',
-        delta,
-      )
+      return tip('Raise bid to grow stake.', 'info', 'rank', delta)
     }
-    return tip(
-      'At target stake.',
-      'neutral',
-      'none',
-      delta,
-    )
+    return tip('At target stake.', 'neutral', 'none', delta)
   }
   // Yellow only when the loss is meaningful (isDefending). Sub-threshold
   // losses (< 1k SOL or < 10k active) stay violet so a specific-reason
@@ -744,7 +701,7 @@ export const getValidatorTip = (
   // totalPmpe already clears it, "Raise bid" is suppressed.
   priorityFrontierPmpe = 0,
 ): ValidatorTip => {
-  const delta = validator.values.expectedStakeChangeSol ?? 0
+  const delta = validator.values.expectedStakeChangeSol
   const cap = capCta(validator, delta)
   return selectTip(
     bondCta(
@@ -791,9 +748,7 @@ export type NextStakeDeltaCell = {
   tone: NextStakeDeltaTone
 }
 export function nextStakeDeltaCell(expectedChange: number): NextStakeDeltaCell {
-  if (Math.abs(expectedChange) < 1)
-    return { prefix: '', tone: 'neutral' }
-  if (expectedChange > 0)
-    return { prefix: '+', tone: 'positive' }
+  if (Math.abs(expectedChange) < 1) return { prefix: '', tone: 'neutral' }
+  if (expectedChange > 0) return { prefix: '+', tone: 'positive' }
   return { prefix: '', tone: 'negative' }
 }

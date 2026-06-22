@@ -2,6 +2,8 @@
 // not by stakeDelta — regression guard for the sort-key selection.
 import { describe, expect, it } from 'vitest'
 
+import { EPOCHS_PER_YEAR } from 'src/services/constants'
+
 import { makeCompareFn } from '../sam-table'
 
 import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
@@ -18,8 +20,6 @@ function v(totalPmpe: number, samTarget = 1000, active = 0): AuctionValidator {
     revShare: { totalPmpe },
   } as unknown as AuctionValidator
 }
-
-const EPOCHS_PER_YEAR = 182
 
 describe('rank sort uses maxApy desc', () => {
   it('orders by totalPmpe desc on default desc dir', () => {

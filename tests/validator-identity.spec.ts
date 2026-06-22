@@ -42,6 +42,9 @@ test.describe('ValidatorIdentity — truncation format', () => {
     await page.setViewportSize({ width: 1280, height: 900 })
     await page.goto('/test-')
     await rowsLoaded(page)
+    // Default is compact — vote account sub-line is hidden. Switch to detailed.
+    const toggle = page.getByRole('button', { name: 'Switch to detailed view' })
+    if (await toggle.isVisible().catch(() => false)) await toggle.click()
     const tbody = page.locator('tbody').first()
     const truncs = await readVoteCells(tbody)
     expect(truncs.length).toBeGreaterThan(0)

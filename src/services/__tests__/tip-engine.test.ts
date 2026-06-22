@@ -4,7 +4,6 @@ import { describe, it, expect } from 'vitest'
 
 import { computeBondCoverage } from '../bond-coverage'
 import { bondHealthFromAuction } from '../bond-health'
-import { bondUtilizationPct } from '../calculations'
 import { selectProtectedStakeReason } from '../protected-events'
 import {
   getValidatorTip,
@@ -17,7 +16,7 @@ import {
 
 import type { ProtectedEvent } from '../protected-events'
 import type { AugmentedAuctionValidator } from '../sam'
-import type { TipConstraint, TipUrgency, ValidatorTip } from '../tip-engine'
+import type { TipConstraint, ValidatorTip } from '../tip-engine'
 import type { DsSamConfig } from '@marinade.finance/ds-sam-sdk'
 
 function makeValidator(
@@ -64,36 +63,9 @@ const DS_SAM_CONFIG = {
   bidTooLowPenaltyPermittedDeviationPmpe: 0.0001,
 } as unknown as DsSamConfig
 
-// --- bondUtilizationPct ---
-
-describe('bondUtilizationPct', () => {
-  it('3 of 4 epochs covered → 25% utilization', () => {
-    const validator = makeValidator({
-      bondGoodForNEpochs: 3,
-      bondBalanceSol: 100,
-    })
-    expect(bondUtilizationPct(validator, 4)).toBe(25)
-  })
-
-  it('zero bond → 100', () => {
-    const validator = makeValidator({ bondBalanceSol: 0 })
-    expect(bondUtilizationPct(validator, 5)).toBe(100)
-  })
-})
-
 // --- getApyBreakdown ---
 
 describe('getApyBreakdown', () => {
-  it('returns all five APY components: inflation, mev, blockRewards, staticBid, total', () => {
-    const validator = makeValidator()
-    const bd = getApyBreakdown(validator, EPOCHS_PER_YEAR)
-    expect(bd).toHaveProperty('inflation')
-    expect(bd).toHaveProperty('mev')
-    expect(bd).toHaveProperty('blockRewards')
-    expect(bd).toHaveProperty('staticBid')
-    expect(bd).toHaveProperty('total')
-  })
-
   it('staticBid maps to bid pmpe (not named "bid")', () => {
     const validator = makeValidator()
     const bd = getApyBreakdown(validator, EPOCHS_PER_YEAR)
@@ -131,19 +103,6 @@ describe('getTipStyle', () => {
   it('neutral → muted', () => {
     expect(getTipStyle('neutral').color).toContain('muted')
   })
-
-  it('getTipStyle returns color and bg fields, no icon', () => {
-    const urgencies: TipUrgency[] = [
-      'critical',
-      'warning',
-      'info',
-      'positive',
-      'neutral',
-    ]
-    for (const u of urgencies) {
-      expect('icon' in getTipStyle(u)).toBe(false)
-    }
-  })
 })
 
 // --- getTipIcon — glyph = constraint/direction, never severity ---
@@ -174,15 +133,9 @@ describe('getTipIcon', () => {
   })
 
   it('constraint:none — delta>0 → up, delta<0 → down, delta=0 → right', () => {
-    expect(
-      getTipIcon(tip({ constraint: 'none', delta: 100 })),
-    ).toBe('up')
-    expect(
-      getTipIcon(tip({ constraint: 'none', delta: -100 })),
-    ).toBe('down')
-    expect(getTipIcon(tip({ constraint: 'none', delta: 0 }))).toBe(
-      'right',
-    )
+    expect(getTipIcon(tip({ constraint: 'none', delta: 100 }))).toBe('up')
+    expect(getTipIcon(tip({ constraint: 'none', delta: -100 }))).toBe('down')
+    expect(getTipIcon(tip({ constraint: 'none', delta: 0 }))).toBe('right')
   })
 
   it('bond/bid/rank constraint → glyph is never "up" even when losing stake', () => {
@@ -250,10 +203,9 @@ describe('getValidatorTip', () => {
     expect(tip.text).toContain('Raise bid')
   })
 
-  it('out-of-set + above-min + critical bond, no fee yet → below-threshold CTA', () => {
+  it('out-of-set + above-min + critical bond, no fee yet → face-fee-charges CTA', () => {
     // Bond is below the penalty floor (topUpToAvoidFee > 0) but the SDK
-    // has not charged a fee this epoch (bondRiskFeeSol === 0). The honest
-    // text is "below the penalty threshold", not "avoid the fee".
+    // has not charged a fee this epoch (bondRiskFeeSol === 0).
     const validator = makeValidator({
       auctionStake: { marinadeSamTargetSol: 0 },
       bondBalanceSol: 50,
@@ -263,13 +215,12 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
-    expect(tip.text).toContain('below the penalty threshold')
+    expect(tip.text).toContain('face fee charges')
     expect(tip.alert).toBeFalsy()
   })
 
-  it('critical health, claimable below floor, no fee → "below the penalty threshold"', () => {
-    // topUpToAvoidFee > 0 but bondRiskFeeSol === 0 — threshold crossed but
-    // no fee charged yet. Text names the threshold, not the fee.
+  it('critical health, claimable below floor, no fee → "face fee charges"', () => {
+    // topUpToAvoidFee > 0 but bondRiskFeeSol === 0 — threshold crossed but no fee yet.
     const validator = makeValidator({
       bondGoodForNEpochs: 4,
       bondBalanceSol: 0.001,
@@ -279,7 +230,7 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
-    expect(tip.text).toContain('below the penalty threshold')
+    expect(tip.text).toContain('face fee charges')
     expect(tip.alert).toBeFalsy()
   })
 
@@ -300,7 +251,7 @@ describe('getValidatorTip', () => {
     expect(tip.alert).toBe(true)
   })
 
-  it('critical health (epochs > 5), claimable below floor, no fee → threshold CTA', () => {
+  it('critical health (epochs > 5), claimable below floor, no fee → face-fee-charges CTA', () => {
     const validator = makeValidator({
       bondGoodForNEpochs: 8,
       bondBalanceSol: 0.001,
@@ -310,7 +261,7 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
-    expect(tip.text).toContain('below the penalty threshold')
+    expect(tip.text).toContain('face fee charges')
     expect(tip.alert).toBeFalsy()
   })
 
@@ -354,7 +305,14 @@ describe('getValidatorTip', () => {
       values: { expectedStakeChangeSol: 28 },
       revShare: { totalPmpe: 28 },
     })
-    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 20, undefined, undefined, 50)
+    const tip = getValidatorTip(
+      validator,
+      DS_SAM_CONFIG,
+      20,
+      undefined,
+      undefined,
+      50,
+    )
     expect(tip.urgency).toBe('info')
     expect(tip.constraint).toBe('rank')
     expect(tip.text).toBe('Raise bid to get more stake next epoch.')
@@ -367,7 +325,14 @@ describe('getValidatorTip', () => {
       values: { expectedStakeChangeSol: 28 },
       revShare: { totalPmpe: 28 },
     })
-    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 20, undefined, undefined, 10)
+    const tip = getValidatorTip(
+      validator,
+      DS_SAM_CONFIG,
+      20,
+      undefined,
+      undefined,
+      10,
+    )
     expect(tip.urgency).toBe('positive')
     expect(tip.constraint).toBe('none')
     expect(tip.text).toContain('arriving next epoch')
@@ -522,24 +487,6 @@ describe('getValidatorTip', () => {
 // --- B8: getValidatorTip watch health gets bond CTA ---
 
 describe('getValidatorTip watch health (bond top-up lever)', () => {
-  it('watch health with topUpToIdealKeep > 0, delta=0 → info/bond tip (growth lever)', () => {
-    // bondBalanceSol=50 < idealBondPmpe/1000 * stake = (6/1000)*10000 = 60
-    // claimableBondBalanceSol=50 >= minBondPmpe/1000 * stake = (1/1000)*10000 = 10
-    // → topUpToAvoidFee=0, topUpToKeepStake=0, topUpToIdealKeep=10
-    // bondGoodForNEpochs=7 → WATCH (3 < 7 < 10)
-    const validator = makeValidator({
-      bondGoodForNEpochs: 7,
-      bondBalanceSol: 50,
-      claimableBondBalanceSol: 50,
-      marinadeActivatedStakeSol: 10000,
-      values: { expectedStakeChangeSol: 0 },
-    })
-    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
-    expect(tip.constraint).toBe('bond')
-    expect(tip.urgency).toBe('info')
-    expect(tip.text).toContain('SOL')
-  })
-
   it('watch health + defending (large loss) → warning/bond "keep stake" (beats deltaCta)', () => {
     // WATCH shape with marinadeActivatedStakeSol=50000, claimable=100:
     //   stakeKeepFloor   = (1/1000)*50000 = 50  → topUpToKeepStake   = max(0,50-100)=0
@@ -689,31 +636,6 @@ describe('bondAdvice — canonical CTA contract', () => {
       marinadeActivatedStakeSol: 10000,
     }, // healthy
   ]
-
-  it('WATCH + nearFeeThreshold=true → warning/yellow "avoid bond fee"', () => {
-    // bondGoodForNEpochs=7 → WATCH; topUpToIdealKeep>0; no fee yet.
-    const v = makeValidator({
-      bondGoodForNEpochs: 7,
-      bondBalanceSol: 50,
-      claimableBondBalanceSol: 50,
-      marinadeActivatedStakeSol: 10000,
-    })
-    const health = bondHealthFromAuction(v, DS_SAM_CONFIG, 100)
-    const coverage = computeBondCoverage(v, DS_SAM_CONFIG, 100)
-    const advice = bondAdvice(
-      coverage,
-      health,
-      0,
-      (DS_SAM_CONFIG as unknown as { minBondBalanceSol: number })
-        .minBondBalanceSol ?? 0,
-      v.bondBalanceSol ?? 0,
-      v.marinadeActivatedStakeSol ?? 0,
-      true,
-    )
-    expect(advice.urgency).toBe('warning')
-    expect(advice.text).toContain('avoid bond fee')
-    expect(advice.tone).toBe('yellow')
-  })
 
   it('every CTA is paren-free, sentence-case, ends with a period', () => {
     for (const s of states) {

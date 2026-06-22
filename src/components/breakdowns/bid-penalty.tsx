@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { cost, pct, pmpe, stake } from 'src/format'
+import { pay, pct, pmpe, stake } from 'src/format'
 import { computeBidPenalty } from 'src/services/bid-penalty'
 
 import { CalcCard, type CardStatus } from './card'
@@ -35,7 +35,7 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
   const baseStatus: Omit<CardStatus, 'action'> = {
     label:
       metrics.penaltySol > 0
-        ? `Raise bid or pay a ${cost(metrics.penaltySol)} penalty this epoch.`
+        ? `Raise bid or pay a ${pay(metrics.penaltySol, 3)} penalty this epoch.`
         : metrics.isNegativeBiddingChange
           ? 'Bid dropped this epoch but bond obligation covers it — no penalty.'
           : 'Bid did not decrease — no penalty.',
@@ -184,7 +184,7 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
           {metrics.penaltySol > 0 ? (
             <CalcRow
               label="Penalty this epoch"
-              col2={cost(metrics.penaltySol)}
+              col2={pay(metrics.penaltySol, 3)}
               total
               severity="error"
             />

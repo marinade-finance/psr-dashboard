@@ -6,6 +6,7 @@ import {
 import React, { useMemo } from 'react'
 
 import { Banner } from 'src/components/banner/banner'
+import { FetchError } from 'src/components/fetch-error/fetch-error'
 import { Loader } from 'src/components/loader/loader'
 import { Navigation } from 'src/components/navigation/navigation'
 import { ValidatorBondsTable } from 'src/components/validator-bonds-table/validator-bonds-table'
@@ -64,23 +65,10 @@ export const ValidatorBondsPage: React.FC<UserLevelProps> = ({ level }) => {
         )}
       </div>
       {status === 'error' && (
-        <div className="px-4 py-8 max-w-2xl mx-auto text-center">
-          <p className="text-base font-medium text-destructive">
-            Couldn&apos;t load validator bonds.
-          </p>
-          <p className="text-sm text-muted-foreground mt-2">
-            The bonds API didn&apos;t respond. The page can&apos;t render
-            without it. Try reloading; if the problem persists, check the
-            validator-bonds API status.
-          </p>
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            className="mt-4 text-sm text-primary hover:underline"
-          >
-            Reload page
-          </button>
-        </div>
+        <FetchError
+          title="Couldn't load validator bonds."
+          detail="The bonds API didn't respond. The page can't render without it. Try reloading; if the problem persists, check the validator-bonds API status."
+        />
       )}
       {status === 'pending' && <Loader />}
       {status === 'success' && (

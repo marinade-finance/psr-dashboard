@@ -14,10 +14,10 @@ type Props = {
   level?: UserLevel
 }
 
-// Each user level maps to one markdown document. The document is split into
-// navigable pages by `<!-- page: id | Title -->` markers (see public/docs/*).
-type Doc = 'GUIDE' | 'GUIDE-EXPERT'
-const DOCS: readonly Doc[] = ['GUIDE', 'GUIDE-EXPERT'] as const
+// One markdown document drives the docs page. It is split into navigable
+// pages by `<!-- page: id | Title -->` markers (see public/docs/GUIDE.md).
+type Doc = 'GUIDE'
+const DOCS: readonly Doc[] = ['GUIDE'] as const
 
 const fetchDoc = (name: Doc) =>
   fetch(`/docs/${name}.md`).then(res => {
@@ -187,16 +187,10 @@ function makeComponents(
 }
 
 export const DocsPage: React.FC<Props> = ({ level }) => {
-  const isExpert = level === 'expert'
   const { hash } = useLocation()
   const hashName = hash.startsWith('#') ? hash.slice(1) : hash
 
-  // The active document. Direct hash links (e.g. a breakdown "Guide ↗")
-  // target anchors that live in GUIDE; default to GUIDE when a hash is
-  // present so the scroll target resolves regardless of expert mode.
-  const [activeDoc, setActiveDoc] = useState<Doc>(
-    isExpert && !hashName ? 'GUIDE-EXPERT' : 'GUIDE',
-  )
+  const [activeDoc, setActiveDoc] = useState<Doc>('GUIDE')
   const [pageId, setPageId] = useState<string | null>(null)
 
   // Reset the user's explicit page selection whenever the URL hash changes
@@ -215,8 +209,8 @@ export const DocsPage: React.FC<Props> = ({ level }) => {
   const pages = useMemo(() => (data ? splitPages(data) : []), [data])
 
   // anchor id -> page id, derived from the rendered slices so it can never
-  // drift from the markdown. Legacy links like /docs#bond resolve through
-  // this map to whichever page now holds that anchor.
+  // drift from the markdown. Cross-page anchor links (/docs#bond) resolve
+  // through this map to whichever page now holds that anchor.
   const anchorToPage = useMemo(() => {
     const m = new Map<string, string>()
     for (const p of pages) for (const a of p.anchors) m.set(a, p.id)
@@ -277,24 +271,6 @@ export const DocsPage: React.FC<Props> = ({ level }) => {
       <Navigation level={level} />
       <div className="flex justify-center px-4 sm:px-6">
         <div className="w-full max-w-5xl">
-          {isExpert && (
-            <div className="flex gap-1 pt-4 border-b border-border mb-0">
-              {DOCS.map(doc => (
-                <button
-                  key={doc}
-                  onClick={() => switchDoc(doc)}
-                  className={cn(
-                    'px-3 py-2 text-mid font-medium border-b-2 transition-colors -mb-px',
-                    activeDoc === doc
-                      ? 'border-primary text-primary'
-                      : 'border-transparent text-muted-foreground hover:text-foreground',
-                  )}
-                >
-                  {doc === 'GUIDE' ? 'Guide' : 'Expert Guide'}
-                </button>
-              ))}
-            </div>
-          )}
           <div className="flex flex-col md:flex-row gap-8 py-10">
             <nav className="md:w-56 shrink-0">
               <ul className="flex flex-row flex-wrap md:flex-col gap-1 md:sticky md:top-6">

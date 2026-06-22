@@ -1,8 +1,10 @@
+import { EPOCH_DURATION_MS } from './constants'
+
 import type { ProtectedEventWithValidator } from 'src/services/validator-with-protected_event'
 
 import type { Validator } from 'src/services/validators'
 
-export const EPOCH_DURATION_MS = 48 * 60 * 60 * 1000
+export { EPOCH_DURATION_MS }
 
 export type EpochProgress = {
   epoch: number
@@ -20,6 +22,7 @@ export type TimelineNode = {
 export type EpochMeterModel = {
   label: string
   stale: boolean
+  critical: boolean
   timeline: TimelineNode[]
 }
 
@@ -45,7 +48,8 @@ export const selectCurrentEpochProgress = (
   let best: { epoch: number; startMs: number } | null = null
   for (const v of validators) {
     for (const stat of v.epoch_stats) {
-      if (stat.epoch_end_at !== null || stat.epoch_start_at === null) continue
+      // epoch_end_at is optional in the API schema — undefined means still open.
+      if (stat.epoch_end_at != null || stat.epoch_start_at == null) continue
       const startMs = Date.parse(stat.epoch_start_at)
       if (!Number.isFinite(startMs)) continue
       if (best === null || stat.epoch > best.epoch) {
@@ -71,10 +75,7 @@ export const selectLatestPaymentSettled = (
   for (const e of protectedEvents) {
     if (networkEpoch !== null && e.protectedEvent.epoch >= networkEpoch)
       continue
-    if (
-      e.status === 'fact' &&
-      e.protectedEvent.epoch > max
-    ) {
+    if (e.status === 'fact' && e.protectedEvent.epoch > max) {
       max = e.protectedEvent.epoch
     }
   }
@@ -111,6 +112,7 @@ export const epochMeterModel = ({
 }): EpochMeterModel => {
   const differ = networkEpoch !== null && networkEpoch !== auctionEpoch
   const stale = networkEpoch !== null && auctionEpoch < networkEpoch
+  const critical = networkEpoch !== null && networkEpoch - auctionEpoch > 1
   const label = differ
     ? `${networkEpoch} → ${auctionEpoch}`
     : `Epoch ${auctionEpoch}`
@@ -123,15 +125,14 @@ export const epochMeterModel = ({
     map.set(epoch, arr)
   }
   add(paymentSettled, 'payment')
-  if (auctionSettled !== paymentSettled)
-    add(auctionSettled, 'auction')
-  add(networkEpoch, 'live')
-  if (auctionEpoch > (networkEpoch ?? -Infinity))
+  if (auctionSettled !== paymentSettled) add(auctionSettled, 'auction')
+  add(networkEpoch ?? auctionEpoch, 'live')
+  if (networkEpoch !== null && auctionEpoch > networkEpoch)
     add(auctionEpoch, 'next')
 
   const timeline: TimelineNode[] = [...map.entries()]
     .sort(([a], [b]) => a - b)
     .map(([epoch, stages]) => ({ epoch, stages }))
 
-  return { label, stale, timeline }
+  return { label, stale, critical, timeline }
 }

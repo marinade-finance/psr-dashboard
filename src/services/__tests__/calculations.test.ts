@@ -1,11 +1,13 @@
-// Tests for core auction math: compoundApy, bondUtilizationPct,
-// apyBreakdown composition, and bondGaugeScaleMax scaling.
+// Tests for compoundApy, apyBreakdown, bondGaugeScaleMax, bondCriticalFrac, bondUtilizationPct, effectiveBondRunway.
 import { describe, it, expect, vi } from 'vitest'
 
+import { bondUtilizationPct, effectiveBondRunway } from '../bond-health'
 import {
+  annualize,
   compoundApy,
-  bondUtilizationPct,
   apyBreakdown,
+  bondGaugeScaleMax,
+  bondCriticalFrac,
 } from '../calculations'
 import { selectProjectedAPY } from '../sam'
 import { selectMaxProtectedStake } from '../validator-with-bond'
@@ -15,6 +17,7 @@ import type * as ValidatorsModule from '../validators'
 import type {
   AuctionValidator,
   AuctionResult,
+  DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
 
 // sam.ts calls loadSam which hits external APIs — mock the module-level fetches
@@ -119,6 +122,11 @@ describe('bondUtilizationPct', () => {
     })
     expect(bondUtilizationPct(validator, 4)).toBe(50)
   })
+
+  it('minBondEpochs=0 → 100 (misconfig surfaces as fully depleted)', () => {
+    const v = makeValidator({ bondBalanceSol: 50, bondGoodForNEpochs: 3 })
+    expect(bondUtilizationPct(v, 0)).toBe(100)
+  })
 })
 
 describe('apyBreakdown', () => {
@@ -188,7 +196,7 @@ describe('B2 — selectMaxProtectedStake zero-pmpe guard', () => {
         pubkey: 'pk',
         vote_account: 'vote1',
         authority: 'auth',
-        cpmpe: 0,
+        cpmpe: '0',
         updated_at: '2024-01-01',
         epoch: 700,
         funded_amount: 1000000000,
@@ -222,7 +230,7 @@ describe('B2 — selectMaxProtectedStake zero-pmpe guard', () => {
         pubkey: 'pk',
         vote_account: 'vote1',
         authority: 'auth',
-        cpmpe: 0,
+        cpmpe: '0',
         updated_at: '2024-01-01',
         epoch: 700,
         funded_amount: 1000000000,
@@ -270,5 +278,96 @@ describe('B3 — selectProjectedAPY zero-tvl guard', () => {
     const result = selectProjectedAPY(auctionResult, 182)
     expect(result).toBeGreaterThan(0)
     expect(Number.isFinite(result)).toBe(true)
+  })
+})
+
+// --- annualize ---
+
+describe('annualize', () => {
+  it('zero rate → 0 regardless of epochs', () => {
+    expect(annualize(0, 182)).toBe(0)
+  })
+
+  it('zero epochs → 0 regardless of rate', () => {
+    expect(annualize(0.01, 0)).toBe(0)
+  })
+
+  it('compoundApy(pmpe, n) === annualize(pmpe/1000, n)', () => {
+    expect(annualize(5 / 1000, 182)).toBeCloseTo(compoundApy(5, 182), 12)
+  })
+
+  it('rate=1 (100%) over 1 epoch → 1.0 (doubled)', () => {
+    expect(annualize(1, 1)).toBe(1)
+  })
+})
+
+// --- effectiveBondRunway ---
+
+describe('effectiveBondRunway', () => {
+  const cfg = { minBondBalanceSol: 10 } as DsSamConfig
+  const v = (bondBalanceSol: number, bondGoodForNEpochs?: number) =>
+    ({
+      voteAccount: 'v',
+      bondBalanceSol,
+      bondGoodForNEpochs,
+    }) as unknown as AuctionValidator
+
+  it('bond below minBondBalanceSol → 0', () => {
+    expect(effectiveBondRunway(v(5, 15), cfg)).toBe(0)
+  })
+
+  it('no bond → 0', () => {
+    expect(effectiveBondRunway(v(0, 15), cfg)).toBe(0)
+  })
+
+  it('bond at minBondBalanceSol → raw runway', () => {
+    expect(effectiveBondRunway(v(10, 15), cfg)).toBe(15)
+  })
+
+  it('bond above minBondBalanceSol → raw runway', () => {
+    expect(effectiveBondRunway(v(100, 15), cfg)).toBe(15)
+  })
+
+  it('bondGoodForNEpochs undefined → 0', () => {
+    expect(effectiveBondRunway(v(100, undefined), cfg)).toBe(0)
+  })
+
+  it('negative bondGoodForNEpochs → 0', () => {
+    expect(effectiveBondRunway(v(100, -5), cfg)).toBe(0)
+  })
+})
+
+// --- bondGaugeScaleMax ---
+
+describe('bondGaugeScaleMax', () => {
+  it('scale = 4 × idealBondEpochs', () => {
+    const cfg = { idealBondEpochs: 10 } as DsSamConfig
+    expect(bondGaugeScaleMax(cfg)).toBe(40)
+  })
+
+  it('zero idealBondEpochs → 0', () => {
+    const cfg = { idealBondEpochs: 0 } as DsSamConfig
+    expect(bondGaugeScaleMax(cfg)).toBe(0)
+  })
+})
+
+// --- bondCriticalFrac ---
+
+describe('bondCriticalFrac', () => {
+  it('always 0.5 — 2 × idealBondEpochs / (4 × idealBondEpochs)', () => {
+    const cfg = { minBondEpochs: 2, idealBondEpochs: 10 } as DsSamConfig
+    // 2*10 / 40 = 0.5
+    expect(bondCriticalFrac(cfg)).toBeCloseTo(0.5, 9)
+  })
+
+  it('minBondEpochs does not affect the result', () => {
+    const cfg = { minBondEpochs: 0, idealBondEpochs: 10 } as DsSamConfig
+    expect(bondCriticalFrac(cfg)).toBe(0.5)
+  })
+
+  it('idealBondEpochs=0 → falls back to 0.5 sentinel', () => {
+    const cfg = { minBondEpochs: 2, idealBondEpochs: 0 } as DsSamConfig
+    // bondGaugeScaleMax=0 → max > 0 is false → 0.5
+    expect(bondCriticalFrac(cfg)).toBe(0.5)
   })
 })

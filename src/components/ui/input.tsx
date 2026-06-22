@@ -4,9 +4,10 @@ import { cn } from 'src/class_utils'
 
 export type InputProps = React.InputHTMLAttributes<HTMLInputElement>
 
-export function Input({ className, type, ...props }: InputProps) {
-  return (
+export const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ className, type, ...props }, ref) => (
     <input
+      ref={ref}
       type={type}
       className={cn(
         'flex h-9 w-full rounded-md border border-border-grid bg-secondary px-3 py-1 text-sm text-foreground shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-50',
@@ -14,5 +15,6 @@ export function Input({ className, type, ...props }: InputProps) {
       )}
       {...props}
     />
-  )
-}
+  ),
+)
+Input.displayName = 'Input'

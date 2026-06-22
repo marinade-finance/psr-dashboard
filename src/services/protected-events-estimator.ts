@@ -1,15 +1,11 @@
-import { lamportsToSol } from 'src/format'
+import { finite, lamportsToSol } from 'src/format'
+import { LAMPORTS_PER_SOL } from 'src/services/constants'
 
 import { fetchRewards } from './rewards'
 
 import type { ProtectedEvent, SettlementMeta } from './protected-events'
 import type { EpochRewards } from './rewards'
 import type { Validator, ValidatorEpoch } from './validators'
-
-// Internal math runs in SOL; the on-chain `ProtectedEvent.amount` field is
-// in lamports (matches the backend API). Convert at the boundary when
-// constructing the event.
-const SOL_TO_LAMPORTS = 1e9
 
 type LowCreditsSettlementConfig = {
   meta: SettlementMeta
@@ -67,7 +63,7 @@ const claimAmountInLossRange = (
   const claimPerStake =
     Math.min(expectedEpr - actualEpr, maxClaimPerStake) - ignoredClaimPerStake
 
-  return Math.max(stake * claimPerStake, 0)
+  return finite(Math.max(stake * claimPerStake, 0))
 }
 
 const calcStakeByEpoch = (validators: Validator[]) => {
@@ -112,6 +108,7 @@ const calcTargetCreditsByEpoch = (validators: Validator[]) => {
 
   const result: Map<number, number> = new Map()
   for (const [epoch, sumOfWeights] of sumOfWeightsPerEpoch) {
+    if (sumOfWeights <= 0) continue
     result.set(
       epoch,
       Math.round((sumOfWeightedCreditsPerEpoch.get(epoch) ?? 0) / sumOfWeights),
@@ -145,6 +142,9 @@ const buildLowCreditsProtectedEvent = (
 
   const expectedRewards = marinadeStake * expectedEpr
   const actualRewards = marinadeStake * actualEpr
+  if (expectedRewards <= 0) {
+    return null
+  }
 
   const eprLossBps = Math.round(10000 * (1 - actualRewards / expectedRewards))
   if (eprLossBps <= config.grace_low_credits_bps) {
@@ -157,13 +157,13 @@ const buildLowCreditsProtectedEvent = (
     expectedEpr,
     marinadeStake,
   )
-  if (amountSol * SOL_TO_LAMPORTS < config.min_settlement_lamports) {
+  if (LAMPORTS_PER_SOL * amountSol < config.min_settlement_lamports) {
     return null
   }
 
   return {
     epoch: epochStat.epoch,
-    amount: Math.round(amountSol * SOL_TO_LAMPORTS),
+    amount: Math.round(LAMPORTS_PER_SOL * amountSol),
     vote_account: validator.vote_account,
     meta: config.meta,
     reason: {
@@ -209,6 +209,9 @@ const buildCommissionIncreaseProtectedEvent = (
 
   const expectedRewards = marinadeStake * expectedEpr
   const actualRewards = marinadeStake * actualEpr
+  if (expectedRewards <= 0) {
+    return null
+  }
 
   const eprLossBps = Math.round(10000 * (1 - actualRewards / expectedRewards))
   if (eprLossBps < config.grace_commission_increase * 100) {
@@ -221,13 +224,13 @@ const buildCommissionIncreaseProtectedEvent = (
     expectedEpr,
     marinadeStake,
   )
-  if (amountSol * SOL_TO_LAMPORTS < config.min_settlement_lamports) {
+  if (LAMPORTS_PER_SOL * amountSol < config.min_settlement_lamports) {
     return null
   }
 
   return {
     epoch: epochStat.epoch,
-    amount: Math.round(amountSol * SOL_TO_LAMPORTS),
+    amount: Math.round(LAMPORTS_PER_SOL * amountSol),
     vote_account: validator.vote_account,
     meta: config.meta,
     reason: {

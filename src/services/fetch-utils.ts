@@ -58,4 +58,3 @@ export const expectObject = (
   }
   return value as Record<string, unknown>
 }
-

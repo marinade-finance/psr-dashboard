@@ -10,16 +10,16 @@ import { TEST_PROTECTED_EVENTS } from 'src/fixtures/test-protected-events'
 import {
   TEST_AUCTION_RESULT,
   TEST_DS_SAM_CONFIG,
-  TEST_EPOCHS_PER_YEAR,
 } from 'src/fixtures/test-validators'
 import { ValidatorBondsPage } from 'src/pages/validator-bonds'
+import { EPOCHS_PER_YEAR } from 'src/services/constants'
 
 import type { UserLevelProps } from 'src/components/navigation/navigation'
 
 const SAM_RESULT = {
   auctionResult: TEST_AUCTION_RESULT,
-  epochsPerYear: TEST_EPOCHS_PER_YEAR,
-  dcSamConfig: TEST_DS_SAM_CONFIG,
+  epochsPerYear: EPOCHS_PER_YEAR,
+  dsSamConfig: TEST_DS_SAM_CONFIG,
 }
 
 export const TestBondsPage: React.FC<UserLevelProps> = ({ level }) => {
@@ -37,9 +37,9 @@ export const TestBondsPage: React.FC<UserLevelProps> = ({ level }) => {
       },
     })
     queryClient.setQueryData(['bonds'], TEST_BONDS_DATA)
-    // EpochMeter (in nav) reads ['sam', 0] and ['protected-events']; nav
+    // EpochMeter (in nav) reads ['sam'] and ['protected-events']; nav
     // hover prefetches ['protected-events']. Seed both so nothing leaks.
-    queryClient.setQueryData(['sam', 0], SAM_RESULT)
+    queryClient.setQueryData(['sam'], SAM_RESULT)
     queryClient.setQueryData(['protected-events'], TEST_PROTECTED_EVENTS)
     queryClient.setQueryData(
       ['notifications-broadcast'],

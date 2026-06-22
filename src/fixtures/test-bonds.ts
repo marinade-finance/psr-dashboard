@@ -25,13 +25,13 @@ function makeValidator(
 function makeBond(
   voteAccount: string,
   effectiveSol: number,
-  cpmpe = 2,
+  cpmpe: number | string = '2',
 ): BondRecord {
   return {
     pubkey: voteAccount.slice(0, 6) + 'bnd',
     vote_account: voteAccount,
     authority: 'BondAuth11111111111111111111111111111111111',
-    cpmpe,
+    cpmpe: String(cpmpe),
     updated_at: new Date().toISOString(),
     epoch: EPOCH,
     funded_amount: effectiveSol * SOL,

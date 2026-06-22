@@ -20,24 +20,23 @@ function buildConstraintsConfig(
   data: AuctionData,
 ): AuctionConstraintsConfig {
   const { networkTotalSol, marinadeSamTvlSol } = data.stakeAmounts
-  const marinadeTotalTvlSol = marinadeSamTvlSol
   return {
     totalCountryStakeCapSol:
       networkTotalSol * config.maxNetworkStakeConcentrationPerCountryDec,
     totalAsoStakeCapSol:
       networkTotalSol * config.maxNetworkStakeConcentrationPerAsoDec,
     marinadeCountryStakeCapSol:
-      marinadeTotalTvlSol * config.maxMarinadeStakeConcentrationPerCountryDec,
+      marinadeSamTvlSol * config.maxMarinadeStakeConcentrationPerCountryDec,
     marinadeAsoStakeCapSol:
-      marinadeTotalTvlSol * config.maxMarinadeStakeConcentrationPerAsoDec,
+      marinadeSamTvlSol * config.maxMarinadeStakeConcentrationPerAsoDec,
     marinadeValidatorStakeCapSol:
-      marinadeTotalTvlSol * config.maxMarinadeTvlSharePerValidatorDec,
+      marinadeSamTvlSol * config.maxMarinadeTvlSharePerValidatorDec,
     minBondBalanceSol: config.minBondBalanceSol,
     minMaxStakeWanted: config.minMaxStakeWanted ?? Infinity,
     minBondEpochs: config.minBondEpochs,
     idealBondEpochs: config.idealBondEpochs,
     unprotectedValidatorStakeCapSol:
-      marinadeTotalTvlSol * config.maxUnprotectedStakePerValidatorDec,
+      marinadeSamTvlSol * config.maxUnprotectedStakePerValidatorDec,
     minUnprotectedStakeToDelegateSol: config.minUnprotectedStakeToDelegateSol,
     unprotectedFoundationStakeDec: config.unprotectedFoundationStakeDec,
     unprotectedDelegatedStakeDec: config.unprotectedDelegatedStakeDec,
@@ -119,13 +118,23 @@ export function runSdkRerun(
     }
   })
 
+  // Clone stakeAmounts too: reset()/evaluate() below mutate
+  // marinadeRemainingSamSol, and sharing the ref would corrupt the live
+  // ['sam'] snapshot this rerun derives from.
   const clonedAuctionData: AuctionData = {
     ...baseAuctionData,
+    stakeAmounts: { ...baseAuctionData.stakeAmounts },
     validators,
   }
 
   const constraintsConfig = buildConstraintsConfig(config, clonedAuctionData)
   const constraints = new AuctionConstraints(constraintsConfig, debug)
   const auction = new Auction(clonedAuctionData, constraints, config, debug)
+  // baseAuctionData is post-evaluation (loadSam already drained
+  // marinadeRemainingSamSol to ~0 and accumulated marinadeSamTargetSol).
+  // evaluate() distributes from the current remaining budget BEFORE its own
+  // internal reset, so without this it finds no budget, no winner, and throws
+  // 'winningTotalPmpe has to be finite'. reset() restores the pre-auction state.
+  auction.reset()
   return auction.evaluate()
 }

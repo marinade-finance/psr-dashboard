@@ -1,18 +1,15 @@
 import React from 'react'
 
-import { cost, pmpe, stake } from 'src/format'
+import { cost, pay, pmpe, stake } from 'src/format'
 import { computeBidding } from 'src/services/bidding'
+import { computePaymentTotal } from 'src/services/payment-total'
 import {
   isProtectedEvent,
   selectAmount,
   selectProtectedStakeReason,
 } from 'src/services/protected-events'
 
-import {
-  CalcCard,
-  withSimAction,
-  type CardStatus,
-} from './card'
+import { CalcCard, withSimAction, type CardStatus } from './card'
 import { CalcRow, SectionHeader } from './row'
 
 import type { ProtectedEvent } from 'src/services/protected-events'
@@ -51,20 +48,19 @@ export const PaymentsBreakdown: React.FC<Props> = ({
   onGoToPenalty,
 }) => {
   const m = computeBidding(validator)
-
-  const psrTotal = psrEstimates.reduce(
-    (sum, estimate) => sum + selectAmount(estimate),
-    0,
-  )
-  const penaltyTotal =
-    bidTooLowPenaltySol + blacklistPenaltySol + bondRiskFeeSol + psrTotal
-  const total = m.total + penaltyTotal
+  const { penaltyTotal, total } = computePaymentTotal({
+    biddingTotalSol: m.total,
+    bidTooLowPenaltySol,
+    blacklistPenaltySol,
+    bondRiskFeeSol,
+    psrEstimates,
+  })
   const hasPenalty = penaltyTotal > 0
 
   const baseStatus: Omit<CardStatus, 'action'> = {
     label: hasPenalty
-      ? `You will pay ${cost(total)} in total this epoch — including ${cost(penaltyTotal)} in penalties.`
-      : `You will pay ${cost(total)} in total this epoch — no penalties.`,
+      ? `You will pay ${pay(total, 3)} in total this epoch — including ${pay(penaltyTotal, 3)} in penalties.`
+      : `You will pay ${pay(total, 3)} in total this epoch — no penalties.`,
     tone: hasPenalty ? 'red' : 'green',
   }
   const status: CardStatus = withSimAction(baseStatus, onGoToSim)
@@ -96,11 +92,6 @@ export const PaymentsBreakdown: React.FC<Props> = ({
       )}
       <table className="w-full max-w-[34rem]">
         <tbody>
-          {/* Receipt-slip layout: col1 carries PMPE rates only, col2 SOL */}
-          {/* amounts only. Each unit kind lives in its own column. Each */}
-          {/* sub-cost gets its own section header so a reader can scan */}
-          {/* by "where each number came from". The result row echoes the */}
-          {/* rate so multiplication reads left → right on one line. */}
           <SectionHeader title="Activated stake cost" col1Unit="PMPE" />
           <CalcRow label="Activated Marinade stake" col2={stake(m.stake)} />
           <CalcRow
@@ -138,17 +129,17 @@ export const PaymentsBreakdown: React.FC<Props> = ({
           <CalcRow
             label="Bid-too-low penalty"
             help="Charged when you drop your bid this epoch and your bond doesn't cover what you previously promised stakers."
-            col2={bidTooLowPenaltySol > 0 ? cost(bidTooLowPenaltySol) : '—'}
+            col2={bidTooLowPenaltySol > 0 ? pay(bidTooLowPenaltySol, 3) : '—'}
           />
           <CalcRow
             label="Blacklist penalty"
             help="Charged the first epoch your validator gets added to Marinade's blacklist."
-            col2={blacklistPenaltySol > 0 ? cost(blacklistPenaltySol) : '—'}
+            col2={blacklistPenaltySol > 0 ? pay(blacklistPenaltySol, 3) : '—'}
           />
           <CalcRow
             label="Bond risk fee"
             help="Charged when your claimable bond drops below the trigger threshold. Some stake also gets pulled back alongside the fee."
-            col2={bondRiskFeeSol > 0 ? cost(bondRiskFeeSol) : '—'}
+            col2={bondRiskFeeSol > 0 ? pay(bondRiskFeeSol, 3) : '—'}
           />
           {psrEstimates.length > 0 && (
             <>
@@ -169,13 +160,13 @@ export const PaymentsBreakdown: React.FC<Props> = ({
                         ? 'from bond'
                         : 'from Marinade backstop'
                     }
-                    col2={cost(selectAmount(estimate))}
+                    col2={pay(selectAmount(estimate), 3)}
                   />
                 )
               })}
             </>
           )}
-          <CalcRow label="Total payment" col2={cost(total)} total />
+          <CalcRow label="Total payment" col2={pay(total, 3)} total />
         </tbody>
       </table>
     </CalcCard>

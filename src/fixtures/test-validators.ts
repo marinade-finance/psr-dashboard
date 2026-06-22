@@ -288,14 +288,10 @@ const v02: AuctionValidator = {
   }),
 }
 
-// 3. In-set, watch bond (60–84% util, ~15 epoch runway)
+// 3. In-set, watch bond — bondGoodForNEpochs=10 < idealBondEpochs=13 → watch
 const v03: AuctionValidator = {
   ...makeBase('FiXtUREv3333333333333333333333333333333333cc', {
     marinadeActivatedStakeSol: 225_000,
-    // Watch: 90k paid undelegation shrinks projected exposed to 135k, so the
-    // projected floor (135k×1.2/1000 = 162) sits below claimable 200 → no
-    // fee. But the keep floor on the full 225k (×1.2/1000 = 270) exceeds
-    // claimable 200 → topUpToKeepStake > 0 → watch (orange), not critical.
     bondBalanceSol: 200,
     claimableBondBalanceSol: 200,
     bidCpmpe: 2.4,
@@ -323,7 +319,7 @@ const v03: AuctionValidator = {
   idealBondPmpe: 0.6,
   minUnprotectedReserve: 0,
   idealUnprotectedReserve: 0,
-  bondGoodForNEpochs: 16, // runway = bondGoodForNEpochs - minBondEpochs(1) = 15
+  bondGoodForNEpochs: 10, // watch: 10 < idealBondEpochs=13; > minBondEpochs+URGENT(4) → not critical
   bondSamHealth: 0.7,
   values: {
     ...makeValues({
@@ -730,13 +726,10 @@ const v12: AuctionValidator = {
 
 // 13. No bond posted at all (bondBalanceSol = 0 → bondHealthFromAuction
 //   returns 'no-bond'). Eligible + staked + positive SAM target, so it
-//   passes every auction gate. NOTE: the SAM table's passesTableFilter
-//   short-circuits on `!v.bondBalanceSol` (sam-table.tsx) and the detail
-//   panel's sheetValidatorData filters `selectBondSize > 0`, so a true
-//   zero-bond row is structurally filtered out of /test- in both Basic
-//   and Expert. This row keeps the no-bond STATE present in the fixture
-//   data (every modality covered) even though the current page chrome
-//   never renders it — see the task report for the blocker.
+//   passes every auction gate. passesTableFilter keeps it (active OR target
+//   stake qualifies, bond not required), and sheetValidatorData uses the same
+//   filter, so the row both renders in the SAM table and opens the detail
+//   panel — the no-bond state is fully exercised end-to-end on /test-.
 const v13: AuctionValidator = {
   ...makeBase('FiXtUREvaNOBONDdddddddddddddddddddddddddddmm', {
     marinadeActivatedStakeSol: 90_000,
@@ -814,6 +807,7 @@ function stateValidator(
     bondGoodForNEpochs: number
     bidCpmpe?: number
     paidUndelegationSol?: number
+    bondRiskFeeSol?: number
     marinadeActivatedStakeSol?: number
     country?: string
     aso?: string
@@ -861,6 +855,7 @@ function stateValidator(
         marinadeActivatedStakeSol: active,
       }),
       paidUndelegationSol: opts.paidUndelegationSol ?? 0,
+      bondRiskFeeSol: opts.bondRiskFeeSol ?? 0,
     },
   }
 }
@@ -1054,6 +1049,103 @@ const s24 = stateValidator('FiXtUREvbOUTsoftgrowccccccccccccccccccccccll', {
   aso: ASO_TERASWITCH,
 })
 
+// 25. CRITICAL: fee estimated AND shortfall (bond can't cover fee in full).
+//   minBondPmpe=2, active=50k → bondRiskFeeFloor=100; claimable=20 → shortfall=80.
+//   bondRiskFeeSol=15 (scoring API estimate) > 0 → both fee and shortfall fire.
+//   CTA: "Top up 80 or pay 15 bond fee." (topUp + pay variant).
+const s25 = stateValidator('FiXtUREvbCRITICALfeeAndShort25555555555555mm', {
+  minBondPmpe: 2,
+  idealBondPmpe: 4,
+  bondBalanceSol: 40,
+  claimableBondBalanceSol: 20,
+  marinadeSamTargetSol: 45_000,
+  bondGoodForNEpochs: 4,
+  bidCpmpe: 2.9,
+  bondRiskFeeSol: 15,
+  country: 'Germany',
+  aso: ASO_AWS,
+})
+
+// 26. CRITICAL: runway only — no fee, no shortfall, no keep/ideal shortfall.
+//   minBondPmpe=1, idealBondPmpe=2, active=50k → minFloor=50, idealFloor=100.
+//   claimable=200 ≥ 50 → topUpToKeepStake=0; bond=200 ≥ 100 → topUpToIdealKeep=0.
+//   bondGoodForNEpochs=4 (≤ minBond+URGENT=4) → CRITICAL from runway.
+//   CTA: "Top up bond to extend runway." (generic fallback).
+const s26 = stateValidator('FiXtUREvbCRITICALrunwayOnly26666666666666nn', {
+  minBondPmpe: 1,
+  idealBondPmpe: 2,
+  bondBalanceSol: 200,
+  claimableBondBalanceSol: 200,
+  marinadeSamTargetSol: 45_000,
+  bondGoodForNEpochs: 4,
+  bidCpmpe: 2.8,
+  country: C_NL,
+  aso: ASO_LATITUDE,
+})
+
+// 27. Below-min bond + fee charging → CRITICAL/red "Top up bond to 5 to grow stake."
+//   bond=3 < minBondBalanceSol=5; bondRiskFeeSol=10 → isCharging=true → red/critical.
+//   NOTE: passesTableFilter removes bond < minBondBalanceSol — this validator is
+//   invisible in the Basic table but reachable via detail-panel search.
+const s27 = stateValidator('FiXtUREvbBELOWMINfee27777777777777777777oo', {
+  minBondPmpe: 1,
+  idealBondPmpe: 2,
+  bondBalanceSol: 3,
+  claimableBondBalanceSol: 3,
+  marinadeSamTargetSol: 30_000,
+  bondGoodForNEpochs: 2,
+  bidCpmpe: 2.7,
+  bondRiskFeeSol: 10,
+  country: C_US,
+  aso: ASO_EQUINIX,
+})
+
+// 28. In-set + delta=0 + cap binding → capCta: "X — stake can't grow until cap frees."
+//   marinadeSamTargetSol=STATE_ACTIVE → target=active → no undelegation, no inflow → delta=0.
+//   lastCapConstraint with totalLeftToCapSol=0 → cap is full.
+//   Bond healthy so no bond CTA shadows capCta.
+const s28: AuctionValidator = {
+  ...stateValidator('FiXtUREvbCAPinset28888888888888888888888888pp', {
+    minBondPmpe: 1,
+    idealBondPmpe: 2,
+    bondBalanceSol: 200,
+    claimableBondBalanceSol: 200,
+    marinadeSamTargetSol: STATE_ACTIVE,
+    bondGoodForNEpochs: 30,
+    bidCpmpe: 2.5,
+    country: C_GB,
+    aso: ASO_CHERRY,
+  }),
+  lastCapConstraint: {
+    constraintType: AuctionConstraintType.ASO,
+    constraintName: ASO_GCP,
+    totalStakeSol: 1_000_000,
+    totalLeftToCapSol: 0,
+    marinadeStakeSol: 500_000,
+    marinadeLeftToCapSol: 0,
+    validators: [],
+  },
+}
+
+// 29. In-set + delta=0 + below target + below priority frontier →
+//   deltaCta: "Raise bid to grow stake."
+//   bid=1.01 → totalPmpe=6.01 (> WINNING_PMPE=6.0 → in-set, marinadeSamTargetSol>0).
+//   active=5k, target=80k → belowTarget=true.
+//   stakePriority=10 (lowest) → greedy pass exhausts budget on higher-bid validators first.
+//   totalPmpe(6.01) < priorityFrontierPmpe (~7.5) → bid lever fires.
+const s29 = stateValidator('FiXtUREvbRAISEbid29999999999999999999999999qq', {
+  minBondPmpe: 1,
+  idealBondPmpe: 2,
+  bondBalanceSol: 100,
+  claimableBondBalanceSol: 100,
+  marinadeSamTargetSol: 80_000,
+  bondGoodForNEpochs: 30,
+  bidCpmpe: 1.01,
+  marinadeActivatedStakeSol: 5_000,
+  country: C_NL,
+  aso: ASO_TERASWITCH,
+})
+
 // ───── outOfSetCta coverage fixtures (o-row) ─────────────────────────────────
 //
 // One validator per branch of outOfSetCta in src/services/tip-engine.ts so
@@ -1191,6 +1283,22 @@ const o03: AuctionValidator = {
   samBlocked: false,
   lastCapConstraint: null,
   values: outOfSetValues(60_000, 100),
+}
+
+// o13. Blacklisted + no penalty + not defending (low stake ≤ NON_TRIVIAL_STAKE_SOL) →
+//   NEUTRAL "Blacklisted by Marinade." — no stake at real risk, informational.
+const O13_VOTE = 'FiXtUREvoBLACKLISTEDlo13999999999999999999mm'
+const o13: AuctionValidator = {
+  ...outOfSetBase(O13_VOTE, {
+    marinadeActivatedStakeSol: 5_000,
+    country: C_FR,
+    aso: ASO_OVH,
+  }),
+  ...O_COMMON,
+  samEligible: false,
+  samBlocked: false,
+  lastCapConstraint: null,
+  values: outOfSetValues(5_000, 100),
 }
 
 // o04. samEligible=false, bond present, not blacklisted → CRITICAL
@@ -1452,9 +1560,15 @@ export const TEST_VALIDATORS: AuctionValidator[] = [
   s22,
   s23,
   s24,
+  s25,
+  s26,
+  s27,
+  s28,
+  s29,
   o01,
   o02,
   o03,
+  o13,
   o04,
   o05,
   o06,
@@ -1483,7 +1597,7 @@ export const TEST_AUCTION_RESULT: AuctionResult = {
       marinadeSamTvlSol: TVL,
       marinadeRemainingSamSol: 300_000,
     },
-    blacklist: new Set<string>([O03_VOTE]),
+    blacklist: new Set<string>([O03_VOTE, O13_VOTE]),
   },
 }
 
@@ -1537,9 +1651,6 @@ export const TEST_DS_SAM_CONFIG: DsSamConfig = {
   logVerbosity: LogVerbosity.ERROR,
 }
 
-// Epochs per year (same constant as sam.ts)
-export const TEST_EPOCHS_PER_YEAR = (365.25 * 24 * 3600) / 172800
-
 // Human-readable names for each fixture validator
 export const TEST_VALIDATOR_NAMES = new Map<string, string>([
   ['FiXtUREv1111111111111111111111111111111111aa', 'Test: In-Set Gaining'],
@@ -1589,6 +1700,23 @@ export const TEST_VALIDATOR_NAMES = new Map<string, string>([
   ],
   ['FiXtUREvbOUTsoftgrowccccccccccccccccccccccll', 'CTA: Out-of-Set Soft Grow'],
   [
+    'FiXtUREvbCRITICALfeeAndShort25555555555555mm',
+    'CTA: Critical (Fee + Shortfall)',
+  ],
+  [
+    'FiXtUREvbCRITICALrunwayOnly26666666666666nn',
+    'CTA: Critical (Runway Fallback)',
+  ],
+  ['FiXtUREvbBELOWMINfee27777777777777777777oo', 'CTA: Below-Min Bond + Fee'],
+  [
+    'FiXtUREvbCAPinset28888888888888888888888888pp',
+    'CTA: In-Set Cap (no growth)',
+  ],
+  [
+    'FiXtUREvbRAISEbid29999999999999999999999999qq',
+    'CTA: Raise Bid to Grow Stake',
+  ],
+  [
     'FiXtUREvoSAMBLOCKEDhi1111111111111111111111aa',
     'Test: samBlocked (real stake)',
   ],
@@ -1599,6 +1727,10 @@ export const TEST_VALIDATOR_NAMES = new Map<string, string>([
   [
     'FiXtUREvoBLACKLISTEDhi33333333333333333333cc',
     'Test: Blacklisted (real stake)',
+  ],
+  [
+    'FiXtUREvoBLACKLISTEDlo13999999999999999999mm',
+    'Test: Blacklisted (no stake)',
   ],
   [
     'FiXtUREvoCLIENThi4444444444444444444444444dd',

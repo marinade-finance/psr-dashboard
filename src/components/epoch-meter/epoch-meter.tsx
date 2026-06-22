@@ -15,7 +15,7 @@ import {
   type TimelineStage,
 } from 'src/services/epoch'
 import { loadSam } from 'src/services/sam'
-import { fetchProtectedEventsWithValidator } from 'src/services/validator-with-protected_event'
+import { fetchProtectedEventsWithValidators } from 'src/services/validator-with-protected_event'
 
 // Nav chip: epoch number with a leading progress ring. Hover shows a
 // timeline of pipeline stages (payments-settled / auction-settled / live /
@@ -24,11 +24,11 @@ export const EpochMeter: React.FC = () => {
   const queryClient = useQueryClient()
   const { data: sam } = useQuery({
     queryKey: ['sam'],
-    queryFn: () => loadSam(null),
+    queryFn: () => loadSam(),
   })
   const { data: protectedEvents } = useQuery({
     queryKey: ['protected-events'],
-    queryFn: () => fetchProtectedEventsWithValidator(queryClient),
+    queryFn: () => fetchProtectedEventsWithValidators(queryClient),
   })
 
   const [now, setNow] = useState(() => Date.now())
@@ -67,10 +67,20 @@ export const EpochMeter: React.FC = () => {
     <Tooltip content={<TimelineCard model={model} progress={progress} />}>
       <button
         type="button"
-        aria-label={model.stale ? `${model.label} (stale)` : model.label}
+        aria-label={
+          model.critical
+            ? `${model.label} (data stale by more than one epoch)`
+            : model.stale
+              ? `${model.label} (stale)`
+              : model.label
+        }
         className={cn(
-          'text-xs font-mono px-2 py-1 rounded-md bg-muted whitespace-nowrap inline-flex items-center gap-1.5 cursor-default border-none focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-          model.stale ? 'text-warning' : 'text-muted-foreground',
+          'text-xs font-mono px-2 py-1 rounded-md whitespace-nowrap inline-flex items-center gap-1.5 cursor-default border focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors',
+          model.critical
+            ? 'bg-destructive-light text-destructive border-destructive/25'
+            : model.stale
+              ? 'bg-warning-light text-warning border-warning/25'
+              : 'bg-muted text-muted-foreground border-border/50',
         )}
       >
         <ProgressRing percent={ringPercent} size={12} />

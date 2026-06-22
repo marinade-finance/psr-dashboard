@@ -8,6 +8,24 @@ import path from 'path'
 // `/docs`, `/expert-docs`, `/bonds` etc. need to resolve to /index.html so
 // the React router can pick them up. Static assets (markdown, images) and
 // the bundler's own URLs (/@vite/, /@react-refresh) must pass through.
+const STATIC_EXTENSIONS = [
+  '.css',
+  '.js',
+  '.mjs',
+  '.json',
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.svg',
+  '.ico',
+  '.woff',
+  '.woff2',
+  '.ttf',
+  '.map',
+  '.webp',
+  '.gif',
+]
+
 function spaFallback(): PluginOption {
   function rewrite(
     req: {
@@ -18,11 +36,9 @@ function spaFallback(): PluginOption {
   ) {
     const url = req.url ?? ''
     const accept = req.headers.accept as string | undefined
-    if (
-      accept?.includes('text/html') &&
-      !url.includes('.') &&
-      !url.startsWith('/@')
-    ) {
+    const pathname = url.split('?')[0].split('#')[0]
+    const isStatic = STATIC_EXTENSIONS.some(ext => pathname.endsWith(ext))
+    if (accept?.includes('text/html') && !isStatic && !url.startsWith('/@')) {
       req.url = '/index.html'
     }
     next()

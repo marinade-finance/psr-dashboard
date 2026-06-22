@@ -73,6 +73,7 @@ export const ValidatorSearch: React.FC<Props> = ({
   const [highlighted, setHighlighted] = useState(0)
   const [open, setOpen] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const matches = useMemo(
     () => findMatches(query, validators, nameMap),
@@ -88,6 +89,36 @@ export const ValidatorSearch: React.FC<Props> = ({
     }
     document.addEventListener('mousedown', onClick)
     return () => document.removeEventListener('mousedown', onClick)
+  }, [])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.isComposing) return
+      if (e.ctrlKey || e.metaKey || e.altKey) return
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement
+      )
+        return
+      if ((e.target as HTMLElement | null)?.isContentEditable) return
+      if (wrapRef.current?.contains(e.target as Node)) return
+      const activate = (): void => {
+        e.preventDefault()
+        inputRef.current?.focus()
+      }
+      if (e.key === '/') {
+        activate()
+      } else if (
+        e.key === 's' &&
+        (document.activeElement === document.body ||
+          document.activeElement === null)
+      ) {
+        activate()
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
   }, [])
 
   const select = (vote: string) => {
@@ -121,6 +152,7 @@ export const ValidatorSearch: React.FC<Props> = ({
   return (
     <div ref={wrapRef} className={cn('relative', className)}>
       <Input
+        ref={inputRef}
         type="search"
         value={query}
         placeholder="Find validator by name or vote account…"

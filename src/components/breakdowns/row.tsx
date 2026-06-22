@@ -9,8 +9,8 @@ export const SEPARATOR_DIV_CLASS = 'border-t border-border-grid pt-2 mt-1'
 // top space is what makes the total row breathe — a thin border alone reads
 // as "more rows below" without it.
 const SEPARATOR_CELL_PAD = 'pt-3 pb-1.5'
-// Total rows: slightly tighter top than before so the following
-// SectionHeader breaks cleanly from the conclusion.
+// Total rows: tighter top so the following SectionHeader breaks cleanly
+// from the conclusion.
 const TOTAL_CELL_PAD = 'pt-3 pb-2'
 const NORMAL_CELL_PAD = 'py-1.5'
 
@@ -119,10 +119,8 @@ function rowStyle(opts: {
       ? SEPARATOR_CELL_PAD
       : NORMAL_CELL_PAD
   // One subtle hairline for every "= result" row — total or subtotal.
-  // (Previously the subtotal used a heavier `border-t-2` which only added
-  // visual noise; the semantic — "math conclusion above" — is identical.)
   const sepBorder = sep ? 'border-t border-muted-foreground/30' : false
-  return { sep, bld, lg, cellPad, sepBorder, total: opts.total }
+  return { bld, lg, cellPad, sepBorder }
 }
 
 export const CalcRow: React.FC<{
