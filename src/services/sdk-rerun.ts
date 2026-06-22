@@ -118,13 +118,23 @@ export function runSdkRerun(
     }
   })
 
+  // Clone stakeAmounts too: reset()/evaluate() below mutate
+  // marinadeRemainingSamSol, and sharing the ref would corrupt the live
+  // ['sam'] snapshot this rerun derives from.
   const clonedAuctionData: AuctionData = {
     ...baseAuctionData,
+    stakeAmounts: { ...baseAuctionData.stakeAmounts },
     validators,
   }
 
   const constraintsConfig = buildConstraintsConfig(config, clonedAuctionData)
   const constraints = new AuctionConstraints(constraintsConfig, debug)
   const auction = new Auction(clonedAuctionData, constraints, config, debug)
+  // baseAuctionData is post-evaluation (loadSam already drained
+  // marinadeRemainingSamSol to ~0 and accumulated marinadeSamTargetSol).
+  // evaluate() distributes from the current remaining budget BEFORE its own
+  // internal reset, so without this it finds no budget, no winner, and throws
+  // 'winningTotalPmpe has to be finite'. reset() restores the pre-auction state.
+  auction.reset()
   return auction.evaluate()
 }

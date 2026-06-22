@@ -48,7 +48,8 @@ export const selectCurrentEpochProgress = (
   let best: { epoch: number; startMs: number } | null = null
   for (const v of validators) {
     for (const stat of v.epoch_stats) {
-      if (stat.epoch_end_at !== null || stat.epoch_start_at === null) continue
+      // epoch_end_at is optional in the API schema — undefined means still open.
+      if (stat.epoch_end_at != null || stat.epoch_start_at == null) continue
       const startMs = Date.parse(stat.epoch_start_at)
       if (!Number.isFinite(startMs)) continue
       if (best === null || stat.epoch > best.epoch) {

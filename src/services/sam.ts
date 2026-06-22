@@ -262,10 +262,17 @@ type RedelegationAllocation = {
 // Shared greedy redelegation allocation. The per-validator expected stake
 // change, the auction-wide priority frontier, the totalPmpe-desc rank used
 // by next-epoch advice, and the marginal-winner reference used by the
-// auction APY math all read from this one pass so they never drift apart.
+// auction APY math all read from this one pass so these four consumers never
+// drift apart from each other.
 // Validators are walked in descending revShare.totalPmpe order; a validator
 // is "fully satisfied" when its entire below-target delta fit before the
 // budget was exhausted.
+//
+// Estimate caveat: this pass does NOT enforce the SDK's concentration caps
+// (country / ASO / per-validator / maxStakeWanted) that auction.evaluate()
+// applies during stake distribution. The estimate assumes no such cap binds
+// for the validator; a capped-out validator will show more inflow / a better
+// frontier position here than the SDK would actually grant.
 //
 // Memoised per AuctionResult identity: called by computeExpectedStakeChanges,
 // selectRedelegationPriorityFrontierPmpe, selectRedelegationPriorityRank,
@@ -286,7 +293,7 @@ function allocateRedelegation(
     v.auctionStake.marinadeSamTargetSol - effectiveActive(v)
 
   const sorted = [...validators].sort(
-    (va, vb) => vb.stakePriority - va.stakePriority,
+    (va, vb) => (vb.revShare.totalPmpe ?? 0) - (va.revShare.totalPmpe ?? 0),
   )
   const inflowByVote = new Map<string, number>()
   const rankByVote = new Map<string, number>()

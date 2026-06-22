@@ -1,9 +1,4 @@
-import {
-  keepPreviousData,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query'
 import React, { useState, useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
@@ -14,7 +9,7 @@ import { ICON_ROWS_DETAILED } from 'src/components/icons/icon-rows-detailed'
 import { Button } from 'src/components/ui/button'
 import { Loader } from 'src/components/loader/loader'
 import { Navigation } from 'src/components/navigation/navigation'
-import { SamTable } from 'src/components/sam-table/sam-table'
+import { SamTable, passesTableFilter } from 'src/components/sam-table/sam-table'
 import { ValidatorDetail } from 'src/components/validator-detail/validator-detail'
 import {
   fetchAllNotifications,
@@ -24,7 +19,6 @@ import {
   augmentAuctionResult,
   fetchValidatorNames,
   loadSam,
-  selectBondSize,
   selectMaxAPY,
 } from 'src/services/sam'
 import { mergeOverrides, removeFromOverrides } from 'src/services/simulation'
@@ -62,7 +56,6 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
   const loadAuction = dataSources?.loadAuction ?? loadSam
   const loadValidatorNames =
     dataSources?.loadValidatorNames ?? fetchValidatorNames
-  const queryClient = useQueryClient()
 
   const [searchParams, setSearchParams] = useSearchParams()
   const selectedValidator = searchParams.get('v')
@@ -72,33 +65,38 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
   const [simulatedValidators, setSimulatedValidators] = useState<Set<string>>(
     new Set(),
   )
-  const [originalAuctionResult, setOriginalAuctionResult] =
-    useState<AuctionResult | null>(null)
+  // Simulation output lives in component state, never in the ['sam'] cache:
+  // that cache is the canonical live auction shared by EpochMeter, bonds and
+  // protected-events. Writing sim numbers into it would leak them to those
+  // consumers and a background refetch would flip the table back to live data
+  // under the sim banner.
+  const [simResult, setSimResult] = useState<SamResult | null>(null)
 
-  const { data, status } = useQuery({
+  const { data: liveData, status } = useQuery({
     queryKey: ['sam'],
     queryFn: () => loadAuction(),
     placeholderData: keepPreviousData,
   })
 
+  const data = simResult ?? liveData
+
   function simulateOverrides(overrides: AppOverrides): Promise<SamResult> {
-    const current = queryClient.getQueryData<SamResult>(['sam'])
-    if (!current) return Promise.reject(new Error('No auction data'))
-    const baseAuctionData =
-      originalAuctionResult?.auctionData ?? current.auctionResult.auctionData
-    const result = runSdkRerun(baseAuctionData, current.dsSamConfig, overrides)
+    if (!liveData) return Promise.reject(new Error('No auction data'))
+    const result = runSdkRerun(
+      liveData.auctionResult.auctionData,
+      liveData.dsSamConfig,
+      overrides,
+    )
     return Promise.resolve({
       auctionResult: result,
-      epochsPerYear: current.epochsPerYear,
-      dsSamConfig: current.dsSamConfig,
+      epochsPerYear: liveData.epochsPerYear,
+      dsSamConfig: liveData.dsSamConfig,
     })
   }
 
   const { mutate: runSimulation, isPending: isCalculating } = useMutation({
     mutationFn: simulateOverrides,
-    onSuccess: result => {
-      queryClient.setQueryData(['sam'], result)
-    },
+    onSuccess: setSimResult,
     onError: err => console.error('[sam-sim] failed:', err),
   })
 
@@ -132,21 +130,10 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
   }, [validatorNames])
 
   const handleResetSimulation = useCallback(() => {
-    // Restore original data immediately so the table snaps back without
-    // waiting for the background refetch to complete.
-    if (originalAuctionResult) {
-      const current = queryClient.getQueryData<SamResult>(['sam'])
-      if (current) {
-        queryClient.setQueryData(['sam'], {
-          ...current,
-          auctionResult: originalAuctionResult,
-        })
-      }
-    }
+    setSimResult(null)
     setSimulationOverrides(null)
     setSimulatedValidators(new Set())
-    setOriginalAuctionResult(null)
-  }, [queryClient, originalAuctionResult])
+  }, [])
 
   const handleClearValidator = useCallback(
     (voteAccount: string) => {
@@ -160,28 +147,15 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
       setSimulatedValidators(nextSet)
 
       if (nextSet.size === 0) {
-        // All cleared — restore base auction optimistically (mirrors reset).
-        const current = queryClient.getQueryData<SamResult>(['sam'])
-        if (current && originalAuctionResult) {
-          queryClient.setQueryData(['sam'], {
-            ...current,
-            auctionResult: originalAuctionResult,
-          })
-        }
+        // All cleared — drop the sim result so the table snaps back to live.
+        setSimResult(null)
         setSimulationOverrides(null)
-        setOriginalAuctionResult(null)
       } else {
         setSimulationOverrides(nextOverrides)
         if (nextOverrides) runSimulation(nextOverrides)
       }
     },
-    [
-      simulationOverrides,
-      simulatedValidators,
-      queryClient,
-      runSimulation,
-      originalAuctionResult,
-    ],
+    [simulationOverrides, simulatedValidators, runSimulation],
   )
 
   const handleClearSelectedValidator = useCallback(() => {
@@ -228,10 +202,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
       bidPmpe: number | null,
       bondBalanceSol: number | null,
     ) => {
-      if (!selectedValidator || !data) return
-      if (!originalAuctionResult && data.auctionResult) {
-        setOriginalAuctionResult(data.auctionResult)
-      }
+      if (!selectedValidator || !liveData) return
       const next = mergeOverrides(simulationOverrides, selectedValidator, {
         inflationCommissionDec: inflationCommission,
         mevCommissionDec: mevCommission,
@@ -243,14 +214,14 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
       setSimulatedValidators(prev => new Set([...prev, selectedValidator]))
       runSimulation(next)
     },
-    [
-      selectedValidator,
-      data,
-      simulationOverrides,
-      originalAuctionResult,
-      runSimulation,
-    ],
+    [selectedValidator, liveData, simulationOverrides, runSimulation],
   )
+
+  // When a sim is active, the live auction is the "original" the table diffs
+  // ghost rows against; otherwise there is nothing to compare to.
+  const originalAuctionResult = simResult
+    ? (liveData?.auctionResult ?? null)
+    : null
 
   const displayAuctionResult = data?.auctionResult
 
@@ -261,7 +232,13 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
       data.dsSamConfig.minBondBalanceSol,
     )
     const validators = augmented
-      .filter(validator => (selectBondSize(validator) ?? 0) > 0)
+      .filter(validator =>
+        passesTableFilter(
+          validator,
+          level ?? 'basic',
+          data.dsSamConfig.minBondBalanceSol,
+        ),
+      )
       .sort(
         (a, b) =>
           selectMaxAPY(b, data.epochsPerYear) -
@@ -276,7 +253,20 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
       rank: index + 1,
       totalValidators: validators.length,
     }
-  }, [selectedValidator, displayAuctionResult, data])
+  }, [selectedValidator, displayAuctionResult, data, level])
+
+  const viewToggle = isCompact
+    ? {
+        label: 'Switch to detailed view',
+        title: 'Detailed view',
+        icon: ICON_ROWS_COMPACT,
+      }
+    : {
+        label: 'Switch to compact view',
+        title: 'Compact view',
+        icon: ICON_ROWS_DETAILED,
+      }
+  const selectedIsSimulated = simulatedValidators.has(selectedValidator ?? '')
 
   return (
     <div className="bg-background-page">
@@ -287,12 +277,10 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
           size="icon"
           onClick={() => setIsCompact(c => !c)}
           className="ml-2 rounded-full text-muted-foreground hover:text-foreground"
-          aria-label={
-            isCompact ? 'Switch to detailed view' : 'Switch to compact view'
-          }
-          title={isCompact ? 'Detailed view' : 'Compact view'}
+          aria-label={viewToggle.label}
+          title={viewToggle.title}
         >
-          {isCompact ? ICON_ROWS_COMPACT : ICON_ROWS_DETAILED}
+          {viewToggle.icon}
         </Button>
       </Navigation>
       {simulatedValidators.size > 0 && (
@@ -360,13 +348,11 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
             nameMap={nameMap}
             notificationsMap={notificationsMap}
             rank={sheetValidatorData.rank}
-            isSimulated={simulatedValidators.has(selectedValidator ?? '')}
+            isSimulated={selectedIsSimulated}
             onClose={handleBack}
             onSimulate={handleDetailSimulate}
             onClearSimulation={
-              simulatedValidators.has(selectedValidator ?? '')
-                ? handleClearSelectedValidator
-                : undefined
+              selectedIsSimulated ? handleClearSelectedValidator : undefined
             }
             isCalculating={isCalculating}
             level={level}

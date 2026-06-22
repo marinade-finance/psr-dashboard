@@ -399,8 +399,19 @@ function SimDeltas({
   const inSetAfter = selectInSet(current)
   const stakeBefore = original.auctionStake.marinadeSamTargetSol
   const stakeAfter = current.auctionStake.marinadeSamTargetSol
-  const riskBefore = original.values.bondRiskFeeSol ?? 0
-  const riskAfter = current.values.bondRiskFeeSol ?? 0
+  // bondRiskFeeSol is pinned from the scoring API and never changes in
+  // simulation. Track bondRiskFeeShortfall instead — it changes when
+  // simulated stake shifts the fee floor.
+  const shortfallBefore = computeBondCoverage(
+    original,
+    dsSamConfig,
+    origWinningTotalPmpe,
+  ).bondRiskFeeShortfall
+  const shortfallAfter = computeBondCoverage(
+    current,
+    dsSamConfig,
+    winningTotalPmpe,
+  ).bondRiskFeeShortfall
   const penaltyBefore = computeBidTooLowPenaltySol(
     original,
     dsSamConfig,
@@ -457,19 +468,19 @@ function SimDeltas({
       ),
     })
   }
-  const riskDelta = riskAfter - riskBefore
-  if (Math.abs(riskDelta) > 1e-6) {
+  const shortfallDelta = shortfallAfter - shortfallBefore
+  if (Math.abs(shortfallDelta) > 1e-6) {
     rows.push({
-      label: 'Bond risk fee',
+      label: 'Fee shortfall',
       node: (
         <span
           className="font-mono"
           style={{
-            color: riskDelta > 0 ? CSS_DESTRUCTIVE : CSS_STATUS_GREEN,
+            color: shortfallDelta > 0 ? CSS_DESTRUCTIVE : CSS_STATUS_GREEN,
           }}
         >
-          {riskDelta > 0 ? '+' : '−'}
-          {cost(Math.abs(riskDelta))}
+          {shortfallDelta > 0 ? '+' : '−'}
+          {cost(Math.abs(shortfallDelta))}
         </span>
       ),
     })
@@ -651,6 +662,16 @@ export const ValidatorDetail = ({
     }, 400)
     return () => clearTimeout(t)
   }, [simEnabled, editBid, editInflation, editMev, editBlock, editBond])
+
+  const makeSimWheelHandler =
+    (value: string, setter: (v: string) => void, step: number) =>
+    (e: React.WheelEvent<HTMLInputElement>) => {
+      if (document.activeElement !== e.currentTarget) return
+      e.preventDefault()
+      const current = parseFloat(value) || 0
+      const next = e.deltaY < 0 ? current + step : current - step
+      setter(String(Math.round(next / step) * step))
+    }
 
   const handleSimToggle = (enabled: boolean) => {
     setSimEnabled(enabled)
@@ -1098,6 +1119,7 @@ export const ValidatorDetail = ({
                       type="number"
                       value={editBid}
                       onChange={e => setEditBid(e.target.value)}
+                      onWheel={makeSimWheelHandler(editBid, setEditBid, 0.001)}
                       step="0.001"
                       min="0"
                       className="font-mono"
@@ -1111,6 +1133,11 @@ export const ValidatorDetail = ({
                       type="number"
                       value={editInflation}
                       onChange={e => setEditInflation(e.target.value)}
+                      onWheel={makeSimWheelHandler(
+                        editInflation,
+                        setEditInflation,
+                        0.1,
+                      )}
                       step="0.1"
                       min="0"
                       max="100"
@@ -1129,6 +1156,7 @@ export const ValidatorDetail = ({
                       type="number"
                       value={editMev}
                       onChange={e => setEditMev(e.target.value)}
+                      onWheel={makeSimWheelHandler(editMev, setEditMev, 0.1)}
                       step="0.1"
                       min="0"
                       max="100"
@@ -1144,6 +1172,11 @@ export const ValidatorDetail = ({
                       type="number"
                       value={editBlock}
                       onChange={e => setEditBlock(e.target.value)}
+                      onWheel={makeSimWheelHandler(
+                        editBlock,
+                        setEditBlock,
+                        0.1,
+                      )}
                       step="0.1"
                       min="0"
                       max="100"
@@ -1159,6 +1192,7 @@ export const ValidatorDetail = ({
                       type="number"
                       value={editBond}
                       onChange={e => setEditBond(e.target.value)}
+                      onWheel={makeSimWheelHandler(editBond, setEditBond, 1)}
                       step="1"
                       min="0"
                       placeholder="—"

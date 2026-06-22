@@ -6,6 +6,8 @@ validator bonds, and protected events. Auction computation comes from
 
 ## Local development
 
+`pnpm generate-schemas` requires Python 3 (stdlib only) to pre-process the notifications OpenAPI spec.
+
 ```sh
 pnpm install
 pnpm start:dev          # Vite dev server (HMR), port 3000

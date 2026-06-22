@@ -21,12 +21,25 @@ const makeValidator = (
   }) as unknown as AuctionValidator
 
 describe('passesTableFilter', () => {
-  it('drops validators with bond below minimum regardless of level', () => {
+  it('drops validators with bond below minimum and no stake regardless of level', () => {
     for (const bondBalanceSol of [0, MIN_BOND_SOL - 1]) {
-      const v = makeValidator({ bondBalanceSol })
+      const v = makeValidator({
+        bondBalanceSol,
+        marinadeActivatedStakeSol: 0,
+        auctionStake: { marinadeSamTargetSol: 0 } as never,
+      })
       expect(passesTableFilter(v, 'expert', MIN_BOND_SOL)).toBe(false)
       expect(passesTableFilter(v, 'basic', MIN_BOND_SOL)).toBe(false)
     }
+  })
+
+  it('shows target-stake validators with no active stake and no bond', () => {
+    const v = makeValidator({
+      bondBalanceSol: 0,
+      marinadeActivatedStakeSol: 0,
+      auctionStake: { marinadeSamTargetSol: 1000 } as never,
+    })
+    expect(passesTableFilter(v, 'basic', MIN_BOND_SOL)).toBe(true)
   })
 
   it('expert mode shows everything with sufficient bond', () => {

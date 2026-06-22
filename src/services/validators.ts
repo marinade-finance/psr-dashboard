@@ -51,10 +51,4 @@ export const fetchValidatorsWithEpochs = (
     signal,
     body =>
       schemas.ResponseValidators.parse(body) as unknown as ValidatorsResponse,
-  ).then(data => ({
-    validators: data.validators.filter(
-      validator =>
-        Number(validator.marinade_stake) > 0 ||
-        Number(validator.marinade_native_stake) > 0,
-    ),
-  }))
+  )

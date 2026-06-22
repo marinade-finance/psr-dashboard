@@ -176,6 +176,16 @@ placeholderData: keepPreviousData })`. After a re-run, `insertGhostRows`
 injects ghost entries at original positions of changed validators.
 Detection of refetch completion watches `fetchStatus === 'idle'`.
 
+**Bond fee warnings in simulation:** `values.bondRiskFeeSol` is a
+scoring-API input — it is NOT recomputed by the simulation re-run. Bond
+fee CTAs therefore persist unchanged through any simulation: if the real
+epoch has a fee being charged, the warning continues to show regardless
+of bid/commission overrides (correct — the user hasn't topped up the
+bond). The "What changes" diff tracks `bondRiskFeeShortfall` (computed
+from simulated `marinadeActivatedStakeSol × minBondPmpe − claimable`)
+rather than the pinned `bondRiskFeeSol`, so a simulation that changes
+stake allocation will surface the resulting shortfall change.
+
 ### Bond chip
 
 Four tiers, `BOND_CHIP` record in `sam-table.tsx`, keyed by the shared `BondHealthState` enum from `src/services/bond-health.ts` (`NO_BOND` / `CRITICAL` / `WATCH` / `HEALTHY`):
@@ -502,6 +512,11 @@ Generic `<Table>` inside `<TableShell>` with `TABLE_SHELL_HOVER`,
 | -------------- | ---------------------------------------------------------------- |
 | Validator Bond | `bg-status-green-light text-status-green border-status-green/30` |
 | Marinade       | `bg-warning-light text-warning border-warning/30`                |
+
+**Duplicate badge** (Reason column): rows sharing an identical
+`(vote_account, epoch, reason, amount)` tuple get a warning-style `Duplicate`
+chip flagging a known backend double-settlement (e.g. epoch 977). Rows are
+never silently deduplicated — both are shown, flagged.
 
 ---
 

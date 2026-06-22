@@ -1,4 +1,4 @@
-import { lamportsToSol } from 'src/format'
+import { finite, lamportsToSol } from 'src/format'
 import { LAMPORTS_PER_SOL } from 'src/services/constants'
 
 import { fetchRewards } from './rewards'
@@ -63,7 +63,7 @@ const claimAmountInLossRange = (
   const claimPerStake =
     Math.min(expectedEpr - actualEpr, maxClaimPerStake) - ignoredClaimPerStake
 
-  return Math.max(stake * claimPerStake, 0)
+  return finite(Math.max(stake * claimPerStake, 0))
 }
 
 const calcStakeByEpoch = (validators: Validator[]) => {

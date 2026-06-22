@@ -22,14 +22,17 @@ export function compoundApy(pmpe: number, epochsPerYear: number): number {
   return annualize(pmpe / 1e3, epochsPerYear)
 }
 
-// Gauge scale: 4 × idealBondEpochs puts the green "safe" zone at 25%+.
+// Gauge scale: 4 × idealBondEpochs — ideal runway lands at 25% fill,
+// the critical+watch zone occupies the leftmost quarter.
 export function bondGaugeScaleMax(config: DsSamConfig): number {
   return 4 * config.idealBondEpochs
 }
 
+// Critical band covers the leftmost half (0–50%) of the scale, making the
+// danger zone prominent regardless of absolute epoch values.
 export function bondCriticalFrac(config: DsSamConfig): number {
   const max = bondGaugeScaleMax(config)
-  return max > 0 ? config.minBondEpochs / max : 0.2
+  return max > 0 ? (2 * config.idealBondEpochs) / max : 0.5
 }
 
 export function apyBreakdown(

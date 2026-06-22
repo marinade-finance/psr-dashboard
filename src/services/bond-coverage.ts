@@ -119,7 +119,10 @@ export function computeBondCoverage(
   const stakeIdealFloor =
     idealUnprotectedReserveSol +
     pmpeToSol(idealBondPmpe, currentExposedStakeSol)
-  const topUpToIdealKeep = Math.max(0, stakeIdealFloor - bondBalanceSol)
+  const topUpToIdealKeep = Math.max(
+    0,
+    stakeIdealFloor - claimableBondBalanceSol,
+  )
 
   // Projected basis: post-undelegation. Mirrors the SDK's fee trigger:
   //   claimableBond >= minUnprotectedReserve + projectedExposed * minBondPmpe/1000
