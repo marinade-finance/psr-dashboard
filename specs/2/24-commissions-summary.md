@@ -14,6 +14,7 @@ not hidden behind hover or a click — we'll experiment with the best layout.
 ## Current state
 
 The Bidding tab breakdown already shows all four values clearly:
+
 - Inflation: X% → Y PMPE
 - MEV: X% → Y PMPE
 - Block rewards: X% → Y PMPE

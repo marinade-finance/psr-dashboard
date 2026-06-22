@@ -33,6 +33,7 @@ Two parts:
 
 Run every CTA producer and render each non-null result as its own row,
 ordered by severity. Each row carries:
+
 - the **lever glyph** (`getTipIcon`) and **severity colour** (`getTipStyle`) —
   the two orthogonal axes are already defined, reuse them
 - the constraint's specific binding figure: cap name + which cap (country /
@@ -47,6 +48,7 @@ do NOT reword them (CLAUDE.md writing rules).
 
 Show the inputs that decide queue order so the comparison questions answer
 themselves:
+
 - **Priority rank** — position when the redelegation budget is handed out
   (total PMPE highest first); already computed via
   `selectRedelegationPriorityRank`

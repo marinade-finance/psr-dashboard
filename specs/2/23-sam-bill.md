@@ -18,14 +18,14 @@ participation or auditing their bond outflow have to do the maths themselves.
 A downloadable per-validator summary covering one calendar month (or an
 arbitrary epoch range the user selects):
 
-| Line item                        | Source                              |
-| -------------------------------- | ----------------------------------- |
-| Static bid cost per epoch        | bid PMPE × average stake × epochs  |
-| Dynamic bid cost per epoch       | clearing-price discount per epoch   |
-| PSR settlements (bond-funded)    | protected-events API, bond-paid rows|
-| PSR settlements (Marinade-backed)| protected-events API, backstop rows |
-| Bond risk fees charged           | protected-events API, BondRiskFee   |
-| **Total bond outflow**           | sum of above                        |
+| Line item                         | Source                               |
+| --------------------------------- | ------------------------------------ |
+| Static bid cost per epoch         | bid PMPE × average stake × epochs    |
+| Dynamic bid cost per epoch        | clearing-price discount per epoch    |
+| PSR settlements (bond-funded)     | protected-events API, bond-paid rows |
+| PSR settlements (Marinade-backed) | protected-events API, backstop rows  |
+| Bond risk fees charged            | protected-events API, BondRiskFee    |
+| **Total bond outflow**            | sum of above                         |
 
 Output format: CSV (machine-readable, easy to import into accounting tools).
 PDF is a stretch goal — CSV first.

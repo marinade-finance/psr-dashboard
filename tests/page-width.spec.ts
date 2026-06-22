@@ -47,7 +47,9 @@ test.describe('page-width constraint — bonds table', () => {
     expect(cls).toContain('mx-auto')
   })
 
-  test('bonds table rendered width does not exceed 1920px', async ({ page }) => {
+  test('bonds table rendered width does not exceed 1920px', async ({
+    page,
+  }) => {
     // Viewport is 1280px by default — the div should fit within that.
     const width = await page.evaluate(() => {
       const divs = Array.from(document.querySelectorAll('div'))
@@ -77,7 +79,9 @@ test.describe('page-width constraint — protected events table', () => {
     expect(cls).toContain('mx-auto')
   })
 
-  test('events table rendered width does not exceed 1920px', async ({ page }) => {
+  test('events table rendered width does not exceed 1920px', async ({
+    page,
+  }) => {
     const width = await page.evaluate(() => {
       const divs = Array.from(document.querySelectorAll('div'))
       const match = divs.find(d => d.className.includes('max-w-[1920px]'))

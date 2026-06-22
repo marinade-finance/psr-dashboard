@@ -30,16 +30,18 @@ async function openSheetAndSimulate(page: Page) {
     .locator(SHEET)
     .getByRole('switch', { name: /Toggle simulation mode/i })
     .click()
-  await expect(page.locator(SHEET).getByText('What-If Simulation')).toBeVisible()
+  await expect(
+    page.locator(SHEET).getByText('What-If Simulation'),
+  ).toBeVisible()
 
   // Edit the bid to trigger a recompute and surface the simulation banner.
   const bidInput = page.locator(SHEET).locator('input[type="number"]').first()
   await bidInput.fill('0.1')
   await page.waitForTimeout(1200)
 
-  await expect(
-    page.getByText(/Simulation Mode/i).first(),
-  ).toBeVisible({ timeout: 8000 })
+  await expect(page.getByText(/Simulation Mode/i).first()).toBeVisible({
+    timeout: 8000,
+  })
 }
 
 test.describe('simulation reset — banner cleared after reset', () => {
@@ -62,7 +64,9 @@ test.describe('simulation reset — banner cleared after reset', () => {
     })
   })
 
-  test('Reset Simulation button removes itself after click', async ({ page }) => {
+  test('Reset Simulation button removes itself after click', async ({
+    page,
+  }) => {
     await openSheetAndSimulate(page)
 
     await page.locator(SHEET).getByText('Back to rankings').click()
@@ -88,15 +92,16 @@ test.describe('simulation reset — banner cleared after reset', () => {
     await resetBtn.click()
 
     // Ghost rows carry a line-through style; none should remain.
-    await expect(page.locator('tbody tr.line-through, tbody [class*="line-through"]')).toHaveCount(
-      0,
-      { timeout: 5000 },
-    )
+    await expect(
+      page.locator('tbody tr.line-through, tbody [class*="line-through"]'),
+    ).toHaveCount(0, { timeout: 5000 })
   })
 })
 
 test.describe('simulation banner stickiness — stays visible on scroll', () => {
-  test('banner remains in viewport after scrolling 400px down', async ({ page }) => {
+  test('banner remains in viewport after scrolling 400px down', async ({
+    page,
+  }) => {
     await openSheetAndSimulate(page)
 
     // Close sheet so the banner is not covered.

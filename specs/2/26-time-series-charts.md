@@ -15,12 +15,12 @@ numbers across sessions.
 Compact per-validator trend charts on the validator detail panel, covering
 the last N epochs (N configurable, default ~30).
 
-| Chart | Data source |
-|---|---|
-| Bond balance over epochs | bonds API per-validator history |
-| Bid PMPE over epochs | validators API historical `revShare` |
-| Stake (active) over epochs | validators API historical stake fields |
-| Payments per epoch | protected events API + bid cost history |
+| Chart                      | Data source                             |
+| -------------------------- | --------------------------------------- |
+| Bond balance over epochs   | bonds API per-validator history         |
+| Bid PMPE over epochs       | validators API historical `revShare`    |
+| Stake (active) over epochs | validators API historical stake fields  |
+| Payments per epoch         | protected events API + bid cost history |
 
 Charts are sparkline-style by default; click to expand to a full chart with
 axis labels and epoch tooltips.

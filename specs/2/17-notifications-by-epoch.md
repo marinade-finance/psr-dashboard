@@ -12,8 +12,10 @@ from the current epoch vs older epochs?
 separating each group. Most-recent epoch at the top.
 
 **Where:**
+
 - `src/components/validator-detail/` — the Notifications tab list renderer.
 
 **Open questions:**
+
 - Epoch header design: inline divider vs collapsible group?
 - How many epochs to show before truncating (pagination or "show more").

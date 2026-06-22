@@ -15,6 +15,7 @@ does not implement — so either the code or the copy is wrong.
 
 `rewardsGuaranteeIdeal` is currently set equal to `rewardsGuaranteeKeep`
 (one epoch). Two possibilities:
+
 - The reward reserve was always intended to be single-epoch (the protocol
   only ever guarantees one epoch of rewards) — then the **tooltip is wrong**
   and the fix is copy-only.

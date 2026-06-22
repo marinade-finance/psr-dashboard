@@ -66,6 +66,7 @@ the section to WHY + code pointers (drop HOW), update `specs/index.md`
 status.
 
 Lifecycle: `draft` → `planned` → `partial` → `shipped`.
+
 - `draft` — idea captured; implementation blocked until promoted
 - `experiment` — live prototype in a preview branch; validates the idea
   before committing to production. Must not be merged to production until

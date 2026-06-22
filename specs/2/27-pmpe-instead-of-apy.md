@@ -24,6 +24,7 @@ to active validators.
 ## Experiment scope
 
 A preview deployment with `Max APY` column replaced by `Total PMPE`:
+
 - Column header: "PMPE" (or "Total PMPE")
 - Value: `revShare.totalPmpe` formatted to 2 dp
 - Sort: same descending order — highest PMPE wins
@@ -36,6 +37,7 @@ panel are unaffected — those are contextual, not the primary sort signal.
 ## Gate
 
 Must not ship to production until:
+
 1. All open bugs in `bugs.md` are resolved (particularly #41, display/filter
    correctness issues that affect which validators appear in the table).
 2. Experiment validated with validator feedback — at least the user-test cohort

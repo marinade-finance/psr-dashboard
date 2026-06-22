@@ -80,7 +80,10 @@ test.describe('detail sheet — full open-walk-simulate-close cycle', () => {
     ).toBeVisible()
 
     // (4) Close via X — URL drops ?v=.
-    await page.locator(SHEET).getByRole('button', { name: 'Back to rankings' }).click()
+    await page
+      .locator(SHEET)
+      .getByRole('button', { name: 'Back to rankings' })
+      .click()
     await expect(page.locator(SHEET)).toHaveCount(0, { timeout: 5000 })
     await expect(page).not.toHaveURL(/\?v=/)
   })
@@ -117,7 +120,10 @@ test.describe('detail sheet — simulate then reset cycle', () => {
 
     // (4) Close the sheet so the SAM banner (and the Reset Simulation pill
     // on it) is no longer covered by the Radix modal overlay.
-    await page.locator(SHEET).getByRole('button', { name: 'Back to rankings' }).click()
+    await page
+      .locator(SHEET)
+      .getByRole('button', { name: 'Back to rankings' })
+      .click()
     await expect(page.locator(SHEET)).toHaveCount(0, { timeout: 5000 })
 
     // (5) "Reset Simulation" pill on the SAM banner is visible.

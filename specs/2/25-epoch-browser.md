@@ -17,10 +17,12 @@ Same SAM table, same validator detail panel, same breakdown cards — but
 driven by a historical snapshot.
 
 **UX entry points:**
+
 - Epoch selector in the global header (alongside / replacing the current epoch display)
 - Direct URL: `?epoch=N` — linkable and shareable
 
 **Behavioural changes vs live mode:**
+
 - All data fetches parameterised with `?epoch=N`
 - "ESTIMATE" / "FINALIZED" badges reflect that epoch's settlement state
 - Simulation mode disabled — historical data is read-only

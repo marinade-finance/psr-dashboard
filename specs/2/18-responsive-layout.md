@@ -10,6 +10,7 @@ overlap or clip. Not a mobile target (mobile shows unsupported banner below
 better experience.
 
 **Known issues:**
+
 - Validator detail sheet: `sticky top-[68px]` tab strip assumes the global nav
   is 68px — needs re-validation after the sheet gained `top-4` inset margin
   (commit c7cd8840). The sticky offset should reference the sheet's own header

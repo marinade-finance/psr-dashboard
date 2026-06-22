@@ -15,6 +15,7 @@ the SAM fetch, so an in-flight `runFinalOnly()` keeps running.
 `loadSam()` (`src/services/sam.ts:29`) has no signal parameter and calls
 `dsSam.runFinalOnly()` — the ds-sam-sdk API does not appear to accept an
 `AbortSignal`. Forwarding a signal requires:
+
 - a `loadSam` signature change to accept and honour a signal,
 - an SDK-level hook to abort `runFinalOnly()` mid-flight (may not exist),
 - updates at the other call sites (`epoch-meter.tsx:27`,

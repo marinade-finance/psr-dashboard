@@ -84,7 +84,9 @@ test.describe('keyboard shortcut — no-op when focus is inside an input', () =>
     const V01 = 'FiXtUREv1111111111111111111111111111111111aa'
     await page.goto(`/test-?v=${V01}`)
     await page.waitForSelector('tbody tr', { timeout: 30000 })
-    await expect(page.locator('[role="dialog"]').first()).toBeVisible({ timeout: 10000 })
+    await expect(page.locator('[role="dialog"]').first()).toBeVisible({
+      timeout: 10000,
+    })
     await page
       .locator('[role="dialog"]')
       .getByRole('switch', { name: /Toggle simulation mode/i })

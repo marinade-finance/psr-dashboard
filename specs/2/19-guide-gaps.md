@@ -18,10 +18,10 @@ Each maps to a concrete doc addition or UI label.
 Items 1–3 and 5 are pure GUIDE prose additions. Item 4 needs a UI label in the
 bond breakdown AND a GUIDE explanation.
 
-| #   | Gap                                              | Fix                                                                                       |
-| --- | ------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| 6   | Protected event reason labels — visual ambiguity | GUIDE: reason taxonomy; only the four entries below need copy                             |
-| 7   | APY uses network averages, not validator output  | GUIDE: replace "weighted by actual reward mix" with accurate network-average description  |
+| #   | Gap                                              | Fix                                                                                      |
+| --- | ------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| 6   | Protected event reason labels — visual ambiguity | GUIDE: reason taxonomy; only the four entries below need copy                            |
+| 7   | APY uses network averages, not validator output  | GUIDE: replace "weighted by actual reward mix" with accurate network-average description |
 
 **Item 6 — Protected event reason explainers**
 
@@ -74,6 +74,7 @@ Additionally: `rewards_mev` has a multi-epoch Jito delivery lag; `rewards_inflat
 is an estimate (name contains "est").
 
 **Fixed in GUIDE** (2026-05-29): replaced the inaccurate paragraph with:
+
 - network-average formula description
 - Jito delivery lag explanation
 
