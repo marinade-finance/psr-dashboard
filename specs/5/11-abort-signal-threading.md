@@ -28,7 +28,7 @@ cost is a wasted in-flight computation on cancel — no correctness impact.
 
 Add an optional `signal` to `loadSam`, pass it to the SDK run, and forward
 from all three call sites. Track the SDK cancellation support need in the
-ds-sam-sdk follow-up (see `specs/2/7-calculations-to-sdk.md`).
+ds-sam-sdk follow-up (see `specs/3/2-calculations-to-sdk.md`).
 
 **Where:** `src/services/sam.ts` (`loadSam`); `src/services/validator-with-bond.ts:43-51`;
 `src/components/epoch-meter/epoch-meter.tsx:27`;
