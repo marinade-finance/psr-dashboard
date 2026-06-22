@@ -25,20 +25,21 @@ export const ValidatorIdentity: React.FC<Props> = ({
       <div className="font-medium text-base text-foreground truncate">
         {name || '---'}
       </div>
-      {!compact && (responsive ? (
-        <>
-          <div className="text-xs font-mono text-secondary-foreground mt-px hidden sm:block">
-            {truncate8(voteAccount)}
-          </div>
-          <div className="text-xs font-mono text-secondary-foreground mt-px sm:hidden">
+      {!compact &&
+        (responsive ? (
+          <>
+            <div className="text-xs font-mono text-secondary-foreground mt-px hidden sm:block">
+              {truncate8(voteAccount)}
+            </div>
+            <div className="text-xs font-mono text-secondary-foreground mt-px sm:hidden">
+              {truncate4(voteAccount)}
+            </div>
+          </>
+        ) : (
+          <div className="text-xs font-mono text-secondary-foreground mt-px">
             {truncate4(voteAccount)}
           </div>
-        </>
-      ) : (
-        <div className="text-xs font-mono text-secondary-foreground mt-px">
-          {truncate4(voteAccount)}
-        </div>
-      ))}
+        ))}
     </div>
     {trailing}
   </div>

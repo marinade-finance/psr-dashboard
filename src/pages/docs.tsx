@@ -209,8 +209,8 @@ export const DocsPage: React.FC<Props> = ({ level }) => {
   const pages = useMemo(() => (data ? splitPages(data) : []), [data])
 
   // anchor id -> page id, derived from the rendered slices so it can never
-  // drift from the markdown. Legacy links like /docs#bond resolve through
-  // this map to whichever page now holds that anchor.
+  // drift from the markdown. Cross-page anchor links (/docs#bond) resolve
+  // through this map to whichever page now holds that anchor.
   const anchorToPage = useMemo(() => {
     const m = new Map<string, string>()
     for (const p of pages) for (const a of p.anchors) m.set(a, p.id)

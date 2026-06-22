@@ -297,7 +297,7 @@ function bondCta(
   precomputedCoverage?: BondCoverage,
 ): ValidatorTip | null {
   const bondBalance = validator.bondBalanceSol ?? 0
-  const bondRiskFeeSol = validator.values?.bondRiskFeeSol ?? 0
+  const bondRiskFeeSol = validator.values.bondRiskFeeSol
   const coverage =
     precomputedCoverage ??
     computeBondCoverage(validator, dsSamConfig, winningTotalPmpe)
@@ -347,9 +347,8 @@ function bondCta(
     winningTotalPmpe,
     coverage,
   )
-  // 'watch' implies runway > minBondEpochs + BOND_URGENT_EPOCHS (bondHealthFromAuction
-  // returns 'critical' at or below that threshold), so the old nearFeeThreshold
-  // branch (watch && runway ≤ threshold) was unreachable by construction.
+  // 'watch' implies runway > minBondEpochs + BOND_URGENT_EPOCHS, so any 'watch'
+  // validator is already above the fee threshold.
   const fires =
     health === 'critical' ||
     (inSet &&
@@ -702,7 +701,7 @@ export const getValidatorTip = (
   // totalPmpe already clears it, "Raise bid" is suppressed.
   priorityFrontierPmpe = 0,
 ): ValidatorTip => {
-  const delta = validator.values.expectedStakeChangeSol ?? 0
+  const delta = validator.values.expectedStakeChangeSol
   const cap = capCta(validator, delta)
   return selectTip(
     bondCta(

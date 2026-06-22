@@ -6,6 +6,8 @@ validator bonds, and protected events. Auction computation comes from
 
 ## Local development
 
+`pnpm generate-schemas` requires Python 3 (stdlib only) to pre-process the notifications OpenAPI spec.
+
 ```sh
 pnpm install
 pnpm start:dev          # Vite dev server (HMR), port 3000
@@ -20,9 +22,6 @@ pnpm test:e2e           # playwright e2e (auto-starts preview)
 pnpm test:e2e:update    # refresh visual-regression baselines
 npx tsc --noEmit        # type check
 ```
-
-Pre-commit hooks (husky + lint-staged) run `eslint --fix` + `prettier
---write` on staged TS/TSX. First run may reformat — retry once.
 
 ## Routes
 

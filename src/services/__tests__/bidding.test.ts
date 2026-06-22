@@ -11,7 +11,9 @@ vi.mock('../validators', async importOriginal => {
   return { ...actual }
 })
 
-function makeValidator(overrides: Record<string, unknown> = {}): AugmentedAuctionValidator {
+function makeValidator(
+  overrides: Record<string, unknown> = {},
+): AugmentedAuctionValidator {
   return {
     voteAccount: 'v1',
     marinadeActivatedStakeSol: 10000,
@@ -44,11 +46,13 @@ describe('computeBidding — stake and target', () => {
   })
 
   it('active=target=10000 → delta=0, activating=0', () => {
-    const b = computeBidding(makeValidator({
-      marinadeActivatedStakeSol: 10000,
-      auctionStake: { marinadeSamTargetSol: 10000 },
-      values: { expectedStakeChangeSol: 0, commissions: null },
-    }))
+    const b = computeBidding(
+      makeValidator({
+        marinadeActivatedStakeSol: 10000,
+        auctionStake: { marinadeSamTargetSol: 10000 },
+        values: { expectedStakeChangeSol: 0, commissions: null },
+      }),
+    )
     expect(b.delta).toBe(0)
     expect(b.activating).toBe(0)
   })
@@ -62,9 +66,11 @@ describe('computeBidding — delta decomposition', () => {
   })
 
   it('negative expectedStakeChange → delta<0, activating=0 (clamped)', () => {
-    const b = computeBidding(makeValidator({
-      values: { expectedStakeChangeSol: -3000, commissions: null },
-    }))
+    const b = computeBidding(
+      makeValidator({
+        values: { expectedStakeChangeSol: -3000, commissions: null },
+      }),
+    )
     expect(b.delta).toBe(-3000)
     expect(b.activating).toBe(0)
   })
@@ -83,32 +89,36 @@ describe('computeBidding — bid and effBid', () => {
   })
 
   it('effBid > bid → bidGap=0 (no negative gap)', () => {
-    const b = computeBidding(makeValidator({
-      revShare: {
-        bidPmpe: 3,
-        auctionEffectiveBidPmpe: 8,
-        activatingStakePmpe: 0,
-        inflationPmpe: 5,
-        mevPmpe: 2,
-        blockPmpe: 1,
-        totalPmpe: 11,
-      },
-    }))
+    const b = computeBidding(
+      makeValidator({
+        revShare: {
+          bidPmpe: 3,
+          auctionEffectiveBidPmpe: 8,
+          activatingStakePmpe: 0,
+          inflationPmpe: 5,
+          mevPmpe: 2,
+          blockPmpe: 1,
+          totalPmpe: 11,
+        },
+      }),
+    )
     expect(b.bidGap).toBe(0)
   })
 
   it('bid === effBid → bidGap=0', () => {
-    const b = computeBidding(makeValidator({
-      revShare: {
-        bidPmpe: 8,
-        auctionEffectiveBidPmpe: 8,
-        activatingStakePmpe: 2,
-        inflationPmpe: 5,
-        mevPmpe: 2,
-        blockPmpe: 1,
-        totalPmpe: 16,
-      },
-    }))
+    const b = computeBidding(
+      makeValidator({
+        revShare: {
+          bidPmpe: 8,
+          auctionEffectiveBidPmpe: 8,
+          activatingStakePmpe: 2,
+          inflationPmpe: 5,
+          mevPmpe: 2,
+          blockPmpe: 1,
+          totalPmpe: 16,
+        },
+      }),
+    )
     expect(b.bidGap).toBe(0)
   })
 })
@@ -132,10 +142,12 @@ describe('computeBidding — cost arithmetic', () => {
   })
 
   it('zero stake → cost=0 and activatingCost=0', () => {
-    const b = computeBidding(makeValidator({
-      marinadeActivatedStakeSol: 0,
-      values: { expectedStakeChangeSol: 0, commissions: null },
-    }))
+    const b = computeBidding(
+      makeValidator({
+        marinadeActivatedStakeSol: 0,
+        values: { expectedStakeChangeSol: 0, commissions: null },
+      }),
+    )
     expect(b.cost).toBe(0)
     expect(b.activatingCost).toBe(0)
     expect(b.total).toBe(0)
@@ -145,7 +157,7 @@ describe('computeBidding — cost arithmetic', () => {
 describe('computeBidding — formatted commission fields', () => {
   it('inflPct is a percentage string derived from inflationCommissionDec', () => {
     const b = computeBidding(makeValidator())
-    expect(b.inflPct).toMatch(/^\d+%$/)
+    expect(b.inflPct).toBe('8%')
   })
 
   it('mevPct is "-" when mevCommissionDec is null', () => {
@@ -155,12 +167,12 @@ describe('computeBidding — formatted commission fields', () => {
 
   it('mevPct is a percentage string when mevCommissionDec is set', () => {
     const b = computeBidding(makeValidator())
-    expect(b.mevPct).toMatch(/^\d+%$/)
+    expect(b.mevPct).toBe('5%')
   })
 
   it('blkPct is a percentage string', () => {
     const b = computeBidding(makeValidator())
-    expect(b.blkPct).toMatch(/^\d+%$/)
+    expect(b.blkPct).toBe('5%')
   })
 })
 

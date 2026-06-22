@@ -1,5 +1,5 @@
-import { lamportsToSol } from 'src/format'
-import { solToLamports } from 'src/services/units'
+import { finite, lamportsToSol } from 'src/format'
+import { LAMPORTS_PER_SOL } from 'src/services/constants'
 
 import { fetchRewards } from './rewards'
 
@@ -63,7 +63,7 @@ const claimAmountInLossRange = (
   const claimPerStake =
     Math.min(expectedEpr - actualEpr, maxClaimPerStake) - ignoredClaimPerStake
 
-  return Math.max(stake * claimPerStake, 0)
+  return finite(Math.max(stake * claimPerStake, 0))
 }
 
 const calcStakeByEpoch = (validators: Validator[]) => {
@@ -108,6 +108,7 @@ const calcTargetCreditsByEpoch = (validators: Validator[]) => {
 
   const result: Map<number, number> = new Map()
   for (const [epoch, sumOfWeights] of sumOfWeightsPerEpoch) {
+    if (sumOfWeights <= 0) continue
     result.set(
       epoch,
       Math.round((sumOfWeightedCreditsPerEpoch.get(epoch) ?? 0) / sumOfWeights),
@@ -156,13 +157,13 @@ const buildLowCreditsProtectedEvent = (
     expectedEpr,
     marinadeStake,
   )
-  if (solToLamports(amountSol) < config.min_settlement_lamports) {
+  if (LAMPORTS_PER_SOL * amountSol < config.min_settlement_lamports) {
     return null
   }
 
   return {
     epoch: epochStat.epoch,
-    amount: Math.round(solToLamports(amountSol)),
+    amount: Math.round(LAMPORTS_PER_SOL * amountSol),
     vote_account: validator.vote_account,
     meta: config.meta,
     reason: {
@@ -223,13 +224,13 @@ const buildCommissionIncreaseProtectedEvent = (
     expectedEpr,
     marinadeStake,
   )
-  if (solToLamports(amountSol) < config.min_settlement_lamports) {
+  if (LAMPORTS_PER_SOL * amountSol < config.min_settlement_lamports) {
     return null
   }
 
   return {
     epoch: epochStat.epoch,
-    amount: Math.round(solToLamports(amountSol)),
+    amount: Math.round(LAMPORTS_PER_SOL * amountSol),
     vote_account: validator.vote_account,
     meta: config.meta,
     reason: {

@@ -373,9 +373,7 @@ const PenaltyRow = ({
 )
 
 // What-changes block inside the sim panel: shows before → after pairs for
-// values that actually moved. Skips when there's no baseline. Re-uses
-// effectiveBondRunway, selectInSet, bidTooLowPenaltySol, and the cached
-// bondRiskFeeSol — no new derivations.
+// values that actually moved. Skips when there's no baseline.
 function SimDeltas({
   voteAccount,
   current,
@@ -401,8 +399,19 @@ function SimDeltas({
   const inSetAfter = selectInSet(current)
   const stakeBefore = original.auctionStake.marinadeSamTargetSol
   const stakeAfter = current.auctionStake.marinadeSamTargetSol
-  const riskBefore = original.values.bondRiskFeeSol ?? 0
-  const riskAfter = current.values.bondRiskFeeSol ?? 0
+  // bondRiskFeeSol is pinned from the scoring API and never changes in
+  // simulation. Track bondRiskFeeShortfall instead — it changes when
+  // simulated stake shifts the fee floor.
+  const shortfallBefore = computeBondCoverage(
+    original,
+    dsSamConfig,
+    origWinningTotalPmpe,
+  ).bondRiskFeeShortfall
+  const shortfallAfter = computeBondCoverage(
+    current,
+    dsSamConfig,
+    winningTotalPmpe,
+  ).bondRiskFeeShortfall
   const penaltyBefore = computeBidTooLowPenaltySol(
     original,
     dsSamConfig,
@@ -459,19 +468,19 @@ function SimDeltas({
       ),
     })
   }
-  const riskDelta = riskAfter - riskBefore
-  if (Math.abs(riskDelta) > 1e-6) {
+  const shortfallDelta = shortfallAfter - shortfallBefore
+  if (Math.abs(shortfallDelta) > 1e-6) {
     rows.push({
-      label: 'Bond risk fee',
+      label: 'Fee shortfall',
       node: (
         <span
           className="font-mono"
           style={{
-            color: riskDelta > 0 ? CSS_DESTRUCTIVE : CSS_STATUS_GREEN,
+            color: shortfallDelta > 0 ? CSS_DESTRUCTIVE : CSS_STATUS_GREEN,
           }}
         >
-          {riskDelta > 0 ? '+' : '−'}
-          {cost(Math.abs(riskDelta))}
+          {shortfallDelta > 0 ? '+' : '−'}
+          {cost(Math.abs(shortfallDelta))}
         </span>
       ),
     })
@@ -546,10 +555,6 @@ export const ValidatorDetail = ({
     dsSamConfig,
     winningTotalPmpe,
   )
-  // A no-bond or below-minimum bond sustains zero stake regardless of the
-  // SDK's raw bondGoodForNEpochs, which ignores the below-min gate. Force
-  // the runway to Depleted so Balance, Reserve and Bond runway tell one
-  // coherent story instead of "0 SOL / Critical / 6 epochs".
   const bondRunway = effectiveBondRunway(validator, dsSamConfig)
   const tip = getValidatorTip(
     validator,
@@ -565,7 +570,7 @@ export const ValidatorDetail = ({
 
   const inSet = selectInSet(validator)
   // Dense rank around the winning cutoff: 0 at cutoff, +N above, −N below.
-  const posVsWinning = validator.values.cutoffRank ?? 0
+  const posVsWinning = validator.values.cutoffRank
   const bondCoverage = useMemo(
     () => computeBondCoverage(validator, dsSamConfig, winningTotalPmpe),
     [validator, dsSamConfig, winningTotalPmpe],
@@ -614,6 +619,10 @@ export const ValidatorDetail = ({
   const [editBond, setEditBond] = useState(
     (validator.bondBalanceSol ?? 0).toString(),
   )
+  // Mirror is load-bearing: handleSimToggle and goToSim set simEnabled
+  // locally (the parent only learns about it after the debounced onSimulate
+  // fires), so simEnabled can't just be a derived `isSimulated`. The effect
+  // resyncs when the parent flips isSimulated (e.g. on clearSimulation).
   const [simEnabled, setSimEnabled] = useState(isSimulated)
   useEffect(() => {
     setSimEnabled(isSimulated)
@@ -654,6 +663,16 @@ export const ValidatorDetail = ({
     return () => clearTimeout(t)
   }, [simEnabled, editBid, editInflation, editMev, editBlock, editBond])
 
+  const makeSimWheelHandler =
+    (value: string, setter: (v: string) => void, step: number) =>
+    (e: React.WheelEvent<HTMLInputElement>) => {
+      if (document.activeElement !== e.currentTarget) return
+      e.preventDefault()
+      const current = parseFloat(value) || 0
+      const next = e.deltaY < 0 ? current + step : current - step
+      setter(String(Math.round(next / step) * step))
+    }
+
   const handleSimToggle = (enabled: boolean) => {
     setSimEnabled(enabled)
     firstRun.current = true
@@ -663,13 +682,13 @@ export const ValidatorDetail = ({
 
   const goToSim = () => {
     setSimEnabled(true)
+    firstRun.current = true
     setTab('overview')
   }
 
   // Banner tone follows the bond-health axis when the tip is bond-driven,
   // otherwise tracks the tip's own urgency. Click target reuses the shared
-  // TIP_TAB map so banner-nav and tab-dot can't disagree (previously the
-  // banner's bid → overview contradicted the dot's bid → penalty).
+  // TIP_TAB map so banner-nav and tab-dot can't disagree.
   const tipTarget = TIP_TAB[tip.constraint]
 
   const attention = tabAttention({
@@ -1100,6 +1119,7 @@ export const ValidatorDetail = ({
                       type="number"
                       value={editBid}
                       onChange={e => setEditBid(e.target.value)}
+                      onWheel={makeSimWheelHandler(editBid, setEditBid, 0.001)}
                       step="0.001"
                       min="0"
                       className="font-mono"
@@ -1113,6 +1133,11 @@ export const ValidatorDetail = ({
                       type="number"
                       value={editInflation}
                       onChange={e => setEditInflation(e.target.value)}
+                      onWheel={makeSimWheelHandler(
+                        editInflation,
+                        setEditInflation,
+                        0.1,
+                      )}
                       step="0.1"
                       min="0"
                       max="100"
@@ -1131,6 +1156,7 @@ export const ValidatorDetail = ({
                       type="number"
                       value={editMev}
                       onChange={e => setEditMev(e.target.value)}
+                      onWheel={makeSimWheelHandler(editMev, setEditMev, 0.1)}
                       step="0.1"
                       min="0"
                       max="100"
@@ -1146,6 +1172,11 @@ export const ValidatorDetail = ({
                       type="number"
                       value={editBlock}
                       onChange={e => setEditBlock(e.target.value)}
+                      onWheel={makeSimWheelHandler(
+                        editBlock,
+                        setEditBlock,
+                        0.1,
+                      )}
                       step="0.1"
                       min="0"
                       max="100"
@@ -1161,6 +1192,7 @@ export const ValidatorDetail = ({
                       type="number"
                       value={editBond}
                       onChange={e => setEditBond(e.target.value)}
+                      onWheel={makeSimWheelHandler(editBond, setEditBond, 1)}
                       step="1"
                       min="0"
                       placeholder="—"

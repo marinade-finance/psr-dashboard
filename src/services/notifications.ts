@@ -1,4 +1,6 @@
+import { z } from 'zod'
 import { NOTIFICATIONS_API_URL } from './apiUrls'
+import { fetchJson, FetchError } from './fetch-utils'
 
 export type NotificationPriority = 'critical' | 'warning' | 'info'
 
@@ -30,6 +32,24 @@ export interface NotificationSummary {
   notifications: ParsedNotification[]
 }
 
+const ValidatorNotificationSchema = z
+  .object({
+    id: z.string(),
+    notification_type: z.string(),
+    inner_type: z.string(),
+    user_id: z.string(),
+    scope: z.enum(['broadcast', 'individual']).optional(),
+    priority: z.enum(['critical', 'warning', 'info']),
+    title: z.string().nullable(),
+    message: z.string(),
+    data: z.record(z.unknown()),
+    notification_id: z.string().nullable(),
+    relevance_until: z.string(),
+    created_at: z.string(),
+  })
+  .passthrough()
+const ValidatorNotificationArraySchema = z.array(ValidatorNotificationSchema)
+
 const PAGE_SIZE = 200
 // Safety cap. Assumes fewer than PAGE_SIZE * MAX_PAGES active individual
 // notifications at any time; prevents runaway loops if the API misbehaves.
@@ -52,12 +72,17 @@ export async function fetchAllNotifications(
       url.searchParams.set('limit', String(PAGE_SIZE))
       url.searchParams.set('offset', String(page * PAGE_SIZE))
 
-      const res = await fetch(url.toString(), { signal })
-      if (!res.ok) break
-
-      const raw = await res.json()
-      if (!Array.isArray(raw)) break
-      const notifications = raw as ValidatorNotification[]
+      let notifications: ValidatorNotification[]
+      try {
+        notifications = await fetchJson<ValidatorNotification[]>(
+          url.toString(),
+          signal,
+          body => ValidatorNotificationArraySchema.parse(body),
+        )
+      } catch (err) {
+        if (err instanceof FetchError) break
+        throw err
+      }
 
       for (const notification of notifications) {
         const existing = result[notification.user_id]
@@ -90,11 +115,11 @@ export async function fetchLatestSamAuctionBroadcastNotification(
     const url = new URL('/v1/notifications/broadcast', NOTIFICATIONS_API_URL)
     url.searchParams.set('notification_type', 'sam_auction')
     url.searchParams.set('limit', '10')
-    const res = await fetch(url.toString(), { signal })
-    if (!res.ok) return null
-    const raw = await res.json()
-    if (!Array.isArray(raw)) return null
-    const notifications = raw as ValidatorNotification[]
+    const notifications = await fetchJson<ValidatorNotification[]>(
+      url.toString(),
+      signal,
+      body => ValidatorNotificationArraySchema.parse(body),
+    )
     if (notifications.length === 0) return null
     return notifications.reduce((latest, n) =>
       Date.parse(n.created_at) > Date.parse(latest.created_at) ? n : latest,
@@ -123,6 +148,7 @@ function escapeHtml(text: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
 }
 
 export function notificationTooltip(summary: NotificationSummary): string {

@@ -61,7 +61,6 @@ import {
 import {
   buildOriginalPositionsMap,
   detectChangedValidators,
-  getPositionChange,
   insertGhostRows,
 } from 'src/services/simulation'
 import {
@@ -162,11 +161,12 @@ export function passesTableFilter(
   level: UserLevel,
   minBondBalanceSol: number,
 ): boolean {
-  if ((v.bondBalanceSol ?? 0) < minBondBalanceSol) return false
+  const hasActiveStake = v.marinadeActivatedStakeSol > 0
+  const hasTargetStake = v.auctionStake.marinadeSamTargetSol > 0
+  const meetsMinBond = (v.bondBalanceSol ?? 0) >= minBondBalanceSol
+  if (!hasActiveStake && !hasTargetStake && !meetsMinBond) return false
   if (level === 'expert') return true
-  const inSetOrStaked =
-    v.marinadeActivatedStakeSol > 0 || v.auctionStake.marinadeSamTargetSol > 0
-  return inSetOrStaked
+  return hasActiveStake || hasTargetStake
 }
 
 export function makeCompareFn(
@@ -179,14 +179,10 @@ export function makeCompareFn(
     let cmp = 0
     switch (col) {
       case 'rank':
-        // Rank is built from selectMaxAPY desc (auctionRankMap below). The
-        // base cmp is asc; the dir flip below produces desc on default click.
         cmp = selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
         break
       case 'stakeDelta':
-        cmp =
-          selectExpectedStakeChange(a as AugmentedAuctionValidator) -
-          selectExpectedStakeChange(b as AugmentedAuctionValidator)
+        cmp = selectExpectedStakeChange(a) - selectExpectedStakeChange(b)
         break
       case 'validator': {
         const nameA = validatorMeta?.get(a.voteAccount)?.name ?? a.voteAccount
@@ -326,8 +322,6 @@ const RankCell = React.memo<{
   isGhost: boolean
   isSimulated: boolean
   isCompact: boolean
-  posColor: string | undefined
-  tipColor: string
   voteAccount: string
   onClearValidator?: (voteAccount: string) => void
 }>(
@@ -337,8 +331,6 @@ const RankCell = React.memo<{
     isGhost,
     isSimulated,
     isCompact,
-    posColor: _posColor,
-    tipColor: _tipColor,
     voteAccount,
     onClearValidator,
   }) => {
@@ -346,8 +338,7 @@ const RankCell = React.memo<{
     const rankLabel = `#${rank}`
     // Sub: cutoff-relative position. No # prefix here — the # lives only on
     // the primary rank. NBSP binds the count to the word so it never wraps.
-    const cutoffWord =
-      cutoffRank === 0 ? 'at cutoff' : cutoffRank > 0 ? 'above' : 'below'
+    const cutoffWord = cutoffRank > 0 ? 'above' : 'below'
     const rankSubLabel =
       cutoffRank === 0 ? 'at cutoff' : `${Math.abs(cutoffRank)} ${cutoffWord}`
     if (isGhost)
@@ -417,8 +408,10 @@ export const SamTable: React.FC<Props> = ({
   onClearValidator,
 }) => {
   const winningTotalPmpe = auctionResult.winningTotalPmpe
-  const priorityFrontierPmpe =
-    selectRedelegationPriorityFrontierPmpe(auctionResult)
+  const priorityFrontierPmpe = useMemo(
+    () => selectRedelegationPriorityFrontierPmpe(auctionResult),
+    [auctionResult],
+  )
   const {
     auctionData: { validators },
   } = auctionResult
@@ -607,6 +600,8 @@ export const SamTable: React.FC<Props> = ({
     changedValidators,
     originalAuctionResult,
     originalPositionsMap,
+    dsSamConfig,
+    winningTotalPmpe,
   ])
 
   // Cutoff partition: who would clear the bid threshold by yield, regardless
@@ -731,20 +726,8 @@ export const SamTable: React.FC<Props> = ({
       const rank = isGhost
         ? (origAuctionRank ?? index + 1)
         : (auctionRankMap.get(voteAccount) ?? index + 1)
-      const cutoffRank = validator.values.cutoffRank ?? rank
+      const cutoffRank = validator.values.cutoffRank
       const isSimulated = simulatedValidators.has(voteAccount)
-
-      // Position change for simulated rows — compare original vs new auction rank
-      const posChange =
-        isSimulated && !isGhost
-          ? getPositionChange(origAuctionRank, rank)
-          : null
-      const posColor =
-        posChange?.direction === 'improved'
-          ? CSS_STATUS_GREEN
-          : posChange?.direction === 'worsened'
-            ? CSS_DESTRUCTIVE
-            : undefined
 
       const bondUtilPct = bondUtilizationPct(
         validator,
@@ -790,7 +773,7 @@ export const SamTable: React.FC<Props> = ({
         !isGhost && !inSet && 'bg-destructive/[0.02]',
         !isGhost && inSet && 'hover:bg-primary-light',
         !isGhost && !inSet && 'hover:bg-destructive/[0.05]',
-        !isGhost && isSimulated && 'ring-2 ring-inset ring-status-yellow',
+        !isGhost && isSimulated && 'bg-status-yellow-light',
         isFlashing && 'bg-status-yellow-light',
       ]
         .filter(Boolean)
@@ -838,8 +821,6 @@ export const SamTable: React.FC<Props> = ({
               isGhost={isGhost}
               isSimulated={isSimulated}
               isCompact={isCompact}
-              posColor={posColor}
-              tipColor={tipStyle.color}
               voteAccount={voteAccount}
               onClearValidator={onClearValidator}
             />
@@ -911,7 +892,7 @@ export const SamTable: React.FC<Props> = ({
                   scaleMax={bondScaleMax}
                   marker={bondCritical}
                   criticalBand={bondCritical}
-                  tone="bg-muted-foreground/40"
+                  tone={bondChip.bar}
                 />
                 <span className="text-xs opacity-60 font-mono whitespace-nowrap text-muted-foreground">
                   (
@@ -987,15 +968,15 @@ export const SamTable: React.FC<Props> = ({
           </TableCell>
 
           {/* Next Step — icon = constraint/direction, color = severity.
-            The contiguous out-of-set "Bid too low" block is an EXPECTED
-            state, not an alarm: render it muted with a 2-word label;
-            the full sentence lives in the detail panel. */}
+            The contiguous out-of-set "bid below winning price" block is
+            an EXPECTED state, not an alarm: render it muted with a short
+            label; the full sentence lives in the detail panel. */}
           {(() => {
             const bidTooLow = tip.constraint === 'rank'
             const stepColor = bidTooLow ? CSS_MUTED_FG : tipStyle.color
             const stepBg = bidTooLow ? CSS_MUTED : tipStyle.bg
             const stepText = bidTooLow
-              ? 'Bid too low — raise it.'
+              ? 'Bid below winning price.'
               : trimTipDecimals(tip.text)
             return (
               <TableCell className="px-3.5 py-3">
@@ -1123,12 +1104,20 @@ export const SamTable: React.FC<Props> = ({
         >
           {/* Search row — sits above the table, aligned with validator column */}
           {onValidatorSearch && (
-            <div className={cn('mb-4 flex', inSimulation ? 'px-0 pt-2' : '')}>
+            <div
+              className={cn(
+                'mb-4 flex min-w-0',
+                inSimulation ? 'px-0 pt-2' : '',
+              )}
+            >
               <ValidatorSearch
                 validators={validators}
                 nameMap={validatorMeta ?? EMPTY_NAME_MAP}
                 onSelect={onValidatorSearch}
-                className="ml-10 w-[540px]"
+                className={cn(
+                  'ml-10 min-w-0',
+                  isCompact ? 'flex-1' : 'w-[540px]',
+                )}
               />
             </div>
           )}

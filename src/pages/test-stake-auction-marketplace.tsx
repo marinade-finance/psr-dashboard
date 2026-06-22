@@ -21,7 +21,7 @@ import type { SamDataSources } from 'src/pages/stake-auction-marketplace'
 const SAM_RESULT = {
   auctionResult: TEST_AUCTION_RESULT,
   epochsPerYear: EPOCHS_PER_YEAR,
-  dcSamConfig: TEST_DS_SAM_CONFIG,
+  dsSamConfig: TEST_DS_SAM_CONFIG,
 }
 
 export const TestSamPage: React.FC<UserLevelProps> = ({ level }) => {
@@ -55,9 +55,7 @@ export const TestSamPage: React.FC<UserLevelProps> = ({ level }) => {
       ['notifications-all', 'sam_auction'],
       TEST_NOTIFICATIONS_MAP,
     )
-    // The Payments tab in validator-detail now uses a single shared query
-    // `['psr-estimates-all']` (was per-validator). Seed an empty array; the
-    // tab still renders the empty state without firing a fetch.
+    // Seed empty array so the tab renders without a fetch.
     queryClient.setQueryData(['psr-estimates-all'], [])
     return queryClient
   })

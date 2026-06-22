@@ -1,5 +1,5 @@
 import { pct } from 'src/format'
-import { pmpeToSol } from 'src/services/pmpe'
+import { pmpeToSol } from 'src/services/constants'
 import {
   formattedBlockRewardsCommission,
   formattedMevCommission,

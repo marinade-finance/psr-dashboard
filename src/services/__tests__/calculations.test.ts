@@ -1,6 +1,4 @@
-// Tests for core auction math: compoundApy, apyBreakdown,
-// bondGaugeScaleMax/bondCriticalFrac, plus bondUtilizationPct/
-// effectiveBondRunway (now living in bond-health.ts).
+// Tests for compoundApy, apyBreakdown, bondGaugeScaleMax, bondCriticalFrac, bondUtilizationPct, effectiveBondRunway.
 import { describe, it, expect, vi } from 'vitest'
 
 import { bondUtilizationPct, effectiveBondRunway } from '../bond-health'
@@ -19,6 +17,7 @@ import type * as ValidatorsModule from '../validators'
 import type {
   AuctionValidator,
   AuctionResult,
+  DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
 
 // sam.ts calls loadSam which hits external APIs — mock the module-level fetches
@@ -122,6 +121,11 @@ describe('bondUtilizationPct', () => {
       bondBalanceSol: 100,
     })
     expect(bondUtilizationPct(validator, 4)).toBe(50)
+  })
+
+  it('minBondEpochs=0 → 100 (misconfig surfaces as fully depleted)', () => {
+    const v = makeValidator({ bondBalanceSol: 50, bondGoodForNEpochs: 3 })
+    expect(bondUtilizationPct(v, 0)).toBe(100)
   })
 })
 
@@ -335,8 +339,6 @@ describe('effectiveBondRunway', () => {
 
 // --- bondGaugeScaleMax ---
 
-import type { DsSamConfig } from '@marinade.finance/ds-sam-sdk'
-
 describe('bondGaugeScaleMax', () => {
   it('scale = 4 × idealBondEpochs', () => {
     const cfg = { idealBondEpochs: 10 } as DsSamConfig
@@ -352,29 +354,20 @@ describe('bondGaugeScaleMax', () => {
 // --- bondCriticalFrac ---
 
 describe('bondCriticalFrac', () => {
-  it('minBondEpochs / (4 × idealBondEpochs)', () => {
+  it('always 0.5 — 2 × idealBondEpochs / (4 × idealBondEpochs)', () => {
     const cfg = { minBondEpochs: 2, idealBondEpochs: 10 } as DsSamConfig
-    // 2 / 40 = 0.05
-    expect(bondCriticalFrac(cfg)).toBeCloseTo(0.05, 9)
+    // 2*10 / 40 = 0.5
+    expect(bondCriticalFrac(cfg)).toBeCloseTo(0.5, 9)
   })
 
-  it('minBondEpochs=0 → 0', () => {
+  it('minBondEpochs does not affect the result', () => {
     const cfg = { minBondEpochs: 0, idealBondEpochs: 10 } as DsSamConfig
-    expect(bondCriticalFrac(cfg)).toBe(0)
+    expect(bondCriticalFrac(cfg)).toBe(0.5)
   })
 
-  it('idealBondEpochs=0 → falls back to 0.2 sentinel', () => {
+  it('idealBondEpochs=0 → falls back to 0.5 sentinel', () => {
     const cfg = { minBondEpochs: 2, idealBondEpochs: 0 } as DsSamConfig
-    // bondGaugeScaleMax=0 → max > 0 is false → 0.2
-    expect(bondCriticalFrac(cfg)).toBe(0.2)
-  })
-})
-
-// --- bondUtilizationPct — zero epochs edge case ---
-
-describe('bondUtilizationPct — zero minBondEpochs guard', () => {
-  it('minBondEpochs=0 → 100 (misconfig surfaces as fully depleted)', () => {
-    const v = makeValidator({ bondBalanceSol: 50, bondGoodForNEpochs: 3 })
-    expect(bondUtilizationPct(v, 0)).toBe(100)
+    // bondGaugeScaleMax=0 → max > 0 is false → 0.5
+    expect(bondCriticalFrac(cfg)).toBe(0.5)
   })
 })

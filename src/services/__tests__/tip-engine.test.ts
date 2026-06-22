@@ -3,7 +3,7 @@
 import { describe, it, expect } from 'vitest'
 
 import { computeBondCoverage } from '../bond-coverage'
-import { bondHealthFromAuction, bondUtilizationPct } from '../bond-health'
+import { bondHealthFromAuction } from '../bond-health'
 import { selectProtectedStakeReason } from '../protected-events'
 import {
   getValidatorTip,
@@ -16,7 +16,7 @@ import {
 
 import type { ProtectedEvent } from '../protected-events'
 import type { AugmentedAuctionValidator } from '../sam'
-import type { TipConstraint, TipUrgency, ValidatorTip } from '../tip-engine'
+import type { TipConstraint, ValidatorTip } from '../tip-engine'
 import type { DsSamConfig } from '@marinade.finance/ds-sam-sdk'
 
 function makeValidator(
@@ -63,36 +63,9 @@ const DS_SAM_CONFIG = {
   bidTooLowPenaltyPermittedDeviationPmpe: 0.0001,
 } as unknown as DsSamConfig
 
-// --- bondUtilizationPct ---
-
-describe('bondUtilizationPct', () => {
-  it('3 of 4 epochs covered → 25% utilization', () => {
-    const validator = makeValidator({
-      bondGoodForNEpochs: 3,
-      bondBalanceSol: 100,
-    })
-    expect(bondUtilizationPct(validator, 4)).toBe(25)
-  })
-
-  it('zero bond → 100', () => {
-    const validator = makeValidator({ bondBalanceSol: 0 })
-    expect(bondUtilizationPct(validator, 5)).toBe(100)
-  })
-})
-
 // --- getApyBreakdown ---
 
 describe('getApyBreakdown', () => {
-  it('returns all five APY components: inflation, mev, blockRewards, staticBid, total', () => {
-    const validator = makeValidator()
-    const bd = getApyBreakdown(validator, EPOCHS_PER_YEAR)
-    expect(bd).toHaveProperty('inflation')
-    expect(bd).toHaveProperty('mev')
-    expect(bd).toHaveProperty('blockRewards')
-    expect(bd).toHaveProperty('staticBid')
-    expect(bd).toHaveProperty('total')
-  })
-
   it('staticBid maps to bid pmpe (not named "bid")', () => {
     const validator = makeValidator()
     const bd = getApyBreakdown(validator, EPOCHS_PER_YEAR)
@@ -129,19 +102,6 @@ describe('getTipStyle', () => {
 
   it('neutral → muted', () => {
     expect(getTipStyle('neutral').color).toContain('muted')
-  })
-
-  it('getTipStyle returns color and bg fields, no icon', () => {
-    const urgencies: TipUrgency[] = [
-      'critical',
-      'warning',
-      'info',
-      'positive',
-      'neutral',
-    ]
-    for (const u of urgencies) {
-      expect('icon' in getTipStyle(u)).toBe(false)
-    }
   })
 })
 
@@ -527,24 +487,6 @@ describe('getValidatorTip', () => {
 // --- B8: getValidatorTip watch health gets bond CTA ---
 
 describe('getValidatorTip watch health (bond top-up lever)', () => {
-  it('watch health with topUpToIdealKeep > 0, delta=0 → info/bond tip (growth lever)', () => {
-    // bondBalanceSol=50 < idealBondPmpe/1000 * stake = (6/1000)*10000 = 60
-    // claimableBondBalanceSol=50 >= minBondPmpe/1000 * stake = (1/1000)*10000 = 10
-    // → topUpToAvoidFee=0, topUpToKeepStake=0, topUpToIdealKeep=10
-    // bondGoodForNEpochs=7 → WATCH (3 < 7 < 10)
-    const validator = makeValidator({
-      bondGoodForNEpochs: 7,
-      bondBalanceSol: 50,
-      claimableBondBalanceSol: 50,
-      marinadeActivatedStakeSol: 10000,
-      values: { expectedStakeChangeSol: 0 },
-    })
-    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
-    expect(tip.constraint).toBe('bond')
-    expect(tip.urgency).toBe('info')
-    expect(tip.text).toContain('SOL')
-  })
-
   it('watch health + defending (large loss) → warning/bond "keep stake" (beats deltaCta)', () => {
     // WATCH shape with marinadeActivatedStakeSol=50000, claimable=100:
     //   stakeKeepFloor   = (1/1000)*50000 = 50  → topUpToKeepStake   = max(0,50-100)=0

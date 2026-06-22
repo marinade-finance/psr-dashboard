@@ -54,15 +54,25 @@ Append findings here during audits; the user prioritises and prunes.
 All planned work lives in `specs/` — see `specs/index.md` for the
 master list.
 
-**New item:** open the relevant spec file in `specs/1/` (or create a new
-`specs/1/N-topic.md`) and add the item as a named section. If no
-existing spec fits, create a new file. Add a row to `specs/index.md`.
+**New item:** create `specs/2/N-topic.md` (next available N), add a row
+to `specs/index.md`. Default status: `draft`.
+
+**Promoting:** change `draft` → `planned` only when the work is approved
+to start. A `draft` spec must never be implemented — it is an idea under
+consideration, not a commitment.
 
 **Shipped item:** set `status: shipped` in the spec frontmatter, trim
 the section to WHY + code pointers (drop HOW), update `specs/index.md`
 status.
 
-Lifecycle: `planned` → `partial` → `shipped`.
+Lifecycle: `draft` → `planned` → `partial` → `shipped`.
+- `draft` — idea captured; implementation blocked until promoted
+- `experiment` — live prototype in a preview branch; validates the idea
+  before committing to production. Must not be merged to production until
+  explicitly promoted to `planned` AND any stated gates are cleared.
+- `planned` — approved; ready to implement
+- `partial` — in progress
+- `shipped` — done
 
 During audits, record bugs in `bugs.md`; record design intent and
 queued features in the relevant spec file.
@@ -109,6 +119,37 @@ This file holds only agent-facing rules below.
   supported" banner (`src/components/navigation/navigation.tsx`) below
   640px. Don't add mobile viewport variants in tests; don't ship CSS
   that tries to make pages usable on a phone.
+
+### E2E conventions (Playwright, `tests/`)
+
+- Always `waitForSelector('tbody tr', { timeout: 30000 })` before
+  interacting — fixture data loads async even on `/test-*` routes.
+- Use **loose assertions**: `toContain` / regex over exact strings.
+  Cosmetic copy changes must not break the suite.
+- Define `const SHEET = '[role="dialog"]'` and shared helpers
+  (`gotoSam`, `openSheet`) at the top of each spec file — don't
+  inline navigation or locator magic inline in every test.
+- Deep-link the sheet via `page.goto('/test-?v=VOTE_ACCOUNT')` rather
+  than clicking through the table — faster and deterministic.
+- Selector hooks: bare class tokens (`navigation`, `metric`,
+  `docsButton`, `badge`, `metricValue`) are Playwright selectors.
+  **Grep `tests/` before deleting any CSS class** — it may be the
+  only handle a spec has on that element.
+
+### Unit conventions (Vitest, `src/**/*.test.ts`)
+
+- Define a **factory function** (`makeValidator`, `makeConfig`) that
+  returns a minimal valid object for the type under test. Use
+  `as unknown as SdkType` to satisfy opaque SDK types — don't try to
+  construct them fully.
+- Test config objects: include only properties the function under test
+  reads; omit everything else so the test fails loudly if the function
+  starts reading a new field unexpectedly.
+- One `describe` per logical concern, one `it` per case. Don't merge
+  unrelated assertions into a single `it` to keep failure messages
+  precise.
+- **Test features, not fixes.** A regression caught at runtime →
+  fix the code; only add a test if the feature lacked coverage.
 
 ## Visual language rules (operational)
 

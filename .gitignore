@@ -48,6 +48,9 @@ lerna-debug.log*
 
 # Local
 *.local.json
+.env
+.env.*
+!.env.example
 
 # Shipping artifacts (ephemeral)
 /.ship

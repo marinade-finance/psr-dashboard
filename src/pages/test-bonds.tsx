@@ -19,7 +19,7 @@ import type { UserLevelProps } from 'src/components/navigation/navigation'
 const SAM_RESULT = {
   auctionResult: TEST_AUCTION_RESULT,
   epochsPerYear: EPOCHS_PER_YEAR,
-  dcSamConfig: TEST_DS_SAM_CONFIG,
+  dsSamConfig: TEST_DS_SAM_CONFIG,
 }
 
 export const TestBondsPage: React.FC<UserLevelProps> = ({ level }) => {
@@ -37,9 +37,9 @@ export const TestBondsPage: React.FC<UserLevelProps> = ({ level }) => {
       },
     })
     queryClient.setQueryData(['bonds'], TEST_BONDS_DATA)
-    // EpochMeter (in nav) reads ['sam', 0] and ['protected-events']; nav
+    // EpochMeter (in nav) reads ['sam'] and ['protected-events']; nav
     // hover prefetches ['protected-events']. Seed both so nothing leaks.
-    queryClient.setQueryData(['sam', 0], SAM_RESULT)
+    queryClient.setQueryData(['sam'], SAM_RESULT)
     queryClient.setQueryData(['protected-events'], TEST_PROTECTED_EVENTS)
     queryClient.setQueryData(
       ['notifications-broadcast'],

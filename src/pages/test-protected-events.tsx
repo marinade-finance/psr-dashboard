@@ -16,7 +16,7 @@ import type { UserLevelProps } from 'src/components/navigation/navigation'
 const SAM_RESULT = {
   auctionResult: TEST_AUCTION_RESULT,
   epochsPerYear: EPOCHS_PER_YEAR,
-  dcSamConfig: TEST_DS_SAM_CONFIG,
+  dsSamConfig: TEST_DS_SAM_CONFIG,
 }
 
 export const TestProtectedEventsPage: React.FC<UserLevelProps> = ({
@@ -36,8 +36,8 @@ export const TestProtectedEventsPage: React.FC<UserLevelProps> = ({
       },
     })
     queryClient.setQueryData(['protected-events'], TEST_PROTECTED_EVENTS)
-    // EpochMeter (in nav) reads ['sam', 0]; nav hover prefetches ['bonds'].
-    queryClient.setQueryData(['sam', 0], SAM_RESULT)
+    // EpochMeter (in nav) reads ['sam']; nav hover prefetches ['bonds'].
+    queryClient.setQueryData(['sam'], SAM_RESULT)
     queryClient.setQueryData(['bonds'], TEST_BONDS_DATA)
     queryClient.setQueryData(
       ['notifications-broadcast'],

@@ -227,14 +227,6 @@
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  .no-transitions * {
-    transition: none !important;
-  }
-
-  .header-glow > table thead {
-    animation: header-glow 2s ease-in-out infinite;
-  }
-
   @keyframes sheet-slide-in-right {
     from {
       transform: translateX(100%);
@@ -259,20 +251,6 @@
     }
     to {
       opacity: 1;
-    }
-  }
-
-  @keyframes header-glow {
-    0%,
-    100% {
-      background: linear-gradient(135deg, var(--sim-from), var(--sim-to));
-    }
-    50% {
-      background: linear-gradient(
-        135deg,
-        var(--sim-glow-from),
-        var(--sim-glow-to)
-      );
     }
   }
 

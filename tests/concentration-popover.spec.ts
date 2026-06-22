@@ -11,6 +11,8 @@ import type { Locator, Page } from '@playwright/test'
 async function gotoSam(page: Page) {
   await page.goto('/test-')
   await page.waitForSelector('tbody tr', { timeout: 30000 })
+  const toggle = page.getByRole('button', { name: 'Switch to detailed view' })
+  if (await toggle.isVisible().catch(() => false)) await toggle.click()
 }
 
 // The card has the uppercase label as its title. Hover anywhere over the

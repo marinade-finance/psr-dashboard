@@ -1,8 +1,7 @@
 // Formatting layer. All display rounding lives here — services and
 // components should NEVER `Math.round` a value before handing it to one of
 // these functions. `toLocaleString` and `toFixed` both round half-away-from-
-// zero, which is what we want for monetary display (matches what lodash.round
-// used to do, without the dependency).
+// zero, which is what we want for monetary display.
 
 export const sol = (amount: number, digits = 0) =>
   amount.toLocaleString(undefined, {
@@ -18,12 +17,13 @@ export const pct = (
   fractionDigits: number = 2,
   maxValue: number = 1e18,
 ): string => {
-  if (amount >= maxValue) {
+  const n = finite(amount)
+  if (n >= maxValue) {
     return `>${pctString(maxValue, fractionDigits)}`
-  } else if (amount <= -maxValue) {
+  } else if (n <= -maxValue) {
     return `<-${pctString(maxValue, fractionDigits)}`
   }
-  return pctString(amount, fractionDigits)
+  return pctString(n, fractionDigits)
 }
 
 export const finite = (x: number | null | undefined): number =>
@@ -38,7 +38,7 @@ export const stake = (n: number) => `${sol(n, 0)} SOL`
 // decimals (tip-pill style); pass digits for receipt-precision rendering.
 export const pay = (n: number, digits: number = 0) => {
   const p = Math.pow(10, digits)
-  return `${sol(Math.ceil(n * p) / p, digits)} SOL`
+  return `${sol(Math.ceil(finite(n) * p) / p, digits)} SOL`
 }
 export const penalty = (n: number) => `${sol(n, 3)} SOL`
 // Cost rows need 3-decimal precision — per-epoch bid costs are often

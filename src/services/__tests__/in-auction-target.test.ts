@@ -12,7 +12,9 @@ vi.mock('../validators', async importOriginal => {
   return { ...actual }
 })
 
-function makeValidator(overrides: Record<string, unknown> = {}): AugmentedAuctionValidator {
+function makeValidator(
+  overrides: Record<string, unknown> = {},
+): AugmentedAuctionValidator {
   return {
     voteAccount: 'v1',
     marinadeActivatedStakeSol: 10000,
@@ -75,12 +77,20 @@ describe('computeInAuctionTarget — bid arithmetic', () => {
 
 describe('computeInAuctionTarget — coverage passthrough', () => {
   it('bondFloorToBack = coverage.stakeKeepFloor', () => {
-    const t = computeInAuctionTarget(makeValidator(), 15, makeCoverage({ stakeKeepFloor: 123 }))
+    const t = computeInAuctionTarget(
+      makeValidator(),
+      15,
+      makeCoverage({ stakeKeepFloor: 123 }),
+    )
     expect(t.bondFloorToBack).toBe(123)
   })
 
   it('bondTopUp = coverage.topUpToKeepStake', () => {
-    const t = computeInAuctionTarget(makeValidator(), 15, makeCoverage({ topUpToKeepStake: 42 }))
+    const t = computeInAuctionTarget(
+      makeValidator(),
+      15,
+      makeCoverage({ topUpToKeepStake: 42 }),
+    )
     expect(t.bondTopUp).toBe(42)
   })
 })
@@ -148,7 +158,14 @@ describe('computeInAuctionTarget — cap constraints', () => {
 describe('computeInAuctionTarget — zero winning total', () => {
   it('winningTotalPmpe=0 and currentTotal=0 → bidIncrease=0', () => {
     const v = makeValidator({
-      revShare: { bidPmpe: 0, totalPmpe: 0, inflationPmpe: 0, mevPmpe: 0, blockPmpe: 0, auctionEffectiveBidPmpe: 0 },
+      revShare: {
+        bidPmpe: 0,
+        totalPmpe: 0,
+        inflationPmpe: 0,
+        mevPmpe: 0,
+        blockPmpe: 0,
+        auctionEffectiveBidPmpe: 0,
+      },
     })
     const t = computeInAuctionTarget(v, 0, makeCoverage())
     expect(t.bidIncrease).toBe(0)

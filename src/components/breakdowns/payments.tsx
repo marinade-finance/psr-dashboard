@@ -92,11 +92,6 @@ export const PaymentsBreakdown: React.FC<Props> = ({
       )}
       <table className="w-full max-w-[34rem]">
         <tbody>
-          {/* Receipt-slip layout: col1 carries PMPE rates only, col2 SOL */}
-          {/* amounts only. Each unit kind lives in its own column. Each */}
-          {/* sub-cost gets its own section header so a reader can scan */}
-          {/* by "where each number came from". The result row echoes the */}
-          {/* rate so multiplication reads left → right on one line. */}
           <SectionHeader title="Activated stake cost" col1Unit="PMPE" />
           <CalcRow label="Activated Marinade stake" col2={stake(m.stake)} />
           <CalcRow
