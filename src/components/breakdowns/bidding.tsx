@@ -6,11 +6,7 @@ import { computeBidding } from 'src/services/bidding'
 import { computeInAuctionTarget } from 'src/services/in-auction-target'
 import { computeNextEpochStake } from 'src/services/next-epoch-stake'
 
-import {
-  CalcCard,
-  withSimAction,
-  type CardStatus,
-} from './card'
+import { CalcCard, withSimAction, type CardStatus } from './card'
 import { CalcRow, OkRow, SectionHeader } from './row'
 
 import type { AuctionResult } from '@marinade.finance/ds-sam-sdk'
@@ -240,7 +236,11 @@ export const BiddingBreakdown: React.FC<Props> = ({
               <CalcRow
                 label="Your priority rank"
                 help={PRIORITY_RANK_HELP}
-                col2={`#${nextEpoch.priorityRank}`}
+                col2={
+                  nextEpoch.priorityRank == null
+                    ? '—'
+                    : `#${nextEpoch.priorityRank}`
+                }
               />
               <CalcRow
                 label="Your bid gap"
@@ -275,7 +275,11 @@ export const BiddingBreakdown: React.FC<Props> = ({
               <CalcRow
                 label="Your priority rank"
                 help={PRIORITY_RANK_HELP}
-                col2={`#${nextEpoch.priorityRank}`}
+                col2={
+                  nextEpoch.priorityRank == null
+                    ? '—'
+                    : `#${nextEpoch.priorityRank}`
+                }
               />
               <CalcRow
                 label="Your bid gap"

@@ -9,7 +9,7 @@ status: planned
 auction result — they cannot be set per field. The current fixture population
 does not produce every region, so Playwright snapshots miss entire code paths.
 
-## Why "B-frozen" (real snapshot) beats a hand-crafted population
+### Why "B-frozen" (real snapshot) beats a hand-crafted population
 
 A hand-crafted population (Option A) requires modelling the full auction
 interactions — country/ASO caps, multiple winning bands, natural-withdrawal
@@ -20,7 +20,7 @@ Capture from the live data source (`loadSam` / `fetchValidatorsWithEpochs`),
 freeze as a static fixture, prune to a representative subset (~30–50 rows), tune
 a few edge rows.
 
-## Auction conditions the fixture must produce
+### Auction conditions the fixture must produce
 
 - **Non-zero redelegation budget** — `selectRedelegationBudget > 0`. Total TVL
   must exceed Σ active stake; without this, "gain stake / keep stake" CTAs and
@@ -34,12 +34,12 @@ a few edge rows.
 - **claimable < gross bond** — at least one row where `claimableBondBalanceSol`
   differs from `bondBalanceSol`.
 
-## Row variation required
+### Row variation required
 
 Each fixture row must vary: `cpmpe`, bond balance, active stake, paid
 undelegation, and claimable-bond vs gross-bond.
 
-## Constraints
+### Constraints
 
 Write only `src/fixtures/test-validators.ts` (and `src/fixtures/test-bonds.ts`
 if the bonds page needs parallel coverage). Fixture objects must satisfy the

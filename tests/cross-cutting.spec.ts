@@ -81,6 +81,15 @@ test('/nonsense renders the NotFoundPage (no blank screen)', async ({
   ).toBeVisible({ timeout: 5000 })
 })
 
+test('/test-error renders the ErrorPage (route error boundary)', async ({
+  page,
+}) => {
+  await page.goto('/test-error')
+  await expect(
+    page.getByRole('heading', { name: /Oops!/i }),
+  ).toBeVisible({ timeout: 5000 })
+})
+
 test('banner element has aria-live="polite" for screen readers', async ({
   page,
 }) => {
@@ -98,10 +107,15 @@ test('banner element has aria-live="polite" for screen readers', async ({
               id: 'a11y-1',
               title: 'A11y Banner Test',
               message: 'body',
-              priority: 1,
+              priority: 'info',
               notification_type: 'sam_auction',
               scope: 'broadcast',
               created_at: new Date().toISOString(),
+              inner_type: '',
+              user_id: '',
+              data: {},
+              notification_id: null,
+              relevance_until: new Date(Date.now() + 86400000).toISOString(),
             },
           ]),
         })

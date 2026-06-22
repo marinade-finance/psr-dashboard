@@ -15,7 +15,7 @@ import {
 import { pay, stake, topUp } from 'src/format'
 import { assertNever } from 'src/utils/assert-never'
 
-import { computeBidPenalty } from './bid-penalty'
+import { blacklistPenaltySol, computeBidPenalty } from './bid-penalty'
 import { computeBondCoverage } from './bond-coverage'
 import { bondHealthFromAuction } from './bond-health'
 import { apyBreakdown } from './calculations'
@@ -33,7 +33,12 @@ import type {
 
 export type TipIcon = 'alert' | 'bond' | 'bid' | 'cap' | 'up' | 'down' | 'right'
 
-export type TipUrgency = 'critical' | 'warning' | 'info' | 'positive' | 'neutral'
+export type TipUrgency =
+  | 'critical'
+  | 'warning'
+  | 'info'
+  | 'positive'
+  | 'neutral'
 export type TipConstraint = 'rank' | 'bond' | 'bid' | 'cap' | 'none'
 
 export interface ValidatorTip {
@@ -53,7 +58,6 @@ export interface TipStyle {
   color: string
   bg: string
 }
-
 
 // Color carries severity. Glyph carries the lever — except a critical
 // alarm also swaps to the alert glyph; see getTipIcon.
@@ -135,10 +139,7 @@ export function bondAdvice(
 ): BondAdvice {
   // Below the SDK minimum. Checked before the health switch so a below-min
   // bond in any tier gets the actionable wording.
-  if (
-    bondBalanceSol < minBondBalanceSol &&
-    health !== 'no-bond'
-  ) {
+  if (bondBalanceSol < minBondBalanceSol && health !== 'no-bond') {
     // Below-min without a pending fee — grey (informational, no stake at risk).
     const isCharging = bondRiskFeeSol > 0
     return {
@@ -296,7 +297,7 @@ function bondCta(
   precomputedCoverage?: BondCoverage,
 ): ValidatorTip | null {
   const bondBalance = validator.bondBalanceSol ?? 0
-  const bondRiskFeeSol = validator.values?.bondRiskFeeSol ?? 0
+  const bondRiskFeeSol = validator.values.bondRiskFeeSol
   const coverage =
     precomputedCoverage ??
     computeBondCoverage(validator, dsSamConfig, winningTotalPmpe)
@@ -346,9 +347,8 @@ function bondCta(
     winningTotalPmpe,
     coverage,
   )
-  // 'watch' implies runway > minBondEpochs + BOND_URGENT_EPOCHS (bondHealthFromAuction
-  // returns 'critical' at or below that threshold), so the old nearFeeThreshold
-  // branch (watch && runway ≤ threshold) was unreachable by construction.
+  // 'watch' implies runway > minBondEpochs + BOND_URGENT_EPOCHS, so any 'watch'
+  // validator is already above the fee threshold.
   const fires =
     health === 'critical' ||
     (inSet &&
@@ -512,13 +512,7 @@ function outOfSetCta(
     // Testing-only state — production traffic shouldn't reach here. Kept
     // red + octagon as a loud "this should never ship live" signal; not
     // worth the conditional-severity logic the other branches need.
-    return tip(
-      'Blocked from SAM this epoch.',
-      'critical',
-      'none',
-      delta,
-      true,
-    )
+    return tip('Blocked from SAM this epoch.', 'critical', 'none', delta, true)
   }
 
   // Gate on === false so an undefined samEligible (SDK pre-auction state)
@@ -536,8 +530,7 @@ function outOfSetCta(
       // and stays grey regardless of stake size.
       const penaltyPmpe = validator.revShare.blacklistPenaltyPmpe ?? 0
       if (penaltyPmpe > 0) {
-        const penaltySol =
-          (penaltyPmpe / 1000) * (validator.marinadeActivatedStakeSol ?? 0)
+        const penaltySol = blacklistPenaltySol(validator)
         return tip(
           `Blacklisted — ${pay(penaltySol)} penalty this epoch.`,
           'critical',
@@ -631,8 +624,16 @@ function deltaCta(
   if (delta > 0) {
     // Validator is receiving scraps from leftover budget — below the priority
     // frontier. Raising bid to clear the frontier gets them full allocation.
-    if (priorityFrontierPmpe > 0 && validator.revShare.totalPmpe < priorityFrontierPmpe) {
-      return tip('Raise bid to get more stake next epoch.', 'info', 'rank', delta)
+    if (
+      priorityFrontierPmpe > 0 &&
+      validator.revShare.totalPmpe < priorityFrontierPmpe
+    ) {
+      return tip(
+        'Raise bid to get more stake next epoch.',
+        'info',
+        'rank',
+        delta,
+      )
     }
     return tip(
       `${stake(delta)} arriving next epoch.`,
@@ -656,12 +657,7 @@ function deltaCta(
     const atOwnCap = wanted != null && target >= wanted - 1e-9
     const belowTarget = target > 0 && active < target * 0.99
     if (atOwnCap) {
-      return tip(
-        'At your `maxStakeWanted` setting.',
-        'neutral',
-        'none',
-        delta,
-      )
+      return tip('At your `maxStakeWanted` setting.', 'neutral', 'none', delta)
     }
     // delta===0 with active well below target: redistribution budget ran out
     // before reaching this validator. Higher bid → higher stakePriority →
@@ -669,22 +665,15 @@ function deltaCta(
     // Exception: if the bid already clears the priority frontier, the bid lever
     // is exhausted — budget simply ran out; "Raise bid" would be wrong advice.
     if (belowTarget && !capBinding) {
-      if (priorityFrontierPmpe > 0 && validator.revShare.totalPmpe >= priorityFrontierPmpe) {
+      if (
+        priorityFrontierPmpe > 0 &&
+        validator.revShare.totalPmpe >= priorityFrontierPmpe
+      ) {
         return tip('At target stake.', 'neutral', 'none', delta)
       }
-      return tip(
-        'Raise bid to grow stake.',
-        'info',
-        'rank',
-        delta,
-      )
+      return tip('Raise bid to grow stake.', 'info', 'rank', delta)
     }
-    return tip(
-      'At target stake.',
-      'neutral',
-      'none',
-      delta,
-    )
+    return tip('At target stake.', 'neutral', 'none', delta)
   }
   // Yellow only when the loss is meaningful (isDefending). Sub-threshold
   // losses (< 1k SOL or < 10k active) stay violet so a specific-reason
@@ -712,7 +701,7 @@ export const getValidatorTip = (
   // totalPmpe already clears it, "Raise bid" is suppressed.
   priorityFrontierPmpe = 0,
 ): ValidatorTip => {
-  const delta = validator.values.expectedStakeChangeSol ?? 0
+  const delta = validator.values.expectedStakeChangeSol
   const cap = capCta(validator, delta)
   return selectTip(
     bondCta(
@@ -759,9 +748,7 @@ export type NextStakeDeltaCell = {
   tone: NextStakeDeltaTone
 }
 export function nextStakeDeltaCell(expectedChange: number): NextStakeDeltaCell {
-  if (Math.abs(expectedChange) < 1)
-    return { prefix: '', tone: 'neutral' }
-  if (expectedChange > 0)
-    return { prefix: '+', tone: 'positive' }
+  if (Math.abs(expectedChange) < 1) return { prefix: '', tone: 'neutral' }
+  if (expectedChange > 0) return { prefix: '+', tone: 'positive' }
   return { prefix: '', tone: 'negative' }
 }

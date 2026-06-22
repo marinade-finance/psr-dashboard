@@ -288,14 +288,10 @@ const v02: AuctionValidator = {
   }),
 }
 
-// 3. In-set, watch bond (60–84% util, ~15 epoch runway)
+// 3. In-set, watch bond — bondGoodForNEpochs=10 < idealBondEpochs=13 → watch
 const v03: AuctionValidator = {
   ...makeBase('FiXtUREv3333333333333333333333333333333333cc', {
     marinadeActivatedStakeSol: 225_000,
-    // Watch: 90k paid undelegation shrinks projected exposed to 135k, so the
-    // projected floor (135k×1.2/1000 = 162) sits below claimable 200 → no
-    // fee. But the keep floor on the full 225k (×1.2/1000 = 270) exceeds
-    // claimable 200 → topUpToKeepStake > 0 → watch (orange), not critical.
     bondBalanceSol: 200,
     claimableBondBalanceSol: 200,
     bidCpmpe: 2.4,
@@ -323,7 +319,7 @@ const v03: AuctionValidator = {
   idealBondPmpe: 0.6,
   minUnprotectedReserve: 0,
   idealUnprotectedReserve: 0,
-  bondGoodForNEpochs: 16, // runway = bondGoodForNEpochs - minBondEpochs(1) = 15
+  bondGoodForNEpochs: 10, // watch: 10 < idealBondEpochs=13; > minBondEpochs+URGENT(4) → not critical
   bondSamHealth: 0.7,
   values: {
     ...makeValues({
@@ -730,13 +726,10 @@ const v12: AuctionValidator = {
 
 // 13. No bond posted at all (bondBalanceSol = 0 → bondHealthFromAuction
 //   returns 'no-bond'). Eligible + staked + positive SAM target, so it
-//   passes every auction gate. NOTE: the SAM table's passesTableFilter
-//   short-circuits on `!v.bondBalanceSol` (sam-table.tsx) and the detail
-//   panel's sheetValidatorData filters `selectBondSize > 0`, so a true
-//   zero-bond row is structurally filtered out of /test- in both Basic
-//   and Expert. This row keeps the no-bond STATE present in the fixture
-//   data (every modality covered) even though the current page chrome
-//   never renders it — see the task report for the blocker.
+//   passes every auction gate. passesTableFilter keeps it (active OR target
+//   stake qualifies, bond not required), and sheetValidatorData uses the same
+//   filter, so the row both renders in the SAM table and opens the detail
+//   panel — the no-bond state is fully exercised end-to-end on /test-.
 const v13: AuctionValidator = {
   ...makeBase('FiXtUREvaNOBONDdddddddddddddddddddddddddddmm', {
     marinadeActivatedStakeSol: 90_000,
@@ -1658,9 +1651,6 @@ export const TEST_DS_SAM_CONFIG: DsSamConfig = {
   logVerbosity: LogVerbosity.ERROR,
 }
 
-// Epochs per year (same constant as sam.ts)
-export const TEST_EPOCHS_PER_YEAR = (365.25 * 24 * 3600) / 172800
-
 // Human-readable names for each fixture validator
 export const TEST_VALIDATOR_NAMES = new Map<string, string>([
   ['FiXtUREv1111111111111111111111111111111111aa', 'Test: In-Set Gaining'],
@@ -1717,10 +1707,7 @@ export const TEST_VALIDATOR_NAMES = new Map<string, string>([
     'FiXtUREvbCRITICALrunwayOnly26666666666666nn',
     'CTA: Critical (Runway Fallback)',
   ],
-  [
-    'FiXtUREvbBELOWMINfee27777777777777777777oo',
-    'CTA: Below-Min Bond + Fee',
-  ],
+  ['FiXtUREvbBELOWMINfee27777777777777777777oo', 'CTA: Below-Min Bond + Fee'],
   [
     'FiXtUREvbCAPinset28888888888888888888888888pp',
     'CTA: In-Set Cap (no growth)',

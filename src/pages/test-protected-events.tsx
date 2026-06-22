@@ -7,16 +7,16 @@ import { TEST_PROTECTED_EVENTS } from 'src/fixtures/test-protected-events'
 import {
   TEST_AUCTION_RESULT,
   TEST_DS_SAM_CONFIG,
-  TEST_EPOCHS_PER_YEAR,
 } from 'src/fixtures/test-validators'
 import { ProtectedEventsPage } from 'src/pages/protected-events'
+import { EPOCHS_PER_YEAR } from 'src/services/constants'
 
 import type { UserLevelProps } from 'src/components/navigation/navigation'
 
 const SAM_RESULT = {
   auctionResult: TEST_AUCTION_RESULT,
-  epochsPerYear: TEST_EPOCHS_PER_YEAR,
-  dcSamConfig: TEST_DS_SAM_CONFIG,
+  epochsPerYear: EPOCHS_PER_YEAR,
+  dsSamConfig: TEST_DS_SAM_CONFIG,
 }
 
 export const TestProtectedEventsPage: React.FC<UserLevelProps> = ({
@@ -36,8 +36,8 @@ export const TestProtectedEventsPage: React.FC<UserLevelProps> = ({
       },
     })
     queryClient.setQueryData(['protected-events'], TEST_PROTECTED_EVENTS)
-    // EpochMeter (in nav) reads ['sam', 0]; nav hover prefetches ['bonds'].
-    queryClient.setQueryData(['sam', 0], SAM_RESULT)
+    // EpochMeter (in nav) reads ['sam']; nav hover prefetches ['bonds'].
+    queryClient.setQueryData(['sam'], SAM_RESULT)
     queryClient.setQueryData(['bonds'], TEST_BONDS_DATA)
     queryClient.setQueryData(
       ['notifications-broadcast'],

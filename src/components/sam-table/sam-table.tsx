@@ -7,6 +7,8 @@ import { Gauge } from 'src/components/gauge/gauge'
 import { HelpTip } from 'src/components/help-tip/help-tip'
 import { ICON_ARROW_DOWN_SM } from 'src/components/icons/icon-arrow-down-sm'
 import { ICON_ARROW_UP_SM } from 'src/components/icons/icon-arrow-up-sm'
+import { ICON_CHEVRON_RIGHT_SM } from 'src/components/icons/icon-chevron-right'
+import { ICON_STAR } from 'src/components/icons/icon-star'
 import { PENALTY_BID_LOW } from 'src/components/icons/penalty-bid-low'
 import { PENALTY_BLACKLIST } from 'src/components/icons/penalty-blacklist'
 import { PENALTY_RISK } from 'src/components/icons/penalty-risk'
@@ -29,19 +31,19 @@ import {
   CSS_MUTED_FG,
   CSS_STATUS_GREEN,
 } from 'src/css'
-import { pct, penalty, sol, stake } from 'src/format'
+import { pct, pay, sol, stake } from 'src/format'
 import {
   bidTooLowPenaltySol,
   blacklistPenaltySol,
 } from 'src/services/bid-penalty'
 import { computeBondCoverage } from 'src/services/bond-coverage'
-import { bondHealthFromAuction } from 'src/services/bond-health'
 import {
-  bondCriticalFrac,
-  bondGaugeScaleMax,
+  BOND_URGENT_EPOCHS,
+  bondHealthFromAuction,
   bondUtilizationPct,
   effectiveBondRunway,
-} from 'src/services/calculations'
+} from 'src/services/bond-health'
+import { bondCriticalFrac, bondGaugeScaleMax } from 'src/services/calculations'
 import { HELP_TEXT } from 'src/services/help-text'
 import {
   augmentAuctionResult,
@@ -59,7 +61,6 @@ import {
 import {
   buildOriginalPositionsMap,
   detectChangedValidators,
-  getPositionChange,
   insertGhostRows,
 } from 'src/services/simulation'
 import {
@@ -160,11 +161,12 @@ export function passesTableFilter(
   level: UserLevel,
   minBondBalanceSol: number,
 ): boolean {
-  if ((v.bondBalanceSol ?? 0) < minBondBalanceSol) return false
+  const hasActiveStake = v.marinadeActivatedStakeSol > 0
+  const hasTargetStake = v.auctionStake.marinadeSamTargetSol > 0
+  const meetsMinBond = (v.bondBalanceSol ?? 0) >= minBondBalanceSol
+  if (!hasActiveStake && !hasTargetStake && !meetsMinBond) return false
   if (level === 'expert') return true
-  const inSetOrStaked =
-    v.marinadeActivatedStakeSol > 0 || v.auctionStake.marinadeSamTargetSol > 0
-  return inSetOrStaked
+  return hasActiveStake || hasTargetStake
 }
 
 export function makeCompareFn(
@@ -177,14 +179,10 @@ export function makeCompareFn(
     let cmp = 0
     switch (col) {
       case 'rank':
-        // Rank is built from selectMaxAPY desc (auctionRankMap below). The
-        // base cmp is asc; the dir flip below produces desc on default click.
         cmp = selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
         break
       case 'stakeDelta':
-        cmp =
-          selectExpectedStakeChange(a as AugmentedAuctionValidator) -
-          selectExpectedStakeChange(b as AugmentedAuctionValidator)
+        cmp = selectExpectedStakeChange(a) - selectExpectedStakeChange(b)
         break
       case 'validator': {
         const nameA = validatorMeta?.get(a.voteAccount)?.name ?? a.voteAccount
@@ -283,7 +281,7 @@ const PenaltyBadges = React.memo<{
     badges.push({ label: 'Bond risk fee', sol: bondRiskSol, kind: 'risk' })
   if (badges.length === 0) return null
   const tip = badges
-    .map(b => `${b.label}: ~${penalty(b.sol)} estimated`)
+    .map(b => `${b.label}: ~${pay(b.sol, 3)} estimated`)
     .join('\n')
   return (
     <Tooltip content={<span className="whitespace-pre-line">{tip}</span>}>
@@ -324,8 +322,6 @@ const RankCell = React.memo<{
   isGhost: boolean
   isSimulated: boolean
   isCompact: boolean
-  posColor: string | undefined
-  tipColor: string
   voteAccount: string
   onClearValidator?: (voteAccount: string) => void
 }>(
@@ -335,8 +331,6 @@ const RankCell = React.memo<{
     isGhost,
     isSimulated,
     isCompact,
-    posColor: _posColor,
-    tipColor: _tipColor,
     voteAccount,
     onClearValidator,
   }) => {
@@ -344,8 +338,7 @@ const RankCell = React.memo<{
     const rankLabel = `#${rank}`
     // Sub: cutoff-relative position. No # prefix here — the # lives only on
     // the primary rank. NBSP binds the count to the word so it never wraps.
-    const cutoffWord =
-      cutoffRank === 0 ? 'at cutoff' : cutoffRank > 0 ? 'above' : 'below'
+    const cutoffWord = cutoffRank > 0 ? 'above' : 'below'
     const rankSubLabel =
       cutoffRank === 0 ? 'at cutoff' : `${Math.abs(cutoffRank)} ${cutoffWord}`
     if (isGhost)
@@ -415,8 +408,10 @@ export const SamTable: React.FC<Props> = ({
   onClearValidator,
 }) => {
   const winningTotalPmpe = auctionResult.winningTotalPmpe
-  const priorityFrontierPmpe =
-    selectRedelegationPriorityFrontierPmpe(auctionResult)
+  const priorityFrontierPmpe = useMemo(
+    () => selectRedelegationPriorityFrontierPmpe(auctionResult),
+    [auctionResult],
+  )
   const {
     auctionData: { validators },
   } = auctionResult
@@ -605,6 +600,8 @@ export const SamTable: React.FC<Props> = ({
     changedValidators,
     originalAuctionResult,
     originalPositionsMap,
+    dsSamConfig,
+    winningTotalPmpe,
   ])
 
   // Cutoff partition: who would clear the bid threshold by yield, regardless
@@ -729,30 +726,18 @@ export const SamTable: React.FC<Props> = ({
       const rank = isGhost
         ? (origAuctionRank ?? index + 1)
         : (auctionRankMap.get(voteAccount) ?? index + 1)
-      const cutoffRank = validator.values.cutoffRank ?? rank
+      const cutoffRank = validator.values.cutoffRank
       const isSimulated = simulatedValidators.has(voteAccount)
 
-      // Position change for simulated rows — compare original vs new auction rank
-      const posChange =
-        isSimulated && !isGhost
-          ? getPositionChange(origAuctionRank, rank)
-          : null
-      const posColor =
-        posChange?.direction === 'improved'
-          ? CSS_STATUS_GREEN
-          : posChange?.direction === 'worsened'
-            ? CSS_DESTRUCTIVE
-            : undefined
-
-      // Bond health
       const bondUtilPct = bondUtilizationPct(
         validator,
         dsSamConfig.minBondEpochs,
       )
       const bondHealth = validator.bondHealth
       const bondChip = BOND_CHIP[bondHealth]
-      const bondRunway = effectiveBondRunway(validator, bondHealth)
-      const hasAlert = bondRunway <= 5 || bondUtilPct >= 85
+      const bondRunway = effectiveBondRunway(validator, dsSamConfig)
+      const alertRunwayCeil = dsSamConfig.minBondEpochs + BOND_URGENT_EPOCHS
+      const hasAlert = bondRunway <= alertRunwayCeil || bondUtilPct >= 85
       const bondScaleMax = bondGaugeScaleMax(dsSamConfig)
       const bondCritical = bondCriticalFrac(dsSamConfig)
 
@@ -788,7 +773,7 @@ export const SamTable: React.FC<Props> = ({
         !isGhost && !inSet && 'bg-destructive/[0.02]',
         !isGhost && inSet && 'hover:bg-primary-light',
         !isGhost && !inSet && 'hover:bg-destructive/[0.05]',
-        !isGhost && isSimulated && 'ring-2 ring-inset ring-status-yellow',
+        !isGhost && isSimulated && 'bg-status-yellow-light',
         isFlashing && 'bg-status-yellow-light',
       ]
         .filter(Boolean)
@@ -836,8 +821,6 @@ export const SamTable: React.FC<Props> = ({
               isGhost={isGhost}
               isSimulated={isSimulated}
               isCompact={isCompact}
-              posColor={posColor}
-              tipColor={tipStyle.color}
               voteAccount={voteAccount}
               onClearValidator={onClearValidator}
             />
@@ -909,7 +892,7 @@ export const SamTable: React.FC<Props> = ({
                   scaleMax={bondScaleMax}
                   marker={bondCritical}
                   criticalBand={bondCritical}
-                  tone="bg-muted-foreground/40"
+                  tone={bondChip.bar}
                 />
                 <span className="text-xs opacity-60 font-mono whitespace-nowrap text-muted-foreground">
                   (
@@ -985,15 +968,15 @@ export const SamTable: React.FC<Props> = ({
           </TableCell>
 
           {/* Next Step — icon = constraint/direction, color = severity.
-            The contiguous out-of-set "Bid too low" block is an EXPECTED
-            state, not an alarm: render it muted with a 2-word label;
-            the full sentence lives in the detail panel. */}
+            The contiguous out-of-set "bid below winning price" block is
+            an EXPECTED state, not an alarm: render it muted with a short
+            label; the full sentence lives in the detail panel. */}
           {(() => {
             const bidTooLow = tip.constraint === 'rank'
             const stepColor = bidTooLow ? CSS_MUTED_FG : tipStyle.color
             const stepBg = bidTooLow ? CSS_MUTED : tipStyle.bg
             const stepText = bidTooLow
-              ? 'Bid too low — raise it.'
+              ? 'Bid below winning price.'
               : trimTipDecimals(tip.text)
             return (
               <TableCell className="px-3.5 py-3">
@@ -1019,15 +1002,7 @@ export const SamTable: React.FC<Props> = ({
           {/* Chevron */}
           <TableCell className="px-2.5 py-3 w-10">
             <div className="w-7 h-7 rounded-[7px] flex items-center justify-center border bg-secondary border-border text-secondary-foreground group-hover:bg-primary-light group-hover:border-primary/30 group-hover:text-primary transition-all duration-[120ms]">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path
-                  d="M4.5 3L7.5 6L4.5 9"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              {ICON_CHEVRON_RIGHT_SM}
             </div>
           </TableCell>
         </TableRow>
@@ -1123,17 +1098,26 @@ export const SamTable: React.FC<Props> = ({
         <div
           className={cn(
             'mx-4 mb-4',
-            inSimulation && 'ring-4 ring-status-yellow rounded-xl',
+            inSimulation &&
+              'outline outline-[4px] [outline-color:var(--color-status-yellow)] rounded-xl',
           )}
         >
           {/* Search row — sits above the table, aligned with validator column */}
           {onValidatorSearch && (
-            <div className={cn('mb-4 flex', inSimulation ? 'px-0 pt-2' : '')}>
+            <div
+              className={cn(
+                'mb-4 flex min-w-0',
+                inSimulation ? 'px-0 pt-2' : '',
+              )}
+            >
               <ValidatorSearch
                 validators={validators}
                 nameMap={validatorMeta ?? EMPTY_NAME_MAP}
                 onSelect={onValidatorSearch}
-                className="w-[240px]"
+                className={cn(
+                  'ml-10 min-w-0',
+                  isCompact ? 'flex-1' : 'w-[540px]',
+                )}
               />
             </div>
           )}
@@ -1244,18 +1228,9 @@ export const SamTable: React.FC<Props> = ({
                     <TableCell colSpan={7} className="p-0">
                       <div className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-primary-light-10 via-primary-light to-primary-light-10 border-y-2 border-primary">
                         <div className="flex items-center gap-1.5">
-                          <svg
-                            width="14"
-                            height="14"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                          >
-                            <path
-                              d="M8 2L10 6H14L11 9L12 13L8 10.5L4 13L5 9L2 6H6L8 2Z"
-                              fill="var(--primary)"
-                              opacity="0.8"
-                            />
-                          </svg>
+                          <span className="text-primary opacity-80">
+                            {ICON_STAR}
+                          </span>
                           <span className="text-xs font-semibold text-primary">
                             Winning Set Cutoff
                           </span>

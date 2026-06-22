@@ -16,7 +16,7 @@ export type NextEpochStake = {
   targetBidPmpePriority: number
   bidIncreaseForPriority: number
   bidGapPmpe: number // static bid minus clearing price, clamped at 0
-  priorityRank: number // 1-based position in totalPmpe descending order
+  priorityRank: number | null // 1-based; null when validator not in rank map
 }
 
 export const computeNextEpochStake = (

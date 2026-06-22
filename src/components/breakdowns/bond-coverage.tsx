@@ -1,14 +1,10 @@
 import React from 'react'
 
-import { bondSol, pmpe, stake, topUp } from 'src/format'
+import { bondSol, pay, pmpe, stake, topUp } from 'src/format'
 import type { BondHealthState } from 'src/services/bond-health'
 import { bondAdvice } from 'src/services/tip-engine'
 
-import {
-  CalcCard,
-  withSimAction,
-  type CardStatus,
-} from './card'
+import { CalcCard, withSimAction, type CardStatus } from './card'
 import { CalcRow, OkRow, SectionHeader } from './row'
 
 import type { BondCoverage } from 'src/services/bond-coverage'
@@ -23,7 +19,7 @@ type Props = {
   minBondBalanceSol: number
   marinadeActivatedStakeSol: number
   // Signed delta from the auction's redelegation pass. When positive on a
-  // 'soft' bond, the canonical "top up to grow stake" CTA contradicts the
+  // 'watch' bond, the canonical "top up to grow stake" CTA contradicts the
   // truthful "stake is already arriving" — see statusLine().
   expectedStakeDeltaSol?: number
   isSimulated?: boolean
@@ -168,7 +164,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
                 <CalcRow
                   label="Estimated bond risk fee this epoch"
                   help="Charged when the bond is below the threshold. The amount scales with the shortfall and the protocol's bond-risk rate."
-                  col2={bondSol(bondRiskFeeSol)}
+                  col2={pay(bondRiskFeeSol, 3)}
                   bold
                   severity="error"
                 />
@@ -196,8 +192,8 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           />
 
           <SectionHeader
-            title={`Minimum bond to keep stake — ${coverage.minEp} epochs`}
-            help={`What the bond needs to keep your stake for the next ${coverage.minEp} epochs. Fall short and the protocol pulls stake back to a size your bond can cover.`}
+            title={`Minimum bond to keep stake — ${coverage.minBondEpochs} epochs`}
+            help={`What the bond needs to keep your stake for the next ${coverage.minBondEpochs} epochs. Fall short and the protocol pulls stake back to a size your bond can cover.`}
           />
           <CalcRow
             label="Claimable bond balance"
@@ -215,7 +211,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           />
           <CalcRow
             label="Bond held for bid payments"
-            help="Bid times exposed stake over the covered window, plus a fixed reserve for the unprotected slice."
+            help={`Expected max effective bid × exposed stake × ${coverage.minBondEpochs} epochs, plus a fixed reserve for the unprotected slice.`}
             col2={bondSol(coverage.heldForBidKeep)}
           />
           <CalcRow
@@ -240,14 +236,14 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           )}
 
           <SectionHeader
-            title={`Ideal bond to grow stake — ${coverage.idealEp} epochs`}
+            title={`Ideal bond to grow stake — ${coverage.idealBondEpochs} epochs`}
             help={
               'What the bond needs for the pool to feel comfortable giving you more stake.'
             }
           />
           <CalcRow
-            label="Bond balance"
-            col2={bondSol(coverage.bondBalanceSol)}
+            label="Claimable bond balance"
+            col2={bondSol(coverage.claimableBondBalanceSol)}
             bold
           />
           <CalcRow
@@ -256,7 +252,7 @@ export const BondCoverageBreakdown: React.FC<Props> = ({
           />
           <CalcRow
             label="Bond held for bid payments"
-            help="Bid times exposed stake over the longer ideal window, plus a fixed reserve for the unprotected slice."
+            help={`Expected max effective bid × exposed stake × ${coverage.idealBondEpochs} epochs, plus a fixed reserve for the unprotected slice.`}
             col2={bondSol(coverage.heldForBidIdeal)}
           />
           <CalcRow

@@ -10,19 +10,18 @@ import { TEST_PROTECTED_EVENTS } from 'src/fixtures/test-protected-events'
 import {
   TEST_AUCTION_RESULT,
   TEST_DS_SAM_CONFIG,
-  TEST_EPOCHS_PER_YEAR,
   TEST_VALIDATOR_NAMES,
 } from 'src/fixtures/test-validators'
 import { SamPage } from 'src/pages/stake-auction-marketplace'
-import { runSdkRerun } from 'src/services/sdk-rerun'
+import { EPOCHS_PER_YEAR } from 'src/services/constants'
 
 import type { UserLevelProps } from 'src/components/navigation/navigation'
 import type { SamDataSources } from 'src/pages/stake-auction-marketplace'
 
 const SAM_RESULT = {
   auctionResult: TEST_AUCTION_RESULT,
-  epochsPerYear: TEST_EPOCHS_PER_YEAR,
-  dcSamConfig: TEST_DS_SAM_CONFIG,
+  epochsPerYear: EPOCHS_PER_YEAR,
+  dsSamConfig: TEST_DS_SAM_CONFIG,
 }
 
 export const TestSamPage: React.FC<UserLevelProps> = ({ level }) => {
@@ -56,38 +55,13 @@ export const TestSamPage: React.FC<UserLevelProps> = ({ level }) => {
       ['notifications-all', 'sam_auction'],
       TEST_NOTIFICATIONS_MAP,
     )
-    // The Payments tab in validator-detail now uses a single shared query
-    // `['psr-estimates-all']` (was per-validator). Seed an empty array; the
-    // tab still renders the empty state without firing a fetch.
+    // Seed empty array so the tab renders without a fetch.
     queryClient.setQueryData(['psr-estimates-all'], [])
     return queryClient
   })
   const dataSources = useMemo<SamDataSources>(
     () => ({
-      loadAuction: overrides => {
-        // Skip the SDK rerun when no overrides are active. Fixtures pre-bake
-        // `bondGoodForNEpochs`, `marinadeSamTargetSol`, etc. to specific demo
-        // values; `Auction.evaluate()` overwrites them with SDK-derived ones
-        // — and on synthetic data (intentionally tiny bonds for critical
-        // states) the recomputed runway comes out negative for ~all rows,
-        // tripping `passesTableFilter`'s runway check and hiding the table.
-        // Only rerun the SDK when the user actually simulated something.
-        const hasOverrides =
-          overrides != null &&
-          (overrides.source.inflationCommissionsDec.size > 0 ||
-            overrides.source.mevCommissionsDec.size > 0 ||
-            overrides.source.blockRewardsCommissionsDec.size > 0 ||
-            overrides.source.cpmpesDec.size > 0 ||
-            overrides.bondBalanceSol.size > 0)
-        const auctionResult = hasOverrides
-          ? runSdkRerun(
-              TEST_AUCTION_RESULT.auctionData,
-              TEST_DS_SAM_CONFIG,
-              overrides,
-            )
-          : TEST_AUCTION_RESULT
-        return Promise.resolve({ ...SAM_RESULT, auctionResult })
-      },
+      loadAuction: () => Promise.resolve(SAM_RESULT),
       loadValidatorNames: () => Promise.resolve(TEST_VALIDATOR_NAMES),
     }),
     [],

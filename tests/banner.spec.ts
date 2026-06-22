@@ -22,10 +22,15 @@ function makeNotification(title: string, body: string, id = '1') {
       id,
       title,
       message: body,
-      priority: 1,
+      priority: 'info',
       notification_type: 'sam_auction',
       scope: 'broadcast',
       created_at: new Date().toISOString(),
+      inner_type: '',
+      user_id: '',
+      data: {},
+      notification_id: null,
+      relevance_until: new Date(Date.now() + 86400000).toISOString(),
     },
   ]
 }

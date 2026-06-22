@@ -47,7 +47,7 @@ export const fetchValidatorsWithBonds = async (
   const [{ validators }, { bonds }, { auctionResult }] = await Promise.all([
     fetchValidatorsWithEpochs(0, signal),
     fetchBonds(signal),
-    qc.ensureQueryData({ queryKey: ['sam'], queryFn: () => loadSam(null) }),
+    qc.ensureQueryData({ queryKey: ['sam'], queryFn: () => loadSam() }),
   ])
 
   const auctionByVoteAccount = new Map<string, AuctionValidator>()
@@ -55,19 +55,23 @@ export const fetchValidatorsWithBonds = async (
     auctionByVoteAccount.set(validator.voteAccount, validator)
   }
 
+  const bondByVoteAccount = new Map<string, BondRecord>()
+  for (const bond of bonds) {
+    bondByVoteAccount.set(bond.vote_account, bond)
+  }
+
   const validatorsWithBonds: Record<string, ValidatorWithBond> = {}
 
   for (const validator of validators) {
+    const hasMarinade =
+      Number(validator.marinade_stake) > 0 ||
+      Number(validator.marinade_native_stake) > 0
+    const bond = bondByVoteAccount.get(validator.vote_account) ?? null
+    if (!hasMarinade && !bond) continue
     validatorsWithBonds[validator.vote_account] = {
       validator,
-      bond: null,
+      bond,
       auction: auctionByVoteAccount.get(validator.vote_account),
-    }
-  }
-
-  for (const bond of bonds) {
-    if (validatorsWithBonds[bond.vote_account]) {
-      validatorsWithBonds[bond.vote_account].bond = bond
     }
   }
 

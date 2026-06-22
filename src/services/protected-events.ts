@@ -1,7 +1,7 @@
 import { pct } from 'src/format'
-import { VALIDATOR_BONDS_API_URL } from 'src/services/apiUrls'
-import { fetchJson, safeParseLenient } from 'src/services/fetch-utils'
 import { schemas } from 'src/schemas/generated/bonds'
+import { VALIDATOR_BONDS_API_URL } from 'src/services/apiUrls'
+import { fetchJson } from 'src/services/fetch-utils'
 
 type SettlementFunder = 'ValidatorBond' | 'Marinade'
 
@@ -138,8 +138,9 @@ export const selectProtectedStakeReason = (protectedEvent: ProtectedEvent) => {
   }
 }
 
+// `amount` is stored in lamports; expose to callers in SOL.
 export const selectAmount = (protectedEvent: ProtectedEvent) =>
-  Number(protectedEvent.amount / 1e9)
+  protectedEvent.amount / 1e9
 
 export const fetchProtectedEvents = (
   signal?: AbortSignal,
@@ -147,5 +148,6 @@ export const fetchProtectedEvents = (
   fetchJson<ProtectedEventsResponse>(
     `${VALIDATOR_BONDS_API_URL}/protected-events`,
     signal,
-    body => safeParseLenient(schemas.ProtectedEventsResponse, body) as ProtectedEventsResponse,
+    body =>
+      schemas.ProtectedEventsResponse.parse(body) as ProtectedEventsResponse,
   )

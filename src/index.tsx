@@ -51,7 +51,8 @@ const ErrorPage = () => {
   const error = useRouteError() as { statusText?: string; message?: string }
 
   return (
-    <Navigation>
+    <>
+      <Navigation />
       <div role="alert" className="p-8 max-w-prose mx-auto">
         <h1 className="text-xl font-semibold mb-2">Oops!</h1>
         <p>Sorry, an unexpected error has occurred.</p>
@@ -59,19 +60,22 @@ const ErrorPage = () => {
           <i>{error.statusText ?? error.message}</i>
         </p>
       </div>
-    </Navigation>
+    </>
   )
 }
 
-// Catch-all for unknown paths so React Router renders the ErrorPage instead
-// of a blank screen. Matches anything not claimed by the routes above.
+const ThrowOnRender = (): never => {
+  throw new Error('Test error')
+}
+
 const NotFoundPage = () => (
-  <Navigation>
+  <>
+    <Navigation />
     <div role="alert" className="p-8 max-w-prose mx-auto">
       <h1 className="text-xl font-semibold mb-2">Page not found</h1>
       <p>That route doesn&apos;t exist. Use the navigation above.</p>
     </div>
-  </Navigation>
+  </>
 )
 
 const router = createBrowserRouter([
@@ -103,6 +107,11 @@ const router = createBrowserRouter([
   {
     path: '/expert-protected-events',
     element: <ProtectedEventsPage level={'expert'} />,
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: '/test-error',
+    element: <ThrowOnRender />,
     errorElement: <ErrorPage />,
   },
   {

@@ -60,7 +60,7 @@ test.describe('detail sheet — open & close', () => {
 
   test('clicking the × close button dismisses the sheet', async ({ page }) => {
     await openSheet(page, V01)
-    await page.locator(SHEET).getByRole('button', { name: 'Close' }).click()
+    await page.locator(SHEET).getByRole('button', { name: 'Back to rankings' }).click()
     await expect(page.locator(SHEET)).toHaveCount(0, { timeout: 5000 })
   })
 

@@ -11,9 +11,10 @@ metric, tab, or status badge, update the matching row here in the same
 commit.
 
 All pages share the same shell: `Navigation` → optional `Banner` → page
-content. Routes have a Basic and an Expert variant (`/foo` and
-`/expert-foo`); `level: UserLevel` propagates from the route into the page
-component and downstream.
+content. `level: UserLevel` propagates from the route into the page
+component and downstream. `/expert-*` routes still exist in code but are
+deprecated and undocumented; Basic-vs-Expert column markers below
+describe the surface the `UserLevel` prop gates.
 
 ---
 
@@ -28,18 +29,17 @@ Protected Stake Rewards" wordmark (wordmark hidden below `sm`).
 
 **Tabs**
 
-| Desktop label             | Mobile label | Route                       |
-| ------------------------- | ------------ | --------------------------- |
-| Stake Auction Marketplace | SAM          | `/{prefix}`                 |
-| Protected Events          | Events       | `/{prefix}protected-events` |
-| Validator Bonds           | Bonds        | `/{prefix}bonds`            |
+| Desktop label             | Mobile label | Route               |
+| ------------------------- | ------------ | ------------------- |
+| Stake Auction Marketplace | SAM          | `/`                 |
+| Protected Events          | Events       | `/protected-events` |
+| Validator Bonds           | Bonds        | `/bonds`            |
 
-`prefix = ''` (Basic) or `'expert-'` (Expert). Active tab styled
-`bg-primary text-primary-foreground`. Hovering Events / Bonds prefetches the
-respective query (`staleTime: 5min`).
+Active tab styled `bg-primary text-primary-foreground`. Hovering Events /
+Bonds prefetches the respective query (`staleTime: 5min`).
 
-**Right** — Docs link (→ `/docs` or `/expert-docs` per `level`, hidden
-below `sm`), **Epoch meter**, `ThemeToggle`.
+**Right** — Docs link (→ `/docs`, hidden below `sm`), **Epoch meter**,
+`ThemeToggle`.
 
 ### Epoch meter
 
@@ -58,7 +58,7 @@ lines 2-3 fill in without hovering the Events tab. Never blocks the nav.
 
 ---
 
-## SAM Page (`/`, `/expert-`)
+## SAM Page (`/`)
 
 `src/pages/stake-auction-marketplace.tsx` ·
 `src/components/sam-table/sam-table.tsx`
@@ -144,13 +144,13 @@ indicator `↑`/`↓` next to active header. Table sits in a scroll-x card
 | Max APY             | `maxApy`     | `selectMaxAPY` pill. Primary tone if in winning set, destructive-light otherwise.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | Bond                | `bond`       | Bond chip (No bond / Critical / Watch / Adequate / Healthy — see § Bond chip) + dot + balance, then a compact `<Gauge size="sm">` (the shared track-and-fill component, also used larger by the Concentration metrics) + `(Nep)` runway suffix. Gauge geometry lives in `src/services/calculations.ts` — `BOND_CRITICAL_FRAC = 0.2` and `bondGaugeScaleMax(config) = minBondEpochs / 0.2`. The scale is chosen so the SDK's `minBondEpochs` floor lands at exactly 20% of the track; runway above `5 × minBondEpochs` saturates at full. Fill colour follows the bond-health tier (`BOND_CHIP[...].bar`: primary / muted / warning / destructive), so a near-critical bond reads red even when its runway is only a few epochs. A thin `bg-destructive` marker tick at the 20% mark (`marker={BOND_CRITICAL_FRAC}`) flags the `minBondEpochs` critical floor — no number label, the `w-14` cell cannot fit one without crowding the `(Nep)` token. The bond pill also passes `criticalBand={BOND_CRITICAL_FRAC}`, so the leftmost 20% of the track carries a faint `bg-destructive/15` zone drawn behind the value fill — the critical-runway region reads red at a glance. The band is bond-pill-only: the `size="lg"` Concentration gauge does not pass `criticalBand` — its marker is the cap, a different semantic. Runway display is capped at 100: `≥ 100` epochs renders `(>100ep)`, below that the rounded value, e.g. `(37ep)`.                                                                                                                                                                                                                                                                     |
 | Stake / Next change | `stakeDelta` | Active SAM stake on top, expected next-epoch change underneath. Muted `0 SOL` when delta is zero, otherwise tinted `+/−` SOL coloured `var(--status-green)` / `var(--destructive)`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| Next Step           | `nextStep`   | One-line tip from `getValidatorTip`, pill capped at `max-w-[260px]` so the column stays rhythmic. **Colour = severity** via `getTipStyle(tip.urgency)`. **Glyph = lever** via `getTipIcon`: `TipConstraint.BOND` → shield glyph, `BID`/`RANK` → ascending-chevrons glyph (same lever — raise the bid), `CAP` → cap glyph; all non-directional and severity-agnostic. Only `TipConstraint.NONE` is directional and keyed off the real signed delta — ↗ gain, ↘ loss, → at target — so an up-arrow can never appear on a losing or blocked row. One escalation: `tip.alert === true` (an estimated bond risk fee this epoch) swaps the glyph for the octagon `ICON_ALERT`. The contiguous out-of-set "bid too low" block (`constraint: 'rank'`) is an expected state, not an alarm — rendered muted with a 2-word "Bid too low" label; the full sentence shows in the detail panel. Out-of-set validators whose `revShare.totalPmpe` already clears the winning total surface the binding reason directly (`outOfSetCta`): `Blocked from SAM this epoch.`, `Blacklisted by Marinade.`, `No bond posted. Add a bond to qualify.`, `Not eligible — check client version and vote credits.`, the cap cause line (country/ASO/validator/want) suffixed `— out of set.`, `Max-stake-wanted set to 0 — opted out.`, or the generic `Out of set — bid is high enough, another constraint binds.` Severity tracks active Marinade stake — above 10k SOL the tip is critical-red, otherwise grey; the opt-out branch is always `info`. In-set `deltaCta` says `At your max-stake-wanted setting.` when the target meets the validator's own `maxStakeWanted`, otherwise `At target stake.` for zero / cap-bound deltas. |
+| Next Step           | `nextStep`   | One-line tip from `getValidatorTip`, pill capped at `max-w-[260px]` so the column stays rhythmic. **Colour = severity** via `getTipStyle(tip.urgency)`. **Glyph = lever** via `getTipIcon`: `TipConstraint.BOND` → shield glyph, `BID`/`RANK` → ascending-chevrons glyph (same lever — raise the bid), `CAP` → cap glyph; all non-directional and severity-agnostic. Only `TipConstraint.NONE` is directional and keyed off the real signed delta — ↗ gain, ↘ loss, → at target — so an up-arrow can never appear on a losing or blocked row. One escalation: `tip.alert === true` (an estimated bond risk fee this epoch) swaps the glyph for the octagon `ICON_ALERT`. The contiguous out-of-set "bid below winning price" block (`constraint: 'rank'`) is an expected state, not an alarm — rendered muted with a "Bid below winning price." label; the full sentence shows in the detail panel. Out-of-set validators whose `revShare.totalPmpe` already clears the winning total surface the binding reason directly (`outOfSetCta`): `Blocked from SAM this epoch.`, `Blacklisted by Marinade.`, `No bond posted. Add a bond to qualify.`, `Not eligible — check client version and vote credits.`, the cap cause line (country/ASO/validator/want) suffixed `— out of set.`, `Max-stake-wanted set to 0 — opted out.`, or the generic `Out of set — bid is high enough, another constraint binds.` Severity tracks active Marinade stake — above 10k SOL the tip is critical-red, otherwise grey; the opt-out branch is always `info`. In-set `deltaCta` says `At your max-stake-wanted setting.` when the target meets the validator's own `maxStakeWanted`, otherwise `At target stake.` for zero / cap-bound deltas. |
 | (chevron)           | —            | Drill-in cue, recolours on row hover.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 
 ### Cutoff divider
 
 A row spanning all columns separates **bid-eligible** (max APY ≥ winning
-APY) from **bid-too-low** validators. Note: bond-blocked but bid-winning
+APY) from **below-winning-price** validators. Note: bond-blocked but bid-winning
 validators stay above the line because they'd win on yield. Only rendered
 when sorted by the default `maxApy` rank. The strip carries a "Winning
 Set Cutoff" star label, the literal `Winning APY: X%`, and a
@@ -161,7 +161,7 @@ right-aligned `N bid-eligible · M winning` count.
 | State                       | Background                                                                                                              |
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | In set                      | `bg-card`, hover `bg-primary-light`                                                                                     |
-| Out of set (bid-too-low)    | `bg-destructive/[0.02]`, hover `bg-destructive/[0.05]`                                                                  |
+| Out of set (bid below winning price) | `bg-destructive/[0.02]`, hover `bg-destructive/[0.05]`                                                         |
 | Ghost (simulation original) | `opacity-40 line-through bg-muted/30` — `cursor-pointer` if the simulated target row exists, otherwise `cursor-default` |
 | Simulated (post-edit)       | `ring-2 ring-inset ring-status-yellow`, `borderLeftColor` = posColor (green up, red down)                               |
 | Scroll-flash                | `bg-status-yellow-light` for 800ms after clicking a ghost row to jump to its new position                               |
@@ -175,6 +175,16 @@ Tracked in `SamPage`: `simulationRunId`, `simulationOverrides`,
 placeholderData: keepPreviousData })`. After a re-run, `insertGhostRows`
 injects ghost entries at original positions of changed validators.
 Detection of refetch completion watches `fetchStatus === 'idle'`.
+
+**Bond fee warnings in simulation:** `values.bondRiskFeeSol` is a
+scoring-API input — it is NOT recomputed by the simulation re-run. Bond
+fee CTAs therefore persist unchanged through any simulation: if the real
+epoch has a fee being charged, the warning continues to show regardless
+of bid/commission overrides (correct — the user hasn't topped up the
+bond). The "What changes" diff tracks `bondRiskFeeShortfall` (computed
+from simulated `marinadeActivatedStakeSol × minBondPmpe − claimable`)
+rather than the pinned `bondRiskFeeSol`, so a simulation that changes
+stake allocation will surface the resulting shortfall change.
 
 ### Bond chip
 
@@ -383,7 +393,7 @@ one shared `rowStyle()` helper inside `row.tsx`. Conclusion rows pass
 
 ---
 
-## Validator Bonds Page (`/bonds`, `/expert-bonds`)
+## Validator Bonds Page (`/bonds`)
 
 `src/pages/validator-bonds.tsx` ·
 `src/components/validator-bonds-table/validator-bonds-table.tsx`
@@ -449,7 +459,7 @@ sort: Marinade Stake DESC.**
 
 ---
 
-## Protected Events Page (`/protected-events`, `/expert-protected-events`)
+## Protected Events Page (`/protected-events`)
 
 `src/pages/protected-events.tsx` ·
 `src/components/protected-events-table/protected-events-table.tsx`
@@ -503,30 +513,27 @@ Generic `<Table>` inside `<TableShell>` with `TABLE_SHELL_HOVER`,
 | Validator Bond | `bg-status-green-light text-status-green border-status-green/30` |
 | Marinade       | `bg-warning-light text-warning border-warning/30`                |
 
+**Duplicate badge** (Reason column): rows sharing an identical
+`(vote_account, epoch, reason, amount)` tuple get a warning-style `Duplicate`
+chip flagging a known backend double-settlement (e.g. epoch 977). Rows are
+never silently deduplicated — both are shown, flagged.
+
 ---
 
-## Docs Page (`/docs`, `/expert-docs`)
+## Docs Page (`/docs`)
 
 `src/pages/docs.tsx`
 
-Centered `max-w-3xl` column. Renders `public/docs/GUIDE.md` (Basic) or
-`public/docs/GUIDE-EXPERT.md` (Expert) through `react-markdown` with
-`remark-gfm` + `rehype-raw`. Fetched as plain text via `useQuery({
-queryKey: ['doc', activeDoc], staleTime: Infinity })`.
+Centered `max-w-3xl` column. Renders `public/docs/GUIDE.md` through
+`react-markdown` with `remark-gfm` + `rehype-raw`. Fetched as plain text
+via `useQuery({ queryKey: ['doc', activeDoc], staleTime: Infinity })`.
 
-- Expert mode shows a tab strip ("Guide" / "Expert Guide") to switch
-  between the two. When entering the route via a hash (e.g. from a
-  breakdown "Guide →" link), the Expert page still defaults to `GUIDE`
-  so the section anchor exists.
 - Hash anchors work: `<a id="...">` markers in the markdown are
   honoured (via `rehype-raw`) and a `useEffect` scrolls to
   `window.location.hash` after the markdown DOM mounts (deferred one
-  frame via `requestAnimationFrame`). Re-runs on tab switch.
-- Links beginning with `#GUIDE` / `#GUIDE-EXPERT` switch the active doc
-  instead of scrolling. All other external `a` elements open in a new
-  tab.
-- Card "Guide →" links from breakdown cards use
-  `docsPath(level)` to pick `/docs` vs `/expert-docs`, then append a
+  frame via `requestAnimationFrame`). External `a` elements open in a
+  new tab.
+- Card "Guide →" links from breakdown cards route to `/docs` plus the
   section anchor.
 
 ---
@@ -543,15 +550,16 @@ the full UI and interaction surface but bypassing live APIs.
 | `/test-bonds`            | `TestBondsPage` (`src/pages/test-bonds.tsx`)                      | `ValidatorBondsPage`  |
 | `/test-protected-events` | `TestProtectedEventsPage` (`src/pages/test-protected-events.tsx`) | `ProtectedEventsPage` |
 
-Fixtures: `src/fixtures/`, `src/test-validators.ts`, `src/test-bonds.ts`,
-`src/test-protected-events.ts`. Test pages set `refetchInterval: false`
-on the wrapped `QueryClient` queries.
+Fixtures: `src/fixtures/test-validators.ts`,
+`src/fixtures/test-bonds.ts`, `src/fixtures/test-protected-events.ts`,
+`src/fixtures/test-notifications.ts`. Test pages set
+`refetchInterval: false` on the wrapped `QueryClient` queries.
 
 ---
 
 ## Shared visual primitives
 
-Pointer list — for the full design language see CLAUDE.md.
+Pointer list — for the full design language see `VISUALS.md`.
 
 - **`<Card>`** (`src/components/ui/card.tsx`) — `rounded-xl border border-border bg-card shadow-card`.
 - **`<TableShell>` + `TABLE_SHELL_HOVER`** (`src/components/table/table.tsx`) — canonical outer card chrome for any page that drops a generic `<Table>` into a content section. Wraps the table in `bg-card rounded-xl border border-border shadow-card overflow-hidden overflow-x-auto`. Both the bonds and protected-events tables sit inside one. Pair with `TABLE_SHELL_HOVER` on the `<Table>`'s `className` to get the muted `bg-secondary` row-hover (the default `<Table>` hover, `bg-primary-light`, is reserved for SAM, which has its own bespoke wrapper).

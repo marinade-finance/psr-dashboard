@@ -95,7 +95,10 @@ test.describe('simulation — editing fires a recompute and surfaces ghost+sim r
 
     // Close the sheet so the SAM banner (Reset Simulation pill) is no
     // longer covered by the Radix modal overlay.
-    await page.locator(SHEET).getByRole('button', { name: 'Close' }).click()
+    await page
+      .locator(SHEET)
+      .getByRole('button', { name: /Back to rankings/i })
+      .click()
     await expect(page.locator(SHEET)).toHaveCount(0, { timeout: 5000 })
 
     const resetBtn = page.getByRole('button', { name: /Reset Simulation/i })

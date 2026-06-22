@@ -4,14 +4,12 @@ status: planned
 
 # Bond Calculator
 
-## Problem
-
-Validators ask how to determine the bid and bond required to obtain stake.
+**Why:** validators ask how to determine the bid and bond required to obtain stake.
 Because SAM is a last-price auction, the required bid varies by epoch
 depending on competition. Minimal bond is tricky to reason about: more bond
 can be staked, and once stake is obtained the excess bond can be withdrawn.
 
-## Solution
+### Solution
 
 Add a bond calculator that lets validators input parameters and see:
 
@@ -22,7 +20,7 @@ Add a bond calculator that lets validators input parameters and see:
 4. **Withdraw-after-stake flow** — show how much bond becomes withdrawable
    once stake is assigned (bond posted minus bond required for received stake)
 
-## UX
+### UX
 
 - Accessible from the SAM auction page (inline or linked panel)
 - Inputs: desired stake amount (SOL), validator vote account (optional,
@@ -31,7 +29,7 @@ Add a bond calculator that lets validators input parameters and see:
   surplus after assignment
 - Show historical clearing prices for context (last N epochs)
 
-## Technical Notes
+### Technical Notes
 
 - Use `ds-sam-sdk` auction data to derive recent effective bids
 - Bond requirement = f(stake_received, validator_params) — extract from

@@ -15,7 +15,7 @@ import {
   type TimelineStage,
 } from 'src/services/epoch'
 import { loadSam } from 'src/services/sam'
-import { fetchProtectedEventsWithValidator } from 'src/services/validator-with-protected_event'
+import { fetchProtectedEventsWithValidators } from 'src/services/validator-with-protected_event'
 
 // Nav chip: epoch number with a leading progress ring. Hover shows a
 // timeline of pipeline stages (payments-settled / auction-settled / live /
@@ -24,11 +24,11 @@ export const EpochMeter: React.FC = () => {
   const queryClient = useQueryClient()
   const { data: sam } = useQuery({
     queryKey: ['sam'],
-    queryFn: () => loadSam(null),
+    queryFn: () => loadSam(),
   })
   const { data: protectedEvents } = useQuery({
     queryKey: ['protected-events'],
-    queryFn: () => fetchProtectedEventsWithValidator(queryClient),
+    queryFn: () => fetchProtectedEventsWithValidators(queryClient),
   })
 
   const [now, setNow] = useState(() => Date.now())

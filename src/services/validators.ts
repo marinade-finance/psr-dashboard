@@ -1,7 +1,7 @@
 import { lamportsToSol } from 'src/format'
-import { VALIDATORS_API_URL } from 'src/services/apiUrls'
-import { fetchJson, safeParseLenient } from 'src/services/fetch-utils'
 import { schemas } from 'src/schemas/generated/validators'
+import { VALIDATORS_API_URL } from 'src/services/apiUrls'
+import { fetchJson } from 'src/services/fetch-utils'
 
 export type ValidatorEpoch = {
   credits: number
@@ -49,11 +49,6 @@ export const fetchValidatorsWithEpochs = (
   fetchJson<ValidatorsResponse>(
     `${VALIDATORS_API_URL}/validators?limit=9999&epochs=${epochs}`,
     signal,
-    body => safeParseLenient(schemas.ResponseValidators, body) as ValidatorsResponse,
-  ).then(data => ({
-    validators: data.validators.filter(
-      validator =>
-        Number(validator.marinade_stake) > 0 ||
-        Number(validator.marinade_native_stake) > 0,
-    ),
-  }))
+    body =>
+      schemas.ResponseValidators.parse(body) as unknown as ValidatorsResponse,
+  )

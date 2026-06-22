@@ -2,7 +2,23 @@
 // rounding direction, and edge values.
 import { describe, it, expect } from 'vitest'
 
-import { sol, pct, pay, pmpe, stake, topUp } from '../format'
+import {
+  sol,
+  pct,
+  pay,
+  pmpe,
+  stake,
+  topUp,
+  finite,
+  bondSol,
+  penalty,
+  cost,
+  signedStake,
+  lamportsToSol,
+} from '../format'
+
+// NBSP ( ) is used between number and "SOL" in penalty/cost/signedStake/stake/pay
+const NBSP = ' '
 
 describe('sol', () => {
   it('keeps two decimals for sub-unit amounts', () => {
@@ -29,6 +45,12 @@ describe('pay / stake', () => {
     expect(pay(0.17)).toBe('1 SOL')
     expect(pay(1.4)).toBe('2 SOL')
     expect(pay(1.7)).toBe('2 SOL')
+  })
+
+  it('pay with digits rounds UP at the requested decimal place', () => {
+    expect(pay(0.0001, 3)).toBe(`0.001${NBSP}SOL`)
+    expect(pay(1.2341, 3)).toBe(`1.235${NBSP}SOL`)
+    expect(pay(1.234, 3)).toBe(`1.234${NBSP}SOL`)
   })
 
   it('stake formats integer-only with NBSP + SOL suffix', () => {
@@ -79,8 +101,6 @@ describe('pct', () => {
   })
 })
 
-import { finite, bondSol, penalty, cost, signedStake, lamportsToSol } from '../format'
-
 describe('finite', () => {
   it('finite number → passes through unchanged', () => {
     expect(finite(3.14)).toBe(3.14)
@@ -98,7 +118,7 @@ describe('finite', () => {
   })
 
   it('null → 0', () => {
-    expect(finite(null as unknown as number)).toBe(0)
+    expect(finite(null)).toBe(0)
   })
 
   it('undefined → 0', () => {
@@ -120,9 +140,6 @@ describe('bondSol', () => {
     expect(bondSol(0)).toBe('0.0 SOL')
   })
 })
-
-// NBSP ( ) is used between number and "SOL" in penalty/cost/signedStake/stake/pay
-const NBSP = ' '
 
 describe('penalty', () => {
   it('formats to 3 decimal places with NBSP + SOL suffix', () => {

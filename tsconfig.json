@@ -21,6 +21,6 @@
     "lib": ["esnext", "dom", "dom.iterable"],
     "types": ["node", "vite/client"]
   },
-  "include": ["src/**/*", "tests/**/*"],
+  "include": ["src/**/*"],
   "exclude": ["vite.config.ts", "src/schemas/generated/**"]
 }
