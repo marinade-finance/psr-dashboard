@@ -6,7 +6,8 @@ validator bonds, and protected events. Auction computation comes from
 
 ## Local development
 
-`pnpm generate-schemas` requires Python 3 (stdlib only) to pre-process the notifications OpenAPI spec.
+`pnpm generate` (Bun) regenerates the Zod API schemas in
+`src/schemas/generated/` from the upstream OpenAPI specs.
 
 ```sh
 pnpm install

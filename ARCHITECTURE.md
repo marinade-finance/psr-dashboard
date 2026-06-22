@@ -84,7 +84,7 @@ local-only scratch (untracked).
 | `/test-protected-events` | `TestProtectedEventsPage` (`src/pages/test-protected-events.tsx`) | Internal sandbox (fixture) |
 
 `/expert-*` routes still exist in `src/index.tsx` but are deprecated
-and scheduled for removal — see `specs/1/0-next.md`. Don't add new
+and scheduled for removal — see `specs/2/1-remove-expert-routes.md`. Don't add new
 expert-only behaviour or document the expert variants here.
 
 ---

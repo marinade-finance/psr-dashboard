@@ -115,7 +115,7 @@ This file holds only agent-facing rules below.
   page with a `QueryClient` pre-seeded from `src/fixtures/*`.
 - **No expert test routes.** Don't add `/expert-test-*`. Don't write
   Playwright tests that hit any `/expert-*` route. Expert routes still
-  exist in code but are deprecated (see `specs/1/0-next.md`).
+  exist in code but are deprecated (see `specs/2/1-remove-expert-routes.md`).
 - **Mobile is not supported.** The app shows a "Mobile view is not
   supported" banner (`src/components/navigation/navigation.tsx`) below
   640px. Don't add mobile viewport variants in tests; don't ship CSS
