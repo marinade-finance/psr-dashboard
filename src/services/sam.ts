@@ -23,9 +23,47 @@ type SamResult = {
   dsSamConfig: DsSamConfig
 }
 
+const FETCHED_EPOCHS = 11
+
+// Derive epochsPerYear from the average real epoch duration over the last
+// FETCHED_EPOCHS epochs (epoch_start_at / epoch_end_at timestamps) — matches
+// the production calculation, where epochs currently run slightly under the
+// 48h nominal. Falls back to the nominal constant (EPOCHS_PER_YEAR) when
+// timestamps are unavailable, e.g. during an extended outage.
+const estimateEpochsPerYear = async (): Promise<number> => {
+  const { validators } = await fetchValidatorsWithEpochs(FETCHED_EPOCHS)
+  const epochStats = validators.flatMap(({ epoch_stats }) => epoch_stats)
+
+  const rangeStart = epochStats.reduce(
+    (acc, { epoch, epoch_start_at }) => {
+      if (epoch_start_at === null || epoch >= acc.epoch) return acc
+      return { epoch, timestamp: new Date(epoch_start_at).getTime() / 1e3 }
+    },
+    { epoch: Infinity, timestamp: Infinity },
+  )
+
+  const rangeEnd = epochStats.reduce(
+    (acc, { epoch, epoch_end_at }) => {
+      if (epoch_end_at === null || epoch <= acc.epoch) return acc
+      return { epoch, timestamp: new Date(epoch_end_at).getTime() / 1e3 }
+    },
+    { epoch: 0, timestamp: 0 },
+  )
+
+  if (!isFinite(rangeStart.epoch) || rangeEnd.epoch === 0) {
+    return EPOCHS_PER_YEAR
+  }
+
+  const SECONDS_PER_YEAR = 365.25 * 24 * 3600
+  const rangeDuration = rangeEnd.timestamp - rangeStart.timestamp
+  const rangeEpochs = rangeEnd.epoch - rangeStart.epoch + 1
+  return SECONDS_PER_YEAR / (rangeDuration / rangeEpochs)
+}
+
 // Fetches the live auction. Simulation with overrides goes through
 // runSdkRerun (single source of truth); loadSam does not accept overrides.
 export const loadSam = async (): Promise<SamResult> => {
+  const epochsPerYear = await estimateEpochsPerYear()
   const config = await loadSamConfig()
   const dsSam = new DsSamSDK({
     ...config,
@@ -39,12 +77,10 @@ export const loadSam = async (): Promise<SamResult> => {
 
   return {
     auctionResult,
-    epochsPerYear: EPOCHS_PER_YEAR,
+    epochsPerYear,
     dsSamConfig: dsSam.config,
   }
 }
-
-const FETCHED_EPOCHS = 11
 
 // AugmentedAuctionValidator: AuctionValidator with derived per-validator fields
 // pre-computed. expectedStakeChangeSol drives the next-epoch delta display and
