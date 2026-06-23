@@ -316,13 +316,23 @@ type RedelegationAllocation = {
 // selectRedelegationPriorityFrontierPmpe, selectRedelegationPriorityRank,
 // selectWinningApyForValidator, and computeNextEpochStake — same auction
 // would otherwise run the greedy pass once per consumer per detail open.
-const allocationCache = new WeakMap<AuctionResult, RedelegationAllocation>()
+const allocationCache = new WeakMap<
+  AuctionResult,
+  Map<number, RedelegationAllocation>
+>()
 
 function allocateRedelegation(
   auctionResult: AuctionResult,
+  minBondBalanceSol = 0,
 ): RedelegationAllocation {
-  const cached = allocationCache.get(auctionResult)
+  let byMin = allocationCache.get(auctionResult)
+  if (!byMin) {
+    byMin = new Map()
+    allocationCache.set(auctionResult, byMin)
+  }
+  const cached = byMin.get(minBondBalanceSol)
   if (cached) return cached
+
   const validators = auctionResult.auctionData.validators
   const budget = selectRedelegationBudget(auctionResult)
   const rawDelta = (v: AuctionValidator) =>
@@ -348,7 +358,8 @@ function allocateRedelegation(
     if (v.auctionStake.marinadeSamTargetSol > 0) {
       marginalWinner = v
     }
-    if (budget > 0) {
+    const belowMin = (v.bondBalanceSol ?? 0) < minBondBalanceSol
+    if (budget > 0 && !belowMin) {
       const delta = rawDelta(v)
       if (delta > 0 && remaining > 0) {
         const alloc = Math.min(delta, remaining)
@@ -369,7 +380,7 @@ function allocateRedelegation(
     rankByVote,
     marginalWinner,
   }
-  allocationCache.set(auctionResult, result)
+  byMin.set(minBondBalanceSol, result)
   return result
 }
 
@@ -435,7 +446,10 @@ function computeExpectedStakeChanges(
 
   const byVote = new Map(validators.map(v => [v.voteAccount, v] as const))
 
-  const { inflowByVote } = allocateRedelegation(auctionResult)
+  const { inflowByVote } = allocateRedelegation(
+    auctionResult,
+    minBondBalanceSol,
+  )
   for (const [va, alloc] of inflowByVote) {
     const validator = byVote.get(va)
     if (validator && bondBelowMin(validator)) continue
