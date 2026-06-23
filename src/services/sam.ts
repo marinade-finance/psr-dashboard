@@ -85,8 +85,8 @@ export const loadSam = async (): Promise<SamResult> => {
 // AugmentedAuctionValidator: AuctionValidator with derived per-validator fields
 // pre-computed. expectedStakeChangeSol drives the next-epoch delta display and
 // decomposes into three signed components that always sum to it:
-//   paidUndelegationSol (≤0)      scheduled undelegation outflow (only when target < active)
-//   redelegationInflowSol (≥0)    inflow from the 1% rotation budget
+//   paidUndelegationSol (≤0)      scheduled undelegation outflow (only when target ≤ active)
+//   redelegationInflowSol (≥0)    inflow from the uninvested float (TVL − Σactive)
 //   naturalWithdrawalSol (≤0)     rotation outflow (over-target excess, lowest unstakePriority first)
 // cutoffRank is the dense position relative to the auction cutoff: 0 = at the
 // winning total PMPE, +1 = closest distinct tier above (ties share a rank),
@@ -371,9 +371,11 @@ function allocateRedelegation(
   return result
 }
 
-// paidUndelegation = SDK's paidUndelegationSol: scheduled undelegation outflow.
-// Applied as a negative only when target < active — if target ≥ active the
-// undelegation is absorbed by incoming redelegation and the net outflow is zero.
+// paidUndelegation = SDK's paidUndelegationSol (positive magnitude): bond risk
+// fee charged by undelegating stake. Only non-zero when target ≤ active —
+// when target > active the validator is receiving stake, not losing it.
+// target < active: capped at active−target so stake never projects below target.
+// target == active: shown in full as a negative; no rotation inflow offsets it.
 // Sub-min-bond validators lose all stake and are excluded from inflow/rotation.
 function computeExpectedStakeChanges(
   auctionResult: AuctionResult,
