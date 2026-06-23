@@ -9,7 +9,9 @@ type RewardsResponse = {
   rewards_inflation_est: EpochRewards[]
 }
 
-const EpochRewardsTupleSchema = z.tuple([z.number(), z.number()])
+const EpochRewardsTupleSchema = z
+  .tuple([z.number(), z.number()])
+  .rest(z.unknown())
 const RewardsResponseSchema = z
   .object({
     rewards_mev: z.array(EpochRewardsTupleSchema),
