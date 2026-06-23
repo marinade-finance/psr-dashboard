@@ -1,38 +1,294 @@
-:root {
-  --bg-dark-1: #1c1b23;
-  --bg-dark-2: #2b2a34;
-  --bg-dark-3: #353439;
-  --bg-dark-4: #42414e;
-  --text-light-1: #b8b8bc;
-  --text-light-2: #fbfbfe;
+@import 'tailwindcss';
+
+/* Class-based dark mode */
+@variant dark (&:where(.dark, .dark *));
+
+/* Theme tokens — maps CSS variables to Tailwind utilities */
+@theme {
+  --font-sans: Geist, system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
+  --shadow-card: var(--shadow);
+  --shadow-hover: var(--shadow-hover-val);
+  --shadow-button: var(--shadow-button-val);
+
+  --color-background: var(--background);
+  --color-background-page: var(--background-page);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-tertiary: var(--tertiary);
+  --color-tertiary-foreground: var(--tertiary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-alpha: var(--primary-alpha);
+  --color-primary-light: var(--primary-light);
+  --color-primary-light-10: var(--primary-light-10);
+  --color-destructive: var(--destructive);
+  --color-destructive-light: var(--destructive-light);
+  --color-warning: var(--warning);
+  --color-warning-light: var(--warning-light);
+  --color-info: var(--info);
+  --color-info-light: var(--info-light);
+  --color-border: var(--border);
+  --color-border-grid: var(--border-grid);
+  --color-ring: var(--ring);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-cell-red: var(--cell-red);
+  --color-cell-green: var(--cell-green);
+  --color-cell-yellow: var(--cell-yellow);
+  --color-cell-grey: var(--cell-grey);
+  --color-status-green: var(--status-green);
+  --color-status-green-light: var(--status-green-light);
+  --color-status-yellow: var(--status-yellow);
+  --color-status-yellow-light: var(--status-yellow-light);
+  --color-status-red: var(--status-red);
+  --color-status-grey: var(--status-grey);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-input: var(--input);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sim-from: var(--sim-from);
+  --color-sim-to: var(--sim-to);
+  --color-sim-tbody: var(--sim-tbody);
+  --color-sim-row: var(--sim-row);
+
+  /* Off-scale type tokens — replace ad-hoc text-[10px] / text-[11px] / text-[13px].
+     Tailwind default text-xs stays at 12px. */
+  --text-2xs: 0.625rem; /* 10px — glanceable meta (cell sub-labels, axis ticks) */
+  --text-2xs--line-height: 0.875rem;
+  --text-3xs: 0.6875rem; /* 11px — micro epoch-meter ticks only */
+  --text-3xs--line-height: 0.875rem;
+  --text-mid: 0.8125rem; /* 13px — emphasised secondary / tab labels */
+  --text-mid--line-height: 1.125rem;
+
+  /* Radius tokens — mirror the Marinade app scale so future shadcn primitives
+     stay in step. Existing rounded-md/lg keep their Tailwind defaults; consumers
+     opting in use rounded-{xs,xl,2xl,3xl}. */
+  --radius-xs: 0.125rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
 }
 
-* {
-  margin: 0px;
-  padding: 0px;
-  box-sizing: border-box;
+@layer base {
+  :root {
+    --background: #ffffff;
+    --background-page: #f3f7f7;
+    --foreground: #182120;
+    --card: #ffffff;
+    --card-foreground: #081211;
+    --secondary: #e7eeef;
+    --secondary-foreground: #3a4e4d;
+    --tertiary: #dde7e8;
+    --tertiary-foreground: #6f8383;
+    --muted: #f3f7f7;
+    --muted-foreground: #6c8383;
+    --border: #dde7e8;
+    --border-grid: #e7eeef;
+    --primary: oklch(60% 0.118 184.704);
+    --primary-foreground: #f6f9f9;
+    --primary-alpha: rgba(8, 147, 139, 0.15);
+    --primary-light: rgba(8, 147, 139, 0.08);
+    --primary-light-10: rgba(8, 147, 139, 0.1);
+    --destructive-light: rgba(220, 38, 38, 0.1);
+    --warning-light: rgba(229, 150, 6, 0.1);
+    --info-light: rgba(99, 102, 241, 0.1);
+    --destructive: #dc2626;
+    --destructive-foreground: #f6f9f9;
+    --popover: #ffffff;
+    --popover-foreground: #042f2e;
+    --warning: #e59606;
+    --info: #6366f1;
+    --ring: rgba(154, 177, 178, 0.3);
+    --shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.05);
+    --cell-red: rgba(220, 38, 38, 0.12);
+    --cell-green: rgba(8, 147, 139, 0.12);
+    --cell-yellow: rgba(229, 150, 6, 0.12);
+    --cell-grey: rgba(100, 116, 139, 0.1);
+    --status-green: #16a34a;
+    --status-green-light: rgba(22, 163, 74, 0.1);
+    --status-yellow: #ca8a04;
+    --status-yellow-light: rgba(202, 138, 4, 0.1);
+    --status-red: #dc2626;
+    --status-grey: #6b7280;
+    --accent: #e7eeef;
+    --accent-foreground: #081211;
+    --input: #e7eeef;
+    --chart-1: oklch(60% 0.118 184.704);
+    --chart-2: #818cf8;
+    --chart-3: #fbbf24;
+    --chart-4: #c084fc;
+    --chart-5: #fb7185;
+    --sim-from: rgba(5, 30, 28, 1);
+    --sim-to: rgba(15, 50, 48, 1);
+    --sim-glow-from: rgba(10, 60, 56, 1);
+    --sim-glow-to: rgba(20, 80, 76, 1);
+    --sim-tbody: rgba(5, 30, 28, 0.08);
+    --sim-row: rgba(5, 30, 28, 0.06);
+    --shadow-hover-val: 0 4px 12px rgba(0, 0, 0, 0.15);
+    --shadow-button-val: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+
+  .dark {
+    --background: #030707;
+    --background-page: #050d0c;
+    --foreground: #f6f9f9;
+    --card: #050d0c;
+    --card-foreground: #f6f9f9;
+    --secondary: #212c2b;
+    --secondary-foreground: #f6f9f9;
+    --tertiary: #3a4e4d;
+    --tertiary-foreground: #9ab1b2;
+    --muted: #182120;
+    --border: rgba(255, 255, 255, 0.15);
+    --border-grid: rgba(255, 255, 255, 0.06);
+    --primary: oklch(70.4% 0.14 182.503);
+    --primary-foreground: #042f2e;
+    --primary-alpha: rgba(28, 168, 161, 0.2);
+    --primary-light: rgba(28, 168, 161, 0.08);
+    --primary-light-10: rgba(28, 168, 161, 0.1);
+    --destructive-light: rgba(248, 113, 113, 0.15);
+    --warning-light: rgba(251, 146, 60, 0.15);
+    --info-light: rgba(129, 140, 248, 0.15);
+    --destructive: #f87171;
+    --destructive-foreground: #042f2e;
+    --popover: #182120;
+    --popover-foreground: #f6f9f9;
+    --warning: #fb923c;
+    --info: #818cf8;
+    --ring: rgba(111, 131, 131, 0.5);
+    --shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.2);
+    --cell-red: rgba(248, 113, 113, 0.2);
+    --cell-green: rgba(58, 195, 188, 0.15);
+    --cell-yellow: rgba(251, 146, 60, 0.18);
+    --cell-grey: rgba(128, 128, 128, 0.3);
+    --status-green: #4ade80;
+    --status-green-light: rgba(74, 222, 128, 0.15);
+    --status-yellow: #fbbf24;
+    --status-yellow-light: rgba(251, 191, 36, 0.15);
+    --status-red: #f87171;
+    --accent: #212c2b;
+    --accent-foreground: #f0fdfa;
+    --input: rgba(255, 255, 255, 0.15);
+    --chart-1: #3ac3bc;
+    --chart-2: #6366f1;
+    --chart-3: #f59e0b;
+    --chart-4: #a855f7;
+    --chart-5: #f43f5e;
+  }
+
+  html {
+    width: 100%;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    position: relative;
+    background-color: var(--background-page);
+    color: var(--foreground);
+    font-family:
+      Geist,
+      system-ui,
+      -apple-system,
+      sans-serif;
+    text-rendering: optimizeLegibility;
+    font-optical-sizing: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 200ms;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font-family: inherit;
+  }
 }
 
-button,
-input,
-select,
-textarea {
-  font-family: inherit;
-}
+@layer components {
+  * {
+    transition-property: background-color, border-color, color;
+    transition-duration: 150ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
 
-html,
-body {
-  background-color: var(--bg-dark-2);
-  font-family: monospace, 'Courier New', Courier;
-  color: var(--text-light-1);
-}
+  @keyframes sheet-slide-in-right {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
 
-html {
-  width: 100%;
-}
+  @keyframes sheet-slide-out-right {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(100%);
+    }
+  }
 
-body {
-  position: relative;
+  @keyframes sheet-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.3;
+    }
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes anchor-flash {
+    0% {
+      background-color: var(--warning-light);
+    }
+    60% {
+      background-color: var(--warning-light);
+    }
+    100% {
+      background-color: transparent;
+    }
+  }
+
+  .anchor-highlight {
+    animation: anchor-flash 2s ease-out forwards;
+    border-radius: 4px;
+  }
 }
 
 /* Tooltip: solid dark background at 90% alpha, full-content coverage, crisp text */

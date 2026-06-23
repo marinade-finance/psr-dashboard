@@ -1,0 +1,74 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import React, { useMemo, useState } from 'react'
+
+import { TEST_BONDS_DATA } from 'src/fixtures/test-bonds'
+import {
+  TEST_BROADCAST_NOTIFICATION,
+  TEST_NOTIFICATIONS_MAP,
+} from 'src/fixtures/test-notifications'
+import { TEST_PROTECTED_EVENTS } from 'src/fixtures/test-protected-events'
+import {
+  TEST_AUCTION_RESULT,
+  TEST_DS_SAM_CONFIG,
+  TEST_VALIDATOR_NAMES,
+} from 'src/fixtures/test-validators'
+import { SamPage } from 'src/pages/stake-auction-marketplace'
+import { EPOCHS_PER_YEAR } from 'src/services/constants'
+
+import type { UserLevelProps } from 'src/components/navigation/navigation'
+import type { SamDataSources } from 'src/pages/stake-auction-marketplace'
+
+const SAM_RESULT = {
+  auctionResult: TEST_AUCTION_RESULT,
+  epochsPerYear: EPOCHS_PER_YEAR,
+  dsSamConfig: TEST_DS_SAM_CONFIG,
+}
+
+export const TestSamPage: React.FC<UserLevelProps> = ({ level }) => {
+  const [queryClient] = useState(() => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          staleTime: Infinity,
+          refetchInterval: false,
+          refetchOnMount: false,
+          refetchOnWindowFocus: false,
+          refetchOnReconnect: false,
+          retry: false,
+        },
+      },
+    })
+    // SamPage subscribes to the canonical ['sam'] queryKey; the bonds and
+    // protected-events service functions read from the same key via
+    // queryClient.ensureQueryData (see the library-native-refactor branch).
+    // EpochMeter shares the same cache entry. Seed every active consumer so
+    // the test page never reaches upstream APIs.
+    queryClient.setQueryData(['sam'], SAM_RESULT)
+    queryClient.setQueryData(['protected-events'], TEST_PROTECTED_EVENTS)
+    queryClient.setQueryData(['bonds'], TEST_BONDS_DATA)
+    queryClient.setQueryData(['validator-names'], TEST_VALIDATOR_NAMES)
+    queryClient.setQueryData(
+      ['notifications-broadcast'],
+      TEST_BROADCAST_NOTIFICATION,
+    )
+    queryClient.setQueryData(
+      ['notifications-all', 'sam_auction'],
+      TEST_NOTIFICATIONS_MAP,
+    )
+    // Seed empty array so the tab renders without a fetch.
+    queryClient.setQueryData(['psr-estimates-all'], [])
+    return queryClient
+  })
+  const dataSources = useMemo<SamDataSources>(
+    () => ({
+      loadAuction: () => Promise.resolve(SAM_RESULT),
+      loadValidatorNames: () => Promise.resolve(TEST_VALIDATOR_NAMES),
+    }),
+    [],
+  )
+  return (
+    <QueryClientProvider client={queryClient}>
+      <SamPage level={level} dataSources={dataSources} />
+    </QueryClientProvider>
+  )
+}

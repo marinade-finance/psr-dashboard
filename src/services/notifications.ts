@@ -1,4 +1,6 @@
+import { z } from 'zod'
 import { NOTIFICATIONS_API_URL } from './apiUrls'
+import { fetchJson, FetchError } from './fetch-utils'
 
 export type NotificationPriority = 'critical' | 'warning' | 'info'
 
@@ -17,10 +19,36 @@ export interface ValidatorNotification {
   created_at: string
 }
 
+export interface ParsedNotification {
+  id: string
+  priority: NotificationPriority
+  title: string | null
+  body: string
+  footer: string
+}
+
 export interface NotificationSummary {
   count: number
-  notifications: ValidatorNotification[]
+  notifications: ParsedNotification[]
 }
+
+const ValidatorNotificationSchema = z
+  .object({
+    id: z.string(),
+    notification_type: z.string(),
+    inner_type: z.string(),
+    user_id: z.string(),
+    scope: z.enum(['broadcast', 'individual']).optional(),
+    priority: z.enum(['critical', 'warning', 'info']),
+    title: z.string().nullable(),
+    message: z.string(),
+    data: z.record(z.unknown()),
+    notification_id: z.string().nullable(),
+    relevance_until: z.string(),
+    created_at: z.string(),
+  })
+  .passthrough()
+const ValidatorNotificationArraySchema = z.array(ValidatorNotificationSchema)
 
 const PAGE_SIZE = 200
 // Safety cap. Assumes fewer than PAGE_SIZE * MAX_PAGES active individual
@@ -30,6 +58,7 @@ const TOOLTIP_MAX_NOTIFICATIONS = 10
 
 export async function fetchAllNotifications(
   notificationType?: string,
+  signal?: AbortSignal,
 ): Promise<Record<string, NotificationSummary>> {
   const result: Record<string, NotificationSummary> = {}
 
@@ -42,23 +71,30 @@ export async function fetchAllNotifications(
       url.searchParams.set('scope', 'individual')
       url.searchParams.set('limit', String(PAGE_SIZE))
       url.searchParams.set('offset', String(page * PAGE_SIZE))
-      // eslint-disable-next-line no-await-in-loop
-      const res = await fetch(url.toString())
-      if (!res.ok) break
-      // eslint-disable-next-line no-await-in-loop
-      const notifications = (await res.json()) as ValidatorNotification[]
 
-      for (const n of notifications) {
-        const existing = result[n.user_id]
+      let notifications: ValidatorNotification[]
+      try {
+        notifications = await fetchJson<ValidatorNotification[]>(
+          url.toString(),
+          signal,
+          body => ValidatorNotificationArraySchema.parse(body),
+        )
+      } catch (err) {
+        if (err instanceof FetchError) break
+        throw err
+      }
+
+      for (const notification of notifications) {
+        const existing = result[notification.user_id]
         if (existing) {
           existing.count++
           if (existing.notifications.length < TOOLTIP_MAX_NOTIFICATIONS) {
-            existing.notifications.push(n)
+            existing.notifications.push(parseNotification(notification))
           }
         } else {
-          result[n.user_id] = {
+          result[notification.user_id] = {
             count: 1,
-            notifications: [n],
+            notifications: [parseNotification(notification)],
           }
         }
       }
@@ -72,14 +108,18 @@ export async function fetchAllNotifications(
   return result
 }
 
-export async function fetchLatestSamAuctionBroadcastNotification(): Promise<ValidatorNotification | null> {
+export async function fetchLatestSamAuctionBroadcastNotification(
+  signal?: AbortSignal,
+): Promise<ValidatorNotification | null> {
   try {
     const url = new URL('/v1/notifications/broadcast', NOTIFICATIONS_API_URL)
     url.searchParams.set('notification_type', 'sam_auction')
     url.searchParams.set('limit', '10')
-    const res = await fetch(url.toString())
-    if (!res.ok) return null
-    const notifications = (await res.json()) as ValidatorNotification[]
+    const notifications = await fetchJson<ValidatorNotification[]>(
+      url.toString(),
+      signal,
+      body => ValidatorNotificationArraySchema.parse(body),
+    )
     if (notifications.length === 0) return null
     return notifications.reduce((latest, n) =>
       Date.parse(n.created_at) > Date.parse(latest.created_at) ? n : latest,
@@ -89,35 +129,44 @@ export async function fetchLatestSamAuctionBroadcastNotification(): Promise<Vali
   }
 }
 
+function parseNotification(n: ValidatorNotification): ParsedNotification {
+  const [bodyPart, ...footerParts] = n.message.split('\n\nEmitted:')
+  return {
+    id: n.id,
+    priority: n.priority,
+    title: n.title,
+    body: bodyPart,
+    footer: footerParts.length
+      ? `Emitted:${footerParts.join('\n\nEmitted:')}`
+      : '',
+  }
+}
+
 function escapeHtml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
 }
 
 export function notificationTooltip(summary: NotificationSummary): string {
-  // Split each notification body at the footer separator so we can render the
-  // "Emitted: …" metadata line smaller/italic and visually subordinate to the
-  // main notification text. Format-neutral `\n` characters become `<br/>` only
-  // here — the formatter's output stays plain text.
   const shown = summary.notifications.slice(0, TOOLTIP_MAX_NOTIFICATIONS)
   const remaining = summary.count - shown.length
   const rendered = shown
-    .map(n => {
+    .map(({ priority, body, footer }) => {
       const prefix =
-        n.priority === 'critical'
+        priority === 'critical'
           ? '[CRITICAL]'
-          : n.priority === 'warning'
+          : priority === 'warning'
             ? '[WARNING]'
             : '[INFO]'
-      const [bodyPart, ...footerParts] = n.message.split('\n\nEmitted:')
-      const body = escapeHtml(bodyPart).replace(/\n/g, '<br/>')
-      const footer = footerParts.length
-        ? `<br/><small><em>Emitted:${escapeHtml(footerParts.join('\n\nEmitted:'))}</em></small>`
+      const bodyHtml = escapeHtml(body).replace(/\n/g, '<br/>')
+      const footerHtml = footer
+        ? `<br/><small><em>${escapeHtml(footer)}</em></small>`
         : ''
-      return `<p><strong>${prefix}</strong> ${body}${footer}</p>`
+      return `<p><strong>${prefix}</strong> ${bodyHtml}${footerHtml}</p>`
     })
     .join('<hr/>')
   return remaining > 0

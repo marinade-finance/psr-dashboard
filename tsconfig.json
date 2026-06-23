@@ -1,24 +1,26 @@
 {
   "compilerOptions": {
-    "target": "es2016",
-    "module": "commonjs",
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "declaration": true,
     "removeComments": true,
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./",
+    "paths": { "src/*": ["./src/*"] },
     "incremental": true,
     "skipLibCheck": true,
-    "strictNullChecks": false,
-    "noImplicitAny": true,
-    "strictBindCallApply": false,
+    "strict": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": false,
     "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false,
-    "jsx": "react",
-    "lib": ["esnext", "dom", "dom.iterable"]
-  }
+    "noFallthroughCasesInSwitch": true,
+    "jsx": "react-jsx",
+    "lib": ["esnext", "dom", "dom.iterable"],
+    "types": ["node", "vite/client"]
+  },
+  "include": ["src/**/*"],
+  "exclude": ["vite.config.ts", "src/schemas/generated/**"]
 }

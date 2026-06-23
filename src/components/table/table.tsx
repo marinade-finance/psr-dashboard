@@ -1,64 +1,109 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import { useVirtualizer } from '@tanstack/react-virtual'
+import React, { useMemo, useRef, useState } from 'react'
 
-import styles from './table.module.css'
+import { cn } from 'src/class_utils'
+import { HelpTip } from 'src/components/help-tip/help-tip'
+import {
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  Table as UiTable,
+} from 'src/components/ui/table'
+import type { HTMLAttributes, ReactNode } from 'react'
+import type { Color } from 'src/services/types'
 
-import type { HTMLAttributes } from 'react'
+export type { Color }
 
-export const enum OrderDirection {
-  ASC,
-  DESC,
+// Canonical card chrome for any page that drops a generic Table inside a
+// content section. Bundles the outer surface (rounded card, border, shadow),
+// the horizontal scroll behaviour, and the muted row-hover override that the
+// non-SAM tables share. SAM table has its own bespoke wrapper and does not
+// use this.
+export const TABLE_SHELL_HOVER = '[&_tbody_tr:hover]:bg-secondary' as const
+
+export function TableShell({
+  children,
+  className,
+}: {
+  children: ReactNode
+  className?: string
+}): React.ReactElement {
+  return (
+    <div
+      className={cn(
+        'bg-card rounded-xl border border-border shadow-card overflow-hidden overflow-x-auto',
+        className,
+      )}
+    >
+      {children}
+    </div>
+  )
 }
+
+export type OrderDirection = 'asc' | 'desc'
 
 export type Order = [number, OrderDirection]
 
-export enum Alignment {
-  LEFT,
-  RIGHT,
+export type Alignment = 'left' | 'right'
+
+const TABLE_BASE = [
+  'relative border-separate [border-spacing:0]',
+  '[&_thead]:sticky [&_thead]:top-0 [&_thead]:bg-muted',
+  '[&_thead]:text-foreground [&_thead]:cursor-pointer',
+  '[&_thead]:select-none [&_thead]:z-[1]',
+  '[&_thead]:border-b [&_thead]:border-border-grid',
+  '[&_thead_th:first-child]:rounded-tl-xl',
+  '[&_thead_th:last-child]:rounded-tr-xl',
+  '[&_tbody]:bg-card',
+  '[&_tbody_tr]:bg-card',
+  // content-visibility: auto lets the browser skip layout/paint of off-screen
+  // rows entirely (Chrome 85+/Safari 18+). Combined with contain-intrinsic-size
+  // it reserves space so scroll height stays accurate. For tables with 1000+
+  // rows (protected-events) this cuts the synchronous layout cost on mount
+  // from hundreds of ms to ~zero — the browser only lays out what's visible.
+  '[&_tbody_tr]:[content-visibility:auto]',
+  '[&_tbody_tr]:[contain-intrinsic-size:auto_44px]',
+  '[&_th]:relative [&_th]:px-3.5 [&_th]:py-[11px] [&_th]:whitespace-nowrap [&_th]:text-xs [&_th]:font-medium [&_th]:tracking-[0.06em] [&_th]:text-muted-foreground',
+  '[&_td]:relative [&_td]:px-3.5 [&_td]:py-3 [&_td]:whitespace-nowrap [&_td]:align-top',
+  '[&_tbody_tr:hover]:bg-primary-light',
+].join(' ')
+
+// Virtualized variant: drop content-visibility (virtualizer already skips
+// off-screen rows; content-visibility on visible rows can collapse their
+// reported width and cause thead/tbody column misalignment during scroll).
+const TABLE_BASE_VIRTUALIZED = TABLE_BASE.replace(
+  '[&_tbody_tr]:[content-visibility:auto] [&_tbody_tr]:[contain-intrinsic-size:auto_44px]',
+  '',
+)
+
+function alignmentClassName(alignment?: Alignment): string {
+  return alignment === 'right' ? 'text-right' : 'text-left'
 }
 
-export enum Color {
-  RED,
-  GREEN,
-  YELLOW,
-  ORANGE,
-  GREY,
-}
-
-const alignmentClassName = (alignment?: Alignment) => {
-  switch (alignment) {
-    case Alignment.LEFT:
-      return styles.left
-    case Alignment.RIGHT:
-      return styles.right
-    default:
-      return styles.left
-  }
-}
-
-const colorClassName = (color?: Color) => {
+function colorClassName(color?: Color): string {
   switch (color) {
-    case Color.RED:
-      return styles.red
-    case Color.GREEN:
-      return styles.green
-    case Color.YELLOW:
-      return styles.yellow
-    case Color.ORANGE:
-      return styles.orange
-    case Color.GREY:
-      return styles.grey
+    case 'red':
+      return 'bg-cell-red'
+    case 'green':
+      return 'bg-cell-green'
+    case 'yellow':
+      return 'bg-cell-yellow'
+    case 'grey':
+      return 'bg-cell-grey'
     default:
-      return styles.noBg
+      return ''
   }
 }
 
-const renderHeader = <Item,>(
+function renderHeader<Item>(
   columns: Column<Item>[],
   onSort: (i: number) => void,
   userOrder: [number, OrderDirection] | null,
   defaultOrder: Order[],
   showRowNumber: boolean,
-): JSX.Element => {
+): React.ReactElement {
   const [userOrderColumn, userOrderDirection] = userOrder ?? [null, null]
   const [defaultOrderColumn, defaultOrderDirection] = defaultOrder[0] ?? [
     null,
@@ -66,27 +111,21 @@ const renderHeader = <Item,>(
   ]
 
   return (
-    <tr>
-      {showRowNumber ? <td>#</td> : null}
+    <TableRow>
+      {showRowNumber ? <TableHead>#</TableHead> : null}
       {columns.map((column, i) => {
         const isUserSorted = userOrderColumn === i
         const isDefaultSorted = !userOrder && defaultOrderColumn === i
-
-        let indicatorClass = styles.sortIndicator
         let indicator = ''
-
         if (isUserSorted) {
-          indicatorClass = `${styles.sortIndicator} ${styles.sortIndicatorActive}`
-          indicator = userOrderDirection === OrderDirection.ASC ? '▲' : '▼'
+          indicator = userOrderDirection === 'asc' ? '▲' : '▼'
         } else if (isDefaultSorted) {
-          indicatorClass = `${styles.sortIndicator} ${styles.sortIndicatorDefault}`
-          indicator = defaultOrderDirection === OrderDirection.ASC ? '▲' : '▼'
+          indicator = defaultOrderDirection === 'asc' ? '▲' : '▼'
         }
-
         const isSortable = column.sortable !== false && !!column.compare
 
         return (
-          <th
+          <TableHead
             key={i}
             className={alignmentClassName(column.alignment)}
             onClick={isSortable ? () => onSort(i) : undefined}
@@ -94,15 +133,45 @@ const renderHeader = <Item,>(
             {...(column.headerAttrsFn ? column.headerAttrsFn() : {})}
           >
             {column.header}
-            {isSortable && <span className={indicatorClass}>{indicator}</span>}
-          </th>
+            {column.headerHelp && (
+              <HelpTip
+                text={column.headerHelp}
+                guideTo={column.headerGuideTo}
+              />
+            )}
+            {isSortable && (
+              <span
+                className={cn(
+                  'ml-1 text-xs opacity-40',
+                  isUserSorted && 'opacity-100! text-primary!',
+                  isDefaultSorted && 'opacity-60! text-muted-foreground!',
+                )}
+              >
+                {indicator}
+              </span>
+            )}
+          </TableHead>
         )
       })}
-    </tr>
+    </TableRow>
   )
 }
 
-const renderRow = <Item,>(
+function renderRows<Item>(
+  items: Item[],
+  columns: Column<Item>[],
+  showRowNumber: boolean,
+  rowAttrsFn?: (
+    item: Item,
+    index: number,
+  ) => HTMLAttributes<HTMLTableRowElement>,
+): React.ReactElement[] {
+  return items.map((item, i) =>
+    renderRow(item, columns, i, showRowNumber, rowAttrsFn),
+  )
+}
+
+function renderRow<Item>(
   item: Item,
   columns: Column<Item>[],
   index: number,
@@ -111,33 +180,38 @@ const renderRow = <Item,>(
     item: Item,
     index: number,
   ) => HTMLAttributes<HTMLTableRowElement>,
-  rowNumberRender?: (item: Item, index: number) => JSX.Element,
-): JSX.Element => {
+): React.ReactElement {
   return (
-    <tr key={index} {...(rowAttrsFn ? rowAttrsFn(item, index) : {})}>
-      {showRowNumber ? (
-        <td>
-          {rowNumberRender ? rowNumberRender(item, index) : <>{index + 1}</>}
-        </td>
-      ) : null}
-      {columns.map((column, i) => (
-        <td
-          {...(column.cellAttrsFn ? column.cellAttrsFn(item) : {})}
-          key={i}
-          className={`${alignmentClassName(column.alignment)} ${column.background ? colorClassName(column.background(item)) : ''}`}
-        >
-          {column.render(item, index)}
-        </td>
-      ))}
-    </tr>
+    <TableRow key={index} {...(rowAttrsFn ? rowAttrsFn(item, index) : {})}>
+      {showRowNumber ? <TableCell>{index + 1}</TableCell> : null}
+      {columns.map((column, i) => {
+        const cellAttrs = column.cellAttrsFn ? column.cellAttrsFn(item) : {}
+        const { className: cellClassName, ...restCellAttrs } = cellAttrs
+        return (
+          <TableCell
+            {...restCellAttrs}
+            key={i}
+            className={cn(
+              alignmentClassName(column.alignment),
+              column.background && colorClassName(column.background(item)),
+              cellClassName,
+            )}
+          >
+            {column.render(item, index)}
+          </TableCell>
+        )
+      })}
+    </TableRow>
   )
 }
 
 type Column<Item> = {
   header: string
+  headerHelp?: string
+  headerGuideTo?: string
   headerAttrsFn?: () => HTMLAttributes<HTMLTableCellElement>
   cellAttrsFn?: (item: Item) => HTMLAttributes<HTMLTableCellElement>
-  render: (item: Item, index?: number) => JSX.Element
+  render: (item: Item, index?: number) => React.ReactElement
   compare?: (a: Item, b: Item) => number
   sortable?: boolean
   background?: (item: Item) => Color | undefined
@@ -153,44 +227,44 @@ type Props<Item> = {
     item: Item,
     index: number,
   ) => HTMLAttributes<HTMLTableRowElement>
-  rowNumberRender?: (item: Item, index: number) => JSX.Element
-  onOrderChange?: (order: Order[]) => void
-  presorted?: boolean
-  caption?: React.ReactNode
+  className?: string
+  /** Off by default — adds a scroll container that subtly changes page layout. */
+  virtualize?: boolean
+  /** Estimated row height in px. Only used when `virtualize` is true. */
+  virtualizeRowHeight?: number
+  /** Max scroll-container height when virtualised, e.g. `'70vh'`. */
+  virtualizeMaxHeight?: string
 }
 
-export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
+export const Table: <Item>(props: Props<Item>) => React.ReactElement = ({
   data,
   columns,
   defaultOrder,
   showRowNumber,
   rowAttrsFn,
-  rowNumberRender,
-  onOrderChange,
-  presorted,
-  caption,
+  className,
+  virtualize = false,
+  virtualizeRowHeight = 44,
+  virtualizeMaxHeight = '70vh',
 }) => {
   const [userOrder, setUserOrder] = useState<Order | null>(null)
 
+  // Callers typically pass `defaultOrder` as an inline array literal, so its
+  // identity churns every parent render. Key the memo by content instead, so
+  // sorting only re-runs when the actual columns/directions change.
+  const defaultOrderKey = JSON.stringify(defaultOrder)
   const order: [number, OrderDirection][] = useMemo(() => {
     if (userOrder) {
       return [userOrder, ...defaultOrder]
     }
     return [...defaultOrder]
-  }, [userOrder, defaultOrder])
-
-  useEffect(() => {
-    onOrderChange?.(order)
-  }, [order, onOrderChange])
+  }, [userOrder, defaultOrderKey])
 
   // `columns` is deliberately omitted from deps: call sites pass inline array
   // literals, so including it would re-sort on every parent render. Sort
   // results are stable as long as comparators derive their result from the
   // row data passed in (a, b) — that contract holds for all current consumers.
   const sortedData = useMemo(() => {
-    if (presorted) {
-      return data
-    }
     const items = [...data]
     items.sort((a, b) => {
       for (const [columnIndex, orderDirection] of order) {
@@ -198,35 +272,49 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
         if (compareResult !== undefined && compareResult !== 0) {
           if (compareResult === Infinity) return 1
           if (compareResult === -Infinity) return -1
-          return orderDirection === OrderDirection.ASC
-            ? compareResult
-            : -compareResult
+          return orderDirection === 'asc' ? compareResult : -compareResult
         }
       }
       return 0
     })
     return items
-  }, [order, data, presorted])
+  }, [order, data])
 
   const onSort = (columnIndex: number) => {
     const column = columns[columnIndex]
     if (column.sortable === false || !column.compare) return
     const [prevColumn, prevOrder] = userOrder ?? [null, null]
     if (columnIndex === prevColumn) {
-      if (prevOrder === OrderDirection.ASC) {
-        setUserOrder([columnIndex, OrderDirection.DESC])
+      if (prevOrder === 'asc') {
+        setUserOrder([columnIndex, 'desc'])
       } else {
         setUserOrder(null)
       }
     } else {
-      setUserOrder([columnIndex, OrderDirection.ASC])
+      setUserOrder([columnIndex, 'asc'])
     }
   }
 
+  if (virtualize) {
+    return (
+      <VirtualizedTable
+        sortedData={sortedData}
+        columns={columns}
+        defaultOrder={defaultOrder}
+        userOrder={userOrder}
+        onSort={onSort}
+        showRowNumber={showRowNumber ?? false}
+        rowAttrsFn={rowAttrsFn}
+        className={className}
+        rowHeight={virtualizeRowHeight}
+        maxHeight={virtualizeMaxHeight}
+      />
+    )
+  }
+
   return (
-    <table className={styles.table}>
-      {caption && <caption>{caption}</caption>}
-      <thead>
+    <UiTable className={cn(TABLE_BASE, className)}>
+      <TableHeader>
         {renderHeader(
           columns,
           onSort,
@@ -234,19 +322,106 @@ export const Table: <Item>(props: Props<Item>) => JSX.Element = ({
           defaultOrder,
           showRowNumber ?? false,
         )}
-      </thead>
-      <tbody>
-        {sortedData.map((item, i) =>
-          renderRow(
-            item,
+      </TableHeader>
+      <TableBody>
+        {renderRows(sortedData, columns, showRowNumber ?? false, rowAttrsFn)}
+      </TableBody>
+    </UiTable>
+  )
+}
+
+// Virtualised body uses spacer rows to preserve the table's natural scroll
+// height while React only mounts the visible window + a small overscan.
+// Spacer rows are plain <tr> with one colSpan-wide <td> set to the missing
+// height — table layout honours the height as a row minimum, so the scrollbar
+// stays accurate without per-row absolute positioning (which would fight
+// table-cell layout for column widths).
+type VirtualizedTableProps<Item> = {
+  sortedData: Item[]
+  columns: Column<Item>[]
+  defaultOrder: Order[]
+  userOrder: Order | null
+  onSort: (i: number) => void
+  showRowNumber: boolean
+  rowAttrsFn?: (
+    item: Item,
+    index: number,
+  ) => HTMLAttributes<HTMLTableRowElement>
+  className?: string
+  rowHeight: number
+  maxHeight: string
+}
+
+function VirtualizedTable<Item>({
+  sortedData,
+  columns,
+  defaultOrder,
+  userOrder,
+  onSort,
+  showRowNumber,
+  rowAttrsFn,
+  className,
+  rowHeight,
+  maxHeight,
+}: VirtualizedTableProps<Item>): React.ReactElement {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const virtualizer = useVirtualizer({
+    count: sortedData.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => rowHeight,
+    overscan: 10,
+  })
+
+  const virtualRows = virtualizer.getVirtualItems()
+  const totalSize = virtualizer.getTotalSize()
+  const paddingTop = virtualRows.length > 0 ? virtualRows[0].start : 0
+  const paddingBottom =
+    virtualRows.length > 0
+      ? totalSize - virtualRows[virtualRows.length - 1].end
+      : 0
+  // Spacer cells need to span every visible column (data columns + optional #).
+  const colSpan = columns.length + (showRowNumber ? 1 : 0)
+
+  return (
+    <div
+      ref={scrollRef}
+      style={{ maxHeight, overflowY: 'auto', overflowX: 'visible' }}
+      className="bg-card"
+    >
+      <UiTable className={cn(TABLE_BASE_VIRTUALIZED, className)}>
+        <TableHeader>
+          {renderHeader(
             columns,
-            i,
-            showRowNumber ?? false,
-            rowAttrsFn,
-            rowNumberRender,
-          ),
-        )}
-      </tbody>
-    </table>
+            onSort,
+            userOrder,
+            defaultOrder,
+            showRowNumber,
+          )}
+        </TableHeader>
+        <TableBody>
+          {paddingTop > 0 && (
+            <tr aria-hidden style={{ height: paddingTop }}>
+              <td colSpan={colSpan} />
+            </tr>
+          )}
+          {virtualRows.map(vRow => {
+            const item = sortedData[vRow.index]
+            if (item === undefined) return null
+            return renderRow(
+              item,
+              columns,
+              vRow.index,
+              showRowNumber,
+              rowAttrsFn,
+            )
+          })}
+          {paddingBottom > 0 && (
+            <tr aria-hidden style={{ height: paddingBottom }}>
+              <td colSpan={colSpan} />
+            </tr>
+          )}
+        </TableBody>
+      </UiTable>
+    </div>
   )
 }

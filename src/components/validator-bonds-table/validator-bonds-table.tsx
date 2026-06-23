@@ -1,19 +1,15 @@
-import round from 'lodash.round'
-import React from 'react'
+import React, { useMemo } from 'react'
 
-import { UserLevel } from 'src/components/navigation/navigation'
-import {
-  formatBps,
-  formatPercentage,
-  formatSolAmount,
-  lamportsToSol,
-} from 'src/format'
+import { cn } from 'src/class_utils'
+import { docsPath } from 'src/components/breakdowns/docs-path'
+import type { UserLevel } from 'src/components/navigation/navigation'
+import { HtmlTooltip } from 'src/components/ui/tooltip'
+import { ValidatorIdentity } from 'src/components/validator-identity/validator-identity'
+import { pct, sol, lamportsToSol } from 'src/format'
 import { selectEffectiveAmount } from 'src/services/bonds'
 import { notificationTooltip } from 'src/services/notifications'
-import { selectEffectiveBid, selectEffectiveCost } from 'src/services/sam'
 import {
   selectProtectedStake,
-  selectMaxStakeWanted,
   selectMaxProtectedStake,
 } from 'src/services/validator-with-bond'
 import {
@@ -24,19 +20,24 @@ import {
   selectVoteAccount,
 } from 'src/services/validators'
 
-import styles from './validator-bonds-table.module.css'
-import { tooltipAttributes } from '../../services/utils'
 import { BellIcon } from '../icons/bell-icon'
-import { Metric } from '../metric/metric'
-import { Alignment, OrderDirection, Table } from '../table/table'
+import { TABLE_SHELL_HOVER, Table, TableShell } from '../table/table'
+import type { Alignment } from '../table/table'
 
 import type { NotificationSummary } from 'src/services/notifications'
 import type { ValidatorWithBond } from 'src/services/validator-with-bond'
 
 type Props = {
   data: ValidatorWithBond[]
-  level: UserLevel
+  level?: UserLevel
   notificationsMap?: Record<string, NotificationSummary>
+}
+
+function rowCoverageBarColor(ratio: number, hasBond: boolean): string {
+  if (!hasBond) return 'bg-muted-foreground/30'
+  if (ratio >= 0.9) return 'bg-status-green'
+  if (ratio >= 0.5) return 'bg-warning'
+  return 'bg-destructive'
 }
 
 export const ValidatorBondsTable: React.FC<Props> = ({
@@ -44,269 +45,291 @@ export const ValidatorBondsTable: React.FC<Props> = ({
   level,
   notificationsMap,
 }) => {
-  const totalMarinadeStake = data.reduce(
-    (sum, { validator }) => sum + selectTotalMarinadeStake(validator),
-    0,
-  )
-  const totalProtectedStake = data.reduce(
-    (sum, validatorWithBond) => sum + selectProtectedStake(validatorWithBond),
-    0,
-  )
-  const totalMaxProtectedStake = data.reduce(
-    (sum, entry) => sum + selectMaxProtectedStake(entry),
-    0,
-  )
-  const effectiveBalance = Math.round(
-    data.reduce(
-      (sum, { bond }) => sum + (bond ? selectEffectiveAmount(bond) : 0),
-      0,
-    ),
-  )
-  const totalFundedBonds = data.filter(
-    ({ bond }) => (bond ? selectEffectiveAmount(bond) : 0) > 0,
-  ).length
+  const aggregates = useMemo(() => {
+    let totalMarinadeStake = 0
+    let totalProtectedStake = 0
+    let totalMaxProtectedStake = 0
+    let effectiveBalance = 0
+    let totalFundedBonds = 0
+    for (const entry of data) {
+      const { validator, bond } = entry
+      totalMarinadeStake += selectTotalMarinadeStake(validator)
+      totalProtectedStake += selectProtectedStake(entry)
+      totalMaxProtectedStake += selectMaxProtectedStake(entry)
+      const bondAmount = bond ? selectEffectiveAmount(bond) : 0
+      effectiveBalance += bondAmount
+      if (bondAmount > 0) totalFundedBonds += 1
+    }
+    return {
+      totalMarinadeStake,
+      totalProtectedStake,
+      totalMaxProtectedStake,
+      effectiveBalance,
+      totalFundedBonds,
+    }
+  }, [data])
+  const {
+    totalMarinadeStake,
+    totalProtectedStake,
+    totalMaxProtectedStake,
+    effectiveBalance,
+    totalFundedBonds,
+  } = aggregates
 
-  let expertMetrics
-  let expertColumns: {
+  const coveredRatio =
+    totalMarinadeStake > 0 ? totalProtectedStake / totalMarinadeStake : 0
+  // Integer-by-construction, used only for CSS width math and threshold checks.
+  const coveredPct = Math.round(coveredRatio * 100)
+
+  const expertColumns: {
     header: string
-    render: (entry: ValidatorWithBond) => JSX.Element
+    headerHelp?: string
+    headerGuideTo?: string
+    render: (entry: ValidatorWithBond) => React.ReactElement
     compare: (a: ValidatorWithBond, b: ValidatorWithBond) => number
     alignment: Alignment
-  }[] = []
-  if (level === UserLevel.Expert) {
-    expertMetrics = (
-      <>
-        <Metric
-          label="Max Protectable Stake"
-          value={formatPercentage(totalMaxProtectedStake / totalMarinadeStake)}
-          {...tooltipAttributes(
-            "How much of Marinade's stake can be potentially protected if all bonds in the system are used",
-          )}
-        />
-      </>
-    )
-    expertColumns = [
-      {
-        header: 'Max protected stake [☉]',
-        render: (entry: ValidatorWithBond) => (
-          <>{formatSolAmount(selectMaxProtectedStake(entry))}</>
-        ),
-        compare: (a: ValidatorWithBond, b: ValidatorWithBond) =>
-          selectMaxProtectedStake(a) - selectMaxProtectedStake(b),
-        alignment: Alignment.RIGHT,
-      },
-      {
-        header: 'Protected stake [%]',
-        render: (validatorWithBond: ValidatorWithBond) => {
-          const stake = selectNativeMarinadeStake(validatorWithBond.validator)
-          return (
-            <>
-              {formatPercentage(
-                stake > 0 ? selectProtectedStake(validatorWithBond) / stake : 0,
-              )}
-            </>
-          )
-        },
-        compare: (a: ValidatorWithBond, b: ValidatorWithBond) =>
-          selectProtectedStake(a) - selectProtectedStake(b),
-        alignment: Alignment.RIGHT,
-      },
-    ]
-  }
+  }[] = useMemo(
+    () =>
+      level === 'expert'
+        ? [
+            {
+              header: 'Max protectable [SOL]',
+              headerHelp:
+                'The most stake this bond could ever reimburse if it were stretched to its limit. A bigger bond pushes this number up.',
+              headerGuideTo: `${docsPath(level)}#bond`,
+              render: (entry: ValidatorWithBond) => (
+                <>{sol(selectMaxProtectedStake(entry))}</>
+              ),
+              compare: (a: ValidatorWithBond, b: ValidatorWithBond) =>
+                selectMaxProtectedStake(a) - selectMaxProtectedStake(b),
+              alignment: 'right',
+            },
+          ]
+        : [],
+    [level],
+  )
 
   return (
-    <div className={styles.tableWrap}>
-      <div className={styles.metricWrap}>
-        <Metric
-          label="Bonds Funded"
-          value={totalFundedBonds.toLocaleString()}
-          {...tooltipAttributes('Count of currently funded bonds')}
-        />
-        <Metric
-          label="Bonds Balance"
-          value={`☉ ${formatSolAmount(effectiveBalance)}`}
-          {...tooltipAttributes(
-            'Total effective amount of SOL deposited to the bonds',
-          )}
-        />
-        <Metric
-          label="Marinade Stake"
-          value={`☉ ${formatSolAmount(totalMarinadeStake)}`}
-          {...tooltipAttributes('How much stake is distributed by Marinade')}
-        />
-        <Metric
-          label="Protected Stake"
-          value={formatPercentage(totalProtectedStake / totalMarinadeStake)}
-          {...tooltipAttributes(
-            "How much of Marinade's stake is protected by validators' deposits to the bonds",
-          )}
-        />
-        <>{expertMetrics}</>
-      </div>
-      <Table
-        data={data}
-        columns={[
-          {
-            header: 'Validator',
-            headerAttrsFn: () => tooltipAttributes('Validator Vote Account'),
-            render: ({ validator }) => {
-              const va = selectVoteAccount(validator)
-              const summary = notificationsMap?.[va]
-              const plural =
-                summary && summary.count === 1
-                  ? 'notification'
-                  : 'notifications'
-              return (
-                <span className={styles.validatorCell}>
-                  <span className={styles.pubkey}>{va}</span>
-                  {summary && (
-                    <span className={styles.badges}>
-                      <button
-                        type="button"
-                        className={`${styles.badge} ${styles.notif}`}
-                        {...tooltipAttributes(notificationTooltip(summary))}
-                        aria-label={`${summary.count} ${plural}`}
-                      >
-                        {BellIcon}
-                      </button>
-                    </span>
-                  )}
-                </span>
-              )
-            },
-            compare: (a, b) =>
-              selectVoteAccount(a.validator).localeCompare(
-                selectVoteAccount(b.validator),
-              ),
-          },
-          {
-            header: 'Name',
-            render: ({ validator }) => (
-              <span className={styles.pubkey}>{selectName(validator)}</span>
-            ),
-            compare: (a, b) =>
-              selectName(a.validator).localeCompare(selectName(b.validator)),
-          },
-          {
-            header: 'Bond balance [☉]',
-            render: ({ bond }) => (
-              <>
-                {formatSolAmount(
-                  Number(
-                    lamportsToSol(bond?.effective_amount?.toString() ?? '0'),
-                  ),
-                )}
-              </>
-            ),
-            compare: (a, b) =>
-              Number(a.bond?.effective_amount ?? 0) -
-              Number(b.bond?.effective_amount ?? 0),
-            alignment: Alignment.RIGHT,
-          },
-          {
-            header: 'Max Stake Wanted [☉]',
-            headerAttrsFn: () =>
-              tooltipAttributes(
-                "The max-stake-wanted parameter set up in contract. If not set up, max stake is not limited. The validator won't get more stake than what they set up here. No already delegated stake will be lost by decreasing this setting.",
-              ),
-            render: ({ bond }) => {
-              const maxStakeWanted = bond ? selectMaxStakeWanted(bond) : 0
-              return (
-                <>
-                  {maxStakeWanted > 0 ? formatSolAmount(maxStakeWanted) : '-'}
-                </>
-              )
-            },
-            compare: ({ bond: a }, { bond: b }) =>
-              a && b
-                ? selectMaxStakeWanted(a) - selectMaxStakeWanted(b)
-                : undefined,
-            alignment: Alignment.RIGHT,
-          },
-          {
-            header: 'Bond Comm.',
-            headerAttrsFn: () =>
-              tooltipAttributes(
-                'Current commission settings in the bond configuration. If the configured commission is lower ' +
-                  'than the on-chain commission, the difference is drawn from the funded bond.<br/>' +
-                  'Ordered by in-bond inflation commission.',
-              ),
-            cellAttrsFn: ({ bond }) =>
-              tooltipAttributes(
-                `Inflation commission: ${formatBps(bond?.inflation_commission_bps)}<br/>` +
-                  `MEV commission: ${formatBps(bond?.mev_commission_bps)}<br/>` +
-                  `Block rewards commission: ${formatBps(bond?.block_commission_bps)}`,
-              ),
-            render: ({ bond }) => (
-              <>
-                {formatBps(bond?.inflation_commission_bps)} /{' '}
-                {formatBps(bond?.mev_commission_bps)} /{' '}
-                {formatBps(bond?.block_commission_bps)}{' '}
-              </>
-            ),
-            compare: compareBondCommissions,
-            alignment: Alignment.RIGHT,
-          },
-          {
-            header: 'Marinade stake [☉]',
-            render: ({ validator }) => (
-              <span
-                {...tooltipAttributes(
-                  `Native: ${formatSolAmount(selectNativeMarinadeStake(validator))}, Liquid: ${formatSolAmount(selectLiquidMarinadeStake(validator))}`,
-                )}
+    <div className="max-w-[1920px] mx-auto relative">
+      {/* Coverage Hero Bar */}
+      <div className="px-4 pb-4">
+        <div className="metricWrap bg-card rounded-xl border border-border shadow-card p-5">
+          <div className="flex items-baseline gap-2 mb-3">
+            <span className="metric text-3xl font-bold font-mono text-primary">
+              {pct(coveredRatio, 0)}
+            </span>
+            <span className="text-sm text-muted-foreground">
+              of Marinade stake is bond-protected
+            </span>
+          </div>
+          {/* Stacked bar */}
+          <HtmlTooltip
+            html={
+              `Protected: ${sol(totalProtectedStake)} SOL<br/>` +
+              `Uncovered: ${sol(totalMarinadeStake - totalProtectedStake)} SOL`
+            }
+          >
+            <div className="h-8 rounded-lg overflow-hidden flex mb-4 w-full">
+              <div
+                className="flex items-center justify-center text-xs font-medium text-white overflow-hidden"
+                style={{
+                  width: `${coveredPct}%`,
+                  background: 'var(--primary)',
+                  flexShrink: 0,
+                  flexBasis: `${coveredPct}%`,
+                  maxWidth: `${coveredPct}%`,
+                }}
               >
-                {formatSolAmount(selectTotalMarinadeStake(validator))}
+                <span className="truncate px-1 hidden sm:block">
+                  {coveredPct > 25
+                    ? `${sol(totalProtectedStake)} SOL covered`
+                    : ''}
+                </span>
+              </div>
+              <div
+                className="flex items-center justify-center text-xs font-medium text-muted-foreground overflow-hidden flex-1 min-w-0"
+                style={{ background: 'var(--muted)' }}
+              >
+                <span className="truncate px-1 hidden sm:block">
+                  {100 - coveredPct > 25
+                    ? `${sol(totalMarinadeStake - totalProtectedStake)} SOL uncovered`
+                    : ''}
+                </span>
+              </div>
+            </div>
+          </HtmlTooltip>
+          {/* Stat chips */}
+          <div className="flex flex-wrap gap-4 text-sm">
+            <HtmlTooltip html="How many validators have at least some SOL in their bond right now.">
+              <span className="text-muted-foreground">
+                Bonds funded:{' '}
+                <strong className="text-foreground">{totalFundedBonds}</strong>
               </span>
-            ),
-            compare: (a, b) =>
-              selectTotalMarinadeStake(a.validator) -
-              selectTotalMarinadeStake(b.validator),
-            alignment: Alignment.RIGHT,
-          },
-          {
-            header: 'Eff. Cost [☉]',
-            headerAttrsFn: () =>
-              tooltipAttributes(
-                'Estimated total cost per epoch for the SAM stake that this validator received. ' +
-                  'This estimation does not consider the commission bidding never claims more than the real rewards earned in the epoch. ' +
-                  'And the potential penalties for rapid bid changes. (sorts by Eff. Bid)',
-              ),
-            cellAttrsFn: () =>
-              tooltipAttributes(
-                'Assumed cost per epoch for the SAM stake that this validator received.',
-              ),
-            render: ({ auction }) => (
-              <>{auction ? round(selectEffectiveCost(auction), 1) : '-'}</>
-            ),
-            compare: ({ auction: a }, { auction: b }) =>
-              a && b
-                ? selectEffectiveBid(a) - selectEffectiveBid(b)
-                : undefined,
-            alignment: Alignment.RIGHT,
-          },
-          ...expertColumns,
-        ]}
-        defaultOrder={[
-          [2, OrderDirection.DESC],
-          [4, OrderDirection.DESC],
-        ]}
-      />
+            </HtmlTooltip>
+            <HtmlTooltip html="Total SOL sitting in all validator bonds combined.">
+              <span className="text-muted-foreground">
+                Total bonds:{' '}
+                <strong className="text-foreground">
+                  {sol(effectiveBalance)} SOL
+                </strong>
+              </span>
+            </HtmlTooltip>
+            <HtmlTooltip html="Total SOL Marinade has staked across all validators.">
+              <span className="text-muted-foreground">
+                Total stake:{' '}
+                <strong className="text-foreground">
+                  {sol(totalMarinadeStake)} SOL
+                </strong>
+              </span>
+            </HtmlTooltip>
+            {level === 'expert' && (
+              <HtmlTooltip html="If every bond stretched as far as it could, this is the share of Marinade's stake that would be covered.">
+                <span className="text-muted-foreground">
+                  Max protectable:{' '}
+                  <strong className="text-foreground">
+                    {pct(
+                      totalMarinadeStake > 0
+                        ? totalMaxProtectedStake / totalMarinadeStake
+                        : 0,
+                    )}
+                  </strong>
+                </span>
+              </HtmlTooltip>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="px-4 pb-4">
+        <TableShell>
+          <Table
+            className={TABLE_SHELL_HOVER}
+            showRowNumber
+            data={data}
+            columns={[
+              {
+                header: 'Validator',
+                render: ({ validator }) => {
+                  const name = selectName(validator)
+                  const va = selectVoteAccount(validator)
+                  const summary = notificationsMap?.[va]
+                  return (
+                    <ValidatorIdentity
+                      name={name}
+                      voteAccount={va}
+                      trailing={
+                        summary && (
+                          <HtmlTooltip html={notificationTooltip(summary)}>
+                            <button
+                              type="button"
+                              className="shrink-0 text-warning opacity-80 hover:opacity-100 w-4 h-4"
+                              aria-label={`${summary.count} notification${summary.count === 1 ? '' : 's'}`}
+                            >
+                              {BellIcon}
+                            </button>
+                          </HtmlTooltip>
+                        )
+                      }
+                    />
+                  )
+                },
+                compare: (a, b) =>
+                  selectName(a.validator).localeCompare(
+                    selectName(b.validator),
+                  ),
+              },
+              {
+                header: 'Marinade Stake [SOL]',
+                headerHelp:
+                  'All the SOL Marinade has staked with this validator — both directly staked SOL and SOL backing mSOL.',
+                headerGuideTo: `${docsPath(level)}#bond`,
+                render: ({ validator }) => (
+                  <HtmlTooltip
+                    html={`Native: ${sol(selectNativeMarinadeStake(validator))}, Liquid: ${sol(selectLiquidMarinadeStake(validator))}`}
+                  >
+                    <span>{sol(selectTotalMarinadeStake(validator))}</span>
+                  </HtmlTooltip>
+                ),
+                compare: (a, b) =>
+                  selectTotalMarinadeStake(a.validator) -
+                  selectTotalMarinadeStake(b.validator),
+                alignment: 'right',
+              },
+              {
+                header: 'Bond Balance [SOL]',
+                headerHelp:
+                  'How much SOL the validator has in its safety deposit, ready to reimburse stakers if something goes wrong.',
+                headerGuideTo: `${docsPath(level)}#bond`,
+                render: ({ bond }) => (
+                  <>
+                    {sol(
+                      Number(
+                        lamportsToSol(
+                          bond?.effective_amount?.toString() ?? '0',
+                        ),
+                      ),
+                    )}
+                  </>
+                ),
+                compare: (a, b) =>
+                  Number(a.bond?.effective_amount ?? 0) -
+                  Number(b.bond?.effective_amount ?? 0),
+                alignment: 'right',
+              },
+              {
+                header: 'Protected Stake [SOL]',
+                headerHelp:
+                  "The slice of this validator's Marinade stake that the bond is big enough to reimburse if needed.",
+                headerGuideTo: `${docsPath(level)}#bond`,
+                render: entry => <>{sol(selectProtectedStake(entry))}</>,
+                compare: (a, b) =>
+                  selectProtectedStake(a) - selectProtectedStake(b),
+                alignment: 'right',
+              },
+              {
+                header: 'Coverage',
+                headerHelp:
+                  "What share of this validator's Marinade stake the bond can fully cover. 100% means everything is protected.",
+                headerGuideTo: `${docsPath(level)}#bond`,
+                render: entry => {
+                  const stake = selectTotalMarinadeStake(entry.validator)
+                  const coveredStake = selectProtectedStake(entry)
+                  const hasBond = entry.bond !== null
+                  const ratio = stake > 0 ? coveredStake / stake : 0
+                  return (
+                    <div className="flex items-center gap-2 min-w-[90px]">
+                      <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className={cn(
+                            'h-full rounded-full',
+                            rowCoverageBarColor(ratio, hasBond),
+                          )}
+                          style={{ width: `${Math.round(ratio * 100)}%` }}
+                        />
+                      </div>
+                      <span className="text-xs tabular-nums w-10 text-right">
+                        {pct(ratio)}
+                      </span>
+                    </div>
+                  )
+                },
+                compare: (a, b) => {
+                  const stakeA = selectTotalMarinadeStake(a.validator)
+                  const stakeB = selectTotalMarinadeStake(b.validator)
+                  const ratioA =
+                    stakeA > 0 ? selectProtectedStake(a) / stakeA : 0
+                  const ratioB =
+                    stakeB > 0 ? selectProtectedStake(b) / stakeB : 0
+                  return ratioA - ratioB
+                },
+                alignment: 'right',
+              },
+              ...expertColumns,
+            ]}
+            defaultOrder={[[1, 'desc']]}
+          />
+        </TableShell>
+      </div>
     </div>
   )
-}
-
-function compareBondCommissions(
-  { bond: aBond }: ValidatorWithBond,
-  { bond: bBond }: ValidatorWithBond,
-): number | undefined {
-  const aVal = aBond?.inflation_commission_bps
-  const bVal = bBond?.inflation_commission_bps
-  // Both null/undefined - equal
-  if (aVal == null && bVal == null) return 0
-  // Only a is null - always push to end (use Infinity so it stays at end regardless of sort direction)
-  if (aVal == null) return Infinity
-  // Only b is null - always push to end (use -Infinity so it stays at end regardless of sort direction)
-  if (bVal == null) return -Infinity
-  // Both have values - normal numeric sort
-  return aVal - bVal
 }

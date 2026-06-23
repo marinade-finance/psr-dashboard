@@ -1,3 +1,4 @@
+import { LAMPORTS_PER_SOL, LAST_DRYRUN_EPOCH } from './constants'
 import { fetchProtectedEvents } from './protected-events'
 import { calculateProtectedEventEstimates } from './protected-events-estimator'
 import { loadSam } from './sam'
@@ -6,38 +7,42 @@ import { fetchValidatorsWithEpochs } from './validators'
 
 import type { ProtectedEvent, SettlementReason } from './protected-events'
 import type { Validator } from './validators'
+import type { QueryClient } from '@tanstack/react-query'
 
-export enum ProtectedEventStatus {
-  DRYRUN,
-  ESTIMATE,
-  FACT,
-}
+export type ProtectedEventStatus = 'dryrun' | 'estimate' | 'fact'
 export type ProtectedEventWithValidator = {
   status: ProtectedEventStatus
   protectedEvent: ProtectedEvent
   validator: Validator | null
 }
 
-const LAST_DRYRUN_EPOCH = 608
-
-export const fetchProtectedEventsWithValidator = async (): Promise<
-  ProtectedEventWithValidator[]
-  // eslint-disable-next-line complexity
-> => {
+// Takes a QueryClient so the shared loadSam() result is read from the canonical
+// ['sam'] cache via ensureQueryData — see fetchValidatorsWithBonds.
+export const fetchProtectedEventsWithValidators = async (
+  qc: QueryClient,
+  signal?: AbortSignal,
+): Promise<ProtectedEventWithValidator[]> => {
   const [
     { validators },
     { protected_events: protectedEvents },
     scoring,
     { auctionResult },
   ] = await Promise.all([
-    fetchValidatorsWithEpochs(3),
-    fetchProtectedEvents(),
-    fetchScoring(),
-    loadSam(),
+    // Canonical cache key shared with the validator-detail Payments tab, so the
+    // 3-epoch validator payload (multi-MB) is fetched at most once.
+    qc.ensureQueryData({
+      queryKey: ['validators-with-epochs', 3],
+      queryFn: ({ signal: s }) => fetchValidatorsWithEpochs(3, s),
+    }),
+    fetchProtectedEvents(signal),
+    fetchScoring(signal),
+    qc.ensureQueryData({ queryKey: ['sam'], queryFn: () => loadSam() }),
   ])
 
-  const estimatedProtectedEvents =
-    await calculateProtectedEventEstimates(validators)
+  const estimatedProtectedEvents = await calculateProtectedEventEstimates(
+    validators,
+    signal,
+  )
 
   const validatorsMap: Record<string, Validator> = {}
   for (const validator of validators) {
@@ -48,10 +53,7 @@ export const fetchProtectedEventsWithValidator = async (): Promise<
   const protectedEventsWithValidator: ProtectedEventWithValidator[] = []
   for (const protectedEvent of protectedEvents) {
     latestProcessedEpoch = Math.max(protectedEvent.epoch, latestProcessedEpoch)
-    const status =
-      protectedEvent.epoch > LAST_DRYRUN_EPOCH
-        ? ProtectedEventStatus.FACT
-        : ProtectedEventStatus.DRYRUN
+    const status = protectedEvent.epoch > LAST_DRYRUN_EPOCH ? 'fact' : 'dryrun'
     protectedEventsWithValidator.push({
       status,
       protectedEvent,
@@ -62,7 +64,7 @@ export const fetchProtectedEventsWithValidator = async (): Promise<
   for (const protectedEvent of estimatedProtectedEvents) {
     if (protectedEvent.epoch > latestProcessedEpoch) {
       protectedEventsWithValidator.push({
-        status: ProtectedEventStatus.ESTIMATE,
+        status: 'estimate',
         protectedEvent,
         validator: validatorsMap[protectedEvent.vote_account] ?? null,
       })
@@ -89,12 +91,12 @@ export const fetchProtectedEventsWithValidator = async (): Promise<
   ) => {
     if (amountLamports <= 0) return
     protectedEventsWithValidator.push({
-      status: ProtectedEventStatus.ESTIMATE,
+      status: 'estimate',
       protectedEvent: {
         epoch,
         amount: amountLamports,
         vote_account: voteAccount,
-        meta: { funder: 'ValidatorBond' as const },
+        meta: { funder: 'ValidatorBond' },
         reason,
       },
       validator: validatorsMap[voteAccount] ?? null,
@@ -111,8 +113,8 @@ export const fetchProtectedEventsWithValidator = async (): Promise<
     )
     if (epochStats == null) continue
     const stake =
-      Number(epochStats.marinade_native_stake ?? '0') +
-      Number(epochStats.marinade_stake ?? '0')
+      Number(epochStats.marinade_native_stake) +
+      Number(epochStats.marinade_stake)
     pushAuctionPenalty(
       entry.voteAccount,
       entry.epoch,
@@ -128,7 +130,7 @@ export const fetchProtectedEventsWithValidator = async (): Promise<
     pushAuctionPenalty(
       entry.voteAccount,
       entry.epoch,
-      Math.round((entry.values?.bondRiskFeeSol ?? 0) * 1e9),
+      Math.round(LAMPORTS_PER_SOL * (entry.values?.bondRiskFeeSol ?? 0)),
       'BondRiskFee',
     )
   }
@@ -136,9 +138,7 @@ export const fetchProtectedEventsWithValidator = async (): Promise<
   if (auctionCoversCurrentEpoch) {
     for (const entry of auctionResult.auctionData.validators) {
       const v = validatorsMap[entry.voteAccount]
-      const stake =
-        Number(v?.marinade_native_stake ?? '0') +
-        Number(v?.marinade_stake ?? '0')
+      const stake = Number(v?.marinade_native_stake) + Number(v?.marinade_stake)
       pushAuctionPenalty(
         entry.voteAccount,
         maxStatsEpoch,
@@ -154,7 +154,7 @@ export const fetchProtectedEventsWithValidator = async (): Promise<
       pushAuctionPenalty(
         entry.voteAccount,
         maxStatsEpoch,
-        Math.round((entry.values?.bondRiskFeeSol ?? 0) * 1e9),
+        Math.round(LAMPORTS_PER_SOL * (entry.values?.bondRiskFeeSol ?? 0)),
         'BondRiskFee',
       )
     }

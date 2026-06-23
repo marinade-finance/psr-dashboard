@@ -1,97 +1,64 @@
 # Marinade PSR Dashboard
 
-Dashboard for Marinade's Protected Staking Rewards program. Displays SAM auction results, validator bonds, and protected events.
+React SPA showing the live SAM (Stake Auction Marketplace) auction,
+validator bonds, and protected events. Auction computation comes from
+[`@marinade.finance/ds-sam-sdk`](https://www.npmjs.com/package/@marinade.finance/ds-sam-sdk).
 
-## Development
+## Local development
 
-Start the development server:
+`pnpm generate` (Bun) regenerates the Zod API schemas in
+`src/schemas/generated/` from the upstream OpenAPI specs.
 
 ```sh
 pnpm install
-pnpm start:dev
+pnpm start:dev          # Vite dev server (HMR), port 3000
+pnpm build              # production build → build/
+pnpm preview            # serve build/ on :8080 (used by Playwright)
+
+pnpm lint               # eslint
+pnpm format:check       # prettier check
+pnpm check              # lint + format:check
+pnpm test               # vitest unit
+pnpm test:e2e           # playwright e2e (auto-starts preview)
+pnpm test:e2e:update    # refresh visual-regression baselines
+npx tsc --noEmit        # type check
 ```
 
-### Environment variables
+## Routes
 
-Environment variables are injected at build time via `webpack.DefinePlugin`. To override a variable, set it before running the dev server or build:
+| Route                    | Page                                   |
+| ------------------------ | -------------------------------------- |
+| `/`                      | SAM auction                            |
+| `/bonds`                 | Validator bonds                        |
+| `/protected-events`      | Protected events                       |
+| `/docs`                  | In-app guide (`public/docs/GUIDE.md`)  |
+| `/test-`                 | SAM page over fixture data (Playwright)|
+| `/test-bonds`            | Bonds page over fixture data           |
+| `/test-protected-events` | Events page over fixture data          |
 
-```sh
-NOTIFICATIONS_API_URL=http://localhost:3000 pnpm start:dev
-```
+The main data query on every page auto-refreshes once an hour.
 
-| Variable | Default | Description |
-|---|---|---|
-| `VALIDATORS_API_URL` | `https://validators-api.marinade.finance` | Validators API (rewards, validator list) |
-| `VALIDATOR_BONDS_API_URL` | `https://validator-bonds-api.marinade.finance` | Validator Bonds API (bonds, protected events) |
-| `SCORING_API_URL` | `https://scoring.marinade.finance` | Scoring API (SAM scores) |
-| `NOTIFICATIONS_API_URL` | `https://marinade-notifications.marinade.finance` | Notifications API |
+## Documentation
 
-## Banner Notifications
+- [`SCREENS.md`](SCREENS.md) — UI inventory (every page, panel, column, badge).
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — code layout, services, data flow.
+- [`VISUALS.md`](VISUALS.md) — visual-language alphabet (tokens, primitives).
+- [`CLAUDE.md`](CLAUDE.md) — agent operating rules.
+- [`public/docs/GUIDE.md`](public/docs/GUIDE.md) — end-user guide rendered by `/docs`.
+- [`specs/index.md`](specs/index.md) — design specs.
 
-The dashboard displays broadcast notifications as banners at the top of every page.
-Notifications are fetched from the [marinade-notifications API](https://marinade-notifications.marinade.finance/docs)
-(`GET /v1/notifications/broadcast?notification_type=sam_auction`).
+## Deployment
 
-When there are no active notifications, no banner is shown.
+Build output is `build/`; SPA fallback is `public/_redirects` (Netlify-style)
+plus the `spaFallback` middleware in `vite.config.ts` for `pnpm preview`.
 
-### Adding a banner notification
+## Contributing
 
-Post an announcement event to the notifications API:
-
-```bash
-# 1. Generate a JWT token (in the marinade-notifications repo)
-cd ~/marinade/marinade-notifications/notification-service
-pnpm jwt generate-token <username> 720h
-# The JWT `sub` claim must match a username in ALLOWED_USERS env var
-
-# 2. Post the announcement
-curl -X POST https://marinade-notifications.marinade.finance/bonds-event-v1 \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <YOUR_JWT_TOKEN>" \
-  -d '{
-    "header": {
-      "producer_id": "my-producer",
-      "message_id": "'$(uuidgen)'",
-      "created_at": '$(date +%s%3N)'
-    },
-    "payload": {
-      "type": "bonds",
-      "inner_type": "announcement",
-      "vote_account": "11111111111111111111111111111111",
-      "bond_pubkey": null,
-      "bond_type": "bidding",
-      "epoch": 800,
-      "data": {
-        "message": "Your announcement text here.\n\nSecond paragraph here.",
-        "title": "Banner Title",
-        "details": {}
-      },
-      "created_at": "'$(date -u +%Y-%m-%dT%H:%M:%S.000Z)'"
-    }
-  }'
-```
-
-- `data.title` — banner heading (falls back to "Announcement" when null)
-- `data.message` — banner body; supports markdown. Single newlines (`\n`) render as line breaks; blank lines (`\n\n`) start a new paragraph.
-- `vote_account` — required by schema but ignored for announcements (they broadcast to all)
-
-### Expiry
-
-Announcements auto-expire after **14 days** (configured as `relevance_hours: 336`
-in `notifications-bonds/src/config/thresholds.yaml`). The API filters out expired
-notifications automatically — no cleanup needed.
-
-### Removing a banner early
-
-There is no API endpoint for deactivation yet. Use SQL directly:
-
-```sql
--- Find recent announcements
-SELECT id, title, message, created_at FROM notifications_outbox
-WHERE inner_type = 'announcement' ORDER BY created_at DESC LIMIT 5;
-
--- Deactivate by id
-UPDATE notifications_outbox SET deactivated_at = now() WHERE id = <id>;
-```
-
-Once `deactivated_at` is set, the notification disappears from the dashboard immediately.
+1. **Live docs travel with the change.** Update `SCREENS.md` /
+   `ARCHITECTURE.md` / `VISUALS.md` in the same commit when the UI,
+   structure, or visual tokens change.
+2. **Use semantic Tailwind tokens.** Never inline `var(...)`, never raw
+   hex/rgb. Define a CSS var in `src/index.css`, expose it in `@theme`,
+   then use the generated `bg-…` / `text-…` class.
+3. **Commit format:** `[section] Message`. Examples: `[fix]`, `[docs]`,
+   `[test]`, `[specs]`.
