@@ -323,10 +323,8 @@ function allocateRedelegation(
   if (cached) return cached
   const validators = auctionResult.auctionData.validators
   const budget = selectRedelegationBudget(auctionResult)
-  const effectiveActive = (v: AuctionValidator) =>
-    v.marinadeActivatedStakeSol - selectPaidUndelegationSol(v)
   const rawDelta = (v: AuctionValidator) =>
-    v.auctionStake.marinadeSamTargetSol - effectiveActive(v)
+    v.auctionStake.marinadeSamTargetSol - v.marinadeActivatedStakeSol
 
   const sorted = [...validators].sort(
     (va, vb) => (vb.revShare.totalPmpe ?? 0) - (va.revShare.totalPmpe ?? 0),

@@ -203,41 +203,41 @@ describe('augmentAuctionResult — bond below minBondBalanceSol', () => {
 })
 
 describe('computeExpectedStakeChanges — paidUndelegation with target >= active', () => {
-  // active == target with paidUndelegationSol: allocateRedelegation grants
-  // matching inflow (effectiveActive = active - paid < target), so the two
-  // must cancel. Prior to fix, only the inflow was applied → spurious +paid.
-  it('nets to zero when active == target and budget covers paid undelegation', () => {
+  // allocateRedelegation uses target - active (not effectiveActive) so the
+  // rotation budget is never spent on compensating paid undelegations.
+  // paidUndelegation is always shown as a separate negative component.
+
+  it('shows -paid when active == target (no rotation inflow for paid undelegation)', () => {
     const paid = 2815
     const active = 40389
-    // Single validator: active == target, large TVL so budget covers paid.
     const result = makeBondResult(
       [makeBondValidator('V', 5, active, active, paid)],
       active * 10,
     )
     const [v] = augmentAuctionResult(result, 0)
     const bd = selectExpectedStakeChangeBreakdown(v)
-    expect(selectExpectedStakeChange(v)).toBeCloseTo(0, 9)
+    // rawDelta = target - active = 0 → no rotation inflow
+    expect(selectExpectedStakeChange(v)).toBeCloseTo(-paid, 9)
     expect(bd.paidUndelegation).toBeCloseTo(-paid, 9)
-    expect(bd.redelegationInflow).toBeCloseTo(paid, 9)
+    expect(bd.redelegationInflow).toBeCloseTo(0, 9)
   })
 
-  it('nets to inflow-paid when budget only partially covers', () => {
+  it('shows -paid regardless of rotation budget size when active == target', () => {
     const paid = 3000
     const active = 10000
-    // TVL set so rotation budget = 1000 < paid (3000).
     const result = makeBondResult(
       [makeBondValidator('V', 5, active, active, paid)],
       active + 1000,
     )
     const [v] = augmentAuctionResult(result, 0)
     const bd = selectExpectedStakeChangeBreakdown(v)
-    // inflow capped at budget (1000), undelegation = -3000 → net = -2000
-    expect(selectExpectedStakeChange(v)).toBeCloseTo(-2000, 9)
+    // rawDelta = 0 → no inflow; result is just the undelegation
+    expect(selectExpectedStakeChange(v)).toBeCloseTo(-paid, 9)
     expect(bd.paidUndelegation).toBeCloseTo(-paid, 9)
-    expect(bd.redelegationInflow).toBeCloseTo(1000, 9)
+    expect(bd.redelegationInflow).toBeCloseTo(0, 9)
   })
 
-  it('nets to target-active when target > active with paid undelegation', () => {
+  it('nets to (target-active-paid) when target > active with paid undelegation', () => {
     const paid = 500
     const active = 8000
     const target = 10000
@@ -247,11 +247,11 @@ describe('computeExpectedStakeChanges — paidUndelegation with target >= active
     )
     const [v] = augmentAuctionResult(result, 0)
     const bd = selectExpectedStakeChangeBreakdown(v)
-    // inflow = (target-active) + paid = 2500; undelegation = -paid = -500
-    // net = 2000 = target - active ✓
-    expect(selectExpectedStakeChange(v)).toBeCloseTo(target - active, 9)
+    // rawDelta = target - active = 2000; inflow = 2000; undelegation = -500
+    // net = 1500 = (target - active) - paid
+    expect(selectExpectedStakeChange(v)).toBeCloseTo(target - active - paid, 9)
     expect(bd.paidUndelegation).toBeCloseTo(-paid, 9)
-    expect(bd.redelegationInflow).toBeCloseTo(target - active + paid, 9)
+    expect(bd.redelegationInflow).toBeCloseTo(target - active, 9)
   })
 })
 
