@@ -80,7 +80,7 @@ interface ValidatorDetailProps {
   epochsPerYear: number
   nameMap?: Map<string, { name?: string }>
   notificationsMap?: Record<string, NotificationSummary>
-  rank: number
+  rank: number | null
   isSimulated?: boolean
   onClose: () => void
   onSimulate: (
@@ -746,14 +746,16 @@ export const ValidatorDetail = ({
                   <span className="text-sm leading-none">
                     {TIP_ICONS[getTipIcon(tip)]}
                   </span>
-                  {`#${rank}`}
+                  {rank !== null ? `#${rank}` : '—'}
                 </span>
                 <span className="text-xs font-mono text-muted-foreground">
-                  {posVsWinning === 0
-                    ? 'at winning edge'
-                    : posVsWinning > 0
-                      ? `${posVsWinning} ${posVsWinning === 1 ? 'place' : 'places'} above winning`
-                      : `${Math.abs(posVsWinning)} ${Math.abs(posVsWinning) === 1 ? 'place' : 'places'} below winning`}
+                  {rank === null
+                    ? 'out of set'
+                    : posVsWinning === 0
+                      ? 'at winning edge'
+                      : posVsWinning > 0
+                        ? `${posVsWinning} ${posVsWinning === 1 ? 'place' : 'places'} above winning`
+                        : `${Math.abs(posVsWinning)} ${Math.abs(posVsWinning) === 1 ? 'place' : 'places'} below winning`}
                 </span>
               </span>
               {validatorName && (
