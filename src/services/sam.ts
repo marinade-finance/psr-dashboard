@@ -408,19 +408,25 @@ function computeExpectedStakeChanges(
       continue
     }
     const paid = selectPaidUndelegationSol(validator)
-    if (
-      paid > 0 &&
-      validator.auctionStake.marinadeSamTargetSol <
-        validator.marinadeActivatedStakeSol
-    ) {
-      // Cap at active−target so the projected stake never undershoots target.
-      const maxUndel =
-        validator.marinadeActivatedStakeSol -
-        validator.auctionStake.marinadeSamTargetSol
-      const capped = Math.min(paid, maxUndel)
+    if (paid > 0) {
       const entry = get(validator.voteAccount)
-      entry.paidUndelegation = -capped
-      entry.total += -capped
+      if (
+        validator.auctionStake.marinadeSamTargetSol <
+        validator.marinadeActivatedStakeSol
+      ) {
+        // Cap at active−target so the projected stake never undershoots target.
+        const maxUndel =
+          validator.marinadeActivatedStakeSol -
+          validator.auctionStake.marinadeSamTargetSol
+        const capped = Math.min(paid, maxUndel)
+        entry.paidUndelegation = -capped
+        entry.total += -capped
+      } else {
+        // target >= active: allocateRedelegation grants offsetting inflow via
+        // effectiveActive; apply paidUndelegation here so the two net to zero.
+        entry.paidUndelegation = -paid
+        entry.total += -paid
+      }
     }
   }
 
