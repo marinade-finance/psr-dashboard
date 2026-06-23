@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { cn } from 'src/class_utils'
 import { docsPath } from 'src/components/breakdowns/docs-path'
@@ -435,6 +435,13 @@ export const SamTable: React.FC<Props> = ({
   const [flashId, setFlashId] = useState<string | null>(null)
   const tableRef = useRef<HTMLDivElement>(null)
   const flashTimeoutRef = useRef<number | null>(null)
+
+  useEffect(
+    () => () => {
+      if (flashTimeoutRef.current) window.clearTimeout(flashTimeoutRef.current)
+    },
+    [],
+  )
 
   const handleGhostClick = useCallback((voteAccount: string) => {
     const root = tableRef.current
