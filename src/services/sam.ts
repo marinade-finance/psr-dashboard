@@ -254,6 +254,7 @@ const WITHDRAWAL_FRACTION_PER_EPOCH = 0.01
 
 // 1%-TVL rotation: sorted by unstakePriority asc (lowest prio unstaked first),
 // takes each validator's over-target excess until the budget is exhausted.
+// Paid undelegation is applied first; the rotation only takes what remains.
 function computeNaturalWithdrawal(
   validators: AuctionValidator[],
   tvl: number,
@@ -265,9 +266,10 @@ function computeNaturalWithdrawal(
     Number.isFinite(v.unstakePriority) ? v.unstakePriority : Infinity
   const sorted = [...validators].sort((a, b) => prio(a) - prio(b))
   for (const v of sorted) {
+    const paid = selectPaidUndelegationSol(v)
     const excess = Math.max(
       0,
-      v.marinadeActivatedStakeSol - v.auctionStake.marinadeSamTargetSol,
+      v.marinadeActivatedStakeSol - paid - v.auctionStake.marinadeSamTargetSol,
     )
     if (excess <= 0) continue
     const take = Math.min(excess, remaining)
