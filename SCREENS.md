@@ -276,8 +276,9 @@ hops to the matching deep-dive tab.
 Left column:
 
 - **Stake** card — `MetricRow`s: `Active Marinade stake`, `Target
-Marinade stake`, `Expected change next epoch` (separator). The
-  Next-epoch `HelpTip` notes the delta can be `0 SOL` even when
+Marinade stake`, `Max stake wanted` (conditional — hidden when null
+  or 0; 0 means opted out), `Expected change next epoch` (separator).
+  The Next-epoch `HelpTip` notes the delta can be `0 SOL` even when
   target > active stake.
 - **Bond** card (title clickable → Bond tab) — `Balance`, `Reserve`
   (value = `bondCoverageLabel()` — `Fully covered` / `Adequate` /
