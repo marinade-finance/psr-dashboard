@@ -424,8 +424,9 @@ function computeExpectedStakeChanges(
         entry.paidUndelegation = -capped
         entry.total += -capped
       } else {
-        // target >= active: allocateRedelegation grants offsetting inflow via
-        // effectiveActive; apply paidUndelegation here so the two net to zero.
+        // target >= active: no rotation inflow (rawDelta = target - active ≤ 0).
+        // paidUndelegation can only be non-zero when target == active (fee charged
+        // while at target); show it in full so the net expected change is correct.
         entry.paidUndelegation = -paid
         entry.total += -paid
       }
@@ -443,7 +444,10 @@ function computeExpectedStakeChanges(
     entry.total += alloc
   }
 
-  const withdrawals = computeNaturalWithdrawal(validators, tvl)
+  const withdrawals = computeNaturalWithdrawal(
+    validators.filter(v => !bondBelowMin(v)),
+    tvl,
+  )
   for (const [va, w] of withdrawals) {
     const validator = byVote.get(va)
     if (validator && bondBelowMin(validator)) continue

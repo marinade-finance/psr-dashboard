@@ -237,21 +237,49 @@ describe('computeExpectedStakeChanges — paidUndelegation with target >= active
     expect(bd.redelegationInflow).toBeCloseTo(0, 9)
   })
 
-  it('nets to (target-active-paid) when target > active with paid undelegation', () => {
-    const paid = 500
+  it('target > active: paid = 0 by protocol, inflow fills gap normally', () => {
+    // paidUndelegationSol is only non-zero when target <= active; this case
+    // confirms no undelegation component appears when target > active.
     const active = 8000
     const target = 10000
     const result = makeBondResult(
-      [makeBondValidator('V', 5, active, target, paid)],
+      [makeBondValidator('V', 5, active, target, 0)],
       active * 10,
     )
     const [v] = augmentAuctionResult(result, 0)
     const bd = selectExpectedStakeChangeBreakdown(v)
-    // rawDelta = target - active = 2000; inflow = 2000; undelegation = -500
-    // net = 1500 = (target - active) - paid
-    expect(selectExpectedStakeChange(v)).toBeCloseTo(target - active - paid, 9)
-    expect(bd.paidUndelegation).toBeCloseTo(-paid, 9)
+    expect(selectExpectedStakeChange(v)).toBeCloseTo(target - active, 9)
+    expect(bd.paidUndelegation).toBeCloseTo(0, 9)
     expect(bd.redelegationInflow).toBeCloseTo(target - active, 9)
+  })
+})
+
+describe('computeNaturalWithdrawal — paid undelegation reduces excess first', () => {
+  it('partial paid: rotation takes only the remaining excess', () => {
+    // active=10000, target=5000, paid=2000 → effective excess = 3000
+    // TVL set so 1% budget > 3000, validator should lose at most 3000 via rotation
+    const result = makeBondResult(
+      [makeBondValidator('V', 5, 10000, 5000, 2000)],
+      500000,
+    )
+    const [v] = augmentAuctionResult(result, 0)
+    const bd = selectExpectedStakeChangeBreakdown(v)
+    expect(bd.paidUndelegation).toBeCloseTo(-2000, 9)
+    expect(bd.naturalWithdrawal).toBeCloseTo(-3000, 9)
+    expect(selectExpectedStakeChange(v)).toBeCloseTo(-5000, 9)
+  })
+
+  it('paid absorbs entire excess: no rotation withdrawal', () => {
+    // active=10000, target=8000, paid=3000 → excess cap = 2000; rotation excess = 0
+    const result = makeBondResult(
+      [makeBondValidator('V', 5, 10000, 8000, 3000)],
+      500000,
+    )
+    const [v] = augmentAuctionResult(result, 0)
+    const bd = selectExpectedStakeChangeBreakdown(v)
+    expect(bd.paidUndelegation).toBeCloseTo(-2000, 9) // capped at active-target
+    expect(bd.naturalWithdrawal).toBeCloseTo(0, 9)
+    expect(selectExpectedStakeChange(v)).toBeCloseTo(-2000, 9)
   })
 })
 
