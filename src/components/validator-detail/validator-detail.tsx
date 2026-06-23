@@ -974,6 +974,13 @@ export const ValidatorDetail = ({
                   help="How much stake the auction decided you should have this epoch, based on your bid and how you scored."
                   value={stake(validator.auctionStake.marinadeSamTargetSol)}
                 />
+                {validator.maxStakeWanted != null && (
+                  <MetricRow
+                    label="Max stake wanted"
+                    help="The self-imposed stake cap you set. The auction will not assign you more than this amount."
+                    value={stake(validator.maxStakeWanted)}
+                  />
+                )}
                 <MetricRow
                   label="Expected change next epoch"
                   help="Stake you'll gain or lose next epoch. Losses mostly come from falling out of the auction — your bid was too low or the bond was thin. A small share comes from people pulling SOL out of Marinade, taken from every validator proportionally. It can read 0 SOL even when your target stake is above your active stake — the redelegation budget went to higher-priority validators first, or you are cap or bond constrained, so no net inflow is expected."
