@@ -78,43 +78,9 @@ export function usePinnedTooltip<T extends HTMLElement>(
 // outside the trigger and the tooltip body dismisses the pin; Esc too.
 // `Learn more ↗` opens the guide (stopPropagation so it doesn't unpin).
 export const HelpTip: React.FC<Props> = ({ html, text, guideTo, children }) => {
-  const id = useId()
-  const [pinned, setPinned] = useState(false)
   const [hovered, setHovered] = useState(false)
   const triggerRef = useRef<HTMLButtonElement>(null)
-
-  // Sync local pinned with the singleton.
-  useEffect(() => {
-    const sub: PinSubscriber = next => setPinned(next === id)
-    pinSubscribers.add(sub)
-    return () => {
-      pinSubscribers.delete(sub)
-    }
-  }, [id])
-
-  // Outside-click + Esc dismiss the global pin.
-  useEffect(() => {
-    if (!pinned) return undefined
-    const onDown = (e: MouseEvent) => {
-      const t = e.target
-      if (!(t instanceof Element)) return
-      // Inside the trigger? The button's onClick toggles — leave it alone.
-      if (triggerRef.current?.contains(t)) return
-      // Inside the tooltip body (Radix portals content with role="tooltip")?
-      // Keep open so users can read it and click "Learn more".
-      if (t.closest('[role="tooltip"]')) return
-      setGlobalPinned(null)
-    }
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setGlobalPinned(null)
-    }
-    document.addEventListener('mousedown', onDown)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('mousedown', onDown)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [pinned])
+  const { pinned, toggle } = usePinnedTooltip(triggerRef)
 
   const tooltipContent = (
     <span className="flex flex-col gap-1">
@@ -171,7 +137,7 @@ export const HelpTip: React.FC<Props> = ({ html, text, guideTo, children }) => {
         onPointerDown={e => e.preventDefault()}
         onClick={e => {
           e.stopPropagation()
-          setGlobalPinned(currentPinnedId === id ? null : id)
+          toggle()
         }}
       >
         {children}
