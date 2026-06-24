@@ -650,8 +650,12 @@ export function selectRedelegationBudget(auctionResult: AuctionResult): number {
 // no binding frontier, any in-set validator is already served.
 export function selectRedelegationPriorityFrontierPmpe(
   auctionResult: AuctionResult,
+  minBondBalanceSol = 0,
 ): number {
-  return allocateRedelegation(auctionResult).priorityFrontierPmpe ?? 0
+  return (
+    allocateRedelegation(auctionResult, minBondBalanceSol)
+      .priorityFrontierPmpe ?? 0
+  )
 }
 
 // 1-based position of this validator in the exact order the redelegation

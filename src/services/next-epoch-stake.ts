@@ -22,9 +22,14 @@ export type NextEpochStake = {
 export const computeNextEpochStake = (
   v: AugmentedAuctionValidator,
   auctionResult: AuctionResult,
+  minBondBalanceSol = 0,
 ): NextEpochStake => {
-  const priorityFrontierPmpe =
-    selectRedelegationPriorityFrontierPmpe(auctionResult)
+  // Frontier must use the same sub-min-bond skipping as the actual stake
+  // allocation, else it reads lower than what really clears.
+  const priorityFrontierPmpe = selectRedelegationPriorityFrontierPmpe(
+    auctionResult,
+    minBondBalanceSol,
+  )
   const pmpeGap =
     priorityFrontierPmpe > 0
       ? Math.max(0, priorityFrontierPmpe - v.revShare.totalPmpe)

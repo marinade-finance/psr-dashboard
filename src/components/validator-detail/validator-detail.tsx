@@ -562,7 +562,10 @@ export const ValidatorDetail = ({
     winningTotalPmpe,
     undefined,
     auctionResult.auctionData.blacklist,
-    selectRedelegationPriorityFrontierPmpe(auctionResult),
+    selectRedelegationPriorityFrontierPmpe(
+      auctionResult,
+      dsSamConfig.minBondBalanceSol,
+    ),
   )
   const tipStyle = getTipStyle(tip.urgency)
   const expectedStakeDelta = selectExpectedStakeChange(validator)
@@ -851,6 +854,7 @@ export const ValidatorDetail = ({
                 guideTo={`${docsPath(level)}#bidding`}
                 validator={validator}
                 auctionResult={auctionResult}
+                dsSamConfig={dsSamConfig}
                 winningTotalPmpe={winningTotalPmpe}
                 coverage={bondCoverage}
                 isSimulated={isSimulated}
