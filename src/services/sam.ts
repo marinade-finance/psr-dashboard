@@ -252,6 +252,16 @@ export const selectEffectiveCost = (validator: AuctionValidator) =>
 // Not SDK-exported; maintained here until the SDK exposes it.
 const WITHDRAWAL_FRACTION_PER_EPOCH = 0.01
 
+// Paid undelegation (bond risk fee) projection switch. OFF: the protocol
+// allocates the 1% rotation budget bottom-up by unstakePriority and does not
+// currently prioritise undelegating the paid-undelegation validators, so a
+// paid validator at target does not actually lose that stake this epoch.
+// Flip to true once the protocol prioritises these undelegations.
+const PAID_UNDELEGATION_ENABLED = false
+
+const gatedPaidUndelegationSol = (v: AuctionValidator): number =>
+  PAID_UNDELEGATION_ENABLED ? selectPaidUndelegationSol(v) : 0
+
 // 1%-TVL rotation: sorted by unstakePriority asc (lowest prio unstaked first),
 // takes each validator's over-target excess until the budget is exhausted.
 // Paid undelegation is applied first; the rotation only takes what remains.
@@ -266,7 +276,7 @@ function computeNaturalWithdrawal(
     Number.isFinite(v.unstakePriority) ? v.unstakePriority : Infinity
   const sorted = [...validators].sort((a, b) => prio(a) - prio(b))
   for (const v of sorted) {
-    const paid = selectPaidUndelegationSol(v)
+    const paid = gatedPaidUndelegationSol(v)
     const excess = Math.max(
       0,
       v.marinadeActivatedStakeSol - paid - v.auctionStake.marinadeSamTargetSol,
@@ -390,6 +400,8 @@ function allocateRedelegation(
 // target < active: capped at active−target so stake never projects below target.
 // target == active: shown in full as a negative; no rotation inflow offsets it.
 // Sub-min-bond validators lose all stake and are excluded from inflow/rotation.
+// Gated by PAID_UNDELEGATION_ENABLED — off by default, so paid resolves to 0
+// and this branch is inert until the protocol prioritises these undelegations.
 function computeExpectedStakeChanges(
   auctionResult: AuctionResult,
   minBondBalanceSol: number,
@@ -420,7 +432,7 @@ function computeExpectedStakeChanges(
       entry.total = -validator.marinadeActivatedStakeSol
       continue
     }
-    const paid = selectPaidUndelegationSol(validator)
+    const paid = gatedPaidUndelegationSol(validator)
     if (paid > 0) {
       const entry = get(validator.voteAccount)
       if (

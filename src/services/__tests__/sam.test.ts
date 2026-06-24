@@ -202,12 +202,13 @@ describe('augmentAuctionResult — bond below minBondBalanceSol', () => {
   })
 })
 
-describe('computeExpectedStakeChanges — paidUndelegation with target >= active', () => {
-  // allocateRedelegation uses target - active (not effectiveActive) so the
-  // rotation budget is never spent on compensating paid undelegations.
-  // paidUndelegation is always shown as a separate negative component.
+describe('computeExpectedStakeChanges — paid undelegation disabled (PAID_UNDELEGATION_ENABLED=false)', () => {
+  // The protocol allocates the 1% rotation budget bottom-up by unstakePriority
+  // and does not currently prioritise undelegating paid-undelegation validators,
+  // so paidUndelegationSol resolves to 0: a validator at target does not lose
+  // that stake this epoch. These tests pin the switched-off projection.
 
-  it('shows -paid when active == target (no rotation inflow for paid undelegation)', () => {
+  it('no loss when active == target despite a paid undelegation', () => {
     const paid = 2815
     const active = 40389
     const result = makeBondResult(
@@ -216,13 +217,13 @@ describe('computeExpectedStakeChanges — paidUndelegation with target >= active
     )
     const [v] = augmentAuctionResult(result, 0)
     const bd = selectExpectedStakeChangeBreakdown(v)
-    // rawDelta = target - active = 0 → no rotation inflow
-    expect(selectExpectedStakeChange(v)).toBeCloseTo(-paid, 9)
-    expect(bd.paidUndelegation).toBeCloseTo(-paid, 9)
+    // paid treated as 0; rawDelta = target - active = 0 → no inflow either
+    expect(selectExpectedStakeChange(v)).toBeCloseTo(0, 9)
+    expect(bd.paidUndelegation).toBeCloseTo(0, 9)
     expect(bd.redelegationInflow).toBeCloseTo(0, 9)
   })
 
-  it('shows -paid regardless of rotation budget size when active == target', () => {
+  it('no loss regardless of rotation budget size when active == target', () => {
     const paid = 3000
     const active = 10000
     const result = makeBondResult(
@@ -231,9 +232,8 @@ describe('computeExpectedStakeChanges — paidUndelegation with target >= active
     )
     const [v] = augmentAuctionResult(result, 0)
     const bd = selectExpectedStakeChangeBreakdown(v)
-    // rawDelta = 0 → no inflow; result is just the undelegation
-    expect(selectExpectedStakeChange(v)).toBeCloseTo(-paid, 9)
-    expect(bd.paidUndelegation).toBeCloseTo(-paid, 9)
+    expect(selectExpectedStakeChange(v)).toBeCloseTo(0, 9)
+    expect(bd.paidUndelegation).toBeCloseTo(0, 9)
     expect(bd.redelegationInflow).toBeCloseTo(0, 9)
   })
 
@@ -254,31 +254,33 @@ describe('computeExpectedStakeChanges — paidUndelegation with target >= active
   })
 })
 
-describe('computeNaturalWithdrawal — paid undelegation reduces excess first', () => {
-  it('partial paid: rotation takes only the remaining excess', () => {
-    // active=10000, target=5000, paid=2000 → effective excess = 3000
-    // TVL set so 1% budget > 3000, validator should lose at most 3000 via rotation
+describe('computeNaturalWithdrawal — paid undelegation disabled, rotation uses full excess', () => {
+  // With PAID_UNDELEGATION_ENABLED=false the paid amount no longer pre-reduces
+  // the over-target excess, so the 1% rotation budget rotates the whole excess.
+
+  it('rotation takes the full over-target excess up to the budget', () => {
+    // active=10000, target=5000 → excess = 5000; TVL=500000 → 1% budget = 5000
     const result = makeBondResult(
       [makeBondValidator('V', 5, 10000, 5000, 2000)],
       500000,
     )
     const [v] = augmentAuctionResult(result, 0)
     const bd = selectExpectedStakeChangeBreakdown(v)
-    expect(bd.paidUndelegation).toBeCloseTo(-2000, 9)
-    expect(bd.naturalWithdrawal).toBeCloseTo(-3000, 9)
+    expect(bd.paidUndelegation).toBeCloseTo(0, 9)
+    expect(bd.naturalWithdrawal).toBeCloseTo(-5000, 9)
     expect(selectExpectedStakeChange(v)).toBeCloseTo(-5000, 9)
   })
 
-  it('paid absorbs entire excess: no rotation withdrawal', () => {
-    // active=10000, target=8000, paid=3000 → excess cap = 2000; rotation excess = 0
+  it('rotation takes the whole excess when budget covers it', () => {
+    // active=10000, target=8000 → excess = 2000; budget = 5000 covers it
     const result = makeBondResult(
       [makeBondValidator('V', 5, 10000, 8000, 3000)],
       500000,
     )
     const [v] = augmentAuctionResult(result, 0)
     const bd = selectExpectedStakeChangeBreakdown(v)
-    expect(bd.paidUndelegation).toBeCloseTo(-2000, 9) // capped at active-target
-    expect(bd.naturalWithdrawal).toBeCloseTo(0, 9)
+    expect(bd.paidUndelegation).toBeCloseTo(0, 9)
+    expect(bd.naturalWithdrawal).toBeCloseTo(-2000, 9)
     expect(selectExpectedStakeChange(v)).toBeCloseTo(-2000, 9)
   })
 })
