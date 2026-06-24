@@ -36,7 +36,13 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
   // percentage stays "0%" instead of "NaN%".
   const inflComm = validator.inflationCommissionDec ?? 0
   const mevComm = validator.mevCommissionDec ?? 0
-  const blockComm = validator.blockRewardsCommissionDec ?? 0
+  // Block rewards are framed by the share GIVEN to stakers (1 − commission),
+  // not the commission kept — matches GUIDE.md and how the SDK credits
+  // blockPmpe (zero when commission is null or ≥ 100%, so "shared" reads 0%
+  // exactly when the component contributes nothing).
+  const blockCommDec = validator.blockRewardsCommissionDec
+  const blockShared =
+    blockCommDec === null || blockCommDec >= 1 ? 0 : 1 - blockCommDec
 
   const r = validator.revShare
   // Bar widths use raw PMPE (linear, sums to totalPmpe); the displayed % is
@@ -62,7 +68,7 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
       apy: apyBreakdown.blockRewards,
       pmpe: r.blockPmpe ?? 0,
       swatch: 'bg-chart-3',
-      context: `${pct(blockComm, 0)} shared`,
+      context: `${pct(blockShared, 0)} shared`,
     },
     {
       label: 'Static bid',
