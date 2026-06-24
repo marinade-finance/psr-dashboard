@@ -322,8 +322,6 @@ describe('B3 — selectProjectedAPY zero-tvl guard', () => {
   })
 })
 
-// --- annualize ---
-
 describe('annualize', () => {
   it('zero rate → 0 regardless of epochs', () => {
     expect(annualize(0, 182)).toBe(0)
@@ -341,8 +339,6 @@ describe('annualize', () => {
     expect(annualize(1, 1)).toBe(1)
   })
 })
-
-// --- effectiveBondRunway ---
 
 describe('effectiveBondRunway', () => {
   const cfg = { minBondBalanceSol: 10 } as DsSamConfig
@@ -378,8 +374,6 @@ describe('effectiveBondRunway', () => {
   })
 })
 
-// --- bondGaugeScaleMax ---
-
 describe('bondGaugeScaleMax', () => {
   it('scale = 4 × idealBondEpochs', () => {
     const cfg = { idealBondEpochs: 10 } as DsSamConfig
@@ -391,8 +385,6 @@ describe('bondGaugeScaleMax', () => {
     expect(bondGaugeScaleMax(cfg)).toBe(0)
   })
 })
-
-// --- bondCriticalFrac ---
 
 describe('bondCriticalFrac', () => {
   it('always 0.5 — 2 × idealBondEpochs / (4 × idealBondEpochs)', () => {

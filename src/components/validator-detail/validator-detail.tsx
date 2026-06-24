@@ -824,12 +824,6 @@ export const ValidatorDetail = ({
           }}
         />
 
-        {/*
-          Tabs no longer render a tab-level title or Guide link.
-          Uniformity is at the card level: each card inside the body
-          owns its own title + Guide chrome via CalcCard. The Overview
-          tab is a multi-card grid where every sub-card uses CalcCard.
-        */}
         <>
           <TabStrip tab={tab} setTab={setTab} attention={attention} />
 

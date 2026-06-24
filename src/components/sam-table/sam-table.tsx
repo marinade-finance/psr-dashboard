@@ -86,7 +86,6 @@ export type ValidatorMeta = {
   name?: string
 }
 
-// Validator with computed bond state
 type ValidatorWithBondState = AugmentedAuctionValidator & {
   bondHealth: BondHealthState
   // Memoised so the per-row pipeline (bondHealth, tip, bond chip) computes
@@ -505,7 +504,6 @@ export const SamTable: React.FC<Props> = ({
     [sortColumn],
   )
 
-  // Current validators with bond health and expected stake change computed
   const validatorsWithBond: ValidatorWithBondState[] = useMemo(
     () =>
       augmentAuctionResult(auctionResult, dsSamConfig.minBondBalanceSol)
@@ -558,7 +556,6 @@ export const SamTable: React.FC<Props> = ({
     )
   }, [originalAuctionResult, epochsPerYear])
 
-  // Sort validators based on current sort column and direction
   const sortedValidators = useMemo(
     () =>
       [...validatorsWithBond].sort(
@@ -600,7 +597,6 @@ export const SamTable: React.FC<Props> = ({
     [simulatedValidators, validators, originalAuctionResult],
   )
 
-  // Split into winners and non-winners, with ghost rows inserted
   const allDisplayValidators = useMemo(() => {
     const base = sortedValidators.map(validator => ({
       validator,
@@ -682,7 +678,6 @@ export const SamTable: React.FC<Props> = ({
     [auctionResult],
   )
 
-  // Stats for the stats bar
   const winningCount = winningValidators.length
 
   // SAM-eligible universe for the "Winning Validators" stat: any validator
@@ -783,7 +778,6 @@ export const SamTable: React.FC<Props> = ({
 
       const expectedChange = selectExpectedStakeChange(validator)
 
-      // Tip
       const tip = getValidatorTip(
         validator,
         dsSamConfig,
@@ -794,7 +788,6 @@ export const SamTable: React.FC<Props> = ({
       )
       const tipStyle = getTipStyle(tip.urgency)
 
-      // Max APY
       const maxApy = selectMaxAPY(validator, epochsPerYear)
 
       const validatorName =
@@ -853,7 +846,6 @@ export const SamTable: React.FC<Props> = ({
             onValidatorClick(voteAccount)
           }}
         >
-          {/* Rank / ✕ */}
           <TableCell className="px-3.5 py-3 text-center w-10">
             <RankCell
               rank={rank}
@@ -866,7 +858,6 @@ export const SamTable: React.FC<Props> = ({
             />
           </TableCell>
 
-          {/* Validator */}
           <TableCell className="px-3.5 py-3 w-[240px]">
             <ValidatorIdentity
               name={validatorName}
@@ -890,14 +881,12 @@ export const SamTable: React.FC<Props> = ({
             />
           </TableCell>
 
-          {/* Max APY */}
           <TableCell className="px-3.5 py-3">
             <span className="font-normal text-xs font-mono text-foreground">
               {pct(maxApy, 2)}
             </span>
           </TableCell>
 
-          {/* Bond Health */}
           <TableCell className="px-3.5 py-3">
             {isCompact ? (
               <span
@@ -945,7 +934,6 @@ export const SamTable: React.FC<Props> = ({
             )}
           </TableCell>
 
-          {/* Stake / Next change */}
           <TableCell className="px-3.5 py-3">
             {isCompact ? (
               <div className="flex items-center gap-1">
@@ -1039,7 +1027,6 @@ export const SamTable: React.FC<Props> = ({
             )
           })()}
 
-          {/* Chevron */}
           <TableCell className="px-2.5 py-3 w-10">
             <div className="w-7 h-7 rounded-[7px] flex items-center justify-center border bg-secondary border-border text-secondary-foreground group-hover:bg-primary-light group-hover:border-primary/30 group-hover:text-primary transition-all duration-[120ms]">
               {ICON_CHEVRON_RIGHT_SM}
@@ -1076,7 +1063,6 @@ export const SamTable: React.FC<Props> = ({
       )}
     >
       <div className="max-w-[1920px] mx-auto">
-        {/* Headline metrics — grid: 3 cols → 4 cols → 7 cols (1 row) */}
         <div className="grid grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-3 mt-3 mb-3 px-4">
           {stats
             .filter(
@@ -1142,7 +1128,6 @@ export const SamTable: React.FC<Props> = ({
               'outline outline-[4px] [outline-color:var(--color-status-yellow)] rounded-xl',
           )}
         >
-          {/* Search row — sits above the table, aligned with validator column */}
           {onValidatorSearch && (
             <div
               className={cn(
@@ -1162,7 +1147,6 @@ export const SamTable: React.FC<Props> = ({
             </div>
           )}
 
-          {/* Table */}
           <div
             ref={tableRef}
             className="bg-card rounded-xl border border-border shadow-card overflow-hidden overflow-x-auto"
@@ -1262,7 +1246,6 @@ export const SamTable: React.FC<Props> = ({
                   renderRow(row.validator, i, row.isGhost),
                 )}
 
-                {/* Winning Set Cutoff Divider */}
                 {belowCutoff.length > 0 && (
                   <TableRow>
                     <TableCell colSpan={7} className="p-0">

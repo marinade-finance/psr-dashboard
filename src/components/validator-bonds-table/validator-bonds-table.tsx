@@ -111,7 +111,6 @@ export const ValidatorBondsTable: React.FC<Props> = ({
 
   return (
     <div className="max-w-[1920px] mx-auto relative">
-      {/* Coverage Hero Bar */}
       <div className="px-4 pb-4">
         <div className="metricWrap bg-card rounded-xl border border-border shadow-card p-5">
           <div className="flex items-baseline gap-2 mb-3">
@@ -122,7 +121,6 @@ export const ValidatorBondsTable: React.FC<Props> = ({
               of Marinade stake is bond-protected
             </span>
           </div>
-          {/* Stacked bar */}
           <HtmlTooltip
             html={
               `Protected: ${sol(totalProtectedStake)} SOL<br/>` +
@@ -158,7 +156,6 @@ export const ValidatorBondsTable: React.FC<Props> = ({
               </div>
             </div>
           </HtmlTooltip>
-          {/* Stat chips */}
           <div className="flex flex-wrap gap-4 text-sm">
             <HtmlTooltip html="How many validators have at least some SOL in their bond right now.">
               <span className="text-muted-foreground">

@@ -63,8 +63,6 @@ const DS_SAM_CONFIG = {
   bidTooLowPenaltyPermittedDeviationPmpe: 0.0001,
 } as unknown as DsSamConfig
 
-// --- getApyBreakdown ---
-
 describe('getApyBreakdown', () => {
   it('staticBid maps to bid pmpe (not named "bid")', () => {
     const validator = makeValidator()
@@ -80,8 +78,6 @@ describe('getApyBreakdown', () => {
     expect(bd.total).toBeCloseTo(expected, 10)
   })
 })
-
-// --- getTipStyle ---
 
 describe('getTipStyle', () => {
   it('critical → destructive', () => {
@@ -159,8 +155,6 @@ describe('getTipIcon', () => {
     expect(getTipIcon(losing)).not.toBe('up')
   })
 })
-
-// --- getValidatorTip — all priority branches ---
 
 describe('getValidatorTip', () => {
   it('not in set → info/rank (growth lever — raise bid to qualify)', () => {
@@ -484,8 +478,6 @@ describe('getValidatorTip', () => {
   })
 })
 
-// --- B8: getValidatorTip watch health gets bond CTA ---
-
 describe('getValidatorTip watch health (bond top-up lever)', () => {
   it('watch health + defending (large loss) → warning/bond "keep stake" (beats deltaCta)', () => {
     // WATCH shape with marinadeActivatedStakeSol=50000, claimable=100:
@@ -747,8 +739,6 @@ describe('nextStakeDeltaCell', () => {
   })
 })
 
-// --- B9: selectProtectedStakeReason handles 'Bidding' ---
-
 describe('selectProtectedStakeReason', () => {
   it("handles 'Bidding' reason", () => {
     const event = {
@@ -763,8 +753,6 @@ describe('selectProtectedStakeReason', () => {
     expect(result).toBe('Bidding')
   })
 })
-
-// --- B10: selectProtectedStakeReason LowCredits with expected_credits=0 ---
 
 describe('selectProtectedStakeReason LowCredits zero guard', () => {
   it('expected_credits=0 does not produce Infinity or NaN', () => {
