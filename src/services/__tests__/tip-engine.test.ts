@@ -203,7 +203,7 @@ describe('getValidatorTip', () => {
     expect(tip.text).toContain('Raise bid')
   })
 
-  it('out-of-set + above-min + critical bond, no fee yet → face-fee-charges CTA', () => {
+  it('out-of-set + above-min + critical bond, no fee yet → avoid-liquidation CTA', () => {
     // Bond is below the penalty floor (topUpToAvoidFee > 0) but the SDK
     // has not charged a fee this epoch (bondRiskFeeSol === 0).
     const validator = makeValidator({
@@ -215,11 +215,11 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
-    expect(tip.text).toContain('face fee charges')
+    expect(tip.text).toContain('avoid bond liquidation')
     expect(tip.alert).toBeFalsy()
   })
 
-  it('critical health, claimable below floor, no fee → "face fee charges"', () => {
+  it('critical health, claimable below floor, no fee → "avoid bond liquidation"', () => {
     // topUpToAvoidFee > 0 but bondRiskFeeSol === 0 — threshold crossed but no fee yet.
     const validator = makeValidator({
       bondGoodForNEpochs: 4,
@@ -230,7 +230,7 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
-    expect(tip.text).toContain('face fee charges')
+    expect(tip.text).toContain('avoid bond liquidation')
     expect(tip.alert).toBeFalsy()
   })
 
@@ -251,7 +251,7 @@ describe('getValidatorTip', () => {
     expect(tip.alert).toBe(true)
   })
 
-  it('critical health (epochs > 5), claimable below floor, no fee → face-fee-charges CTA', () => {
+  it('critical health (epochs > 5), claimable below floor, no fee → avoid-liquidation CTA', () => {
     const validator = makeValidator({
       bondGoodForNEpochs: 8,
       bondBalanceSol: 0.001,
@@ -261,7 +261,7 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
-    expect(tip.text).toContain('face fee charges')
+    expect(tip.text).toContain('avoid bond liquidation')
     expect(tip.alert).toBeFalsy()
   })
 
