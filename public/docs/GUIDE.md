@@ -625,8 +625,10 @@ A two-column dashboard summarising the validator's situation. The cards
 that have a deeper companion tab — Bond, Expected Payment, APY
 Composition — let you click their title to jump there.
 
-- **Stake** — three rows: Active Marinade stake (SOL delegated right
-  now), Target Marinade stake (what the auction wants you to have), and
+- **Stake** — Activated Marinade stake (SOL delegated right now),
+  Target Marinade stake (what the auction wants you to have), Max stake
+  wanted (your [self-imposed cap](#stake-wanted) — only shown when set
+  above 0; a cap of 0 means you opted out and the row is hidden), and
   Expected change next epoch (signed delta — green for gains, red for
   losses). Losses come mostly from falling out of the auction; a small
   share is the natural-turnover share spread pro-rata across all
