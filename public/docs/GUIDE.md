@@ -505,10 +505,15 @@ Every column, in order:
 
 ### `#` — Auction rank
 
-The validator's position in the auction order, sorted by max APY by default.
+The validator's position in the auction order — always ranked by max APY,
+which is how the auction itself decides winners. (The table defaults to
+sorting rows by target stake, but the `#` rank always reflects the max-APY
+auction order, so it can look out of sequence under other sorts. Your sort
+choice is remembered across reloads.)
 
 - A horizontal **Winning Set Cutoff** line marks the boundary between winners
-  and non-winners. Above the line → receiving stake this epoch.
+  and non-winners. Above the line → receiving stake this epoch. It appears
+  under any sort order, not just the max-APY default.
 - Hovering shows the cutoff-relative offset (`+N` above, `-N` below).
 - A small **severity icon** appears next to the rank. Its colour is the
   validator's tip urgency (red = critical action required, yellow = needs
@@ -653,11 +658,15 @@ Composition — let you click their title to jump there.
   Click any sub-row label to jump straight to the tab that explains it.
   The Total at the bottom reconciles with the Payments tab.
 - **Max APY composition** — a stacked bar showing how the validator's
-  total APY splits across Inflation, MEV, Block rewards, and the Stake
-  bid contribution. Each row has its own bar segment, the segment colour
-  matches a tiny swatch on the row, and the rightmost number is that
-  component's APY. The grey line under each label is the commission the
-  validator takes on that source — `0% commission`, `your bid`.
+  total APY **to stakers** splits across Inflation, MEV, Block rewards,
+  and the Stake bid contribution. Every segment is already net of
+  commission — it is what stakers actually receive. Each row has its own
+  bar segment, the segment colour matches a tiny swatch on the row, and
+  the rightmost number is that component's APY. The grey line under each
+  label gives the commission context: Inflation and MEV show the
+  commission the validator keeps (`0% commission`); Block rewards show
+  the share GIVEN to stakers (`100% shared`). When `0% shared`, the
+  validator keeps all block rewards, so that segment is empty.
   - **Winning APY threshold** — the headline figure top-left. This is
     the minimum total APY the validator must offer to win stake, and it
     is **rebuilt at this validator's own commission profile** — not a

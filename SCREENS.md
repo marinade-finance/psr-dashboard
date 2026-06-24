@@ -59,15 +59,19 @@ shows the full list.
 `src/components/epoch-meter/epoch-meter.tsx`. Chip shows `Epoch {auctionEpoch}` (the common case,
 `auctionEpoch === networkEpoch`); only when they differ it shows
 `{networkEpoch} → {auctionEpoch}`, tinted `text-warning` iff
-`auctionEpoch < networkEpoch` (view is stale). A shared `HelpTip`
-exposes up to three sentence-case lines: (1) the epoch the auction
-allocates for, (2) the live Solana epoch + whether the view is live /
-next epoch / behind the chain (omitted until the protected-events query
-resolves), (3) latest protected-events settlement status — "on-chain"
-(FACT) or "estimated, not yet on-chain" (ESTIMATE). Auction epoch
-renders immediately from the prefetched `['sam', 0]` query; the meter
-force-populates the `['protected-events']` query (`staleTime: 5 min`) so
-lines 2-3 fill in without hovering the Events tab. Never blocks the nav.
+`auctionEpoch < networkEpoch` (view is stale). A leading `ProgressRing`
+shows how far through the live epoch we are. Hovering opens a `Tooltip`
+with the `TimelineCard` — payments-settled / auction-settled / live /
+next-auction stage dots anchored to their epochs, plus a progress gauge
+and `~Nh remaining`. The tooltip is **click-to-pin sticky** (same global
+pin singleton as `HelpTip` via `usePinnedTooltip` — pinning one unpins
+the other; outside-click / Esc dismiss). Progress + hours-remaining come
+from the Solana RPC `getEpochInfo` (slot-accurate, `['epoch-info']`
+query) when it resolves; otherwise it falls back to the `epoch_start_at`
+timestamp over a 48h epoch. Auction epoch renders immediately from the
+prefetched `['sam', 0]` query; the meter force-populates the
+`['protected-events']` query (`staleTime: 5 min`) so the settlement
+stages fill in without hovering the Events tab. Never blocks the nav.
 
 ---
 
@@ -333,7 +337,11 @@ Right column:
 - **APY Composition** — `ApyCompositionCard`. Segmented bar showing
   inflation / MEV / block rewards / stake bid. Bar widths use raw
   PMPE proportions (so they sum to total); the displayed % is each
-  component's compounded APY. Threshold marker line + label at the
+  component's compounded APY. Per-row context line: inflation and MEV
+  show `N% commission` (the share the validator keeps); block rewards
+  show `N% shared` — the fraction GIVEN to stakers (`1 − commission`,
+  and `0%` when the commission is null or ≥ 100%, matching the SDK's
+  zeroed `blockPmpe`). Threshold marker line + label at the
   winning-APY position. The `±X% vs winning` pill is green above
   the winning threshold; below it the pill becomes a button reading
   `-X% vs winning → Bidding` that switches the panel to the
