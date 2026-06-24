@@ -6,6 +6,7 @@ import {
   annualize,
   compoundApy,
   apyBreakdown,
+  blockRewardsSharedFrac,
   bondGaugeScaleMax,
   bondCriticalFrac,
 } from '../calculations'
@@ -82,6 +83,46 @@ describe('compoundApy', () => {
 
   it('zero epochs → 0 regardless of pmpe', () => {
     expect(compoundApy(5, 0)).toBe(0)
+  })
+})
+
+describe('blockRewardsSharedFrac', () => {
+  // The label shows the share GIVEN to stakers; the value must stay consistent
+  // with the SDK's blockPmpe = rawBlock × (1 − commission), which is 0 when
+  // commission is null or ≥ 1.
+  it('commission 0 → 100% shared', () => {
+    expect(blockRewardsSharedFrac(0)).toBe(1)
+  })
+
+  it('commission 0.5 → 50% shared', () => {
+    expect(blockRewardsSharedFrac(0.5)).toBe(0.5)
+  })
+
+  it('commission 0.05 → 95% shared', () => {
+    expect(blockRewardsSharedFrac(0.05)).toBeCloseTo(0.95, 9)
+  })
+
+  it('commission 0.99 → 1% shared', () => {
+    expect(blockRewardsSharedFrac(0.99)).toBeCloseTo(0.01, 9)
+  })
+
+  it('commission 1 (100% kept) → 0% shared', () => {
+    expect(blockRewardsSharedFrac(1)).toBe(0)
+  })
+
+  it('null commission → 0% shared', () => {
+    expect(blockRewardsSharedFrac(null)).toBe(0)
+  })
+
+  it('shared > 0 exactly when the SDK would credit blockPmpe', () => {
+    // calculatePmpe returns 0 iff commission is null or ≥ 1; the shared label
+    // must read 0% under exactly those inputs and positive otherwise.
+    for (const c of [0, 0.05, 0.5, 0.99]) {
+      expect(blockRewardsSharedFrac(c)).toBeGreaterThan(0)
+    }
+    for (const c of [1, 1.5, null]) {
+      expect(blockRewardsSharedFrac(c)).toBe(0)
+    }
   })
 })
 
