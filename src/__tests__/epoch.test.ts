@@ -112,6 +112,32 @@ describe('selectCurrentEpochProgress', () => {
     expect(result?.hoursRemaining).toBeCloseTo(24, 5)
   })
 
+  it('ignores a late-stamped live epoch_start_at, using the previous epoch end', () => {
+    // Regression: the API stamps the in-progress epoch's start ~now; the real
+    // boundary is the previous (settled) epoch's end. Using the live start
+    // would read ~0% / ~48h all epoch long.
+    const v: Validator = {
+      ...validator([]),
+      epoch_stats: [
+        stat({
+          epoch: 611,
+          epoch_start_at: '2026-05-12T00:00:00Z',
+          epoch_end_at: '2026-05-14T00:00:00Z', // true start of 612
+        }),
+        stat({
+          epoch: 612,
+          epoch_start_at: '2026-05-15T00:00:00Z', // late: 24h after the boundary
+          epoch_end_at: null,
+        }),
+      ],
+    }
+    const half = start + EPOCH_DURATION_MS / 2 // 24h after the TRUE start
+    const result = selectCurrentEpochProgress([v], half)
+    expect(result?.epoch).toBe(612)
+    expect(result?.percent).toBeCloseTo(50, 5) // not ~0 from the late start
+    expect(result?.hoursRemaining).toBeCloseTo(24, 5)
+  })
+
   it('clamps percent at 100 past the 48h mark', () => {
     const v: Validator = {
       ...validator([]),

@@ -98,24 +98,44 @@ export const selectNetworkEpoch = (validators: Validator[]): number | null => {
 
 export type LiveEpochStart = { epoch: number; startMs: number }
 
-// The in-progress epoch's start: the newest stat with epoch_end_at === null
-// and a parseable start time. A tiny scalar — safe to retain in the nav.
+// The in-progress epoch's start. The live epoch's own `epoch_start_at` is
+// stamped late by the API (≈ when its first stat row is created, often hours
+// after the boundary), so using it makes the meter read ~0% / ~48h all epoch.
+// The reliable boundary is the *previous* epoch's `epoch_end_at` — the latest
+// non-null end across settled epochs is exactly when the live epoch began.
+// A tiny scalar — safe to retain in the nav.
 export const selectLiveEpochStart = (
   validators: Validator[],
 ): LiveEpochStart | null => {
-  let best: LiveEpochStart | null = null
+  let liveEpoch = -Infinity
+  let liveOwnStartMs: number | null = null // best-effort fallback only
+  let lastSettledEndMs = -Infinity
   for (const v of validators) {
     for (const stat of v.epoch_stats) {
-      // epoch_end_at is optional in the API schema — undefined means still open.
-      if (stat.epoch_end_at != null || stat.epoch_start_at == null) continue
-      const startMs = Date.parse(stat.epoch_start_at)
-      if (!Number.isFinite(startMs)) continue
-      if (best === null || stat.epoch > best.epoch) {
-        best = { epoch: stat.epoch, startMs }
+      // epoch_end_at is optional in the API schema — null/undefined = still open.
+      if (stat.epoch_end_at == null) {
+        if (stat.epoch > liveEpoch) {
+          liveEpoch = stat.epoch
+          const s =
+            stat.epoch_start_at == null ? NaN : Date.parse(stat.epoch_start_at)
+          liveOwnStartMs = Number.isFinite(s) ? s : null
+        }
+        continue
+      }
+      const endMs = Date.parse(stat.epoch_end_at)
+      if (Number.isFinite(endMs) && endMs > lastSettledEndMs) {
+        lastSettledEndMs = endMs
       }
     }
   }
-  return best
+  if (liveEpoch === -Infinity) return null
+  // Prefer the previous epoch's end (reliable boundary). Fall back to the live
+  // epoch's own (late-stamped) start only when no settled epoch is present —
+  // a degenerate case that does not occur with the API's 3-epoch window.
+  const startMs =
+    lastSettledEndMs !== -Infinity ? lastSettledEndMs : liveOwnStartMs
+  if (startMs === null) return null
+  return { epoch: liveEpoch, startMs }
 }
 
 // Map elapsed time since the epoch start onto a 48h epoch and clamp.
