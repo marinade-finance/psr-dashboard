@@ -8,17 +8,14 @@ import { Tooltip } from 'src/components/ui/tooltip'
 import {
   epochInfoProgress,
   epochMeterModel,
+  epochProgressFromStart,
   fetchEpochInfo,
-  selectCurrentEpochProgress,
-  selectLatestAuctionSettled,
-  selectLatestPaymentSettled,
-  selectNetworkEpoch,
+  fetchEpochMeterData,
   type EpochMeterModel,
   type EpochProgress,
   type TimelineStage,
 } from 'src/services/epoch'
 import { loadSam } from 'src/services/sam'
-import { fetchProtectedEventsWithValidators } from 'src/services/validator-with-protected_event'
 
 // Nav chip: epoch number with a leading progress ring. Hover shows a
 // timeline of pipeline stages (payments-settled / auction-settled / live /
@@ -29,9 +26,13 @@ export const EpochMeter: React.FC = () => {
     queryKey: ['sam'],
     queryFn: () => loadSam(),
   })
-  const { data: protectedEvents } = useQuery({
-    queryKey: ['protected-events'],
-    queryFn: () => fetchProtectedEventsWithValidators(queryClient),
+  // Lean nav query: only the epoch scalars, so the always-mounted nav does not
+  // pin the multi-MB ['protected-events'] payload for the whole session.
+  const { data: meter } = useQuery({
+    queryKey: ['epoch-meter'],
+    queryFn: () => fetchEpochMeterData(queryClient),
+    staleTime: 5 * 60 * 1000,
+    refetchInterval: 60 * 60 * 1000,
   })
   // Best-effort slot-accurate progress; falls back to the API timestamp path
   // when the RPC is blocked. retry:false keeps a blocked endpoint quiet.
@@ -57,22 +58,13 @@ export const EpochMeter: React.FC = () => {
   const auctionEpoch = sam?.auctionResult.auctionData.epoch
   if (auctionEpoch === undefined) return null
 
-  const validators = protectedEvents
-    ? protectedEvents.flatMap(e => (e.validator ? [e.validator] : []))
-    : []
-  const networkEpoch = validators.length ? selectNetworkEpoch(validators) : null
-  const paymentSettled = protectedEvents
-    ? selectLatestPaymentSettled(protectedEvents, networkEpoch)
-    : null
-  const auctionSettled = protectedEvents
-    ? selectLatestAuctionSettled(protectedEvents, networkEpoch)
-    : null
+  const networkEpoch = meter?.networkEpoch ?? null
+  const paymentSettled = meter?.paymentSettled ?? null
+  const auctionSettled = meter?.auctionSettled ?? null
   const progress =
     epochInfo && epochInfo.epoch === networkEpoch
       ? epochInfoProgress(epochInfo)
-      : validators.length
-        ? selectCurrentEpochProgress(validators, now)
-        : null
+      : epochProgressFromStart(meter?.liveEpoch ?? null, now)
 
   const model = epochMeterModel({
     auctionEpoch,

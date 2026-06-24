@@ -1,9 +1,11 @@
 import { RPC_URL } from './apiUrls'
 import { EPOCH_DURATION_MS } from './constants'
+import { fetchProtectedEventsWithValidators } from './validator-with-protected_event'
 
 import type { ProtectedEventWithValidator } from 'src/services/validator-with-protected_event'
 
 import type { Validator } from 'src/services/validators'
+import type { QueryClient } from '@tanstack/react-query'
 
 export { EPOCH_DURATION_MS }
 
@@ -94,14 +96,14 @@ export const selectNetworkEpoch = (validators: Validator[]): number | null => {
   return max === -Infinity ? null : max
 }
 
-// Progress through the in-progress epoch. The in-progress stat has
-// epoch_end_at === null and a start time; we map elapsed time onto a 48h
-// epoch and clamp.
-export const selectCurrentEpochProgress = (
+export type LiveEpochStart = { epoch: number; startMs: number }
+
+// The in-progress epoch's start: the newest stat with epoch_end_at === null
+// and a parseable start time. A tiny scalar — safe to retain in the nav.
+export const selectLiveEpochStart = (
   validators: Validator[],
-  nowMs: number,
-): EpochProgress | null => {
-  let best: { epoch: number; startMs: number } | null = null
+): LiveEpochStart | null => {
+  let best: LiveEpochStart | null = null
   for (const v of validators) {
     for (const stat of v.epoch_stats) {
       // epoch_end_at is optional in the API schema — undefined means still open.
@@ -113,11 +115,32 @@ export const selectCurrentEpochProgress = (
       }
     }
   }
-  if (best === null) return null
-  const elapsed = Math.max(0, nowMs - best.startMs)
+  return best
+}
+
+// Map elapsed time since the epoch start onto a 48h epoch and clamp.
+export const epochProgressFromStart = (
+  start: LiveEpochStart | null,
+  nowMs: number,
+): EpochProgress | null => {
+  if (start === null) return null
+  const elapsed = Math.max(0, nowMs - start.startMs)
   const percent = Math.min(100, (elapsed / EPOCH_DURATION_MS) * 100)
   const hoursRemaining = Math.max(0, (EPOCH_DURATION_MS - elapsed) / 3_600_000)
-  return { epoch: best.epoch, percent, hoursRemaining }
+  return { epoch: start.epoch, percent, hoursRemaining }
+}
+
+// Progress through the in-progress epoch, derived from validator stats.
+export const selectCurrentEpochProgress = (
+  validators: Validator[],
+  nowMs: number,
+): EpochProgress | null => {
+  const start = selectLiveEpochStart(validators)
+  if (start === null) return null
+  const elapsed = Math.max(0, nowMs - start.startMs)
+  const percent = Math.min(100, (elapsed / EPOCH_DURATION_MS) * 100)
+  const hoursRemaining = Math.max(0, (EPOCH_DURATION_MS - elapsed) / 3_600_000)
+  return { epoch: start.epoch, percent, hoursRemaining }
 }
 
 // Latest past FACT (on-chain) PE epoch — the payments-settled checkpoint.
@@ -153,6 +176,41 @@ export const selectLatestAuctionSettled = (
     if (e.protectedEvent.epoch > max) max = e.protectedEvent.epoch
   }
   return max === -Infinity ? null : max
+}
+
+// Lean nav model for the EpochMeter: only the scalars the chip/tooltip render.
+// The meter lives in the always-mounted nav; observing the full
+// ['protected-events'] payload there pins its multi-MB 3-epoch validator
+// cross-references for the whole session. This derives the scalars and keeps
+// only those (plus the tiny live-epoch start), so the nav never retains the
+// heavy payload. The heavy result is reused from the shared
+// ['protected-events'] cache via ensureQueryData (no double fetch on the
+// Events page), but with no persistent observer here it becomes GC-eligible
+// once the Events page unmounts.
+export type EpochMeterData = {
+  networkEpoch: number | null
+  paymentSettled: number | null
+  auctionSettled: number | null
+  liveEpoch: LiveEpochStart | null
+}
+
+export async function fetchEpochMeterData(
+  qc: QueryClient,
+): Promise<EpochMeterData> {
+  // Reuse / populate the shared ['protected-events'] cache; its own observers
+  // (the Events page) drive abort, and ensureQueryData adds none here.
+  const events = await qc.ensureQueryData({
+    queryKey: ['protected-events'],
+    queryFn: ({ signal }) => fetchProtectedEventsWithValidators(qc, signal),
+  })
+  const validators = events.flatMap(e => (e.validator ? [e.validator] : []))
+  const networkEpoch = validators.length ? selectNetworkEpoch(validators) : null
+  return {
+    networkEpoch,
+    paymentSettled: selectLatestPaymentSettled(events, networkEpoch),
+    auctionSettled: selectLatestAuctionSettled(events, networkEpoch),
+    liveEpoch: selectLiveEpochStart(validators),
+  }
 }
 
 export const epochMeterModel = ({
