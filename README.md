@@ -11,6 +11,7 @@ validator bonds, and protected events. Auction computation comes from
 
 ```sh
 pnpm install
+pnpm generate           # regenerate Zod schemas from upstream OpenAPI specs (Bun)
 pnpm start:dev          # Vite dev server (HMR), port 3000
 pnpm build              # production build → build/
 pnpm preview            # serve build/ on :8080 (used by Playwright)

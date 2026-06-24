@@ -145,7 +145,7 @@ UI-free. Pure functions and async fetchers, typed against SDK types where applic
 | `protected-events.ts`               | Fetches on-chain protected events; humanises reason strings.                               |
 | `protected-events-estimator.ts`     | Derives low-credits / commission-increase estimates for unsettled epochs.                  |
 | `epoch.ts`                          | Pure epoch-meter logic: network epoch, settlement status, chip / tooltip copy.             |
-| `notifications.ts`                  | Fetches and paginates the notifications API.                                               |
+| `notifications.ts`                  | Fetches and paginates the notifications API; `notificationTooltip()` renders HTML for the nav bell tooltip. |
 
 ### Plumbing
 

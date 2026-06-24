@@ -39,7 +39,20 @@ Active tab styled `bg-primary text-primary-foreground`. Hovering Events /
 Bonds prefetches the respective query (`staleTime: 5min`).
 
 **Right** — Docs link (→ `/docs`, hidden below `sm`), **Epoch meter**,
-`ThemeToggle`.
+`ThemeToggle`, **Notifications bell**.
+
+### Notifications bell
+
+`src/components/navigation/navigation.tsx` · `src/services/notifications.ts`
+
+Bell icon at the far right of the nav bar. Fetches validator-scoped
+notifications from the Marinade notifications API (keys
+`['notifications-all', 'sam_auction']` and `['notifications-broadcast']`,
+refetch every 5 min). A numeric count badge appears when there are unread
+items. `notificationTooltip()` in `notifications.ts` renders an HTML
+tooltip listing up to 10 notifications in priority order (`critical` /
+`warning` / `info`). The Notifications tab in the validator detail sheet
+shows the full list.
 
 ### Epoch meter
 
@@ -130,6 +143,19 @@ substring) via `findMatches`. Up to 8 ranked matches in a dropdown;
 click or `Enter` opens the detail sheet for that validator — even if
 the validator is hidden by the Basic-mode filter, because the detail
 reads from the full auction set, not from the visible table rows.
+
+### Compact / detailed view toggle
+
+`src/pages/stake-auction-marketplace.tsx:62` ·
+`src/components/sam-table/sam-table.tsx:402`
+
+Toggle button placed in the nav bar (top-right of the SAM page) next to
+the Simulate switch. Flips `isCompact` state (default `true`).
+
+| Mode        | What changes vs compact                                                                                                    |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **Compact** | Vote account sub-line hidden in `ValidatorIdentity`. Bond column shows balance only (no health chip, no gauge). Headline metrics show only Re-delegation, Winning APY, Total Auction Stake. Concentration cards hidden. Rank sub-label hidden. |
+| **Detailed** | Full `ValidatorIdentity` (name + vote account). Bond chip + gauge + runway label visible. All 7 headline stat tiles shown. Concentration cards shown. Rank cutoff sub-label shown. |
 
 ### Auction table
 

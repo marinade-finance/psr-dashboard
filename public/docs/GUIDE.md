@@ -6,6 +6,8 @@ The PSR (Protected Staking Rewards) Dashboard shows Marinade's stake-distributio
 system: who is bidding for stake, who has won this epoch's auction, which validators
 have bond coverage, and which past epochs triggered protected-event payouts.
 
+The bell icon in the top navigation bar shows validator-specific alerts; a count badge appears when there are unread notifications for the validator you are looking at.
+
 The auction itself is recomputed in your browser using the
 [`@marinade.finance/ds-sam-sdk`](https://github.com/marinade-finance/ds-sam/tree/main/packages/ds-sam-sdk)
 package — so most numbers come straight from the same algorithm Marinade runs
@@ -497,7 +499,9 @@ When a country or ASO hits its cap, validators there are cut — even if their b
 
 ## Auction Table Columns
 
-The SAM table is the centrepiece of the home tab. Every column, in order:
+The SAM table is the centrepiece of the home tab. A toggle button in the top-right of the table switches between **compact** (default) and **detailed** row view. In compact mode the vote account sub-line under each validator name and the bond health chip and gauge are hidden, keeping rows tighter. Detailed mode reveals the full bond chip, gauge, runway, and the cutoff sub-label under the rank number.
+
+Every column, in order:
 
 ### `#` — Auction rank
 
@@ -625,7 +629,8 @@ A two-column dashboard summarising the validator's situation. The cards
 that have a deeper companion tab — Bond, Expected Payment, APY
 Composition — let you click their title to jump there.
 
-- **Stake** — Activated Marinade stake (SOL delegated right now),
+- **Stake** — Activated Marinade stake (the SOL currently delegated to this
+  validator — the label in the UI reads "Activated Marinade stake"),
   Target Marinade stake (what the auction wants you to have), Max stake
   wanted (your [self-imposed cap](#stake-wanted) — only shown when set
   above 0; a cap of 0 means you opted out and the row is hidden), and
