@@ -38,9 +38,9 @@ describe('rank sort uses maxApy desc', () => {
     expect(sorted.map(x => x.revShare.totalPmpe)).toEqual([10, 20, 30])
   })
 
-  it('rank is independent of stakeDelta (target − active)', () => {
-    // Pre-fix the rank branch fell through to stakeDelta. Construct a case
-    // where stakeDelta order ≠ totalPmpe order, then assert totalPmpe wins.
+  it('rank is independent of target stake (target − active)', () => {
+    // Pre-fix the rank branch fell through to the target-stake key. Construct
+    // a case where target order ≠ totalPmpe order, then assert totalPmpe wins.
     const high = v(50, /*samTarget*/ 100, /*active*/ 100) // delta=0
     const low = v(5, /*samTarget*/ 5000, /*active*/ 0) // delta=+5000
     const sorted = [high, low].sort(
@@ -50,5 +50,25 @@ describe('rank sort uses maxApy desc', () => {
     // Pre-fix sort would have placed `low` (delta 5000) first.
     expect(sorted[0]).toBe(high)
     expect(sorted[1]).toBe(low)
+  })
+})
+
+describe('targetStake sort orders by marinadeSamTargetSol', () => {
+  it('highest target first on default desc dir', () => {
+    const arr = [v(10, 1000), v(10, 9000), v(10, 5000)]
+    const sorted = [...arr].sort(
+      makeCompareFn('targetStake', 'desc', undefined, EPOCHS_PER_YEAR),
+    )
+    const targets = sorted.map(x => x.auctionStake.marinadeSamTargetSol)
+    expect(targets).toEqual([9000, 5000, 1000])
+  })
+
+  it('lowest target first when dir=asc', () => {
+    const arr = [v(10, 1000), v(10, 9000), v(10, 5000)]
+    const sorted = [...arr].sort(
+      makeCompareFn('targetStake', 'asc', undefined, EPOCHS_PER_YEAR),
+    )
+    const targets = sorted.map(x => x.auctionStake.marinadeSamTargetSol)
+    expect(targets).toEqual([1000, 5000, 9000])
   })
 })

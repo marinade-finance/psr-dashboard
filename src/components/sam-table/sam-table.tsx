@@ -147,7 +147,7 @@ export type SortColumn =
   | 'validator'
   | 'maxApy'
   | 'bond'
-  | 'stakeDelta'
+  | 'targetStake'
   | 'nextStep'
 export type SortDirection = 'asc' | 'desc'
 
@@ -169,6 +169,28 @@ export function passesTableFilter(
   return hasActiveStake || hasTargetStake
 }
 
+const SORT_COL_KEY = 'psr-sort-col'
+const SORT_DIR_KEY = 'psr-sort-dir'
+const SORT_COLUMNS: readonly SortColumn[] = [
+  'rank',
+  'validator',
+  'maxApy',
+  'bond',
+  'targetStake',
+  'nextStep',
+]
+
+function getInitialSortColumn(): SortColumn {
+  const stored = localStorage.getItem(SORT_COL_KEY)
+  return stored && (SORT_COLUMNS as string[]).includes(stored)
+    ? (stored as SortColumn)
+    : 'targetStake'
+}
+
+function getInitialSortDirection(): SortDirection {
+  return localStorage.getItem(SORT_DIR_KEY) === 'asc' ? 'asc' : 'desc'
+}
+
 export function makeCompareFn(
   col: SortColumn,
   dir: SortDirection,
@@ -181,8 +203,10 @@ export function makeCompareFn(
       case 'rank':
         cmp = selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
         break
-      case 'stakeDelta':
-        cmp = selectExpectedStakeChange(a) - selectExpectedStakeChange(b)
+      case 'targetStake':
+        cmp =
+          a.auctionStake.marinadeSamTargetSol -
+          b.auctionStake.marinadeSamTargetSol
         break
       case 'validator': {
         const nameA = validatorMeta?.get(a.voteAccount)?.name ?? a.voteAccount
@@ -456,17 +480,26 @@ export const SamTable: React.FC<Props> = ({
     flashTimeoutRef.current = window.setTimeout(() => setFlashId(null), 800)
   }, [])
 
-  // Sorting state
-  const [sortColumn, setSortColumn] = useState<SortColumn>('maxApy')
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
+  // Sorting state — persisted to localStorage so the choice survives reload,
+  // same mechanism as the theme toggle. Default: target stake, highest first.
+  const [sortColumn, setSortColumn] = useState<SortColumn>(getInitialSortColumn)
+  const [sortDirection, setSortDirection] = useState<SortDirection>(
+    getInitialSortDirection,
+  )
 
   const handleSort = useCallback(
     (column: SortColumn) => {
       if (sortColumn === column) {
-        setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'))
+        setSortDirection(prev => {
+          const next = prev === 'asc' ? 'desc' : 'asc'
+          localStorage.setItem(SORT_DIR_KEY, next)
+          return next
+        })
       } else {
         setSortColumn(column)
         setSortDirection('desc')
+        localStorage.setItem(SORT_COL_KEY, column)
+        localStorage.setItem(SORT_DIR_KEY, 'desc')
       }
     },
     [sortColumn],
@@ -1195,12 +1228,12 @@ export const SamTable: React.FC<Props> = ({
                   </TableHead>
                   <TableHead
                     className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-[140px] cursor-pointer hover:text-primary whitespace-nowrap"
-                    onClick={() => handleSort('stakeDelta')}
+                    onClick={() => handleSort('targetStake')}
                   >
                     <div className="flex items-center gap-1">
                       Stake / Next change
                       <SortIndicator
-                        column="stakeDelta"
+                        column="targetStake"
                         sortColumn={sortColumn}
                         sortDirection={sortDirection}
                       />

@@ -15,41 +15,38 @@ async function gotoSam(page: Page) {
   if (await toggle.isVisible().catch(() => false)) await toggle.click()
 }
 
-function parseNum(s: string): number {
-  return parseFloat(s.replace(/[^0-9.\-]/g, ''))
-}
-
-async function maxApyHeader(page: Page) {
+function maxApyHeader(page: Page) {
   return page
     .locator('thead th')
     .filter({ hasText: /Max APY/ })
     .first()
 }
 
+function stakeHeader(page: Page) {
+  return page
+    .locator('thead th')
+    .filter({ hasText: /Stake \/ Next/ })
+    .first()
+}
+
 test.describe('SAM table — sort defaults', () => {
-  test('default sort indicator on Max APY is ↓ (descending)', async ({
+  // Default sort is target stake DESC, carried on the Stake / Next change
+  // header. Target stake is not a displayed numeric column, so the default is
+  // asserted via the header indicator rather than column-value monotonicity.
+  test('default sort indicator is on the Stake / Next change header (↓)', async ({
     page,
   }) => {
     await gotoSam(page)
-    const h = await maxApyHeader(page)
+    const h = stakeHeader(page)
     await expect(h).toContainText('↓')
   })
 
-  test('default Max APY column values are descending', async ({ page }) => {
+  test('Max APY does not carry the default sort indicator', async ({
+    page,
+  }) => {
     await gotoSam(page)
-    // Max APY is the third visible column (#, Validator, Max APY)
-    const cells = page.locator('tbody tr:not([data-divider]) td:nth-child(3)')
-    const n = await cells.count()
-    const vals: number[] = []
-    for (let i = 0; i < n; i++) {
-      const t = await cells.nth(i).innerText()
-      const v = parseNum(t)
-      if (!isNaN(v)) vals.push(v)
-    }
-    expect(vals.length).toBeGreaterThan(1)
-    for (let i = 1; i < vals.length; i++) {
-      expect(vals[i]).toBeLessThanOrEqual(vals[i - 1])
-    }
+    const h = maxApyHeader(page)
+    await expect(h).not.toContainText(/[↑↓]/)
   })
 })
 
@@ -174,7 +171,8 @@ test.describe('SAM table — winning set tint', () => {
     page,
   }) => {
     await gotoSam(page)
-    // Use the first row (default sort is Max APY DESC, so #1 is in-set).
+    // Use the first row (default sort is target stake DESC, so the top row is
+    // the highest-target validator — necessarily in-set).
     const first = page.locator('tbody tr').first()
     const cls = (await first.getAttribute('class')) ?? ''
     // Out-of-set marker class — must NOT be on an in-set row.
