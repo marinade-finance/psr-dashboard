@@ -1,8 +1,9 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 import { cn } from 'src/class_utils'
 import { Gauge } from 'src/components/gauge/gauge'
+import { usePinnedTooltip } from 'src/components/help-tip/help-tip'
 import { Tooltip } from 'src/components/ui/tooltip'
 import {
   epochInfoProgress,
@@ -48,6 +49,11 @@ export const EpochMeter: React.FC = () => {
     return () => clearInterval(id)
   }, [])
 
+  // Click pins the timeline tooltip open (sticky), same singleton as HelpTip.
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const [hovered, setHovered] = useState(false)
+  const { pinned, toggle } = usePinnedTooltip(triggerRef)
+
   const auctionEpoch = sam?.auctionResult.auctionData.epoch
   if (auctionEpoch === undefined) return null
 
@@ -78,8 +84,15 @@ export const EpochMeter: React.FC = () => {
     progress && progress.epoch === networkEpoch ? progress.percent : 0
 
   return (
-    <Tooltip content={<TimelineCard model={model} progress={progress} />}>
+    <Tooltip
+      content={<TimelineCard model={model} progress={progress} />}
+      open={pinned || hovered}
+      onOpenChange={o => {
+        if (!pinned) setHovered(o)
+      }}
+    >
       <button
+        ref={triggerRef}
         type="button"
         aria-label={
           model.critical
@@ -88,8 +101,11 @@ export const EpochMeter: React.FC = () => {
               ? `${model.label} (stale)`
               : model.label
         }
+        aria-pressed={pinned}
+        onPointerDown={e => e.preventDefault()}
+        onClick={toggle}
         className={cn(
-          'text-xs font-mono px-2 py-1 rounded-md whitespace-nowrap inline-flex items-center gap-1.5 cursor-default border focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors',
+          'text-xs font-mono px-2 py-1 rounded-md whitespace-nowrap inline-flex items-center gap-1.5 cursor-pointer border focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors',
           model.critical
             ? 'bg-destructive-light text-destructive border-destructive/25'
             : model.stale
