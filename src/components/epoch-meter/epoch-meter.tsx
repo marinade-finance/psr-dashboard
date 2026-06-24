@@ -228,15 +228,19 @@ function TimelineCard({
           )
         })}
       </div>
-      {progress !== null && (
+      {progress !== null ? (
         <div className="w-full flex flex-col items-stretch gap-1 mt-1 px-1">
           <Gauge value={percent} scaleMax={100} tone="bg-primary" size="lg" />
-          {hours !== null && (
-            <span className="text-2xs text-muted-foreground text-center">
-              ~{Math.round(hours)}h remaining
-            </span>
-          )}
+          <span className="text-2xs text-muted-foreground text-center">
+            {hours !== null
+              ? `~${Math.round(hours)}h remaining`
+              : 'Time remaining unknown'}
+          </span>
         </div>
+      ) : (
+        <span className="text-2xs text-muted-foreground text-center mt-1">
+          Time remaining unknown
+        </span>
       )}
     </div>
   )

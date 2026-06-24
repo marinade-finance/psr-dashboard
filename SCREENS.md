@@ -68,7 +68,9 @@ pin singleton as `HelpTip` via `usePinnedTooltip` — pinning one unpins
 the other; outside-click / Esc dismiss). Progress + hours-remaining come
 from the Solana RPC `getEpochInfo` (slot-accurate, `['epoch-info']`
 query) when it resolves; otherwise it falls back to the `epoch_start_at`
-timestamp over a 48h epoch. Auction epoch renders immediately from the
+timestamp over a 48h epoch. When neither source resolves, the card shows
+`Time remaining unknown` rather than a fabricated figure. Auction epoch
+renders immediately from the
 prefetched `['sam', 0]` query; the meter force-populates the
 `['protected-events']` query (`staleTime: 5 min`) so the settlement
 stages fill in without hovering the Events tab. Never blocks the nav.
