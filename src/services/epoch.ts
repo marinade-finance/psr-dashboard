@@ -1,5 +1,6 @@
 import { RPC_URL } from './apiUrls'
 import { EPOCH_DURATION_MS } from './constants'
+import { loadSam } from './sam'
 import { fetchProtectedEventsWithValidators } from './validator-with-protected_event'
 
 import type { ProtectedEventWithValidator } from 'src/services/validator-with-protected_event'
@@ -212,6 +213,18 @@ export type EpochMeterData = {
   paymentSettled: number | null
   auctionSettled: number | null
   liveEpoch: LiveEpochStart | null
+}
+
+// The nav chip needs only the auction epoch (an int), but the full
+// AuctionResult is large. Reuse the shared ['sam'] cache via ensureQueryData
+// and retain only the number here, so the nav never holds the AuctionResult —
+// it stays observed only by SamPage and is GC-eligible once that unmounts.
+export async function fetchAuctionEpoch(qc: QueryClient): Promise<number> {
+  const sam = await qc.ensureQueryData({
+    queryKey: ['sam'],
+    queryFn: () => loadSam(),
+  })
+  return sam.auctionResult.auctionData.epoch
 }
 
 export async function fetchEpochMeterData(

@@ -9,29 +9,35 @@ import {
   epochInfoProgress,
   epochMeterModel,
   epochProgressFromStart,
+  fetchAuctionEpoch,
   fetchEpochInfo,
   fetchEpochMeterData,
   type EpochMeterModel,
   type EpochProgress,
   type TimelineStage,
 } from 'src/services/epoch'
-import { loadSam } from 'src/services/sam'
 
 // Nav chip: epoch number with a leading progress ring. Hover shows a
 // timeline of pipeline stages (payments-settled / auction-settled / live /
 // next-auction), each anchored to its concrete epoch.
 export const EpochMeter: React.FC = () => {
   const queryClient = useQueryClient()
-  const { data: sam } = useQuery({
-    queryKey: ['sam'],
-    queryFn: () => loadSam(),
+  // Lean nav queries: the chip needs only scalars (the auction epoch int and a
+  // few epoch numbers), so the always-mounted nav never retains the full
+  // ['sam'] AuctionResult or the multi-MB ['protected-events'] payload. Both
+  // reuse the shared caches via ensureQueryData. staleTime === refetchInterval
+  // so navigation never refetches — load at most once per epoch-scale timeout,
+  // keep cached, no reload churn.
+  const { data: auctionEpoch } = useQuery({
+    queryKey: ['auction-epoch'],
+    queryFn: () => fetchAuctionEpoch(queryClient),
+    staleTime: 60 * 60 * 1000,
+    refetchInterval: 60 * 60 * 1000,
   })
-  // Lean nav query: only the epoch scalars, so the always-mounted nav does not
-  // pin the multi-MB ['protected-events'] payload for the whole session.
   const { data: meter } = useQuery({
     queryKey: ['epoch-meter'],
     queryFn: () => fetchEpochMeterData(queryClient),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 60 * 1000,
     refetchInterval: 60 * 60 * 1000,
   })
   // Best-effort slot-accurate progress; falls back to the API timestamp path
@@ -55,7 +61,6 @@ export const EpochMeter: React.FC = () => {
   const [hovered, setHovered] = useState(false)
   const { pinned, toggle } = usePinnedTooltip(triggerRef)
 
-  const auctionEpoch = sam?.auctionResult.auctionData.epoch
   if (auctionEpoch === undefined) return null
 
   const networkEpoch = meter?.networkEpoch ?? null
