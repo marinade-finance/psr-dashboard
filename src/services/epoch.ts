@@ -1,3 +1,4 @@
+import { RPC_URL } from './apiUrls'
 import { EPOCH_DURATION_MS } from './constants'
 
 import type { ProtectedEventWithValidator } from 'src/services/validator-with-protected_event'
@@ -6,11 +7,66 @@ import type { Validator } from 'src/services/validators'
 
 export { EPOCH_DURATION_MS }
 
+const SLOT_DURATION_S = 0.4
+
 export type EpochProgress = {
   epoch: number
   percent: number
   hoursRemaining: number
 }
+
+export type EpochInfo = {
+  epoch: number
+  slotIndex: number
+  slotsInEpoch: number
+}
+
+// Best-effort slot-accurate epoch progress straight from the cluster.
+// getEpochInfo gives slotIndex / slotsInEpoch with no timestamp lag — the
+// validators API only stamps epoch_start_at once it processes new-epoch
+// stats, which can trail the actual flip by hours. Returns null on any
+// failure (CORS, rate-limit, offline) so the caller falls back silently.
+export async function fetchEpochInfo(
+  signal?: AbortSignal,
+): Promise<EpochInfo | null> {
+  try {
+    const res = await fetch(RPC_URL, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getEpochInfo' }),
+      signal,
+    })
+    if (!res.ok) return null
+    const json: unknown = await res.json()
+    const r = (json as { result?: Partial<EpochInfo> } | null)?.result
+    if (
+      !r ||
+      typeof r.epoch !== 'number' ||
+      typeof r.slotIndex !== 'number' ||
+      typeof r.slotsInEpoch !== 'number' ||
+      r.slotsInEpoch <= 0
+    ) {
+      return null
+    }
+    return {
+      epoch: r.epoch,
+      slotIndex: r.slotIndex,
+      slotsInEpoch: r.slotsInEpoch,
+    }
+  } catch {
+    return null
+  }
+}
+
+// Slot-based progress from getEpochInfo — exact, no timestamp arithmetic.
+export const epochInfoProgress = (info: EpochInfo): EpochProgress => ({
+  epoch: info.epoch,
+  percent: Math.min(100, (info.slotIndex / info.slotsInEpoch) * 100),
+  hoursRemaining: Math.max(
+    0,
+    ((info.slotsInEpoch - info.slotIndex) * SLOT_DURATION_S) / 3600,
+  ),
+})
 
 export type TimelineStage = 'payment' | 'auction' | 'live' | 'next'
 

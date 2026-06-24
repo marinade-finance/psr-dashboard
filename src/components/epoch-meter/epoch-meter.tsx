@@ -5,7 +5,9 @@ import { cn } from 'src/class_utils'
 import { Gauge } from 'src/components/gauge/gauge'
 import { Tooltip } from 'src/components/ui/tooltip'
 import {
+  epochInfoProgress,
   epochMeterModel,
+  fetchEpochInfo,
   selectCurrentEpochProgress,
   selectLatestAuctionSettled,
   selectLatestPaymentSettled,
@@ -30,6 +32,15 @@ export const EpochMeter: React.FC = () => {
     queryKey: ['protected-events'],
     queryFn: () => fetchProtectedEventsWithValidators(queryClient),
   })
+  // Best-effort slot-accurate progress; falls back to the API timestamp path
+  // when the RPC is blocked. retry:false keeps a blocked endpoint quiet.
+  const { data: epochInfo } = useQuery({
+    queryKey: ['epoch-info'],
+    queryFn: ({ signal }) => fetchEpochInfo(signal),
+    staleTime: 10 * 60 * 1000,
+    refetchInterval: 10 * 60 * 1000,
+    retry: false,
+  })
 
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
@@ -50,9 +61,12 @@ export const EpochMeter: React.FC = () => {
   const auctionSettled = protectedEvents
     ? selectLatestAuctionSettled(protectedEvents, networkEpoch)
     : null
-  const progress = validators.length
-    ? selectCurrentEpochProgress(validators, now)
-    : null
+  const progress =
+    epochInfo && epochInfo.epoch === networkEpoch
+      ? epochInfoProgress(epochInfo)
+      : validators.length
+        ? selectCurrentEpochProgress(validators, now)
+        : null
 
   const model = epochMeterModel({
     auctionEpoch,

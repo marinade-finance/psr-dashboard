@@ -144,14 +144,14 @@ UI-free. Pure functions and async fetchers, typed against SDK types where applic
 | `validator-with-protected_event.ts` | Joins protected events + estimated events + per-epoch penalties into a unified event list. |
 | `protected-events.ts`               | Fetches on-chain protected events; humanises reason strings.                               |
 | `protected-events-estimator.ts`     | Derives low-credits / commission-increase estimates for unsettled epochs.                  |
-| `epoch.ts`                          | Pure epoch-meter logic: network epoch, settlement status, chip / tooltip copy.             |
+| `epoch.ts`                          | Epoch-meter logic: network epoch, settlement status, chip / tooltip copy. Also `fetchEpochInfo` — best-effort Solana RPC `getEpochInfo` for slot-accurate progress, null on failure. |
 | `notifications.ts`                  | Fetches and paginates the notifications API; `notificationTooltip()` renders HTML for the nav bell tooltip. |
 
 ### Plumbing
 
 | File             | What it does                                                                                                                                                |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apiUrls.ts`     | Four `*_API_URL` constants, each env-overridable.                                                                                                           |
+| `apiUrls.ts`     | Four `*_API_URL` constants plus `RPC_URL` (Solana RPC, default mainnet-beta), each env-overridable.                                                          |
 | `fetch-utils.ts` | `fetchJson<T>(url)` — throws on non-2xx.                                                                                                                    |
 | `types.ts`       | Shared `Color` enum.                                                                                                                                        |
 | `help-text.ts`   | `HELP_TEXT` map of tooltip strings keyed by metric.                                                                                                         |
@@ -213,6 +213,7 @@ rows (new position, green/red grading by move severity).
 | `['protected-events']`                 | `ProtectedEventsPage` + `Navigation` hover-prefetch + `EpochMeter`                     | Refetch every hour; nav-hover and `EpochMeter` use `staleTime: 5 min`.                                                                                                                                            |
 | `['psr-estimates-all']`                | `ValidatorDetail`                                                                      | All PSR estimates in one query; `staleTime: 5 min`.                                                                                                                                                               |
 | `['doc', activeDoc]`                   | `DocsPage`                                                                             | `staleTime: Infinity`.                                                                                                                                                                                            |
+| `['epoch-info']`                       | `EpochMeter`                                                                           | Solana RPC `getEpochInfo` for slot-accurate epoch progress; `staleTime` / `refetchInterval` 10 min, `retry: false`. Best-effort — falls back to the `epoch_start_at` timestamp path when the RPC is blocked.       |
 
 ### SAM page state
 

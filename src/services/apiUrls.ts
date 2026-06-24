@@ -12,3 +12,6 @@ export const SCORING_API_URL =
 export const NOTIFICATIONS_API_URL =
   import.meta.env.VITE_NOTIFICATIONS_API_URL ??
   'https://marinade-notifications.marinade.finance'
+
+export const RPC_URL =
+  import.meta.env.VITE_RPC_URL ?? 'https://api.mainnet-beta.solana.com'
