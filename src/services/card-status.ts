@@ -1,22 +1,15 @@
-// Tone enum and CardStatus shapes are pure-data — they belong in the service
-// layer so tip-engine and other services can build CardStatus values without
-// importing from `src/components/` (which would create a circular import).
-// The component layer maps the enum to CSS classes; the data layer doesn't
-// know or care.
+// CardStatusTone and the CardStatus/CardStatusAction decision shapes live in
+// @marinade.finance/ds-sam-calc (the calc layer decides whether there is an
+// action, its label and its tone). The click mechanism is UI, so we intersect
+// onClick back in here — the dashboard owns what clicking the action does.
+import type {
+  CardStatus as CalcCardStatus,
+  CardStatusAction as CalcCardStatusAction,
+} from '@marinade.finance/ds-sam-calc'
 
-export type CardStatusTone = 'red' | 'yellow' | 'green' | 'grey'
+export type { CardStatusTone } from '@marinade.finance/ds-sam-calc'
 
-export type CardStatusAction = {
-  label: string
-  onClick: () => void
-  // Pill colour. Defaults to the banner's own tone (e.g. red status with a
-  // red "Bond tab →" pill). Override to 'yellow' for sim-jump pills so the
-  // simulation affordance reads consistently across tones.
-  tone?: CardStatusTone
-}
-
-export type CardStatus = {
-  label: string
-  tone: CardStatusTone
+export type CardStatusAction = CalcCardStatusAction & { onClick: () => void }
+export type CardStatus = Omit<CalcCardStatus, 'action'> & {
   action?: CardStatusAction
 }

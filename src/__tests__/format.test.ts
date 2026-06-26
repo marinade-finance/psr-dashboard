@@ -129,15 +129,15 @@ describe('finite', () => {
 describe('bondSol', () => {
   it('rounds DOWN to 1 decimal place (never overstates available bond)', () => {
     // 10.19 → floor(10.19 * 10) / 10 = 10.1
-    expect(bondSol(10.19)).toBe('10.1 SOL')
+    expect(bondSol(10.19)).toBe(`10.1${NBSP}SOL`)
   })
 
   it('whole number → one trailing decimal zero', () => {
-    expect(bondSol(5)).toBe('5.0 SOL')
+    expect(bondSol(5)).toBe(`5.0${NBSP}SOL`)
   })
 
   it('zero → "0.0 SOL"', () => {
-    expect(bondSol(0)).toBe('0.0 SOL')
+    expect(bondSol(0)).toBe(`0.0${NBSP}SOL`)
   })
 })
 
