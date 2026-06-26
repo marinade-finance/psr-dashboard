@@ -6,8 +6,6 @@ import { test, expect } from '@playwright/test'
 test.beforeEach(async ({ page }) => {
   await page.goto('/test-')
   await page.waitForSelector('tbody tr', { timeout: 50000 })
-  const toggle = page.getByRole('button', { name: 'Switch to detailed view' })
-  if (await toggle.isVisible().catch(() => false)) await toggle.click()
 })
 
 test('table loads with rows', async ({ page }) => {
@@ -15,12 +13,7 @@ test('table loads with rows', async ({ page }) => {
 })
 
 test('all headline metrics visible', async ({ page }) => {
-  for (const label of [
-    'Total Auction Stake',
-    'Winning APY',
-    'Projected APY',
-    'Winning Validators',
-  ]) {
+  for (const label of ['Re-delegation', 'Winning APY', 'Total Auction Stake']) {
     await expect(page.getByText(label).first()).toBeVisible()
   }
 })
@@ -55,22 +48,21 @@ test('Total Auction Stake renders with comma-formatted SOL', async ({
   expect(await card.innerText()).toMatch(/\d{1,3}(,\d{3})+/)
 })
 
-test('Winning + Projected APY contain valid percentages', async ({ page }) => {
-  for (const label of ['Winning APY', 'Projected APY']) {
-    const card = page
-      .locator('div')
-      .filter({ hasText: new RegExp(`^${label}`) })
-      .first()
-    const text = await card.innerText()
-    expect(text).toContain('%')
-    expect(text).not.toContain('NaN')
-  }
+test('Winning APY contains a valid percentage', async ({ page }) => {
+  const card = page
+    .locator('div')
+    .filter({ hasText: /^Winning APY/ })
+    .first()
+  const text = await card.innerText()
+  expect(text).toContain('%')
+  expect(text).not.toContain('NaN')
 })
 
 test('bond column carries Healthy / Watch / Critical labels', async ({
   page,
 }) => {
-  const bondCells = page.locator('tbody tr td:nth-child(4)')
+  // Column order: # · Validator · Stake · Max APY · Bond — Bond is 5th.
+  const bondCells = page.locator('tbody tr td:nth-child(5)')
   const count = await bondCells.count()
   const texts: string[] = []
   for (let i = 0; i < Math.min(count, 30); i++) {
@@ -79,6 +71,13 @@ test('bond column carries Healthy / Watch / Critical labels', async ({
   expect(texts.some(t => /Healthy|Watch|Critical/.test(t))).toBe(true)
 })
 
-test('winning-set divider row present', async ({ page }) => {
+test('winning-set divider appears when sorted by Max APY', async ({ page }) => {
+  // The cutoff divider partitions by winning APY, so it only renders under the
+  // Max APY sort. Default sort is Stake, so sort by Max APY first.
+  await page
+    .locator('thead th')
+    .filter({ hasText: /Max APY/ })
+    .first()
+    .click({ position: { x: 10, y: 10 } })
   await expect(page.getByText(/Winning Set Cutoff/i).first()).toBeVisible()
 })

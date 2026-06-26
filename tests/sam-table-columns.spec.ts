@@ -1,5 +1,5 @@
 // SAM table column behaviour — sort defaults, sort toggles, rank-cell anatomy,
-// next-step + bond + stake-delta column contents, winning-set tint, penalty
+// next-step + bond + stake column contents, winning-set tint, penalty
 // badges, horizontal scroll on narrow viewports.
 //
 // Uses the deterministic /test- route so we know which fixtures are present.
@@ -11,29 +11,27 @@ import type { Page } from '@playwright/test'
 async function gotoSam(page: Page) {
   await page.goto('/test-')
   await page.waitForSelector('tbody tr', { timeout: 30000 })
-  const toggle = page.getByRole('button', { name: 'Switch to detailed view' })
-  if (await toggle.isVisible().catch(() => false)) await toggle.click()
-}
-
-function maxApyHeader(page: Page) {
-  return page
-    .locator('thead th')
-    .filter({ hasText: /Max APY/ })
-    .first()
 }
 
 function stakeHeader(page: Page) {
-  return page
-    .locator('thead th')
-    .filter({ hasText: /Stake \/ Next/ })
-    .first()
+  return page.locator('thead th').filter({ hasText: /Stake/ }).first()
+}
+
+// The Stake cell reads "X SOL (+Y SOL)" — current stake plus the signed gap to
+// target. The sort key is the sum (= target). Parse both tokens (the gap uses a
+// unicode minus −, so normalise it before parsing).
+function parseStakeSum(s: string): number {
+  const m = s.match(/[+\-−]?\s*[\d,]+(?:\.\d+)?/g)
+  if (!m) return NaN
+  const norm = (x: string) =>
+    parseFloat(x.replace(/\s/g, '').replace('−', '-').replace(/,/g, ''))
+  const current = norm(m[0])
+  const gap = m.length > 1 ? norm(m[1]) : 0
+  return current + gap
 }
 
 test.describe('SAM table — sort defaults', () => {
-  // Default sort is target stake DESC, carried on the Stake / Next change
-  // header. Target stake is not a displayed numeric column, so the default is
-  // asserted via the header indicator rather than column-value monotonicity.
-  test('default sort indicator is on the Stake / Next change header (↓)', async ({
+  test('default sort indicator on Stake is ↓ (descending)', async ({
     page,
   }) => {
     await gotoSam(page)
@@ -41,12 +39,26 @@ test.describe('SAM table — sort defaults', () => {
     await expect(h).toContainText('↓')
   })
 
-  test('Max APY does not carry the default sort indicator', async ({
+  test('default Stake column values (current + gap) are descending', async ({
     page,
   }) => {
     await gotoSam(page)
-    const h = maxApyHeader(page)
-    await expect(h).not.toContainText(/[↑↓]/)
+    // Stake is the third visible column (#, Validator, Stake).
+    const cells = page.locator('tbody tr:not([data-divider]) td:nth-child(3)')
+    const n = await cells.count()
+    const vals: number[] = []
+    for (let i = 0; i < n; i++) {
+      const v = parseStakeSum(await cells.nth(i).innerText())
+      if (!isNaN(v)) vals.push(v)
+    }
+    expect(vals.length).toBeGreaterThan(1)
+    // Rows split into above/below-cutoff segments (each sorted independently),
+    // so allow at most one ascending step at the segment boundary.
+    let breaks = 0
+    for (let i = 1; i < vals.length; i++) {
+      if (vals[i] > vals[i - 1]) breaks++
+    }
+    expect(breaks).toBeLessThanOrEqual(1)
   })
 })
 
@@ -96,18 +108,8 @@ test.describe('SAM table — rank cell', () => {
       .first()
     const txt = await firstRank.innerText()
     expect(txt).toMatch(/#\d+/)
-    // No leading dash for in-set rows (cutoff rank is positive above the line).
+    // No leading dash for in-set rows (rank is a plain positive #N).
     expect(txt.trim().startsWith('-')).toBe(false)
-  })
-
-  test('rank cell shows a tip-urgency icon for non-ghost rows', async ({
-    page,
-  }) => {
-    await gotoSam(page)
-    // The rank cell contains a tip icon — at least one row should render an
-    // <svg> inside its rank cell (the icon).
-    const iconInRank = page.locator('tbody tr td:nth-child(1) svg').first()
-    await expect(iconInRank).toBeVisible({ timeout: 5000 })
   })
 })
 
@@ -116,7 +118,8 @@ test.describe('SAM table — bond column', () => {
     page,
   }) => {
     await gotoSam(page)
-    const cells = page.locator('tbody tr:not([data-divider]) td:nth-child(4)')
+    // Bond is the fifth column (#, Validator, Stake, Max APY, Bond).
+    const cells = page.locator('tbody tr:not([data-divider]) td:nth-child(5)')
     const n = await cells.count()
     const texts: string[] = []
     for (let i = 0; i < n; i++) texts.push(await cells.nth(i).innerText())
@@ -125,42 +128,45 @@ test.describe('SAM table — bond column', () => {
     )
   })
 
-  test('bond cell renders runway as parenthesised "(Nep)" suffix', async ({
+  test('critical bond rows carry an "X epochs to liquidate" alert', async ({
     page,
   }) => {
     await gotoSam(page)
-    const cells = page.locator('tbody tr:not([data-divider]) td:nth-child(4)')
+    // Bond is the fifth column (#, Validator, Stake, Max APY, Bond).
+    const cells = page.locator('tbody tr:not([data-divider]) td:nth-child(5)')
     const n = await cells.count()
-    let anyParen = false
+    let foundCritical = false
     for (let i = 0; i < n; i++) {
       const t = await cells.nth(i).innerText()
-      if (/\(\s*\d+\s*ep\s*\)/i.test(t)) {
-        anyParen = true
-        break
+      if (/Critical/.test(t)) {
+        foundCritical = true
+        // Every critical bond cell surfaces the runway alert.
+        expect(t).toMatch(/\d+\s+epochs?\s+to\s+liquidate/i)
       }
     }
-    expect(anyParen, '"(Nep)" runway suffix should appear on bonded rows').toBe(
+    expect(foundCritical, 'expected a Critical bond row in the fixture').toBe(
       true,
     )
   })
 })
 
-test.describe('SAM table — stake / next change column', () => {
-  test('column contains a +/- prefix for at least one non-zero delta row', async ({
+test.describe('SAM table — stake column', () => {
+  test('column shows a signed gap "(+/− SOL)" for at least one row', async ({
     page,
   }) => {
     await gotoSam(page)
-    const cells = page.locator('tbody tr:not([data-divider]) td:nth-child(5)')
+    // Stake is the third column (#, Validator, Stake).
+    const cells = page.locator('tbody tr:not([data-divider]) td:nth-child(3)')
     const n = await cells.count()
     let foundSigned = false
     for (let i = 0; i < n; i++) {
       const t = await cells.nth(i).innerText()
-      if (/[+-]\s*\d/.test(t)) {
+      if (/[+\-−]\s*\d/.test(t)) {
         foundSigned = true
         break
       }
     }
-    expect(foundSigned, 'expected at least one signed delta in fixture').toBe(
+    expect(foundSigned, 'expected at least one signed gap in fixture').toBe(
       true,
     )
   })

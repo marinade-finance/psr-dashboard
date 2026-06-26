@@ -569,8 +569,6 @@ export const ValidatorDetail = ({
   const [tab, setTab] = useState<Tab>('overview')
 
   const inSet = selectInSet(validator)
-  // Dense rank around the winning cutoff: 0 at cutoff, +N above, −N below.
-  const posVsWinning = validator.values.cutoffRank
   const bondCoverage = useMemo(
     () => computeBondCoverage(validator, dsSamConfig, winningTotalPmpe),
     [validator, dsSamConfig, winningTotalPmpe],
@@ -738,23 +736,14 @@ export const ValidatorDetail = ({
               Back to rankings
             </button>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <span className="shrink-0 flex flex-col leading-tight">
-                <span
-                  className="text-base font-bold font-mono flex items-center gap-1"
-                  style={{ color: tipStyle.color }}
-                >
-                  <span className="text-sm leading-none">
-                    {TIP_ICONS[getTipIcon(tip)]}
-                  </span>
-                  {`#${rank}`}
+              <span
+                className="shrink-0 text-base font-bold font-mono flex items-center gap-1"
+                style={{ color: tipStyle.color }}
+              >
+                <span className="text-sm leading-none">
+                  {TIP_ICONS[getTipIcon(tip)]}
                 </span>
-                <span className="text-xs font-mono text-muted-foreground">
-                  {posVsWinning === 0
-                    ? 'at winning edge'
-                    : posVsWinning > 0
-                      ? `${posVsWinning} ${posVsWinning === 1 ? 'place' : 'places'} above winning`
-                      : `${Math.abs(posVsWinning)} ${Math.abs(posVsWinning) === 1 ? 'place' : 'places'} below winning`}
-                </span>
+                {`#${rank}`}
               </span>
               {validatorName && (
                 <span className="text-lg font-semibold text-foreground">
