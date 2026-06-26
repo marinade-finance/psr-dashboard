@@ -12,9 +12,12 @@ importers:
 
   .:
     dependencies:
+      '@marinade.finance/ds-sam-calc':
+        specifier: link:../ds-sam/packages/ds-sam-calc
+        version: link:../ds-sam/packages/ds-sam-calc
       '@marinade.finance/ds-sam-sdk':
-        specifier: 0.0.51
-        version: 0.0.51
+        specifier: link:../ds-sam/packages/ds-sam-sdk
+        version: link:../ds-sam/packages/ds-sam-sdk
       '@radix-ui/react-dialog':
         specifier: 1.1.15
         version: 1.1.15(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -734,9 +737,6 @@ packages:
 
   '@liuli-util/fs-extra@0.1.0':
     resolution: {integrity: sha512-eaAyDyMGT23QuRGbITVY3SOJff3G9ekAAyGqB9joAnTBmqvFN+9a1FazOdO70G6IUqgpKV451eBHYSRcOJ/FNQ==}
-
-  '@marinade.finance/ds-sam-sdk@0.0.51':
-    resolution: {integrity: sha512-TbkdAgS5y6nyUZ9N5641PC27UoyfdBKd/6OOvAh+SKu0vvGlG6JGvPIKKzflaMvjXNMtyk8vx4tKmZFgFgdRgQ==}
 
   '@marinade.finance/eslint-config@1.3.5':
     resolution: {integrity: sha512-yKLW2vI9QmQ6uWO3SQSbOYDmtSpYPU34zuomKGCfoLF7/bN+c6GinyzUumIPoUshqztRkqjOpFels4F4E6puEg==}
@@ -5177,15 +5177,6 @@ snapshots:
     dependencies:
       '@types/fs-extra': 9.0.13
       fs-extra: 10.1.0
-
-  '@marinade.finance/ds-sam-sdk@0.0.51':
-    dependencies:
-      axios: 1.16.1
-      decimal.js: 10.6.0
-      semver: 7.8.0
-    transitivePeerDependencies:
-      - debug
-      - supports-color
 
   '@marinade.finance/eslint-config@1.3.5(eslint@10.4.0(jiti@2.7.0))(jest@30.4.2(@types/node@25.9.1)(ts-node@10.9.2(@types/node@25.9.1)(typescript@6.0.3)))(prettier@3.8.3)(typescript@6.0.3)':
     dependencies:
