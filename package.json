@@ -51,7 +51,8 @@
     "vitest": "4.1.7"
   },
   "dependencies": {
-    "@marinade.finance/ds-sam-sdk": "0.0.51",
+    "@marinade.finance/ds-sam-calc": "link:../ds-sam/packages/ds-sam-calc",
+    "@marinade.finance/ds-sam-sdk": "link:../ds-sam/packages/ds-sam-sdk",
     "@zodios/core": "10.9.6",
     "zod": "^3",
     "@radix-ui/react-dialog": "1.1.15",
