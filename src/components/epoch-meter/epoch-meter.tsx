@@ -66,10 +66,15 @@ export const EpochMeter: React.FC = () => {
   const networkEpoch = meter?.networkEpoch ?? null
   const paymentSettled = meter?.paymentSettled ?? null
   const auctionSettled = meter?.auctionSettled ?? null
-  const progress =
-    epochInfo && epochInfo.epoch === networkEpoch
-      ? epochInfoProgress(epochInfo)
-      : epochProgressFromStart(meter?.liveEpoch ?? null, now)
+  // Trust slot-accurate RPC progress whenever it loaded — epochInfo is
+  // self-describing (carries its own epoch from getEpochInfo), so it needs no
+  // agreement from the slower validator-stats networkEpoch. Fall back to
+  // timestamp-based progress only when the RPC returned nothing (blocked /
+  // offline), not merely when the two epoch sources briefly disagree at a
+  // boundary.
+  const progress = epochInfo
+    ? epochInfoProgress(epochInfo)
+    : epochProgressFromStart(meter?.liveEpoch ?? null, now)
 
   const model = epochMeterModel({
     auctionEpoch,
@@ -77,8 +82,7 @@ export const EpochMeter: React.FC = () => {
     paymentSettled,
     auctionSettled,
   })
-  const ringPercent =
-    progress && progress.epoch === networkEpoch ? progress.percent : 0
+  const ringPercent = progress?.percent ?? 0
 
   return (
     <Tooltip
