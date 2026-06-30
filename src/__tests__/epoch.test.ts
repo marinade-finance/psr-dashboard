@@ -3,6 +3,7 @@
 import { describe, it, expect } from 'vitest'
 
 import {
+  epochInfoProgress,
   epochMeterModel,
   selectLatestAuctionSettled,
   selectLatestPaymentSettled,
@@ -77,6 +78,51 @@ describe('selectNetworkEpoch', () => {
         validator([699]),
       ]),
     ).toBe(702)
+  })
+})
+
+describe('epochInfoProgress', () => {
+  const SLOTS = 432_000 // 48h / 0.4s
+
+  it('mid-epoch → 50% with half the slots of remaining time', () => {
+    const r = epochInfoProgress({
+      epoch: 612,
+      slotIndex: SLOTS / 2,
+      slotsInEpoch: SLOTS,
+    })
+    expect(r.epoch).toBe(612)
+    expect(r.percent).toBeCloseTo(50, 5)
+    expect(r.hoursRemaining).toBeCloseTo(24, 5)
+  })
+
+  it('start of epoch → 0% and a full epoch of remaining time', () => {
+    const r = epochInfoProgress({
+      epoch: 612,
+      slotIndex: 0,
+      slotsInEpoch: SLOTS,
+    })
+    expect(r.percent).toBe(0)
+    expect(r.hoursRemaining).toBeCloseTo(48, 5)
+  })
+
+  it('at the last slot → clamps to 100% / 0h', () => {
+    const r = epochInfoProgress({
+      epoch: 612,
+      slotIndex: SLOTS,
+      slotsInEpoch: SLOTS,
+    })
+    expect(r.percent).toBe(100)
+    expect(r.hoursRemaining).toBe(0)
+  })
+
+  it('slotIndex past slotsInEpoch → still clamps to 100% / 0h', () => {
+    const r = epochInfoProgress({
+      epoch: 612,
+      slotIndex: SLOTS + 50_000,
+      slotsInEpoch: SLOTS,
+    })
+    expect(r.percent).toBe(100)
+    expect(r.hoursRemaining).toBe(0)
   })
 })
 
