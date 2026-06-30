@@ -325,8 +325,8 @@ describe('allocateRedelegation — best-first walk by totalPmpe desc', () => {
     expect(high).toBeDefined()
     expect(low).toBeDefined()
     if (!high || !low) return
-    expect(selectRedelegationPriorityRank(high, result)).toBe(1)
-    expect(selectRedelegationPriorityRank(low, result)).toBe(2)
+    expect(selectRedelegationPriorityRank(high, result, 0)).toBe(1)
+    expect(selectRedelegationPriorityRank(low, result, 0)).toBe(2)
   })
 
   it('the budget fills the higher-totalPmpe validator first', () => {
@@ -344,7 +344,7 @@ describe('allocateRedelegation — best-first walk by totalPmpe desc', () => {
   it('priority frontier is the lowest fully-served totalPmpe', () => {
     const result = tightBudgetResult()
     // Only HIGH (12) is fully served; LOW never gets budget → frontier = 12.
-    expect(selectRedelegationPriorityFrontierPmpe(result)).toBe(12)
+    expect(selectRedelegationPriorityFrontierPmpe(result, 0)).toBe(12)
   })
 })
 
@@ -380,7 +380,7 @@ describe('selectWinningApyForValidator — marginal winner', () => {
     const winningBidPmpe = Math.max(0, 10 - 3) // winningTotalPmpe − MARG nonBid
     const expected = compoundApy(5 + winningBidPmpe, epochsPerYear)
     expect(
-      selectWinningApyForValidator(self, result, epochsPerYear),
+      selectWinningApyForValidator(self, result, epochsPerYear, 0),
     ).toBeCloseTo(expected, 9)
   })
 })
