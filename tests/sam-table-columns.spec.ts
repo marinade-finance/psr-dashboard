@@ -30,9 +30,13 @@ function stakeHeader(page: Page) {
 }
 
 test.describe('SAM table — sort defaults', () => {
-  // Default sort is target stake DESC, carried on the Stake / Next change
-  // header. Target stake is not a displayed numeric column, so the default is
-  // asserted via the header indicator rather than column-value monotonicity.
+  /**
+   * Loads the SAM table with no user interaction.
+   * Assumes the default sort is target stake DESC, carried on the
+   * Stake / Next change header — target stake is not a displayed numeric
+   * column, so it is asserted via the header indicator, not column values.
+   * Verifies that header shows the ↓ (descending) indicator on first load.
+   */
   test('default sort indicator is on the Stake / Next change header (↓)', async ({
     page,
   }) => {
@@ -41,6 +45,12 @@ test.describe('SAM table — sort defaults', () => {
     await expect(h).toContainText('↓')
   })
 
+  /**
+   * Loads the SAM table with no user interaction.
+   * Assumes only the active sort column carries an indicator and the default
+   * is target stake, not Max APY.
+   * Verifies the Max APY header shows no ↑/↓ indicator on first load.
+   */
   test('Max APY does not carry the default sort indicator', async ({
     page,
   }) => {
