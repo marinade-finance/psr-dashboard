@@ -171,7 +171,6 @@ function TimelineCard({
   const { timeline } = model
   if (timeline.length === 0) return null
   const percent = progress?.percent ?? 0
-  const hours = progress?.hoursRemaining ?? null
   return (
     <div className="flex flex-col items-center gap-2 py-1 px-1">
       <div className="flex items-stretch">
@@ -218,9 +217,7 @@ function TimelineCard({
         <div className="w-full flex flex-col items-stretch gap-1 mt-1 px-1">
           <Gauge value={percent} scaleMax={100} tone="bg-primary" size="lg" />
           <span className="text-2xs text-muted-foreground text-center">
-            {hours !== null
-              ? `~${Math.round(hours)}h remaining`
-              : 'Time remaining unknown'}
+            {`~${Math.round(progress.hoursRemaining)}h remaining`}
           </span>
         </div>
       ) : (
