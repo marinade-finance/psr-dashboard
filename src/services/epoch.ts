@@ -1,5 +1,4 @@
 import { RPC_URL } from './apiUrls'
-import { EPOCH_DURATION_MS } from './constants'
 import { loadSam } from './sam'
 import { fetchProtectedEventsWithValidators } from './validator-with-protected_event'
 
@@ -7,8 +6,6 @@ import type { ProtectedEventWithValidator } from 'src/services/validator-with-pr
 
 import type { Validator } from 'src/services/validators'
 import type { QueryClient } from '@tanstack/react-query'
-
-export { EPOCH_DURATION_MS }
 
 const SLOT_DURATION_S = 0.4
 
@@ -97,73 +94,6 @@ export const selectNetworkEpoch = (validators: Validator[]): number | null => {
   return max === -Infinity ? null : max
 }
 
-export type LiveEpochStart = { epoch: number; startMs: number }
-
-// The in-progress epoch's start. The live epoch's own `epoch_start_at` is
-// stamped late by the API (≈ when its first stat row is created, often hours
-// after the boundary), so using it makes the meter read ~0% / ~48h all epoch.
-// The reliable boundary is the *previous* epoch's `epoch_end_at` — the latest
-// non-null end across settled epochs is exactly when the live epoch began.
-// A tiny scalar — safe to retain in the nav.
-export const selectLiveEpochStart = (
-  validators: Validator[],
-): LiveEpochStart | null => {
-  let liveEpoch = -Infinity
-  let liveOwnStartMs: number | null = null // best-effort fallback only
-  let lastSettledEndMs = -Infinity
-  for (const v of validators) {
-    for (const stat of v.epoch_stats) {
-      // epoch_end_at is optional in the API schema — null/undefined = still open.
-      if (stat.epoch_end_at == null) {
-        if (stat.epoch > liveEpoch) {
-          liveEpoch = stat.epoch
-          const s =
-            stat.epoch_start_at == null ? NaN : Date.parse(stat.epoch_start_at)
-          liveOwnStartMs = Number.isFinite(s) ? s : null
-        }
-        continue
-      }
-      const endMs = Date.parse(stat.epoch_end_at)
-      if (Number.isFinite(endMs) && endMs > lastSettledEndMs) {
-        lastSettledEndMs = endMs
-      }
-    }
-  }
-  if (liveEpoch === -Infinity) return null
-  // Prefer the previous epoch's end (reliable boundary). Fall back to the live
-  // epoch's own (late-stamped) start only when no settled epoch is present —
-  // a degenerate case that does not occur with the API's 3-epoch window.
-  const startMs =
-    lastSettledEndMs !== -Infinity ? lastSettledEndMs : liveOwnStartMs
-  if (startMs === null) return null
-  return { epoch: liveEpoch, startMs }
-}
-
-// Map elapsed time since the epoch start onto a 48h epoch and clamp.
-export const epochProgressFromStart = (
-  start: LiveEpochStart | null,
-  nowMs: number,
-): EpochProgress | null => {
-  if (start === null) return null
-  const elapsed = Math.max(0, nowMs - start.startMs)
-  const percent = Math.min(100, (elapsed / EPOCH_DURATION_MS) * 100)
-  const hoursRemaining = Math.max(0, (EPOCH_DURATION_MS - elapsed) / 3_600_000)
-  return { epoch: start.epoch, percent, hoursRemaining }
-}
-
-// Progress through the in-progress epoch, derived from validator stats.
-export const selectCurrentEpochProgress = (
-  validators: Validator[],
-  nowMs: number,
-): EpochProgress | null => {
-  const start = selectLiveEpochStart(validators)
-  if (start === null) return null
-  const elapsed = Math.max(0, nowMs - start.startMs)
-  const percent = Math.min(100, (elapsed / EPOCH_DURATION_MS) * 100)
-  const hoursRemaining = Math.max(0, (EPOCH_DURATION_MS - elapsed) / 3_600_000)
-  return { epoch: start.epoch, percent, hoursRemaining }
-}
-
 // Latest past FACT (on-chain) PE epoch — the payments-settled checkpoint.
 // Filters out anything on/after the live epoch: an epoch only counts as
 // "payments settled" once it has ended.
@@ -203,8 +133,8 @@ export const selectLatestAuctionSettled = (
 // The meter lives in the always-mounted nav; observing the full
 // ['protected-events'] payload there pins its multi-MB 3-epoch validator
 // cross-references for the whole session. This derives the scalars and keeps
-// only those (plus the tiny live-epoch start), so the nav never retains the
-// heavy payload. The heavy result is reused from the shared
+// only those, so the nav never retains the heavy payload. The heavy result is
+// reused from the shared
 // ['protected-events'] cache via ensureQueryData (no double fetch on the
 // Events page), but with no persistent observer here it becomes GC-eligible
 // once the Events page unmounts.
@@ -212,7 +142,6 @@ export type EpochMeterData = {
   networkEpoch: number | null
   paymentSettled: number | null
   auctionSettled: number | null
-  liveEpoch: LiveEpochStart | null
 }
 
 // The nav chip needs only the auction epoch (an int), but the full
@@ -242,7 +171,6 @@ export async function fetchEpochMeterData(
     networkEpoch,
     paymentSettled: selectLatestPaymentSettled(events, networkEpoch),
     auctionSettled: selectLatestAuctionSettled(events, networkEpoch),
-    liveEpoch: selectLiveEpochStart(validators),
   }
 }
 

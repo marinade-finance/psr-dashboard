@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
 
 import { cn } from 'src/class_utils'
 import { Gauge } from 'src/components/gauge/gauge'
@@ -8,7 +8,6 @@ import { Tooltip } from 'src/components/ui/tooltip'
 import {
   epochInfoProgress,
   epochMeterModel,
-  epochProgressFromStart,
   fetchAuctionEpoch,
   fetchEpochInfo,
   fetchEpochMeterData,
@@ -40,21 +39,15 @@ export const EpochMeter: React.FC = () => {
     staleTime: 60 * 60 * 1000,
     refetchInterval: 60 * 60 * 1000,
   })
-  // Best-effort slot-accurate progress; falls back to the API timestamp path
-  // when the RPC is blocked. retry:false keeps a blocked endpoint quiet.
+  // Slot-accurate epoch progress straight from the cluster RPC. When it is
+  // unavailable the chip drops its progress and shows "RPC unavailable" — we
+  // never fake progress from timestamps.
   const { data: epochInfo } = useQuery({
     queryKey: ['epoch-info'],
     queryFn: ({ signal }) => fetchEpochInfo(signal),
     staleTime: 10 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000,
-    retry: false,
   })
-
-  const [now, setNow] = useState(() => Date.now())
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 60_000)
-    return () => clearInterval(id)
-  }, [])
 
   // Click pins the timeline tooltip open (sticky), same singleton as HelpTip.
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -66,10 +59,7 @@ export const EpochMeter: React.FC = () => {
   const networkEpoch = meter?.networkEpoch ?? null
   const paymentSettled = meter?.paymentSettled ?? null
   const auctionSettled = meter?.auctionSettled ?? null
-  const progress =
-    epochInfo && epochInfo.epoch >= (networkEpoch ?? 0)
-      ? epochInfoProgress(epochInfo)
-      : epochProgressFromStart(meter?.liveEpoch ?? null, now)
+  const progress = epochInfo ? epochInfoProgress(epochInfo) : null
 
   const model = epochMeterModel({
     auctionEpoch,
@@ -235,7 +225,7 @@ function TimelineCard({
         </div>
       ) : (
         <span className="text-2xs text-muted-foreground text-center mt-1">
-          Time remaining unknown
+          RPC unavailable
         </span>
       )}
     </div>
