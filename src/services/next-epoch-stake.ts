@@ -24,9 +24,6 @@ export const computeNextEpochStake = (
   auctionResult: AuctionResult,
   minBondBalanceSol: number,
 ): NextEpochStake => {
-  // Frontier and rank must use the same sub-min-bond skipping as the actual
-  // stake allocation, else they read a different validator set than the
-  // stake changes shown alongside them.
   const priorityFrontierPmpe = selectRedelegationPriorityFrontierPmpe(
     auctionResult,
     minBondBalanceSol,
