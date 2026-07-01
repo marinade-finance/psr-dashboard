@@ -290,12 +290,13 @@ function makePrioValidator(
   totalPmpe: number,
   active: number,
   target: number,
+  bondBalanceSol = 5,
 ): AuctionValidator {
   return {
     voteAccount,
     auctionStake: { marinadeSamTargetSol: target },
     marinadeActivatedStakeSol: active,
-    bondBalanceSol: 5,
+    bondBalanceSol,
     values: { paidUndelegationSol: 0 },
     revShare: { totalPmpe },
   } as unknown as AuctionValidator
@@ -345,6 +346,22 @@ describe('allocateRedelegation — best-first walk by totalPmpe desc', () => {
     const result = tightBudgetResult()
     // Only HIGH (12) is fully served; LOW never gets budget → frontier = 12.
     expect(selectRedelegationPriorityFrontierPmpe(result, 0)).toBe(12)
+  })
+
+  it('frontier skips sub-min-bond validators when minBondBalanceSol is set', () => {
+    // Budget (1000) covers both 500-deltas. HIGH (bond 100) is healthy; LOW
+    // (bond 1, totalPmpe 8) is sub-min. At minBond=0 LOW is served too, so the
+    // frontier drops to 8. At minBond=10 LOW is skipped — matching the actual
+    // stake allocation — so the frontier stays at HIGH's 12.
+    const result = makeBondResult(
+      [
+        makePrioValidator('LOW', 8, 0, 500, 1),
+        makePrioValidator('HIGH', 12, 0, 500, 100),
+      ],
+      1000,
+    )
+    expect(selectRedelegationPriorityFrontierPmpe(result, 0)).toBe(8)
+    expect(selectRedelegationPriorityFrontierPmpe(result, 10)).toBe(12)
   })
 })
 
