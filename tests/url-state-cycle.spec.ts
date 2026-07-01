@@ -1,9 +1,9 @@
 // URL ?v= state cycle for the SAM detail sheet:
 //   - clicking a row pushes ?v= (one history entry)
-//   - clicking ANY row while the sheet is open closes it and clears ?v=
-//     (intentional dismiss-first behaviour — a second click opens the
-//      target validator). See src/pages/stake-auction-marketplace.tsx
-//      handleValidatorClick.
+//   - clicking a DIFFERENT row while the sheet is open switches ?v= to that
+//     validator (sheet stays open); clicking the OPEN validator's own row
+//     toggles the sheet closed and clears ?v=. See
+//     src/pages/stake-auction-marketplace.tsx handleValidatorClick.
 //   - opening via deep link ?v= then closing strips the param (handleBack
 //     replaceState path)
 import { test, expect } from '@playwright/test'
@@ -28,17 +28,34 @@ test.describe('URL ?v= state cycle', () => {
     expect(page.url()).not.toBe(before)
   })
 
-  test('clicking another row while sheet is open closes it and clears ?v=', async ({
+  test('clicking a different row while the sheet is open switches ?v= to it', async ({
     page,
   }) => {
-    // Open V01 — pushState
+    // Open V01 via deep link.
     await page.goto(`/test-?v=${V01}`)
     await page.waitForSelector('tbody tr', { timeout: 30000 })
     await expect(page.locator(SHEET).first()).toBeVisible({ timeout: 10000 })
     expect(page.url()).toContain(V01)
 
-    // Click V02 row while sheet is open — the new dismiss-first behaviour
-    // closes the sheet and clears ?v= rather than switching to V02.
+    // Click V02 row while V01's sheet is open — the sheet switches to V02
+    // (stays open) and ?v= updates rather than closing.
+    const v02Row = page.locator(`tbody tr[data-vote-account="${V02}"]`).first()
+    await expect(v02Row).toBeVisible()
+    await v02Row.click({ position: { x: 50, y: 10 } })
+    await expect(page.locator(SHEET).first()).toBeVisible({ timeout: 5000 })
+    await expect(page).toHaveURL(new RegExp(`\\?v=${V02}`))
+    expect(page.url()).not.toContain(V01)
+  })
+
+  test("clicking the open validator's own row toggles the sheet closed", async ({
+    page,
+  }) => {
+    // Open V02 via deep link, then click V02's own row — same-validator
+    // click clears ?v= and closes the sheet (toggle).
+    await page.goto(`/test-?v=${V02}`)
+    await page.waitForSelector('tbody tr', { timeout: 30000 })
+    await expect(page.locator(SHEET).first()).toBeVisible({ timeout: 10000 })
+
     const v02Row = page.locator(`tbody tr[data-vote-account="${V02}"]`).first()
     await expect(v02Row).toBeVisible()
     await v02Row.click({ position: { x: 50, y: 10 } })
