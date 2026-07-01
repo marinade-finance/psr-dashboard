@@ -26,6 +26,7 @@ jobs:
       - run: npx tsc --noEmit
 
       - run: pnpm test
+
       - run: pnpm build
         env:
           VITE_RPC_URL: https://api.mainnet-beta.solana.com
