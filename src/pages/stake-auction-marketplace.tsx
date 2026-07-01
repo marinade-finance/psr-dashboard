@@ -164,21 +164,15 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
 
   const handleValidatorClick = useCallback(
     (voteAccount: string) => {
-      if (selectedValidator !== null) {
-        // Any click while the sheet is open dismisses it first.
-        // The user clicks a second time to open the new validator.
-        setSearchParams(prev => {
-          const next = new URLSearchParams(prev)
+      setSearchParams(prev => {
+        const next = new URLSearchParams(prev)
+        if (selectedValidator === voteAccount) {
           next.delete('v')
-          return next
-        })
-      } else {
-        setSearchParams(prev => {
-          const next = new URLSearchParams(prev)
+        } else {
           next.set('v', voteAccount)
-          return next
-        })
-      }
+        }
+        return next
+      })
     },
     [setSearchParams, selectedValidator],
   )
@@ -247,10 +241,20 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
     const index = validators.findIndex(
       validator => validator.voteAccount === selectedValidator,
     )
-    if (index === -1) return null
+    if (index !== -1) {
+      return {
+        validator: validators[index],
+        rank: index + 1,
+        totalValidators: validators.length,
+      }
+    }
+    // Validator exists but is out of the filtered set (bonded, no active stake).
+    // Still open the sheet so the URL param doesn't dangle.
+    const outOfSet = augmented.find(v => v.voteAccount === selectedValidator)
+    if (!outOfSet) return null
     return {
-      validator: validators[index],
-      rank: index + 1,
+      validator: outOfSet,
+      rank: null,
       totalValidators: validators.length,
     }
   }, [selectedValidator, displayAuctionResult, data, level])

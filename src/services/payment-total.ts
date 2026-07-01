@@ -20,13 +20,10 @@ export function computePaymentTotal(args: {
     0,
   )
   const penaltyTotal =
-    args.bidTooLowPenaltySol +
-    args.blacklistPenaltySol +
-    args.bondRiskFeeSol +
-    psrTotal
+    args.bidTooLowPenaltySol + args.blacklistPenaltySol + args.bondRiskFeeSol
   return {
     psrTotal,
     penaltyTotal,
-    total: args.biddingTotalSol + penaltyTotal,
+    total: args.biddingTotalSol + penaltyTotal + psrTotal,
   }
 }
