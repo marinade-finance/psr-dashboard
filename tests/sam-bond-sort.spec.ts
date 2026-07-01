@@ -108,6 +108,11 @@ test.describe('SAM table — Bond column sort', () => {
 })
 
 test.describe('SAM table — Stake / Next change column sort', () => {
+  /**
+   * Clicks the "Stake / Next change" header on a loaded SAM table.
+   * Assumes the table has rendered rows (gotoSam waits for them).
+   * Verifies the header then shows a ↑/↓ sort indicator.
+   */
   test('clicking Stake header sets a sort indicator', async ({ page }) => {
     await gotoSam(page)
     const h = page
@@ -118,6 +123,12 @@ test.describe('SAM table — Stake / Next change column sort', () => {
     await expect(h).toContainText(/[↑↓]/, { timeout: 5000 })
   })
 
+  /**
+   * Clicks the "Stake / Next change" header twice on a loaded SAM table.
+   * Assumes the table has rendered rows and the column toggles direction.
+   * Verifies both the row order and the indicator direction differ between
+   * the two clicks (sort flips, not just re-applies).
+   */
   test('Stake sort indicator and row order flip together on repeated clicks', async ({
     page,
   }) => {
@@ -138,6 +149,11 @@ test.describe('SAM table — Stake / Next change column sort', () => {
 })
 
 test.describe('SAM table — sort choice persists across reload', () => {
+  /**
+   * Selects Max APY and flips it to ascending, then reloads the page.
+   * Assumes the sort choice is persisted to localStorage.
+   * Verifies Max APY is still the active ascending sort after reload.
+   */
   test('a chosen sort survives a page reload (sticky via localStorage)', async ({
     page,
   }) => {

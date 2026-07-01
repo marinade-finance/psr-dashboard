@@ -54,9 +54,9 @@ describe('selectRedelegationPriorityRank', () => {
     const b = makeValidator('B', 10, 3, 3)
     const c = makeValidator('C', 8, 2, 2)
     const result = makeResult([b, a, c])
-    expect(selectRedelegationPriorityRank(a, result)).toBe(1)
-    expect(selectRedelegationPriorityRank(b, result)).toBe(2)
-    expect(selectRedelegationPriorityRank(c, result)).toBe(3)
+    expect(selectRedelegationPriorityRank(a, result, 0)).toBe(1)
+    expect(selectRedelegationPriorityRank(b, result, 0)).toBe(2)
+    expect(selectRedelegationPriorityRank(c, result, 0)).toBe(3)
   })
 
   it('ties share the higher position', () => {
@@ -65,9 +65,9 @@ describe('selectRedelegationPriorityRank', () => {
     const c = makeValidator('C', 8, 2, 2)
     const result = makeResult([a, b, c])
     // Neither A nor B has a strictly-higher peer → both rank 1.
-    expect(selectRedelegationPriorityRank(a, result)).toBe(1)
-    expect(selectRedelegationPriorityRank(b, result)).toBe(1)
-    expect(selectRedelegationPriorityRank(c, result)).toBe(3)
+    expect(selectRedelegationPriorityRank(a, result, 0)).toBe(1)
+    expect(selectRedelegationPriorityRank(b, result, 0)).toBe(1)
+    expect(selectRedelegationPriorityRank(c, result, 0)).toBe(3)
   })
 })
 
@@ -76,17 +76,17 @@ describe('computeNextEpochStake — context fields', () => {
     const over = makeValidator('OVER', 10, 5, 3)
     const under = makeValidator('UNDER', 8, 2, 4)
     const result = makeResult([over, under])
-    expect(computeNextEpochStake(over, result).bidGapPmpe).toBeCloseTo(2, 9)
+    expect(computeNextEpochStake(over, result, 0).bidGapPmpe).toBeCloseTo(2, 9)
     // Static bid below the clearing price → no negative gap.
-    expect(computeNextEpochStake(under, result).bidGapPmpe).toBe(0)
+    expect(computeNextEpochStake(under, result, 0).bidGapPmpe).toBe(0)
   })
 
   it('surfaces the priority rank from the greedy order', () => {
     const a = makeValidator('A', 12, 4, 4)
     const b = makeValidator('B', 9, 3, 3)
     const result = makeResult([b, a])
-    expect(computeNextEpochStake(a, result).priorityRank).toBe(1)
-    expect(computeNextEpochStake(b, result).priorityRank).toBe(2)
+    expect(computeNextEpochStake(a, result, 0).priorityRank).toBe(1)
+    expect(computeNextEpochStake(b, result, 0).priorityRank).toBe(2)
   })
 
   it('does not let bid gap or rank shift the target bid maths', () => {
@@ -94,7 +94,7 @@ describe('computeNextEpochStake — context fields', () => {
     // still derived only from the frontier totalPmpe, not the gap.
     const over = makeValidator('OVER', 10, 9, 2)
     const result = makeResult([over])
-    const n = computeNextEpochStake(over, result)
+    const n = computeNextEpochStake(over, result, 0)
     // No binding frontier here → target equals current, no increase.
     expect(n.bidIncreaseForPriority).toBe(0)
     expect(n.bidGapPmpe).toBeGreaterThan(0)
@@ -122,7 +122,7 @@ describe('computeNextEpochStake — validator already clears the frontier', () =
         stakeAmounts: { marinadeSamTvlSol: 10000 },
       },
     } as unknown as AuctionResult
-    const n = computeNextEpochStake(vFull, result)
+    const n = computeNextEpochStake(vFull, result, 0)
     // frontier = validator's own totalPmpe (10); validator clears it → no increase
     expect(n.bidIncreaseForPriority).toBe(0)
     // targetBidPmpePriority = currentBid + 0 = 4
@@ -136,7 +136,7 @@ describe('computeNextEpochStake — validator above the frontier', () => {
     const a = makeValidator('A', 20, 8, 8)
     const b = makeValidator('B', 10, 4, 4)
     const result = makeResult([a, b])
-    const n = computeNextEpochStake(a, result)
+    const n = computeNextEpochStake(a, result, 0)
     expect(n.bidIncreaseForPriority).toBe(0)
   })
 
@@ -153,7 +153,7 @@ describe('computeNextEpochStake — validator above the frontier', () => {
         stakeAmounts: { marinadeSamTvlSol: 150 },
       },
     } as unknown as AuctionResult
-    const nb = computeNextEpochStake(b, result)
+    const nb = computeNextEpochStake(b, result, 0)
     expect(nb.priorityFrontierPmpe).toBeGreaterThan(0)
     expect(nb.bidIncreaseForPriority).toBeGreaterThan(0)
   })
@@ -164,7 +164,7 @@ describe('selectRedelegationPriorityRank — validator not in rank map', () => {
     const a = makeValidator('A', 10, 4, 4)
     const result = makeResult([a])
     const ghost = makeValidator('GHOST', 7, 2, 2)
-    expect(selectRedelegationPriorityRank(ghost, result)).toBeNull()
+    expect(selectRedelegationPriorityRank(ghost, result, 0)).toBeNull()
   })
 })
 
@@ -172,6 +172,6 @@ describe('selectRedelegationPriorityRank — single validator', () => {
   it('single validator in result → rank 1', () => {
     const a = makeValidator('A', 10, 4, 4)
     const result = makeResult([a])
-    expect(selectRedelegationPriorityRank(a, result)).toBe(1)
+    expect(selectRedelegationPriorityRank(a, result, 0)).toBe(1)
   })
 })

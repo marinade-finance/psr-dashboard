@@ -144,8 +144,12 @@ export function selectWinningApyForValidator(
   v: AuctionValidator,
   auctionResult: AuctionResult,
   epochsPerYear: number,
+  minBondBalanceSol: number,
 ): number {
-  const { marginalWinner } = allocateRedelegation(auctionResult)
+  const { marginalWinner } = allocateRedelegation(
+    auctionResult,
+    minBondBalanceSol,
+  )
   const winningBidPmpe = marginalWinner
     ? Math.max(
         0,
@@ -333,7 +337,7 @@ const allocationCache = new WeakMap<
 
 function allocateRedelegation(
   auctionResult: AuctionResult,
-  minBondBalanceSol = 0,
+  minBondBalanceSol: number,
 ): RedelegationAllocation {
   let byMin = allocationCache.get(auctionResult)
   if (!byMin) {
@@ -650,7 +654,7 @@ export function selectRedelegationBudget(auctionResult: AuctionResult): number {
 // no binding frontier, any in-set validator is already served.
 export function selectRedelegationPriorityFrontierPmpe(
   auctionResult: AuctionResult,
-  minBondBalanceSol = 0,
+  minBondBalanceSol: number,
 ): number {
   return (
     allocateRedelegation(auctionResult, minBondBalanceSol)
@@ -667,8 +671,11 @@ export function selectRedelegationPriorityFrontierPmpe(
 export function selectRedelegationPriorityRank(
   v: AuctionValidator,
   auctionResult: AuctionResult,
+  minBondBalanceSol: number,
 ): number | null {
   return (
-    allocateRedelegation(auctionResult).rankByVote.get(v.voteAccount) ?? null
+    allocateRedelegation(auctionResult, minBondBalanceSol).rankByVote.get(
+      v.voteAccount,
+    ) ?? null
   )
 }

@@ -547,6 +547,7 @@ export const ValidatorDetail = ({
     validator,
     auctionResult,
     epochsPerYear,
+    dsSamConfig.minBondBalanceSol,
   )
   const winningTotalPmpe = auctionResult.winningTotalPmpe
   const apyBreakdown = getApyBreakdown(validator, epochsPerYear)

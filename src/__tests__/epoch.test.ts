@@ -1,11 +1,10 @@
-// Tests for epoch selectors: selectNetworkEpoch, selectCurrentEpochProgress (48 h clamp),
-// selectLatestPaymentSettled, selectLatestAuctionSettled, and epochMeterModel timeline builder.
+// Tests for epoch selectors: selectNetworkEpoch, selectLatestPaymentSettled,
+// selectLatestAuctionSettled, and epochMeterModel timeline builder.
 import { describe, it, expect } from 'vitest'
 
 import {
-  EPOCH_DURATION_MS,
+  epochInfoProgress,
   epochMeterModel,
-  selectCurrentEpochProgress,
   selectLatestAuctionSettled,
   selectLatestPaymentSettled,
   selectNetworkEpoch,
@@ -82,103 +81,48 @@ describe('selectNetworkEpoch', () => {
   })
 })
 
-describe('selectCurrentEpochProgress', () => {
-  const start = Date.parse('2026-05-14T00:00:00Z')
+describe('epochInfoProgress', () => {
+  const SLOTS = 432_000 // 48h / 0.4s
 
-  it('returns null when no stats have a start time', () => {
-    expect(selectCurrentEpochProgress([validator([612])], start)).toBe(null)
+  it('mid-epoch → 50% with half the slots of remaining time', () => {
+    const r = epochInfoProgress({
+      epoch: 612,
+      slotIndex: SLOTS / 2,
+      slotsInEpoch: SLOTS,
+    })
+    expect(r.epoch).toBe(612)
+    expect(r.percent).toBeCloseTo(50, 5)
+    expect(r.hoursRemaining).toBeCloseTo(24, 5)
   })
 
-  it('uses the in-progress stat (epoch_end_at === null) with a start time', () => {
-    const v: Validator = {
-      ...validator([]),
-      epoch_stats: [
-        stat({
-          epoch: 611,
-          epoch_start_at: '2026-05-12T00:00:00Z',
-          epoch_end_at: '2026-05-14T00:00:00Z',
-        }),
-        stat({
-          epoch: 612,
-          epoch_start_at: '2026-05-14T00:00:00Z',
-          epoch_end_at: null,
-        }),
-      ],
-    }
-    const half = start + EPOCH_DURATION_MS / 2
-    const result = selectCurrentEpochProgress([v], half)
-    expect(result?.epoch).toBe(612)
-    expect(result?.percent).toBeCloseTo(50, 5)
-    expect(result?.hoursRemaining).toBeCloseTo(24, 5)
+  it('start of epoch → 0% and a full epoch of remaining time', () => {
+    const r = epochInfoProgress({
+      epoch: 612,
+      slotIndex: 0,
+      slotsInEpoch: SLOTS,
+    })
+    expect(r.percent).toBe(0)
+    expect(r.hoursRemaining).toBeCloseTo(48, 5)
   })
 
-  it('ignores a late-stamped live epoch_start_at, using the previous epoch end', () => {
-    // Regression: the API stamps the in-progress epoch's start ~now; the real
-    // boundary is the previous (settled) epoch's end. Using the live start
-    // would read ~0% / ~48h all epoch long.
-    const v: Validator = {
-      ...validator([]),
-      epoch_stats: [
-        stat({
-          epoch: 611,
-          epoch_start_at: '2026-05-12T00:00:00Z',
-          epoch_end_at: '2026-05-14T00:00:00Z', // true start of 612
-        }),
-        stat({
-          epoch: 612,
-          epoch_start_at: '2026-05-15T00:00:00Z', // late: 24h after the boundary
-          epoch_end_at: null,
-        }),
-      ],
-    }
-    const half = start + EPOCH_DURATION_MS / 2 // 24h after the TRUE start
-    const result = selectCurrentEpochProgress([v], half)
-    expect(result?.epoch).toBe(612)
-    expect(result?.percent).toBeCloseTo(50, 5) // not ~0 from the late start
-    expect(result?.hoursRemaining).toBeCloseTo(24, 5)
+  it('at the last slot → clamps to 100% / 0h', () => {
+    const r = epochInfoProgress({
+      epoch: 612,
+      slotIndex: SLOTS,
+      slotsInEpoch: SLOTS,
+    })
+    expect(r.percent).toBe(100)
+    expect(r.hoursRemaining).toBe(0)
   })
 
-  it('clamps percent at 100 past the 48h mark', () => {
-    const v: Validator = {
-      ...validator([]),
-      epoch_stats: [
-        stat({ epoch: 612, epoch_start_at: '2026-05-14T00:00:00Z' }),
-      ],
-    }
-    const over = start + EPOCH_DURATION_MS * 2
-    const result = selectCurrentEpochProgress([v], over)
-    expect(result?.percent).toBe(100)
-    expect(result?.hoursRemaining).toBe(0)
-  })
-
-  it('multiple in-progress stats (epoch_end_at null) → uses the highest epoch', () => {
-    const v: Validator = {
-      ...validator([]),
-      epoch_stats: [
-        stat({
-          epoch: 611,
-          epoch_start_at: '2026-05-12T00:00:00Z',
-          epoch_end_at: null, // incorrectly open — lower epoch
-        }),
-        stat({
-          epoch: 612,
-          epoch_start_at: '2026-05-14T00:00:00Z',
-          epoch_end_at: null,
-        }),
-      ],
-    }
-    const result = selectCurrentEpochProgress([v], start)
-    expect(result?.epoch).toBe(612)
-  })
-
-  it('stat with epoch_start_at null → skipped', () => {
-    const v: Validator = {
-      ...validator([]),
-      epoch_stats: [
-        stat({ epoch: 612, epoch_start_at: null, epoch_end_at: null }),
-      ],
-    }
-    expect(selectCurrentEpochProgress([v], start)).toBeNull()
+  it('slotIndex past slotsInEpoch → still clamps to 100% / 0h', () => {
+    const r = epochInfoProgress({
+      epoch: 612,
+      slotIndex: SLOTS + 50_000,
+      slotsInEpoch: SLOTS,
+    })
+    expect(r.percent).toBe(100)
+    expect(r.hoursRemaining).toBe(0)
   })
 })
 
