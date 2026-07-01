@@ -26,11 +26,6 @@ jobs:
       - run: npx tsc --noEmit
 
       - run: pnpm test
-
-      # CI builds against mainnet-beta: the app default (rpc.marinade.finance)
-      # rejects the localhost preview origin with CORS, which the e2e
-      # no-console-errors checks would flag. Production/preview builds keep the
-      # default; only CI overrides.
       - run: pnpm build
         env:
           VITE_RPC_URL: https://api.mainnet-beta.solana.com
