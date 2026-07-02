@@ -1,4 +1,5 @@
 import {
+  AuctionConstraintType,
   DsSamSDK,
   InputsSource,
   loadSamConfig,
@@ -567,6 +568,82 @@ export const selectExpectedStakeChangeBreakdown = (
 
 export const selectCutoffRank = (v: AugmentedAuctionValidator): number =>
   v.values.cutoffRank
+
+export type ConcentrationContext = {
+  // The validator's own country / ASO group.
+  label: string
+  // The group's share of the auction's total SAM target stake (0..1).
+  pctOfTotal: number
+  // Configured concentration cap for this constraint (0..1).
+  capPct: number
+  // How many validators fall in this group.
+  groupValidatorCount: number
+  // True when THIS validator's binding cap is this exact country / ASO.
+  thisValidatorCapped: boolean
+}
+
+export type ValidatorConcentration = {
+  country: ConcentrationContext
+  aso: ConcentrationContext
+}
+
+// Per-validator concentration context: for the validator's own country and
+// ASO, how much of the auction's SAM target stake that group already holds
+// versus the configured cap, and whether this validator is itself capped by
+// that constraint. Surfaced in the detail panel so the country / ASO limits
+// stay inspectable per validator after the headline concentration tiles were
+// removed. null when the validator is not in the auction set.
+export const selectValidatorConcentration = (
+  auctionResult: AuctionResult,
+  config: DsSamConfig,
+  voteAccount: string,
+): ValidatorConcentration | null => {
+  const validators = auctionResult.auctionData.validators
+  const self = validators.find(v => v.voteAccount === voteAccount)
+  if (!self) return null
+
+  const context = (
+    pick: (v: AuctionValidator) => string,
+    capType: AuctionConstraintType,
+    capPct: number,
+  ): ConcentrationContext => {
+    const key = pick(self) || '—'
+    let groupStake = 0
+    let total = 0
+    let groupValidatorCount = 0
+    for (const v of validators) {
+      const stakeSol = v.auctionStake.marinadeSamTargetSol
+      if (stakeSol <= 0) continue
+      total += stakeSol
+      if ((pick(v) || '—') === key) {
+        groupStake += stakeSol
+        groupValidatorCount += 1
+      }
+    }
+    return {
+      label: key,
+      pctOfTotal: total > 0 ? groupStake / total : 0,
+      capPct,
+      groupValidatorCount,
+      thisValidatorCapped:
+        self.lastCapConstraint?.constraintType === capType &&
+        self.lastCapConstraint.constraintName === key,
+    }
+  }
+
+  return {
+    country: context(
+      v => v.country,
+      AuctionConstraintType.COUNTRY,
+      config.maxNetworkStakeConcentrationPerCountryDec,
+    ),
+    aso: context(
+      v => v.aso,
+      AuctionConstraintType.ASO,
+      config.maxNetworkStakeConcentrationPerAsoDec,
+    ),
+  }
+}
 
 // Budget for next-epoch re-delegation: TVL − Σ active is the pool stake
 // already liquid in the reserve, free to (re)delegate without waiting for

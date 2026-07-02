@@ -31,7 +31,7 @@ import {
   CSS_WARNING,
   CSS_MUTED_FG,
 } from 'src/css'
-import { cost, pay, topUp, stake, signedStake } from 'src/format'
+import { cost, pay, pct, topUp, stake, signedStake } from 'src/format'
 import {
   bidTooLowPenaltySol as computeBidTooLowPenaltySol,
   blacklistPenaltySol as computeBlacklistPenaltySol,
@@ -49,6 +49,7 @@ import {
   selectExpectedStakeChange,
   selectInSet,
   selectRedelegationPriorityFrontierPmpe,
+  selectValidatorConcentration,
   selectVoteAccount,
   selectWinningApyForValidator,
 } from 'src/services/sam'
@@ -69,7 +70,11 @@ import type {
   NotificationPriority,
   NotificationSummary,
 } from 'src/services/notifications'
-import type { AugmentedAuctionValidator } from 'src/services/sam'
+import type {
+  AugmentedAuctionValidator,
+  ConcentrationContext,
+  ValidatorConcentration,
+} from 'src/services/sam'
 import type { TipConstraint } from 'src/services/tip-engine'
 
 interface ValidatorDetailProps {
@@ -333,6 +338,64 @@ const MetricRow = ({
   )
 }
 
+// Per-validator concentration context (country + ASO group share vs cap).
+// Kept as its own component so the group ternaries stay out of the already
+// dense ValidatorDetail body.
+const ConcentrationRow = ({
+  label,
+  group,
+  help,
+  guideTo,
+  separator,
+}: {
+  label: string
+  group: ConcentrationContext
+  help: string
+  guideTo: string
+  separator?: boolean
+}) => (
+  <MetricRow
+    label={`${label} · ${group.label}`}
+    help={help}
+    helpGuideTo={guideTo}
+    value={`${pct(group.pctOfTotal, 1)} of ${pct(group.capPct, 0)} cap${
+      group.thisValidatorCapped ? ' · at cap' : ''
+    }`}
+    valueStyle={
+      group.thisValidatorCapped ? { color: CSS_DESTRUCTIVE } : undefined
+    }
+    separator={separator}
+  />
+)
+
+const ConcentrationCard = ({
+  concentration,
+  guideTo,
+  isSimulated,
+}: {
+  concentration: ValidatorConcentration
+  guideTo: string
+  isSimulated: boolean
+}) => (
+  <CalcCard title="Concentration" guideTo={guideTo} isSimulated={isSimulated}>
+    <div className="space-y-3">
+      <ConcentrationRow
+        label="Country"
+        group={concentration.country}
+        help="Share of Marinade's SAM target stake in your country, against the per-country concentration cap. The auction stops adding stake to a country once its share reaches the cap."
+        guideTo={guideTo}
+      />
+      <ConcentrationRow
+        label="ASO"
+        group={concentration.aso}
+        help="Share of Marinade's SAM target stake in your ASO (the operator / data-centre group), against the per-ASO concentration cap. The auction stops adding stake to an ASO once its share reaches the cap."
+        guideTo={guideTo}
+        separator
+      />
+    </div>
+  </CalcCard>
+)
+
 const PenaltyRow = ({
   label,
   value,
@@ -578,6 +641,10 @@ export const ValidatorDetail = ({
   const bondCoverage = useMemo(
     () => computeBondCoverage(validator, dsSamConfig, winningTotalPmpe),
     [validator, dsSamConfig, winningTotalPmpe],
+  )
+  const concentration = useMemo(
+    () => selectValidatorConcentration(auctionResult, dsSamConfig, voteAccount),
+    [auctionResult, dsSamConfig, voteAccount],
   )
   const paymentMetrics = useMemo(() => computeBidding(validator), [validator])
   const queryClient = useQueryClient()
@@ -1005,6 +1072,14 @@ export const ValidatorDetail = ({
                 />
               </div>
             </CalcCard>
+
+            {concentration && (
+              <ConcentrationCard
+                concentration={concentration}
+                guideTo={`${docsPath(level)}#concentration`}
+                isSimulated={isSimulated}
+              />
+            )}
 
             <CalcCard
               title="Bond"

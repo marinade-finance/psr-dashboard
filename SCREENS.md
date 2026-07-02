@@ -280,6 +280,16 @@ Marinade stake`, `Max stake wanted` (conditional — hidden when null
   or 0; 0 means opted out), `Expected change next epoch` (separator).
   The Next-epoch `HelpTip` notes the delta can be `0 SOL` even when
   target > active stake.
+- **Concentration** card (conditional — hidden when the validator is
+  not in the auction set) — `MetricRow`s for `Country · {name}` and
+  `ASO · {name}`, each valued `X% of Y% cap` where `X` is the group's
+  share of the auction's total SAM target stake and `Y` is the
+  configured cap (`maxNetworkStakeConcentrationPer{Country,Aso}Dec`).
+  When this validator's own binding cap is that country / ASO the value
+  gains a `· at cap` suffix and turns `CSS_DESTRUCTIVE`. Source:
+  `selectValidatorConcentration`. Keeps the country / ASO limits
+  inspectable per-validator after the headline concentration tiles were
+  removed.
 - **Bond** card (title clickable → Bond tab) — `Balance`, `Reserve`
   (value = `bondCoverageLabel()` — `Fully covered` / `Adequate` /
   `Top up X to grow stake` / `Top up X to keep your stake` / `Top
