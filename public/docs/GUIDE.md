@@ -43,8 +43,6 @@ Tile order (left → right) as rendered in `sam-table.tsx`:
   validators that are below their auction target (capped by the rebalancing budget).
 - **Winning APY** — APY of the _last_ validator to make the cut. The clearing
   price of the auction.
-- **Projected APY** — expected return for stakers across the whole winning set.
-- **Winning Validators** — count of validators receiving stake this epoch.
 - **Total Auction Stake** — total SOL that SAM is distributing this epoch.
 
 The detailed column reference is in [Auction Table Columns](#auction-table) and
@@ -370,9 +368,10 @@ bounded amount of SOL:
 - **Withdrawal priority** — when natural turnover pulls SOL from the pool, it
   leaves over-target validators first. Validators sitting at or below target
   are protected from forced withdrawals as long as anyone is over-target.
-- **Why "Next change" might be smaller than (target − active).** Because the
-  rebalancing budget is shared across the whole pool. A validator far below
-  target won't close the entire gap in one epoch.
+- **Why the gap to target won't close in one epoch.** The Stake column shows
+  the full gap to your auction target as `(+ N SOL)` / `(− N SOL)`. Because the
+  rebalancing budget is shared across the whole pool, a validator far below
+  target won't close the entire gap in a single epoch.
 
 _See [Stake Matching — Marinade Docs](https://docs.marinade.finance/marinade-protocol/protocol-overview/stake-auction-market#stake-matching) for the rebalancing algorithm._
 
@@ -499,25 +498,19 @@ When a country or ASO hits its cap, validators there are cut — even if their b
 
 ## Auction Table Columns
 
-The SAM table is the centrepiece of the home tab. A toggle button in the top-right of the table switches between **compact** (default) and **detailed** row view. In compact mode the vote account sub-line under each validator name and the bond health chip and gauge are hidden, keeping rows tighter. Detailed mode reveals the full bond chip, gauge, runway, and the cutoff sub-label under the rank number.
-
-Every column, in order:
+The SAM table is the centrepiece of the home tab. Every column, in order:
 
 ### `#` — Auction rank
 
-The validator's position in the auction order — always ranked by max APY,
-which is how the auction itself decides winners. (The table defaults to
-sorting rows by target stake, but the `#` rank always reflects the max-APY
-auction order, so it can look out of sequence under other sorts. Your sort
-choice is remembered across reloads.)
+The validator's position in the auction order (`#N`) — always ranked by max
+APY, which is how the auction itself decides winners. The table defaults to
+sorting rows by target stake (your sort choice is remembered across reloads),
+but the `#` rank always reflects the max-APY auction order, so it can look out
+of sequence under other sorts.
 
 - A horizontal **Winning Set Cutoff** line marks the boundary between winners
   and non-winners. Above the line → receiving stake this epoch. It appears
   under any sort order, not just the max-APY default.
-- Hovering shows the cutoff-relative offset (`+N` above, `-N` below).
-- A small **severity icon** appears next to the rank. Its colour is the
-  validator's tip urgency (red = critical action required, yellow = needs
-  attention, grey = nothing pressing).
 
 ### `Validator` — Identity
 
@@ -543,42 +536,34 @@ bid and commissions. This is what the auction sorts by.
 
 A compact summary of the validator's bond:
 
+- **Balance** — bond size in SOL.
 - **Health pill** — colour-coded status:
   - **No bond** (red) — no bond posted at all; the validator cannot win
     any stake until one is created and funded to the minimum.
-  - **Adequate** (muted) — bond covers current stake but not the ideal
-    target; validator is fine but not eligible for more stake.
   - **Healthy** (green) — bond comfortably above ideal coverage.
   - **Watch** (yellow) — bond can no longer back the validator's current
     stake; some stake will be undelegated unless the bond is topped up.
   - **Critical** (red) — bond is below the penalty threshold. The bond
     risk fee is being charged this epoch. See [Bond Risk Fee](#bond-risk-fee).
-- **Balance** — bond size in SOL.
-- **Runway** — `(Nep)` shows how many epochs the bond will last at the current
-  burn rate (Cost PMPE bid + risk fee). `(0ep)` or "Depleted" means out of money
-  imminently.
-- **Health bar** — remaining-runway gauge above the minimum threshold.
-  Full bar = runway well above minimum; partially filled = approaching
-  the minimum; empty bar = at or past minimum, which is the state in
-  which the bond risk fee fires and forced undelegation begins. Bar
-  colour matches the health pill.
+- **`X epochs to liquidate`** — critical bonds only: how many epochs the bond
+  can keep paying before it runs out at the current burn rate (Cost PMPE bid +
+  risk fee). The detail panel carries the full bond breakdown.
 
-### `Stake / Next change` — Active and projected stake
+### `Stake` — Current stake and the gap to target
 
-Two numbers stacked:
+The table's primary column. Two parts on one line:
 
-- **Top:** currently active SAM stake (SOL).
-- **Bottom (Next change):** projected stake change next epoch — driven by the
-  validator's auction outcome (bond, bid, `maxStakeWanted`), capped
-  by the redelegation budget.
-  - **Positive (green)** — the auction set a target above the current
-    active stake; the bond and bid support more.
-  - **Negative (red)** — the auction set a target below the current
-    active stake; the bond, bid, or other cap is squeezing the
-    allocation down.
+- **Current stake (bold):** how much active SAM stake you have right now (SOL).
+- **Gap to target `(+ N SOL)` / `(− N SOL)`:** the difference between your
+  current stake and the auction target for next epoch (`target − active`).
+  - **Positive (green)** — the auction set a target above your current
+    stake; the bond and bid support more, so stake should flow in.
+  - **Negative (red)** — the auction set a target below your current
+    stake; a bond, bid, or cap is squeezing the allocation down.
 
-See [Re-delegation](#redelegation) for why the delta is often smaller than the
-gap to target.
+The column sorts by current stake + gap — i.e. your target allocation.
+
+See [Re-delegation](#redelegation) for why the gap rarely closes in one epoch.
 
 ### `Next Step` — Plain-language tip
 
