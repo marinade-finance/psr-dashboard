@@ -280,16 +280,6 @@ Marinade stake`, `Max stake wanted` (conditional — hidden when null
   or 0; 0 means opted out), `Expected change next epoch` (separator).
   The Next-epoch `HelpTip` notes the delta can be `0 SOL` even when
   target > active stake.
-- **Concentration** card (conditional — hidden when the validator is
-  not in the auction set) — `MetricRow`s for `Country · {name}` and
-  `ASO · {name}`, each valued `X% of Y% cap` where `X` is the group's
-  share of the auction's total SAM target stake and `Y` is the
-  configured cap (`maxNetworkStakeConcentrationPer{Country,Aso}Dec`).
-  When this validator's own binding cap is that country / ASO the value
-  gains a `· at cap` suffix and turns `CSS_DESTRUCTIVE`. Source:
-  `selectValidatorConcentration`. Keeps the country / ASO limits
-  inspectable per-validator after the headline concentration tiles were
-  removed.
 - **Bond** card (title clickable → Bond tab) — `Balance`, `Reserve`
   (value = `bondCoverageLabel()` — `Fully covered` / `Adequate` /
   `Top up X to grow stake` / `Top up X to keep your stake` / `Top
@@ -300,15 +290,25 @@ epochs`). Balance renders 3-decimal `cost()` precision for a
   reads as "0 SOL". Bid runway is forced to `Depleted` when
   bond-health is `no-bond` or `critical` so Balance, Reserve and
   Bid runway always tell one coherent story.
+- **Concentration** card (conditional — hidden when the validator is
+  not in the auction set) — `MetricRow`s for `Country · {name}` and
+  `ASO · {name}`, each valued `X% of Y% cap` where `X` is the group's
+  share of the auction's total SAM target stake and `Y` is the
+  configured cap (`maxNetworkStakeConcentrationPer{Country,Aso}Dec`).
+  When this validator's own binding cap is that country / ASO the value
+  gains a `· at cap` suffix and turns `CSS_DESTRUCTIVE`. Source:
+  `selectValidatorConcentration`. Keeps the country / ASO limits
+  inspectable per-validator after the headline concentration tiles were
+  removed.
+
+Right column:
+
 - **Payments** card (title clickable → Payments tab) — `Active stake
 cost`, `Activating stake cost`, a `Penalty` summary row (`No
 penalties` when total is zero, or the destructive total cost),
   optional sub-rows `↳ bid-too-low penalty` / `↳ blacklist penalty`
   / `↳ bond risk fee` (each a `PenaltyRow` that routes to its own
   breakdown tab), then `Expected payment this epoch` (separator).
-
-Right column:
-
 - **APY Composition** — `ApyCompositionCard`. Segmented bar showing
   inflation / MEV / block rewards / stake bid. Bar widths use raw
   PMPE proportions (so they sum to total); the displayed % is each

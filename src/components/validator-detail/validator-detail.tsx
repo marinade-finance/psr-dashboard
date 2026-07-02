@@ -1073,14 +1073,6 @@ export const ValidatorDetail = ({
               </div>
             </CalcCard>
 
-            {concentration && (
-              <ConcentrationCard
-                concentration={concentration}
-                guideTo={`${docsPath(level)}#concentration`}
-                isSimulated={isSimulated}
-              />
-            )}
-
             <CalcCard
               title="Bond"
               guideTo={`${docsPath(level)}#bond`}
@@ -1113,6 +1105,16 @@ export const ValidatorDetail = ({
               </div>
             </CalcCard>
 
+            {concentration && (
+              <ConcentrationCard
+                concentration={concentration}
+                guideTo={`${docsPath(level)}#concentration`}
+                isSimulated={isSimulated}
+              />
+            )}
+          </div>
+
+          <div className="space-y-6">
             <CalcCard
               title="Payments"
               guideTo={`${docsPath(level)}#detail-panel`}
@@ -1172,9 +1174,7 @@ export const ValidatorDetail = ({
                 />
               </div>
             </CalcCard>
-          </div>
 
-          <div className="space-y-6">
             <ApyCompositionCard
               apyBreakdown={apyBreakdown}
               winningApy={winningApy}
