@@ -35,24 +35,19 @@ async function readColumn(page: Page, nthChild: number) {
   return vals
 }
 
-// The Stake cell carries TWO numerics: active stake on the first line,
-// signed delta on the second. The Stake header sorts by delta, so the
-// monotonicity check needs the second token (signed) — not the first
-// (active, which is independent of the sort key).
-async function readStakeDeltas(page: Page) {
+// The Stake header sorts by target stake, which is not a displayed column
+// value (the cell shows active stake + signed delta). So Stake-sort tests
+// detect a reorder via the validator-name order rather than column values.
+async function readValidatorOrder(page: Page) {
   const cells = page.locator(
-    `tbody tr:not([data-divider]):not([data-ghost="true"]) td:nth-child(5)`,
+    'tbody tr:not([data-divider]):not([data-ghost="true"]) td:nth-child(2)',
   )
   const n = await cells.count()
-  const vals: number[] = []
+  const names: string[] = []
   for (let i = 0; i < n; i++) {
-    const text = await cells.nth(i).innerText()
-    const matches = text.match(/-?[\d,]+(?:\.\d+)?/g)
-    if (!matches || matches.length < 2) continue
-    const delta = parseFloat(matches[1].replace(/,/g, ''))
-    if (!isNaN(delta)) vals.push(delta)
+    names.push((await cells.nth(i).innerText()).trim())
   }
-  return vals
+  return names
 }
 
 // The SAM table renders two segments by default: above-cutoff (winners +
@@ -112,54 +107,72 @@ test.describe('SAM table — Bond column sort', () => {
   })
 })
 
-test.describe('SAM table — Stake / Next Δ column sort', () => {
-  test('clicking Stake header reorders rows by stake delta', async ({
-    page,
-  }) => {
+test.describe('SAM table — Stake / Next change column sort', () => {
+  /**
+   * Clicks the "Stake / Next change" header on a loaded SAM table.
+   * Assumes the table has rendered rows (gotoSam waits for them).
+   * Verifies the header then shows a ↑/↓ sort indicator.
+   */
+  test('clicking Stake header sets a sort indicator', async ({ page }) => {
     await gotoSam(page)
-    const h = page.locator('thead th').filter({ hasText: /Stake/ }).first()
+    const h = page
+      .locator('thead th')
+      .filter({ hasText: /Stake \/ Next/ })
+      .first()
     await h.click({ position: { x: 10, y: 10 } })
-    const vals = await readStakeDeltas(page)
-    expect(vals.length).toBeGreaterThan(1)
-    const sorted = isSortedAsc(vals) || isSortedDesc(vals)
-    expect(sorted).toBe(true)
+    await expect(h).toContainText(/[↑↓]/, { timeout: 5000 })
   })
 
-  test('Stake sort indicator and values flip together on repeated clicks', async ({
+  /**
+   * Clicks the "Stake / Next change" header twice on a loaded SAM table.
+   * Assumes the table has rendered rows and the column toggles direction.
+   * Verifies both the row order and the indicator direction differ between
+   * the two clicks (sort flips, not just re-applies).
+   */
+  test('Stake sort indicator and row order flip together on repeated clicks', async ({
     page,
   }) => {
     await gotoSam(page)
-    const h = page.locator('thead th').filter({ hasText: /Stake/ }).first()
+    const h = page
+      .locator('thead th')
+      .filter({ hasText: /Stake \/ Next/ })
+      .first()
     await h.click({ position: { x: 10, y: 10 } })
-    const firstOrder = (await readStakeDeltas(page)).join(',')
+    const firstOrder = (await readValidatorOrder(page)).join(',')
     const firstIndicator = (await h.innerText()).includes('↑') ? '↑' : '↓'
     await h.click({ position: { x: 10, y: 10 } })
-    const secondOrder = (await readStakeDeltas(page)).join(',')
+    const secondOrder = (await readValidatorOrder(page)).join(',')
     const secondIndicator = (await h.innerText()).includes('↑') ? '↑' : '↓'
     expect(firstOrder).not.toBe(secondOrder)
     expect(firstIndicator).not.toBe(secondIndicator)
   })
 })
 
-test.describe('SAM table — default sort holds after reload', () => {
-  test('reloading the page restores the default Max APY DESC sort', async ({
+test.describe('SAM table — sort choice persists across reload', () => {
+  /**
+   * Selects Max APY and flips it to ascending, then reloads the page.
+   * Assumes the sort choice is persisted to localStorage.
+   * Verifies Max APY is still the active ascending sort after reload.
+   */
+  test('a chosen sort survives a page reload (sticky via localStorage)', async ({
     page,
   }) => {
     await gotoSam(page)
-    // Flip to ASC.
+    // Select Max APY and flip it to ASC (two clicks: desc then asc).
     const apyH = page
       .locator('thead th')
       .filter({ hasText: /Max APY/ })
       .first()
     await apyH.click({ position: { x: 10, y: 10 } })
+    await apyH.click({ position: { x: 10, y: 10 } })
     await expect(apyH).toContainText('↑')
-    // Now reload — sort state is in-memory, so the default ↓ should be back.
+    // Reload — the choice is persisted, so Max APY ASC should still be active.
     await page.reload()
     await page.waitForSelector('tbody tr', { timeout: 30000 })
     const reloaded = page
       .locator('thead th')
       .filter({ hasText: /Max APY/ })
       .first()
-    await expect(reloaded).toContainText('↓')
+    await expect(reloaded).toContainText('↑')
   })
 })

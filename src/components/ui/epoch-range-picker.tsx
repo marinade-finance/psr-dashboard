@@ -6,7 +6,6 @@ import { ICON_CHEVRON_DOWN_SM } from 'src/components/icons/icon-chevron-down-sm'
 import { ICON_CHEVRON_LEFT } from 'src/components/icons/icon-chevron-left'
 import { ICON_CHEVRON_RIGHT } from 'src/components/icons/icon-chevron-right'
 
-// How many epochs per panel column × rows
 const PANEL_SIZE = 30 // 6 cols × 5 rows
 const CELL_BTN =
   'relative z-10 w-8 h-8 flex items-center justify-center rounded-full text-xs font-mono transition-colors'
@@ -63,8 +62,6 @@ export const EpochRangePicker: React.FC<Props> = ({
     return () => document.removeEventListener('mousedown', handler)
   }, [open])
 
-  // Left panel shows [pageStart, pageStart+PANEL_SIZE)
-  // Right panel shows [pageStart+PANEL_SIZE, pageStart+PANEL_SIZE*2)
   const leftEpochs = epochs.slice(pageStart, pageStart + PANEL_SIZE)
   const rightEpochs = epochs.slice(
     pageStart + PANEL_SIZE,
@@ -190,7 +187,6 @@ export const EpochRangePicker: React.FC<Props> = ({
     )
   }
 
-  // Epoch range label for left/right panels
   const leftLabel =
     leftEpochs.length > 0
       ? `${leftEpochs[0]}–${leftEpochs[leftEpochs.length - 1]}`
@@ -202,7 +198,6 @@ export const EpochRangePicker: React.FC<Props> = ({
 
   return (
     <div className="relative" ref={ref}>
-      {/* Trigger — dual slot Airbnb style */}
       <button
         type="button"
         onClick={() => {
@@ -215,12 +210,10 @@ export const EpochRangePicker: React.FC<Props> = ({
           open && 'border-primary ring-1 ring-primary/30',
         )}
       >
-        {/* Calendar icon */}
         <span className="flex items-center px-3 text-muted-foreground">
           {ICON_CALENDAR}
         </span>
 
-        {/* Start slot */}
         <span
           className={cn(
             'flex flex-col items-start justify-center px-3 py-1 text-left',
@@ -242,10 +235,8 @@ export const EpochRangePicker: React.FC<Props> = ({
           </span>
         </span>
 
-        {/* Divider */}
         <span className="w-px bg-border self-stretch" />
 
-        {/* End slot */}
         <span
           className={cn(
             'flex flex-col items-start justify-center px-3 py-1 text-left',
@@ -265,16 +256,13 @@ export const EpochRangePicker: React.FC<Props> = ({
           </span>
         </span>
 
-        {/* Chevron */}
         <span className="flex items-center px-2 text-muted-foreground">
           {ICON_CHEVRON_DOWN_SM}
         </span>
       </button>
 
-      {/* Popover */}
       {open && (
         <div className="absolute top-full mt-2 z-50 bg-card border border-border rounded-2xl shadow-xl p-4 w-[calc(100vw-2rem)] sm:w-[540px] right-0 sm:right-auto">
-          {/* Header row */}
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs uppercase tracking-wider font-medium text-muted-foreground">
               {selecting === 'start'
@@ -302,7 +290,6 @@ export const EpochRangePicker: React.FC<Props> = ({
             </button>
           </div>
 
-          {/* Two-panel grid — stacked on mobile, side-by-side on sm+ */}
           <div className="flex flex-col sm:flex-row gap-4">
             {renderPanel(leftEpochs, leftLabel)}
             <div className="hidden sm:block w-px bg-border self-stretch" />
@@ -310,7 +297,6 @@ export const EpochRangePicker: React.FC<Props> = ({
             {renderPanel(rightEpochs, rightLabel)}
           </div>
 
-          {/* Navigation */}
           <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
             <button
               type="button"

@@ -22,9 +22,12 @@ export type NextEpochStake = {
 export const computeNextEpochStake = (
   v: AugmentedAuctionValidator,
   auctionResult: AuctionResult,
+  minBondBalanceSol: number,
 ): NextEpochStake => {
-  const priorityFrontierPmpe =
-    selectRedelegationPriorityFrontierPmpe(auctionResult)
+  const priorityFrontierPmpe = selectRedelegationPriorityFrontierPmpe(
+    auctionResult,
+    minBondBalanceSol,
+  )
   const pmpeGap =
     priorityFrontierPmpe > 0
       ? Math.max(0, priorityFrontierPmpe - v.revShare.totalPmpe)
@@ -35,6 +38,10 @@ export const computeNextEpochStake = (
       priorityFrontierPmpe > 0 ? v.revShare.bidPmpe + pmpeGap : 0,
     bidIncreaseForPriority: pmpeGap,
     bidGapPmpe: Math.max(0, v.revShare.bidPmpe - selectEffectiveBid(v)),
-    priorityRank: selectRedelegationPriorityRank(v, auctionResult),
+    priorityRank: selectRedelegationPriorityRank(
+      v,
+      auctionResult,
+      minBondBalanceSol,
+    ),
   }
 }

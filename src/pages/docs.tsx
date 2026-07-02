@@ -244,6 +244,7 @@ export const DocsPage: React.FC<Props> = ({ level }) => {
     if (status !== 'success' || !activePage) return undefined
     if (!hashName || DOCS.includes(hashName as Doc)) return undefined
     if (!activePage.anchors.includes(hashName)) return undefined
+    const timers: number[] = []
     const id = requestAnimationFrame(() => {
       const el = document.getElementById(hashName)
       if (!el) return
@@ -253,11 +254,14 @@ export const DocsPage: React.FC<Props> = ({ level }) => {
       if (next && /^H[1-6]$/.test(next.tagName)) targets.push(next)
       for (const t of targets) {
         t.classList.add('anchor-highlight')
-        setTimeout(() => t.classList.remove('anchor-highlight'), 2200)
+        timers.push(
+          window.setTimeout(() => t.classList.remove('anchor-highlight'), 2200),
+        )
       }
     })
     return () => {
       cancelAnimationFrame(id)
+      timers.forEach(t => window.clearTimeout(t))
     }
   }, [status, activePage, hashName])
 

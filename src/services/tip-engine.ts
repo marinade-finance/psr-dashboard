@@ -173,7 +173,7 @@ export function bondAdvice(
       }
       if (coverage.bondRiskFeeShortfall > 0) {
         return {
-          text: `Top up ${topUp(coverage.bondRiskFeeShortfall)} or face fee charges.`,
+          text: `Top up ${topUp(coverage.bondRiskFeeShortfall)} to avoid bond liquidation.`,
           urgency: 'critical',
           tone: 'red',
         }

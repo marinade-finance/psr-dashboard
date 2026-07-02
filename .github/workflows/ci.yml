@@ -28,6 +28,8 @@ jobs:
       - run: pnpm test
 
       - run: pnpm build
+        env:
+          VITE_RPC_URL: https://api.mainnet-beta.solana.com
 
       - name: Cache Playwright browsers
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5

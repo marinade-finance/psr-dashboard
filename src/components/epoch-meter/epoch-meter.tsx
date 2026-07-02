@@ -1,58 +1,65 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import React, { useEffect, useState } from 'react'
+import React, { useRef, useState } from 'react'
 
 import { cn } from 'src/class_utils'
 import { Gauge } from 'src/components/gauge/gauge'
+import { usePinnedTooltip } from 'src/components/help-tip/help-tip'
 import { Tooltip } from 'src/components/ui/tooltip'
 import {
+  epochInfoProgress,
   epochMeterModel,
-  selectCurrentEpochProgress,
-  selectLatestAuctionSettled,
-  selectLatestPaymentSettled,
-  selectNetworkEpoch,
+  fetchAuctionEpoch,
+  fetchEpochInfo,
+  fetchEpochMeterData,
   type EpochMeterModel,
   type EpochProgress,
   type TimelineStage,
 } from 'src/services/epoch'
-import { loadSam } from 'src/services/sam'
-import { fetchProtectedEventsWithValidators } from 'src/services/validator-with-protected_event'
 
 // Nav chip: epoch number with a leading progress ring. Hover shows a
 // timeline of pipeline stages (payments-settled / auction-settled / live /
 // next-auction), each anchored to its concrete epoch.
 export const EpochMeter: React.FC = () => {
   const queryClient = useQueryClient()
-  const { data: sam } = useQuery({
-    queryKey: ['sam'],
-    queryFn: () => loadSam(),
+  // Lean nav queries: the chip needs only scalars (the auction epoch int and a
+  // few epoch numbers), so the always-mounted nav never retains the full
+  // ['sam'] AuctionResult or the multi-MB ['protected-events'] payload. Both
+  // reuse the shared caches via ensureQueryData. staleTime === refetchInterval
+  // so navigation never refetches — load at most once per epoch-scale timeout,
+  // keep cached, no reload churn.
+  const { data: auctionEpoch } = useQuery({
+    queryKey: ['auction-epoch'],
+    queryFn: () => fetchAuctionEpoch(queryClient),
+    staleTime: 60 * 60 * 1000,
+    refetchInterval: 60 * 60 * 1000,
   })
-  const { data: protectedEvents } = useQuery({
-    queryKey: ['protected-events'],
-    queryFn: () => fetchProtectedEventsWithValidators(queryClient),
+  const { data: meter } = useQuery({
+    queryKey: ['epoch-meter'],
+    queryFn: () => fetchEpochMeterData(queryClient),
+    staleTime: 60 * 60 * 1000,
+    refetchInterval: 60 * 60 * 1000,
+  })
+  // Slot-accurate epoch progress straight from the cluster RPC. When it is
+  // unavailable the chip drops its progress and shows "RPC unavailable" — we
+  // never fake progress from timestamps.
+  const { data: epochInfo } = useQuery({
+    queryKey: ['epoch-info'],
+    queryFn: ({ signal }) => fetchEpochInfo(signal),
+    staleTime: 10 * 60 * 1000,
+    refetchInterval: 10 * 60 * 1000,
   })
 
-  const [now, setNow] = useState(() => Date.now())
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 60_000)
-    return () => clearInterval(id)
-  }, [])
+  // Click pins the timeline tooltip open (sticky), same singleton as HelpTip.
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const [hovered, setHovered] = useState(false)
+  const { pinned, toggle } = usePinnedTooltip(triggerRef)
 
-  const auctionEpoch = sam?.auctionResult.auctionData.epoch
   if (auctionEpoch === undefined) return null
 
-  const validators = protectedEvents
-    ? protectedEvents.flatMap(e => (e.validator ? [e.validator] : []))
-    : []
-  const networkEpoch = validators.length ? selectNetworkEpoch(validators) : null
-  const paymentSettled = protectedEvents
-    ? selectLatestPaymentSettled(protectedEvents, networkEpoch)
-    : null
-  const auctionSettled = protectedEvents
-    ? selectLatestAuctionSettled(protectedEvents, networkEpoch)
-    : null
-  const progress = validators.length
-    ? selectCurrentEpochProgress(validators, now)
-    : null
+  const networkEpoch = meter?.networkEpoch ?? null
+  const paymentSettled = meter?.paymentSettled ?? null
+  const auctionSettled = meter?.auctionSettled ?? null
+  const progress = epochInfo ? epochInfoProgress(epochInfo) : null
 
   const model = epochMeterModel({
     auctionEpoch,
@@ -60,12 +67,18 @@ export const EpochMeter: React.FC = () => {
     paymentSettled,
     auctionSettled,
   })
-  const ringPercent =
-    progress && progress.epoch === networkEpoch ? progress.percent : 0
+  const ringPercent = progress?.percent ?? 0
 
   return (
-    <Tooltip content={<TimelineCard model={model} progress={progress} />}>
+    <Tooltip
+      content={<TimelineCard model={model} progress={progress} />}
+      open={pinned || hovered}
+      onOpenChange={o => {
+        if (!pinned) setHovered(o)
+      }}
+    >
       <button
+        ref={triggerRef}
         type="button"
         aria-label={
           model.critical
@@ -74,8 +87,11 @@ export const EpochMeter: React.FC = () => {
               ? `${model.label} (stale)`
               : model.label
         }
+        aria-pressed={pinned}
+        onPointerDown={e => e.preventDefault()}
+        onClick={toggle}
         className={cn(
-          'text-xs font-mono px-2 py-1 rounded-md whitespace-nowrap inline-flex items-center gap-1.5 cursor-default border focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors',
+          'text-xs font-mono px-2 py-1 rounded-md whitespace-nowrap inline-flex items-center gap-1.5 cursor-pointer border focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors',
           model.critical
             ? 'bg-destructive-light text-destructive border-destructive/25'
             : model.stale
@@ -155,7 +171,6 @@ function TimelineCard({
   const { timeline } = model
   if (timeline.length === 0) return null
   const percent = progress?.percent ?? 0
-  const hours = progress?.hoursRemaining ?? null
   return (
     <div className="flex flex-col items-center gap-2 py-1 px-1">
       <div className="flex items-stretch">
@@ -198,15 +213,17 @@ function TimelineCard({
           )
         })}
       </div>
-      {progress !== null && (
+      {progress !== null ? (
         <div className="w-full flex flex-col items-stretch gap-1 mt-1 px-1">
           <Gauge value={percent} scaleMax={100} tone="bg-primary" size="lg" />
-          {hours !== null && (
-            <span className="text-2xs text-muted-foreground text-center">
-              ~{Math.round(hours)}h remaining
-            </span>
-          )}
+          <span className="text-2xs text-muted-foreground text-center">
+            {`~${Math.round(progress.hoursRemaining)}h remaining`}
+          </span>
         </div>
+      ) : (
+        <span className="text-2xs text-muted-foreground text-center mt-1">
+          RPC unavailable
+        </span>
       )}
     </div>
   )

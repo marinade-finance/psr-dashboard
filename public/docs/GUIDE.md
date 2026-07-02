@@ -6,6 +6,8 @@ The PSR (Protected Staking Rewards) Dashboard shows Marinade's stake-distributio
 system: who is bidding for stake, who has won this epoch's auction, which validators
 have bond coverage, and which past epochs triggered protected-event payouts.
 
+The bell icon in the top navigation bar shows validator-specific alerts; a count badge appears when there are unread notifications for the validator you are looking at.
+
 The auction itself is recomputed in your browser using the
 [`@marinade.finance/ds-sam-sdk`](https://github.com/marinade-finance/ds-sam/tree/main/packages/ds-sam-sdk)
 package — so most numbers come straight from the same algorithm Marinade runs
@@ -497,14 +499,21 @@ When a country or ASO hits its cap, validators there are cut — even if their b
 
 ## Auction Table Columns
 
-The SAM table is the centrepiece of the home tab. Every column, in order:
+The SAM table is the centrepiece of the home tab. A toggle button in the top-right of the table switches between **compact** (default) and **detailed** row view. In compact mode the vote account sub-line under each validator name and the bond health chip and gauge are hidden, keeping rows tighter. Detailed mode reveals the full bond chip, gauge, runway, and the cutoff sub-label under the rank number.
+
+Every column, in order:
 
 ### `#` — Auction rank
 
-The validator's position in the auction order, sorted by max APY by default.
+The validator's position in the auction order — always ranked by max APY,
+which is how the auction itself decides winners. (The table defaults to
+sorting rows by target stake, but the `#` rank always reflects the max-APY
+auction order, so it can look out of sequence under other sorts. Your sort
+choice is remembered across reloads.)
 
 - A horizontal **Winning Set Cutoff** line marks the boundary between winners
-  and non-winners. Above the line → receiving stake this epoch.
+  and non-winners. Above the line → receiving stake this epoch. It appears
+  under any sort order, not just the max-APY default.
 - Hovering shows the cutoff-relative offset (`+N` above, `-N` below).
 - A small **severity icon** appears next to the rank. Its colour is the
   validator's tip urgency (red = critical action required, yellow = needs
@@ -625,8 +634,11 @@ A two-column dashboard summarising the validator's situation. The cards
 that have a deeper companion tab — Bond, Expected Payment, APY
 Composition — let you click their title to jump there.
 
-- **Stake** — three rows: Active Marinade stake (SOL delegated right
-  now), Target Marinade stake (what the auction wants you to have), and
+- **Stake** — Activated Marinade stake (the SOL currently delegated to this
+  validator — the label in the UI reads "Activated Marinade stake"),
+  Target Marinade stake (what the auction wants you to have), Max stake
+  wanted (your [self-imposed cap](#stake-wanted) — only shown when set
+  above 0; a cap of 0 means you opted out and the row is hidden), and
   Expected change next epoch (signed delta — green for gains, red for
   losses). Losses come mostly from falling out of the auction; a small
   share is the natural-turnover share spread pro-rata across all
@@ -646,11 +658,15 @@ Composition — let you click their title to jump there.
   Click any sub-row label to jump straight to the tab that explains it.
   The Total at the bottom reconciles with the Payments tab.
 - **Max APY composition** — a stacked bar showing how the validator's
-  total APY splits across Inflation, MEV, Block rewards, and the Stake
-  bid contribution. Each row has its own bar segment, the segment colour
-  matches a tiny swatch on the row, and the rightmost number is that
-  component's APY. The grey line under each label is the commission the
-  validator takes on that source — `0% commission`, `your bid`.
+  total APY **to stakers** splits across Inflation, MEV, Block rewards,
+  and the Stake bid contribution. Every segment is already net of
+  commission — it is what stakers actually receive. Each row has its own
+  bar segment, the segment colour matches a tiny swatch on the row, and
+  the rightmost number is that component's APY. The grey line under each
+  label gives the commission context: Inflation and MEV show the
+  commission the validator keeps (`0% commission`); Block rewards show
+  the share GIVEN to stakers (`100% shared`). When `0% shared`, the
+  validator keeps all block rewards, so that segment is empty.
   - **Winning APY threshold** — the headline figure top-left. This is
     the minimum total APY the validator must offer to win stake, and it
     is **rebuilt at this validator's own commission profile** — not a

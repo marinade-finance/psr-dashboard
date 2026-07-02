@@ -85,8 +85,8 @@ export const loadSam = async (): Promise<SamResult> => {
 // AugmentedAuctionValidator: AuctionValidator with derived per-validator fields
 // pre-computed. expectedStakeChangeSol drives the next-epoch delta display and
 // decomposes into three signed components that always sum to it:
-//   paidUndelegationSol (≤0)      scheduled undelegation outflow (only when target < active)
-//   redelegationInflowSol (≥0)    inflow from the 1% rotation budget
+//   paidUndelegationSol (≤0)      scheduled undelegation outflow (only when target ≤ active)
+//   redelegationInflowSol (≥0)    inflow from the uninvested float (TVL − Σactive)
 //   naturalWithdrawalSol (≤0)     rotation outflow (over-target excess, lowest unstakePriority first)
 // cutoffRank is the dense position relative to the auction cutoff: 0 = at the
 // winning total PMPE, +1 = closest distinct tier above (ties share a rank),
@@ -144,8 +144,12 @@ export function selectWinningApyForValidator(
   v: AuctionValidator,
   auctionResult: AuctionResult,
   epochsPerYear: number,
+  minBondBalanceSol: number,
 ): number {
-  const { marginalWinner } = allocateRedelegation(auctionResult)
+  const { marginalWinner } = allocateRedelegation(
+    auctionResult,
+    minBondBalanceSol,
+  )
   const winningBidPmpe = marginalWinner
     ? Math.max(
         0,
@@ -252,8 +256,19 @@ export const selectEffectiveCost = (validator: AuctionValidator) =>
 // Not SDK-exported; maintained here until the SDK exposes it.
 const WITHDRAWAL_FRACTION_PER_EPOCH = 0.01
 
+// Paid undelegation (bond risk fee) projection switch. OFF: the protocol
+// allocates the 1% rotation budget bottom-up by unstakePriority and does not
+// currently prioritise undelegating the paid-undelegation validators, so a
+// paid validator at target does not actually lose that stake this epoch.
+// Flip to true once the protocol prioritises these undelegations.
+const PAID_UNDELEGATION_ENABLED = false
+
+const gatedPaidUndelegationSol = (v: AuctionValidator): number =>
+  PAID_UNDELEGATION_ENABLED ? selectPaidUndelegationSol(v) : 0
+
 // 1%-TVL rotation: sorted by unstakePriority asc (lowest prio unstaked first),
 // takes each validator's over-target excess until the budget is exhausted.
+// Paid undelegation is applied first; the rotation only takes what remains.
 function computeNaturalWithdrawal(
   validators: AuctionValidator[],
   tvl: number,
@@ -265,9 +280,10 @@ function computeNaturalWithdrawal(
     Number.isFinite(v.unstakePriority) ? v.unstakePriority : Infinity
   const sorted = [...validators].sort((a, b) => prio(a) - prio(b))
   for (const v of sorted) {
+    const paid = gatedPaidUndelegationSol(v)
     const excess = Math.max(
       0,
-      v.marinadeActivatedStakeSol - v.auctionStake.marinadeSamTargetSol,
+      v.marinadeActivatedStakeSol - paid - v.auctionStake.marinadeSamTargetSol,
     )
     if (excess <= 0) continue
     const take = Math.min(excess, remaining)
@@ -314,19 +330,27 @@ type RedelegationAllocation = {
 // selectRedelegationPriorityFrontierPmpe, selectRedelegationPriorityRank,
 // selectWinningApyForValidator, and computeNextEpochStake — same auction
 // would otherwise run the greedy pass once per consumer per detail open.
-const allocationCache = new WeakMap<AuctionResult, RedelegationAllocation>()
+const allocationCache = new WeakMap<
+  AuctionResult,
+  Map<number, RedelegationAllocation>
+>()
 
 function allocateRedelegation(
   auctionResult: AuctionResult,
+  minBondBalanceSol: number,
 ): RedelegationAllocation {
-  const cached = allocationCache.get(auctionResult)
+  let byMin = allocationCache.get(auctionResult)
+  if (!byMin) {
+    byMin = new Map()
+    allocationCache.set(auctionResult, byMin)
+  }
+  const cached = byMin.get(minBondBalanceSol)
   if (cached) return cached
+
   const validators = auctionResult.auctionData.validators
   const budget = selectRedelegationBudget(auctionResult)
-  const effectiveActive = (v: AuctionValidator) =>
-    v.marinadeActivatedStakeSol - selectPaidUndelegationSol(v)
   const rawDelta = (v: AuctionValidator) =>
-    v.auctionStake.marinadeSamTargetSol - effectiveActive(v)
+    v.auctionStake.marinadeSamTargetSol - v.marinadeActivatedStakeSol
 
   const sorted = [...validators].sort(
     (va, vb) => (vb.revShare.totalPmpe ?? 0) - (va.revShare.totalPmpe ?? 0),
@@ -348,7 +372,8 @@ function allocateRedelegation(
     if (v.auctionStake.marinadeSamTargetSol > 0) {
       marginalWinner = v
     }
-    if (budget > 0) {
+    const belowMin = (v.bondBalanceSol ?? 0) < minBondBalanceSol
+    if (budget > 0 && !belowMin) {
       const delta = rawDelta(v)
       if (delta > 0 && remaining > 0) {
         const alloc = Math.min(delta, remaining)
@@ -369,14 +394,18 @@ function allocateRedelegation(
     rankByVote,
     marginalWinner,
   }
-  allocationCache.set(auctionResult, result)
+  byMin.set(minBondBalanceSol, result)
   return result
 }
 
-// paidUndelegation = SDK's paidUndelegationSol: scheduled undelegation outflow.
-// Applied as a negative only when target < active — if target ≥ active the
-// undelegation is absorbed by incoming redelegation and the net outflow is zero.
+// paidUndelegation = SDK's paidUndelegationSol (positive magnitude): bond risk
+// fee charged by undelegating stake. Only non-zero when target ≤ active —
+// when target > active the validator is receiving stake, not losing it.
+// target < active: capped at active−target so stake never projects below target.
+// target == active: shown in full as a negative; no rotation inflow offsets it.
 // Sub-min-bond validators lose all stake and are excluded from inflow/rotation.
+// Gated by PAID_UNDELEGATION_ENABLED — off by default, so paid resolves to 0
+// and this branch is inert until the protocol prioritises these undelegations.
 function computeExpectedStakeChanges(
   auctionResult: AuctionResult,
   minBondBalanceSol: number,
@@ -407,26 +436,36 @@ function computeExpectedStakeChanges(
       entry.total = -validator.marinadeActivatedStakeSol
       continue
     }
-    const paid = selectPaidUndelegationSol(validator)
-    if (
-      paid > 0 &&
-      validator.auctionStake.marinadeSamTargetSol <
-        validator.marinadeActivatedStakeSol
-    ) {
-      // Cap at active−target so the projected stake never undershoots target.
-      const maxUndel =
-        validator.marinadeActivatedStakeSol -
-        validator.auctionStake.marinadeSamTargetSol
-      const capped = Math.min(paid, maxUndel)
+    const paid = gatedPaidUndelegationSol(validator)
+    if (paid > 0) {
       const entry = get(validator.voteAccount)
-      entry.paidUndelegation = -capped
-      entry.total += -capped
+      if (
+        validator.auctionStake.marinadeSamTargetSol <
+        validator.marinadeActivatedStakeSol
+      ) {
+        // Cap at active−target so the projected stake never undershoots target.
+        const maxUndel =
+          validator.marinadeActivatedStakeSol -
+          validator.auctionStake.marinadeSamTargetSol
+        const capped = Math.min(paid, maxUndel)
+        entry.paidUndelegation = -capped
+        entry.total += -capped
+      } else {
+        // target >= active: no rotation inflow (rawDelta = target - active ≤ 0).
+        // paidUndelegation can only be non-zero when target == active (fee charged
+        // while at target); show it in full so the net expected change is correct.
+        entry.paidUndelegation = -paid
+        entry.total += -paid
+      }
     }
   }
 
   const byVote = new Map(validators.map(v => [v.voteAccount, v] as const))
 
-  const { inflowByVote } = allocateRedelegation(auctionResult)
+  const { inflowByVote } = allocateRedelegation(
+    auctionResult,
+    minBondBalanceSol,
+  )
   for (const [va, alloc] of inflowByVote) {
     const validator = byVote.get(va)
     if (validator && bondBelowMin(validator)) continue
@@ -435,7 +474,10 @@ function computeExpectedStakeChanges(
     entry.total += alloc
   }
 
-  const withdrawals = computeNaturalWithdrawal(validators, tvl)
+  const withdrawals = computeNaturalWithdrawal(
+    validators.filter(v => !bondBelowMin(v)),
+    tvl,
+  )
   for (const [va, w] of withdrawals) {
     const validator = byVote.get(va)
     if (validator && bondBelowMin(validator)) continue
@@ -612,8 +654,12 @@ export function selectRedelegationBudget(auctionResult: AuctionResult): number {
 // no binding frontier, any in-set validator is already served.
 export function selectRedelegationPriorityFrontierPmpe(
   auctionResult: AuctionResult,
+  minBondBalanceSol: number,
 ): number {
-  return allocateRedelegation(auctionResult).priorityFrontierPmpe ?? 0
+  return (
+    allocateRedelegation(auctionResult, minBondBalanceSol)
+      .priorityFrontierPmpe ?? 0
+  )
 }
 
 // 1-based position of this validator in the exact order the redelegation
@@ -625,8 +671,11 @@ export function selectRedelegationPriorityFrontierPmpe(
 export function selectRedelegationPriorityRank(
   v: AuctionValidator,
   auctionResult: AuctionResult,
+  minBondBalanceSol: number,
 ): number | null {
   return (
-    allocateRedelegation(auctionResult).rankByVote.get(v.voteAccount) ?? null
+    allocateRedelegation(auctionResult, minBondBalanceSol).rankByVote.get(
+      v.voteAccount,
+    ) ?? null
   )
 }

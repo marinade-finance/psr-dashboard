@@ -9,7 +9,7 @@ import { computeNextEpochStake } from 'src/services/next-epoch-stake'
 import { CalcCard, withSimAction, type CardStatus } from './card'
 import { CalcRow, OkRow, SectionHeader } from './row'
 
-import type { AuctionResult } from '@marinade.finance/ds-sam-sdk'
+import type { AuctionResult, DsSamConfig } from '@marinade.finance/ds-sam-sdk'
 import type { BondCoverage } from 'src/services/bond-coverage'
 import type { AugmentedAuctionValidator } from 'src/services/sam'
 
@@ -18,6 +18,7 @@ type Props = {
   guideTo?: string
   validator: AugmentedAuctionValidator
   auctionResult: AuctionResult
+  dsSamConfig: DsSamConfig
   winningTotalPmpe: number
   coverage: BondCoverage
   isSimulated?: boolean
@@ -67,6 +68,7 @@ export const BiddingBreakdown: React.FC<Props> = ({
   guideTo,
   validator,
   auctionResult,
+  dsSamConfig,
   winningTotalPmpe,
   coverage,
   isSimulated,
@@ -78,7 +80,11 @@ export const BiddingBreakdown: React.FC<Props> = ({
     winningTotalPmpe,
     coverage,
   )
-  const nextEpoch = computeNextEpochStake(validator, auctionResult)
+  const nextEpoch = computeNextEpochStake(
+    validator,
+    auctionResult,
+    dsSamConfig.minBondBalanceSol,
+  )
   const noFrontier = nextEpoch.priorityFrontierPmpe <= 0
 
   // Cap label. Country/ASO names are meaningful — show them. VALIDATOR's

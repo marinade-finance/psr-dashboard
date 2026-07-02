@@ -30,17 +30,17 @@ function setGlobalPinned(id: string | null) {
   pinSubscribers.forEach(s => s(id))
 }
 
-// Hover previews the tip (Radix Tooltip). Click pins it open globally
-// (singleton: pinning a second tip unpins the first). Clicking anywhere
-// outside the trigger and the tooltip body dismisses the pin; Esc too.
-// `Learn more ↗` opens the guide (stopPropagation so it doesn't unpin).
-export const HelpTip: React.FC<Props> = ({ html, text, guideTo, children }) => {
+// Click-to-pin behaviour for any tooltip trigger, sharing the same global
+// singleton as HelpTip (pinning one unpins the other). Returns the pinned
+// flag and a toggle; the caller drives a controlled Radix `open` with
+// `pinned || hovered`. Outside-click (outside the trigger and the tooltip
+// body) and Esc dismiss the pin — identical to HelpTip.
+export function usePinnedTooltip<T extends HTMLElement>(
+  triggerRef: React.RefObject<T | null>,
+): { pinned: boolean; toggle: () => void } {
   const id = useId()
   const [pinned, setPinned] = useState(false)
-  const [hovered, setHovered] = useState(false)
-  const triggerRef = useRef<HTMLButtonElement>(null)
 
-  // Sync local pinned with the singleton.
   useEffect(() => {
     const sub: PinSubscriber = next => setPinned(next === id)
     pinSubscribers.add(sub)
@@ -49,16 +49,12 @@ export const HelpTip: React.FC<Props> = ({ html, text, guideTo, children }) => {
     }
   }, [id])
 
-  // Outside-click + Esc dismiss the global pin.
   useEffect(() => {
     if (!pinned) return undefined
     const onDown = (e: MouseEvent) => {
       const t = e.target
       if (!(t instanceof Element)) return
-      // Inside the trigger? The button's onClick toggles — leave it alone.
       if (triggerRef.current?.contains(t)) return
-      // Inside the tooltip body (Radix portals content with role="tooltip")?
-      // Keep open so users can read it and click "Learn more".
       if (t.closest('[role="tooltip"]')) return
       setGlobalPinned(null)
     }
@@ -71,7 +67,20 @@ export const HelpTip: React.FC<Props> = ({ html, text, guideTo, children }) => {
       document.removeEventListener('mousedown', onDown)
       document.removeEventListener('keydown', onKey)
     }
-  }, [pinned])
+  }, [pinned, triggerRef])
+
+  const toggle = () => setGlobalPinned(currentPinnedId === id ? null : id)
+  return { pinned, toggle }
+}
+
+// Hover previews the tip (Radix Tooltip). Click pins it open globally
+// (singleton: pinning a second tip unpins the first). Clicking anywhere
+// outside the trigger and the tooltip body dismisses the pin; Esc too.
+// `Learn more ↗` opens the guide (stopPropagation so it doesn't unpin).
+export const HelpTip: React.FC<Props> = ({ html, text, guideTo, children }) => {
+  const [hovered, setHovered] = useState(false)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const { pinned, toggle } = usePinnedTooltip(triggerRef)
 
   const tooltipContent = (
     <span className="flex flex-col gap-1">
@@ -128,7 +137,7 @@ export const HelpTip: React.FC<Props> = ({ html, text, guideTo, children }) => {
         onPointerDown={e => e.preventDefault()}
         onClick={e => {
           e.stopPropagation()
-          setGlobalPinned(currentPinnedId === id ? null : id)
+          toggle()
         }}
       >
         {children}

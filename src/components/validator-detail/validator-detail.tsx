@@ -80,7 +80,7 @@ interface ValidatorDetailProps {
   epochsPerYear: number
   nameMap?: Map<string, { name?: string }>
   notificationsMap?: Record<string, NotificationSummary>
-  rank: number
+  rank: number | null
   isSimulated?: boolean
   onClose: () => void
   onSimulate: (
@@ -547,6 +547,7 @@ export const ValidatorDetail = ({
     validator,
     auctionResult,
     epochsPerYear,
+    dsSamConfig.minBondBalanceSol,
   )
   const winningTotalPmpe = auctionResult.winningTotalPmpe
   const apyBreakdown = getApyBreakdown(validator, epochsPerYear)
@@ -562,7 +563,10 @@ export const ValidatorDetail = ({
     winningTotalPmpe,
     undefined,
     auctionResult.auctionData.blacklist,
-    selectRedelegationPriorityFrontierPmpe(auctionResult),
+    selectRedelegationPriorityFrontierPmpe(
+      auctionResult,
+      dsSamConfig.minBondBalanceSol,
+    ),
   )
   const tipStyle = getTipStyle(tip.urgency)
   const expectedStakeDelta = selectExpectedStakeChange(validator)
@@ -746,14 +750,16 @@ export const ValidatorDetail = ({
                   <span className="text-sm leading-none">
                     {TIP_ICONS[getTipIcon(tip)]}
                   </span>
-                  {`#${rank}`}
+                  {rank !== null ? `#${rank}` : '—'}
                 </span>
                 <span className="text-xs font-mono text-muted-foreground">
-                  {posVsWinning === 0
-                    ? 'at winning edge'
-                    : posVsWinning > 0
-                      ? `${posVsWinning} ${posVsWinning === 1 ? 'place' : 'places'} above winning`
-                      : `${Math.abs(posVsWinning)} ${Math.abs(posVsWinning) === 1 ? 'place' : 'places'} below winning`}
+                  {rank === null
+                    ? 'out of set'
+                    : posVsWinning === 0
+                      ? 'at winning edge'
+                      : posVsWinning > 0
+                        ? `${posVsWinning} ${posVsWinning === 1 ? 'place' : 'places'} above winning`
+                        : `${Math.abs(posVsWinning)} ${Math.abs(posVsWinning) === 1 ? 'place' : 'places'} below winning`}
                 </span>
               </span>
               {validatorName && (
@@ -824,12 +830,6 @@ export const ValidatorDetail = ({
           }}
         />
 
-        {/*
-          Tabs no longer render a tab-level title or Guide link.
-          Uniformity is at the card level: each card inside the body
-          owns its own title + Guide chrome via CalcCard. The Overview
-          tab is a multi-card grid where every sub-card uses CalcCard.
-        */}
         <>
           <TabStrip tab={tab} setTab={setTab} attention={attention} />
 
@@ -857,6 +857,7 @@ export const ValidatorDetail = ({
                 guideTo={`${docsPath(level)}#bidding`}
                 validator={validator}
                 auctionResult={auctionResult}
+                dsSamConfig={dsSamConfig}
                 winningTotalPmpe={winningTotalPmpe}
                 coverage={bondCoverage}
                 isSimulated={isSimulated}
@@ -974,6 +975,14 @@ export const ValidatorDetail = ({
                   help="How much stake the auction decided you should have this epoch, based on your bid and how you scored."
                   value={stake(validator.auctionStake.marinadeSamTargetSol)}
                 />
+                {validator.maxStakeWanted != null &&
+                  validator.maxStakeWanted > 0 && (
+                    <MetricRow
+                      label="Max stake wanted"
+                      help="The self-imposed stake cap you set. The auction will not assign you more than this amount."
+                      value={stake(validator.maxStakeWanted)}
+                    />
+                  )}
                 <MetricRow
                   label="Expected change next epoch"
                   help="Stake you'll gain or lose next epoch. Losses mostly come from falling out of the auction — your bid was too low or the bond was thin. A small share comes from people pulling SOL out of Marinade, taken from every validator proportionally. It can read 0 SOL even when your target stake is above your active stake — the redelegation budget went to higher-priority validators first, or you are cap or bond constrained, so no net inflow is expected."

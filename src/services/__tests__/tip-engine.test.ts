@@ -63,8 +63,6 @@ const DS_SAM_CONFIG = {
   bidTooLowPenaltyPermittedDeviationPmpe: 0.0001,
 } as unknown as DsSamConfig
 
-// --- getApyBreakdown ---
-
 describe('getApyBreakdown', () => {
   it('staticBid maps to bid pmpe (not named "bid")', () => {
     const validator = makeValidator()
@@ -80,8 +78,6 @@ describe('getApyBreakdown', () => {
     expect(bd.total).toBeCloseTo(expected, 10)
   })
 })
-
-// --- getTipStyle ---
 
 describe('getTipStyle', () => {
   it('critical → destructive', () => {
@@ -160,8 +156,6 @@ describe('getTipIcon', () => {
   })
 })
 
-// --- getValidatorTip — all priority branches ---
-
 describe('getValidatorTip', () => {
   it('not in set → info/rank (growth lever — raise bid to qualify)', () => {
     const validator = makeValidator({
@@ -203,7 +197,7 @@ describe('getValidatorTip', () => {
     expect(tip.text).toContain('Raise bid')
   })
 
-  it('out-of-set + above-min + critical bond, no fee yet → face-fee-charges CTA', () => {
+  it('out-of-set + above-min + critical bond, no fee yet → avoid-liquidation CTA', () => {
     // Bond is below the penalty floor (topUpToAvoidFee > 0) but the SDK
     // has not charged a fee this epoch (bondRiskFeeSol === 0).
     const validator = makeValidator({
@@ -215,11 +209,11 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
-    expect(tip.text).toContain('face fee charges')
+    expect(tip.text).toContain('avoid bond liquidation')
     expect(tip.alert).toBeFalsy()
   })
 
-  it('critical health, claimable below floor, no fee → "face fee charges"', () => {
+  it('critical health, claimable below floor, no fee → "avoid bond liquidation"', () => {
     // topUpToAvoidFee > 0 but bondRiskFeeSol === 0 — threshold crossed but no fee yet.
     const validator = makeValidator({
       bondGoodForNEpochs: 4,
@@ -230,7 +224,7 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
-    expect(tip.text).toContain('face fee charges')
+    expect(tip.text).toContain('avoid bond liquidation')
     expect(tip.alert).toBeFalsy()
   })
 
@@ -251,7 +245,7 @@ describe('getValidatorTip', () => {
     expect(tip.alert).toBe(true)
   })
 
-  it('critical health (epochs > 5), claimable below floor, no fee → face-fee-charges CTA', () => {
+  it('critical health (epochs > 5), claimable below floor, no fee → avoid-liquidation CTA', () => {
     const validator = makeValidator({
       bondGoodForNEpochs: 8,
       bondBalanceSol: 0.001,
@@ -261,7 +255,7 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('critical')
     expect(tip.constraint).toBe('bond')
-    expect(tip.text).toContain('face fee charges')
+    expect(tip.text).toContain('avoid bond liquidation')
     expect(tip.alert).toBeFalsy()
   })
 
@@ -483,8 +477,6 @@ describe('getValidatorTip', () => {
     expect(tip.urgency).toBe('positive')
   })
 })
-
-// --- B8: getValidatorTip watch health gets bond CTA ---
 
 describe('getValidatorTip watch health (bond top-up lever)', () => {
   it('watch health + defending (large loss) → warning/bond "keep stake" (beats deltaCta)', () => {
@@ -747,8 +739,6 @@ describe('nextStakeDeltaCell', () => {
   })
 })
 
-// --- B9: selectProtectedStakeReason handles 'Bidding' ---
-
 describe('selectProtectedStakeReason', () => {
   it("handles 'Bidding' reason", () => {
     const event = {
@@ -763,8 +753,6 @@ describe('selectProtectedStakeReason', () => {
     expect(result).toBe('Bidding')
   })
 })
-
-// --- B10: selectProtectedStakeReason LowCredits with expected_credits=0 ---
 
 describe('selectProtectedStakeReason LowCredits zero guard', () => {
   it('expected_credits=0 does not produce Infinity or NaN', () => {

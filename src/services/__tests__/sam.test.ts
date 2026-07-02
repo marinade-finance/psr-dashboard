@@ -125,13 +125,14 @@ function makeBondValidator(
   bondBalanceSol: number,
   active: number,
   target: number,
+  paidUndelegationSol = 0,
 ): AuctionValidator {
   return {
     voteAccount,
     auctionStake: { marinadeSamTargetSol: target },
     marinadeActivatedStakeSol: active,
     bondBalanceSol,
-    values: { paidUndelegationSol: 0 },
+    values: { paidUndelegationSol },
     revShare: { totalPmpe: 10 },
   } as unknown as AuctionValidator
 }
@@ -201,17 +202,101 @@ describe('augmentAuctionResult — bond below minBondBalanceSol', () => {
   })
 })
 
+describe('computeExpectedStakeChanges — paid undelegation disabled (PAID_UNDELEGATION_ENABLED=false)', () => {
+  // The protocol allocates the 1% rotation budget bottom-up by unstakePriority
+  // and does not currently prioritise undelegating paid-undelegation validators,
+  // so paidUndelegationSol resolves to 0: a validator at target does not lose
+  // that stake this epoch. These tests pin the switched-off projection.
+
+  it('no loss when active == target despite a paid undelegation', () => {
+    const paid = 2815
+    const active = 40389
+    const result = makeBondResult(
+      [makeBondValidator('V', 5, active, active, paid)],
+      active * 10,
+    )
+    const [v] = augmentAuctionResult(result, 0)
+    const bd = selectExpectedStakeChangeBreakdown(v)
+    // paid treated as 0; rawDelta = target - active = 0 → no inflow either
+    expect(selectExpectedStakeChange(v)).toBeCloseTo(0, 9)
+    expect(bd.paidUndelegation).toBeCloseTo(0, 9)
+    expect(bd.redelegationInflow).toBeCloseTo(0, 9)
+  })
+
+  it('no loss regardless of rotation budget size when active == target', () => {
+    const paid = 3000
+    const active = 10000
+    const result = makeBondResult(
+      [makeBondValidator('V', 5, active, active, paid)],
+      active + 1000,
+    )
+    const [v] = augmentAuctionResult(result, 0)
+    const bd = selectExpectedStakeChangeBreakdown(v)
+    expect(selectExpectedStakeChange(v)).toBeCloseTo(0, 9)
+    expect(bd.paidUndelegation).toBeCloseTo(0, 9)
+    expect(bd.redelegationInflow).toBeCloseTo(0, 9)
+  })
+
+  it('target > active: paid = 0 by protocol, inflow fills gap normally', () => {
+    // paidUndelegationSol is only non-zero when target <= active; this case
+    // confirms no undelegation component appears when target > active.
+    const active = 8000
+    const target = 10000
+    const result = makeBondResult(
+      [makeBondValidator('V', 5, active, target, 0)],
+      active * 10,
+    )
+    const [v] = augmentAuctionResult(result, 0)
+    const bd = selectExpectedStakeChangeBreakdown(v)
+    expect(selectExpectedStakeChange(v)).toBeCloseTo(target - active, 9)
+    expect(bd.paidUndelegation).toBeCloseTo(0, 9)
+    expect(bd.redelegationInflow).toBeCloseTo(target - active, 9)
+  })
+})
+
+describe('computeNaturalWithdrawal — paid undelegation disabled, rotation uses full excess', () => {
+  // With PAID_UNDELEGATION_ENABLED=false the paid amount no longer pre-reduces
+  // the over-target excess, so the 1% rotation budget rotates the whole excess.
+
+  it('rotation takes the full over-target excess up to the budget', () => {
+    // active=10000, target=5000 → excess = 5000; TVL=500000 → 1% budget = 5000
+    const result = makeBondResult(
+      [makeBondValidator('V', 5, 10000, 5000, 2000)],
+      500000,
+    )
+    const [v] = augmentAuctionResult(result, 0)
+    const bd = selectExpectedStakeChangeBreakdown(v)
+    expect(bd.paidUndelegation).toBeCloseTo(0, 9)
+    expect(bd.naturalWithdrawal).toBeCloseTo(-5000, 9)
+    expect(selectExpectedStakeChange(v)).toBeCloseTo(-5000, 9)
+  })
+
+  it('rotation takes the whole excess when budget covers it', () => {
+    // active=10000, target=8000 → excess = 2000; budget = 5000 covers it
+    const result = makeBondResult(
+      [makeBondValidator('V', 5, 10000, 8000, 3000)],
+      500000,
+    )
+    const [v] = augmentAuctionResult(result, 0)
+    const bd = selectExpectedStakeChangeBreakdown(v)
+    expect(bd.paidUndelegation).toBeCloseTo(0, 9)
+    expect(bd.naturalWithdrawal).toBeCloseTo(-2000, 9)
+    expect(selectExpectedStakeChange(v)).toBeCloseTo(-2000, 9)
+  })
+})
+
 function makePrioValidator(
   voteAccount: string,
   totalPmpe: number,
   active: number,
   target: number,
+  bondBalanceSol = 5,
 ): AuctionValidator {
   return {
     voteAccount,
     auctionStake: { marinadeSamTargetSol: target },
     marinadeActivatedStakeSol: active,
-    bondBalanceSol: 5,
+    bondBalanceSol,
     values: { paidUndelegationSol: 0 },
     revShare: { totalPmpe },
   } as unknown as AuctionValidator
@@ -241,8 +326,8 @@ describe('allocateRedelegation — best-first walk by totalPmpe desc', () => {
     expect(high).toBeDefined()
     expect(low).toBeDefined()
     if (!high || !low) return
-    expect(selectRedelegationPriorityRank(high, result)).toBe(1)
-    expect(selectRedelegationPriorityRank(low, result)).toBe(2)
+    expect(selectRedelegationPriorityRank(high, result, 0)).toBe(1)
+    expect(selectRedelegationPriorityRank(low, result, 0)).toBe(2)
   })
 
   it('the budget fills the higher-totalPmpe validator first', () => {
@@ -260,7 +345,23 @@ describe('allocateRedelegation — best-first walk by totalPmpe desc', () => {
   it('priority frontier is the lowest fully-served totalPmpe', () => {
     const result = tightBudgetResult()
     // Only HIGH (12) is fully served; LOW never gets budget → frontier = 12.
-    expect(selectRedelegationPriorityFrontierPmpe(result)).toBe(12)
+    expect(selectRedelegationPriorityFrontierPmpe(result, 0)).toBe(12)
+  })
+
+  it('frontier skips sub-min-bond validators when minBondBalanceSol is set', () => {
+    // Budget (1000) covers both 500-deltas. HIGH (bond 100) is healthy; LOW
+    // (bond 1, totalPmpe 8) is sub-min. At minBond=0 LOW is served too, so the
+    // frontier drops to 8. At minBond=10 LOW is skipped — matching the actual
+    // stake allocation — so the frontier stays at HIGH's 12.
+    const result = makeBondResult(
+      [
+        makePrioValidator('LOW', 8, 0, 500, 1),
+        makePrioValidator('HIGH', 12, 0, 500, 100),
+      ],
+      1000,
+    )
+    expect(selectRedelegationPriorityFrontierPmpe(result, 0)).toBe(8)
+    expect(selectRedelegationPriorityFrontierPmpe(result, 10)).toBe(12)
   })
 })
 
@@ -296,7 +397,7 @@ describe('selectWinningApyForValidator — marginal winner', () => {
     const winningBidPmpe = Math.max(0, 10 - 3) // winningTotalPmpe − MARG nonBid
     const expected = compoundApy(5 + winningBidPmpe, epochsPerYear)
     expect(
-      selectWinningApyForValidator(self, result, epochsPerYear),
+      selectWinningApyForValidator(self, result, epochsPerYear, 0),
     ).toBeCloseTo(expected, 9)
   })
 })
