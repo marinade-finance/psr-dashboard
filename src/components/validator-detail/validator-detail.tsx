@@ -338,9 +338,6 @@ const MetricRow = ({
   )
 }
 
-// Per-validator concentration context (country + ASO group share vs cap).
-// Kept as its own component so the group ternaries stay out of the already
-// dense ValidatorDetail body.
 const ConcentrationRow = ({
   label,
   group,
