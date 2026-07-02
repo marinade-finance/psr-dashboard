@@ -102,7 +102,6 @@ expert-only behaviour or document the expert variants here.
 | `components/table/`                  | Generic sortable table used by bonds and events pages.                                            |
 | `components/navigation/`             | Top bar, tab switcher, epoch meter, theme toggle.                                                 |
 | `components/epoch-meter/`            | Epoch chip in the nav; pure render over `services/epoch.ts` logic.                                |
-| `components/concentration-metric/`   | Stacked-bar country / ASO concentration tile on the SAM page.                                     |
 | `components/validator-search/`       | Vote-account / name search input on the SAM page.                                                 |
 | `components/banner/`                 | Dismissible announcement card (localStorage-persisted dismiss).                                   |
 | `components/help-tip/`               | Shared inline `?` tooltip icon.                                                                   |
@@ -118,19 +117,19 @@ UI-free. Pure functions and async fetchers, typed against SDK types where applic
 
 ### Auction & SAM
 
-| File                   | What it does                                                                                                                                                                    |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sam.ts`               | Loads and runs the SDK auction (`loadSam`). Augments results with per-validator expected stake change. Selectors for APY, stake, bid, budget, priority frontier, concentration. |
-| `simulation.ts`        | Builds `SourceDataOverrides` from form edits; produces ghost-row state for the simulation UI.                                                                                   |
-| `calculations.ts`      | Pure math: APY compounding (`annualize`, `compoundApy`, `apyBreakdown`) and bond-gauge geometry (`bondGaugeScaleMax`, `bondCriticalFrac`).                                      |
-| `tip-engine.ts`        | Drives the rank-cell colour and Next Step column. Assembles a `ValidatorTip` from five orthogonal lever helpers sorted by severity then lever priority.                         |
-| `bidding.ts`           | Per-validator stake / bid / cost row.                                                                                                                                           |
-| `bond-coverage.ts`     | Bond top-up calculations for keep-stake and avoid-fee thresholds.                                                                                                               |
-| `bond-health.ts`       | Four-tier bond health state (`NO_BOND → CRITICAL → WATCH → HEALTHY`); also exports `effectiveBondRunway(v, config)` and `bondUtilizationPct`.                                   |
-| `bid-penalty.ts`       | Bid-too-low penalty recompute, mirroring SDK `calcBidTooLowPenalty`.                                                                                                            |
-| `in-auction-target.ts` | Closed-form static bid to clear the winning total (estimate — verify in Simulate).                                                                                              |
-| `next-epoch-stake.ts`  | Heuristic bid to clear the redelegation priority frontier (estimate — verify in Simulate).                                                                                      |
-| `payment-total.ts`     | `computePaymentTotal({biddingTotalSol, ...penalties, psrEstimates})` → `{psrTotal, penaltyTotal, total}`.                                                                       |
+| File                   | What it does                                                                                                                                                     |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sam.ts`               | Loads and runs the SDK auction (`loadSam`). Augments results with per-validator expected stake change. Selectors for APY, stake, bid, budget, priority frontier. |
+| `simulation.ts`        | Builds `SourceDataOverrides` from form edits; produces ghost-row state for the simulation UI.                                                                    |
+| `calculations.ts`      | Pure math: APY compounding (`annualize`, `compoundApy`, `apyBreakdown`) and bond-gauge geometry (`bondGaugeScaleMax`, `bondCriticalFrac`).                       |
+| `tip-engine.ts`        | Drives the rank-cell colour and Next Step column. Assembles a `ValidatorTip` from five orthogonal lever helpers sorted by severity then lever priority.          |
+| `bidding.ts`           | Per-validator stake / bid / cost row.                                                                                                                            |
+| `bond-coverage.ts`     | Bond top-up calculations for keep-stake and avoid-fee thresholds.                                                                                                |
+| `bond-health.ts`       | Four-tier bond health state (`NO_BOND → CRITICAL → WATCH → HEALTHY`); also exports `effectiveBondRunway(v, config)` and `bondUtilizationPct`.                    |
+| `bid-penalty.ts`       | Bid-too-low penalty recompute, mirroring SDK `calcBidTooLowPenalty`.                                                                                             |
+| `in-auction-target.ts` | Closed-form static bid to clear the winning total (estimate — verify in Simulate).                                                                               |
+| `next-epoch-stake.ts`  | Heuristic bid to clear the redelegation priority frontier (estimate — verify in Simulate).                                                                       |
+| `payment-total.ts`     | `computePaymentTotal({biddingTotalSol, ...penalties, psrEstimates})` → `{psrTotal, penaltyTotal, total}`.                                                        |
 
 ### Validator data
 

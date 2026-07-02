@@ -4,9 +4,6 @@ import { useSearchParams } from 'react-router-dom'
 
 import { Banner } from 'src/components/banner/banner'
 import { FetchError } from 'src/components/fetch-error/fetch-error'
-import { ICON_ROWS_COMPACT } from 'src/components/icons/icon-rows-compact'
-import { ICON_ROWS_DETAILED } from 'src/components/icons/icon-rows-detailed'
-import { Button } from 'src/components/ui/button'
 import { Loader } from 'src/components/loader/loader'
 import { Navigation } from 'src/components/navigation/navigation'
 import { SamTable, passesTableFilter } from 'src/components/sam-table/sam-table'
@@ -59,7 +56,6 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
 
   const [searchParams, setSearchParams] = useSearchParams()
   const selectedValidator = searchParams.get('v')
-  const [isCompact, setIsCompact] = useState(true)
   const [simulationOverrides, setSimulationOverrides] =
     useState<AppOverrides | null>(null)
   const [simulatedValidators, setSimulatedValidators] = useState<Set<string>>(
@@ -259,34 +255,11 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
     }
   }, [selectedValidator, displayAuctionResult, data, level])
 
-  const viewToggle = isCompact
-    ? {
-        label: 'Switch to detailed view',
-        title: 'Detailed view',
-        icon: ICON_ROWS_COMPACT,
-      }
-    : {
-        label: 'Switch to compact view',
-        title: 'Compact view',
-        icon: ICON_ROWS_DETAILED,
-      }
   const selectedIsSimulated = simulatedValidators.has(selectedValidator ?? '')
 
   return (
     <div className="bg-background-page">
-      <Navigation level={level}>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={() => setIsCompact(c => !c)}
-          className="ml-2 rounded-full text-muted-foreground hover:text-foreground"
-          aria-label={viewToggle.label}
-          title={viewToggle.title}
-        >
-          {viewToggle.icon}
-        </Button>
-      </Navigation>
+      <Navigation level={level} />
       {simulatedValidators.size > 0 && (
         <div className={SIM_BANNER_CLASS}>
           <span className="flex items-center gap-2 min-w-0">
@@ -328,7 +301,6 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
             epochsPerYear={data.epochsPerYear}
             dsSamConfig={data.dsSamConfig}
             level={level}
-            isCompact={isCompact}
             simulatedValidators={simulatedValidators}
             isCalculating={isCalculating}
             validatorMeta={nameMap}
