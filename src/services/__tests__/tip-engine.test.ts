@@ -369,6 +369,51 @@ describe('getValidatorTip', () => {
     expect(tip.text).toContain('Losing')
   })
 
+  it('out-of-set + no bond + defending + below winning price → loss headlines, not "grow stake"', () => {
+    // Allied-#69 case: ~44k active leaving (delta << 0), no bond, price below
+    // winning. The missing bond is a hard gate, but posting it alone can't win
+    // stake at a losing price — so the loss must headline. A big loser must not
+    // get a milder CTA than a validator shedding a few SOL (which shows
+    // "Losing N" via deltaCta at info).
+    const validator = makeValidator({
+      auctionStake: { marinadeSamTargetSol: 0 },
+      bondBalanceSol: 0,
+      claimableBondBalanceSol: 0,
+      marinadeActivatedStakeSol: 50_000,
+      values: { expectedStakeChangeSol: -30_000 },
+    })
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
+    expect(tip.urgency).toBe('warning')
+    expect(tip.constraint).toBe('none')
+    expect(tip.text).toContain('Losing')
+  })
+
+  it('out-of-set + no bond + defending + price clears winning → bond is sole blocker, "grow stake" wins', () => {
+    // Same loss, but totalPmpe >= winningTotalPmpe: the missing bond is the
+    // ONLY thing keeping it out, so the actionable bond CTA is right to lead.
+    const validator = makeValidator({
+      auctionStake: { marinadeSamTargetSol: 0 },
+      bondBalanceSol: 0,
+      claimableBondBalanceSol: 0,
+      marinadeActivatedStakeSol: 50_000,
+      values: { expectedStakeChangeSol: -30_000 },
+      revShare: {
+        inflationPmpe: 5,
+        mevPmpe: 2,
+        blockPmpe: 1,
+        bidPmpe: 20,
+        totalPmpe: 150,
+        bondObligationPmpe: 20,
+        auctionEffectiveBidPmpe: 20,
+        effParticipatingBidPmpe: 20,
+      },
+    })
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
+    expect(tip.urgency).toBe('warning')
+    expect(tip.constraint).toBe('bond')
+    expect(tip.text).toContain('grow stake')
+  })
+
   it('delta < 0 + not defending → info, losing stake message', () => {
     // Active at boundary (10k = not > NON_TRIVIAL_STAKE_SOL) → not defending.
     const validator = makeValidator({

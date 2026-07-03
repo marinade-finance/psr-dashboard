@@ -321,14 +321,22 @@ function bondCta(
         true,
       )
     }
-    // Below-min, no SDK fee yet. Severity follows the global ladder:
-    //   yellow — defending (meaningful stake leaving).
-    //   grey   — eligibility-only, novelty validator with no real stake.
+    // Below-min, no SDK fee yet. The bond is a hard qualification gate, but
+    // posting it only grows stake when the validator's price already clears
+    // winning; if it's also below the winning price, the bond alone won't win
+    // it any stake, so the honest headline is the loss (deltaCta's "Losing N
+    // SOL"). Only escalate to warning — outranking the loss on the bond-lever
+    // tiebreak — when the bond is the SOLE blocker; otherwise stay neutral and
+    // let the loss show, so a big loser isn't handed a milder message than a
+    // validator shedding a few SOL.
+    const bondIsSoleBlocker = validator.revShare.totalPmpe >= winningTotalPmpe
     return tip(
       bondBalance <= 0
         ? `Post a bond of ${stake(dsSamConfig.minBondBalanceSol)} to grow stake.`
         : `Top up bond to ${stake(dsSamConfig.minBondBalanceSol)} to grow stake.`,
-      isDefending(validator, delta) ? 'warning' : 'neutral',
+      bondIsSoleBlocker && isDefending(validator, delta)
+        ? 'warning'
+        : 'neutral',
       'bond',
       delta,
     )
