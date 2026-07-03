@@ -467,4 +467,14 @@ describe('selectValidatorConcentration', () => {
   it('returns null for a validator not in the auction set', () => {
     expect(selectValidatorConcentration(result, cfg, 'nope')).toBeNull()
   })
+
+  it('still resolves for an out-of-set (zero-target) validator in the set', () => {
+    // 'Z' has marinadeSamTargetSol 0 (out of set) but IS in the auction data,
+    // so it must still get its country/ASO group context from in-set peers.
+    const c = selectValidatorConcentration(result, cfg, 'Z')
+    if (!c) throw new Error('expected concentration for out-of-set Z')
+    expect(c.country.label).toBe('US')
+    expect(c.country.pctOfTotal).toBeCloseTo(0.8) // US peers A+B, self excluded
+    expect(c.aso.label).toBe('aws')
+  })
 })

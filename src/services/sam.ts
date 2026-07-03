@@ -625,9 +625,11 @@ export const selectValidatorConcentration = (
       pctOfTotal: total > 0 ? groupStake / total : 0,
       capPct,
       groupValidatorCount,
+      // Match the SDK's raw constraintName (not the '—' display fallback), so
+      // an empty-named country/ASO still resolves its at-cap state correctly.
       thisValidatorCapped:
         self.lastCapConstraint?.constraintType === capType &&
-        self.lastCapConstraint.constraintName === key,
+        self.lastCapConstraint.constraintName === pick(self),
     }
   }
 
