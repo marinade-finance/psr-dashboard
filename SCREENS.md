@@ -279,12 +279,13 @@ Left column:
 Marinade stake`, `Max stake wanted` (conditional — hidden when null
   or 0; 0 means opted out), `Expected change next epoch` (separator).
   When `maxStakeWanted` sits below the auction floor
-  `max(minMaxStakeWanted, active)` a muted sub-line reads `Below N min —
-  auction uses M` (`N` = `minMaxStakeWanted`, `M` = the clipped-up
-  `effectiveWantCap`), and the row's `HelpTip` says the setting is raised
-  to the minimum so the auction can target more than the shown value — it
-  no longer claims the setting is a hard ceiling. The Next-epoch `HelpTip`
-  notes the delta can be `0 SOL` even when target > active stake.
+  `max(minMaxStakeWanted, active)` a muted sub-line reads `Below <floor> —
+  auction uses M`, naming whichever floor raised the cap (`N min` when the
+  network minimum binds, else `your active stake`) and `M` = the clipped-up
+  `effectiveWantCap`. The row's `HelpTip` says the auction never assigns
+  below the network minimum or current active stake, so a low setting is
+  raised — it no longer claims the setting is a hard ceiling. The Next-epoch
+  `HelpTip` notes the delta can be `0 SOL` even when target > active stake.
 - **Bond** card (title clickable → Bond tab) — `Balance`, `Reserve`
   (value = `bondCoverageLabel()` — `Fully covered` / `Adequate` /
   `Top up X to grow stake` / `Top up X to keep your stake` / `Top

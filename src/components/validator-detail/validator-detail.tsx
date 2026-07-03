@@ -644,6 +644,12 @@ export const ValidatorDetail = ({
     validator.maxStakeWanted != null &&
     validator.maxStakeWanted > 0 &&
     validator.maxStakeWanted < effectiveWantCap
+  // Which floor actually raised the cap — the network minimum or the
+  // validator's own active stake (the auction won't cap below either).
+  const wantFloorLabel =
+    minMaxStakeWanted >= validator.marinadeActivatedStakeSol
+      ? `${stake(minMaxStakeWanted)} min`
+      : 'your active stake'
   const [tab, setTab] = useState<Tab>('overview')
 
   const inSet = selectInSet(validator)
@@ -1058,12 +1064,12 @@ export const ValidatorDetail = ({
                     <div>
                       <MetricRow
                         label="Max stake wanted"
-                        help="The self-imposed stake cap you set. A value below the network minimum is raised to that minimum, so the auction can target more than this."
+                        help="The self-imposed stake cap you set. The auction never assigns below the network minimum or your current active stake, so a low setting is raised and the target can exceed it."
                         value={stake(validator.maxStakeWanted)}
                       />
                       {wantCapOverridden && (
                         <div className="text-xs text-muted-foreground mt-0.5">
-                          Below {stake(minMaxStakeWanted)} min — auction uses{' '}
+                          Below {wantFloorLabel} — auction uses{' '}
                           {stake(effectiveWantCap)}
                         </div>
                       )}
