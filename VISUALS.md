@@ -59,14 +59,18 @@ text + urgency end-to-end: `bondCta`, `bidCta`, `outOfSetCta`, `capCta`,
 `deltaCta`. `outOfSetCta` fires only when the validator is out-of-set
 despite `revShare.totalPmpe ≥ winningTotalPmpe` — it names the actual
 binding reason instead of letting `deltaCta` lie with a "Losing N SOL"
-symptom. Reasons are checked in source order: samBlocked → opted-out
-(`maxStakeWanted === 0`, pinned to INFO regardless of stake) →
-`samEligible === false` (narrowed to no-bond when `bondBalanceSol == null`,
-then to blacklisted, then to a generic "client version / vote credits"
-hint) → binding cap → generic "another constraint binds". Severity
-tracks `marinadeActivatedStakeSol` against the 10k `NON_TRIVIAL_STAKE_SOL`
-line — critical above, neutral below; the cap branch reads warning above
-the line, info below.
+symptom. Reasons are checked in source order: samBlocked (`Blocked from
+SAM this epoch.`) → `samEligible === false` (blacklisted → `Blacklisted —
+N penalty this epoch.` when a penalty charges, else `Blacklisted.`;
+otherwise the generic `Not eligible — check client version and vote
+credits.`) → binding cap with `totalLeftToCapSol === 0` (the `capCauseLine`:
+country / ASO / per-validator / concentration, each suffixed `.`). Any
+other case returns null and `deltaCta` owns the message. Severity is
+per-branch: samBlocked and an active blacklist penalty are critical (alert
+glyph); the remaining branches read warning when `isDefending` (>10k
+active AND >1k loss), else info. The `capCauseLine` WANT arm is dead —
+WANT caps carry `totalLeftToCapSol: Infinity`, so the `=== 0` gate never
+selects them.
 `selectTip` sorts surviving candidates by `SEVERITY_ORDER` first
 (critical→warning→info→positive→neutral), then `LEVER_ORDER`
 (bond→bid/rank→cap→none) as the tiebreak. **Rule:** never reword a CTA
