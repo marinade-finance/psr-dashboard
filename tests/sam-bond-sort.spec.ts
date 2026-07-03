@@ -1,22 +1,18 @@
-// SAM table sort correctness — beyond the existing ↑ / ↓ indicator-flip
-// tests, this spec asserts that clicking Bond and Stake/Δ headers actually
-// reorders the visible rows. Uses the deterministic /test- route so the
-// underlying values are known.
+// SAM table sort correctness — beyond the ↑ / ↓ indicator-flip tests, this
+// spec asserts that clicking the Bond and Stake headers actually reorders the
+// visible rows, and that the chosen sort persists across reloads. Uses the
+// deterministic /test- route so the underlying values are known.
 import { test, expect } from '@playwright/test'
 import type { Page } from '@playwright/test'
 
 async function gotoSam(page: Page) {
   await page.goto('/test-')
   await page.waitForSelector('tbody tr', { timeout: 30000 })
-  // Default view is compact, which hides the stake-delta numeric text in
-  // favour of arrow icons. Switch to detailed so column-text sort assertions
-  // can read both the active stake AND the delta.
-  const toggle = page.getByRole('button', { name: 'Switch to detailed view' })
-  if (await toggle.isVisible().catch(() => false)) await toggle.click()
 }
 
 function parseNum(s: string): number {
-  // First numeric token in the cell text — handles "(12ep)" suffix etc.
+  // First numeric token in the cell text — the Bond cell's leading balance,
+  // ahead of any "X epochs to liquidate" alert on critical rows.
   const m = s.match(/-?[\d,]+(?:\.\d+)?/)
   if (!m) return NaN
   return parseFloat(m[0].replace(/,/g, ''))
@@ -35,19 +31,27 @@ async function readColumn(page: Page, nthChild: number) {
   return vals
 }
 
-// The Stake header sorts by target stake, which is not a displayed column
-// value (the cell shows active stake + signed delta). So Stake-sort tests
-// detect a reorder via the validator-name order rather than column values.
-async function readValidatorOrder(page: Page) {
+// The Stake cell reads "X SOL (+Y SOL)": current stake plus the signed gap to
+// target. The Stake header sorts by the SUM (current + gap = target), so the
+// monotonicity check needs that sum, not either token alone. The gap uses a
+// unicode minus −, so normalise it before parsing.
+async function readStakeSortValues(page: Page) {
   const cells = page.locator(
-    'tbody tr:not([data-divider]):not([data-ghost="true"]) td:nth-child(2)',
+    'tbody tr:not([data-divider]):not([data-ghost="true"]) td:nth-child(3)',
   )
   const n = await cells.count()
-  const names: string[] = []
+  const norm = (x: string) =>
+    parseFloat(x.replace(/\s/g, '').replace('−', '-').replace(/,/g, ''))
+  const vals: number[] = []
   for (let i = 0; i < n; i++) {
-    names.push((await cells.nth(i).innerText()).trim())
+    const text = await cells.nth(i).innerText()
+    const matches = text.match(/[+\-−]?\s*[\d,]+(?:\.\d+)?/g)
+    if (!matches) continue
+    const current = norm(matches[0])
+    const gap = matches.length > 1 ? norm(matches[1]) : 0
+    if (!isNaN(current)) vals.push(current + gap)
   }
-  return names
+  return vals
 }
 
 // The SAM table renders two segments by default: above-cutoff (winners +
@@ -77,9 +81,9 @@ test.describe('SAM table — Bond column sort', () => {
     // Header has a HelpTip whose onClick stopPropagations — click on the
     // text area at the left of the cell so the TableHead's handleSort fires.
     await h.click({ position: { x: 10, y: 10 } })
-    // Bond cell shows "<tier> <balance> SOL …" — the bond *balance* is the
-    // numeric the sort uses (see selectBondSize in services).
-    const vals = await readColumn(page, 4)
+    // Bond is the 5th column (#, Validator, Stake, Max APY, Bond); the bond
+    // *balance* is the leading numeric the sort uses (see selectBondSize).
+    const vals = await readColumn(page, 5)
     expect(vals.length, 'need ≥2 bond rows to test ordering').toBeGreaterThan(1)
     const sorted = isSortedAsc(vals) || isSortedDesc(vals)
     expect(
@@ -93,13 +97,11 @@ test.describe('SAM table — Bond column sort', () => {
   }) => {
     await gotoSam(page)
     const h = page.locator('thead th').filter({ hasText: /^Bond/ }).first()
-    // Header has a HelpTip whose onClick stopPropagations — click on the
-    // text area at the left of the cell so the TableHead's handleSort fires.
     await h.click({ position: { x: 10, y: 10 } })
-    const firstOrder = (await readColumn(page, 4)).join(',')
+    const firstOrder = (await readColumn(page, 5)).join(',')
     const firstIndicator = (await h.innerText()).includes('↑') ? '↑' : '↓'
     await h.click({ position: { x: 10, y: 10 } })
-    const secondOrder = (await readColumn(page, 4)).join(',')
+    const secondOrder = (await readColumn(page, 5)).join(',')
     const secondIndicator = (await h.innerText()).includes('↑') ? '↑' : '↓'
     // Toggle proof: order AND indicator both flip.
     expect(firstOrder).not.toBe(secondOrder)
@@ -107,41 +109,29 @@ test.describe('SAM table — Bond column sort', () => {
   })
 })
 
-test.describe('SAM table — Stake / Next change column sort', () => {
-  /**
-   * Clicks the "Stake / Next change" header on a loaded SAM table.
-   * Assumes the table has rendered rows (gotoSam waits for them).
-   * Verifies the header then shows a ↑/↓ sort indicator.
-   */
-  test('clicking Stake header sets a sort indicator', async ({ page }) => {
+test.describe('SAM table — Stake column sort', () => {
+  test('clicking Stake header reorders rows by stake (current + gap)', async ({
+    page,
+  }) => {
     await gotoSam(page)
-    const h = page
-      .locator('thead th')
-      .filter({ hasText: /Stake \/ Next/ })
-      .first()
+    const h = page.locator('thead th').filter({ hasText: /Stake/ }).first()
     await h.click({ position: { x: 10, y: 10 } })
-    await expect(h).toContainText(/[↑↓]/, { timeout: 5000 })
+    const vals = await readStakeSortValues(page)
+    expect(vals.length).toBeGreaterThan(1)
+    const sorted = isSortedAsc(vals) || isSortedDesc(vals)
+    expect(sorted).toBe(true)
   })
 
-  /**
-   * Clicks the "Stake / Next change" header twice on a loaded SAM table.
-   * Assumes the table has rendered rows and the column toggles direction.
-   * Verifies both the row order and the indicator direction differ between
-   * the two clicks (sort flips, not just re-applies).
-   */
   test('Stake sort indicator and row order flip together on repeated clicks', async ({
     page,
   }) => {
     await gotoSam(page)
-    const h = page
-      .locator('thead th')
-      .filter({ hasText: /Stake \/ Next/ })
-      .first()
+    const h = page.locator('thead th').filter({ hasText: /Stake/ }).first()
     await h.click({ position: { x: 10, y: 10 } })
-    const firstOrder = (await readValidatorOrder(page)).join(',')
+    const firstOrder = (await readStakeSortValues(page)).join(',')
     const firstIndicator = (await h.innerText()).includes('↑') ? '↑' : '↓'
     await h.click({ position: { x: 10, y: 10 } })
-    const secondOrder = (await readValidatorOrder(page)).join(',')
+    const secondOrder = (await readStakeSortValues(page)).join(',')
     const secondIndicator = (await h.innerText()).includes('↑') ? '↑' : '↓'
     expect(firstOrder).not.toBe(secondOrder)
     expect(firstIndicator).not.toBe(secondIndicator)
@@ -149,11 +139,6 @@ test.describe('SAM table — Stake / Next change column sort', () => {
 })
 
 test.describe('SAM table — sort choice persists across reload', () => {
-  /**
-   * Selects Max APY and flips it to ascending, then reloads the page.
-   * Assumes the sort choice is persisted to localStorage.
-   * Verifies Max APY is still the active ascending sort after reload.
-   */
   test('a chosen sort survives a page reload (sticky via localStorage)', async ({
     page,
   }) => {

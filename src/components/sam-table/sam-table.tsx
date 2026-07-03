@@ -2,11 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { cn } from 'src/class_utils'
 import { docsPath } from 'src/components/breakdowns/docs-path'
-import { ConcentrationMetric } from 'src/components/concentration-metric/concentration-metric'
-import { Gauge } from 'src/components/gauge/gauge'
 import { HelpTip } from 'src/components/help-tip/help-tip'
-import { ICON_ARROW_DOWN_SM } from 'src/components/icons/icon-arrow-down-sm'
-import { ICON_ARROW_UP_SM } from 'src/components/icons/icon-arrow-up-sm'
 import { ICON_CHEVRON_RIGHT_SM } from 'src/components/icons/icon-chevron-right'
 import { ICON_STAR } from 'src/components/icons/icon-star'
 import { PENALTY_BID_LOW } from 'src/components/icons/penalty-bid-low'
@@ -43,20 +39,17 @@ import {
   bondUtilizationPct,
   effectiveBondRunway,
 } from 'src/services/bond-health'
-import { bondCriticalFrac, bondGaugeScaleMax } from 'src/services/calculations'
 import { HELP_TEXT } from 'src/services/help-text'
 import {
   augmentAuctionResult,
-  buildConcentrationBreakdown,
   selectBondSize,
-  selectExpectedStakeChange,
   selectMaxAPY,
   selectRedelegationBudget,
   selectRedelegationPriorityFrontierPmpe,
   selectSamDistributedStake,
+  selectSamTargetStake,
   selectVoteAccount,
   selectWinningAPY,
-  selectProjectedAPY,
 } from 'src/services/sam'
 import {
   buildOriginalPositionsMap,
@@ -67,7 +60,6 @@ import {
   getValidatorTip,
   getTipStyle,
   getTipIcon,
-  nextStakeDeltaCell,
 } from 'src/services/tip-engine'
 import { assertNever } from 'src/utils/assert-never'
 
@@ -94,16 +86,6 @@ type ValidatorWithBondState = AugmentedAuctionValidator & {
   bondCoverage: BondCoverage
 }
 
-const TEXT_MUTED = 'text-muted-foreground'
-
-// 1 arrow < 5k SOL, 2 arrows < 25k, 3 arrows ≥ 25k
-function stakeArrowCount(delta: number): number {
-  const abs = Math.abs(delta)
-  if (abs < 1) return 0
-  if (abs < 5_000) return 1
-  if (abs < 25_000) return 2
-  return 3
-}
 const DESTRUCTIVE_LIGHT_CHIP = 'bg-destructive-light text-destructive'
 // no-bond and critical share the red chip — they differ only by label.
 const DESTRUCTIVE_CHIP = {
@@ -203,6 +185,8 @@ export function makeCompareFn(
         cmp = selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
         break
       case 'targetStake':
+        // Sort by the stake the auction is steering toward (current active +
+        // gap = target). The Stake cell shows the same sum as "X SOL (+ Y SOL)".
         cmp =
           a.auctionStake.marinadeSamTargetSol -
           b.auctionStake.marinadeSamTargetSol
@@ -241,7 +225,6 @@ type Props = {
   epochsPerYear: number
   dsSamConfig: DsSamConfig
   level?: UserLevel
-  isCompact?: boolean
   simulatedValidators?: Set<string>
   isCalculating: boolean
   validatorMeta?: Map<string, ValidatorMeta>
@@ -341,80 +324,45 @@ const SortIndicator: React.FC<{
 
 const RankCell = React.memo<{
   rank: number
-  cutoffRank: number
   isGhost: boolean
   isSimulated: boolean
-  isCompact: boolean
   voteAccount: string
   onClearValidator?: (voteAccount: string) => void
-}>(
-  ({
-    rank,
-    cutoffRank,
-    isGhost,
-    isSimulated,
-    isCompact,
-    voteAccount,
-    onClearValidator,
-  }) => {
-    // Primary: absolute 1-based stake-priority rank from the top.
-    const rankLabel = `#${rank}`
-    // Sub: cutoff-relative position. No # prefix here — the # lives only on
-    // the primary rank. NBSP binds the count to the word so it never wraps.
-    const cutoffWord = cutoffRank > 0 ? 'above' : 'below'
-    const rankSubLabel =
-      cutoffRank === 0 ? 'at cutoff' : `${Math.abs(cutoffRank)} ${cutoffWord}`
-    if (isGhost)
-      return (
-        <span
-          className={`text-muted-foreground ${RANK_MONO} flex flex-col items-center gap-0`}
-        >
-          <span className={isCompact ? 'text-xs' : 'text-base'}>
-            {rankLabel}
-          </span>
-          {!isCompact && (
-            <span className="text-2xs opacity-60 font-normal leading-tight">
-              {rankSubLabel}
-            </span>
-          )}
-        </span>
-      )
-    if (isSimulated && onClearValidator)
-      return (
-        <div className="flex flex-col items-center gap-0.5">
-          <span
-            className={`font-medium font-mono ${isCompact ? 'text-xs' : 'text-base'}`}
-            style={{ color: 'var(--muted-foreground)' }}
-          >
-            {rankLabel}
-          </span>
-          <Tooltip content="Remove from simulation">
-            <button
-              className="text-xs text-muted-foreground hover:text-destructive leading-none cursor-pointer"
-              onClick={e => {
-                e.stopPropagation()
-                onClearValidator(voteAccount)
-              }}
-            >
-              ✕
-            </button>
-          </Tooltip>
-        </div>
-      )
+}>(({ rank, isGhost, isSimulated, voteAccount, onClearValidator }) => {
+  // Primary: absolute 1-based stake-priority rank from the top.
+  const rankLabel = `#${rank}`
+  if (isGhost)
     return (
-      <span
-        className={`font-medium ${RANK_MONO} flex flex-col items-center gap-0 text-muted-foreground`}
-      >
-        <span className={isCompact ? 'text-xs' : 'text-base'}>{rankLabel}</span>
-        {!isCompact && (
-          <span className="text-2xs opacity-60 font-normal text-muted-foreground leading-tight">
-            {rankSubLabel}
-          </span>
-        )}
-      </span>
+      <span className={`text-muted-foreground ${RANK_MONO}`}>{rankLabel}</span>
     )
-  },
-)
+  if (isSimulated && onClearValidator)
+    return (
+      <div className="flex flex-col items-center gap-0.5">
+        <span
+          className="font-medium font-mono text-xs"
+          style={{ color: 'var(--muted-foreground)' }}
+        >
+          {rankLabel}
+        </span>
+        <Tooltip content="Remove from simulation">
+          <button
+            className="text-xs text-muted-foreground hover:text-destructive leading-none cursor-pointer"
+            onClick={e => {
+              e.stopPropagation()
+              onClearValidator(voteAccount)
+            }}
+          >
+            ✕
+          </button>
+        </Tooltip>
+      </div>
+    )
+  return (
+    <span className={`font-medium ${RANK_MONO} text-muted-foreground`}>
+      {rankLabel}
+    </span>
+  )
+})
 
 export const SamTable: React.FC<Props> = ({
   auctionResult,
@@ -422,7 +370,6 @@ export const SamTable: React.FC<Props> = ({
   epochsPerYear,
   dsSamConfig,
   level,
-  isCompact = true,
   simulatedValidators = EMPTY_SIMULATED_SET,
   isCalculating,
   validatorMeta,
@@ -449,14 +396,6 @@ export const SamTable: React.FC<Props> = ({
   const winningAPY = useMemo(
     () => selectWinningAPY(auctionResult, epochsPerYear),
     [auctionResult, epochsPerYear],
-  )
-  const projectedApy = useMemo(
-    () => selectProjectedAPY(auctionResult, epochsPerYear),
-    [auctionResult, epochsPerYear],
-  )
-  const concentration = useMemo(
-    () => buildConcentrationBreakdown(auctionResult, dsSamConfig),
-    [auctionResult, dsSamConfig],
   )
 
   const [flashId, setFlashId] = useState<string | null>(null)
@@ -684,28 +623,6 @@ export const SamTable: React.FC<Props> = ({
 
   const winningCount = winningValidators.length
 
-  // SAM-eligible universe for the "Winning Validators" stat: any validator
-  // whose bond meets the SDK's minBondBalanceSol threshold. Independent of
-  // the Basic-mode table filter, so "X / Y" reads as the auction outcome
-  // rather than "X of Y rows we chose to render".
-  const bondEligibleValidators = useMemo(
-    () =>
-      auctionResult.auctionData.validators.filter(
-        v =>
-          (v.bondBalanceSol ?? 0) > 0 &&
-          (v.bondBalanceSol ?? 0) >= dsSamConfig.minBondBalanceSol,
-      ),
-    [auctionResult, dsSamConfig.minBondBalanceSol],
-  )
-  const eligibleCount = bondEligibleValidators.length
-  const eligibleWinningCount = useMemo(
-    () =>
-      bondEligibleValidators.filter(
-        v => v.auctionStake.marinadeSamTargetSol > 0,
-      ).length,
-    [bondEligibleValidators],
-  )
-
   const dp = docsPath(level)
 
   const stats = useMemo(
@@ -725,20 +642,6 @@ export const SamTable: React.FC<Props> = ({
         guideTo: `${dp}#last-price`,
       },
       {
-        label: 'Projected APY',
-        value: pct(projectedApy, 2),
-        unit: '',
-        help: HELP_TEXT.projectedApy,
-        guideTo: `${dp}#sam`,
-      },
-      {
-        label: 'Winning Validators',
-        value: `${eligibleWinningCount}`,
-        unit: ` /${eligibleCount}`,
-        help: HELP_TEXT.winningValidators,
-        guideTo: `${dp}#sam`,
-      },
-      {
         label: 'Total Auction Stake',
         value: sol(samDistributedStake, 0),
         unit: 'SOL',
@@ -746,15 +649,7 @@ export const SamTable: React.FC<Props> = ({
         guideTo: `${dp}#sam`,
       },
     ],
-    [
-      totalRedelegation,
-      winningAPY,
-      projectedApy,
-      eligibleWinningCount,
-      eligibleCount,
-      samDistributedStake,
-      dp,
-    ],
+    [totalRedelegation, winningAPY, samDistributedStake, dp],
   )
 
   const renderRow = useCallback(
@@ -765,7 +660,6 @@ export const SamTable: React.FC<Props> = ({
       const rank = isGhost
         ? (origAuctionRank ?? index + 1)
         : (auctionRankMap.get(voteAccount) ?? index + 1)
-      const cutoffRank = validator.values.cutoffRank
       const isSimulated = simulatedValidators.has(voteAccount)
 
       const bondUtilPct = bondUtilizationPct(
@@ -777,10 +671,13 @@ export const SamTable: React.FC<Props> = ({
       const bondRunway = effectiveBondRunway(validator, dsSamConfig)
       const alertRunwayCeil = dsSamConfig.minBondEpochs + BOND_URGENT_EPOCHS
       const hasAlert = bondRunway <= alertRunwayCeil || bondUtilPct >= 85
-      const bondScaleMax = bondGaugeScaleMax(dsSamConfig)
-      const bondCritical = bondCriticalFrac(dsSamConfig)
+      // Critical bonds surface a runway alert in the Bond cell; round to whole
+      // epochs and floor at 1 so it never reads "0 epochs".
+      const epochsToLiquidate = Math.max(1, Math.round(bondRunway))
 
-      const expectedChange = selectExpectedStakeChange(validator)
+      // Stake column: current active stake and the gap to the auction target.
+      const currentStake = validator.marinadeActivatedStakeSol
+      const stakeToTarget = selectSamTargetStake(validator) - currentStake
 
       const tip = getValidatorTip(
         validator,
@@ -853,10 +750,8 @@ export const SamTable: React.FC<Props> = ({
           <TableCell className="px-3.5 py-3 text-center w-10">
             <RankCell
               rank={rank}
-              cutoffRank={cutoffRank}
               isGhost={isGhost}
               isSimulated={isSimulated}
-              isCompact={isCompact}
               voteAccount={voteAccount}
               onClearValidator={onClearValidator}
             />
@@ -867,7 +762,6 @@ export const SamTable: React.FC<Props> = ({
               name={validatorName}
               voteAccount={voteAccount}
               responsive
-              compact={isCompact}
               trailing={
                 <>
                   {hasAlert && (
@@ -885,22 +779,39 @@ export const SamTable: React.FC<Props> = ({
             />
           </TableCell>
 
+          {/* Stake — current active stake + gap to auction target. Primary
+            column: bold current value, tinted parenthetical gap. */}
           <TableCell className="px-3.5 py-3">
-            <span className="font-normal text-xs font-mono text-foreground">
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-semibold text-sm font-mono text-foreground">
+                {stake(currentStake)}
+              </span>
+              {Math.abs(stakeToTarget) >= 1 && (
+                <span
+                  className="font-mono text-xs"
+                  style={{
+                    color:
+                      stakeToTarget > 0 ? CSS_STATUS_GREEN : CSS_DESTRUCTIVE,
+                  }}
+                >
+                  ({stakeToTarget > 0 ? '+' : '−'}
+                  {stake(Math.abs(stakeToTarget))})
+                </span>
+              )}
+            </div>
+          </TableCell>
+
+          {/* Max APY — secondary metric, muted like Bond */}
+          <TableCell className="px-3.5 py-3">
+            <span className="text-sm font-mono text-muted-foreground">
               {pct(maxApy, 2)}
             </span>
           </TableCell>
 
+          {/* Bond — balance + health chip; critical bonds add a runway alert. */}
           <TableCell className="px-3.5 py-3">
-            {isCompact ? (
-              <span
-                className="text-sm font-mono text-muted-foreground"
-                title={bondChip.label}
-              >
-                {stake(selectBondSize(validator) ?? 0)}
-              </span>
-            ) : (
-              <div className="flex items-center gap-1.5 mb-1">
+            <div className="flex flex-col gap-0.5">
+              <div className="flex items-center gap-1.5">
                 <span className="text-muted-foreground text-sm font-mono">
                   {stake(selectBondSize(validator) ?? 0)}
                 </span>
@@ -916,87 +827,13 @@ export const SamTable: React.FC<Props> = ({
                   {bondChip.label}
                 </span>
               </div>
-            )}
-            {!isCompact && (
-              <div className="flex items-center gap-1.5">
-                <Gauge
-                  size="sm"
-                  value={bondRunway}
-                  scaleMax={bondScaleMax}
-                  marker={bondCritical}
-                  criticalBand={bondCritical}
-                  tone={bondChip.bar}
-                />
-                <span className="text-xs opacity-60 font-mono whitespace-nowrap text-muted-foreground">
-                  (
-                  {Math.round(bondRunway) >= 100
-                    ? '>100'
-                    : Math.round(bondRunway)}
-                  ep)
+              {bondHealth === 'critical' && (
+                <span className="text-destructive text-xs font-mono">
+                  {epochsToLiquidate}{' '}
+                  {epochsToLiquidate === 1 ? 'epoch' : 'epochs'} to liquidate
                 </span>
-              </div>
-            )}
-          </TableCell>
-
-          <TableCell className="px-3.5 py-3">
-            {isCompact ? (
-              <div className="flex items-center gap-1">
-                <span className="text-muted-foreground text-xs font-mono">
-                  {stake(validator.marinadeActivatedStakeSol)}
-                </span>
-                {(() => {
-                  const count = stakeArrowCount(expectedChange)
-                  if (count === 0) return null
-                  const isUp = expectedChange > 0
-                  return (
-                    <span
-                      className="inline-flex items-center gap-[1px]"
-                      style={{
-                        color: isUp ? CSS_STATUS_GREEN : CSS_DESTRUCTIVE,
-                      }}
-                    >
-                      {Array.from({ length: count }, (_, i) => (
-                        <span key={i} className="inline-flex">
-                          {isUp ? ICON_ARROW_UP_SM : ICON_ARROW_DOWN_SM}
-                        </span>
-                      ))}
-                    </span>
-                  )
-                })()}
-              </div>
-            ) : (
-              <div className="flex flex-col gap-0.5">
-                <span className="text-muted-foreground text-xs font-mono">
-                  {stake(validator.marinadeActivatedStakeSol)}
-                </span>
-                {(() => {
-                  const cell = nextStakeDeltaCell(expectedChange)
-                  return (
-                    <span
-                      className={cn(
-                        'font-mono text-xs',
-                        cell.tone === 'neutral'
-                          ? TEXT_MUTED
-                          : 'font-semibold text-sm',
-                      )}
-                      style={
-                        cell.tone === 'neutral'
-                          ? undefined
-                          : {
-                              color:
-                                cell.tone === 'positive'
-                                  ? CSS_STATUS_GREEN
-                                  : CSS_DESTRUCTIVE,
-                            }
-                      }
-                    >
-                      {cell.prefix}
-                      {stake(expectedChange)}
-                    </span>
-                  )
-                })()}
-              </div>
-            )}
+              )}
+            </div>
           </TableCell>
 
           {/* Next Step — icon = constraint/direction, color = severity.
@@ -1050,7 +887,6 @@ export const SamTable: React.FC<Props> = ({
       epochsPerYear,
       validatorMeta,
       flashId,
-      isCompact,
       handleGhostClick,
       onValidatorClick,
       onClearValidator,
@@ -1067,61 +903,34 @@ export const SamTable: React.FC<Props> = ({
       )}
     >
       <div className="max-w-[1920px] mx-auto">
-        <div className="grid grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-3 mt-3 mb-3 px-4">
-          {stats
-            .filter(
-              stat =>
-                !isCompact ||
-                [
-                  'Re-delegation',
-                  'Winning APY',
-                  'Total Auction Stake',
-                ].includes(stat.label),
-            )
-            .map(stat => (
-              <Card
-                key={stat.label}
-                className="px-3 py-3 sm:px-5 sm:py-4 overflow-hidden flex flex-col"
-              >
-                <div className="text-xs uppercase tracking-wider font-medium text-muted-foreground mb-1 flex items-center gap-1">
-                  {stat.help ? (
-                    <HelpTip text={stat.help} guideTo={stat.guideTo}>
-                      {stat.label}
-                    </HelpTip>
-                  ) : (
-                    stat.label
-                  )}
-                </div>
-                <div className="mt-auto flex items-baseline gap-0.5 min-w-0 overflow-hidden">
-                  <span className="text-xl sm:text-2xl font-semibold text-foreground font-mono truncate">
-                    {stat.value}
+        {/* Headline metrics — Re-delegation · Winning APY · Total Auction Stake */}
+        <div className="grid grid-cols-3 gap-3 mt-3 mb-3 px-4">
+          {stats.map(stat => (
+            <Card
+              key={stat.label}
+              className="px-3 py-3 sm:px-5 sm:py-4 overflow-hidden flex flex-col"
+            >
+              <div className="text-xs uppercase tracking-wider font-medium text-muted-foreground mb-1 flex items-center gap-1">
+                {stat.help ? (
+                  <HelpTip text={stat.help} guideTo={stat.guideTo}>
+                    {stat.label}
+                  </HelpTip>
+                ) : (
+                  stat.label
+                )}
+              </div>
+              <div className="mt-auto flex items-baseline gap-0.5 min-w-0 overflow-hidden">
+                <span className="text-xl sm:text-2xl font-semibold text-foreground font-mono truncate">
+                  {stat.value}
+                </span>
+                {stat.unit && (
+                  <span className="text-sm text-muted-foreground font-mono shrink-0">
+                    {stat.unit}
                   </span>
-                  {stat.unit && (
-                    <span className="text-sm text-muted-foreground font-mono shrink-0">
-                      {stat.unit}
-                    </span>
-                  )}
-                </div>
-              </Card>
-            ))}
-          {!isCompact && (
-            <ConcentrationMetric
-              label="Top Country"
-              rows={concentration.countries}
-              capPct={concentration.countryCapPct}
-              help="Share of auction-distributed stake by validator country. Bar fills against the per-country cap. A 'capped' tag means at least one validator was cut by the cap."
-              guideTo={`${dp}#concentration`}
-            />
-          )}
-          {!isCompact && (
-            <ConcentrationMetric
-              label="Top ASO"
-              rows={concentration.asos}
-              capPct={concentration.asoCapPct}
-              help="Share of auction-distributed stake by ASO — the Autonomous System Operator hosting the validator. Bar fills against the per-ASO cap. A 'capped' tag means at least one validator was cut by the cap."
-              guideTo={`${dp}#concentration`}
-            />
-          )}
+                )}
+              </div>
+            </Card>
+          ))}
         </div>
 
         {/* Ring wraps only search + table — not the metrics above */}
@@ -1143,10 +952,7 @@ export const SamTable: React.FC<Props> = ({
                 validators={validators}
                 nameMap={validatorMeta ?? EMPTY_NAME_MAP}
                 onSelect={onValidatorSearch}
-                className={cn(
-                  'ml-10 min-w-0',
-                  isCompact ? 'flex-1' : 'w-[540px]',
-                )}
+                className="ml-10 min-w-0 flex-1"
               />
             </div>
           )}
@@ -1181,6 +987,23 @@ export const SamTable: React.FC<Props> = ({
                     />
                   </TableHead>
                   <TableHead
+                    className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-[160px] cursor-pointer hover:text-primary whitespace-nowrap"
+                    onClick={() => handleSort('targetStake')}
+                  >
+                    <div className="flex items-center gap-1">
+                      Stake
+                      <SortIndicator
+                        column="targetStake"
+                        sortColumn={sortColumn}
+                        sortDirection={sortDirection}
+                      />
+                      <HelpTip
+                        text="How much stake you have right now, and the gap to your auction target shown as (+/− SOL). Sort orders by current stake plus that gap — your target allocation."
+                        guideTo={`${dp}#redelegation`}
+                      />
+                    </div>
+                  </TableHead>
+                  <TableHead
                     className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-[100px] cursor-pointer hover:text-primary whitespace-nowrap"
                     onClick={() => handleSort('maxApy')}
                   >
@@ -1211,23 +1034,6 @@ export const SamTable: React.FC<Props> = ({
                       <HelpTip
                         text={HELP_TEXT.bondHealth}
                         guideTo={`${dp}#bond`}
-                      />
-                    </div>
-                  </TableHead>
-                  <TableHead
-                    className="px-3.5 py-[11px] text-left text-xs font-medium tracking-[0.05em] bg-muted w-[140px] cursor-pointer hover:text-primary whitespace-nowrap"
-                    onClick={() => handleSort('targetStake')}
-                  >
-                    <div className="flex items-center gap-1">
-                      Stake / Next change
-                      <SortIndicator
-                        column="targetStake"
-                        sortColumn={sortColumn}
-                        sortDirection={sortDirection}
-                      />
-                      <HelpTip
-                        text="How much stake you have right now, and how much it'll change next epoch. Gains depend on fresh deposits coming in; losses come from regular withdrawals, which Marinade pulls from the most over-stake validators first."
-                        guideTo={`${dp}#redelegation`}
                       />
                     </div>
                   </TableHead>

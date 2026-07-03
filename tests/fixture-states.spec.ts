@@ -13,25 +13,13 @@ const SHEET = '[role="dialog"]'
 test.beforeEach(async ({ page }) => {
   await page.goto('/test-')
   await page.waitForSelector('tbody tr', { timeout: 30000 })
-  const toggle = page.getByRole('button', { name: 'Switch to detailed view' })
-  if (await toggle.isVisible().catch(() => false)) await toggle.click()
-})
-
-test('V08 (Out of Set) rank cell shows a "below" cutoff sub-label', async ({
-  page,
-}) => {
-  const row = page.locator(`tbody tr[data-vote-account="${V08}"]`).first()
-  await expect(row).toBeVisible()
-  const rankText = (await row.locator('td:nth-child(1)').innerText()).trim()
-  // Format is "#N\nM below" for out-of-set rows (see RankCell in
-  // sam-table.tsx). The "below" sub-label is the contract.
-  expect(rankText).toMatch(/below/i)
 })
 
 test('V04 (Critical Bond) row carries the Critical chip', async ({ page }) => {
   const row = page.locator(`tbody tr[data-vote-account="${V04}"]`).first()
   await expect(row).toBeVisible()
-  const bondText = await row.locator('td:nth-child(4)').innerText()
+  // Bond is the 5th column (#, Validator, Stake, Max APY, Bond).
+  const bondText = await row.locator('td:nth-child(5)').innerText()
   expect(bondText).toMatch(/Critical/i)
 })
 

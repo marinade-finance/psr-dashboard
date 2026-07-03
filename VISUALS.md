@@ -105,17 +105,14 @@ column alignment — reserve identical space regardless of glyph.
 `clamp(value/scaleMax, 4%, 100%)`. `marker` and `criticalBand` are
 fractions of the **track** (0..1), independent of fill. **Rule:**
 critical band & threshold marker scale with the track, fill scales with
-the value range — never couple them. Bond pill derives geometry from
-live SDK config: `bondGaugeScaleMax(config) = 4 × idealBondEpochs`;
-`marker = criticalBand = bondCriticalFrac(config) = 2 × idealBondEpochs /
-bondGaugeScaleMax(config) = 0.5` — the leftmost half of the track is the
-danger zone. Rendered DOM: track `56×4 px`, critical band
-`width: bondCriticalFrac%` (`bg-destructive/15`), marker tick at same
-fraction, fill `width: <pct>%`. Used ONLY in the SAM-table bond pill
-and the epoch-meter — concentration tiles do NOT route through `Gauge`.
-`src/components/gauge/gauge.tsx`,
-`src/services/calculations.ts`; call sites
-`src/components/sam-table/sam-table.tsx`,
+the value range — never couple them. Rendered DOM: track height `4 px`,
+critical band (`bg-destructive/15`) and marker tick at the band fraction,
+fill `width: <pct>%`. Used ONLY by the epoch-meter — the SAM-table bond
+column no longer renders a gauge (it shows balance + chip, with a
+text `X epochs to liquidate` alert on critical bonds). The
+`bondGaugeScaleMax` / `bondCriticalFrac` geometry helpers in
+`src/services/calculations.ts` remain but are no longer wired to a
+rendered gauge. `src/components/gauge/gauge.tsx`; call site
 `src/components/epoch-meter/epoch-meter.tsx`.
 
 ### Bond chip
@@ -130,10 +127,10 @@ runway ≤ `minBondEpochs + BOND_URGENT_EPOCHS` (3); `WATCH` →
 runway < `idealBondEpochs`; `HEALTHY` → runway ≥ `idealBondEpochs`.
 Tones: `NO_BOND`/`CRITICAL` = destructive, `WATCH` = warning,
 `HEALTHY` = primary. The chip dot is `w-[7px] h-[7px]` — slightly
-larger than the 6px attention dot elsewhere — so chip and gauge tone
-read together at a glance. **Rule:** chip, dot, gauge fill and runway
-all derive from the single `bondHealth` tier — they can never
-contradict. `src/components/sam-table/sam-table.tsx`.
+larger than the 6px attention dot elsewhere. **Rule:** chip, dot and the
+critical `X epochs to liquidate` runway alert all derive from the single
+`bondHealth` tier — they can never contradict.
+`src/components/sam-table/sam-table.tsx`.
 
 ### Bond-coverage heatmap tiers
 
