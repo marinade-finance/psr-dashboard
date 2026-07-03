@@ -628,6 +628,7 @@ function deltaCta(
   delta: number,
   capBinding: boolean,
   priorityFrontierPmpe = 0,
+  minMaxStakeWanted: number | null = null,
 ): ValidatorTip {
   if (delta > 0) {
     // Validator is receiving scraps from leftover budget — below the priority
@@ -662,7 +663,18 @@ function deltaCta(
     const wanted = validator.maxStakeWanted
     const target = validator.auctionStake.marinadeSamTargetSol
     const active = validator.marinadeActivatedStakeSol
-    const atOwnCap = wanted != null && target >= wanted - 1e-9
+    // The validator's own cap binds ONLY when their setting is the value the
+    // auction actually clips to: max(minMaxStakeWanted, active, wanted). A
+    // setting below that floor is silently raised to it (SDK
+    // buildSamWantConstraints), so target can exceed maxStakeWanted and "at
+    // your setting" would be a lie — a 7k request under a 10k floor lands at
+    // 10k. Only claim it when their number is what's really binding.
+    const wantFloor = Math.max(minMaxStakeWanted ?? 0, active)
+    const atOwnCap =
+      wanted != null &&
+      wanted > 0 &&
+      wanted >= wantFloor &&
+      target >= wanted - 1e-9
     const belowTarget = target > 0 && active < target * 0.99
     if (atOwnCap) {
       return tip('At your `maxStakeWanted` setting.', 'neutral', 'none', delta)
@@ -722,7 +734,13 @@ export const getValidatorTip = (
     bidCta(validator, dsSamConfig, winningTotalPmpe, delta),
     outOfSetCta(validator, winningTotalPmpe, delta, blacklist),
     cap,
-    deltaCta(validator, delta, cap !== null, priorityFrontierPmpe),
+    deltaCta(
+      validator,
+      delta,
+      cap !== null,
+      priorityFrontierPmpe,
+      dsSamConfig.minMaxStakeWanted,
+    ),
   )
 }
 

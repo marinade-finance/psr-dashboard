@@ -344,6 +344,37 @@ describe('getValidatorTip', () => {
     expect(tip.text).toContain('At target')
   })
 
+  it('delta === 0 + maxStakeWanted below the floor → NOT "at your setting" (floor binds)', () => {
+    // StakeNode777 case: set 7k, but minMaxStakeWanted floor 10k raises the
+    // clip to 10k, so target (10k) > setting (7k). The setting isn't binding —
+    // must fall through to the bid lever, not falsely claim the cap is theirs.
+    const cfg = { ...DS_SAM_CONFIG, minMaxStakeWanted: 10_000 }
+    const validator = makeValidator({
+      maxStakeWanted: 7_000,
+      marinadeActivatedStakeSol: 6_449,
+      auctionStake: { marinadeSamTargetSol: 10_000 },
+      values: { expectedStakeChangeSol: 0 },
+    })
+    const tip = getValidatorTip(validator, cfg, 100)
+    expect(tip.text).not.toContain('maxStakeWanted')
+    expect(tip.constraint).toBe('rank')
+    expect(tip.text).toContain('Raise bid')
+  })
+
+  it('delta === 0 + maxStakeWanted at/above the floor → "At your maxStakeWanted setting"', () => {
+    const cfg = { ...DS_SAM_CONFIG, minMaxStakeWanted: 10_000 }
+    const validator = makeValidator({
+      maxStakeWanted: 20_000,
+      marinadeActivatedStakeSol: 20_000,
+      auctionStake: { marinadeSamTargetSol: 20_000 },
+      values: { expectedStakeChangeSol: 0 },
+    })
+    const tip = getValidatorTip(validator, cfg, 100)
+    expect(tip.urgency).toBe('neutral')
+    expect(tip.constraint).toBe('none')
+    expect(tip.text).toContain('maxStakeWanted')
+  })
+
   it('delta === 0 + active << target → info/rank raise-bid (budget ran out before this validator)', () => {
     // makeValidator: active=10000, target=15000 → belowTarget=true, delta=0
     // Budget depleted by higher-priority validators; lever is the bid.

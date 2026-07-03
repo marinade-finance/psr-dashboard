@@ -630,6 +630,20 @@ export const ValidatorDetail = ({
   )
   const tipStyle = getTipStyle(tip.urgency)
   const expectedStakeDelta = selectExpectedStakeChange(validator)
+  // A maxStakeWanted below the network floor (minMaxStakeWanted, or the
+  // validator's own active stake) is silently raised to it by the auction
+  // (SDK buildSamWantConstraints), so the target can exceed the shown cap.
+  // Surface that instead of pretending the low setting is what binds.
+  const minMaxStakeWanted = dsSamConfig.minMaxStakeWanted ?? 0
+  const effectiveWantCap = Math.max(
+    minMaxStakeWanted,
+    validator.marinadeActivatedStakeSol,
+    validator.maxStakeWanted ?? 0,
+  )
+  const wantCapOverridden =
+    validator.maxStakeWanted != null &&
+    validator.maxStakeWanted > 0 &&
+    validator.maxStakeWanted < effectiveWantCap
   const [tab, setTab] = useState<Tab>('overview')
 
   const inSet = selectInSet(validator)
@@ -1041,11 +1055,19 @@ export const ValidatorDetail = ({
                 />
                 {validator.maxStakeWanted != null &&
                   validator.maxStakeWanted > 0 && (
-                    <MetricRow
-                      label="Max stake wanted"
-                      help="The self-imposed stake cap you set. The auction will not assign you more than this amount."
-                      value={stake(validator.maxStakeWanted)}
-                    />
+                    <div>
+                      <MetricRow
+                        label="Max stake wanted"
+                        help="The self-imposed stake cap you set. A value below the network minimum is raised to that minimum, so the auction can target more than this."
+                        value={stake(validator.maxStakeWanted)}
+                      />
+                      {wantCapOverridden && (
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          Below {stake(minMaxStakeWanted)} min — auction uses{' '}
+                          {stake(effectiveWantCap)}
+                        </div>
+                      )}
+                    </div>
                   )}
                 <MetricRow
                   label="Expected change next epoch"
