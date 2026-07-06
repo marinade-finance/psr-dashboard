@@ -841,7 +841,7 @@ export const SamTable: React.FC<Props> = ({
             an EXPECTED state, not an alarm: render it muted with a short
             label; the full sentence lives in the detail panel. */}
           {(() => {
-            const bidTooLow = tip.constraint === 'rank'
+            const bidTooLow = tip.constraint === 'rank' && !inSet
             const stepColor = bidTooLow ? CSS_MUTED_FG : tipStyle.color
             const stepBg = bidTooLow ? CSS_MUTED : tipStyle.bg
             const stepText = bidTooLow
