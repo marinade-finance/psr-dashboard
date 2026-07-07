@@ -344,6 +344,37 @@ describe('getValidatorTip', () => {
     expect(tip.text).toContain('At target')
   })
 
+  it('delta === 0 + maxStakeWanted below the floor → NOT "at your setting" (floor binds)', () => {
+    // StakeNode777 case: set 7k, but minMaxStakeWanted floor 10k raises the
+    // clip to 10k, so target (10k) > setting (7k). The setting isn't binding —
+    // must fall through to the bid lever, not falsely claim the cap is theirs.
+    const cfg = { ...DS_SAM_CONFIG, minMaxStakeWanted: 10_000 }
+    const validator = makeValidator({
+      maxStakeWanted: 7_000,
+      marinadeActivatedStakeSol: 6_449,
+      auctionStake: { marinadeSamTargetSol: 10_000 },
+      values: { expectedStakeChangeSol: 0 },
+    })
+    const tip = getValidatorTip(validator, cfg, 100)
+    expect(tip.text).not.toContain('maxStakeWanted')
+    expect(tip.constraint).toBe('rank')
+    expect(tip.text).toContain('Raise bid')
+  })
+
+  it('delta === 0 + maxStakeWanted at/above the floor → "At your maxStakeWanted setting"', () => {
+    const cfg = { ...DS_SAM_CONFIG, minMaxStakeWanted: 10_000 }
+    const validator = makeValidator({
+      maxStakeWanted: 20_000,
+      marinadeActivatedStakeSol: 20_000,
+      auctionStake: { marinadeSamTargetSol: 20_000 },
+      values: { expectedStakeChangeSol: 0 },
+    })
+    const tip = getValidatorTip(validator, cfg, 100)
+    expect(tip.urgency).toBe('neutral')
+    expect(tip.constraint).toBe('none')
+    expect(tip.text).toContain('maxStakeWanted')
+  })
+
   it('delta === 0 + active << target → info/rank raise-bid (budget ran out before this validator)', () => {
     // makeValidator: active=10000, target=15000 → belowTarget=true, delta=0
     // Budget depleted by higher-priority validators; lever is the bid.
@@ -367,6 +398,51 @@ describe('getValidatorTip', () => {
     expect(tip.urgency).toBe('warning')
     expect(tip.constraint).toBe('none')
     expect(tip.text).toContain('Losing')
+  })
+
+  it('out-of-set + no bond + defending + below winning price → loss headlines, not "grow stake"', () => {
+    // Allied-#69 case: ~44k active leaving (delta << 0), no bond, price below
+    // winning. The missing bond is a hard gate, but posting it alone can't win
+    // stake at a losing price — so the loss must headline. A big loser must not
+    // get a milder CTA than a validator shedding a few SOL (which shows
+    // "Losing N" via deltaCta at info).
+    const validator = makeValidator({
+      auctionStake: { marinadeSamTargetSol: 0 },
+      bondBalanceSol: 0,
+      claimableBondBalanceSol: 0,
+      marinadeActivatedStakeSol: 50_000,
+      values: { expectedStakeChangeSol: -30_000 },
+    })
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
+    expect(tip.urgency).toBe('warning')
+    expect(tip.constraint).toBe('none')
+    expect(tip.text).toContain('Losing')
+  })
+
+  it('out-of-set + no bond + defending + price clears winning → bond is sole blocker, "grow stake" wins', () => {
+    // Same loss, but totalPmpe >= winningTotalPmpe: the missing bond is the
+    // ONLY thing keeping it out, so the actionable bond CTA is right to lead.
+    const validator = makeValidator({
+      auctionStake: { marinadeSamTargetSol: 0 },
+      bondBalanceSol: 0,
+      claimableBondBalanceSol: 0,
+      marinadeActivatedStakeSol: 50_000,
+      values: { expectedStakeChangeSol: -30_000 },
+      revShare: {
+        inflationPmpe: 5,
+        mevPmpe: 2,
+        blockPmpe: 1,
+        bidPmpe: 20,
+        totalPmpe: 150,
+        bondObligationPmpe: 20,
+        auctionEffectiveBidPmpe: 20,
+        effParticipatingBidPmpe: 20,
+      },
+    })
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
+    expect(tip.urgency).toBe('warning')
+    expect(tip.constraint).toBe('bond')
+    expect(tip.text).toContain('grow stake')
   })
 
   it('delta < 0 + not defending → info, losing stake message', () => {
