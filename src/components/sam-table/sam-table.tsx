@@ -837,16 +837,16 @@ export const SamTable: React.FC<Props> = ({
           </TableCell>
 
           {/* Next Step — icon = constraint/direction, color = severity.
-            The contiguous out-of-set "bid below winning price" block is
-            an EXPECTED state, not an alarm: render it muted with a short
-            label; the full sentence lives in the detail panel. */}
+            The engine flags the contiguous out-of-set "bid below winning
+            price" block via tip.chip: an EXPECTED state, not an alarm, so
+            render it muted with that short label while the full sentence
+            lives in the detail panel. Its absence (incl. a defending row)
+            keeps the tip's real severity colour and text. */}
           {(() => {
-            const bidTooLow = tip.constraint === 'rank' && !inSet
-            const stepColor = bidTooLow ? CSS_MUTED_FG : tipStyle.color
-            const stepBg = bidTooLow ? CSS_MUTED : tipStyle.bg
-            const stepText = bidTooLow
-              ? 'Bid below winning price.'
-              : trimTipDecimals(tip.text)
+            const muted = tip.chip != null
+            const stepColor = muted ? CSS_MUTED_FG : tipStyle.color
+            const stepBg = muted ? CSS_MUTED : tipStyle.bg
+            const stepText = tip.chip ?? trimTipDecimals(tip.text)
             return (
               <TableCell className="px-3.5 py-3">
                 <div

@@ -49,6 +49,13 @@ export interface ValidatorTip {
   // this epoch. Drives the alert glyph (and pulse) — never set for plain
   // below-min / no-bond, which stay critical-red without the escalation.
   alert?: boolean
+  // Compact status label for the dense sam-table Next Step column, when the
+  // full `text` sentence would over-state a calm, EXPECTED state. Set only by
+  // bidCta for the non-defending out-of-set-below-winning row ("Bid below
+  // winning price."); its presence is also the signal to render that row
+  // muted. `text` keeps the full CTA for the detail panel. The engine owns
+  // this string — the table must never re-derive it from in-set state.
+  chip?: string
   // Signed next-epoch stake delta. Only meaningful when constraint === 'none';
   // that's the sole case whose glyph is allowed to be directional.
   delta: number
@@ -262,10 +269,12 @@ function tip(
   constraint: TipConstraint,
   delta: number,
   alert?: boolean,
+  chip?: string,
 ): ValidatorTip {
-  return alert
-    ? { text, urgency, constraint, delta, alert }
-    : { text, urgency, constraint, delta }
+  const built: ValidatorTip = { text, urgency, constraint, delta }
+  if (alert) built.alert = true
+  if (chip) built.chip = chip
+  return built
 }
 
 // Callers must include at least one non-null candidate (in practice the
@@ -439,12 +448,19 @@ function bidCta(
   ) {
     // Bid too low — growth lever in general (raise the bid → qualify),
     // escalates to defend lever (yellow) when meaningful stake is leaving
-    // so it outranks the generic "Losing N" delta narrative.
+    // so it outranks the generic "Losing N" delta narrative. The calm
+    // (non-defending) case also carries the compact "Bid below winning
+    // price." chip the dense table renders muted; a defending row drops the
+    // chip so it keeps its warning colour and full CTA and actually stands
+    // out instead of hiding in the muted below-cutoff block.
+    const defending = isDefending(validator, delta)
     return tip(
       'Raise bid to qualify for stake.',
-      isDefending(validator, delta) ? 'warning' : 'info',
+      defending ? 'warning' : 'info',
       'rank',
       delta,
+      undefined,
+      defending ? undefined : 'Bid below winning price.',
     )
   }
   return null
