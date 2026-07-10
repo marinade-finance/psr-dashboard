@@ -273,7 +273,7 @@ function tip(
 ): ValidatorTip {
   const built: ValidatorTip = { text, urgency, constraint, delta }
   if (alert) built.alert = true
-  if (chip) built.chip = chip
+  if (chip != null) built.chip = chip
   return built
 }
 
