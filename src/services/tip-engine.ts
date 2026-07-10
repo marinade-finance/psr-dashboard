@@ -636,6 +636,12 @@ function capCta(
   return tip(text, urgency, 'cap', delta)
 }
 
+// Single string for "in-set, above winning, bid still below the priority
+// frontier" — deltaCta hits this from two different delta states (see
+// below) and used to word it differently per branch even though it's the
+// same situation and the same fix (raise the bid).
+const RAISE_TO_GROW = 'Raise bid to grow stake next epoch.'
+
 // Delta lever — the "stake trajectory" fallback. Always emits something
 // for in-set validators except when the cap lever explains the loss
 // (mutual exclusion at source so we don't have to lie with urgency).
@@ -653,12 +659,7 @@ function deltaCta(
       priorityFrontierPmpe > 0 &&
       validator.revShare.totalPmpe < priorityFrontierPmpe
     ) {
-      return tip(
-        'Raise bid to get more stake next epoch.',
-        'info',
-        'rank',
-        delta,
-      )
+      return tip(RAISE_TO_GROW, 'info', 'rank', delta)
     }
     return tip(
       `${stake(delta)} arriving next epoch.`,
@@ -700,6 +701,11 @@ function deltaCta(
     // served sooner in the greedy allocation pass.
     // Exception: if the bid already clears the priority frontier, the bid lever
     // is exhausted — budget simply ran out; "Raise bid" would be wrong advice.
+    // NOTE: this guard is deliberately NOT the same expression as the
+    // delta>0 branch above — when priorityFrontierPmpe is unknown (0) this
+    // branch still advises raising the bid (safer default when nothing is
+    // arriving), while the delta>0 branch stays silent (the positive delta
+    // already tells the real story). Only the resulting string is shared.
     if (belowTarget && !capBinding) {
       if (
         priorityFrontierPmpe > 0 &&
@@ -707,7 +713,7 @@ function deltaCta(
       ) {
         return tip('At target stake.', 'neutral', 'none', delta)
       }
-      return tip('Raise bid to grow stake.', 'info', 'rank', delta)
+      return tip(RAISE_TO_GROW, 'info', 'rank', delta)
     }
     return tip('At target stake.', 'neutral', 'none', delta)
   }

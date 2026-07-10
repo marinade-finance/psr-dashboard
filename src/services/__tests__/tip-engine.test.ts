@@ -323,7 +323,7 @@ describe('getValidatorTip', () => {
     )
     expect(tip.urgency).toBe('info')
     expect(tip.constraint).toBe('rank')
-    expect(tip.text).toBe('Raise bid to get more stake next epoch.')
+    expect(tip.text).toBe('Raise bid to grow stake next epoch.')
   })
 
   it('delta > 0 + at/above priority frontier → positive arriving message', () => {
@@ -396,7 +396,7 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('info')
     expect(tip.constraint).toBe('rank')
-    expect(tip.text).toBe('Raise bid to grow stake.')
+    expect(tip.text).toBe('Raise bid to grow stake next epoch.')
   })
 
   it('delta < 0 + defending + healthy bond → warning, losing stake message', () => {
