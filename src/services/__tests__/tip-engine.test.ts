@@ -165,6 +165,20 @@ describe('getValidatorTip', () => {
     expect(tip.urgency).toBe('info')
     expect(tip.constraint).toBe('rank')
     expect(tip.text).toContain('Raise bid')
+    // Calm out-of-set row carries the compact muted chip; full CTA in text.
+    expect(tip.chip).toBe('Bid below winning price.')
+  })
+
+  it('defending out-of-set → warning/rank with NO chip (stands out, not muted)', () => {
+    const validator = makeValidator({
+      auctionStake: { marinadeSamTargetSol: 0 },
+      marinadeActivatedStakeSol: 100000,
+      values: { expectedStakeChangeSol: -5000 },
+    })
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
+    expect(tip.urgency).toBe('warning')
+    expect(tip.constraint).toBe('rank')
+    expect(tip.chip).toBeUndefined()
   })
 
   it('out-of-set + bid penalty firing → critical/bid (penalty outranks rank)', () => {
@@ -309,7 +323,7 @@ describe('getValidatorTip', () => {
     )
     expect(tip.urgency).toBe('info')
     expect(tip.constraint).toBe('rank')
-    expect(tip.text).toBe('Raise bid to get more stake next epoch.')
+    expect(tip.text).toBe('Raise bid to grow stake next epoch.')
   })
 
   it('delta > 0 + at/above priority frontier → positive arriving message', () => {
@@ -382,7 +396,7 @@ describe('getValidatorTip', () => {
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.urgency).toBe('info')
     expect(tip.constraint).toBe('rank')
-    expect(tip.text).toBe('Raise bid to grow stake.')
+    expect(tip.text).toBe('Raise bid to grow stake next epoch.')
   })
 
   it('delta < 0 + defending + healthy bond → warning, losing stake message', () => {
