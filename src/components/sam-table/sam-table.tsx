@@ -678,11 +678,6 @@ export const SamTable: React.FC<Props> = ({
       // Stake column: current active stake and the gap to the auction target.
       const currentStake = validator.marinadeActivatedStakeSol
       const stakeToTarget = selectSamTargetStake(validator) - currentStake
-      // Tint the target gap by the FUNDED next-epoch change, not the gap's own
-      // sign: a target the redelegation budget won't reach this epoch
-      // (expectedStakeChangeSol ≈ 0) must not read as green "gaining" — that
-      // contradicts a "Raise bid to grow stake." Next Step. Sub-1-SOL is flat.
-      const nextDelta = validator.values.expectedStakeChangeSol
 
       const tip = getValidatorTip(
         validator,
@@ -796,11 +791,7 @@ export const SamTable: React.FC<Props> = ({
                   className="font-mono text-xs"
                   style={{
                     color:
-                      Math.abs(nextDelta) < 1
-                        ? CSS_MUTED_FG
-                        : nextDelta > 0
-                          ? CSS_STATUS_GREEN
-                          : CSS_DESTRUCTIVE,
+                      stakeToTarget > 0 ? CSS_STATUS_GREEN : CSS_DESTRUCTIVE,
                   }}
                 >
                   ({stakeToTarget > 0 ? '+' : '−'}
