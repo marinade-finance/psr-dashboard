@@ -13,11 +13,8 @@ import {
   CSS_WARNING_LIGHT,
 } from 'src/css'
 
-import type {
-  AuctionValidator,
-  TipUrgency,
-  ValidatorTip,
-} from '@marinade.finance/ds-sam-calc'
+import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
+import type { TipUrgency, ValidatorTip } from '@marinade.finance/ds-sam-calc'
 
 // The CTA decision engine moved to @marinade.finance/ds-sam-calc; re-exported
 // so existing imports from 'src/services/tip-engine' keep resolving. UI-only
