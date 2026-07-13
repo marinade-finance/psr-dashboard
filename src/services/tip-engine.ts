@@ -1,4 +1,6 @@
-import { apyBreakdown, assertNever } from '@marinade.finance/ds-sam-calc'
+import { apyBreakdown } from '@marinade.finance/ds-sam-calc'
+
+import { assertNever } from 'src/utils/assert-never'
 
 import {
   CSS_DESTRUCTIVE,

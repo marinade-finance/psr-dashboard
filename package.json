@@ -53,6 +53,7 @@
   "dependencies": {
     "@marinade.finance/ds-sam-calc": "link:../ds-sam/packages/ds-sam-calc",
     "@marinade.finance/ds-sam-sdk": "link:../ds-sam/packages/ds-sam-sdk",
+    "@marinade.finance/ts-common": "^4.3.2",
     "@zodios/core": "10.9.6",
     "zod": "^3",
     "@radix-ui/react-dialog": "1.1.15",

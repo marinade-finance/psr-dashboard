@@ -12,5 +12,5 @@ export {
   signedStake,
   bondSol,
   topUp,
-  lamportsToSol,
 } from '@marinade.finance/ds-sam-calc'
+export { lamportsToSol } from '@marinade.finance/ts-common'

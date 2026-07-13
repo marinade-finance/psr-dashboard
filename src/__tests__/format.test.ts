@@ -179,8 +179,8 @@ describe('signedStake', () => {
 })
 
 describe('lamportsToSol', () => {
-  it('1 SOL (1_000_000_000 lamports) → "1.000000000"', () => {
-    expect(lamportsToSol('1000000000')).toBe('1.000000000')
+  it('1 SOL (1_000_000_000 lamports) → "1"', () => {
+    expect(lamportsToSol('1000000000')).toBe('1')
   })
 
   it('short input pads with leading zeros', () => {
@@ -192,7 +192,7 @@ describe('lamportsToSol', () => {
     expect(lamportsToSol('123456789')).toBe('0.123456789')
   })
 
-  it('10-digit input splits into integer + fractional', () => {
-    expect(lamportsToSol('1234567890')).toBe('1.234567890')
+  it('10-digit input splits into integer + fractional, trimming trailing zeros', () => {
+    expect(lamportsToSol('1234567890')).toBe('1.23456789')
   })
 })
