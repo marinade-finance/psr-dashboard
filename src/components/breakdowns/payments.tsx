@@ -61,7 +61,7 @@ export const PaymentsBreakdown: React.FC<Props> = ({
     label: hasPenalty
       ? `You will pay ${pay(total, 3)} in total this epoch — including ${pay(penaltyTotal, 3)} in penalties.`
       : `You will pay ${pay(total, 3)} in total this epoch — no penalties.`,
-    tone: hasPenalty ? 'red' : 'green',
+    severity: hasPenalty ? 'critical' : 'good',
   }
   const status: CardStatus = withSimAction(baseStatus, onGoToSim)
 

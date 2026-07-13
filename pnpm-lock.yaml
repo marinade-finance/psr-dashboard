@@ -13,11 +13,11 @@ importers:
   .:
     dependencies:
       '@marinade.finance/ds-sam-calc':
-        specifier: link:../ds-sam/packages/ds-sam-calc
-        version: link:../ds-sam/packages/ds-sam-calc
+        specifier: 0.1.1
+        version: 0.1.1
       '@marinade.finance/ds-sam-sdk':
-        specifier: link:../ds-sam/packages/ds-sam-sdk
-        version: link:../ds-sam/packages/ds-sam-sdk
+        specifier: 0.1.1
+        version: 0.1.1
       '@marinade.finance/ts-common':
         specifier: ^4.3.2
         version: 4.3.2
@@ -807,6 +807,12 @@ packages:
 
   '@liuli-util/fs-extra@0.1.0':
     resolution: {integrity: sha512-eaAyDyMGT23QuRGbITVY3SOJff3G9ekAAyGqB9joAnTBmqvFN+9a1FazOdO70G6IUqgpKV451eBHYSRcOJ/FNQ==}
+
+  '@marinade.finance/ds-sam-calc@0.1.1':
+    resolution: {integrity: sha512-jwvtC9QpCrdpBVoWwXYZKnL8ySyJ06G/AyIak+y1nmG2gCF10rfbL5GLSVyhvaqeTpAfQv/9uto597kh7uQthA==}
+
+  '@marinade.finance/ds-sam-sdk@0.1.1':
+    resolution: {integrity: sha512-iI8peRHzeW+z1tGEuvUE8ptk4Kk7uk1+XxauOWb0Q7M90L0LDbT4VhGqmJCffgmgJYBGQ4dTfB2i/z8mI6dabw==}
 
   '@marinade.finance/eslint-config@1.3.5':
     resolution: {integrity: sha512-yKLW2vI9QmQ6uWO3SQSbOYDmtSpYPU34zuomKGCfoLF7/bN+c6GinyzUumIPoUshqztRkqjOpFels4F4E6puEg==}
@@ -5420,6 +5426,21 @@ snapshots:
       '@types/fs-extra': 9.0.13
       fs-extra: 10.1.0
 
+  '@marinade.finance/ds-sam-calc@0.1.1':
+    dependencies:
+      '@marinade.finance/ts-common': 4.3.2
+      decimal.js: 10.6.0
+
+  '@marinade.finance/ds-sam-sdk@0.1.1':
+    dependencies:
+      '@marinade.finance/ds-sam-calc': 0.1.1
+      axios: 1.16.1
+      decimal.js: 10.6.0
+      semver: 7.8.5
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
   '@marinade.finance/eslint-config@1.3.5(eslint@10.4.0(jiti@2.7.0))(jest@30.4.2(@types/node@25.9.1)(ts-node@10.9.2(@types/node@25.9.1)(typescript@6.0.3)))(prettier@3.8.3)(typescript@6.0.3)':
     dependencies:
       '@eslint/js': 9.39.4
@@ -9303,8 +9324,7 @@ snapshots:
 
   semver@7.8.0: {}
 
-  semver@7.8.5:
-    optional: true
+  semver@7.8.5: {}
 
   set-cookie-parser@2.7.2: {}
 

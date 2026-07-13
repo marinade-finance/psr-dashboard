@@ -107,16 +107,16 @@ export const BiddingBreakdown: React.FC<Props> = ({
   const baseStatus: Omit<CardStatus, 'action'> = inAuction.capConstrained
     ? {
         label: `${capLabel} — raising your bid alone will not get you in.`,
-        tone: 'yellow',
+        severity: 'warning',
       }
     : clears
       ? {
           label: `Already clears — keep your static bid at or above ${pmpe(inAuction.targetBidPmpe)} PMPE.`,
-          tone: 'green',
+          severity: 'good',
         }
       : {
           label: `Bid ${pmpe(inAuction.currentBidPmpe)} → ${pmpe(inAuction.targetBidPmpe)} PMPE to clear the winning total PMPE.`,
-          tone: 'red',
+          severity: 'critical',
         }
   const status: CardStatus = withSimAction(baseStatus, onGoToSim)
 

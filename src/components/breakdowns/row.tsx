@@ -1,8 +1,13 @@
 import React from 'react'
 
 import { cn } from 'src/class_utils'
-import type { CardStatusTone } from 'src/components/breakdowns/card'
+import {
+  severityMarkerClass,
+  severityTextClass,
+} from 'src/components/breakdowns/severity-style'
 import { HelpTip } from 'src/components/help-tip/help-tip'
+
+import type { CardStatusSeverity } from 'src/services/card-status'
 
 export const SEPARATOR_DIV_CLASS = 'border-t border-border-grid pt-2 mt-1'
 // Cell padding for table rows above/below the separator border. The extra
@@ -56,29 +61,21 @@ export const SectionHeader: React.FC<{
   )
 }
 
-type ColoredTone = Exclude<CardStatusTone, 'grey'>
-
-const MARKER_CLASSES: Record<ColoredTone, string> = {
-  ['red']: 'bg-destructive',
-  ['yellow']: 'bg-status-yellow',
-  ['green']: 'bg-primary',
-}
-
-const Marker: React.FC<{ tone: ColoredTone }> = ({ tone }) => (
+const Marker: React.FC<{ severity: CardStatusSeverity }> = ({ severity }) => (
   <span
     className={cn(
       'inline-block w-1.5 h-1.5 rounded-full mr-2 align-middle',
-      MARKER_CLASSES[tone],
+      severityMarkerClass(severity),
     )}
   />
 )
 
 export type Severity = 'ok' | 'warning' | 'error'
 
-const SEVERITY_TONE: Record<Severity, ColoredTone> = {
-  ok: 'green',
-  warning: 'yellow',
-  error: 'red',
+const SEVERITY_STATUS: Record<Severity, CardStatusSeverity> = {
+  ok: 'good',
+  warning: 'warning',
+  error: 'critical',
 }
 
 const TEXT_BASE = 'text-base'
@@ -86,11 +83,6 @@ const TEXT_XS = 'text-xs'
 const BOLD = 'font-semibold'
 const MUTED = 'text-muted-foreground'
 const MID_CELL = 'px-2 text-right font-mono text-xs text-muted-foreground'
-const TONE_TEXT: Record<ColoredTone, string> = {
-  ['green']: 'text-status-green',
-  ['yellow']: 'text-status-yellow',
-  ['red']: 'text-destructive',
-}
 
 // Single shared per-row visual model. CalcRow renders `Label | col1 | col2`
 // for every breakdown table. Padding/divider/weight derive from these flags:
@@ -133,7 +125,7 @@ export const CalcRow: React.FC<{
   total?: boolean
   severity?: Severity
 }> = ({ label, help, col1, col2, bold, separator, total, severity }) => {
-  const tone = severity ? SEVERITY_TONE[severity] : undefined
+  const statusSeverity = severity ? SEVERITY_STATUS[severity] : undefined
   const { bld, lg, cellPad, sepBorder } = rowStyle({
     bold,
     separator,
@@ -151,7 +143,7 @@ export const CalcRow: React.FC<{
           sepBorder,
         )}
       >
-        {tone && !total && <Marker tone={tone} />}
+        {statusSeverity && !total && <Marker severity={statusSeverity} />}
         {help ? <HelpTip text={help}>{label}</HelpTip> : <span>{label}</span>}
       </td>
       <td className={cn(MID_CELL, cellPad, sepBorder)}>{col1 ?? ''}</td>
@@ -163,7 +155,7 @@ export const CalcRow: React.FC<{
           bld && BOLD,
           total ? 'tabular-nums text-foreground' : MUTED,
           sepBorder,
-          tone && TONE_TEXT[tone],
+          statusSeverity && severityTextClass(statusSeverity),
         )}
       >
         {col2 ?? ''}

@@ -6,6 +6,6 @@ export {
   apyBreakdown,
   blockRewardsSharedFrac,
   bondGaugeScaleMax,
-  bondCriticalFrac,
+  bondGaugeCriticalFrac,
   type ApyBreakdown,
 } from '@marinade.finance/ds-sam-calc'

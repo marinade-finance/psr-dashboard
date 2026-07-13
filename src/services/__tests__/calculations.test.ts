@@ -1,4 +1,4 @@
-// Tests for compoundApy, apyBreakdown, bondGaugeScaleMax, bondCriticalFrac, bondUtilizationPct, effectiveBondRunway.
+// Tests for compoundApy, apyBreakdown, bondGaugeScaleMax, bondGaugeCriticalFrac, bondUtilizationPct, effectiveBondRunway.
 import { describe, it, expect, vi } from 'vitest'
 
 import { bondUtilizationPct, effectiveBondRunway } from '../bond-health'
@@ -8,7 +8,7 @@ import {
   apyBreakdown,
   blockRewardsSharedFrac,
   bondGaugeScaleMax,
-  bondCriticalFrac,
+  bondGaugeCriticalFrac,
 } from '../calculations'
 import { selectProjectedAPY } from '../sam'
 import { selectMaxProtectedStake } from '../validator-with-bond'
@@ -386,21 +386,21 @@ describe('bondGaugeScaleMax', () => {
   })
 })
 
-describe('bondCriticalFrac', () => {
+describe('bondGaugeCriticalFrac', () => {
   it('always 0.5 — 2 × idealBondEpochs / (4 × idealBondEpochs)', () => {
     const cfg = { minBondEpochs: 2, idealBondEpochs: 10 } as DsSamConfig
     // 2*10 / 40 = 0.5
-    expect(bondCriticalFrac(cfg)).toBeCloseTo(0.5, 9)
+    expect(bondGaugeCriticalFrac(cfg)).toBeCloseTo(0.5, 9)
   })
 
   it('minBondEpochs does not affect the result', () => {
     const cfg = { minBondEpochs: 0, idealBondEpochs: 10 } as DsSamConfig
-    expect(bondCriticalFrac(cfg)).toBe(0.5)
+    expect(bondGaugeCriticalFrac(cfg)).toBe(0.5)
   })
 
   it('idealBondEpochs=0 → falls back to 0.5 sentinel', () => {
     const cfg = { minBondEpochs: 2, idealBondEpochs: 0 } as DsSamConfig
     // bondGaugeScaleMax=0 → max > 0 is false → 0.5
-    expect(bondCriticalFrac(cfg)).toBe(0.5)
+    expect(bondGaugeCriticalFrac(cfg)).toBe(0.5)
   })
 })

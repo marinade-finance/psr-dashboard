@@ -8,7 +8,7 @@ import { BondCoverageBreakdown } from 'src/components/breakdowns/bond-coverage'
 import {
   CalcCard,
   StatusBanner,
-  tipBannerTone,
+  tipBannerSeverity,
 } from 'src/components/breakdowns/card'
 import { docsPath } from 'src/components/breakdowns/docs-path'
 import { PaymentsBreakdown } from 'src/components/breakdowns/payments'
@@ -902,7 +902,7 @@ export const ValidatorDetail = ({
           className="mx-4 sm:mx-6 my-3"
           status={{
             label: tip.text,
-            tone: tipBannerTone(tip, bondHealth),
+            severity: tipBannerSeverity(tip, bondHealth),
             action:
               tipTarget && tipTarget !== tab
                 ? {
