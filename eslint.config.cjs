@@ -16,7 +16,6 @@ module.exports = [
   },
   {
     rules: {
-      complexity: ['warn', { max: 64 }],
       'no-console': 'off',
       // using relative imports is just fine
       'no-relative-import-paths/no-relative-import-paths': 'off',
