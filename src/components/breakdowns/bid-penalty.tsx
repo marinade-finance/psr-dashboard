@@ -39,14 +39,14 @@ export const BidPenaltyBreakdown: React.FC<Props> = ({
         : metrics.isNegativeBiddingChange
           ? 'Bid dropped this epoch but bond obligation covers it — no penalty.'
           : 'Bid did not decrease — no penalty.',
-    tone: metrics.penaltySol > 0 ? 'red' : 'green',
+    severity: metrics.penaltySol > 0 ? 'critical' : 'good',
   }
   const status: CardStatus = onGoToSim
     ? {
         ...baseStatus,
         action: {
           label: metrics.penaltyPmpe > 0 ? 'Raise bid in sim →' : 'Simulate →',
-          tone: 'yellow',
+          severity: 'warning',
           onClick: onGoToSim,
         },
       }

@@ -12,9 +12,15 @@ importers:
 
   .:
     dependencies:
+      '@marinade.finance/ds-sam-calc':
+        specifier: 0.1.1
+        version: 0.1.1
       '@marinade.finance/ds-sam-sdk':
-        specifier: 0.0.51
-        version: 0.0.51
+        specifier: 0.1.1
+        version: 0.1.1
+      '@marinade.finance/ts-common':
+        specifier: ^4.3.2
+        version: 4.3.2
       '@radix-ui/react-dialog':
         specifier: 1.1.15
         version: 1.1.15(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -802,8 +808,11 @@ packages:
   '@liuli-util/fs-extra@0.1.0':
     resolution: {integrity: sha512-eaAyDyMGT23QuRGbITVY3SOJff3G9ekAAyGqB9joAnTBmqvFN+9a1FazOdO70G6IUqgpKV451eBHYSRcOJ/FNQ==}
 
-  '@marinade.finance/ds-sam-sdk@0.0.51':
-    resolution: {integrity: sha512-TbkdAgS5y6nyUZ9N5641PC27UoyfdBKd/6OOvAh+SKu0vvGlG6JGvPIKKzflaMvjXNMtyk8vx4tKmZFgFgdRgQ==}
+  '@marinade.finance/ds-sam-calc@0.1.1':
+    resolution: {integrity: sha512-jwvtC9QpCrdpBVoWwXYZKnL8ySyJ06G/AyIak+y1nmG2gCF10rfbL5GLSVyhvaqeTpAfQv/9uto597kh7uQthA==}
+
+  '@marinade.finance/ds-sam-sdk@0.1.1':
+    resolution: {integrity: sha512-iI8peRHzeW+z1tGEuvUE8ptk4Kk7uk1+XxauOWb0Q7M90L0LDbT4VhGqmJCffgmgJYBGQ4dTfB2i/z8mI6dabw==}
 
   '@marinade.finance/eslint-config@1.3.5':
     resolution: {integrity: sha512-yKLW2vI9QmQ6uWO3SQSbOYDmtSpYPU34zuomKGCfoLF7/bN+c6GinyzUumIPoUshqztRkqjOpFels4F4E6puEg==}
@@ -811,6 +820,10 @@ packages:
     peerDependencies:
       eslint: '>=9.0.0'
       typescript: '>=4.0.0'
+
+  '@marinade.finance/ts-common@4.3.2':
+    resolution: {integrity: sha512-urqeszjBcFAsZlT9PcP5n+ACphLMTMtxG1L+f5yhm7Bk6JmRVIZ+oWmMUe1ob6dFfRVPvYZhnk5L1PEC0j7CAg==}
+    engines: {node: '>=14'}
 
   '@napi-rs/wasm-runtime@1.1.6':
     resolution: {integrity: sha512-ZLv/JdUfkvOy9eCnnBaGfiO+XimbjebAeO+MRQqD/B+FR1tnRN0tpKSJHRbE8sFfS6aqsXZ67TQjfwfsxULVbg==}
@@ -1822,6 +1835,9 @@ packages:
   async-function@1.0.0:
     resolution: {integrity: sha512-hsU18Ae8CDTR6Kgu9DYf0EbCr/a5iGL0rytQDobUcdpYOKokk8LEjVphnXkDkgpi0wYVsqrXuP0bZxJaTqdgoA==}
     engines: {node: '>= 0.4'}
+
+  async-retry@1.3.3:
+    resolution: {integrity: sha512-wfr/jstw9xNi/0teMHrRW7dsz3Lt5ARhYNZ2ewpadnhaIp5mbALhOAP+EAdsC7t4Z6wqsDVv9+W6gm1Dk9mEyw==}
 
   asynckit@0.4.0:
     resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
@@ -3886,6 +3902,10 @@ packages:
     resolution: {integrity: sha512-oMA2dcrw6u0YfxJQXm342bFKX/E4sG9rbTzO9ptUcR/e8A33cHuvStiYOwH7fszkZlZ1z/ta9AAoPk2F4qIOHA==}
     engines: {node: '>=18'}
 
+  retry@0.13.1:
+    resolution: {integrity: sha512-XQBQ3I8W1Cge0Seh+6gjj03LbmRFWuoszgK9ooCpwYIrhhoO80pfq4cUkU5DkknwfOfFteRwlZ56PYOGYyFWdg==}
+    engines: {node: '>= 4'}
+
   reusify@1.1.0:
     resolution: {integrity: sha512-g6QUff04oZpHs0eG5p83rFLhHeV00ug/Yf9nZM6fLeUrPguBTkTQOdpAWWspMh55TZfVQDPaN3NQJfbVRAxdIw==}
     engines: {iojs: '>=1.0.0', node: '>=0.10.0'}
@@ -5406,11 +5426,17 @@ snapshots:
       '@types/fs-extra': 9.0.13
       fs-extra: 10.1.0
 
-  '@marinade.finance/ds-sam-sdk@0.0.51':
+  '@marinade.finance/ds-sam-calc@0.1.1':
     dependencies:
+      '@marinade.finance/ts-common': 4.3.2
+      decimal.js: 10.6.0
+
+  '@marinade.finance/ds-sam-sdk@0.1.1':
+    dependencies:
+      '@marinade.finance/ds-sam-calc': 0.1.1
       axios: 1.16.1
       decimal.js: 10.6.0
-      semver: 7.8.0
+      semver: 7.8.5
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -5441,6 +5467,11 @@ snapshots:
       - jest
       - prettier
       - supports-color
+
+  '@marinade.finance/ts-common@4.3.2':
+    dependencies:
+      async-retry: 1.3.3
+      decimal.js: 10.6.0
 
   '@napi-rs/wasm-runtime@1.1.6(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)':
     dependencies:
@@ -6401,6 +6432,10 @@ snapshots:
   ast-types-flow@0.0.8: {}
 
   async-function@1.0.0: {}
+
+  async-retry@1.3.3:
+    dependencies:
+      retry: 0.13.1
 
   asynckit@0.4.0: {}
 
@@ -9223,6 +9258,8 @@ snapshots:
       onetime: 7.0.0
       signal-exit: 4.1.0
 
+  retry@0.13.1: {}
+
   reusify@1.1.0: {}
 
   rfdc@1.4.1: {}
@@ -9287,8 +9324,7 @@ snapshots:
 
   semver@7.8.0: {}
 
-  semver@7.8.5:
-    optional: true
+  semver@7.8.5: {}
 
   set-cookie-parser@2.7.2: {}
 

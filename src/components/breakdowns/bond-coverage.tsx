@@ -49,7 +49,7 @@ const statusLine = (
   ) {
     return {
       label: `${stake(expectedStakeDeltaSol)} arriving next epoch — bond covers it.`,
-      tone: 'green',
+      severity: 'good',
     }
   }
   const advice = bondAdvice(
@@ -60,7 +60,7 @@ const statusLine = (
     bondBalanceSol,
     marinadeActivatedStakeSol,
   )
-  return { label: advice.text, tone: advice.tone }
+  return { label: advice.text, severity: advice.severity }
 }
 
 export const BondCoverageBreakdown: React.FC<Props> = ({

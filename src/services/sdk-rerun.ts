@@ -4,7 +4,7 @@ import {
   Debug,
   LogVerbosity,
 } from '@marinade.finance/ds-sam-sdk'
-import { calcValidatorRevShare } from '@marinade.finance/ds-sam-sdk/dist/src/calculations'
+import { calcValidatorRevShare } from '@marinade.finance/ds-sam-calc'
 
 import type {
   AuctionConstraintsConfig,

@@ -5,69 +5,56 @@ import type { BondHealthState } from 'src/services/bond-health'
 import { type TipUrgency, type ValidatorTip } from 'src/services/tip-engine'
 import { assertNever } from 'src/utils/assert-never'
 
-import type { CardStatus, CardStatusTone } from 'src/services/card-status'
+import {
+  severityActionClass,
+  severityBannerClass,
+} from 'src/components/breakdowns/severity-style'
 
-export type { CardStatus, CardStatusTone }
+import type { CardStatus, CardStatusSeverity } from 'src/services/card-status'
 
-const STATUS_CLASSES: Record<CardStatusTone, string> = {
-  ['red']: 'bg-destructive-light text-destructive',
-  ['yellow']: 'bg-status-yellow-light text-status-yellow',
-  ['green']: 'bg-primary-light text-primary',
-  ['grey']: 'bg-muted text-muted-foreground',
-}
+export type { CardStatus, CardStatusSeverity }
 
-// Pill border/text per tone — paired with bg-card/55 fill for the action
-// affordance on the right of a status banner. Same recipe as the
-// validator-detail header banner's "Bond tab →" pill: bg-card/55 + tone-
-// coloured border and text — keeps both surfaces in lockstep.
-const STATUS_ACTION_CLASSES: Record<CardStatusTone, string> = {
-  ['red']: 'border-destructive text-destructive',
-  ['yellow']: 'border-status-yellow text-status-yellow',
-  ['green']: 'border-primary text-primary',
-  ['grey']: 'border-muted-foreground text-muted-foreground',
-}
-
-const urgencyToTone = (urgency: TipUrgency): CardStatusTone => {
+const urgencyToSeverity = (urgency: TipUrgency): CardStatusSeverity => {
   switch (urgency) {
     case 'critical':
-      return 'red'
+      return 'critical'
     case 'warning':
     case 'info':
-      return 'yellow'
+      return 'warning'
     case 'positive':
-      return 'green'
+      return 'good'
     case 'neutral':
-      return 'grey'
+      return 'neutral'
     default:
       return assertNever(urgency)
   }
 }
 
-const bondHealthToTone = (health: BondHealthState): CardStatusTone => {
+const bondHealthToSeverity = (health: BondHealthState): CardStatusSeverity => {
   switch (health) {
     case 'no-bond':
     case 'critical':
-      return 'red'
+      return 'critical'
     case 'watch':
-      return 'yellow'
+      return 'warning'
     case 'healthy':
-      return 'green'
+      return 'good'
     default:
       return assertNever(health)
   }
 }
 
-// Bond tips colour off bond-health (red/yellow/green axis); other tips
-// colour off urgency. Bond + NEUTRAL is the "below-min, no fee" exception —
-// stays urgency-driven so it can read grey instead of inheriting health red.
-export const tipBannerTone = (
+// Bond tips take severity off bond-health; other tips off urgency. Bond +
+// NEUTRAL is the "below-min, no fee" exception — stays urgency-driven so it
+// can read neutral instead of inheriting health critical.
+export const tipBannerSeverity = (
   tip: ValidatorTip,
   bondHealth: BondHealthState,
-): CardStatusTone => {
+): CardStatusSeverity => {
   if (tip.constraint === 'bond' && tip.urgency !== 'neutral') {
-    return bondHealthToTone(bondHealth)
+    return bondHealthToSeverity(bondHealth)
   }
-  return urgencyToTone(tip.urgency)
+  return urgencyToSeverity(tip.urgency)
 }
 
 // Shared status banner — rounded pill with status text on the left and an
@@ -82,7 +69,7 @@ export function withSimAction(
         ...base,
         action: {
           label: 'Simulate →',
-          tone: 'yellow',
+          severity: 'warning',
           onClick: onGoToSim,
         },
       }
@@ -93,12 +80,12 @@ export const StatusBanner: React.FC<{
   status: CardStatus
   className?: string
 }> = ({ status, className }) => {
-  const actionTone = status.action?.tone ?? status.tone
+  const actionSeverity = status.action?.severity ?? status.severity
   return (
     <div
       className={cn(
         'rounded-lg px-3 py-2 text-sm flex items-center gap-3',
-        STATUS_CLASSES[status.tone],
+        severityBannerClass(status.severity),
         status.action && 'cursor-pointer select-none',
         className,
       )}
@@ -109,7 +96,7 @@ export const StatusBanner: React.FC<{
         <span
           className={cn(
             'text-xs font-medium shrink-0 px-2 py-0.5 rounded border whitespace-nowrap bg-card/55',
-            STATUS_ACTION_CLASSES[actionTone],
+            severityActionClass(actionSeverity),
           )}
         >
           {status.action.label}
