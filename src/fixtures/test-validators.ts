@@ -109,6 +109,8 @@ function makeValues(opts: {
   return {
     bondBalanceSol: opts.bondBalanceSol,
     marinadeActivatedStakeSol: opts.marinadeActivatedStakeSol,
+    marinadeLiquidStakeSol: opts.marinadeActivatedStakeSol,
+    marinadeNativeTargetSol: 0,
     bondRiskFeeSol: 0,
     paidUndelegationSol: 0,
     samBlacklisted: false,
