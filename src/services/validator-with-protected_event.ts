@@ -1,5 +1,9 @@
 import { LAMPORTS_PER_SOL, LAST_DRYRUN_EPOCH } from './constants'
-import { fetchProtectedEvents } from './protected-events'
+import {
+  fetchProtectedEvents,
+  selectLatestProcessedEpoch,
+  selectUnsettledEstimates,
+} from './protected-events'
 import { calculateProtectedEventEstimates } from './protected-events-estimator'
 import { loadSam } from './sam'
 import { fetchScoring } from './scoring'
@@ -49,10 +53,9 @@ export const fetchProtectedEventsWithValidators = async (
     validatorsMap[validator.vote_account] = validator
   }
 
-  let latestProcessedEpoch = 0
+  const latestProcessedEpoch = selectLatestProcessedEpoch(protectedEvents)
   const protectedEventsWithValidator: ProtectedEventWithValidator[] = []
   for (const protectedEvent of protectedEvents) {
-    latestProcessedEpoch = Math.max(protectedEvent.epoch, latestProcessedEpoch)
     const status = protectedEvent.epoch > LAST_DRYRUN_EPOCH ? 'fact' : 'dryrun'
     protectedEventsWithValidator.push({
       status,
@@ -61,14 +64,15 @@ export const fetchProtectedEventsWithValidators = async (
     })
   }
 
-  for (const protectedEvent of estimatedProtectedEvents) {
-    if (protectedEvent.epoch > latestProcessedEpoch) {
-      protectedEventsWithValidator.push({
-        status: 'estimate',
-        protectedEvent,
-        validator: validatorsMap[protectedEvent.vote_account] ?? null,
-      })
-    }
+  for (const protectedEvent of selectUnsettledEstimates(
+    estimatedProtectedEvents,
+    latestProcessedEpoch,
+  )) {
+    protectedEventsWithValidator.push({
+      status: 'estimate',
+      protectedEvent,
+      validator: validatorsMap[protectedEvent.vote_account] ?? null,
+    })
   }
 
   let maxStatsEpoch = -Infinity

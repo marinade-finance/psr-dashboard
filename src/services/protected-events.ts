@@ -97,6 +97,13 @@ type ProtectedEventsResponse = {
   protected_events: ProtectedEvent[]
 }
 
+// `expected_credits` is the stake-weighted mean vote credits of every validator
+// in that epoch (see calcTargetCreditsByEpoch), so actual/expected is a
+// vote-credits-vs-network-mean ratio — NOT uptime. A validator that voted every
+// slot but landed below the network mean is not "99% up". Name the metric.
+const lowCreditsLabel = (actualCredits: number, expectedCredits: number) =>
+  `Vote credits ${pct(expectedCredits > 0 ? actualCredits / expectedCredits : 0)} of network mean`
+
 export const selectProtectedStakeReason = (protectedEvent: ProtectedEvent) => {
   if (isProtectedEvent(protectedEvent.reason)) {
     const reason = protectedEvent.reason.ProtectedEvent
@@ -109,12 +116,12 @@ export const selectProtectedStakeReason = (protectedEvent: ProtectedEvent) => {
     if (isLowCreditsReason(reason)) {
       const { actual_credits: actual, expected_credits: expected } =
         reason.LowCredits
-      return `Uptime ${pct(expected > 0 ? actual / expected : 0)}`
+      return lowCreditsLabel(actual, expected)
     }
     if (isDowntimeRevenueImpactReason(reason)) {
       const { actual_credits: actual, expected_credits: expected } =
         reason.DowntimeRevenueImpact
-      return `Uptime ${pct(expected > 0 ? actual / expected : 0)}`
+      return lowCreditsLabel(actual, expected)
     }
   }
   // After isProtectedEvent narrows the object case out, reason is the
@@ -141,6 +148,38 @@ export const selectProtectedStakeReason = (protectedEvent: ProtectedEvent) => {
 // `amount` is stored in lamports; expose to callers in SOL.
 export const selectAmount = (protectedEvent: ProtectedEvent) =>
   protectedEvent.amount / 1e9
+
+// Newest epoch the bonds API has finalized settlements for. Anything at or
+// below it is a paid fact, so an estimate for the same epoch would bill the
+// operator a second time.
+export const selectLatestProcessedEpoch = (
+  protectedEvents: ProtectedEvent[],
+): number => protectedEvents.reduce((max, e) => Math.max(e.epoch, max), 0)
+
+// Drop estimates the API has already settled. Shared by the Events page and the
+// validator-detail Payments tab so both surfaces suppress the same rows.
+export const selectUnsettledEstimates = (
+  estimates: ProtectedEvent[],
+  latestProcessedEpoch: number,
+): ProtectedEvent[] => estimates.filter(e => e.epoch > latestProcessedEpoch)
+
+// Estimates that belong on the Payments tab. That tab totals a single epoch
+// ("you will pay X this epoch"), but the estimator walks a trailing 3-epoch
+// window (validators?epochs=3), so without this an old bad epoch keeps getting
+// re-billed on the current epoch's total for three epochs running. Keep only
+// the live epoch, and only while it is still unsettled.
+// A null networkEpoch means we cannot tell which epoch is live — show nothing
+// rather than risk re-billing a settled one.
+export const selectCurrentEpochEstimates = (
+  estimates: ProtectedEvent[],
+  networkEpoch: number | null,
+  latestProcessedEpoch: number,
+): ProtectedEvent[] =>
+  networkEpoch === null
+    ? []
+    : selectUnsettledEstimates(estimates, latestProcessedEpoch).filter(
+        e => e.epoch === networkEpoch,
+      )
 
 export const fetchProtectedEvents = (
   signal?: AbortSignal,

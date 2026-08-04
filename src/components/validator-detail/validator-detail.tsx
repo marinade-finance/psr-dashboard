@@ -42,8 +42,14 @@ import { bondHealthFromAuction } from 'src/services/bond-health'
 
 import type { BondHealthState } from 'src/services/bond-health'
 import { effectiveBondRunway } from 'src/services/bond-health'
+import { selectNetworkEpoch } from 'src/services/epoch'
 import { HELP_TEXT } from 'src/services/help-text'
 import { computePaymentTotal } from 'src/services/payment-total'
+import {
+  fetchProtectedEvents,
+  selectCurrentEpochEstimates,
+  selectLatestProcessedEpoch,
+} from 'src/services/protected-events'
 import { calculateProtectedEventEstimates } from 'src/services/protected-events-estimator'
 import {
   selectExpectedStakeChange,
@@ -630,26 +636,25 @@ export const ValidatorDetail = ({
   )
   const tipStyle = getTipStyle(tip.urgency)
   const expectedStakeDelta = selectExpectedStakeChange(validator)
-  // A maxStakeWanted below the network floor (minMaxStakeWanted, or the
-  // validator's own active stake) is silently raised to it by the auction
-  // (SDK buildSamWantConstraints), so the target can exceed the shown cap.
+  // A maxStakeWanted below the network floor (minMaxStakeWanted) is silently
+  // raised to it by the auction, so the target can exceed the shown cap.
   // Surface that instead of pretending the low setting is what binds.
+  // Mirrors the SDK's buildSamWantConstraints exactly:
+  //   max(minMaxStakeWanted, maxStakeWanted > 0 ? maxStakeWanted : Infinity)
+  // Active stake is deliberately NOT a term. The WANT constraint does not floor
+  // at it — that floor lives in the BOND cap (bondStakeCapSam), and the auction
+  // combines caps with min(), so a BOND floor never lifts the WANT cap. Lower
+  // your want below your active stake and the auction really does target under
+  // it, which is how a voluntary undelegation happens.
   const minMaxStakeWanted = dsSamConfig.minMaxStakeWanted ?? 0
   const effectiveWantCap = Math.max(
     minMaxStakeWanted,
-    validator.marinadeActivatedStakeSol,
     validator.maxStakeWanted ?? 0,
   )
   const wantCapOverridden =
     validator.maxStakeWanted != null &&
     validator.maxStakeWanted > 0 &&
     validator.maxStakeWanted < effectiveWantCap
-  // Which floor actually raised the cap — the network minimum or the
-  // validator's own active stake (the auction won't cap below either).
-  const wantFloorLabel =
-    minMaxStakeWanted >= validator.marinadeActivatedStakeSol
-      ? `${stake(minMaxStakeWanted)} min`
-      : 'your active stake'
   const [tab, setTab] = useState<Tab>('overview')
 
   const inSet = selectInSet(validator)
@@ -665,15 +670,31 @@ export const ValidatorDetail = ({
   )
   const paymentMetrics = useMemo(() => computeBidding(validator), [validator])
   const queryClient = useQueryClient()
+  // Estimates for the live epoch only. The estimator emits one row per epoch
+  // over a trailing 3-epoch window, and every row here is folded into a "Total
+  // payment" for *this* epoch — so past epochs must be dropped, including ones
+  // the bonds API has already settled and charged for (GEN-8534).
   const { data: allPsrEstimates = [] } = useQuery({
     queryKey: ['psr-estimates-all'],
     queryFn: async ({ signal }) => {
-      const { validators } = await queryClient.ensureQueryData({
-        queryKey: ['validators-with-epochs', 3],
-        queryFn: (ctx: { signal: AbortSignal }) =>
-          fetchValidatorsWithEpochs(3, ctx.signal),
-      })
-      return calculateProtectedEventEstimates(validators, signal)
+      const [{ validators }, { protected_events: settledEvents }] =
+        await Promise.all([
+          queryClient.ensureQueryData({
+            queryKey: ['validators-with-epochs', 3],
+            queryFn: (ctx: { signal: AbortSignal }) =>
+              fetchValidatorsWithEpochs(3, ctx.signal),
+          }),
+          fetchProtectedEvents(signal),
+        ])
+      const estimates = await calculateProtectedEventEstimates(
+        validators,
+        signal,
+      )
+      return selectCurrentEpochEstimates(
+        estimates,
+        selectNetworkEpoch(validators),
+        selectLatestProcessedEpoch(settledEvents),
+      )
     },
     enabled: tab === 'payments',
   })
@@ -1056,7 +1077,7 @@ export const ValidatorDetail = ({
                 />
                 <MetricRow
                   label="Target Marinade stake"
-                  help="How much stake the auction decided you should have this epoch, based on your bid and how you scored."
+                  help="How much stake the auction decided you should have next epoch, based on your bid and how you scored."
                   value={stake(validator.auctionStake.marinadeSamTargetSol)}
                 />
                 {validator.maxStakeWanted != null &&
@@ -1064,12 +1085,12 @@ export const ValidatorDetail = ({
                     <div>
                       <MetricRow
                         label="Max stake wanted"
-                        help="The self-imposed stake cap you set. The auction never assigns below the network minimum or your current active stake, so a low setting is raised and the target can exceed it."
+                        help="The self-imposed stake cap you set. The auction never caps below the network minimum, so a setting under it is raised and the target can exceed what you asked for. It does not floor at your active stake — set the cap under your active stake and the auction will target below it."
                         value={stake(validator.maxStakeWanted)}
                       />
                       {wantCapOverridden && (
                         <div className="text-xs text-muted-foreground mt-0.5">
-                          Below {wantFloorLabel} — auction uses{' '}
+                          Below the network minimum — auction uses{' '}
                           {stake(effectiveWantCap)}
                         </div>
                       )}
