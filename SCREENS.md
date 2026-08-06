@@ -278,13 +278,16 @@ Left column:
 - **Stake** card — `MetricRow`s: `Activated Marinade stake`, `Target
 Marinade stake`, `Max stake wanted` (conditional — hidden when null
   or 0; 0 means opted out), `Expected change next epoch` (separator).
-  When `maxStakeWanted` sits below the auction floor
-  `max(minMaxStakeWanted, active)` a muted sub-line reads `Below <floor> —
-  auction uses M`, naming whichever floor raised the cap (`N min` when the
-  network minimum binds, else `your active stake`) and `M` = the clipped-up
-  `effectiveWantCap`. The row's `HelpTip` says the auction never assigns
-  below the network minimum or current active stake, so a low setting is
-  raised — it no longer claims the setting is a hard ceiling. The Next-epoch
+  When `maxStakeWanted` sits below the auction floor `minMaxStakeWanted` a
+  muted sub-line reads `Below the network minimum — auction uses M`, with `M`
+  = the clipped-up `effectiveWantCap`. The floor mirrors the SDK's
+  `buildSamWantConstraints` — `max(minMaxStakeWanted, maxStakeWanted)` — and
+  active stake is deliberately not a term: the WANT constraint never floors at
+  it (that floor lives in the BOND cap, and caps combine with `min()`). The
+  row's `HelpTip` says the auction never caps below the network minimum so a
+  low setting is raised, and warns that a cap set under your active stake
+  really is targeted below. `Target Marinade stake`'s `HelpTip` says **next**
+  epoch — the auction epoch is last-rewards-epoch + 1. The Next-epoch
   `HelpTip` notes the delta can be `0 SOL` even when target > active stake.
 - **Bond** card (title clickable → Bond tab) — `Balance`, `Reserve`
   (value = `bondCoverageLabel()` — `Fully covered` / `Adequate` /
@@ -373,7 +376,9 @@ stake cost** (Active stake → × Effective bid → = Active stake cost) →
 **Activating stake cost** (Activating stake → × Activating-stake bid →
 = Activating stake cost) → **Penalties** (Bid-too-low, Blacklist, Bond
 risk fee — each `—` when zero) → **PSR settlements — estimated**
-(conditional, one row per estimate with funder in col1) → **Total
+(conditional, one row per estimate with funder in col1 — **live epoch
+only**, and only while that epoch is still unsettled, so a past epoch's
+estimate is never folded into this epoch's total) → **Total
 payment** (`total` styling — separator + bold + large, no severity
 colour). Status banner summarises the combined state from
 `baseStatus`: green `You will pay X SOL in total this epoch — no
@@ -516,13 +521,13 @@ Strip above the table.
 Generic `<Table>` inside `<TableShell>` with `TABLE_SHELL_HOVER`,
 `showRowNumber`. **Default sort: Epoch DESC.**
 
-| Column    | Notes                                                   |
-| --------- | ------------------------------------------------------- |
-| Validator | `<ValidatorIdentity>`                                   |
-| Epoch     | integer epoch                                           |
-| Reason    | human-readable string from `selectProtectedStakeReason` |
-| Paid Out  | SOL amount + status badge                               |
-| Funded by | funder badge                                            |
+| Column    | Notes                                                                                                                                                                                                                                                          |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Validator | `<ValidatorIdentity>`                                                                                                                                                                                                                                          |
+| Epoch     | integer epoch                                                                                                                                                                                                                                                  |
+| Reason    | human-readable string from `selectProtectedStakeReason`. Low-credits / downtime rows read `Vote credits N% of network mean` — `actual_credits / expected_credits`, where expected is the stake-weighted mean credits of all validators that epoch. Not uptime. |
+| Paid Out  | SOL amount + status badge                                                                                                                                                                                                                                      |
+| Funded by | funder badge                                                                                                                                                                                                                                                   |
 
 **Status badges** (Paid Out column): `Dryrun` (variant `secondary`) ·
 `Estimate` (variant `default`) · no badge for finalised events.
