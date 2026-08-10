@@ -486,9 +486,9 @@ A large gap between your bid and the clearing price means you have auction headr
 
 ### Concentration Limits (Countries and ASOs)
 
-Marinade caps the fraction of auction stake that can go to validators in a single country or from a single Autonomous System Operator (ASO — the hosting provider or network operator). The default cap is 30% per country and 30% per ASO. A separate per-validator cap of 15% of TVL also applies. These caps protect the pool against correlated failures: if one cloud provider or jurisdiction has an outage, the impact on Marinade's stake is bounded.
+Marinade caps how much of the **total network stake** may sit in a single country or behind a single Autonomous System Operator (ASO — the hosting provider or network operator). The cap is 40% per country and 30% per ASO, counted over every validator in that group including stake that has nothing to do with Marinade. A separate per-validator cap of 15% of TVL also applies. These caps protect the pool against correlated failures: if one cloud provider or jurisdiction has an outage, the impact on Marinade's stake is bounded.
 
-When a country or ASO hits its cap, validators there are cut — even if their bid is high enough to win. Open any validator's detail panel and the **Concentration** card shows that validator's country and ASO, each with the group's current share of SAM stake against its cap (e.g. `28% of 30% cap`); the value turns red and reads `· at cap` when that country or ASO is the limit holding this validator back.
+When a country or ASO reaches its cap, validators there are cut — even if their bid is high enough to win. Open any validator's detail panel and the **Concentration** card shows that validator's country and ASO, each with the group's share of total network stake against its cap (e.g. `27.8% of 40% cap`); the value turns red and reads `· at cap` when that country or ASO is the limit holding this validator back. Most groups sit far below their cap, so this card usually reads as headroom rather than a warning.
 
 ---
 

@@ -385,13 +385,13 @@ const ConcentrationCard = ({
       <ConcentrationRow
         label="Country"
         group={concentration.country}
-        help="Share of Marinade's SAM target stake in your country, against the per-country concentration cap. The auction stops adding stake to a country once its share reaches the cap."
+        help="Share of total network stake held by validators in your country, against the per-country concentration cap. The auction stops adding stake to a country once that network share reaches the cap."
         guideTo={guideTo}
       />
       <ConcentrationRow
         label="ASO"
         group={concentration.aso}
-        help="Share of Marinade's SAM target stake in your ASO (the operator / data-centre group), against the per-ASO concentration cap. The auction stops adding stake to an ASO once its share reaches the cap."
+        help="Share of total network stake held by validators in your ASO (the operator / data-centre group), against the per-ASO concentration cap. The auction stops adding stake to an ASO once that network share reaches the cap."
         guideTo={guideTo}
         separator
       />
