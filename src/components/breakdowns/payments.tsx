@@ -23,6 +23,7 @@ type Props = {
   blacklistPenaltySol: number
   bidTooLowPenaltySol: number
   psrEstimates: ProtectedEvent[]
+  psrEstimatesUnavailable?: boolean
   isSimulated?: boolean
   onGoToSim?: () => void
   onGoToPenalty?: () => void
@@ -43,6 +44,7 @@ export const PaymentsBreakdown: React.FC<Props> = ({
   blacklistPenaltySol,
   bidTooLowPenaltySol,
   psrEstimates,
+  psrEstimatesUnavailable,
   isSimulated,
   onGoToSim,
   onGoToPenalty,
@@ -57,12 +59,17 @@ export const PaymentsBreakdown: React.FC<Props> = ({
   })
   const hasPenalty = penaltyTotal > 0
 
-  const baseStatus: Omit<CardStatus, 'action'> = {
-    label: hasPenalty
-      ? `You will pay ${pay(total, 3)} in total this epoch — including ${pay(penaltyTotal, 3)} in penalties.`
-      : `You will pay ${pay(total, 3)} in total this epoch — no penalties.`,
-    severity: hasPenalty ? 'critical' : 'good',
-  }
+  const baseStatus: Omit<CardStatus, 'action'> = psrEstimatesUnavailable
+    ? {
+        label: `You will pay at least ${pay(total, 3)} this epoch — PSR settlement estimates could not be loaded, so this total is incomplete.`,
+        severity: 'warning',
+      }
+    : {
+        label: hasPenalty
+          ? `You will pay ${pay(total, 3)} in total this epoch — including ${pay(penaltyTotal, 3)} in penalties.`
+          : `You will pay ${pay(total, 3)} in total this epoch — no penalties.`,
+        severity: hasPenalty ? 'critical' : 'good',
+      }
   const status: CardStatus = withSimAction(baseStatus, onGoToSim)
 
   // The penalty-link stays as a `tip` (rendered under the status banner) —
@@ -166,7 +173,24 @@ export const PaymentsBreakdown: React.FC<Props> = ({
               })}
             </>
           )}
-          <CalcRow label="Total payment" col2={pay(total, 3)} total />
+          {psrEstimatesUnavailable && (
+            <>
+              <SectionHeader
+                title="PSR settlements — estimated"
+                help="PSR estimates could not be computed for this epoch, so any settlement owed is missing from the total below."
+              />
+              <CalcRow label="Estimate for this epoch" col2="unavailable" />
+            </>
+          )}
+          <CalcRow
+            label={
+              psrEstimatesUnavailable
+                ? 'Total payment — excluding PSR'
+                : 'Total payment'
+            }
+            col2={pay(total, 3)}
+            total
+          />
         </tbody>
       </table>
     </CalcCard>

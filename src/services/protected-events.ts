@@ -1,3 +1,5 @@
+import { z } from 'zod'
+
 import { pct } from 'src/format'
 import { schemas } from 'src/schemas/generated/bonds'
 import { VALIDATOR_BONDS_API_URL } from 'src/services/apiUrls'
@@ -72,25 +74,27 @@ type ProtectedEventSettlement = {
   ProtectedEvent: ProtectedEventReason
 }
 
+// The non-ProtectedEvent reasons come from the generated schema, so a regen adds new ones (most
+// recently InstitutionalPayout) without a hand edit here.
 export type SettlementReason =
   | ProtectedEventSettlement
-  | 'Bidding'
-  | 'BidTooLowPenalty'
-  | 'BlacklistPenalty'
-  | 'BondRiskFee'
-  | 'PriorityFee'
+  | Exclude<z.infer<typeof schemas.SettlementReason>, object>
 
 export const isProtectedEvent = (
   e: SettlementReason,
 ): e is ProtectedEventSettlement =>
   typeof e === 'object' && 'ProtectedEvent' in e
 
+// Which bond paid, and the off-chain product attribution — typed from the generated schema. Both
+// optional because locally built estimates are not settlements and never carry them.
 export type ProtectedEvent = {
   epoch: number
   amount: number
   vote_account: string
   meta: SettlementMeta
   reason: SettlementReason
+  bond_type?: z.infer<typeof schemas.ProtectedEventRecord>['bond_type']
+  product?: z.infer<typeof schemas.ProtectedEventRecord>['product']
 }
 
 type ProtectedEventsResponse = {
@@ -139,6 +143,8 @@ export const selectProtectedStakeReason = (protectedEvent: ProtectedEvent) => {
       return 'Bond risk fee'
     case 'PriorityFee':
       return 'Priority fee'
+    case 'InstitutionalPayout':
+      return 'Institutional payout'
     default:
       console.log('unsupported event:', protectedEvent)
       return 'Unsupported'
@@ -181,12 +187,51 @@ export const selectCurrentEpochEstimates = (
         e => e.epoch === networkEpoch,
       )
 
-export const fetchProtectedEvents = (
-  signal?: AbortSignal,
-): Promise<ProtectedEventsResponse> =>
-  fetchJson<ProtectedEventsResponse>(
-    `${VALIDATOR_BONDS_API_URL}/protected-events`,
-    signal,
-    body =>
-      schemas.ProtectedEventsResponse.parse(body) as ProtectedEventsResponse,
+// This dashboard is the SAM view, but /v1 returns every settlement of both bond configs, so
+// institutional payouts and direct-staking PSR would otherwise land in per-validator totals.
+// An allowlist, not a denylist: `product` is an open string, so a product the backend adds
+// later must stay out until someone decides it belongs here. Locally built estimates carry
+// neither field and are SAM by construction.
+export const selectSamBiddingEvents = (
+  protectedEvents: ProtectedEvent[],
+): ProtectedEvent[] =>
+  protectedEvents.filter(
+    e =>
+      (e.product ?? 'sam') === 'sam' &&
+      (e.bond_type ?? 'bidding') === 'bidding',
   )
+
+// Override layer over the generated schema, same rationale as src/services/bonds.ts: the spec
+// declares bond_type and product required, but this API omits fields it declares. The trailing
+// fallbacks keep a reason the backend deploys before the next regen from rejecting the whole
+// response — it degrades to "Unsupported" in selectProtectedStakeReason instead. A regen drops
+// that catch-all every time (scripts/generate-schemas.sh warns about it); here it cannot.
+const SettlementReasonSchema = z.union([
+  schemas.SettlementReason,
+  z.object({ ProtectedEvent: z.object({}).passthrough() }).passthrough(),
+  z.string(),
+])
+const ProtectedEventsResponseSchema = z
+  .object({
+    protected_events: z.array(
+      schemas.ProtectedEventRecord.extend({
+        bond_type: z.string().optional(),
+        product: z.string().optional(),
+        reason: SettlementReasonSchema,
+      }),
+    ),
+  })
+  .passthrough()
+
+export const fetchProtectedEvents = async (
+  signal?: AbortSignal,
+): Promise<ProtectedEventsResponse> => {
+  const { protected_events: protectedEvents } =
+    await fetchJson<ProtectedEventsResponse>(
+      `${VALIDATOR_BONDS_API_URL}/v1/protected-events`,
+      signal,
+      body =>
+        ProtectedEventsResponseSchema.parse(body) as ProtectedEventsResponse,
+    )
+  return { protected_events: selectSamBiddingEvents(protectedEvents) }
+}

@@ -674,7 +674,9 @@ export const ValidatorDetail = ({
   // over a trailing 3-epoch window, and every row here is folded into a "Total
   // payment" for *this* epoch — so past epochs must be dropped, including ones
   // the bonds API has already settled and charged for (GEN-8534).
-  const { data: allPsrEstimates = [] } = useQuery({
+  // Flagged, not a silent `= []`: the bonds API answers 500 until its BigQuery cache loads, and
+  // an empty estimate list understates the epoch total instead of saying it is incomplete.
+  const { data: allPsrEstimates, isError } = useQuery({
     queryKey: ['psr-estimates-all'],
     queryFn: async ({ signal }) => {
       const [{ validators }, { protected_events: settledEvents }] =
@@ -698,8 +700,11 @@ export const ValidatorDetail = ({
     },
     enabled: tab === 'payments',
   })
+  // A failed refetch keeps the last good `data`, so isError alone would label a complete
+  // total as incomplete. Only "no estimates at all" is unavailable.
+  const psrEstimatesUnavailable = isError && allPsrEstimates === undefined
   const psrEstimates = useMemo(
-    () => allPsrEstimates.filter(e => e.vote_account === voteAccount),
+    () => (allPsrEstimates ?? []).filter(e => e.vote_account === voteAccount),
     [allPsrEstimates, voteAccount],
   )
 
@@ -980,6 +985,7 @@ export const ValidatorDetail = ({
                 blacklistPenaltySol={blacklistPenaltySol}
                 bidTooLowPenaltySol={bidTooLowPenaltySol}
                 psrEstimates={psrEstimates}
+                psrEstimatesUnavailable={psrEstimatesUnavailable}
                 isSimulated={isSimulated}
                 onGoToSim={goToSim}
                 onGoToPenalty={() => setTab('penalty')}
