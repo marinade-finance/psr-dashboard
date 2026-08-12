@@ -208,7 +208,7 @@ export const selectSamBiddingEvents = (
 // that catch-all every time (scripts/generate-schemas.sh warns about it); here it cannot.
 const SettlementReasonSchema = z.union([
   schemas.SettlementReason,
-  z.object({ ProtectedEvent: z.object({}).passthrough() }).passthrough(),
+  z.object({}).passthrough(),
   z.string(),
 ])
 const ProtectedEventsResponseSchema = z

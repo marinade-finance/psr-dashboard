@@ -258,6 +258,14 @@ describe('fetchProtectedEvents schema leniency', () => {
     expect(selectProtectedStakeReason(events[0])).toBe('Unsupported')
   })
 
+  it('accepts a settlement reason object whose variant is newer than this client', async () => {
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+    respondWith(samRow({ BrandNewPenalty: { amount: 1 } }))
+    const { protected_events: events } = await fetchProtectedEvents()
+    expect(events).toHaveLength(1)
+    expect(selectProtectedStakeReason(events[0])).toBe('Unsupported')
+  })
+
   it('accepts a ProtectedEvent variant newer than this client', async () => {
     respondWith(
       samRow({ ProtectedEvent: { StakeRuleViolation: { stake: 1 } } }),
