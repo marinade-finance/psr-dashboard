@@ -57,6 +57,12 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-rank-1: var(--rank-1);
+  --color-rank-2: var(--rank-2);
+  --color-rank-3: var(--rank-3);
+  --color-rank-4: var(--rank-4);
+  --color-rank-5: var(--rank-5);
+  --color-rank-other: var(--rank-other);
   --color-sim-from: var(--sim-from);
   --color-sim-to: var(--sim-to);
   --color-sim-tbody: var(--sim-tbody);
@@ -132,6 +138,14 @@
     --chart-3: #fbbf24;
     --chart-4: #c084fc;
     --chart-5: #fb7185;
+    /* Ordinal rank ramp — one hue, dark→light by rank. Step 4 is --chart-1.
+       Validated on #ffffff: monotone L, adjacent ΔL ≥ 0.06, light end 2.67:1. */
+    --rank-1: #00423b;
+    --rank-2: #005f56;
+    --rank-3: #007d72;
+    --rank-4: #009689;
+    --rank-5: #2fb0a3;
+    --rank-other: #6b7280;
     --sim-from: rgba(5, 30, 28, 1);
     --sim-to: rgba(15, 50, 48, 1);
     --sim-glow-from: rgba(10, 60, 56, 1);
@@ -188,6 +202,15 @@
     --chart-3: #f59e0b;
     --chart-4: #a855f7;
     --chart-5: #f43f5e;
+    /* Ordinal rank ramp, stepped for the dark surface — not a flip of the
+       light ramp. Step 3 is --chart-1. Validated on #050d0c: monotone L,
+       adjacent ΔL ≥ 0.06, dark end 3.55:1. */
+    --rank-1: #8fe9e2;
+    --rank-2: #66d6ce;
+    --rank-3: #3ac3bc;
+    --rank-4: #1c9d96;
+    --rank-5: #0f7570;
+    --rank-other: #6b7280;
   }
 
   html {

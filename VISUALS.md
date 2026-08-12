@@ -253,9 +253,37 @@ scale is available for future shadcn primitives.
 
 ### Charts
 
-`bg-chart-1 … bg-chart-5` fixed sequence for stacked bars / pie
-segments. **Rule:** stable ordered palette — not status colours.
-`src/index.css`.
+Two palettes with different jobs. Pick by what the colour means, not by
+what is at hand.
+
+**Categorical — `bg-chart-1 … bg-chart-5`.** Fixed sequence for series
+that are distinct _identities_ (stacked bars, multi-series). **Rule:**
+stable ordered palette — not status colours. Assign in slot order, never
+cycled. `src/index.css`.
+
+**Don't use the categorical sequence where every slot is visible at once**
+(a donut, a scatter). Checked pairwise across all five slots it
+collapses: in light mode `--chart-5` vs `--chart-1` is ΔE 0.5 under
+protanopia — the same colour to a protanope — and `--chart-4` vs
+`--chart-2` is ΔE 9.4 even to normal vision. It is safe for _adjacent_
+pairs, which is what stacked bars compare. At most three of its slots
+clear an all-pairs check.
+
+**Ordinal — `bg-rank-1 … bg-rank-5` + `bg-rank-other`.** One hue stepped
+by magnitude, for _ranked share_ charts whose segments are ordered rather
+than being separate identities (the Concentration donuts). Index by rank,
+not by entity. `--rank-other` is a neutral grey for a folded remainder
+and sits outside the ramp — "Other" is not rank 6.
+
+Both modes are selected, not flipped: light runs dark→light (step 4 is
+`--chart-1`), dark runs light→dark (step 3 is `--chart-1`). Each was
+validated against its own surface for monotone lightness, adjacent ΔL
+≥ 0.06, and a near-surface end clearing 2:1 (light end 2.67:1 on
+`#ffffff`, dark end 3.55:1 on `#050d0c`).
+
+**Rule:** a ranked-share chart carries its values as visible labels — in
+the legend, and in a table beneath. The ramp orders the segments; it is
+never the only thing telling them apart.
 
 ### Decorative borders
 
