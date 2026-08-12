@@ -1,7 +1,8 @@
 # Marinade PSR Dashboard
 
 React SPA showing the live SAM (Stake Auction Marketplace) auction,
-validator bonds, and protected events. Auction computation comes from
+validator bonds, protected events, and stake concentration. Auction
+computation comes from
 [`@marinade.finance/ds-sam-sdk`](https://www.npmjs.com/package/@marinade.finance/ds-sam-sdk).
 
 ## Local development
@@ -32,10 +33,12 @@ npx tsc --noEmit        # type check
 | `/`                      | SAM auction                            |
 | `/bonds`                 | Validator bonds                        |
 | `/protected-events`      | Protected events                       |
+| `/concentration`         | ASO + country split of SAM stake       |
 | `/docs`                  | In-app guide (`public/docs/GUIDE.md`)  |
 | `/test-`                 | SAM page over fixture data (Playwright)|
 | `/test-bonds`            | Bonds page over fixture data           |
 | `/test-protected-events` | Events page over fixture data          |
+| `/test-concentration`    | Concentration page over fixture data   |
 
 The main data query on every page auto-refreshes once an hour.
 

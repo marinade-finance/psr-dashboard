@@ -11,10 +11,12 @@ import {
 
 import { Navigation } from './components/navigation/navigation'
 import { TooltipProvider } from './components/ui/tooltip'
+import { ConcentrationPage } from './pages/concentration'
 import { DocsPage } from './pages/docs'
 import { ProtectedEventsPage } from './pages/protected-events'
 import { SamPage } from './pages/stake-auction-marketplace'
 import { TestBondsPage } from './pages/test-bonds'
+import { TestConcentrationPage } from './pages/test-concentration'
 import { TestProtectedEventsPage } from './pages/test-protected-events'
 import { TestSamPage } from './pages/test-stake-auction-marketplace'
 import { ValidatorBondsPage } from './pages/validator-bonds'
@@ -95,6 +97,11 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
   },
   {
+    path: '/concentration',
+    element: <ConcentrationPage />,
+    errorElement: <ErrorPage />,
+  },
+  {
     path: '/expert-',
     element: <SamPage level={'expert'} />,
     errorElement: <ErrorPage />,
@@ -127,6 +134,11 @@ const router = createBrowserRouter([
   {
     path: '/test-protected-events',
     element: <TestProtectedEventsPage level={'basic'} />,
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: '/test-concentration',
+    element: <TestConcentrationPage level={'basic'} />,
     errorElement: <ErrorPage />,
   },
   {

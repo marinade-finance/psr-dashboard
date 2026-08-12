@@ -29,14 +29,18 @@ Protected Stake Rewards" wordmark (wordmark hidden below `sm`).
 
 **Tabs**
 
-| Desktop label             | Mobile label | Route               |
-| ------------------------- | ------------ | ------------------- |
-| Stake Auction Marketplace | SAM          | `/`                 |
-| Protected Events          | Events       | `/protected-events` |
-| Validator Bonds           | Bonds        | `/bonds`            |
+| Desktop label             | Mobile label  | Route               |
+| ------------------------- | ------------- | ------------------- |
+| Stake Auction Marketplace | SAM           | `/`                 |
+| Protected Events          | Events        | `/protected-events` |
+| Validator Bonds           | Bonds         | `/bonds`            |
+| Concentration             | Concentration | `/concentration`    |
 
 Active tab styled `bg-primary text-primary-foreground`. Hovering Events /
-Bonds prefetches the respective query (`staleTime: 5min`).
+Bonds prefetches the respective query (`staleTime: 5min`). Concentration
+is the one tab with no `expert-` variant — expert routes are deprecated,
+so it links to `/concentration` unprefixed, and it keeps one label at
+every breakpoint (the word is already short).
 
 **Right** — Docs link (→ `/docs`, hidden below `sm`), **Epoch meter**,
 `ThemeToggle`, **Notifications bell**.
@@ -546,6 +550,71 @@ never silently deduplicated — both are shown, flagged.
 
 ---
 
+## Concentration Page (`/concentration`)
+
+`src/pages/concentration.tsx`
+
+How Marinade's SAM target stake spreads across the two dimensions the
+auction caps — the aggregate view of the same concentration the
+validator-detail **Concentration** card shows one validator at a time.
+Renders two `<ConcentrationSplit>` sections stacked, ASO then country.
+
+Reads the shared `['sam']` query (arriving from the auction table costs no
+extra auction run) plus `['cluster-stats']` for the network comparison
+column. Both splits derive from the one auction result, so their totals
+always agree — the same stake, split two ways.
+
+Weighting is **stake, not validator count**: the caps are defined on stake
+share, so stake is what the cap line means. Validators at zero SAM target
+are excluded from both the group and the total.
+
+Each dimension carries **its own cap**, read from `dsSamConfig` and never
+hardcoded — they differ (`maxNetworkStakeConcentrationPerAsoDec` 30%,
+`maxNetworkStakeConcentrationPerCountryDec` 40% as of epoch 1015) and they
+change.
+
+### Split card
+
+`src/components/concentration-split/concentration-split.tsx`
+
+One component, both dimensions; per-dimension wording lives in a single
+`COPY` table keyed by dimension, so the two splits can never drift into
+describing the same mechanic in two different voices.
+
+Donut (left, `w-56`) + heading, one-line description ending in the cap,
+and legend (right, capped `max-w-xl` so values sit beside the names they
+belong to).
+
+- **Donut** — `<DonutChart>`, top 5 groups by stake plus a folded `Other`
+  slice, so it never exceeds 6 segments. A tail of exactly one group is
+  left as itself rather than becoming an "Other" of one.
+- **Centre** — total SAM target stake in compact millions (`5.10M SOL`)
+  over `across N ASOs` / `across N countries`. Compact because the full
+  `stake()` string overflows the ~134px hole and paints over the ring.
+  Hovering any segment or legend row swaps the centre to that group's
+  share + name and dims the other segments to `opacity-35`. Hover state is
+  per-section — hovering the ASO donut leaves the country one untouched.
+- **Legend** — colour dot, group name, share, stake. `Other` reads
+  `Other (N ASOs)` / `Other (N countries)`.
+
+### Split table
+
+Every group unfolded (the donut folds, the table must not), inside a
+`<TableShell>`, default sort by stake descending.
+
+| Column           | Notes                                                                                                                            |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| ASO / Country    | Group name (header follows the dimension); `Unknown` when the validators API has no value — its stake still counts in the total. |
+| SAM target stake | `stake()` SOL.                                                                                                                   |
+| Share of SAM     | Share + `<Gauge>` on a shared track, with a neutral `bg-tertiary-foreground` tick at that dimension's cap.                       |
+| Share of network | Same group's share of all activated stake on Solana, muted. `—` when cluster-stats has no entry — never `0%`.                    |
+| Validators       | Count of in-set validators contributing.                                                                                         |
+
+Shares under one decimal's resolution render `<0.1%`, never `0.0%` — a
+small-but-real share must not read as none.
+
+---
+
 ## Docs Page (`/docs`)
 
 `src/pages/docs.tsx`
@@ -575,10 +644,12 @@ the full UI and interaction surface but bypassing live APIs.
 | `/test-`                 | `TestSamPage` (`src/pages/test-stake-auction-marketplace.tsx`)    | `SamPage`             |
 | `/test-bonds`            | `TestBondsPage` (`src/pages/test-bonds.tsx`)                      | `ValidatorBondsPage`  |
 | `/test-protected-events` | `TestProtectedEventsPage` (`src/pages/test-protected-events.tsx`) | `ProtectedEventsPage` |
+| `/test-concentration`    | `TestConcentrationPage` (`src/pages/test-concentration.tsx`)      | `ConcentrationPage`   |
 
 Fixtures: `src/fixtures/test-validators.ts`,
 `src/fixtures/test-bonds.ts`, `src/fixtures/test-protected-events.ts`,
-`src/fixtures/test-notifications.ts`. Test pages set
+`src/fixtures/test-notifications.ts`,
+`src/fixtures/test-cluster-stats.ts` (`TEST_NETWORK_CONCENTRATION`). Test pages set
 `refetchInterval: false` on the wrapped `QueryClient` queries.
 
 ---
@@ -593,7 +664,8 @@ Pointer list — for the full design language see `VISUALS.md`.
 - **`<ValidatorIdentity>`** (`src/components/validator-identity/validator-identity.tsx`) — canonical "name + truncated vote account" cell.
 - **`<CalcCard>`** (`src/components/breakdowns/card.tsx`) — breakdown panel chrome with optional `guideTo` link, `status` pill, and `tip` footer. Pair with `CalcRow` / `OkRow` / `SectionHeader` / `Marker` from `src/components/breakdowns/row.tsx`. Pass `total` on the conclusion row to get `separator + bold + large` in one prop; `value` defaults to `''`. The separator border is exposed for flex layouts via `SEPARATOR_DIV_CLASS`.
 - **`<HelpTip>`** (`src/components/help-tip/help-tip.tsx`) — small `?` icon, Radix-based tooltip.
-- **`<Gauge>`** (`src/components/gauge/gauge.tsx`) — shared track-and-fill bar: `value`/`scaleMax` fill, optional `marker` tick (0..1), semantic `tone`/`markerTone`, `size` `sm` / `lg`. Used by the epoch-meter. Dumb/presentational.
+- **`<Gauge>`** (`src/components/gauge/gauge.tsx`) — shared track-and-fill bar: `value`/`scaleMax` fill, optional `marker` tick (0..1), semantic `tone`/`markerTone`, `size` `sm` / `lg`. Used by the epoch-meter and the Concentration ASO table. Dumb/presentational.
+- **`<DonutChart>`** (`src/components/donut-chart/donut-chart.tsx`) — shared part-to-whole ring: `segments` (`label`/`value`/`color`), optional `children` in the hole, `hoveredIndex` + `onHover` for the highlight/dim layer, required `ariaLabel`. Dumb/presentational in the same sense as `<Gauge>` — the caller owns ordering, colour and the centre readout. Segments are drawn as one dash-patterned `<circle>` each, so the 2px inter-segment gap falls out of the dash arithmetic; a sub-gap segment keeps a 0.5-unit hairline so a tiny share still reads as present. Keep callers at ≤ 6 segments.
 - **`<Banner>`** (`src/components/banner/banner.tsx`) — dismissible announcement, persistence in `localStorage`.
 
 ---

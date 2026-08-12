@@ -78,10 +78,12 @@ local-only scratch (untracked).
 | `/`                      | `SamPage` (`src/pages/stake-auction-marketplace.tsx`)             | SAM auction                |
 | `/bonds`                 | `ValidatorBondsPage` (`src/pages/validator-bonds.tsx`)            | Validator bonds            |
 | `/protected-events`      | `ProtectedEventsPage` (`src/pages/protected-events.tsx`)          | Protected events           |
+| `/concentration`         | `ConcentrationPage` (`src/pages/concentration.tsx`)               | ASO + country splits       |
 | `/docs`                  | `DocsPage` (`src/pages/docs.tsx`)                                 | In-app guide (`GUIDE.md`)  |
 | `/test-`                 | `TestSamPage` (`src/pages/test-stake-auction-marketplace.tsx`)    | Internal sandbox (fixture) |
 | `/test-bonds`            | `TestBondsPage` (`src/pages/test-bonds.tsx`)                      | Internal sandbox (fixture) |
 | `/test-protected-events` | `TestProtectedEventsPage` (`src/pages/test-protected-events.tsx`) | Internal sandbox (fixture) |
+| `/test-concentration`    | `TestConcentrationPage` (`src/pages/test-concentration.tsx`)      | Internal sandbox (fixture) |
 
 `/expert-*` routes still exist in `src/index.tsx` but are deprecated
 and scheduled for removal — see `specs/2/1-remove-expert-routes.md`. Don't add new
@@ -99,7 +101,9 @@ expert-only behaviour or document the expert variants here.
 | `components/breakdowns/`             | Calculation panels inside the detail sheet. Shared `CalcCard` / `CalcRow` primitives.             |
 | `components/validator-bonds-table/`  | Bonds page table + tile-map.                                                                      |
 | `components/protected-events-table/` | Protected events table + filter strip.                                                            |
-| `components/table/`                  | Generic sortable table used by bonds and events pages.                                            |
+| `components/table/`                  | Generic sortable table used by bonds, events and concentration pages.                             |
+| `components/concentration-split/`    | Concentration page section: donut + legend + ranked table for one dimension (ASO or country).     |
+| `components/donut-chart/`            | Shared presentational part-to-whole donut (SVG, dash-pattern arcs). Caller owns colour/order.     |
 | `components/navigation/`             | Top bar, tab switcher, epoch meter, theme toggle.                                                 |
 | `components/epoch-meter/`            | Epoch chip in the nav; pure render over `services/epoch.ts` logic.                                |
 | `components/validator-search/`       | Vote-account / name search input on the SAM page.                                                 |
@@ -117,34 +121,36 @@ UI-free. Pure functions and async fetchers, typed against SDK types where applic
 
 ### Auction & SAM
 
-| File                   | What it does                                                                                                                                                     |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sam.ts`               | Loads and runs the SDK auction (`loadSam`). Augments results with per-validator expected stake change. Selectors for APY, stake, bid, budget, priority frontier. |
-| `simulation.ts`        | Builds `SourceDataOverrides` from form edits; produces ghost-row state for the simulation UI.                                                                    |
-| `calculations.ts`      | Pure math: APY compounding (`annualize`, `compoundApy`, `apyBreakdown`) and bond-gauge geometry (`bondGaugeScaleMax`, `bondCriticalFrac`).                       |
-| `tip-engine.ts`        | Drives the rank-cell colour and Next Step column. Assembles a `ValidatorTip` from five orthogonal lever helpers sorted by severity then lever priority.          |
-| `bidding.ts`           | Per-validator stake / bid / cost row.                                                                                                                            |
-| `bond-coverage.ts`     | Bond top-up calculations for keep-stake and avoid-fee thresholds.                                                                                                |
-| `bond-health.ts`       | Four-tier bond health state (`NO_BOND → CRITICAL → WATCH → HEALTHY`); also exports `effectiveBondRunway(v, config)` and `bondUtilizationPct`.                    |
-| `bid-penalty.ts`       | Bid-too-low penalty recompute, mirroring SDK `calcBidTooLowPenalty`.                                                                                             |
-| `in-auction-target.ts` | Closed-form static bid to clear the winning total (estimate — verify in Simulate).                                                                               |
-| `next-epoch-stake.ts`  | Heuristic bid to clear the redelegation priority frontier (estimate — verify in Simulate).                                                                       |
-| `payment-total.ts`     | `computePaymentTotal({biddingTotalSol, ...penalties, psrEstimates})` → `{psrTotal, penaltyTotal, total}`.                                                        |
+| File                   | What it does                                                                                                                                                                                                          |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sam.ts`               | Loads and runs the SDK auction (`loadSam`). Augments results with per-validator expected stake change. Selectors for APY, stake, bid, budget, priority frontier.                                                      |
+| `simulation.ts`        | Builds `SourceDataOverrides` from form edits; produces ghost-row state for the simulation UI.                                                                                                                         |
+| `calculations.ts`      | Pure math: APY compounding (`annualize`, `compoundApy`, `apyBreakdown`) and bond-gauge geometry (`bondGaugeScaleMax`, `bondCriticalFrac`).                                                                            |
+| `tip-engine.ts`        | Drives the rank-cell colour and Next Step column. Assembles a `ValidatorTip` from five orthogonal lever helpers sorted by severity then lever priority.                                                               |
+| `bidding.ts`           | Per-validator stake / bid / cost row.                                                                                                                                                                                 |
+| `bond-coverage.ts`     | Bond top-up calculations for keep-stake and avoid-fee thresholds.                                                                                                                                                     |
+| `bond-health.ts`       | Four-tier bond health state (`NO_BOND → CRITICAL → WATCH → HEALTHY`); also exports `effectiveBondRunway(v, config)` and `bondUtilizationPct`.                                                                         |
+| `bid-penalty.ts`       | Bid-too-low penalty recompute, mirroring SDK `calcBidTooLowPenalty`.                                                                                                                                                  |
+| `in-auction-target.ts` | Closed-form static bid to clear the winning total (estimate — verify in Simulate).                                                                                                                                    |
+| `next-epoch-stake.ts`  | Heuristic bid to clear the redelegation priority frontier (estimate — verify in Simulate).                                                                                                                            |
+| `payment-total.ts`     | `computePaymentTotal({biddingTotalSol, ...penalties, psrEstimates})` → `{psrTotal, penaltyTotal, total}`.                                                                                                             |
+| `concentration.ts`     | `selectConcentration(auctionResult, config, dimension, topN)` → SAM target stake grouped by ASO or country: ranked `rows` (all) plus chart-ready `slices` (top N + folded `Other`). Carries that dimension's own cap. |
 
 ### Validator data
 
-| File                                | What it does                                                                                                                                                                                                                            |
-| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `validators.ts`                     | Fetches validators from `validators-api.marinade.finance`.                                                                                                                                                                              |
-| `bonds.ts`                          | Fetches bond records from `validator-bonds-api.marinade.finance`.                                                                                                                                                                       |
-| `scoring.ts`                        | Fetches scoring data from `scoring.marinade.finance`.                                                                                                                                                                                   |
-| `rewards.ts`                        | Fetches per-validator reward data from validators-api.                                                                                                                                                                                  |
-| `validator-with-bond.ts`            | Joins validators × bonds × auction; computes max / actual protected stake.                                                                                                                                                              |
-| `validator-with-protected_event.ts` | Joins protected events + estimated events + per-epoch penalties into a unified event list.                                                                                                                                              |
-| `protected-events.ts`               | Fetches on-chain protected events; humanises reason strings; owns the settled-epoch selectors (`selectLatestProcessedEpoch`, `selectUnsettledEstimates`, `selectCurrentEpochEstimates`) shared by the Events page and the Payments tab. |
-| `protected-events-estimator.ts`     | Derives low-credits / commission-increase estimates for unsettled epochs.                                                                                                                                                               |
-| `epoch.ts`                          | Epoch-meter logic: network epoch, settlement status, chip / tooltip copy. Also `fetchEpochInfo` — best-effort Solana RPC `getEpochInfo` for slot-accurate progress, null on failure.                                                    |
-| `notifications.ts`                  | Fetches and paginates the notifications API; `notificationTooltip()` renders HTML for the nav bell tooltip.                                                                                                                             |
+| File                                | What it does                                                                                                                                                                                                                                                              |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `validators.ts`                     | Fetches validators from `validators-api.marinade.finance`.                                                                                                                                                                                                                |
+| `bonds.ts`                          | Fetches bond records from `validator-bonds-api.marinade.finance`.                                                                                                                                                                                                         |
+| `scoring.ts`                        | Fetches scoring data from `scoring.marinade.finance`.                                                                                                                                                                                                                     |
+| `cluster-stats.ts`                  | Fetches network-wide concentration from `validators-api` `/cluster-stats?epochs=1`; returns the newest epoch's ASO and country → share-of-network maps. Declares its own Zod shape: the generated schema omits the `dc_*_by_country` fields the endpoint actually serves. |
+| `rewards.ts`                        | Fetches per-validator reward data from validators-api.                                                                                                                                                                                                                    |
+| `validator-with-bond.ts`            | Joins validators × bonds × auction; computes max / actual protected stake.                                                                                                                                                                                                |
+| `validator-with-protected_event.ts` | Joins protected events + estimated events + per-epoch penalties into a unified event list.                                                                                                                                                                                |
+| `protected-events.ts`               | Fetches on-chain protected events; humanises reason strings; owns the settled-epoch selectors (`selectLatestProcessedEpoch`, `selectUnsettledEstimates`, `selectCurrentEpochEstimates`) shared by the Events page and the Payments tab.                                   |
+| `protected-events-estimator.ts`     | Derives low-credits / commission-increase estimates for unsettled epochs.                                                                                                                                                                                                 |
+| `epoch.ts`                          | Epoch-meter logic: network epoch, settlement status, chip / tooltip copy. Also `fetchEpochInfo` — best-effort Solana RPC `getEpochInfo` for slot-accurate progress, null on failure.                                                                                      |
+| `notifications.ts`                  | Fetches and paginates the notifications API; `notificationTooltip()` renders HTML for the nav bell tooltip.                                                                                                                                                               |
 
 ### Plumbing
 
@@ -213,6 +219,7 @@ rows (new position, green/red grading by move severity).
 | `['epoch-meter']`                      | `EpochMeter` (nav, all pages)                                                          | Lean scalars (network epoch, settlement epochs) via `fetchEpochMeterData`, which reuses the shared `['protected-events']` cache but retains only the scalars — so the always-mounted nav never pins the full payload. `staleTime` 5 min, refetch hourly. |
 | `['psr-estimates-all']`                | `ValidatorDetail`                                                                      | PSR estimates for the live epoch in one query, filtered by `selectCurrentEpochEstimates` (past and already-settled epochs dropped — they must never reach the Payments total); `staleTime: 5 min`.                                                       |
 | `['doc', activeDoc]`                   | `DocsPage`                                                                             | `staleTime: Infinity`.                                                                                                                                                                                                                                   |
+| `['cluster-stats']`                    | `ConcentrationPage`                                                                    | Network-wide ASO shares for the comparison column. Deliberately never gates render: the page shows the SAM split whether or not this resolves, and a missing ASO reads `—`, not `0%`. `staleTime: 5 min` default.                                        |
 | `['epoch-info']`                       | `EpochMeter`                                                                           | Solana RPC `getEpochInfo` for slot-accurate epoch progress; `staleTime` / `refetchInterval` 10 min. Sole progress source — when it does not resolve the meter shows `RPC unavailable` rather than estimating from timestamps.                            |
 
 ### SAM page state
