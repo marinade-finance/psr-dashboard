@@ -5,12 +5,10 @@ import {
   LogVerbosity,
 } from '@marinade.finance/ds-sam-sdk'
 import {
-  allocateRedelegation,
   annualize,
   compoundApy,
   EPOCHS_PER_YEAR,
   pmpeToSol,
-  selectNonBidPmpe,
 } from '@marinade.finance/ds-sam-calc'
 
 import { pct } from 'src/format'
@@ -134,33 +132,11 @@ export const selectSamDistributedStake = (validators: AuctionValidator[]) =>
     0,
   )
 
+// Clearing it is necessary to win, not sufficient — blocked and capped validators clear it too.
 export const selectWinningAPY = (
   auctionResult: AuctionResult,
   epochsPerYear: number,
 ) => compoundApy(auctionResult.winningTotalPmpe, epochsPerYear)
-
-// Rebuild the winning APY at THIS validator's commission profile: take the
-// marginal winner's bid component and add it to the validator's own
-// inflation/MEV/block revenue. Answers "would I clear at the auction-
-// clearing bid?" — apples-to-apples for the APY pill in validator-detail.
-export function selectWinningApyForValidator(
-  v: AuctionValidator,
-  auctionResult: AuctionResult,
-  epochsPerYear: number,
-  minBondBalanceSol: number,
-): number {
-  const { marginalWinner } = allocateRedelegation(
-    auctionResult,
-    minBondBalanceSol,
-  )
-  const winningBidPmpe = marginalWinner
-    ? Math.max(
-        0,
-        auctionResult.winningTotalPmpe - selectNonBidPmpe(marginalWinner),
-      )
-    : 0
-  return compoundApy(selectNonBidPmpe(v) + winningBidPmpe, epochsPerYear)
-}
 
 const totalProfitPmpe = (v: AuctionValidator) =>
   v.revShare.auctionEffectiveBidPmpe +
