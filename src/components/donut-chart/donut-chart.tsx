@@ -39,6 +39,51 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS
 // by the surface showing through, never by a drawn border.
 const GAP = 2
 
+// Thinnest stroke a sub-gap segment keeps, so a tiny-but-present share still
+// reads as present rather than vanishing into the gap.
+const HAIRLINE = 0.5
+
+export type SegmentArc = {
+  index: number
+  // Arc length actually stroked.
+  drawn: number
+  // Where this segment's arc starts, measured along the circumference.
+  offset: number
+}
+
+// Pure geometry, exported for test. Two invariants matter and neither is
+// visible from the rendered SVG:
+//   1. `drawn` never exceeds the segment's own arc — a floor that overran it
+//      would paint over the next segment and misplace every boundary after it.
+//   2. A zero or negative value produces no arc at all, rather than the
+//      hairline (which would show a segment for a value that isn't there).
+export const layoutSegments = (
+  values: number[],
+  circumference: number,
+  gap: number,
+): SegmentArc[] => {
+  const total = values.reduce((acc, v) => acc + Math.max(v, 0), 0)
+  if (total <= 0) return []
+
+  const arcs: SegmentArc[] = []
+  let offset = 0
+
+  values.forEach((rawValue, index) => {
+    const value = Math.max(rawValue, 0)
+    const arc = (value / total) * circumference
+    if (value > 0) {
+      arcs.push({
+        index,
+        drawn: Math.min(Math.max(arc - gap, HAIRLINE), arc),
+        offset,
+      })
+    }
+    offset += arc
+  })
+
+  return arcs
+}
+
 export const DonutChart: React.FC<Props> = ({
   segments,
   children,
@@ -47,13 +92,15 @@ export const DonutChart: React.FC<Props> = ({
   className,
   ariaLabel,
 }) => {
-  const total = segments.reduce((acc, s) => acc + Math.max(s.value, 0), 0)
-
   // A gap costs arc length, so it can only be spent where there is an arc to
   // spend it on. With one segment there is no boundary to mark at all.
   const gap = segments.length > 1 ? GAP : 0
 
-  let offset = 0
+  const arcs = layoutSegments(
+    segments.map(s => s.value),
+    CIRCUMFERENCE,
+    gap,
+  )
 
   return (
     <div className={cn('relative shrink-0', className)}>
@@ -63,43 +110,34 @@ export const DonutChart: React.FC<Props> = ({
         role="img"
         aria-label={ariaLabel}
       >
-        {total > 0 &&
-          segments.map((segment, index) => {
-            const fraction = Math.max(segment.value, 0) / total
-            const arc = fraction * CIRCUMFERENCE
-            // Never let the gap eat a whole slice: a sub-gap segment keeps a
-            // hairline of colour so a tiny-but-present share still reads as
-            // present, the way the gauge floors its fill at 4%.
-            const drawn = Math.max(arc - gap, 0.5)
-            const dash = `${drawn} ${CIRCUMFERENCE - drawn}`
-            const thisOffset = offset
-            offset += arc
+        {arcs.map(({ index, drawn, offset }) => {
+          const segment = segments[index]
+          const dash = `${drawn} ${CIRCUMFERENCE - drawn}`
+          const dimmed = hoveredIndex !== null && hoveredIndex !== index
 
-            const dimmed = hoveredIndex !== null && hoveredIndex !== index
-
-            return (
-              <circle
-                key={`${segment.label}-${index}`}
-                cx={VIEWBOX / 2}
-                cy={VIEWBOX / 2}
-                r={RADIUS}
-                fill="none"
-                stroke={segment.color}
-                strokeWidth={STROKE}
-                strokeDasharray={dash}
-                strokeDashoffset={-thisOffset}
-                className={cn(
-                  'donutSegment transition-opacity duration-150',
-                  dimmed ? 'opacity-35' : 'opacity-100',
-                  onHover && 'cursor-default',
-                )}
-                onMouseEnter={() => onHover?.(index)}
-                onMouseLeave={() => onHover?.(null)}
-              >
-                <title>{segment.label}</title>
-              </circle>
-            )
-          })}
+          return (
+            <circle
+              key={`${segment.label}-${index}`}
+              cx={VIEWBOX / 2}
+              cy={VIEWBOX / 2}
+              r={RADIUS}
+              fill="none"
+              stroke={segment.color}
+              strokeWidth={STROKE}
+              strokeDasharray={dash}
+              strokeDashoffset={-offset}
+              className={cn(
+                'donutSegment transition-opacity duration-150',
+                dimmed ? 'opacity-35' : 'opacity-100',
+                onHover && 'cursor-default',
+              )}
+              onMouseEnter={() => onHover?.(index)}
+              onMouseLeave={() => onHover?.(null)}
+            >
+              <title>{segment.label}</title>
+            </circle>
+          )
+        })}
       </svg>
       {children && (
         // pointer-events-none so the hole never steals hover from the ring.

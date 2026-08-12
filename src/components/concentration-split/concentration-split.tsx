@@ -116,8 +116,8 @@ export const ConcentrationSplit: React.FC<Props> = ({
     [rows, networkShares],
   )
 
-  // One track for every share bar so rows stay comparable, wide enough to hold
-  // both the largest share and the cap tick.
+  // One track for every share gauge so rows stay comparable, wide enough to
+  // hold both the largest share and the cap tick.
   const scaleMax = Math.max(capPct, ...rows.map(r => r.pctOfTotal), 0.01)
 
   const active = hovered === null ? null : slices[hovered]
