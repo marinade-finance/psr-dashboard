@@ -132,7 +132,6 @@ export const selectSamDistributedStake = (validators: AuctionValidator[]) =>
     0,
   )
 
-// Clearing it is necessary to win, not sufficient — blocked and capped validators clear it too.
 export const selectWinningAPY = (
   auctionResult: AuctionResult,
   epochsPerYear: number,

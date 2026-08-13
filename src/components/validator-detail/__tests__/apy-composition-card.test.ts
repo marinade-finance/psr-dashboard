@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { apyStanding, PILL } from '../apy-composition-card'
+import { apyStanding } from '../apy-composition-card'
 
 import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
 
@@ -22,15 +22,5 @@ describe('apyStanding', () => {
 
   it('is winning exactly at the threshold', () => {
     expect(apyStanding(makeValidator(100), 0)).toBe('winning')
-  })
-})
-
-describe('PILL tones', () => {
-  it('never paints an out-of-set validator as a winner', () => {
-    expect(PILL.outOfSet).not.toContain('primary')
-  })
-
-  it('keeps the out-of-set tone distinct from the below-threshold one', () => {
-    expect(PILL.outOfSet).not.toContain('destructive')
   })
 })

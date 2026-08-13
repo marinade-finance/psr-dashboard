@@ -110,6 +110,11 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
   const delta = apyBreakdown.total - winningApy
   const standing = apyStanding(validator, delta)
   const above = standing !== 'below'
+  const pillClass = cn(
+    'text-xs font-mono font-semibold px-2 py-0.5 rounded-md border',
+    PILL[standing],
+  )
+  const pillText = `${above ? '+' : ''}${pct(delta, 2)} vs winning`
 
   return (
     <CalcCard
@@ -121,17 +126,7 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
         <p className="text-xs text-muted-foreground">
           Winning APY threshold {pct(winningApy, 2)}
         </p>
-        {above || !onGoToBidding ? (
-          <span
-            className={cn(
-              'text-xs font-mono font-semibold px-2 py-0.5 rounded-md border',
-              PILL[standing],
-            )}
-          >
-            {above ? '+' : ''}
-            {pct(delta, 2)} vs winning
-          </span>
-        ) : (
+        {standing === 'below' && onGoToBidding ? (
           // The pill IS the metric. The action label sits above as an
           // auxiliary hint so the pill chrome stays clean. Whole stack is
           // one click target.
@@ -143,18 +138,23 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
             <span className="text-2xs text-destructive font-medium leading-none group-hover:underline">
               Fix in Bidding ↗
             </span>
-            <span
-              className={cn(
-                'text-xs font-mono font-semibold px-2 py-0.5 rounded-md border',
-                PILL[standing],
-              )}
-            >
-              {pct(delta, 2)} vs winning
-            </span>
+            <span className={pillClass}>{pillText}</span>
             <span className="sr-only">
               see the target bid on the Bidding tab
             </span>
           </button>
+        ) : standing === 'outOfSet' ? (
+          // A positive delta alone reads as good news, so the caption says in
+          // words what the muted tone says in colour. Not a button — no bid
+          // clears a cap or a block.
+          <span className="flex flex-col items-end gap-0.5">
+            <span className="text-2xs text-muted-foreground font-medium leading-none">
+              Cleared, but out of set
+            </span>
+            <span className={pillClass}>{pillText}</span>
+          </span>
+        ) : (
+          <span className={pillClass}>{pillText}</span>
         )}
       </div>
       <div className="space-y-2">

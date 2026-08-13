@@ -89,6 +89,9 @@ test('VCAP APY Composition pill is not painted as a winner', async ({
   const cls = (await pill.getAttribute('class')) ?? ''
   expect(cls).toMatch(/muted/i)
   expect(cls).not.toMatch(/primary/i)
+  // Scoped to the pill's own stack — the sheet header carries an unrelated
+  // "Out of Set" badge that would satisfy a sheet-wide match.
+  await expect(pill.locator('..').getByText(/cleared/i)).toBeVisible()
 })
 
 test('V08 (Out of Set) row carries the destructive out-of-set tint', async ({
