@@ -109,12 +109,11 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
   const winPct = (winningApy / apyScale) * 100
   const delta = apyBreakdown.total - winningApy
   const standing = apyStanding(validator, delta)
-  const above = standing !== 'below'
   const pillClass = cn(
     'text-xs font-mono font-semibold px-2 py-0.5 rounded-md border',
     PILL[standing],
   )
-  const pillText = `${above ? '+' : ''}${pct(delta, 2)} vs winning`
+  const pillText = `${delta > 0 ? '+' : ''}${pct(delta, 2)} vs winning`
 
   return (
     <CalcCard
