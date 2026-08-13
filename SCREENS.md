@@ -326,9 +326,13 @@ penalties` when total is zero, or the destructive total cost),
   show `N% shared` — the fraction GIVEN to stakers (`1 − commission`,
   and `0%` when the commission is null or ≥ 100%, matching the SDK's
   zeroed `blockPmpe`). Threshold marker line + label at the
-  winning-APY position. The `±X% vs winning` pill is green above
-  the winning threshold; below it the pill becomes a button reading
-  `-X% vs winning → Bidding` that switches the panel to the
+  winning-APY position. The `±X% vs winning` pill and the Total row's
+  APY carry one of three tones: green when the validator is above the
+  winning threshold AND holds SAM stake (`selectInSet`), grey when it
+  is above the threshold but holds none (blocked, blacklisted or
+  cap-blocked — the header CTA names the binding reason), destructive
+  when it is below the threshold. Below the threshold the pill becomes
+  a button captioned `Fix in Bidding ↗` that switches the panel to the
   Bidding tab so the validator sees the concrete target bid.
 - **What-If Simulation** (only when the Simulate switch is on) —
   four numeric inputs: Stake Bid (PMPE), Inflation Commission %,

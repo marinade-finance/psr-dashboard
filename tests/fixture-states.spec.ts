@@ -74,6 +74,23 @@ test('VCAP (out-of-set at ASO cap) row tip names the binding constraint', async 
   await expect(row.getByText(/OVH SAS at ASO cap/i).first()).toBeVisible()
 })
 
+test('VCAP APY Composition pill is not painted as a winner', async ({
+  page,
+}) => {
+  await page.goto(`/test-?v=${VCAP}`)
+  await page.waitForSelector('tbody tr', { timeout: 30000 })
+  await expect(page.locator(SHEET).first()).toBeVisible({ timeout: 10000 })
+  // The fixture's totalPmpe 7.5 clears the winning 6.0 yet the ASO cap leaves it zero stake.
+  const pill = page
+    .locator(SHEET)
+    .getByText(/vs winning/)
+    .first()
+  await expect(pill).toBeVisible()
+  const cls = (await pill.getAttribute('class')) ?? ''
+  expect(cls).toMatch(/muted/i)
+  expect(cls).not.toMatch(/primary/i)
+})
+
 test('V08 (Out of Set) row carries the destructive out-of-set tint', async ({
   page,
 }) => {
