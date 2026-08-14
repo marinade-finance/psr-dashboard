@@ -24,6 +24,7 @@ type Props = {
   bidTooLowPenaltySol: number
   psrEstimates: ProtectedEvent[]
   psrEstimatesUnavailable?: boolean
+  psrEstimatesLoading?: boolean
   isSimulated?: boolean
   onGoToSim?: () => void
   onGoToPenalty?: () => void
@@ -45,6 +46,7 @@ export const PaymentsBreakdown: React.FC<Props> = ({
   bidTooLowPenaltySol,
   psrEstimates,
   psrEstimatesUnavailable,
+  psrEstimatesLoading,
   isSimulated,
   onGoToSim,
   onGoToPenalty,
@@ -59,10 +61,15 @@ export const PaymentsBreakdown: React.FC<Props> = ({
   })
   const hasPenalty = penaltyTotal > 0
 
-  const baseStatus: Omit<CardStatus, 'action'> = psrEstimatesUnavailable
+  // Both states leave psrEstimates empty, so the total must not read as final in either.
+  const psrMissing = psrEstimatesLoading || psrEstimatesUnavailable
+  const psrMissingReason = psrEstimatesLoading
+    ? 'PSR settlement estimates are still loading'
+    : 'PSR settlement estimates could not be loaded'
+  const baseStatus: Omit<CardStatus, 'action'> = psrMissing
     ? {
-        label: `You will pay at least ${pay(total, 3)} this epoch — PSR settlement estimates could not be loaded, so this total is incomplete.`,
-        severity: 'warning',
+        label: `You will pay at least ${pay(total, 3)} this epoch — ${psrMissingReason}, so this total is incomplete.`,
+        severity: psrEstimatesLoading ? 'neutral' : 'warning',
       }
     : {
         label: hasPenalty
@@ -173,20 +180,25 @@ export const PaymentsBreakdown: React.FC<Props> = ({
               })}
             </>
           )}
-          {psrEstimatesUnavailable && (
+          {psrMissing && (
             <>
               <SectionHeader
                 title="PSR settlements — estimated"
-                help="PSR estimates could not be computed for this epoch, so any settlement owed is missing from the total below."
+                help={
+                  psrEstimatesLoading
+                    ? 'PSR estimates for this epoch are still being computed, so any settlement owed is missing from the total below.'
+                    : 'PSR estimates could not be computed for this epoch, so any settlement owed is missing from the total below.'
+                }
               />
-              <CalcRow label="Estimate for this epoch" col2="unavailable" />
+              <CalcRow
+                label="Estimate for this epoch"
+                col2={psrEstimatesLoading ? 'loading…' : 'unavailable'}
+              />
             </>
           )}
           <CalcRow
             label={
-              psrEstimatesUnavailable
-                ? 'Total payment — excluding PSR'
-                : 'Total payment'
+              psrMissing ? 'Total payment — excluding PSR' : 'Total payment'
             }
             col2={pay(total, 3)}
             total

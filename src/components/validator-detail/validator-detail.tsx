@@ -676,7 +676,11 @@ export const ValidatorDetail = ({
   // the bonds API has already settled and charged for (GEN-8534).
   // Flagged, not a silent `= []`: the bonds API answers 500 until its BigQuery cache loads, and
   // an empty estimate list understates the epoch total instead of saying it is incomplete.
-  const { data: allPsrEstimates, isError } = useQuery({
+  const {
+    data: allPsrEstimates,
+    isError,
+    isLoading: psrEstimatesLoading,
+  } = useQuery({
     queryKey: ['psr-estimates-all'],
     queryFn: async ({ signal }) => {
       const [{ validators }, { protected_events: settledEvents }] =
@@ -701,7 +705,8 @@ export const ValidatorDetail = ({
     enabled: tab === 'payments',
   })
   // A failed refetch keeps the last good `data`, so isError alone would label a complete
-  // total as incomplete. Only "no estimates at all" is unavailable.
+  // total as incomplete. Only "no estimates at all" is unavailable. isLoading (not
+  // isPending) above: the `enabled` gate leaves the query pending on every other tab.
   const psrEstimatesUnavailable = isError && allPsrEstimates === undefined
   const psrEstimates = useMemo(
     () => (allPsrEstimates ?? []).filter(e => e.vote_account === voteAccount),
@@ -986,6 +991,7 @@ export const ValidatorDetail = ({
                 bidTooLowPenaltySol={bidTooLowPenaltySol}
                 psrEstimates={psrEstimates}
                 psrEstimatesUnavailable={psrEstimatesUnavailable}
+                psrEstimatesLoading={psrEstimatesLoading}
                 isSimulated={isSimulated}
                 onGoToSim={goToSim}
                 onGoToPenalty={() => setTab('penalty')}
