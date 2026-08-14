@@ -10,7 +10,7 @@ import {
   selectCurrentEpochEstimates,
   selectLatestProcessedEpoch,
   selectProtectedStakeReason,
-  selectSamBiddingEvents,
+  selectSamBiddingSettlements,
   selectUnsettledEstimates,
 } from '../protected-events'
 
@@ -162,7 +162,7 @@ describe('selectProtectedStakeReason low-credits label', () => {
 
 // The bonds API unions both settlement tables, so the response carries institutional payouts and
 // direct-staking PSR alongside SAM. Unfiltered they inflate this dashboard's per-validator totals.
-describe('selectSamBiddingEvents', () => {
+describe('selectSamBiddingSettlements', () => {
   const settlement = (
     overrides: Partial<Pick<ProtectedEvent, 'bond_type' | 'product'>>,
   ): ProtectedEvent => ({
@@ -172,12 +172,12 @@ describe('selectSamBiddingEvents', () => {
 
   it('keeps SAM payouts from the bidding bond', () => {
     const events = [settlement({ bond_type: 'bidding', product: 'sam' })]
-    expect(selectSamBiddingEvents(events)).toEqual(events)
+    expect(selectSamBiddingSettlements(events)).toEqual(events)
   })
 
   it('drops direct staking charged to either bond', () => {
     expect(
-      selectSamBiddingEvents([
+      selectSamBiddingSettlements([
         settlement({ bond_type: 'bidding', product: 'single-validator' }),
         settlement({ bond_type: 'institutional', product: 'single-validator' }),
       ]),
@@ -186,7 +186,7 @@ describe('selectSamBiddingEvents', () => {
 
   it('drops institutional payouts', () => {
     expect(
-      selectSamBiddingEvents([
+      selectSamBiddingSettlements([
         settlement({ bond_type: 'institutional', product: 'select' }),
       ]),
     ).toEqual([])
@@ -194,7 +194,7 @@ describe('selectSamBiddingEvents', () => {
 
   it('drops select payouts charged to the bidding bond', () => {
     expect(
-      selectSamBiddingEvents([
+      selectSamBiddingSettlements([
         settlement({ bond_type: 'bidding', product: 'select' }),
       ]),
     ).toEqual([])
@@ -203,16 +203,23 @@ describe('selectSamBiddingEvents', () => {
   // `product` is an open string in the spec, so the filter must exclude by default.
   it('drops a product this dashboard has never heard of', () => {
     expect(
-      selectSamBiddingEvents([
+      selectSamBiddingSettlements([
         settlement({ bond_type: 'bidding', product: 'future-product' }),
       ]),
     ).toEqual([])
   })
 
-  it('keeps locally built estimates, which carry neither field', () => {
-    const estimate = makeLowCreditsEvent(1014)
-    expect(estimate.bond_type).toBeUndefined()
-    expect(selectSamBiddingEvents([estimate])).toEqual([estimate])
+  // /v1 serializes both fields from non-Option server fields, so a row missing either is
+  // anomalous. Excluding it understates the total; defaulting it in would bill a validator
+  // for another product's payout.
+  it('drops a row missing either discriminator', () => {
+    expect(
+      selectSamBiddingSettlements([
+        settlement({ bond_type: 'bidding' }),
+        settlement({ product: 'sam' }),
+        makeLowCreditsEvent(1014),
+      ]),
+    ).toEqual([])
   })
 })
 
@@ -276,14 +283,16 @@ describe('fetchProtectedEvents schema leniency', () => {
     })
   })
 
-  it('accepts a row the API sends without bond_type or product, and keeps it as SAM', async () => {
-    const row = samRow('Bidding')
-    delete (row as Record<string, unknown>).bond_type
-    delete (row as Record<string, unknown>).product
-    respondWith(row)
+  // Two rows on purpose: zod rejects the whole array on one bad row, so the SAM row surviving is
+  // what proves the override parsed the field-less one rather than the response blowing up.
+  it('parses a row the API sends without bond_type or product, then excludes it', async () => {
+    const fieldless = samRow('Bidding', { vote_account: 'vote2' })
+    delete (fieldless as Record<string, unknown>).bond_type
+    delete (fieldless as Record<string, unknown>).product
+    respondWith(samRow('Bidding'), fieldless)
     const { protected_events: events } = await fetchProtectedEvents()
     expect(events).toHaveLength(1)
-    expect(events[0].bond_type).toBeUndefined()
+    expect(events[0].vote_account).toBe('vote1')
   })
 
   it('still applies the SAM allowlist to a well-formed response', async () => {

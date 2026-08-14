@@ -190,21 +190,20 @@ export const selectCurrentEpochEstimates = (
 // This dashboard is the SAM view, but /v1 returns every settlement of both bond configs, so
 // institutional payouts and direct-staking PSR would otherwise land in per-validator totals.
 // An allowlist, not a denylist: `product` is an open string, so a product the backend adds
-// later must stay out until someone decides it belongs here. Locally built estimates carry
-// neither field and are SAM by construction.
-export const selectSamBiddingEvents = (
+// later must stay out until someone decides it belongs here — a row missing either field is
+// dropped for the same reason. Takes fetched /v1 rows only, never locally built estimates,
+// which carry neither field.
+export const selectSamBiddingSettlements = (
   protectedEvents: ProtectedEvent[],
 ): ProtectedEvent[] =>
-  protectedEvents.filter(
-    e =>
-      (e.product ?? 'sam') === 'sam' &&
-      (e.bond_type ?? 'bidding') === 'bidding',
-  )
+  protectedEvents.filter(e => e.product === 'sam' && e.bond_type === 'bidding')
 
-// Override layer over the generated schema, same rationale as src/services/bonds.ts: the spec
-// declares bond_type and product required, but this API omits fields it declares. The trailing
-// fallbacks keep a reason the backend deploys before the next regen from rejecting the whole
-// response — it degrades to "Unsupported" in selectProtectedStakeReason instead. A regen drops
+// Override layer over the generated schema, shaped like src/services/bonds.ts but for a different
+// reason: /v1 serializes bond_type and product from non-Option fields, so optional() is not a
+// compatibility shim. It is containment — one anomalous row must not reject the whole array and
+// blank every Payments total, and selectSamBiddingSettlements then drops that row rather than
+// counting it as SAM. The trailing fallbacks do the same for a reason the backend deploys before
+// the next regen, which degrades to "Unsupported" in selectProtectedStakeReason. A regen drops
 // that catch-all every time (scripts/generate-schemas.sh warns about it); here it cannot.
 const SettlementReasonSchema = z.union([
   schemas.SettlementReason,
@@ -233,5 +232,5 @@ export const fetchProtectedEvents = async (
       body =>
         ProtectedEventsResponseSchema.parse(body) as ProtectedEventsResponse,
     )
-  return { protected_events: selectSamBiddingEvents(protectedEvents) }
+  return { protected_events: selectSamBiddingSettlements(protectedEvents) }
 }
