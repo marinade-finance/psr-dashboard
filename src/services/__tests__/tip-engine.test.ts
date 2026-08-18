@@ -2,6 +2,8 @@
 // (bond/bid/cap/delta CTAs, severity ordering), bondAdvice contract, and nextStakeDeltaCell.
 import { describe, it, expect } from 'vitest'
 
+import { SECONDS_PER_YEAR } from '@marinade.finance/ts-common'
+
 import { computeBondCoverage } from '../bond-coverage'
 import { bondHealthFromAuction } from '../bond-health'
 import { selectProtectedStakeReason } from '../protected-events'
@@ -49,7 +51,7 @@ function makeValidator(
   } as unknown as AugmentedAuctionValidator
 }
 
-const EPOCHS_PER_YEAR = 182
+const EPOCH_DURATION_SECONDS = 172_800
 
 const DS_SAM_CONFIG = {
   minBondEpochs: 0,
@@ -66,16 +68,66 @@ const DS_SAM_CONFIG = {
 describe('getApyBreakdown', () => {
   it('staticBid maps to bid pmpe (not named "bid")', () => {
     const validator = makeValidator()
-    const bd = getApyBreakdown(validator, EPOCHS_PER_YEAR)
+    const bd = getApyBreakdown(validator, EPOCH_DURATION_SECONDS)
     expect(bd.staticBid).toBeGreaterThan(0)
     expect((bd as Record<string, unknown>).bid).toBeUndefined()
   })
 
-  it('total = compoundApy(totalPmpe)', () => {
+  it('total annualizes totalPmpe over the epoch duration', () => {
     const validator = makeValidator()
-    const bd = getApyBreakdown(validator, EPOCHS_PER_YEAR)
-    const expected = Math.pow(1 + 28 / 1e3, EPOCHS_PER_YEAR) - 1
+    const bd = getApyBreakdown(validator, EPOCH_DURATION_SECONDS)
+    const epochsPerYear = SECONDS_PER_YEAR / EPOCH_DURATION_SECONDS
+    const expected = Math.pow(1 + 28 / 1e3, epochsPerYear) - 1
     expect(bd.total).toBeCloseTo(expected, 10)
+  })
+
+  it('all components > 0 when all pmpe > 0', () => {
+    const bd = getApyBreakdown(makeValidator(), EPOCH_DURATION_SECONDS)
+    expect(bd.inflation).toBeGreaterThan(0)
+    expect(bd.mev).toBeGreaterThan(0)
+    expect(bd.blockRewards).toBeGreaterThan(0)
+    expect(bd.staticBid).toBeGreaterThan(0)
+    expect(bd.total).toBeGreaterThan(0)
+  })
+
+  it('all zero when all pmpe = 0', () => {
+    const validator = makeValidator({
+      revShare: {
+        inflationPmpe: 0,
+        mevPmpe: 0,
+        blockPmpe: 0,
+        bidPmpe: 0,
+        totalPmpe: 0,
+        bondObligationPmpe: 0,
+        auctionEffectiveBidPmpe: 0,
+        effParticipatingBidPmpe: 0,
+      },
+    })
+    const bd = getApyBreakdown(validator, EPOCH_DURATION_SECONDS)
+    expect(bd.total).toBe(0)
+    expect(bd.inflation).toBe(0)
+    expect(bd.mev).toBe(0)
+    expect(bd.blockRewards).toBe(0)
+    expect(bd.staticBid).toBe(0)
+  })
+
+  it('components are independent (each driven by own pmpe)', () => {
+    const validator = makeValidator({
+      revShare: {
+        inflationPmpe: 10,
+        mevPmpe: 0,
+        blockPmpe: 0,
+        bidPmpe: 0,
+        totalPmpe: 10,
+        bondObligationPmpe: 0,
+        auctionEffectiveBidPmpe: 0,
+        effParticipatingBidPmpe: 0,
+      },
+    })
+    const bd = getApyBreakdown(validator, EPOCH_DURATION_SECONDS)
+    expect(bd.inflation).toBeGreaterThan(0)
+    expect(bd.mev).toBe(0)
+    expect(bd.staticBid).toBe(0)
   })
 })
 

@@ -3,6 +3,7 @@
 import { describe, it, expect, vi } from 'vitest'
 
 import { AuctionConstraintType } from '@marinade.finance/ds-sam-sdk'
+import { pmpeToApy } from '@marinade.finance/ts-common'
 
 import {
   augmentAuctionResult,
@@ -14,8 +15,6 @@ import {
   selectValidatorConcentration,
   selectWinningApyForValidator,
 } from '../sam'
-
-import { compoundApy } from '../calculations'
 
 import type * as ValidatorsModule from '../validators'
 import type {
@@ -397,11 +396,14 @@ describe('selectWinningApyForValidator — marginal winner', () => {
       makeApyValidator('HIGH', 12, 7, true),
     ])
     const self = makeApyValidator('SELF', 11, 5, true)
-    const epochsPerYear = 160
+    const epochDurationSeconds = 172_800
     const winningBidPmpe = Math.max(0, 10 - 3) // winningTotalPmpe − MARG nonBid
-    const expected = compoundApy(5 + winningBidPmpe, epochsPerYear)
+    const expected = pmpeToApy(
+      5 + winningBidPmpe,
+      epochDurationSeconds,
+    ).toNumber()
     expect(
-      selectWinningApyForValidator(self, result, epochsPerYear, 0),
+      selectWinningApyForValidator(self, result, epochDurationSeconds, 0),
     ).toBeCloseTo(expected, 9)
   })
 })

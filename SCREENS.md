@@ -65,10 +65,13 @@ with the `TimelineCard` — payments-settled / auction-settled / live /
 next-auction stage dots anchored to their epochs, plus a progress gauge
 and `~Nh remaining`. The tooltip is **click-to-pin sticky** (same global
 pin singleton as `HelpTip` via `usePinnedTooltip` — pinning one unpins
-the other; outside-click / Esc dismiss). Progress + hours-remaining come
-solely from the Solana RPC `getEpochInfo` (slot-accurate, `['epoch-info']`
-query); progress is never estimated from timestamps. When the RPC does
-not resolve, the ring is empty and the card shows `RPC unavailable`.
+the other; outside-click / Esc dismiss). Progress comes solely from the
+Solana RPC `getEpochInfo` (slot-accurate, `['epoch-info']` query) and is
+never estimated from timestamps; `~Nh remaining` converts the remaining
+slots with the slot rate _measured_ from `getRecentPerformanceSamples`,
+never a nominal 400ms. When `getEpochInfo` does not resolve, the ring is
+empty and the card shows `RPC unavailable`. When only the measured rate
+is missing, the gauge still renders and the countdown line is omitted.
 Auction epoch renders immediately from the
 prefetched `['sam', 0]` query; the meter force-populates the
 `['protected-events']` query (`staleTime: 5 min`) so the settlement
@@ -110,7 +113,7 @@ right edge.
 | Tile                | Source                                                                                                 |
 | ------------------- | ------------------------------------------------------------------------------------------------------ |
 | Re-delegation       | `selectRedelegationBudget(auctionResult)` — TVL − Σ active stake (SOL); matches `psr.marinade.finance` |
-| Winning APY         | `selectWinningAPY(auctionResult, epochsPerYear)`                                                       |
+| Winning APY         | `selectWinningAPY(auctionResult, epochDurationSeconds)`                                                |
 | Total Auction Stake | `selectSamDistributedStake(validators)` (SOL)                                                          |
 
 Tooltips via `HelpTip` on each tile.

@@ -7,12 +7,10 @@ import type { ProtectedEventWithValidator } from 'src/services/validator-with-pr
 import type { Validator } from 'src/services/validators'
 import type { QueryClient } from '@tanstack/react-query'
 
-const SLOT_DURATION_S = 0.4
-
 export type EpochProgress = {
   epoch: number
   percent: number
-  hoursRemaining: number
+  hoursRemaining: number | null
 }
 
 export type EpochInfo = {
@@ -21,51 +19,120 @@ export type EpochInfo = {
   slotsInEpoch: number
 }
 
-// Best-effort slot-accurate epoch progress straight from the cluster.
-// getEpochInfo gives slotIndex / slotsInEpoch with no timestamp lag — the
-// validators API only stamps epoch_start_at once it processes new-epoch
-// stats, which can trail the actual flip by hours. Returns null on any
-// failure (CORS, rate-limit, offline) so the caller falls back silently.
-export async function fetchEpochInfo(
+// Returns null on any failure (CORS, rate-limit, offline) so every caller
+// degrades silently rather than rendering a guess.
+async function rpcResult<T>(
+  method: string,
+  params: unknown[],
   signal?: AbortSignal,
-): Promise<EpochInfo | null> {
+): Promise<T | null> {
   try {
     const res = await fetch(RPC_URL, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getEpochInfo' }),
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method,
+        ...(params.length > 0 ? { params } : {}),
+      }),
       signal,
     })
     if (!res.ok) return null
     const json: unknown = await res.json()
-    const r = (json as { result?: Partial<EpochInfo> } | null)?.result
-    if (
-      !r ||
-      typeof r.epoch !== 'number' ||
-      typeof r.slotIndex !== 'number' ||
-      typeof r.slotsInEpoch !== 'number' ||
-      r.slotsInEpoch <= 0
-    ) {
-      return null
-    }
-    return {
-      epoch: r.epoch,
-      slotIndex: r.slotIndex,
-      slotsInEpoch: r.slotsInEpoch,
-    }
+    return (json as { result?: T } | null)?.result ?? null
   } catch {
     return null
   }
 }
 
+// Best-effort slot-accurate epoch progress straight from the cluster.
+// getEpochInfo gives slotIndex / slotsInEpoch with no timestamp lag — the
+// validators API only stamps epoch_start_at once it processes new-epoch
+// stats, which can trail the actual flip by hours.
+export async function fetchEpochInfo(
+  signal?: AbortSignal,
+): Promise<EpochInfo | null> {
+  const r = await rpcResult<Partial<EpochInfo>>('getEpochInfo', [], signal)
+  if (
+    !r ||
+    typeof r.epoch !== 'number' ||
+    typeof r.slotIndex !== 'number' ||
+    typeof r.slotsInEpoch !== 'number' ||
+    r.slotsInEpoch <= 0
+  ) {
+    return null
+  }
+  return {
+    epoch: r.epoch,
+    slotIndex: r.slotIndex,
+    slotsInEpoch: r.slotsInEpoch,
+  }
+}
+
+export type PerformanceSample = {
+  numSlots: number
+  samplePeriodSecs: number
+}
+
+// Five ~60s windows: long enough to ride out a single slow window, short
+// enough to track a real change in the slot rate within one refetch.
+const PERF_SAMPLE_COUNT = 5
+
+// Pool slots over pooled seconds — a slot-weighted mean. Averaging the
+// per-sample ratios instead would let a short window skew the result.
+export const slotDurationFromSamples = (
+  samples: PerformanceSample[],
+): number | null => {
+  let slots = 0
+  let seconds = 0
+  for (const sample of samples) {
+    if (
+      typeof sample?.numSlots !== 'number' ||
+      typeof sample?.samplePeriodSecs !== 'number' ||
+      sample.numSlots <= 0 ||
+      sample.samplePeriodSecs <= 0
+    ) {
+      continue
+    }
+    slots += sample.numSlots
+    seconds += sample.samplePeriodSecs
+  }
+  return slots > 0 ? seconds / slots : null
+}
+
+// Measured wall-clock seconds per slot. SIMD-0525 steps the protocol slot time
+// 400ms → 200ms and congestion moves the achieved rate further still, so the
+// countdown has to read the cluster's live throughput — any nominal constant is
+// wrong, and wrong in whichever direction the network happens to be running.
+export async function fetchSlotDurationSeconds(
+  signal?: AbortSignal,
+): Promise<number | null> {
+  const samples = await rpcResult<PerformanceSample[]>(
+    'getRecentPerformanceSamples',
+    [PERF_SAMPLE_COUNT],
+    signal,
+  )
+  return Array.isArray(samples) ? slotDurationFromSamples(samples) : null
+}
+
 // Slot-based progress from getEpochInfo — exact, no timestamp arithmetic.
-export const epochInfoProgress = (info: EpochInfo): EpochProgress => ({
+// percent needs no slot duration at all (it is a ratio of slot counts), so it
+// stays exact even when the measured rate is unavailable and the countdown is
+// dropped.
+export const epochInfoProgress = (
+  info: EpochInfo,
+  slotDurationSeconds: number | null,
+): EpochProgress => ({
   epoch: info.epoch,
   percent: Math.min(100, (info.slotIndex / info.slotsInEpoch) * 100),
-  hoursRemaining: Math.max(
-    0,
-    ((info.slotsInEpoch - info.slotIndex) * SLOT_DURATION_S) / 3600,
-  ),
+  hoursRemaining:
+    slotDurationSeconds === null
+      ? null
+      : Math.max(
+          0,
+          ((info.slotsInEpoch - info.slotIndex) * slotDurationSeconds) / 3600,
+        ),
 })
 
 export type TimelineStage = 'payment' | 'auction' | 'live' | 'next'

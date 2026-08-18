@@ -88,7 +88,7 @@ interface ValidatorDetailProps {
   auctionResult: AuctionResult
   originalAuctionResult?: AuctionResult | null
   dsSamConfig: DsSamConfig
-  epochsPerYear: number
+  epochDurationSeconds: number
   nameMap?: Map<string, { name?: string }>
   notificationsMap?: Record<string, NotificationSummary>
   rank: number | null
@@ -595,7 +595,7 @@ export const ValidatorDetail = ({
   auctionResult,
   originalAuctionResult,
   dsSamConfig,
-  epochsPerYear,
+  epochDurationSeconds,
   nameMap,
   notificationsMap,
   rank,
@@ -612,11 +612,11 @@ export const ValidatorDetail = ({
   const winningApy = selectWinningApyForValidator(
     validator,
     auctionResult,
-    epochsPerYear,
+    epochDurationSeconds,
     dsSamConfig.minBondBalanceSol,
   )
   const winningTotalPmpe = auctionResult.winningTotalPmpe
-  const apyBreakdown = getApyBreakdown(validator, epochsPerYear)
+  const apyBreakdown = getApyBreakdown(validator, epochDurationSeconds)
   const bondHealth = bondHealthFromAuction(
     validator,
     dsSamConfig,

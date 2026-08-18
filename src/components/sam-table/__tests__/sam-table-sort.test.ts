@@ -2,15 +2,13 @@
 // not by stakeDelta — regression guard for the sort-key selection.
 import { describe, expect, it } from 'vitest'
 
-import { EPOCHS_PER_YEAR } from 'src/services/constants'
-
 import { makeCompareFn } from '../sam-table'
 
 import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
 
 // Regression: rank-sort fell through to stakeDelta and ranked by samTarget −
-// active. Rank should mirror auctionRankMap, which sorts by selectMaxAPY desc
-// (= totalPmpe desc, since compoundApy is monotonic in totalPmpe).
+// active. Rank should mirror auctionRankMap, which ranks by max APY — ordered
+// on totalPmpe, since APY is monotonic in it.
 
 function v(totalPmpe: number, samTarget = 1000, active = 0): AuctionValidator {
   return {
@@ -24,17 +22,13 @@ function v(totalPmpe: number, samTarget = 1000, active = 0): AuctionValidator {
 describe('rank sort uses maxApy desc', () => {
   it('orders by totalPmpe desc on default desc dir', () => {
     const arr = [v(10), v(30), v(20)]
-    const sorted = [...arr].sort(
-      makeCompareFn('rank', 'desc', undefined, EPOCHS_PER_YEAR),
-    )
+    const sorted = [...arr].sort(makeCompareFn('rank', 'desc', undefined))
     expect(sorted.map(x => x.revShare.totalPmpe)).toEqual([30, 20, 10])
   })
 
   it('orders by totalPmpe asc when dir=asc', () => {
     const arr = [v(10), v(30), v(20)]
-    const sorted = [...arr].sort(
-      makeCompareFn('rank', 'asc', undefined, EPOCHS_PER_YEAR),
-    )
+    const sorted = [...arr].sort(makeCompareFn('rank', 'asc', undefined))
     expect(sorted.map(x => x.revShare.totalPmpe)).toEqual([10, 20, 30])
   })
 
@@ -43,9 +37,7 @@ describe('rank sort uses maxApy desc', () => {
     // a case where target order ≠ totalPmpe order, then assert totalPmpe wins.
     const high = v(50, /*samTarget*/ 100, /*active*/ 100) // delta=0
     const low = v(5, /*samTarget*/ 5000, /*active*/ 0) // delta=+5000
-    const sorted = [high, low].sort(
-      makeCompareFn('rank', 'desc', undefined, EPOCHS_PER_YEAR),
-    )
+    const sorted = [high, low].sort(makeCompareFn('rank', 'desc', undefined))
     // By totalPmpe desc, `high` (50) precedes `low` (5).
     // Pre-fix sort would have placed `low` (delta 5000) first.
     expect(sorted[0]).toBe(high)
@@ -57,7 +49,7 @@ describe('targetStake sort orders by marinadeSamTargetSol', () => {
   it('highest target first on default desc dir', () => {
     const arr = [v(10, 1000), v(10, 9000), v(10, 5000)]
     const sorted = [...arr].sort(
-      makeCompareFn('targetStake', 'desc', undefined, EPOCHS_PER_YEAR),
+      makeCompareFn('targetStake', 'desc', undefined),
     )
     const targets = sorted.map(x => x.auctionStake.marinadeSamTargetSol)
     expect(targets).toEqual([9000, 5000, 1000])
@@ -65,9 +57,7 @@ describe('targetStake sort orders by marinadeSamTargetSol', () => {
 
   it('lowest target first when dir=asc', () => {
     const arr = [v(10, 1000), v(10, 9000), v(10, 5000)]
-    const sorted = [...arr].sort(
-      makeCompareFn('targetStake', 'asc', undefined, EPOCHS_PER_YEAR),
-    )
+    const sorted = [...arr].sort(makeCompareFn('targetStake', 'asc', undefined))
     const targets = sorted.map(x => x.auctionStake.marinadeSamTargetSol)
     expect(targets).toEqual([1000, 5000, 9000])
   })

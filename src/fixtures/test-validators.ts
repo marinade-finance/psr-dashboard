@@ -7,6 +7,7 @@ import {
   InputsSource,
   LogVerbosity,
 } from '@marinade.finance/ds-sam-sdk'
+import { BASELINE_SLOTS_PER_YEAR } from '@marinade.finance/ds-sam-calc'
 
 import type {
   AuctionResult,
@@ -1594,6 +1595,9 @@ export const TEST_AUCTION_RESULT: AuctionResult = {
       mevPmpe: 0.9,
       blockPmpe: 0,
     },
+    // Pre-SIMD-0525 400ms nominal → 48h epochs, so fixture APYs stay at the
+    // magnitudes the expected values in tests/ were written against.
+    slotParams: { slotsPerYear: BASELINE_SLOTS_PER_YEAR, epoch: EPOCH },
     stakeAmounts: {
       networkTotalSol: 2_000_000_000,
       marinadeSamTvlSol: TVL,

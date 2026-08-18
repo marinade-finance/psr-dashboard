@@ -1,11 +1,9 @@
 // Moved to @marinade.finance/ds-sam-calc — re-exported here so existing
-// imports from 'src/services/calculations' keep resolving.
+// imports from 'src/services/calculations' keep resolving. The APY helpers that
+// used to live here are gone: ts-common's pmpeToApy / apyFromPriceRatio take a
+// real epoch duration rather than an epoch count, so callers annualize with those.
 export {
-  annualize,
-  compoundApy,
-  apyBreakdown,
   blockRewardsSharedFrac,
   bondGaugeScaleMax,
   bondGaugeCriticalFrac,
-  type ApyBreakdown,
 } from '@marinade.finance/ds-sam-calc'

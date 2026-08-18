@@ -13,14 +13,16 @@ import {
   TEST_VALIDATOR_NAMES,
 } from 'src/fixtures/test-validators'
 import { SamPage } from 'src/pages/stake-auction-marketplace'
-import { EPOCHS_PER_YEAR } from 'src/services/constants'
+import { selectEpochDurationSeconds } from 'src/services/sam'
 
 import type { UserLevelProps } from 'src/components/navigation/navigation'
 import type { SamDataSources } from 'src/pages/stake-auction-marketplace'
 
 const SAM_RESULT = {
   auctionResult: TEST_AUCTION_RESULT,
-  epochsPerYear: EPOCHS_PER_YEAR,
+  epochDurationSeconds: selectEpochDurationSeconds(
+    TEST_AUCTION_RESULT.auctionData,
+  ),
   dsSamConfig: TEST_DS_SAM_CONFIG,
 }
 

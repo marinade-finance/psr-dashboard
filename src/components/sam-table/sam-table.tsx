@@ -176,13 +176,14 @@ export function makeCompareFn(
   col: SortColumn,
   dir: SortDirection,
   validatorMeta: Map<string, ValidatorMeta> | undefined,
-  epochsPerYear: number,
 ): (a: AuctionValidator, b: AuctionValidator) => number {
   return (a, b) => {
     let cmp = 0
     switch (col) {
       case 'rank':
-        cmp = selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
+        // Max APY is monotonic in totalPmpe — ordering on the pmpe keeps
+        // decimal.js out of the comparator.
+        cmp = a.revShare.totalPmpe - b.revShare.totalPmpe
         break
       case 'targetStake':
         // Sort by the stake the auction is steering toward (current active +
@@ -198,7 +199,7 @@ export function makeCompareFn(
         break
       }
       case 'maxApy':
-        cmp = selectMaxAPY(a, epochsPerYear) - selectMaxAPY(b, epochsPerYear)
+        cmp = a.revShare.totalPmpe - b.revShare.totalPmpe
         break
       case 'bond':
         cmp = (a.bondBalanceSol ?? 0) - (b.bondBalanceSol ?? 0)
@@ -222,7 +223,7 @@ export function makeCompareFn(
 type Props = {
   auctionResult: AuctionResult
   originalAuctionResult: AuctionResult | null
-  epochsPerYear: number
+  epochDurationSeconds: number
   dsSamConfig: DsSamConfig
   level?: UserLevel
   simulatedValidators?: Set<string>
@@ -367,7 +368,7 @@ const RankCell = React.memo<{
 export const SamTable: React.FC<Props> = ({
   auctionResult,
   originalAuctionResult,
-  epochsPerYear,
+  epochDurationSeconds,
   dsSamConfig,
   level,
   simulatedValidators = EMPTY_SIMULATED_SET,
@@ -394,8 +395,8 @@ export const SamTable: React.FC<Props> = ({
     [validators],
   )
   const winningAPY = useMemo(
-    () => selectWinningAPY(auctionResult, epochsPerYear),
-    [auctionResult, epochsPerYear],
+    () => selectWinningAPY(auctionResult, epochDurationSeconds),
+    [auctionResult, epochDurationSeconds],
   )
 
   const [flashId, setFlashId] = useState<string | null>(null)
@@ -480,13 +481,12 @@ export const SamTable: React.FC<Props> = ({
   // Stable auction rank by maxApy desc — independent of display sort
   const auctionRankMap = useMemo(() => {
     const sorted = [...validatorsWithBond].sort(
-      (va, vb) =>
-        selectMaxAPY(vb, epochsPerYear) - selectMaxAPY(va, epochsPerYear),
+      (va, vb) => vb.revShare.totalPmpe - va.revShare.totalPmpe,
     )
     return new Map(
       sorted.map((validator, i) => [selectVoteAccount(validator), i + 1]),
     )
-  }, [validatorsWithBond, epochsPerYear])
+  }, [validatorsWithBond])
 
   // Original auction rank map — same maxApy sort, built from pre-simulation data
   // Used for ghost row rank display and position-change comparison
@@ -494,23 +494,16 @@ export const SamTable: React.FC<Props> = ({
     if (!originalAuctionResult) return null
     return buildOriginalPositionsMap(
       originalAuctionResult,
-      (va, vb) =>
-        selectMaxAPY(vb, epochsPerYear) - selectMaxAPY(va, epochsPerYear),
+      (va, vb) => vb.revShare.totalPmpe - va.revShare.totalPmpe,
     )
-  }, [originalAuctionResult, epochsPerYear])
+  }, [originalAuctionResult])
 
   const sortedValidators = useMemo(
     () =>
       [...validatorsWithBond].sort(
-        makeCompareFn(sortColumn, sortDirection, validatorMeta, epochsPerYear),
+        makeCompareFn(sortColumn, sortDirection, validatorMeta),
       ),
-    [
-      validatorsWithBond,
-      sortColumn,
-      sortDirection,
-      validatorMeta,
-      epochsPerYear,
-    ],
+    [validatorsWithBond, sortColumn, sortDirection, validatorMeta],
   )
 
   // Simulation: display-sort-based original position map — used only for ghost row insertion index
@@ -518,15 +511,9 @@ export const SamTable: React.FC<Props> = ({
     if (!originalAuctionResult) return null
     return buildOriginalPositionsMap(
       originalAuctionResult,
-      makeCompareFn(sortColumn, sortDirection, validatorMeta, epochsPerYear),
+      makeCompareFn(sortColumn, sortDirection, validatorMeta),
     )
-  }, [
-    originalAuctionResult,
-    sortColumn,
-    sortDirection,
-    validatorMeta,
-    epochsPerYear,
-  ])
+  }, [originalAuctionResult, sortColumn, sortDirection, validatorMeta])
 
   const changedValidators = useMemo(
     () =>
@@ -583,6 +570,16 @@ export const SamTable: React.FC<Props> = ({
     winningTotalPmpe,
   ])
 
+  // pmpeToApy is decimal.js at precision 40 — keep it off the per-render path.
+  const maxApyOf = useMemo(() => {
+    const cache = new Map<AuctionValidator, number>()
+    for (const { validator } of allDisplayValidators) {
+      cache.set(validator, selectMaxAPY(validator, epochDurationSeconds))
+    }
+    return (validator: AuctionValidator) =>
+      cache.get(validator) ?? selectMaxAPY(validator, epochDurationSeconds)
+  }, [allDisplayValidators, epochDurationSeconds])
+
   // Cutoff partition: who would clear the bid threshold by yield, regardless
   // of whether the auction actually allocated them target stake. Bid-eligible
   // bond-blocked validators belong above the line; only validators whose max
@@ -599,7 +596,7 @@ export const SamTable: React.FC<Props> = ({
       if (row.validator.auctionStake.marinadeSamTargetSol > 0) {
         winning.push(row)
       }
-      if (selectMaxAPY(row.validator, epochsPerYear) >= winningAPY) {
+      if (row.validator.revShare.totalPmpe >= winningTotalPmpe) {
         above.push(row)
       } else {
         below.push(row)
@@ -610,7 +607,7 @@ export const SamTable: React.FC<Props> = ({
       aboveCutoff: above,
       belowCutoff: below,
     }
-  }, [allDisplayValidators, epochsPerYear, winningAPY])
+  }, [allDisplayValidators, winningTotalPmpe])
   const aboveCount = aboveCutoff.filter(row => !row.isGhost).length
   // Matches psr.marinade.finance: TVL − Σ active = liquid reserve free to
   // redelegate next epoch (no Solana cooldown wait). Not the SDK's gross
@@ -689,7 +686,7 @@ export const SamTable: React.FC<Props> = ({
       )
       const tipStyle = getTipStyle(tip.urgency)
 
-      const maxApy = selectMaxAPY(validator, epochsPerYear)
+      const maxApy = maxApyOf(validator)
 
       const validatorName =
         validatorMeta?.get(voteAccount)?.name ?? `${voteAccount.slice(0, 8)}...`
@@ -884,7 +881,7 @@ export const SamTable: React.FC<Props> = ({
       winningTotalPmpe,
       auctionResult,
       priorityFrontierPmpe,
-      epochsPerYear,
+      maxApyOf,
       validatorMeta,
       flashId,
       handleGhostClick,

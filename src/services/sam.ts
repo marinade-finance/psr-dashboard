@@ -6,18 +6,20 @@ import {
 } from '@marinade.finance/ds-sam-sdk'
 import {
   allocateRedelegation,
-  annualize,
-  compoundApy,
-  EPOCHS_PER_YEAR,
-  pmpeToSol,
   selectNonBidPmpe,
 } from '@marinade.finance/ds-sam-calc'
+import {
+  epochDurationSecondsFromSlotsPerYear,
+  pmpeToApy,
+  pmpeToSol,
+} from '@marinade.finance/ts-common'
 
 import { pct } from 'src/format'
 
 import { fetchValidatorsWithEpochs } from './validators'
 
 import type {
+  AuctionData,
   AuctionResult,
   AuctionValidator,
   DsSamConfig,
@@ -48,51 +50,24 @@ export {
 
 type SamResult = {
   auctionResult: AuctionResult
-  epochsPerYear: number
+  epochDurationSeconds: number
   dsSamConfig: DsSamConfig
 }
 
 const FETCHED_EPOCHS = 11
 
-// Derive epochsPerYear from the average real epoch duration over the last
-// FETCHED_EPOCHS epochs (epoch_start_at / epoch_end_at timestamps) — matches
-// the production calculation, where epochs currently run slightly under the
-// 48h nominal. Falls back to the nominal constant (EPOCHS_PER_YEAR) when
-// timestamps are unavailable, e.g. during an extended outage.
-const estimateEpochsPerYear = async (): Promise<number> => {
-  const { validators } = await fetchValidatorsWithEpochs(FETCHED_EPOCHS)
-  const epochStats = validators.flatMap(({ epoch_stats }) => epoch_stats)
-
-  const rangeStart = epochStats.reduce(
-    (acc, { epoch, epoch_start_at }) => {
-      if (epoch_start_at === null || epoch >= acc.epoch) return acc
-      return { epoch, timestamp: new Date(epoch_start_at).getTime() / 1e3 }
-    },
-    { epoch: Infinity, timestamp: Infinity },
-  )
-
-  const rangeEnd = epochStats.reduce(
-    (acc, { epoch, epoch_end_at }) => {
-      if (epoch_end_at === null || epoch <= acc.epoch) return acc
-      return { epoch, timestamp: new Date(epoch_end_at).getTime() / 1e3 }
-    },
-    { epoch: 0, timestamp: 0 },
-  )
-
-  if (!isFinite(rangeStart.epoch) || rangeEnd.epoch === 0) {
-    return EPOCHS_PER_YEAR
-  }
-
-  const SECONDS_PER_YEAR = 365.25 * 24 * 3600
-  const rangeDuration = rangeEnd.timestamp - rangeStart.timestamp
-  const rangeEpochs = rangeEnd.epoch - rangeStart.epoch + 1
-  return SECONDS_PER_YEAR / (rangeDuration / rangeEpochs)
-}
+// The auction's own slot-time regime is the only basis consistent with its
+// numbers: the SDK normalises the inflation window to this same nominal, so
+// annualizing against a measured multi-epoch average would count the SIMD-0525
+// slot-time step twice. Decimal in, plain number out — the UI does float math.
+export const selectEpochDurationSeconds = (auctionData: AuctionData): number =>
+  epochDurationSecondsFromSlotsPerYear(
+    auctionData.slotParams.slotsPerYear,
+  ).toNumber()
 
 // Fetches the live auction. Simulation with overrides goes through
 // runSdkRerun (single source of truth); loadSam does not accept overrides.
 export const loadSam = async (): Promise<SamResult> => {
-  const epochsPerYear = await estimateEpochsPerYear()
   const config = await loadSamConfig()
   const dsSam = new DsSamSDK({
     ...config,
@@ -106,7 +81,7 @@ export const loadSam = async (): Promise<SamResult> => {
 
   return {
     auctionResult,
-    epochsPerYear,
+    epochDurationSeconds: selectEpochDurationSeconds(auctionResult.auctionData),
     dsSamConfig: dsSam.config,
   }
 }
@@ -136,8 +111,8 @@ export const selectSamDistributedStake = (validators: AuctionValidator[]) =>
 
 export const selectWinningAPY = (
   auctionResult: AuctionResult,
-  epochsPerYear: number,
-) => compoundApy(auctionResult.winningTotalPmpe, epochsPerYear)
+  epochDurationSeconds: number,
+) => pmpeToApy(auctionResult.winningTotalPmpe, epochDurationSeconds).toNumber()
 
 // Rebuild the winning APY at THIS validator's commission profile: take the
 // marginal winner's bid component and add it to the validator's own
@@ -146,7 +121,7 @@ export const selectWinningAPY = (
 export function selectWinningApyForValidator(
   v: AuctionValidator,
   auctionResult: AuctionResult,
-  epochsPerYear: number,
+  epochDurationSeconds: number,
   minBondBalanceSol: number,
 ): number {
   const { marginalWinner } = allocateRedelegation(
@@ -159,30 +134,10 @@ export function selectWinningApyForValidator(
         auctionResult.winningTotalPmpe - selectNonBidPmpe(marginalWinner),
       )
     : 0
-  return compoundApy(selectNonBidPmpe(v) + winningBidPmpe, epochsPerYear)
-}
-
-const totalProfitPmpe = (v: AuctionValidator) =>
-  v.revShare.auctionEffectiveBidPmpe +
-  v.revShare.inflationPmpe +
-  v.revShare.mevPmpe +
-  (v.revShare.blockPmpe ?? 0)
-
-const selectActiveProfit = (validators: AuctionValidator[]) =>
-  validators.reduce(
-    (acc, v) =>
-      acc + pmpeToSol(totalProfitPmpe(v), v.marinadeActivatedStakeSol),
-    0,
-  )
-
-export const selectProjectedAPY = (
-  auctionResult: AuctionResult,
-  epochsPerYear: number,
-) => {
-  const profit = selectActiveProfit(auctionResult.auctionData.validators)
-  const tvl = auctionResult.auctionData.stakeAmounts.marinadeSamTvlSol
-  if (tvl <= 0) return 0
-  return annualize(profit / tvl, epochsPerYear)
+  return pmpeToApy(
+    selectNonBidPmpe(v) + winningBidPmpe,
+    epochDurationSeconds,
+  ).toNumber()
 }
 
 function overridesMessage(
@@ -234,8 +189,8 @@ export const selectBondSize = (validator: AuctionValidator) =>
 
 export const selectMaxAPY = (
   validator: AuctionValidator,
-  epochsPerYear: number,
-) => compoundApy(validator.revShare.totalPmpe, epochsPerYear)
+  epochDurationSeconds: number,
+) => pmpeToApy(validator.revShare.totalPmpe, epochDurationSeconds).toNumber()
 
 export const selectEffectiveBid = (validator: AuctionValidator) =>
   validator.revShare.auctionEffectiveBidPmpe
@@ -244,4 +199,4 @@ export const selectEffectiveCost = (validator: AuctionValidator) =>
   pmpeToSol(
     validator.revShare.auctionEffectiveBidPmpe,
     validator.marinadeActivatedStakeSol,
-  )
+  ).toNumber()
