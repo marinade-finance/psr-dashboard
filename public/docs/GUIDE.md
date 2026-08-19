@@ -486,9 +486,13 @@ A large gap between your bid and the clearing price means you have auction headr
 
 ### Concentration Limits (Countries and ASOs)
 
-Marinade caps the fraction of auction stake that can go to validators in a single country or from a single Autonomous System Operator (ASO — the hosting provider or network operator). The default cap is 30% per country and 30% per ASO. A separate per-validator cap of 15% of TVL also applies. These caps protect the pool against correlated failures: if one cloud provider or jurisdiction has an outage, the impact on Marinade's stake is bounded.
+Marinade caps the fraction of auction stake that can go to validators in a single country or from a single Autonomous System Operator (ASO — the hosting provider or network operator). The two caps differ and are set in the auction config, so read the live figure off the dashboard rather than memorising one: as of epoch 1015 it is 30% per ASO and 40% per country. A separate per-validator cap of 15% of TVL also applies. These caps protect the pool against correlated failures: if one cloud provider or jurisdiction has an outage, the impact on Marinade's stake is bounded.
 
 When a country or ASO hits its cap, validators there are cut — even if their bid is high enough to win. Open any validator's detail panel and the **Concentration** card shows that validator's country and ASO, each with the group's current share of SAM stake against its cap (e.g. `28% of 30% cap`); the value turns red and reads `· at cap` when that country or ASO is the limit holding this validator back.
+
+The **Concentration** page (`/concentration`) shows the same thing for the auction as a whole, on both dimensions: how Marinade's SAM target stake splits across every ASO, and across every country. Each split has a donut carrying the five largest groups plus an `Other` slice — hover any segment to read its share — and a table listing every group with its stake, its share of SAM against that dimension's cap, its share of all activated stake on Solana, and how many validators it holds. Shares are weighted by stake, not by validator count, because the caps are defined on stake. Both splits describe the same pool of stake, so their totals match.
+
+The network column is the comparison worth reading. A group can be a large share of Marinade's auction and a small share of the network, or the reverse — the pair tells you whether Marinade's spread tracks the market or diverges from it.
 
 ---
 

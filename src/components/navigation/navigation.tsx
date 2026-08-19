@@ -78,6 +78,15 @@ export const Navigation: React.FC<React.PropsWithChildren<UserLevelProps>> = ({
               </div>
             )}
           </NavLink>
+          {/* No `prefix`: expert routes are deprecated, so new pages get one
+              route only. */}
+          <NavLink to="/concentration">
+            {({ isActive }) => (
+              <div className={cn(tab, isActive && tabActive)}>
+                Concentration
+              </div>
+            )}
+          </NavLink>
         </div>
         <div className="ml-auto flex items-center gap-2 shrink-0">
           <a
