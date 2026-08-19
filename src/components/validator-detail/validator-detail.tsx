@@ -57,7 +57,7 @@ import {
   selectRedelegationPriorityFrontierPmpe,
   selectValidatorConcentration,
   selectVoteAccount,
-  selectWinningApyForValidator,
+  selectWinningAPY,
 } from 'src/services/sam'
 import {
   bondAdvice,
@@ -609,12 +609,7 @@ export const ValidatorDetail = ({
   const voteAccount = selectVoteAccount(validator)
   const validatorName = nameMap?.get(voteAccount)?.name
   const notificationSummary = notificationsMap?.[voteAccount]
-  const winningApy = selectWinningApyForValidator(
-    validator,
-    auctionResult,
-    epochsPerYear,
-    dsSamConfig.minBondBalanceSol,
-  )
+  const winningApy = selectWinningAPY(auctionResult, epochsPerYear)
   const winningTotalPmpe = auctionResult.winningTotalPmpe
   const apyBreakdown = getApyBreakdown(validator, epochsPerYear)
   const bondHealth = bondHealthFromAuction(

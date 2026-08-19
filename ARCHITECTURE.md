@@ -34,8 +34,11 @@ start:dev`), build output to `build/` (`pnpm build`), preview on 8080
 - **Data**: `@tanstack/react-query` 5.100 (object-form API everywhere).
 - **Markdown**: `react-markdown` 10 + `remark-gfm` + `remark-breaks` +
   `rehype-raw` (for the docs page).
-- **Auction algorithm**: `@marinade.finance/ds-sam-sdk` 0.0.51
-  (`DsSamSDK`, `loadSamConfig`, `runFinalOnly`).
+- **Auction algorithm**: `@marinade.finance/ds-sam-sdk` 0.1.3
+  (`DsSamSDK`, `loadSamConfig`, `runFinalOnly`) plus
+  `@marinade.finance/ds-sam-calc` 0.1.3 (shared pure calc / selectors /
+  tip engine, re-exported through `src/services/*`). Both packages ship
+  from the same `ds-sam` repo and must be bumped together.
 - **Analytics**: `react-gtm-module` initialised in `src/index.tsx`.
 - **Testing**: Vitest 4 (unit, `*.test.{ts,tsx}` under `src/`);
   Playwright 1.60 (e2e, `tests/`).
