@@ -385,13 +385,13 @@ const ConcentrationCard = ({
       <ConcentrationRow
         label="Country"
         group={concentration.country}
-        help="Share of Marinade's SAM target stake in your country, against the per-country concentration cap. The auction stops adding stake to a country once its share reaches the cap."
+        help="Share of total network stake held by validators in your country, against the per-country concentration cap. The auction stops adding stake to a country once that network share reaches the cap."
         guideTo={guideTo}
       />
       <ConcentrationRow
         label="ASO"
         group={concentration.aso}
-        help="Share of Marinade's SAM target stake in your ASO (the operator / data-centre group), against the per-ASO concentration cap. The auction stops adding stake to an ASO once its share reaches the cap."
+        help="Share of total network stake held by validators in your ASO (the operator / data-centre group), against the per-ASO concentration cap. The auction stops adding stake to an ASO once that network share reaches the cap."
         guideTo={guideTo}
         separator
       />
@@ -664,6 +664,9 @@ export const ValidatorDetail = ({
     () => computeBondCoverage(validator, dsSamConfig, winningTotalPmpe),
     [validator, dsSamConfig, winningTotalPmpe],
   )
+  // Local selector (src/services/concentration.ts), not the ds-sam-calc one:
+  // the group share must be measured on network stake, the basis the country /
+  // ASO caps shown next to it are enforced on.
   const concentration = useMemo(
     () => selectValidatorConcentration(auctionResult, dsSamConfig, voteAccount),
     [auctionResult, dsSamConfig, voteAccount],

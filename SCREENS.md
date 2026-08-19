@@ -301,14 +301,19 @@ epochs`). Balance renders 3-decimal `cost()` precision for a
   Bid runway always tell one coherent story.
 - **Concentration** card (conditional — hidden when the validator is
   not in the auction set) — `MetricRow`s for `Country · {name}` and
-  `ASO · {name}`, each valued `X% of Y% cap` where `X` is the group's
-  share of the auction's total SAM target stake and `Y` is the
-  configured cap (`maxNetworkStakeConcentrationPer{Country,Aso}Dec`).
-  When this validator's own binding cap is that country / ASO the value
-  gains a `· at cap` suffix and turns `CSS_DESTRUCTIVE`. Source:
-  `selectValidatorConcentration`. Keeps the country / ASO limits
-  inspectable per-validator after the headline concentration tiles were
-  removed.
+  `ASO · {name}`, each valued `X% of Y% cap`. `X` is the group's share
+  of TOTAL NETWORK stake — every validator sharing this one's country /
+  ASO, summed as `externalActivatedSol + marinadeSamTargetSol`, over
+  `stakeAmounts.networkTotalSol` — and `Y` is the configured cap
+  (`maxNetworkStakeConcentrationPer{Country,Aso}Dec`, live 40% country /
+  30% ASO). Both sides are therefore shares of the same quantity, the
+  one the auction actually caps. When this validator's own binding cap
+  is that country / ASO the value gains a `· at cap` suffix and turns
+  `CSS_DESTRUCTIVE`. Source: `selectValidatorConcentration` from
+  `src/services/concentration.ts` (the dashboard-local one, not
+  ds-sam-calc's share-of-SAM-target version). Keeps the country / ASO
+  limits inspectable per-validator after the headline concentration
+  tiles were removed.
 
 Right column:
 
