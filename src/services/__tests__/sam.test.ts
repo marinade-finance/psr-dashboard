@@ -405,7 +405,7 @@ describe('selectWinningAPY', () => {
   it('compounds the clearing price and is independent of any validator', () => {
     const result = makeResult(10, [
       makeApyValidator('OUT', 8),
-      makeApyValidator('MARG', 10),
+      makeApyValidator('MID', 11),
       makeApyValidator('HIGH', 12),
     ])
     const epochDurationSeconds = 172_800
