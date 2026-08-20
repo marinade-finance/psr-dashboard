@@ -51,9 +51,9 @@
     "vitest": "4.1.7"
   },
   "dependencies": {
-    "@marinade.finance/ds-sam-calc": "0.1.2",
-    "@marinade.finance/ds-sam-sdk": "0.1.2",
-    "@marinade.finance/ts-common": "^4.3.2",
+    "@marinade.finance/ds-sam-calc": "0.2.0",
+    "@marinade.finance/ds-sam-sdk": "0.2.0",
+    "@marinade.finance/ts-common": "^5.1.2",
     "@zodios/core": "10.9.6",
     "zod": "^3",
     "@radix-ui/react-dialog": "1.1.15",
@@ -82,8 +82,7 @@
   },
   "pnpm": {
     "overrides": {
-      "diff": ">=8.0.3",
-      "@remix-run/router": ">=1.23.2"
+      "diff": ">=8.0.3"
     }
   },
   "packageManager": "pnpm@9.12.0+sha512.4abf725084d7bcbafbd728bfc7bee61f2f791f977fd87542b3579dcb23504d170d46337945e4c66485cd12d588a0c0e570ed9c477e7ccdd8507cf05f3f92eaca"

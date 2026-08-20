@@ -9,13 +9,15 @@ import {
   TEST_DS_SAM_CONFIG,
 } from 'src/fixtures/test-validators'
 import { ProtectedEventsPage } from 'src/pages/protected-events'
-import { EPOCHS_PER_YEAR } from 'src/services/constants'
+import { selectEpochDurationSeconds } from 'src/services/sam'
 
 import type { UserLevelProps } from 'src/components/navigation/navigation'
 
 const SAM_RESULT = {
   auctionResult: TEST_AUCTION_RESULT,
-  epochsPerYear: EPOCHS_PER_YEAR,
+  epochDurationSeconds: selectEpochDurationSeconds(
+    TEST_AUCTION_RESULT.auctionData,
+  ),
   dsSamConfig: TEST_DS_SAM_CONFIG,
 }
 

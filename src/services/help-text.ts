@@ -7,7 +7,7 @@ export const HELP_TEXT = {
   staticBid:
     'Extra yearly return you pay stakers out of your own pocket — added on top of normal validator rewards. This is the main knob to climb the ranking. The cost comes out of your bond each epoch.',
   winningApy:
-    'The lowest yearly return that still won stake this epoch. Your Max APY has to clear this level — beat it and you receive stake, fall short and you don’t.',
+    'The lowest yearly return that still won stake this epoch. Your Max APY has to clear this level — fall short and you receive no stake. Clearing it is necessary but not enough on its own: a block, a blacklist, or a full cap can still leave you out.',
   want: 'The cap you set on how much stake you’ll take. Set it too low and you miss out on stake you could have earned.',
   bondHealth:
     'How well your bond covers the upcoming bid costs. Critical — too thin, fee penalties already kicking in. Watch — too thin to keep current stake; some will be pulled back unless you top up. Adequate — covers current stake but below the ideal buffer; no fee risk yet, topping up unlocks room for more stake. Healthy — comfortably covers what you’ll owe.',

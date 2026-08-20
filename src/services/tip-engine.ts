@@ -1,4 +1,4 @@
-import { apyBreakdown } from '@marinade.finance/ds-sam-calc'
+import { pmpeToApy } from '@marinade.finance/ts-common'
 
 import { assertNever } from 'src/utils/assert-never'
 
@@ -93,15 +93,16 @@ export type ApyBreakdownValue = {
 
 export const getApyBreakdown = (
   validator: AuctionValidator,
-  epochsPerYear: number,
+  epochDurationSeconds: number,
 ): ApyBreakdownValue => {
-  const bd = apyBreakdown(validator, epochsPerYear)
+  const apy = (pmpe: number) => pmpeToApy(pmpe, epochDurationSeconds).toNumber()
+  const rev = validator.revShare
   return {
-    inflation: bd.inflation,
-    mev: bd.mev,
-    blockRewards: bd.blockRewards,
-    staticBid: bd.bid,
-    total: bd.total,
+    inflation: apy(rev.inflationPmpe),
+    mev: apy(rev.mevPmpe),
+    blockRewards: apy(rev.blockPmpe ?? 0),
+    staticBid: apy(rev.bidPmpe),
+    total: apy(rev.totalPmpe),
   }
 }
 
