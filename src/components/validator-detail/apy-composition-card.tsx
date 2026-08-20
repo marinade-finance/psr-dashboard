@@ -4,6 +4,7 @@ import { cn } from 'src/class_utils'
 import { CalcCard } from 'src/components/breakdowns/card'
 import { pct } from 'src/format'
 import { blockRewardsSharedFrac } from 'src/services/calculations'
+import { selectInSet } from 'src/services/sam'
 
 import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
 import type { ApyBreakdownValue } from 'src/services/tip-engine'
@@ -24,6 +25,27 @@ type Row = {
   swatch: string
   context: string
 }
+
+type Standing = 'winning' | 'outOfSet' | 'below'
+
+export const PILL: Record<Standing, string> = {
+  winning: 'bg-primary-light text-primary border-primary',
+  outOfSet: 'bg-muted text-muted-foreground border-muted-foreground',
+  below: 'bg-destructive-light text-destructive border-destructive',
+}
+
+const TOTAL_TEXT: Record<Standing, string> = {
+  winning: 'text-primary',
+  outOfSet: 'text-muted-foreground',
+  below: 'text-destructive',
+}
+
+// Clearing the threshold is necessary to win, not sufficient — blocked, blacklisted and cap-blocked validators clear it holding no stake.
+export const apyStanding = (
+  validator: AuctionValidator,
+  delta: number,
+): Standing =>
+  delta < 0 ? 'below' : selectInSet(validator) ? 'winning' : 'outOfSet'
 
 export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
   apyBreakdown,
@@ -86,7 +108,12 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
   const apyScale = Math.max(apyBreakdown.total, winningApy) * 1.2
   const winPct = (winningApy / apyScale) * 100
   const delta = apyBreakdown.total - winningApy
-  const above = delta >= 0
+  const standing = apyStanding(validator, delta)
+  const pillClass = cn(
+    'text-xs font-mono font-semibold px-2 py-0.5 rounded-md border',
+    PILL[standing],
+  )
+  const pillText = `${delta > 0 ? '+' : ''}${pct(delta, 2)} vs winning`
 
   return (
     <CalcCard
@@ -98,19 +125,7 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
         <p className="text-xs text-muted-foreground">
           Winning APY threshold {pct(winningApy, 2)}
         </p>
-        {above || !onGoToBidding ? (
-          <span
-            className={cn(
-              'text-xs font-mono font-semibold px-2 py-0.5 rounded-md border',
-              above
-                ? 'bg-primary-light text-primary border-primary'
-                : 'bg-destructive-light text-destructive border-destructive',
-            )}
-          >
-            {above ? '+' : ''}
-            {pct(delta, 2)} vs winning
-          </span>
-        ) : (
+        {standing === 'below' && onGoToBidding ? (
           // The pill IS the metric. The action label sits above as an
           // auxiliary hint so the pill chrome stays clean. Whole stack is
           // one click target.
@@ -122,13 +137,23 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
             <span className="text-2xs text-destructive font-medium leading-none group-hover:underline">
               Fix in Bidding ↗
             </span>
-            <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-md border bg-destructive-light text-destructive border-destructive">
-              {pct(delta, 2)} vs winning
-            </span>
+            <span className={pillClass}>{pillText}</span>
             <span className="sr-only">
               see the target bid on the Bidding tab
             </span>
           </button>
+        ) : standing === 'outOfSet' ? (
+          // A positive delta alone reads as good news, so the caption says in
+          // words what the muted tone says in colour. Not a button — no bid
+          // clears a cap or a block.
+          <span className="flex flex-col items-end gap-0.5">
+            <span className="text-2xs text-muted-foreground font-medium leading-none">
+              Cleared, but out of set
+            </span>
+            <span className={pillClass}>{pillText}</span>
+          </span>
+        ) : (
+          <span className={pillClass}>{pillText}</span>
         )}
       </div>
       <div className="space-y-2">
@@ -194,7 +219,7 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
           <span
             className={cn(
               'text-xs font-mono font-semibold w-12 text-right shrink-0',
-              above ? 'text-primary' : 'text-destructive',
+              TOTAL_TEXT[standing],
             )}
           >
             {pct(apyBreakdown.total, 2)}

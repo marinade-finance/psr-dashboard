@@ -5,10 +5,6 @@ import {
   LogVerbosity,
 } from '@marinade.finance/ds-sam-sdk'
 import {
-  allocateRedelegation,
-  selectNonBidPmpe,
-} from '@marinade.finance/ds-sam-calc'
-import {
   epochDurationSecondsFromSlotsPerYear,
   pmpeToApy,
   pmpeToSol,
@@ -113,32 +109,6 @@ export const selectWinningAPY = (
   auctionResult: AuctionResult,
   epochDurationSeconds: number,
 ) => pmpeToApy(auctionResult.winningTotalPmpe, epochDurationSeconds).toNumber()
-
-// Rebuild the winning APY at THIS validator's commission profile: take the
-// marginal winner's bid component and add it to the validator's own
-// inflation/MEV/block revenue. Answers "would I clear at the auction-
-// clearing bid?" — apples-to-apples for the APY pill in validator-detail.
-export function selectWinningApyForValidator(
-  v: AuctionValidator,
-  auctionResult: AuctionResult,
-  epochDurationSeconds: number,
-  minBondBalanceSol: number,
-): number {
-  const { marginalWinner } = allocateRedelegation(
-    auctionResult,
-    minBondBalanceSol,
-  )
-  const winningBidPmpe = marginalWinner
-    ? Math.max(
-        0,
-        auctionResult.winningTotalPmpe - selectNonBidPmpe(marginalWinner),
-      )
-    : 0
-  return pmpeToApy(
-    selectNonBidPmpe(v) + winningBidPmpe,
-    epochDurationSeconds,
-  ).toNumber()
-}
 
 function overridesMessage(
   label: string,

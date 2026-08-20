@@ -36,8 +36,10 @@ start:dev`), build output to `build/` (`pnpm build`), preview on 8080
   `rehype-raw` (for the docs page).
 - **Auction algorithm**: `@marinade.finance/ds-sam-sdk` 0.2.0
   (`DsSamSDK`, `loadSamConfig`, `runFinalOnly`) plus
-  `@marinade.finance/ds-sam-calc` 0.2.0 for the shared pure calc.
-- **Shared utilities**: `@marinade.finance/ts-common` 5.1.0 — owns the APY
+  `@marinade.finance/ds-sam-calc` 0.2.0 (shared pure calc / selectors /
+  tip engine, re-exported through `src/services/*`). Both packages ship
+  from the same `ds-sam` repo and must be bumped together.
+- **Shared utilities**: `@marinade.finance/ts-common` 5.1.2 — owns the APY
   math (`pmpeToApy`, `apyFromPriceRatio`,
   `epochDurationSecondsFromSlotsPerYear`) and the SOL/lamport conversions.
   Its `pmpeToSol` and `lamportsToSol` return `Decimal`, so call sites narrow
