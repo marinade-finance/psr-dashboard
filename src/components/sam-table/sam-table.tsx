@@ -570,15 +570,18 @@ export const SamTable: React.FC<Props> = ({
     winningTotalPmpe,
   ])
 
-  // pmpeToApy is decimal.js at precision 40 — keep it off the per-render path.
+  // pmpeToApy runs decimal.js — keep it off the per-render path. Weak keys so a
+  // simulation rerun's replaced validator objects stay collectable.
   const maxApyOf = useMemo(() => {
-    const cache = new Map<AuctionValidator, number>()
-    for (const { validator } of allDisplayValidators) {
-      cache.set(validator, selectMaxAPY(validator, epochDurationSeconds))
+    const cache = new WeakMap<AuctionValidator, number>()
+    return (validator: AuctionValidator) => {
+      const cached = cache.get(validator)
+      if (cached !== undefined) return cached
+      const maxApy = selectMaxAPY(validator, epochDurationSeconds)
+      cache.set(validator, maxApy)
+      return maxApy
     }
-    return (validator: AuctionValidator) =>
-      cache.get(validator) ?? selectMaxAPY(validator, epochDurationSeconds)
-  }, [allDisplayValidators, epochDurationSeconds])
+  }, [epochDurationSeconds])
 
   // Cutoff partition: who would clear the bid threshold by yield, regardless
   // of whether the auction actually allocated them target stake. Bid-eligible

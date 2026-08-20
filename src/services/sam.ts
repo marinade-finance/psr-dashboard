@@ -50,8 +50,6 @@ type SamResult = {
   dsSamConfig: DsSamConfig
 }
 
-const FETCHED_EPOCHS = 11
-
 // The auction's own slot-time regime is the only basis consistent with its
 // numbers: the SDK normalises the inflation window to this same nominal, so
 // annualizing against a measured multi-epoch average would count the SIMD-0525
@@ -83,7 +81,9 @@ export const loadSam = async (): Promise<SamResult> => {
 }
 
 export const fetchValidatorNames = async (): Promise<Map<string, string>> => {
-  const { validators } = await fetchValidatorsWithEpochs(FETCHED_EPOCHS)
+  // Names live on the validator record, not on epoch_stats — asking for zero
+  // epochs keeps 8 MB of per-epoch history off the wire.
+  const { validators } = await fetchValidatorsWithEpochs(0)
   const nameByVote = new Map<string, string>()
   for (const validator of validators) {
     if (validator.info_name)

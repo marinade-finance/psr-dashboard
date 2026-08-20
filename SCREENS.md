@@ -71,7 +71,10 @@ never estimated from timestamps; `~Nh remaining` converts the remaining
 slots with the slot rate _measured_ from `getRecentPerformanceSamples`,
 never a nominal 400ms. When `getEpochInfo` does not resolve, the ring is
 empty and the card shows `RPC unavailable`. When only the measured rate
-is missing, the gauge still renders and the countdown line is omitted.
+is missing, the gauge still renders and the countdown line is omitted —
+including when the samples imply a rate outside 0.05–2 s/slot, which a
+stalled cluster produces and which would otherwise read as hundreds of
+hours remaining.
 Auction epoch renders immediately from the
 prefetched `['sam', 0]` query; the meter force-populates the
 `['protected-events']` query (`staleTime: 5 min`) so the settlement

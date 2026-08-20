@@ -199,6 +199,32 @@ describe('slotDurationFromSamples', () => {
     ] as unknown as PerformanceSample[]
     expect(slotDurationFromSamples(samples)).toBeCloseTo(0.4, 9)
   })
+
+  // A stalled cluster reports well-formed windows carrying a trickle of slots,
+  // and all five stall together — pooling cannot recover a rate from them.
+  it('returns null when every window reports a stalled trickle', () => {
+    expect(
+      slotDurationFromSamples([
+        { numSlots: 3, samplePeriodSecs: 60 },
+        { numSlots: 3, samplePeriodSecs: 60 },
+        { numSlots: 4, samplePeriodSecs: 60 },
+        { numSlots: 2, samplePeriodSecs: 60 },
+        { numSlots: 3, samplePeriodSecs: 60 },
+      ]),
+    ).toBeNull()
+  })
+
+  it('returns null on an implausibly fast rate', () => {
+    expect(
+      slotDurationFromSamples([{ numSlots: 6000, samplePeriodSecs: 60 }]),
+    ).toBeNull()
+  })
+
+  it('keeps a slow but plausible rate', () => {
+    expect(
+      slotDurationFromSamples([{ numSlots: 60, samplePeriodSecs: 60 }]),
+    ).toBeCloseTo(1, 9)
+  })
 })
 
 describe('selectLatestPaymentSettled', () => {

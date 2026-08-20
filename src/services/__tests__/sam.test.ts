@@ -5,9 +5,12 @@ import { describe, it, expect, vi } from 'vitest'
 import { AuctionConstraintType } from '@marinade.finance/ds-sam-sdk'
 import { pmpeToApy } from '@marinade.finance/ts-common'
 
+import { BASELINE_SLOTS_PER_YEAR } from '@marinade.finance/ds-sam-calc'
+
 import {
   augmentAuctionResult,
   selectCutoffRank,
+  selectEpochDurationSeconds,
   selectExpectedStakeChange,
   selectExpectedStakeChangeBreakdown,
   selectRedelegationPriorityFrontierPmpe,
@@ -18,6 +21,7 @@ import {
 
 import type * as ValidatorsModule from '../validators'
 import type {
+  AuctionData,
   AuctionResult,
   AuctionValidator,
   DsSamConfig,
@@ -377,6 +381,25 @@ function makeApyValidator(
     revShare: { totalPmpe },
   } as unknown as AuctionValidator
 }
+
+// The scaling constant behind every APY the dashboard renders — pin it against
+// the 48h nominal the expected values elsewhere in this suite are written for.
+describe('selectEpochDurationSeconds', () => {
+  const auctionData = (slotsPerYear: number) =>
+    ({ slotParams: { slotsPerYear } }) as unknown as AuctionData
+
+  it('baseline slots-per-year → the 48h nominal epoch', () => {
+    expect(
+      selectEpochDurationSeconds(auctionData(BASELINE_SLOTS_PER_YEAR)),
+    ).toBeCloseTo(172_800, 6)
+  })
+
+  it('halved slot time → halved epoch duration', () => {
+    expect(
+      selectEpochDurationSeconds(auctionData(2 * BASELINE_SLOTS_PER_YEAR)),
+    ).toBeCloseTo(86_400, 6)
+  })
+})
 
 describe('selectWinningAPY', () => {
   it('compounds the clearing price and is independent of any validator', () => {

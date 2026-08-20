@@ -79,6 +79,12 @@ export type PerformanceSample = {
 // enough to track a real change in the slot rate within one refetch.
 const PERF_SAMPLE_COUNT = 5
 
+// A partially stalled cluster still reports well-formed windows, just with a
+// handful of slots in them, and every window stalls together so pooling does
+// not rescue it. Outside this band the samples describe a stall, not a rate.
+const MIN_SLOT_DURATION_S = 0.05
+const MAX_SLOT_DURATION_S = 2
+
 // Pool slots over pooled seconds — a slot-weighted mean. Averaging the
 // per-sample ratios instead would let a short window skew the result.
 export const slotDurationFromSamples = (
@@ -98,7 +104,12 @@ export const slotDurationFromSamples = (
     slots += sample.numSlots
     seconds += sample.samplePeriodSecs
   }
-  return slots > 0 ? seconds / slots : null
+  if (slots === 0) return null
+  const slotDuration = seconds / slots
+  return slotDuration >= MIN_SLOT_DURATION_S &&
+    slotDuration <= MAX_SLOT_DURATION_S
+    ? slotDuration
+    : null
 }
 
 // Measured wall-clock seconds per slot. SIMD-0525 steps the protocol slot time
