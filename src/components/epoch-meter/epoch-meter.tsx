@@ -11,6 +11,7 @@ import {
   fetchAuctionEpoch,
   fetchEpochInfo,
   fetchEpochMeterData,
+  fetchSlotDurationSeconds,
   type EpochMeterModel,
   type EpochProgress,
   type TimelineStage,
@@ -41,10 +42,17 @@ export const EpochMeter: React.FC = () => {
   })
   // Slot-accurate epoch progress straight from the cluster RPC. When it is
   // unavailable the chip drops its progress and shows "RPC unavailable" — we
-  // never fake progress from timestamps.
-  const { data: epochInfo } = useQuery({
+  // never fake progress from timestamps. Both calls share one key: the measured
+  // slot rate is only ever consumed alongside the slot index it converts.
+  const { data: epochData } = useQuery({
     queryKey: ['epoch-info'],
-    queryFn: ({ signal }) => fetchEpochInfo(signal),
+    queryFn: async ({ signal }) => {
+      const [info, slotDurationSeconds] = await Promise.all([
+        fetchEpochInfo(signal),
+        fetchSlotDurationSeconds(signal),
+      ])
+      return { info, slotDurationSeconds }
+    },
     staleTime: 10 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000,
   })
@@ -59,7 +67,9 @@ export const EpochMeter: React.FC = () => {
   const networkEpoch = meter?.networkEpoch ?? null
   const paymentSettled = meter?.paymentSettled ?? null
   const auctionSettled = meter?.auctionSettled ?? null
-  const progress = epochInfo ? epochInfoProgress(epochInfo) : null
+  const progress = epochData?.info
+    ? epochInfoProgress(epochData.info, epochData.slotDurationSeconds)
+    : null
 
   const model = epochMeterModel({
     auctionEpoch,
@@ -216,9 +226,11 @@ function TimelineCard({
       {progress !== null ? (
         <div className="w-full flex flex-col items-stretch gap-1 mt-1 px-1">
           <Gauge value={percent} scaleMax={100} tone="bg-primary" size="lg" />
-          <span className="text-2xs text-muted-foreground text-center">
-            {`~${Math.round(progress.hoursRemaining)}h remaining`}
-          </span>
+          {progress.hoursRemaining !== null && (
+            <span className="text-2xs text-muted-foreground text-center">
+              {`~${Math.round(progress.hoursRemaining)}h remaining`}
+            </span>
+          )}
         </div>
       ) : (
         <span className="text-2xs text-muted-foreground text-center mt-1">

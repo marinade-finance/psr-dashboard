@@ -16,7 +16,6 @@ import {
   augmentAuctionResult,
   fetchValidatorNames,
   loadSam,
-  selectMaxAPY,
 } from 'src/services/sam'
 import { mergeOverrides, removeFromOverrides } from 'src/services/simulation'
 import { runSdkRerun } from 'src/services/sdk-rerun'
@@ -27,7 +26,7 @@ import type { AppOverrides } from 'src/services/simulation'
 
 type SamResult = {
   auctionResult: AuctionResult
-  epochsPerYear: number
+  epochDurationSeconds: number
   dsSamConfig: DsSamConfig
 }
 
@@ -85,7 +84,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
     )
     return Promise.resolve({
       auctionResult: result,
-      epochsPerYear: liveData.epochsPerYear,
+      epochDurationSeconds: liveData.epochDurationSeconds,
       dsSamConfig: liveData.dsSamConfig,
     })
   }
@@ -229,11 +228,8 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
           data.dsSamConfig.minBondBalanceSol,
         ),
       )
-      .sort(
-        (a, b) =>
-          selectMaxAPY(b, data.epochsPerYear) -
-          selectMaxAPY(a, data.epochsPerYear),
-      )
+      // Auction rank order; only the index is read, and APY is monotonic in pmpe.
+      .sort((a, b) => b.revShare.totalPmpe - a.revShare.totalPmpe)
     const index = validators.findIndex(
       validator => validator.voteAccount === selectedValidator,
     )
@@ -298,7 +294,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
           <SamTable
             auctionResult={displayAuctionResult}
             originalAuctionResult={originalAuctionResult}
-            epochsPerYear={data.epochsPerYear}
+            epochDurationSeconds={data.epochDurationSeconds}
             dsSamConfig={data.dsSamConfig}
             level={level}
             simulatedValidators={simulatedValidators}
@@ -320,7 +316,7 @@ export const SamPage: React.FC<Props> = ({ level, dataSources }) => {
             auctionResult={displayAuctionResult}
             originalAuctionResult={originalAuctionResult}
             dsSamConfig={data.dsSamConfig}
-            epochsPerYear={data.epochsPerYear}
+            epochDurationSeconds={data.epochDurationSeconds}
             nameMap={nameMap}
             notificationsMap={notificationsMap}
             rank={sheetValidatorData.rank}
