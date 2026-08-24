@@ -3,12 +3,14 @@
 // over a trailing 3-epoch window. These guard the selectors that keep past
 // epochs — settled or not — out of that total, plus the row label that used to
 // mislabel a vote-credits ratio as "Uptime".
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
+  fetchProtectedEvents,
   selectCurrentEpochEstimates,
   selectLatestProcessedEpoch,
   selectProtectedStakeReason,
+  selectSamBiddingSettlements,
   selectUnsettledEstimates,
 } from '../protected-events'
 
@@ -155,5 +157,152 @@ describe('selectProtectedStakeReason low-credits label', () => {
     expect(selectProtectedStakeReason(event)).toBe(
       'Vote credits 96.39% of network mean',
     )
+  })
+})
+
+// The bonds API unions both settlement tables, so the response carries institutional payouts and
+// direct-staking PSR alongside SAM. Unfiltered they inflate this dashboard's per-validator totals.
+describe('selectSamBiddingSettlements', () => {
+  const settlement = (
+    overrides: Partial<Pick<ProtectedEvent, 'bond_type' | 'product'>>,
+  ): ProtectedEvent => ({
+    ...makeLowCreditsEvent(1013),
+    ...overrides,
+  })
+
+  it('keeps SAM payouts from the bidding bond', () => {
+    const events = [settlement({ bond_type: 'bidding', product: 'sam' })]
+    expect(selectSamBiddingSettlements(events)).toEqual(events)
+  })
+
+  it('drops direct staking charged to either bond', () => {
+    expect(
+      selectSamBiddingSettlements([
+        settlement({ bond_type: 'bidding', product: 'single-validator' }),
+        settlement({ bond_type: 'institutional', product: 'single-validator' }),
+      ]),
+    ).toEqual([])
+  })
+
+  it('drops institutional payouts', () => {
+    expect(
+      selectSamBiddingSettlements([
+        settlement({ bond_type: 'institutional', product: 'select' }),
+      ]),
+    ).toEqual([])
+  })
+
+  it('drops select payouts charged to the bidding bond', () => {
+    expect(
+      selectSamBiddingSettlements([
+        settlement({ bond_type: 'bidding', product: 'select' }),
+      ]),
+    ).toEqual([])
+  })
+
+  // `product` is an open string in the spec, so the filter must exclude by default.
+  it('drops a product this dashboard has never heard of', () => {
+    expect(
+      selectSamBiddingSettlements([
+        settlement({ bond_type: 'bidding', product: 'future-product' }),
+      ]),
+    ).toEqual([])
+  })
+
+  // /v1 serializes both fields from non-Option server fields, so a row missing either is
+  // anomalous. Excluding it understates the total; defaulting it in would bill a validator
+  // for another product's payout.
+  it('drops a row missing either discriminator', () => {
+    expect(
+      selectSamBiddingSettlements([
+        settlement({ bond_type: 'bidding' }),
+        settlement({ product: 'sam' }),
+        makeLowCreditsEvent(1014),
+      ]),
+    ).toEqual([])
+  })
+})
+
+// The generated schema is regenerated from a spec this API does not honour, and zod rejects the
+// whole array when one row fails — so a single unrecognised settlement would take the Events page
+// and every Payments tab down. These pin the override layer that keeps such a row parseable.
+describe('fetchProtectedEvents schema leniency', () => {
+  const samRow = (
+    reason: unknown,
+    overrides: Record<string, unknown> = {},
+  ) => ({
+    epoch: 1013,
+    amount: 2_660_000_000,
+    vote_account: 'vote1',
+    meta: { funder: 'ValidatorBond' },
+    bond_type: 'bidding',
+    product: 'sam',
+    reason,
+    ...overrides,
+  })
+
+  const respondWith = (...rows: unknown[]) =>
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ protected_events: rows }),
+        }),
+      ),
+    )
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  it('accepts a settlement reason newer than this client, and labels it Unsupported', async () => {
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+    respondWith(samRow('BrandNewFee'))
+    const { protected_events: events } = await fetchProtectedEvents()
+    expect(events).toHaveLength(1)
+    expect(selectProtectedStakeReason(events[0])).toBe('Unsupported')
+  })
+
+  it('accepts a settlement reason object whose variant is newer than this client', async () => {
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+    respondWith(samRow({ BrandNewPenalty: { amount: 1 } }))
+    const { protected_events: events } = await fetchProtectedEvents()
+    expect(events).toHaveLength(1)
+    expect(selectProtectedStakeReason(events[0])).toBe('Unsupported')
+  })
+
+  it('accepts a ProtectedEvent variant newer than this client', async () => {
+    respondWith(
+      samRow({ ProtectedEvent: { StakeRuleViolation: { stake: 1 } } }),
+    )
+    const { protected_events: events } = await fetchProtectedEvents()
+    expect(events[0].reason).toEqual({
+      ProtectedEvent: { StakeRuleViolation: { stake: 1 } },
+    })
+  })
+
+  // Two rows on purpose: zod rejects the whole array on one bad row, so the SAM row surviving is
+  // what proves the override parsed the field-less one rather than the response blowing up.
+  it('parses a row the API sends without bond_type or product, then excludes it', async () => {
+    const fieldless = samRow('Bidding', { vote_account: 'vote2' })
+    delete (fieldless as Record<string, unknown>).bond_type
+    delete (fieldless as Record<string, unknown>).product
+    respondWith(samRow('Bidding'), fieldless)
+    const { protected_events: events } = await fetchProtectedEvents()
+    expect(events).toHaveLength(1)
+    expect(events[0].vote_account).toBe('vote1')
+  })
+
+  it('still applies the SAM allowlist to a well-formed response', async () => {
+    respondWith(
+      samRow('Bidding'),
+      samRow('Bidding', { bond_type: 'institutional', product: 'select' }),
+      samRow('Bidding', { product: 'single-validator' }),
+    )
+    const { protected_events: events } = await fetchProtectedEvents()
+    expect(events).toHaveLength(1)
+    expect(events[0].product).toBe('sam')
   })
 })

@@ -394,11 +394,26 @@ risk fee — each `—` when zero) → **PSR settlements — estimated**
 only**, and only while that epoch is still unsettled, so a past epoch's
 estimate is never folded into this epoch's total) → **Total
 payment** (`total` styling — separator + bold + large, no severity
-colour). Status banner summarises the combined state from
-`baseStatus`: green `You will pay X SOL in total this epoch — no
-penalties.` or red `You will pay X SOL in total this epoch —
-including Y SOL in penalties.`. The right-side action pill is the
-shared yellow `Simulate →` chip via `withSimAction`. Only the
+colour).
+
+Whenever the PSR estimate query has no data to show, the PSR section
+renders instead as its `SectionHeader` plus a single `Estimate for this
+epoch` row, and the total is relabelled `Total payment — excluding PSR`.
+Two states reach it: `psrEstimatesLoading` (the fetch is in flight —
+row reads `loading…`) and `psrEstimatesUnavailable` (an error with
+nothing cached — row reads `unavailable`). A failed refetch that still
+holds good estimates is NEITHER: the estimates render normally and the
+total stays `Total payment`.
+
+Status banner summarises the combined state from `baseStatus`, four
+variants: green `You will pay X SOL in total this epoch — no
+penalties.`, red `You will pay X SOL in total this epoch — including
+Y SOL in penalties.`, neutral `You will pay at least X SOL this epoch
+— PSR settlement estimates are still loading, so this total is
+incomplete.` while `psrEstimatesLoading`, or amber `You will pay at
+least X SOL this epoch — PSR settlement estimates could not be loaded,
+so this total is incomplete.` when `psrEstimatesUnavailable`. The right-side action pill
+is the shared yellow `Simulate →` chip via `withSimAction`. Only the
 bid-too-low penalty link remains as a `tip` slot under the banner — a
 destructive cross-tab affordance, not a sim action — rendered as `See
 bid-too-low penalty calculation →` when `bidTooLowPenaltySol > 0`.

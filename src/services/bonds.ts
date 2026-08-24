@@ -5,14 +5,16 @@ import { schemas } from 'src/schemas/generated/bonds'
 import { VALIDATOR_BONDS_API_URL } from 'src/services/apiUrls'
 import { fetchJson } from 'src/services/fetch-utils'
 
-// Override layer over the generated schema: the OpenAPI spec declares
-// cpmpe as a string and bond_type as required, but the live API returns
-// cpmpe as a number and may omit bond_type. Applying the loosening here
-// (not in the generated file) keeps `pnpm generate-schemas` faithful — a
+// Override layer over the generated schema: the spec declares bond_type required, but the live
+// API may omit it. cpmpe stays a union because the spec has declared it both ways across regens.
+// updated_at stays a plain string: nothing reads it, so enforcing the spec's date-time format
+// would only add a way for one odd timestamp to fail the whole bonds table.
+// Applying the loosening here (not in the generated file) keeps `pnpm generate` faithful — a
 // regen can't silently revert these and re-break /bonds. See bugs.md #42.
 const BondRecordSchema = schemas.ValidatorBondRecord.extend({
   cpmpe: z.union([z.string(), z.number()]),
   bond_type: z.string().optional(),
+  updated_at: z.string(),
 })
 const BondsResponseSchema = z
   .object({ bonds: z.array(BondRecordSchema) })
