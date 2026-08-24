@@ -34,11 +34,17 @@ start:dev`), build output to `build/` (`pnpm build`), preview on 8080
 - **Data**: `@tanstack/react-query` 5.100 (object-form API everywhere).
 - **Markdown**: `react-markdown` 10 + `remark-gfm` + `remark-breaks` +
   `rehype-raw` (for the docs page).
-- **Auction algorithm**: `@marinade.finance/ds-sam-sdk` 0.2.0
+- **Auction algorithm**: `@marinade.finance/ds-sam-sdk` 0.3.0
   (`DsSamSDK`, `loadSamConfig`, `runFinalOnly`) plus
-  `@marinade.finance/ds-sam-calc` 0.2.0 (shared pure calc / selectors /
+  `@marinade.finance/ds-sam-calc` 0.3.0 (shared pure calc / selectors /
   tip engine, re-exported through `src/services/*`). Both packages ship
-  from the same `ds-sam` repo and must be bumped together.
+  from the same `ds-sam` repo and must be bumped together. 0.3.0 reshapes
+  `ConcentrationContext`: the flat `pctOfTotal` / `capPct` pair became two
+  `ConcentrationDimension`s, `network` (group stake over `networkTotalSol`)
+  and `marinade` (group SAM target over `marinadeSamTvlSol`), plus a
+  `binding` discriminator naming whichever ledger has the least headroom.
+  The Concentration card reads `network` and consults `binding` before it
+  annotates that number as being at its cap.
 - **Shared utilities**: `@marinade.finance/ts-common` 5.1.2 — owns the APY
   math (`pmpeToApy`, `apyFromPriceRatio`,
   `epochDurationSecondsFromSlotsPerYear`) and the SOL/lamport conversions.

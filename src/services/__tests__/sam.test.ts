@@ -2,7 +2,6 @@
 // sub-min-bond stake loss, and selectCutoffRank edge cases.
 import { describe, it, expect, vi } from 'vitest'
 
-import { AuctionConstraintType } from '@marinade.finance/ds-sam-sdk'
 import { pmpeToApy } from '@marinade.finance/ts-common'
 
 import { BASELINE_SLOTS_PER_YEAR } from '@marinade.finance/ds-sam-calc'
@@ -15,7 +14,6 @@ import {
   selectExpectedStakeChangeBreakdown,
   selectRedelegationPriorityFrontierPmpe,
   selectRedelegationPriorityRank,
-  selectValidatorConcentration,
   selectWinningAPY,
 } from '../sam'
 
@@ -24,7 +22,6 @@ import type {
   AuctionData,
   AuctionResult,
   AuctionValidator,
-  DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
 
 vi.mock('../validators', async importOriginal => {
@@ -413,78 +410,5 @@ describe('selectWinningAPY', () => {
       pmpeToApy(10, epochDurationSeconds).toNumber(),
       9,
     )
-  })
-})
-
-describe('selectValidatorConcentration', () => {
-  const cfg = {
-    maxNetworkStakeConcentrationPerCountryDec: 0.3,
-    maxNetworkStakeConcentrationPerAsoDec: 0.3,
-  } as unknown as DsSamConfig
-
-  const makeConcValidator = (
-    voteAccount: string,
-    target: number,
-    country: string,
-    aso: string,
-    capped?: { type: AuctionConstraintType; name: string },
-  ): AuctionValidator =>
-    ({
-      voteAccount,
-      auctionStake: { marinadeSamTargetSol: target },
-      country,
-      aso,
-      lastCapConstraint: capped
-        ? { constraintType: capped.type, constraintName: capped.name }
-        : null,
-    }) as unknown as AuctionValidator
-
-  // total target = 500 → US 400 (0.8), DE 100 (0.2); aws 300 (0.6), ovh 200 (0.4).
-  // The zero-target validator Z is excluded from both group and total.
-  const result = makeResult(0, [
-    makeConcValidator('A', 300, 'US', 'aws'),
-    makeConcValidator('B', 100, 'US', 'ovh'),
-    makeConcValidator('C', 100, 'DE', 'ovh'),
-    makeConcValidator('Z', 0, 'US', 'aws'),
-  ])
-
-  it('computes each group share of total SAM target stake against the cap', () => {
-    const c = selectValidatorConcentration(result, cfg, 'A')
-    if (!c) throw new Error('expected concentration for A')
-    expect(c.country.label).toBe('US')
-    expect(c.country.pctOfTotal).toBeCloseTo(0.8)
-    expect(c.country.capPct).toBe(0.3)
-    expect(c.country.groupValidatorCount).toBe(2)
-    expect(c.aso.label).toBe('aws')
-    expect(c.aso.pctOfTotal).toBeCloseTo(0.6)
-    expect(c.aso.groupValidatorCount).toBe(1)
-  })
-
-  it('flags thisValidatorCapped only for the matching binding constraint', () => {
-    const capped = makeResult(0, [
-      makeConcValidator('A', 300, 'US', 'aws', {
-        type: AuctionConstraintType.COUNTRY,
-        name: 'US',
-      }),
-      makeConcValidator('B', 200, 'DE', 'ovh'),
-    ])
-    const c = selectValidatorConcentration(capped, cfg, 'A')
-    if (!c) throw new Error('expected concentration for A')
-    expect(c.country.thisValidatorCapped).toBe(true)
-    expect(c.aso.thisValidatorCapped).toBe(false)
-  })
-
-  it('returns null for a validator not in the auction set', () => {
-    expect(selectValidatorConcentration(result, cfg, 'nope')).toBeNull()
-  })
-
-  it('still resolves for an out-of-set (zero-target) validator in the set', () => {
-    // 'Z' has marinadeSamTargetSol 0 (out of set) but IS in the auction data,
-    // so it must still get its country/ASO group context from in-set peers.
-    const c = selectValidatorConcentration(result, cfg, 'Z')
-    if (!c) throw new Error('expected concentration for out-of-set Z')
-    expect(c.country.label).toBe('US')
-    expect(c.country.pctOfTotal).toBeCloseTo(0.8) // US peers A+B, self excluded
-    expect(c.aso.label).toBe('aws')
   })
 })

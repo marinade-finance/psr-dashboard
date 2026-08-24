@@ -356,20 +356,32 @@ const ConcentrationRow = ({
   help: string
   guideTo: string
   separator?: boolean
-}) => (
-  <MetricRow
-    label={`${label} · ${group.label}`}
-    help={help}
-    helpGuideTo={guideTo}
-    value={`${pct(group.pctOfTotal, 1)} of ${pct(group.capPct, 0)} cap${
-      group.thisValidatorCapped ? ' · at cap' : ''
-    }`}
-    valueStyle={
-      group.thisValidatorCapped ? { color: CSS_DESTRUCTIVE } : undefined
-    }
-    separator={separator}
-  />
-)
+}) => {
+  // The value shown is the NETWORK-basis share. `thisValidatorCapped` alone
+  // does not justify annotating it: ds-sam records `lastCapConstraint` when
+  // `min(totalLeftToCapSol, marinadeLeftToCapSol)` runs out
+  // (ds-sam-calc `minCapFromConstraint`), so the cap that bit may have been
+  // the Marinade-basis one while the network share still sits far below its
+  // cap. Requiring `binding === 'network'` keeps the marker and the number it
+  // annotates measured on the same quantity: `binding` is derived from the
+  // very same group sums as `group.network`, so the two can never disagree.
+  // (When the network ledger is genuinely the exhausted one its headroom is
+  // ~0 and therefore below the Marinade headroom, so `binding` is 'network'
+  // exactly in the case the marker is meant for.)
+  const atNetworkCap = group.thisValidatorCapped && group.binding === 'network'
+  return (
+    <MetricRow
+      label={`${label} · ${group.label}`}
+      help={help}
+      helpGuideTo={guideTo}
+      value={`${pct(group.network.pctOfTotal, 1)} of ${pct(group.network.capPct, 0)} cap${
+        atNetworkCap ? ' · at cap' : ''
+      }`}
+      valueStyle={atNetworkCap ? { color: CSS_DESTRUCTIVE } : undefined}
+      separator={separator}
+    />
+  )
+}
 
 const ConcentrationCard = ({
   concentration,
@@ -385,13 +397,13 @@ const ConcentrationCard = ({
       <ConcentrationRow
         label="Country"
         group={concentration.country}
-        help="Share of Marinade's SAM target stake in your country, against the per-country concentration cap. The auction stops adding stake to a country once its share reaches the cap."
+        help="Share of total network stake held by validators in your country, against the per-country concentration cap. The auction stops adding stake to a country once that network share reaches the cap."
         guideTo={guideTo}
       />
       <ConcentrationRow
         label="ASO"
         group={concentration.aso}
-        help="Share of Marinade's SAM target stake in your ASO (the operator / data-centre group), against the per-ASO concentration cap. The auction stops adding stake to an ASO once its share reaches the cap."
+        help="Share of total network stake held by validators in your ASO (the operator / data-centre group), against the per-ASO concentration cap. The auction stops adding stake to an ASO once that network share reaches the cap."
         guideTo={guideTo}
         separator
       />
