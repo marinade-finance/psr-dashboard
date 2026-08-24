@@ -1485,6 +1485,27 @@ const o12: AuctionValidator = {
   values: outOfSetValues(50_000, 100),
 }
 
+// o14. Bond below the minimum with the clipped cap at zero, no cap recorded →
+//   outOfSetGate 'bondBelowMin'. Low stake (8 SOL) keeps it out of isDefending,
+//   so the bond CTA stays neutral and the badge caption must name the bond
+//   rather than the loss. bondSamStakeCapSol is the only field that drives the
+//   gate — O_COMMON's 250_000 must be overridden after the spread.
+const o14: AuctionValidator = {
+  ...outOfSetBase('FiXtUREvoBONDBELOWMINo14ddddddddddddddddddnn', {
+    marinadeActivatedStakeSol: 8,
+    bondBalanceSol: 2,
+    country: C_DE,
+    aso: ASO_HETZNER,
+  }),
+  ...O_COMMON,
+  samEligible: true,
+  samBlocked: false,
+  bondSamStakeCapSol: 0,
+  maxBondDelegation: 0,
+  lastCapConstraint: null,
+  values: outOfSetValues(8, 2),
+}
+
 // ───── Out-of-set + bid-too-low penalty (p-row) ──────────────────────────────
 //
 // Validators that dropped their bid hard: now both below the winning line
@@ -1582,6 +1603,7 @@ export const TEST_VALIDATORS: AuctionValidator[] = [
   o10,
   o11,
   o12,
+  o14,
   p01,
 ]
 

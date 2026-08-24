@@ -569,7 +569,7 @@ See [Re-delegation](#redelegation) for why the gap rarely closes in one epoch.
 
 What's currently the binding constraint on this validator and the single
 action that would help most. Strings come verbatim from
-`src/services/tip-engine.ts`. Examples:
+`@marinade.finance/ds-sam-calc`. Examples:
 
 - "Top up X to avoid the bond risk fee." (bond constraint)
 - "Top up bond to X SOL to grow stake." (bond below minimum)
@@ -584,6 +584,21 @@ action that would help most. Strings come verbatim from
 - "Losing X next epoch." (in-set, stake leaking)
 - "At target stake." (in-set, no change)
 - Cap-binding two-liner: e.g. "Germany at country cap\nLosing X until cap frees."
+
+When a validator is out of set at a total that already clears the winning
+threshold, the reason takes priority over the loss — the tip names the
+gate instead of reporting the stake leaking away. The gates are:
+
+- "Blocked from SAM this epoch."
+- "Blacklisted — X penalty this epoch." (or plain "Blacklisted." when nothing charges)
+- "Not eligible — check client version and vote credits."
+- "Bond below X SOL minimum" (the bond is too small for the auction to give any stake)
+- A cap cause line: "Germany at country cap", "Hetzner Online GmbH at ASO cap",
+  "At per-validator cap", "At your bond cap", "At the risk cap", or
+  "At a concentration cap" when the type is unknown
+
+The same gate names the caption on the **Max APY Composition** card and
+the tooltip on the **Out of Set** pill, so all three surfaces agree.
 
 Every bond tip is one short clause carrying the decisive SOL figure.
 The same string appears on the table pill, the validator-detail header
@@ -652,16 +667,19 @@ Composition — let you click their title to jump there.
   commission the validator keeps (`0% commission`); Block rewards show
   the share GIVEN to stakers (`100% shared`). When `0% shared`, the
   validator keeps all block rewards, so that segment is empty.
-  - **Winning APY threshold** — the headline figure top-left. This is
-    the minimum total APY the validator must offer to win stake, and it
-    is **rebuilt at this validator's own commission profile** — not a
-    single global number. That makes it an apples-to-apples bar this
-    specific validator has to clear. It is _not_ the 7% SAM commission
-    cap; different number, easy to confuse.
+  - **Winning APY threshold** — the headline figure top-left. One
+    auction-wide clearing price, the same number on every validator's
+    card. Your own commissions are already inside your own total, so the
+    comparison is apples-to-apples without rebuilding the threshold per
+    validator. It is _not_ the 7% SAM commission cap; different number,
+    easy to confuse.
   - **The pill** top-right restates the gap between the validator's
-    total APY and that threshold. Green and `+X%` means above the bar
-    and winning; red and `−X%` means below it — the validator is short
-    and losing stake, so the Total figure also turns red.
+    total APY and that threshold, in one of three tones. Green `+X%` —
+    above the threshold **and** holding stake. Grey `+X%` — above the
+    threshold but holding none, because a gate binds; the caption above
+    the pill names which one. Red `−X%` — below the threshold, so the
+    total is short of the clearing price and the Total figure turns red
+    too.
   - The Total bar at the bottom carries a vertical tick at the winning
     APY threshold, so the shortfall or headroom is visible at a glance.
 - **What-If Simulation** — only visible when you toggle "Simulate" on

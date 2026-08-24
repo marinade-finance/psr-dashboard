@@ -26,9 +26,9 @@ import {
   CSS_PRIMARY,
   CSS_DESTRUCTIVE,
   CSS_PRIMARY_LIGHT,
-  CSS_DESTRUCTIVE_LIGHT,
   CSS_STATUS_GREEN,
   CSS_WARNING,
+  CSS_MUTED,
   CSS_MUTED_FG,
 } from 'src/css'
 import { cost, pay, pct, topUp, stake, signedStake } from 'src/format'
@@ -65,6 +65,8 @@ import {
   getValidatorTip,
   getTipStyle,
   getTipIcon,
+  outOfSetGate,
+  outOfSetGateLabel,
 } from 'src/services/tip-engine'
 import { fetchValidatorsWithEpochs } from 'src/services/validators'
 import { assertNever } from 'src/utils/assert-never'
@@ -602,6 +604,23 @@ function SimDeltas({
   )
 }
 
+// One gate source for the two surfaces that name it — the membership pill's
+// tooltip and the APY card's caption — so they cannot disagree about the cause.
+const outOfSetCauseLabel = (
+  validator: AugmentedAuctionValidator,
+  dsSamConfig: DsSamConfig,
+  blacklist?: Set<string>,
+): string | null => {
+  const gate = outOfSetGate(validator, dsSamConfig, blacklist)
+  return gate ? outOfSetGateLabel(gate, dsSamConfig) : null
+}
+
+const membershipTooltip = (inSet: boolean, cause: string | null): string =>
+  cause ??
+  (inSet
+    ? 'This validator holds SAM target stake for the next epoch.'
+    : 'No gate we can identify — see the Next Step banner below.')
+
 export const ValidatorDetail = ({
   validator,
   auctionResult,
@@ -642,6 +661,11 @@ export const ValidatorDetail = ({
     ),
   )
   const tipStyle = getTipStyle(tip.urgency)
+  const outOfSetCause = outOfSetCauseLabel(
+    validator,
+    dsSamConfig,
+    auctionResult.auctionData.blacklist,
+  )
   const expectedStakeDelta = selectExpectedStakeChange(validator)
   // A maxStakeWanted below the network floor (minMaxStakeWanted) is silently
   // raised to it by the auction, so the target can exceed the shown cap.
@@ -889,15 +913,17 @@ export const ValidatorDetail = ({
                   {validatorName}
                 </span>
               )}
-              <span
-                className="px-2 py-0.5 rounded-md text-xs font-medium shrink-0"
-                style={{
-                  background: inSet ? CSS_PRIMARY_LIGHT : CSS_DESTRUCTIVE_LIGHT,
-                  color: inSet ? CSS_PRIMARY : CSS_DESTRUCTIVE,
-                }}
-              >
-                {inSet ? 'In Set' : 'Out of Set'}
-              </span>
+              <Tooltip content={membershipTooltip(inSet, outOfSetCause)}>
+                <span
+                  className="px-2 py-0.5 rounded-md text-xs font-medium shrink-0"
+                  style={{
+                    background: inSet ? CSS_PRIMARY_LIGHT : CSS_MUTED,
+                    color: inSet ? CSS_PRIMARY : CSS_MUTED_FG,
+                  }}
+                >
+                  {inSet ? 'In Set' : 'Out of Set'}
+                </span>
+              </Tooltip>
               {isSimulated && (
                 <Tooltip content="Numbers shown here use your what-if commission and bid, not the live values.">
                   <span className="px-2 py-0.5 rounded-md text-xs font-semibold shrink-0 uppercase tracking-wide bg-status-yellow-light text-status-yellow">
@@ -1244,6 +1270,7 @@ export const ValidatorDetail = ({
               apyBreakdown={apyBreakdown}
               winningApy={winningApy}
               validator={validator}
+              outOfSetCause={outOfSetCause}
               guideTo={`${docsPath(level)}#cpmpe`}
               isSimulated={isSimulated}
               onGoToBidding={() => setTab('bidding')}

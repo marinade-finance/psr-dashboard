@@ -36,11 +36,18 @@ Tailwind class can't reach (inline `style`). Source: `src/css.ts`
 `WARNING`=warning, `INFO`=info, `POSITIVE`=primary, `NEUTRAL`=muted. The
 breakdown status banner uses the parallel `CardStatusTone: red | yellow
 | green | grey`; they agree by construction (`bondAdvice` returns both,
-and `tipBannerTone` in `breakdowns/card.tsx` resolves any
+and `tipBannerSeverity` in `breakdowns/card.tsx` resolves any
 `ValidatorTip` → tone). The `grey` tone is paired with
 `TipUrgency.NEUTRAL` (below-min bond with no pending fee — eligibility,
-not urgency). **Rule:** colour encodes severity ONLY — never the lever.
-`src/services/tip-engine.ts`, `src/components/breakdowns/card.tsx`.
+not urgency). **Rule:** colour encodes severity ONLY — never the lever,
+and never set membership. Being out of set is a fact, not an alarm: the
+sam-table row tint (`bg-muted/40`) and the sheet `Out of Set` pill are
+both muted, and severity for those rows is carried by the Next Step
+pill, the tip banner and the rank glyph alone. The APY card's
+grey-vs-destructive split is the one remaining colour on an out-of-set
+row, and it answers a different question — did the total clear the
+winning threshold (`apyStanding`).
+`@marinade.finance/ds-sam-calc`, `src/components/breakdowns/card.tsx`.
 
 ### Lever axis (glyph)
 
@@ -50,27 +57,51 @@ not urgency). **Rule:** colour encodes severity ONLY — never the lever.
 `delta`. **Rule:** glyph encodes which knob to turn — orthogonal to
 colour; only `TipConstraint.NONE` is allowed a directional glyph (it
 is the sole lever-less case where stake trajectory is the only signal
-left). `src/services/tip-engine.ts`.
+left). `@marinade.finance/ds-sam-calc`, glyph map in
+`src/services/tip-engine.ts`.
 
 ### CTA dispatch (one source per lever)
 
-Five CTA helpers in `src/services/tip-engine.ts`, each owning one lever's
-text + urgency end-to-end: `bondCta`, `bidCta`, `outOfSetCta`, `capCta`,
-`deltaCta`. `outOfSetCta` fires only when the validator is out-of-set
-despite `revShare.totalPmpe ≥ winningTotalPmpe` — it names the actual
-binding reason instead of letting `deltaCta` lie with a "Losing N SOL"
-symptom. Reasons are checked in source order: samBlocked (`Blocked from
-SAM this epoch.`) → `samEligible === false` (blacklisted → `Blacklisted —
-N penalty this epoch.` when a penalty charges, else `Blacklisted.`;
-otherwise the generic `Not eligible — check client version and vote
-credits.`) → binding cap with `totalLeftToCapSol === 0` (the `capCauseLine`:
-country / ASO / per-validator / concentration, each suffixed `.`). Any
-other case returns null and `deltaCta` owns the message. Severity is
-per-branch: samBlocked and an active blacklist penalty are critical (alert
-glyph); the remaining branches read warning when `isDefending` (>10k
-active AND >1k loss), else info. The `capCauseLine` WANT arm is dead —
-WANT caps carry `totalLeftToCapSol: Infinity`, so the `=== 0` gate never
-selects them.
+Five CTA helpers in `@marinade.finance/ds-sam-calc`, each owning one
+lever's text + urgency end-to-end: `bondCta`, `bidCta`, `outOfSetCta`,
+`capCta`, `deltaCta`. `outOfSetCta` fires only when the validator is
+out-of-set despite `revShare.totalPmpe ≥ winningTotalPmpe` — it names the
+actual binding reason instead of letting `deltaCta` lie with a "Losing N
+SOL" symptom. Severity is per-branch: samBlocked and an active blacklist
+penalty are critical (alert glyph); the remaining branches read warning
+when `isDefending` (>10k active AND >1k loss), else info.
+
+`outOfSetGate` is the single source for _which_ gate holds a validator
+out, and `outOfSetCta` consumes it — so a caption and a CTA can never
+name two different causes. It returns `blocked` → `blacklisted` /
+`ineligible` → `bondBelowMin` → `cap` in the SDK's own binding order, or
+`null` when no gate is identifiable. `outOfSetGateLabel` renders the
+matching caption fragment (sentence-case, no trailing period, no
+imperative — the CTA format rules do not apply to it), reusing
+`capCauseLine` for the cap kind: country / ASO / per-validator / bond /
+risk / generic concentration. Two dashboard surfaces read it — the sheet
+`Out of Set` pill tooltip and the APY card caption. `bondBelowMin` is
+reported as a caption but returns null from `outOfSetCta`, because
+`bondCta` owns that lever and `getValidatorTip` lets it win.
+
+The gate is **price-agnostic** on purpose — standing is the caller's own
+test. The precedence rule lives in `getValidatorTip`: out of set AND
+`totalPmpe ≥ winningTotalPmpe` AND at least one lever CTA survives ⇒
+`deltaCta` is dropped from the candidate set entirely, so the cause
+headlines even when its severity deliberately reads lower than the loss.
+Below the winning price the loss is the honest headline and this must not
+fire.
+
+`capCta` and `outOfSetCta` **partition by membership**: `capCta` owns
+in-set rows, `outOfSetCta` owns out-of-set rows, so one
+`lastCapConstraint` is read by exactly one CTA. Presence of
+`lastCapConstraint` is itself the binding signal — the SDK records it
+only when the cap is below `EPSILON` and clears it otherwise, so
+`totalLeftToCapSol` says nothing (every per-validator constraint carries
+`Infinity`). `capCta` additionally excludes WANT and BOND: its "until cap
+frees" wording promises that waiting works, which is only true for caps
+outside the validator's control.
+
 `selectTip` sorts surviving candidates by `SEVERITY_ORDER` first
 (critical→warning→info→positive→neutral), then `LEVER_ORDER`
 (bond→bid/rank→cap→none) as the tiebreak. **Rule:** never reword a CTA

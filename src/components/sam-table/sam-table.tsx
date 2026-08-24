@@ -704,9 +704,9 @@ export const SamTable: React.FC<Props> = ({
             ? 'opacity-40 line-through bg-muted/30 cursor-pointer hover:opacity-60'
             : 'opacity-40 line-through bg-muted/30 cursor-default'
           : 'bg-card cursor-pointer',
-        !isGhost && !inSet && 'bg-destructive/[0.02]',
+        !isGhost && !inSet && 'bg-muted/40',
         !isGhost && inSet && 'hover:bg-primary-light',
-        !isGhost && !inSet && 'hover:bg-destructive/[0.05]',
+        !isGhost && !inSet && 'hover:bg-muted',
         !isGhost && isSimulated && 'bg-status-yellow-light',
         isFlashing && 'bg-status-yellow-light',
       ]

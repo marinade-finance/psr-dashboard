@@ -8,6 +8,8 @@ const V06 = 'FiXtUREv6666666666666666666666666666666666ff' // Bid-Too-Low Penalt
 const V08 = 'FiXtUREv8888888888888888888888888888888888hh' // Out of Set
 // Out-of-set validator at ASO cap — outOfSetCta surfaces the cap-binding CTA.
 const VCAP = 'FiXtUREvoCAPASOhi6666666666666666666666666ff'
+// Out-of-set on a clipped bond cap — outOfSetGate reports 'bondBelowMin'.
+const O14 = 'FiXtUREvoBONDBELOWMINo14ddddddddddddddddddnn'
 const SHEET = '[role="dialog"]'
 
 test.beforeEach(async ({ page }) => {
@@ -91,14 +93,34 @@ test('VCAP APY Composition pill is not painted as a winner', async ({
   expect(cls).not.toMatch(/primary/i)
   // Scoped to the pill's own stack — the sheet header carries an unrelated
   // "Out of Set" badge that would satisfy a sheet-wide match.
-  await expect(pill.locator('..').getByText(/cleared/i)).toBeVisible()
+  await expect(
+    pill.locator('..').getByText(/Cleared — .*ASO cap/i),
+  ).toBeVisible()
 })
 
-test('V08 (Out of Set) row carries the destructive out-of-set tint', async ({
+test('O14 APY Composition caption names the bond gate, not the loss', async ({
+  page,
+}) => {
+  await page.goto(`/test-?v=${O14}`)
+  await page.waitForSelector('tbody tr', { timeout: 30000 })
+  await expect(page.locator(SHEET).first()).toBeVisible({ timeout: 10000 })
+  const pill = page
+    .locator(SHEET)
+    .getByText(/vs winning/)
+    .first()
+  await expect(pill).toBeVisible()
+  const cls = (await pill.getAttribute('class')) ?? ''
+  expect(cls).toMatch(/muted/i)
+  await expect(pill.locator('..').getByText(/Bond below/i)).toBeVisible()
+})
+
+test('V08 (Out of Set) row tint is muted, not destructive', async ({
   page,
 }) => {
   const row = page.locator(`tbody tr[data-vote-account="${V08}"]`).first()
   const cls = (await row.getAttribute('class')) ?? ''
-  // sam-table.tsx tints out-of-set rows with a destructive background.
-  expect(cls).toMatch(/destructive|out-of-set|bg-destructive/i)
+  // Membership is tone-neutral: severity lives in the Next Step pill, the
+  // banner and the rank glyph, never in the row background.
+  expect(cls).toMatch(/bg-muted/i)
+  expect(cls).not.toMatch(/destructive/i)
 })

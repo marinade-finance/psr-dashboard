@@ -14,6 +14,8 @@ import {
   getTipStyle,
   getTipIcon,
   nextStakeDeltaCell,
+  outOfSetGate,
+  outOfSetGateLabel,
 } from '../tip-engine'
 
 import type { ProtectedEvent } from '../protected-events'
@@ -583,7 +585,10 @@ describe('getValidatorTip', () => {
     expect(tip.text).toContain("can't grow")
   })
 
-  it('lastCapConstraint with headroom (totalLeftToCapSol > 0) → no cap CTA', () => {
+  it('binding on the marinade side only (totalLeftToCapSol > 0) → still a cap CTA', () => {
+    // The SDK records lastCapConstraint on min(total, marinade) < EPSILON and
+    // clears it otherwise, so presence alone is the signal — totalLeftToCapSol
+    // says nothing about whether the cap binds.
     const validator = makeValidator({
       values: { expectedStakeChangeSol: -5000 },
       lastCapConstraint: {
@@ -592,9 +597,18 @@ describe('getValidatorTip', () => {
         totalStakeSol: 1_000_000,
         totalLeftToCapSol: 50_000,
         marinadeStakeSol: 1_000_000,
-        marinadeLeftToCapSol: 50_000,
+        marinadeLeftToCapSol: 0,
         validators: [],
       },
+    })
+    const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
+    expect(tip.constraint).toBe('cap')
+    expect(tip.text).toContain('Hetzner Online GmbH at ASO cap')
+  })
+
+  it('no lastCapConstraint → no cap CTA, the loss owns the message', () => {
+    const validator = makeValidator({
+      values: { expectedStakeChangeSol: -5000 },
     })
     const tip = getValidatorTip(validator, DS_SAM_CONFIG, 100)
     expect(tip.constraint).toBe('none')
@@ -856,6 +870,77 @@ describe('getValidatorTip out-of-set bond top-up rounding', () => {
     if (tip.text.includes('Top up')) {
       expect(tip.text).not.toMatch(/Top up 0 SOL/)
     }
+  })
+})
+
+// Consumer-boundary guard for the gate the sheet badge and the APY card
+// caption both read. The engine owns the wording; what is pinned here is that
+// the caption and the CTA name the same lever for the row that used to show
+// only the loss.
+describe('outOfSetGate — badge caption source', () => {
+  const GATE_CONFIG = {
+    ...DS_SAM_CONFIG,
+    minBondBalanceSol: 5,
+  }
+
+  const makeBondBelowMin = () =>
+    makeValidator({
+      auctionStake: { marinadeSamTargetSol: 0 },
+      marinadeActivatedStakeSol: 8,
+      bondBalanceSol: 2,
+      claimableBondBalanceSol: 2,
+      bondSamStakeCapSol: 0,
+      values: { expectedStakeChangeSol: -8 },
+    })
+
+  it('clipped bond cap at zero + bond below min → bondBelowMin, label names the minimum', () => {
+    const gate = outOfSetGate(makeBondBelowMin(), GATE_CONFIG)
+    expect(gate).toEqual({ kind: 'bondBelowMin' })
+    expect(gate && outOfSetGateLabel(gate, GATE_CONFIG)).toMatch(
+      /Bond below 5\.0/,
+    )
+  })
+
+  it('a recorded country cap wins over a bond inside the hysteresis band', () => {
+    // clipBondStakeCap only zeroes the cap below 0.8 × the minimum, so a 4.5
+    // SOL bond still carries stake and must not be blamed for someone else's
+    // cap.
+    const validator = makeValidator({
+      auctionStake: { marinadeSamTargetSol: 0 },
+      marinadeActivatedStakeSol: 50_000,
+      bondBalanceSol: 4.5,
+      claimableBondBalanceSol: 4.5,
+      bondSamStakeCapSol: 50_000,
+      lastCapConstraint: {
+        constraintType: 'COUNTRY',
+        constraintName: 'Germany',
+        totalStakeSol: 1_000_000,
+        totalLeftToCapSol: 0,
+        marinadeStakeSol: 1_000_000,
+        marinadeLeftToCapSol: 0,
+        validators: [],
+      },
+      values: { expectedStakeChangeSol: -50_000 },
+    })
+    const gate = outOfSetGate(validator, GATE_CONFIG)
+    expect(gate?.kind).toBe('cap')
+    expect(gate && outOfSetGateLabel(gate, GATE_CONFIG)).toBe(
+      'Germany at country cap',
+    )
+  })
+
+  it('in-set → null, so the caption falls back to the generic string', () => {
+    expect(outOfSetGate(makeValidator(), GATE_CONFIG)).toBeNull()
+  })
+
+  it('calm bondBelowMin row: the bond lever headlines, the loss is suppressed', () => {
+    // The regime the gate exists for — price clears the winning total, so
+    // "Losing 8 SOL" names the symptom and not the gate.
+    const tip = getValidatorTip(makeBondBelowMin(), GATE_CONFIG, 6)
+    expect(tip.constraint).toBe('bond')
+    expect(tip.urgency).toBe('neutral')
+    expect(tip.text).toContain('grow stake')
+    expect(tip.text).not.toContain('Losing')
   })
 })
 

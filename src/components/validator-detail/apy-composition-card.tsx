@@ -13,6 +13,7 @@ interface ApyCompositionCardProps {
   apyBreakdown: ApyBreakdownValue
   winningApy: number
   validator: AuctionValidator
+  outOfSetCause?: string | null
   guideTo?: string
   isSimulated?: boolean
   onGoToBidding?: () => void
@@ -51,6 +52,7 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
   apyBreakdown,
   winningApy,
   validator,
+  outOfSetCause,
   guideTo,
   isSimulated,
   onGoToBidding,
@@ -148,7 +150,9 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
           // clears a cap or a block.
           <span className="flex flex-col items-end gap-0.5">
             <span className="text-2xs text-muted-foreground font-medium leading-none">
-              Cleared, but out of set
+              {outOfSetCause
+                ? `Cleared — ${outOfSetCause}`
+                : 'Cleared, but out of set'}
             </span>
             <span className={pillClass}>{pillText}</span>
           </span>
