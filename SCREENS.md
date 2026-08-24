@@ -315,9 +315,9 @@ epochs`). Balance renders 3-decimal `cost()` precision for a
   30% ASO). Both sides are therefore shares of the same quantity, the
   one the auction actually caps. When this validator's own binding cap
   is that country / ASO the value gains a `· at cap` suffix and turns
-  `CSS_DESTRUCTIVE`. Source: `selectValidatorConcentration` from
-  `src/services/concentration.ts` (the dashboard-local one, not
-  ds-sam-calc's share-of-SAM-target version). Keeps the country / ASO
+  `CSS_DESTRUCTIVE`. Source: `selectValidatorConcentration`'s `.network`
+  dimension (`@marinade.finance/ds-sam-calc` ≥ 0.3.0, which also exposes
+  a `.marinade` dimension and a `binding` flag). Keeps the country / ASO
   limits inspectable per-validator after the headline concentration
   tiles were removed.
 

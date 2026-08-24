@@ -361,7 +361,7 @@ const ConcentrationRow = ({
     label={`${label} · ${group.label}`}
     help={help}
     helpGuideTo={guideTo}
-    value={`${pct(group.pctOfTotal, 1)} of ${pct(group.capPct, 0)} cap${
+    value={`${pct(group.network.pctOfTotal, 1)} of ${pct(group.network.capPct, 0)} cap${
       group.thisValidatorCapped ? ' · at cap' : ''
     }`}
     valueStyle={
@@ -659,9 +659,6 @@ export const ValidatorDetail = ({
     () => computeBondCoverage(validator, dsSamConfig, winningTotalPmpe),
     [validator, dsSamConfig, winningTotalPmpe],
   )
-  // Local selector (src/services/concentration.ts), not the ds-sam-calc one:
-  // the group share must be measured on network stake, the basis the country /
-  // ASO caps shown next to it are enforced on.
   const concentration = useMemo(
     () => selectValidatorConcentration(auctionResult, dsSamConfig, voteAccount),
     [auctionResult, dsSamConfig, voteAccount],

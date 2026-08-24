@@ -2,7 +2,6 @@
 // sub-min-bond stake loss, and selectCutoffRank edge cases.
 import { describe, it, expect, vi } from 'vitest'
 
-import { AuctionConstraintType } from '@marinade.finance/ds-sam-sdk'
 import { pmpeToApy } from '@marinade.finance/ts-common'
 
 import { BASELINE_SLOTS_PER_YEAR } from '@marinade.finance/ds-sam-calc'
@@ -15,7 +14,6 @@ import {
   selectExpectedStakeChangeBreakdown,
   selectRedelegationPriorityFrontierPmpe,
   selectRedelegationPriorityRank,
-  selectValidatorConcentration,
   selectWinningAPY,
 } from '../sam'
 
@@ -24,7 +22,6 @@ import type {
   AuctionData,
   AuctionResult,
   AuctionValidator,
-  DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
 
 vi.mock('../validators', async importOriginal => {
@@ -50,13 +47,12 @@ function makeValidator(
 function makeResult(
   winningTotalPmpe: number,
   validators: AuctionValidator[],
-  networkTotalSol = 0,
 ): AuctionResult {
   return {
     winningTotalPmpe,
     auctionData: {
       validators,
-      stakeAmounts: { marinadeSamTvlSol: 0, networkTotalSol },
+      stakeAmounts: { marinadeSamTvlSol: 0 },
     },
   } as unknown as AuctionResult
 }
@@ -414,133 +410,5 @@ describe('selectWinningAPY', () => {
       pmpeToApy(10, epochDurationSeconds).toNumber(),
       9,
     )
-  })
-})
-
-describe('selectValidatorConcentration', () => {
-  // Live shape: 40% per country, 30% per ASO — both network-stake caps.
-  const cfg = {
-    maxNetworkStakeConcentrationPerCountryDec: 0.4,
-    maxNetworkStakeConcentrationPerAsoDec: 0.3,
-  } as unknown as DsSamConfig
-
-  const makeConcValidator = (
-    voteAccount: string,
-    external: number,
-    target: number,
-    country: string,
-    aso: string,
-    capped?: { type: AuctionConstraintType; name: string },
-  ): AuctionValidator =>
-    ({
-      voteAccount,
-      auctionStake: {
-        externalActivatedSol: external,
-        marinadeSamTargetSol: target,
-      },
-      country,
-      aso,
-      lastCapConstraint: capped
-        ? { constraintType: capped.type, constraintName: capped.name }
-        : null,
-    }) as unknown as AuctionValidator
-
-  // Network total 1000. Group stake is external + SAM target per member:
-  // A 200, B 100, C 200, Z 100 → US 400 (0.4), DE 200 (0.2);
-  // aws 300 (0.3), ovh 300 (0.3). Z holds network stake with no SAM target,
-  // so it counts toward its groups exactly as the auction's cap draw-down
-  // counts it.
-  const validators = [
-    makeConcValidator('A', 150, 50, 'US', 'aws'),
-    makeConcValidator('B', 90, 10, 'US', 'ovh'),
-    makeConcValidator('C', 200, 0, 'DE', 'ovh'),
-    makeConcValidator('Z', 100, 0, 'US', 'aws'),
-  ]
-  const result = makeResult(0, validators, 1000)
-
-  it('divides the group network stake by total network stake', () => {
-    const c = selectValidatorConcentration(result, cfg, 'A')
-    if (!c) throw new Error('expected concentration for A')
-    expect(c.country.label).toBe('US')
-    expect(c.country.pctOfTotal).toBeCloseTo(0.4)
-    expect(c.country.groupValidatorCount).toBe(3)
-    expect(c.aso.label).toBe('aws')
-    expect(c.aso.pctOfTotal).toBeCloseTo(0.3)
-    expect(c.aso.groupValidatorCount).toBe(2)
-  })
-
-  it('counts group members that hold no SAM target stake', () => {
-    const withoutZ = makeResult(
-      0,
-      validators.filter(v => v.voteAccount !== 'Z'),
-      1000,
-    )
-    const c = selectValidatorConcentration(withoutZ, cfg, 'A')
-    if (!c) throw new Error('expected concentration for A')
-    // Z contributes 100 of network stake and 0 of SAM target: dropping it
-    // moves the country share 0.4 → 0.3 and the count 3 → 2.
-    expect(c.country.pctOfTotal).toBeCloseTo(0.3)
-    expect(c.country.groupValidatorCount).toBe(2)
-  })
-
-  it('passes the configured network caps through unchanged', () => {
-    const c = selectValidatorConcentration(result, cfg, 'A')
-    if (!c) throw new Error('expected concentration for A')
-    expect(c.country.capPct).toBe(0.4)
-    expect(c.aso.capPct).toBe(0.3)
-  })
-
-  it('flags thisValidatorCapped only for the matching binding constraint', () => {
-    const capped = makeResult(
-      0,
-      [
-        makeConcValidator('A', 150, 50, 'US', 'aws', {
-          type: AuctionConstraintType.COUNTRY,
-          name: 'US',
-        }),
-        makeConcValidator('B', 100, 100, 'DE', 'ovh'),
-      ],
-      1000,
-    )
-    const c = selectValidatorConcentration(capped, cfg, 'A')
-    if (!c) throw new Error('expected concentration for A')
-    expect(c.country.thisValidatorCapped).toBe(true)
-    expect(c.aso.thisValidatorCapped).toBe(false)
-  })
-
-  it('returns null for a validator not in the auction set', () => {
-    expect(selectValidatorConcentration(result, cfg, 'nope')).toBeNull()
-  })
-
-  it('reports a zero share when the network total is missing', () => {
-    // makeResult defaults networkTotalSol to 0 — no division by zero, no NaN.
-    const c = selectValidatorConcentration(makeResult(0, validators), cfg, 'A')
-    if (!c) throw new Error('expected concentration for A')
-    expect(c.country.pctOfTotal).toBe(0)
-    expect(c.aso.pctOfTotal).toBe(0)
-  })
-
-  it('still resolves for an out-of-set (zero-target) validator in the set', () => {
-    // 'Z' has marinadeSamTargetSol 0 (out of set) but holds network stake, so
-    // it gets its country / ASO group context and is counted in it.
-    const c = selectValidatorConcentration(result, cfg, 'Z')
-    if (!c) throw new Error('expected concentration for out-of-set Z')
-    expect(c.country.label).toBe('US')
-    expect(c.country.pctOfTotal).toBeCloseTo(0.4)
-    expect(c.aso.label).toBe('aws')
-    expect(c.aso.pctOfTotal).toBeCloseTo(0.3)
-  })
-
-  it('labels a validator with no country / ASO on record with an em dash', () => {
-    const unknown = makeResult(
-      0,
-      [makeConcValidator('U', 40, 10, '', '')],
-      1000,
-    )
-    const c = selectValidatorConcentration(unknown, cfg, 'U')
-    if (!c) throw new Error('expected concentration for U')
-    expect(c.country.label).toBe('—')
-    expect(c.aso.label).toBe('—')
-    expect(c.country.pctOfTotal).toBeCloseTo(0.05)
   })
 })

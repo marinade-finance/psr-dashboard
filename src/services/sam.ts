@@ -21,10 +21,10 @@ import type {
   DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
 
-// Pure stake-change / redelegation calc and the per-validator selectors moved
-// to @marinade.finance/ds-sam-calc; re-exported so existing imports from
-// 'src/services/sam' keep resolving. IO (loadSam) and the display-formatting
-// selectors below stay in the dashboard.
+// Pure stake-change / redelegation / concentration calc and the per-validator
+// selectors moved to @marinade.finance/ds-sam-calc; re-exported so existing
+// imports from 'src/services/sam' keep resolving. IO (loadSam) and the
+// display-formatting selectors below stay in the dashboard.
 export {
   selectInSet,
   selectPaidUndelegationSol,
@@ -37,17 +37,12 @@ export {
   selectExpectedStakeChange,
   selectExpectedStakeChangeBreakdown,
   selectCutoffRank,
+  selectValidatorConcentration,
   type AugmentedAuctionValidator,
   type ExpectedStakeChangeBreakdown,
   type ConcentrationContext,
   type ValidatorConcentration,
 } from '@marinade.finance/ds-sam-calc'
-
-// Concentration is the one selector NOT re-exported from ds-sam-calc: the
-// shared one divides by the auction's total SAM target, while the caps it is
-// rendered against are enforced on total network stake. See
-// ./concentration.ts.
-export { selectValidatorConcentration } from './concentration'
 
 type SamResult = {
   auctionResult: AuctionResult
