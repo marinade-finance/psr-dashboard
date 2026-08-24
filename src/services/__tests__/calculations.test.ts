@@ -1,48 +1,19 @@
-// Tests for compoundApy, apyBreakdown, bondGaugeScaleMax, bondGaugeCriticalFrac, bondUtilizationPct, effectiveBondRunway.
-import { describe, it, expect, vi } from 'vitest'
+// Tests for blockRewardsSharedFrac, bondGaugeScaleMax, bondGaugeCriticalFrac, bondUtilizationPct, effectiveBondRunway.
+import { describe, it, expect } from 'vitest'
 
 import { bondUtilizationPct, effectiveBondRunway } from '../bond-health'
 import {
-  annualize,
-  compoundApy,
-  apyBreakdown,
   blockRewardsSharedFrac,
   bondGaugeScaleMax,
   bondGaugeCriticalFrac,
 } from '../calculations'
-import { selectProjectedAPY } from '../sam'
 import { selectMaxProtectedStake } from '../validator-with-bond'
 
 import type { ValidatorWithBond } from '../validator-with-bond'
-import type * as ValidatorsModule from '../validators'
 import type {
   AuctionValidator,
-  AuctionResult,
   DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
-
-// sam.ts calls loadSam which hits external APIs — mock the module-level fetches
-// selectProjectedAPY is a pure function, no mocking needed for it
-// But sam.ts imports from validators which does a fetch at module level — mock it
-vi.mock('../validators', async importOriginal => {
-  const actual = await importOriginal<typeof ValidatorsModule>()
-  return { ...actual }
-})
-
-function makeAuctionResult(
-  tvlSol: number,
-  validators: Partial<AuctionValidator>[] = [],
-): AuctionResult {
-  return {
-    winningTotalPmpe: 10,
-    auctionData: {
-      validators: validators as AuctionValidator[],
-      stakeAmounts: {
-        marinadeSamTvlSol: tvlSol,
-      },
-    },
-  } as unknown as AuctionResult
-}
 
 function makeValidator(
   overrides: Record<string, unknown> = {},
@@ -67,24 +38,6 @@ function makeValidator(
     ...overrides,
   } as unknown as AuctionValidator
 }
-
-describe('compoundApy', () => {
-  it('zero pmpe → 0', () => {
-    expect(compoundApy(0, 182)).toBe(0)
-  })
-
-  it('1 pmpe, 182 epochs → ~20%', () => {
-    expect(compoundApy(1, 182)).toBeCloseTo(0.1995, 3)
-  })
-
-  it('scales with pmpe (higher pmpe → higher apy)', () => {
-    expect(compoundApy(3, 182)).toBeGreaterThan(compoundApy(1, 182))
-  })
-
-  it('zero epochs → 0 regardless of pmpe', () => {
-    expect(compoundApy(5, 0)).toBe(0)
-  })
-})
 
 describe('blockRewardsSharedFrac', () => {
   // The label shows the share GIVEN to stakers; the value must stay consistent
@@ -170,64 +123,6 @@ describe('bondUtilizationPct', () => {
   })
 })
 
-describe('apyBreakdown', () => {
-  it('all components > 0 when all pmpe > 0', () => {
-    const validator = makeValidator()
-    const bd = apyBreakdown(validator, 182)
-    expect(bd.inflation).toBeGreaterThan(0)
-    expect(bd.mev).toBeGreaterThan(0)
-    expect(bd.blockRewards).toBeGreaterThan(0)
-    expect(bd.bid).toBeGreaterThan(0)
-    expect(bd.total).toBeGreaterThan(0)
-  })
-
-  it('total = compoundApy(totalPmpe)', () => {
-    const validator = makeValidator()
-    const bd = apyBreakdown(validator, 182)
-    expect(bd.total).toBeCloseTo(compoundApy(11, 182), 10)
-  })
-
-  it('all zero when all pmpe = 0', () => {
-    const validator = makeValidator({
-      revShare: {
-        inflationPmpe: 0,
-        mevPmpe: 0,
-        blockPmpe: 0,
-        bidPmpe: 0,
-        totalPmpe: 0,
-        bondObligationPmpe: 0,
-        auctionEffectiveBidPmpe: 0,
-        effParticipatingBidPmpe: 0,
-      },
-    })
-    const bd = apyBreakdown(validator, 182)
-    expect(bd.total).toBe(0)
-    expect(bd.inflation).toBe(0)
-    expect(bd.mev).toBe(0)
-    expect(bd.blockRewards).toBe(0)
-    expect(bd.bid).toBe(0)
-  })
-
-  it('components are independent (each driven by own pmpe)', () => {
-    const validator = makeValidator({
-      revShare: {
-        inflationPmpe: 10,
-        mevPmpe: 0,
-        blockPmpe: 0,
-        bidPmpe: 0,
-        totalPmpe: 10,
-        bondObligationPmpe: 0,
-        auctionEffectiveBidPmpe: 0,
-        effParticipatingBidPmpe: 0,
-      },
-    })
-    const bd = apyBreakdown(validator, 182)
-    expect(bd.inflation).toBeGreaterThan(0)
-    expect(bd.mev).toBe(0)
-    expect(bd.bid).toBe(0)
-  })
-})
-
 // B2: selectMaxProtectedStake returns Infinity for zero-bid validators
 describe('B2 — selectMaxProtectedStake zero-pmpe guard', () => {
   it('returns 0 when all revShare pmpe fields are 0 (no division by zero)', () => {
@@ -284,59 +179,6 @@ describe('B2 — selectMaxProtectedStake zero-pmpe guard', () => {
     }
     const result = selectMaxProtectedStake(entry)
     expect(result).toBeGreaterThan(0)
-  })
-})
-
-// B3: selectProjectedAPY divides by tvl which can be 0
-describe('B3 — selectProjectedAPY zero-tvl guard', () => {
-  it('returns 0 when marinadeSamTvlSol is 0', () => {
-    const auctionResult = makeAuctionResult(0, [
-      {
-        marinadeActivatedStakeSol: 1000,
-        revShare: {
-          auctionEffectiveBidPmpe: 5,
-          inflationPmpe: 3,
-          mevPmpe: 2,
-        },
-      } as Partial<AuctionValidator>,
-    ])
-    const result = selectProjectedAPY(auctionResult, 182)
-    expect(result).toBe(0)
-    expect(Number.isFinite(result)).toBe(true)
-  })
-
-  it('returns a finite positive value when tvl > 0', () => {
-    const auctionResult = makeAuctionResult(100000, [
-      {
-        marinadeActivatedStakeSol: 1000,
-        revShare: {
-          auctionEffectiveBidPmpe: 5,
-          inflationPmpe: 3,
-          mevPmpe: 2,
-        },
-      } as Partial<AuctionValidator>,
-    ])
-    const result = selectProjectedAPY(auctionResult, 182)
-    expect(result).toBeGreaterThan(0)
-    expect(Number.isFinite(result)).toBe(true)
-  })
-})
-
-describe('annualize', () => {
-  it('zero rate → 0 regardless of epochs', () => {
-    expect(annualize(0, 182)).toBe(0)
-  })
-
-  it('zero epochs → 0 regardless of rate', () => {
-    expect(annualize(0.01, 0)).toBe(0)
-  })
-
-  it('compoundApy(pmpe, n) === annualize(pmpe/1000, n)', () => {
-    expect(annualize(5 / 1000, 182)).toBeCloseTo(compoundApy(5, 182), 12)
-  })
-
-  it('rate=1 (100%) over 1 epoch → 1.0 (doubled)', () => {
-    expect(annualize(1, 1)).toBe(1)
   })
 })
 

@@ -8,7 +8,9 @@ import {
   selectLatestAuctionSettled,
   selectLatestPaymentSettled,
   selectNetworkEpoch,
+  slotDurationFromSamples,
 } from '../services/epoch'
+import type { PerformanceSample } from '../services/epoch'
 import type {
   ProtectedEventStatus,
   ProtectedEventWithValidator,
@@ -82,47 +84,146 @@ describe('selectNetworkEpoch', () => {
 })
 
 describe('epochInfoProgress', () => {
-  const SLOTS = 432_000 // 48h / 0.4s
+  const SLOTS = 432_000
+  const AT_400MS = 0.4
+  const AT_200MS = 0.2
 
   it('mid-epoch → 50% with half the slots of remaining time', () => {
-    const r = epochInfoProgress({
-      epoch: 612,
-      slotIndex: SLOTS / 2,
-      slotsInEpoch: SLOTS,
-    })
+    const r = epochInfoProgress(
+      { epoch: 612, slotIndex: SLOTS / 2, slotsInEpoch: SLOTS },
+      AT_400MS,
+    )
     expect(r.epoch).toBe(612)
     expect(r.percent).toBeCloseTo(50, 5)
     expect(r.hoursRemaining).toBeCloseTo(24, 5)
   })
 
   it('start of epoch → 0% and a full epoch of remaining time', () => {
-    const r = epochInfoProgress({
-      epoch: 612,
-      slotIndex: 0,
-      slotsInEpoch: SLOTS,
-    })
+    const r = epochInfoProgress(
+      { epoch: 612, slotIndex: 0, slotsInEpoch: SLOTS },
+      AT_400MS,
+    )
     expect(r.percent).toBe(0)
     expect(r.hoursRemaining).toBeCloseTo(48, 5)
   })
 
+  // The SIMD-0525 regression guard: halving the slot time must halve the
+  // countdown, never leave it pinned at the old 48h nominal.
+  it('halved slot time halves the countdown at identical slot counts', () => {
+    const info = { epoch: 612, slotIndex: 0, slotsInEpoch: SLOTS }
+    expect(epochInfoProgress(info, AT_200MS).hoursRemaining).toBeCloseTo(24, 5)
+    expect(epochInfoProgress(info, AT_200MS).percent).toBe(
+      epochInfoProgress(info, AT_400MS).percent,
+    )
+  })
+
+  it('measured rate slower than nominal extends the countdown', () => {
+    const info = { epoch: 612, slotIndex: 0, slotsInEpoch: SLOTS }
+    // 0.4161 s/slot — mainnet's actual observed rate, ~4% off the 0.4 nominal.
+    expect(epochInfoProgress(info, 0.4161).hoursRemaining).toBeCloseTo(49.93, 2)
+    expect(epochInfoProgress(info, AT_400MS).hoursRemaining).toBeCloseTo(48, 5)
+  })
+
+  it('unavailable slot rate → percent still exact, countdown dropped', () => {
+    const r = epochInfoProgress(
+      { epoch: 612, slotIndex: SLOTS / 4, slotsInEpoch: SLOTS },
+      null,
+    )
+    expect(r.percent).toBeCloseTo(25, 5)
+    expect(r.hoursRemaining).toBeNull()
+  })
+
   it('at the last slot → clamps to 100% / 0h', () => {
-    const r = epochInfoProgress({
-      epoch: 612,
-      slotIndex: SLOTS,
-      slotsInEpoch: SLOTS,
-    })
+    const r = epochInfoProgress(
+      { epoch: 612, slotIndex: SLOTS, slotsInEpoch: SLOTS },
+      AT_400MS,
+    )
     expect(r.percent).toBe(100)
     expect(r.hoursRemaining).toBe(0)
   })
 
   it('slotIndex past slotsInEpoch → still clamps to 100% / 0h', () => {
-    const r = epochInfoProgress({
-      epoch: 612,
-      slotIndex: SLOTS + 50_000,
-      slotsInEpoch: SLOTS,
-    })
+    const r = epochInfoProgress(
+      { epoch: 612, slotIndex: SLOTS + 50_000, slotsInEpoch: SLOTS },
+      AT_400MS,
+    )
     expect(r.percent).toBe(100)
     expect(r.hoursRemaining).toBe(0)
+  })
+})
+
+describe('slotDurationFromSamples', () => {
+  it('pools slots over pooled seconds, not a mean of ratios', () => {
+    // 721 slots over 300s — the shape getRecentPerformanceSamples returns.
+    expect(
+      slotDurationFromSamples([
+        { numSlots: 145, samplePeriodSecs: 60 },
+        { numSlots: 145, samplePeriodSecs: 60 },
+        { numSlots: 142, samplePeriodSecs: 60 },
+        { numSlots: 145, samplePeriodSecs: 60 },
+        { numSlots: 144, samplePeriodSecs: 60 },
+      ]),
+    ).toBeCloseTo(300 / 721, 9)
+  })
+
+  it('weights a long window over a short one', () => {
+    // Ratio-averaging would give 0.75; slot-weighting gives 110/200 = 0.55.
+    expect(
+      slotDurationFromSamples([
+        { numSlots: 190, samplePeriodSecs: 100 },
+        { numSlots: 10, samplePeriodSecs: 10 },
+      ]),
+    ).toBeCloseTo(0.55, 9)
+  })
+
+  it('skips zero-slot windows rather than dividing by zero', () => {
+    expect(
+      slotDurationFromSamples([
+        { numSlots: 0, samplePeriodSecs: 60 },
+        { numSlots: 150, samplePeriodSecs: 60 },
+      ]),
+    ).toBeCloseTo(0.4, 9)
+  })
+
+  it('returns null when no window is usable', () => {
+    expect(slotDurationFromSamples([])).toBeNull()
+    expect(
+      slotDurationFromSamples([{ numSlots: 0, samplePeriodSecs: 0 }]),
+    ).toBeNull()
+  })
+
+  it('skips malformed samples from an unexpected RPC payload', () => {
+    const samples = [
+      { numSlots: 'lots', samplePeriodSecs: 60 },
+      { numSlots: 150, samplePeriodSecs: 60 },
+    ] as unknown as PerformanceSample[]
+    expect(slotDurationFromSamples(samples)).toBeCloseTo(0.4, 9)
+  })
+
+  // A stalled cluster reports well-formed windows carrying a trickle of slots,
+  // and all five stall together — pooling cannot recover a rate from them.
+  it('returns null when every window reports a stalled trickle', () => {
+    expect(
+      slotDurationFromSamples([
+        { numSlots: 3, samplePeriodSecs: 60 },
+        { numSlots: 3, samplePeriodSecs: 60 },
+        { numSlots: 4, samplePeriodSecs: 60 },
+        { numSlots: 2, samplePeriodSecs: 60 },
+        { numSlots: 3, samplePeriodSecs: 60 },
+      ]),
+    ).toBeNull()
+  })
+
+  it('returns null on an implausibly fast rate', () => {
+    expect(
+      slotDurationFromSamples([{ numSlots: 6000, samplePeriodSecs: 60 }]),
+    ).toBeNull()
+  })
+
+  it('keeps a slow but plausible rate', () => {
+    expect(
+      slotDurationFromSamples([{ numSlots: 60, samplePeriodSecs: 60 }]),
+    ).toBeCloseTo(1, 9)
   })
 })
 

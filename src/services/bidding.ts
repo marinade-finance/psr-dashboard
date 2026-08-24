@@ -48,7 +48,7 @@ export function computeBidding(v: AugmentedAuctionValidator): Bidding {
   const effBid = selectEffectiveBid(v)
   const cost = selectEffectiveCost(v)
   const activatingStakePmpe = v.revShare.activatingStakePmpe
-  const activatingCost = pmpeToSol(activatingStakePmpe, activating)
+  const activatingCost = pmpeToSol(activatingStakePmpe, activating).toNumber()
   return {
     active: selectSamActiveStake(v),
     target: selectSamTargetStake(v),

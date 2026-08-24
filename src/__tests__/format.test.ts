@@ -178,21 +178,23 @@ describe('signedStake', () => {
   })
 })
 
+// ts-common 5 returns a Decimal, so assert the numeric value every dashboard
+// call site consumes via Number() — not decimal.js's string form, which switches
+// to exponential notation below 1e-7.
 describe('lamportsToSol', () => {
-  it('1 SOL (1_000_000_000 lamports) → "1"', () => {
-    expect(lamportsToSol('1000000000')).toBe('1')
+  it('1 SOL (1_000_000_000 lamports) → 1', () => {
+    expect(lamportsToSol('1000000000').toNumber()).toBe(1)
   })
 
-  it('short input pads with leading zeros', () => {
-    // "1" → "0000000001" → "0.000000001"
-    expect(lamportsToSol('1')).toBe('0.000000001')
+  it('1 lamport → 1e-9', () => {
+    expect(lamportsToSol('1').toNumber()).toBe(1e-9)
   })
 
-  it('exact 9-digit input inserts decimal at front', () => {
-    expect(lamportsToSol('123456789')).toBe('0.123456789')
+  it('sub-SOL input keeps all nine decimals', () => {
+    expect(lamportsToSol('123456789').toFixed()).toBe('0.123456789')
   })
 
-  it('10-digit input splits into integer + fractional, trimming trailing zeros', () => {
-    expect(lamportsToSol('1234567890')).toBe('1.23456789')
+  it('above-SOL input splits into integer + fractional', () => {
+    expect(lamportsToSol('1234567890').toFixed()).toBe('1.23456789')
   })
 })

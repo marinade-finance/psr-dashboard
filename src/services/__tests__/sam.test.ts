@@ -3,22 +3,25 @@
 import { describe, it, expect, vi } from 'vitest'
 
 import { AuctionConstraintType } from '@marinade.finance/ds-sam-sdk'
+import { pmpeToApy } from '@marinade.finance/ts-common'
+
+import { BASELINE_SLOTS_PER_YEAR } from '@marinade.finance/ds-sam-calc'
 
 import {
   augmentAuctionResult,
   selectCutoffRank,
+  selectEpochDurationSeconds,
   selectExpectedStakeChange,
   selectExpectedStakeChangeBreakdown,
   selectRedelegationPriorityFrontierPmpe,
   selectRedelegationPriorityRank,
   selectValidatorConcentration,
-  selectWinningApyForValidator,
+  selectWinningAPY,
 } from '../sam'
-
-import { compoundApy } from '../calculations'
 
 import type * as ValidatorsModule from '../validators'
 import type {
+  AuctionData,
   AuctionResult,
   AuctionValidator,
   DsSamConfig,
@@ -372,37 +375,44 @@ describe('allocateRedelegation — best-first walk by totalPmpe desc', () => {
 function makeApyValidator(
   voteAccount: string,
   totalPmpe: number,
-  nonBid: number,
-  inSet: boolean,
 ): AuctionValidator {
   return {
     voteAccount,
-    auctionStake: { marinadeSamTargetSol: inSet ? 100 : 0 },
-    marinadeActivatedStakeSol: 0,
-    bondBalanceSol: 5,
-    values: { paidUndelegationSol: 0 },
-    revShare: { totalPmpe, inflationPmpe: nonBid, mevPmpe: 0, blockPmpe: 0 },
+    revShare: { totalPmpe },
   } as unknown as AuctionValidator
 }
 
-describe('selectWinningApyForValidator — marginal winner', () => {
-  it('rebuilds the bid from the LOWEST-totalPmpe in-set validator', () => {
-    // In-set: HIGH (totalPmpe 12) and MARG (totalPmpe 10, the clearing winner).
-    // OUT (totalPmpe 8) is not in set. The bid component must come from MARG's
-    // non-bid profile (nonBid=3), not HIGH's (nonBid=7) or OUT's. Input order
-    // is worst-first so a worst-first walk would wrongly pick HIGH last.
-    const result = makeResult(10, [
-      makeApyValidator('OUT', 8, 1, false),
-      makeApyValidator('MARG', 10, 3, true),
-      makeApyValidator('HIGH', 12, 7, true),
-    ])
-    const self = makeApyValidator('SELF', 11, 5, true)
-    const epochsPerYear = 160
-    const winningBidPmpe = Math.max(0, 10 - 3) // winningTotalPmpe − MARG nonBid
-    const expected = compoundApy(5 + winningBidPmpe, epochsPerYear)
+// The scaling constant behind every APY the dashboard renders — pin it against
+// the 48h nominal the expected values elsewhere in this suite are written for.
+describe('selectEpochDurationSeconds', () => {
+  const auctionData = (slotsPerYear: number) =>
+    ({ slotParams: { slotsPerYear } }) as unknown as AuctionData
+
+  it('baseline slots-per-year → the 48h nominal epoch', () => {
     expect(
-      selectWinningApyForValidator(self, result, epochsPerYear, 0),
-    ).toBeCloseTo(expected, 9)
+      selectEpochDurationSeconds(auctionData(BASELINE_SLOTS_PER_YEAR)),
+    ).toBeCloseTo(172_800, 6)
+  })
+
+  it('halved slot time → halved epoch duration', () => {
+    expect(
+      selectEpochDurationSeconds(auctionData(2 * BASELINE_SLOTS_PER_YEAR)),
+    ).toBeCloseTo(86_400, 6)
+  })
+})
+
+describe('selectWinningAPY', () => {
+  it('compounds the clearing price and is independent of any validator', () => {
+    const result = makeResult(10, [
+      makeApyValidator('OUT', 8),
+      makeApyValidator('MID', 11),
+      makeApyValidator('HIGH', 12),
+    ])
+    const epochDurationSeconds = 172_800
+    expect(selectWinningAPY(result, epochDurationSeconds)).toBeCloseTo(
+      pmpeToApy(10, epochDurationSeconds).toNumber(),
+      9,
+    )
   })
 })
 
