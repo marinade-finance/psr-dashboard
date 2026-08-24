@@ -486,9 +486,9 @@ A large gap between your bid and the clearing price means you have auction headr
 
 ### Concentration Limits (Countries and ASOs)
 
-Marinade caps the fraction of auction stake that can go to validators in a single country or from a single Autonomous System Operator (ASO — the hosting provider or network operator). The default cap is 30% per country and 30% per ASO. A separate per-validator cap of 15% of TVL also applies. These caps protect the pool against correlated failures: if one cloud provider or jurisdiction has an outage, the impact on Marinade's stake is bounded.
+Marinade caps how much of **total network stake** may sit in a single country or with a single Autonomous System Operator (ASO — the hosting provider or network operator). The caps currently in force are 40% per country and 30% per ASO; because they come from the auction config rather than the code, each validator's Concentration card shows the live figure alongside that validator's own share. A separate per-validator cap limits any one validator to 15% of Marinade's TVL. These caps protect the pool against correlated failures: if one cloud provider or jurisdiction has an outage, the impact on Marinade's stake is bounded.
 
-When a country or ASO hits its cap, validators there are cut — even if their bid is high enough to win. Open any validator's detail panel and the **Concentration** card shows that validator's country and ASO, each with the group's current share of total network stake against its cap (e.g. `28% of 30% cap`) — the same share the auction measures the cap on, counting every validator in the group whether or not it holds Marinade stake; the value turns red and reads `· at cap` when that country or ASO is the limit holding this validator back.
+When a country or ASO hits its cap, validators there are cut — even if their bid is high enough to win. Open any validator's detail panel and the **Concentration** card shows that validator's country and ASO, each with the group's current share of total network stake against its cap (e.g. `28% of 30% cap`) — the same share the auction measures the cap on, counting every validator in the group whether or not it holds Marinade stake; the value turns red and reads `· at cap` when that country or ASO network cap is the limit holding this validator back.
 
 ---
 

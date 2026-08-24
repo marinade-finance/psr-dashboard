@@ -356,20 +356,32 @@ const ConcentrationRow = ({
   help: string
   guideTo: string
   separator?: boolean
-}) => (
-  <MetricRow
-    label={`${label} · ${group.label}`}
-    help={help}
-    helpGuideTo={guideTo}
-    value={`${pct(group.network.pctOfTotal, 1)} of ${pct(group.network.capPct, 0)} cap${
-      group.thisValidatorCapped ? ' · at cap' : ''
-    }`}
-    valueStyle={
-      group.thisValidatorCapped ? { color: CSS_DESTRUCTIVE } : undefined
-    }
-    separator={separator}
-  />
-)
+}) => {
+  // The value shown is the NETWORK-basis share. `thisValidatorCapped` alone
+  // does not justify annotating it: ds-sam records `lastCapConstraint` when
+  // `min(totalLeftToCapSol, marinadeLeftToCapSol)` runs out
+  // (ds-sam-calc `minCapFromConstraint`), so the cap that bit may have been
+  // the Marinade-basis one while the network share still sits far below its
+  // cap. Requiring `binding === 'network'` keeps the marker and the number it
+  // annotates measured on the same quantity: `binding` is derived from the
+  // very same group sums as `group.network`, so the two can never disagree.
+  // (When the network ledger is genuinely the exhausted one its headroom is
+  // ~0 and therefore below the Marinade headroom, so `binding` is 'network'
+  // exactly in the case the marker is meant for.)
+  const atNetworkCap = group.thisValidatorCapped && group.binding === 'network'
+  return (
+    <MetricRow
+      label={`${label} · ${group.label}`}
+      help={help}
+      helpGuideTo={guideTo}
+      value={`${pct(group.network.pctOfTotal, 1)} of ${pct(group.network.capPct, 0)} cap${
+        atNetworkCap ? ' · at cap' : ''
+      }`}
+      valueStyle={atNetworkCap ? { color: CSS_DESTRUCTIVE } : undefined}
+      separator={separator}
+    />
+  )
+}
 
 const ConcentrationCard = ({
   concentration,

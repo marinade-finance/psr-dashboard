@@ -313,11 +313,16 @@ epochs`). Balance renders 3-decimal `cost()` precision for a
   `stakeAmounts.networkTotalSol` — and `Y` is the configured cap
   (`maxNetworkStakeConcentrationPer{Country,Aso}Dec`, live 40% country /
   30% ASO). Both sides are therefore shares of the same quantity, the
-  one the auction actually caps. When this validator's own binding cap
-  is that country / ASO the value gains a `· at cap` suffix and turns
-  `CSS_DESTRUCTIVE`. Source: `selectValidatorConcentration`'s `.network`
-  dimension (`@marinade.finance/ds-sam-calc` ≥ 0.3.0, which also exposes
-  a `.marinade` dimension and a `binding` flag). Keeps the country / ASO
+  one the auction actually caps. The value gains a `· at cap` suffix and
+  turns `CSS_DESTRUCTIVE` only when this validator's own binding cap is
+  that country / ASO **and** that group's `binding` is `network`.
+  `thisValidatorCapped` alone is not enough: ds-sam records the cap
+  constraint off the _lesser_ of the network and Marinade cap ledgers, so
+  it also fires for a Marinade-basis cap — which would annotate the
+  network number with a cap it is nowhere near. Source:
+  `selectValidatorConcentration`'s `.network` dimension
+  (`@marinade.finance/ds-sam-calc` ≥ 0.3.0, which also exposes a
+  `.marinade` dimension and the `binding` flag). Keeps the country / ASO
   limits inspectable per-validator after the headline concentration
   tiles were removed.
 
