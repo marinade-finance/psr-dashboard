@@ -24,10 +24,13 @@ import type { TipUrgency, ValidatorTip } from '@marinade.finance/ds-sam-calc'
 export {
   getValidatorTip,
   bondAdvice,
+  outOfSetGate,
+  outOfSetGateLabel,
   type ValidatorTip,
   type TipUrgency,
   type TipConstraint,
   type BondAdvice,
+  type OutOfSetGate,
 } from '@marinade.finance/ds-sam-calc'
 
 export type TipIcon = 'alert' | 'bond' | 'bid' | 'cap' | 'up' | 'down' | 'right'

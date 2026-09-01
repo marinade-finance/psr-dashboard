@@ -7,6 +7,7 @@ import { TEST_PROTECTED_EVENTS } from 'src/fixtures/test-protected-events'
 import {
   TEST_AUCTION_RESULT,
   TEST_DS_SAM_CONFIG,
+  TEST_EPOCH_INFO,
 } from 'src/fixtures/test-validators'
 import { ProtectedEventsPage } from 'src/pages/protected-events'
 import { selectEpochDurationSeconds } from 'src/services/sam'
@@ -38,9 +39,12 @@ export const TestProtectedEventsPage: React.FC<UserLevelProps> = ({
       },
     })
     queryClient.setQueryData(['protected-events'], TEST_PROTECTED_EVENTS)
-    // EpochMeter (in nav) reads ['sam']; nav hover prefetches ['bonds'].
+    // EpochMeter (in nav) reads ['sam']; nav hover prefetches ['bonds']. Its
+    // ['epoch-info'] is the one key that has no cache to fall back on —
+    // unseeded it POSTs to the cluster RPC.
     queryClient.setQueryData(['sam'], SAM_RESULT)
     queryClient.setQueryData(['bonds'], TEST_BONDS_DATA)
+    queryClient.setQueryData(['epoch-info'], TEST_EPOCH_INFO)
     queryClient.setQueryData(
       ['notifications-broadcast'],
       TEST_BROADCAST_NOTIFICATION,

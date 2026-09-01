@@ -9,6 +9,8 @@ import {
 } from '@marinade.finance/ds-sam-sdk'
 import { BASELINE_SLOTS_PER_YEAR } from '@marinade.finance/ds-sam-calc'
 
+import type { EpochInfo } from 'src/services/epoch'
+
 import type {
   AuctionResult,
   AuctionValidator,
@@ -1149,6 +1151,33 @@ const s29 = stateValidator('FiXtUREvbRAISEbid29999999999999999999999999qq', {
   aso: ASO_TERASWITCH,
 })
 
+// 30. In-set + delta=0 + VALIDATOR cap binding → capCta: "At per-validator cap
+//   — stake can't grow until cap frees." Same shape as s28; the type is what
+//   matters. VALIDATOR reaches capCauseLine only through capCta on an in-set
+//   row, since outOfSetCta needs the row to be out of set.
+const s30: AuctionValidator = {
+  ...stateValidator('FiXtUREvbCAPVALIDATORinset3000000000000000rr', {
+    minBondPmpe: 1,
+    idealBondPmpe: 2,
+    bondBalanceSol: 200,
+    claimableBondBalanceSol: 200,
+    marinadeSamTargetSol: STATE_ACTIVE,
+    bondGoodForNEpochs: 30,
+    bidCpmpe: 2.5,
+    country: C_NL,
+    aso: ASO_VULTR,
+  }),
+  lastCapConstraint: {
+    constraintType: AuctionConstraintType.VALIDATOR,
+    constraintName: 'FiXtUREvbCAPVALIDATORinset3000000000000000rr',
+    totalStakeSol: 200_000,
+    totalLeftToCapSol: 0,
+    marinadeStakeSol: 200_000,
+    marinadeLeftToCapSol: 0,
+    validators: [],
+  },
+}
+
 // ───── outOfSetCta coverage fixtures (o-row) ─────────────────────────────────
 //
 // One validator per branch of outOfSetCta in src/services/tip-engine.ts so
@@ -1485,6 +1514,76 @@ const o12: AuctionValidator = {
   values: outOfSetValues(50_000, 100),
 }
 
+// o14. Bond below the minimum with the clipped cap at zero, no cap recorded →
+//   outOfSetGate 'bondBelowMin'. Low stake (8 SOL) keeps it out of isDefending,
+//   so the bond CTA stays neutral and the badge caption must name the bond
+//   rather than the loss. bondSamStakeCapSol is the only field that drives the
+//   gate — O_COMMON's 250_000 must be overridden after the spread.
+const o14: AuctionValidator = {
+  ...outOfSetBase('FiXtUREvoBONDBELOWMINo14ddddddddddddddddddnn', {
+    marinadeActivatedStakeSol: 8,
+    bondBalanceSol: 2,
+    country: C_DE,
+    aso: ASO_HETZNER,
+  }),
+  ...O_COMMON,
+  samEligible: true,
+  samBlocked: false,
+  bondSamStakeCapSol: 0,
+  maxBondDelegation: 0,
+  lastCapConstraint: null,
+  values: outOfSetValues(8, 2),
+}
+
+// o15. Cap BOND — the bond is funded well above the minimum, so the gate is
+//   the bond's own stake cap, not 'bondBelowMin'. capCta excludes BOND (only
+//   the validator can free it, so "until cap frees" would be a false promise),
+//   which leaves this row as the only place the cause line renders at all.
+const o15: AuctionValidator = {
+  ...outOfSetBase('FiXtUREvoCAPBONDo15eeeeeeeeeeeeeeeeeeeeeeeoo', {
+    marinadeActivatedStakeSol: 40_000,
+    country: C_NL,
+    aso: ASO_VULTR,
+  }),
+  ...O_COMMON,
+  samEligible: true,
+  samBlocked: false,
+  lastCapConstraint: {
+    constraintType: AuctionConstraintType.BOND,
+    constraintName: '',
+    totalStakeSol: 40_000,
+    totalLeftToCapSol: 0,
+    marinadeStakeSol: 40_000,
+    marinadeLeftToCapSol: 0,
+    validators: [],
+  },
+  values: outOfSetValues(40_000, 100),
+}
+
+// o16. Cap RISK — the unprotected-stake risk cap binds. capCta does accept
+//   RISK, but no in-set fixture carries one, so this row is what renders the
+//   cause line today.
+const o16: AuctionValidator = {
+  ...outOfSetBase('FiXtUREvoCAPRISKo16fffffffffffffffffffffffpp', {
+    marinadeActivatedStakeSol: 45_000,
+    country: C_GB,
+    aso: ASO_CONTABO,
+  }),
+  ...O_COMMON,
+  samEligible: true,
+  samBlocked: false,
+  lastCapConstraint: {
+    constraintType: AuctionConstraintType.RISK,
+    constraintName: '',
+    totalStakeSol: 45_000,
+    totalLeftToCapSol: 0,
+    marinadeStakeSol: 45_000,
+    marinadeLeftToCapSol: 0,
+    validators: [],
+  },
+  values: outOfSetValues(45_000, 100),
+}
+
 // ───── Out-of-set + bid-too-low penalty (p-row) ──────────────────────────────
 //
 // Validators that dropped their bid hard: now both below the winning line
@@ -1568,6 +1667,7 @@ export const TEST_VALIDATORS: AuctionValidator[] = [
   s27,
   s28,
   s29,
+  s30,
   o01,
   o02,
   o03,
@@ -1582,6 +1682,9 @@ export const TEST_VALIDATORS: AuctionValidator[] = [
   o10,
   o11,
   o12,
+  o14,
+  o15,
+  o16,
   p01,
 ]
 
@@ -1605,6 +1708,17 @@ export const TEST_AUCTION_RESULT: AuctionResult = {
     },
     blacklist: new Set<string>([O03_VOTE, O13_VOTE]),
   },
+}
+
+// EpochMeter's ['epoch-info'] query is the one nav consumer that hits the
+// cluster RPC rather than the ['sam'] cache, so every /test- route has to seed
+// it too. Half an epoch at the 400ms slot time the fixture's slotParams assume.
+export const TEST_EPOCH_INFO: {
+  info: EpochInfo
+  slotDurationSeconds: number
+} = {
+  info: { epoch: EPOCH, slotIndex: 216_000, slotsInEpoch: 432_000 },
+  slotDurationSeconds: 0.4,
 }
 
 // Thin config — only fields the UI reads directly

@@ -10,6 +10,7 @@ import { TEST_PROTECTED_EVENTS } from 'src/fixtures/test-protected-events'
 import {
   TEST_AUCTION_RESULT,
   TEST_DS_SAM_CONFIG,
+  TEST_EPOCH_INFO,
 } from 'src/fixtures/test-validators'
 import { ValidatorBondsPage } from 'src/pages/validator-bonds'
 import { selectEpochDurationSeconds } from 'src/services/sam'
@@ -39,10 +40,12 @@ export const TestBondsPage: React.FC<UserLevelProps> = ({ level }) => {
       },
     })
     queryClient.setQueryData(['bonds'], TEST_BONDS_DATA)
-    // EpochMeter (in nav) reads ['sam'] and ['protected-events']; nav
-    // hover prefetches ['protected-events']. Seed both so nothing leaks.
+    // EpochMeter (in nav) reads ['sam'] and ['protected-events']; nav hover
+    // prefetches ['protected-events']. Its ['epoch-info'] is the one key that
+    // has no cache to fall back on — unseeded it POSTs to the cluster RPC.
     queryClient.setQueryData(['sam'], SAM_RESULT)
     queryClient.setQueryData(['protected-events'], TEST_PROTECTED_EVENTS)
+    queryClient.setQueryData(['epoch-info'], TEST_EPOCH_INFO)
     queryClient.setQueryData(
       ['notifications-broadcast'],
       TEST_BROADCAST_NOTIFICATION,
