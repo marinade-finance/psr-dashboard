@@ -915,6 +915,7 @@ export const ValidatorDetail = ({
               )}
               <Tooltip content={membershipTooltip(inSet, outOfSetCause)}>
                 <span
+                  tabIndex={0}
                   className="px-2 py-0.5 rounded-md text-xs font-medium shrink-0"
                   style={{
                     background: inSet ? CSS_PRIMARY_LIGHT : CSS_MUTED,

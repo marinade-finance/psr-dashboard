@@ -28,8 +28,8 @@ npx tsc --noEmit        # type check
 ### Playwright browsers
 
 `pnpm test:e2e` needs Playwright's own pinned build — a system Chrome is not
-used. `npx playwright install chromium` covers supported distros. On one
-Playwright has no build for, it refuses outright
+used. `npx playwright install chromium` covers supported distros. If Playwright
+has no Chromium build for the host platform, the install refuses outright
 (`Playwright does not support chromium on ubuntu26.04-x64`); install the
 nearest supported build instead:
 

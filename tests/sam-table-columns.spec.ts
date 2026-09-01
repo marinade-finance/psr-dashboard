@@ -188,23 +188,23 @@ test.describe('SAM table — winning set tint', () => {
     expect(cls).not.toMatch(/bg-destructive/)
   })
 
-  test('at least one row carries the out-of-set muted tint, and none is destructive', async ({
+  test('a known out-of-set row carries the muted tint, and none is destructive', async ({
     page,
   }) => {
     await gotoSam(page)
+    // s23 in src/fixtures/test-validators.ts — marinadeSamTargetSol: 0, so it
+    // is out of set by construction whatever the sort does.
+    const outOfSet = page
+      .locator('tbody tr')
+      .filter({ hasText: 'CTA: Out-of-Set Bid Too Low' })
+      .first()
+    await expect(outOfSet).toHaveClass(/bg-muted\/40/)
     const rows = page.locator('tbody tr')
     const n = await rows.count()
-    let found = false
     for (let i = 0; i < n; i++) {
       const cls = (await rows.nth(i).getAttribute('class')) ?? ''
       expect(cls).not.toMatch(/bg-destructive/)
-      if (/bg-muted\/40/.test(cls)) {
-        found = true
-      }
     }
-    expect(found, 'expected at least one out-of-set row with muted tint').toBe(
-      true,
-    )
   })
 })
 

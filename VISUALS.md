@@ -42,10 +42,10 @@ and `tipBannerSeverity` in `breakdowns/card.tsx` resolves any
 not urgency). **Rule:** colour encodes severity ONLY — never the lever,
 and never set membership. Being out of set is a fact, not an alarm: the
 sam-table row tint (`bg-muted/40`) and the sheet `Out of Set` pill are
-both muted, and severity for those rows is carried by the Next Step
-pill, the tip banner and the rank glyph alone. The APY card's
-grey-vs-destructive split is the one remaining colour on an out-of-set
-row, and it answers a different question — did the total clear the
+both muted. Every other indicator keeps its own colour on an out-of-set
+row — Next Step pill, tip banner, rank glyph, Bond chip, penalty badges
+— because each answers a severity question, not a membership one. So
+does the APY card's grey-vs-destructive split: did the total clear the
 winning threshold (`apyStanding`).
 `@marinade.finance/ds-sam-calc`, `src/components/breakdowns/card.tsx`.
 
