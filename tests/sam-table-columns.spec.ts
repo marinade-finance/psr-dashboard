@@ -181,8 +181,10 @@ test.describe('SAM table — winning set tint', () => {
     // the highest-target validator — necessarily in-set).
     const first = page.locator('tbody tr').first()
     const cls = (await first.getAttribute('class')) ?? ''
-    // Out-of-set marker class — must NOT be on an in-set row.
-    expect(cls).not.toMatch(/bg-muted/)
+    // The `/40` opacity is load-bearing: TableRow carries an unconditional
+    // `data-[state=selected]:bg-muted` variant, so bare `bg-muted` is on
+    // every row and matching it would assert nothing.
+    expect(cls).not.toMatch(/bg-muted\/40/)
     expect(cls).not.toMatch(/bg-destructive/)
   })
 
@@ -196,7 +198,7 @@ test.describe('SAM table — winning set tint', () => {
     for (let i = 0; i < n; i++) {
       const cls = (await rows.nth(i).getAttribute('class')) ?? ''
       expect(cls).not.toMatch(/bg-destructive/)
-      if (/bg-muted/.test(cls)) {
+      if (/bg-muted\/40/.test(cls)) {
         found = true
       }
     }

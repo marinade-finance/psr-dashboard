@@ -121,6 +121,6 @@ test('V08 (Out of Set) row tint is muted, not destructive', async ({
   const cls = (await row.getAttribute('class')) ?? ''
   // Membership is tone-neutral: severity lives in the Next Step pill, the
   // banner and the rank glyph, never in the row background.
-  expect(cls).toMatch(/bg-muted/i)
+  expect(cls).toMatch(/bg-muted\/40/)
   expect(cls).not.toMatch(/destructive/i)
 })
