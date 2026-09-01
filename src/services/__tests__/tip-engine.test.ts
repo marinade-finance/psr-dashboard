@@ -942,6 +942,41 @@ describe('outOfSetGate — badge caption source', () => {
     expect(tip.text).toContain('grow stake')
     expect(tip.text).not.toContain('Losing')
   })
+
+  const makeCapped = (constraintType: string) =>
+    makeValidator({
+      auctionStake: { marinadeSamTargetSol: 0 },
+      marinadeActivatedStakeSol: 40_000,
+      bondBalanceSol: 100,
+      claimableBondBalanceSol: 100,
+      bondSamStakeCapSol: 40_000,
+      lastCapConstraint: {
+        constraintType,
+        constraintName: '',
+        totalStakeSol: 40_000,
+        totalLeftToCapSol: 0,
+        marinadeStakeSol: 40_000,
+        marinadeLeftToCapSol: 0,
+        validators: [],
+      },
+      values: { expectedStakeChangeSol: -40_000 },
+    })
+
+  // BOND and RISK reach a caption only here: capCta drops both, so without the
+  // out-of-set path these two cause lines would render nowhere.
+  it('a bond stake cap on a funded bond reads as the cap, not as bondBelowMin', () => {
+    const gate = outOfSetGate(makeCapped('BOND'), GATE_CONFIG)
+    expect(gate?.kind).toBe('cap')
+    expect(gate && outOfSetGateLabel(gate, GATE_CONFIG)).toBe(
+      'At your bond cap',
+    )
+  })
+
+  it('a recorded risk cap names the risk cap', () => {
+    const gate = outOfSetGate(makeCapped('RISK'), GATE_CONFIG)
+    expect(gate?.kind).toBe('cap')
+    expect(gate && outOfSetGateLabel(gate, GATE_CONFIG)).toBe('At the risk cap')
+  })
 })
 
 // --- regression: -0 SOL was rendered red; anything that displays 0 SOL is

@@ -10,6 +10,7 @@ import { TEST_PROTECTED_EVENTS } from 'src/fixtures/test-protected-events'
 import {
   TEST_AUCTION_RESULT,
   TEST_DS_SAM_CONFIG,
+  TEST_EPOCH_INFO,
   TEST_VALIDATOR_NAMES,
 } from 'src/fixtures/test-validators'
 import { SamPage } from 'src/pages/stake-auction-marketplace'
@@ -59,6 +60,7 @@ export const TestSamPage: React.FC<UserLevelProps> = ({ level }) => {
     )
     // Seed empty array so the tab renders without a fetch.
     queryClient.setQueryData(['psr-estimates-all'], [])
+    queryClient.setQueryData(['epoch-info'], TEST_EPOCH_INFO)
     return queryClient
   })
   const dataSources = useMemo<SamDataSources>(
