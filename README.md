@@ -25,6 +25,24 @@ pnpm test:e2e:update    # refresh visual-regression baselines
 npx tsc --noEmit        # type check
 ```
 
+### Playwright browsers
+
+`pnpm test:e2e` needs Playwright's own pinned build — a system Chrome is not
+used. `npx playwright install chromium` covers supported distros. On one
+Playwright has no build for, it refuses outright
+(`Playwright does not support chromium on ubuntu26.04-x64`); install the
+nearest supported build instead:
+
+```sh
+PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=ubuntu24.04-x64 npx playwright install chromium
+```
+
+Note the platform string takes no dash before the version — `ubuntu-24.04`
+fails with the same "does not support" message. Install-time only; plain
+`pnpm test:e2e` works afterwards. Don't point `playwright.config.ts` at a
+system browser: CI runs the bundled build, and the split makes a suite pass
+locally and fail in CI.
+
 ## Routes
 
 | Route                    | Page                                   |
