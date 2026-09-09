@@ -123,6 +123,27 @@ const ProtectedEventRecord = z
 const ProtectedEventsResponse = z
   .object({ protected_events: z.array(ProtectedEventRecord) })
   .passthrough()
+const DirectStakingAllocationRecord = z
+  .object({
+    bidding_bonds_epoch: z.number().int().gte(0).nullish(),
+    bidding_effective_amount: z.number().nullish(),
+    bond_type: z.string().nullish(),
+    claims_amount: z.number().int().gte(0),
+    effective_amount: z.number().nullish(),
+    epoch: z.number().int().gte(0),
+    exposure_bps: z.number().int().gte(0).nullish(),
+    institutional_bonds_epoch: z.number().int().gte(0).nullish(),
+    institutional_effective_amount: z.number().nullish(),
+    outcome: z.string(),
+    settlements: z.number().int().gte(0),
+    slot: z.number().int().gte(0),
+    updated_at: z.string().datetime({ offset: true }),
+    vote_account: Pubkey,
+  })
+  .passthrough()
+const DirectStakingAllocationResponse = z
+  .object({ allocation: z.array(DirectStakingAllocationRecord) })
+  .passthrough()
 const ProtectedValidatorsResponse = z
   .object({ protected_validators: z.array(Pubkey) })
   .passthrough()
@@ -163,6 +184,9 @@ const CollectedStakeResponse = z
     validators: z.array(ValidatorStake),
   })
   .passthrough()
+const CollectedStakeHistoryResponse = z
+  .object({ epochs: z.array(CollectedStakeResponse) })
+  .passthrough()
 const VerifiedValidatorsResponse = z
   .object({ verified_validators: z.array(Pubkey) })
   .passthrough()
@@ -178,11 +202,14 @@ export const schemas = {
   SettlementReason,
   ProtectedEventRecord,
   ProtectedEventsResponse,
+  DirectStakingAllocationRecord,
+  DirectStakingAllocationResponse,
   ProtectedValidatorsResponse,
   AuthorityTotal,
   AuthorityStake,
   ValidatorStake,
   CollectedStakeResponse,
+  CollectedStakeHistoryResponse,
   VerifiedValidatorsResponse,
 }
 
@@ -239,11 +266,49 @@ const endpoints = makeApi([
     path: '/v1/protected-events',
     alias: 'List PSR (protected events) per bond type and product',
     requestFormat: 'json',
+    parameters: [
+      {
+        name: 'from_epoch',
+        type: 'Query',
+        schema: z.number().int().gte(0).nullish(),
+      },
+    ],
     response: ProtectedEventsResponse,
     errors: [
       {
+        status: 400,
+        description: `&#x60;from_epoch&#x60; is not a non-negative integer.`,
+        schema: z.void(),
+      },
+      {
         status: 500,
         description: `No settlements have been read from BigQuery yet. Deliberately not an empty list, which would read as &#x27;no validator owes a protected event&#x27;.`,
+        schema: z.void(),
+      },
+    ],
+  },
+  {
+    method: 'get',
+    path: '/v1/protected-events/allocation',
+    alias: 'Direct staking allocation outcome per validator',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'from_epoch',
+        type: 'Query',
+        schema: z.number().int().gte(0).nullish(),
+      },
+    ],
+    response: DirectStakingAllocationResponse,
+    errors: [
+      {
+        status: 400,
+        description: `&#x60;from_epoch&#x60; is not a non-negative integer.`,
+        schema: z.void(),
+      },
+      {
+        status: 500,
+        description: `No allocation report has been stored yet, or it could not be read. Deliberately not an empty list, which would read as &#x27;nobody was left unprotected&#x27;.`,
         schema: z.void(),
       },
     ],
@@ -267,8 +332,35 @@ const endpoints = makeApi([
     path: '/v1/validators/stake',
     alias: 'Marinade stake per validator, per staker authority',
     requestFormat: 'json',
-    response: CollectedStakeResponse,
+    parameters: [
+      {
+        name: 'from_epoch',
+        type: 'Query',
+        schema: z.number().int().gte(0).nullish(),
+      },
+      {
+        name: 'to_epoch',
+        type: 'Query',
+        schema: z.number().int().gte(0).nullish(),
+      },
+      {
+        name: 'label',
+        type: 'Query',
+        schema: z.string().nullish(),
+      },
+      {
+        name: 'vote_account',
+        type: 'Query',
+        schema: z.string().nullish(),
+      },
+    ],
+    response: CollectedStakeHistoryResponse,
     errors: [
+      {
+        status: 400,
+        description: `&#x60;from_epoch&#x60; is after &#x60;to_epoch&#x60;, the window is wider than 100 epochs, &#x60;vote_account&#x60; is not a valid pubkey, or &#x60;label&#x60; is not a configured staker label.`,
+        schema: z.void(),
+      },
       {
         status: 500,
         description: `No stake has been collected yet, or it could not be read. Deliberately not an empty list, which would read as &#x27;no validator has stake&#x27;.`,
