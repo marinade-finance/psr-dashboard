@@ -133,8 +133,12 @@ export const overridesCpmpeMessage = (validator: AuctionValidator): string =>
     'number',
   )
 
-export const selectCommission = (validator: AuctionValidator): number =>
-  validator.inflationCommissionDec
+export const formattedInflationCommission = (
+  validator: AuctionValidator,
+): string => {
+  const dec = validator.inflationCommissionDec
+  return dec == null ? '-' : pct(dec, 0)
+}
 
 export const selectCommissionPmpe = (validator: AuctionValidator) =>
   validator.revShare.inflationPmpe

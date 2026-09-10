@@ -615,6 +615,9 @@ const outOfSetCauseLabel = (
   return gate ? outOfSetGateLabel(gate, dsSamConfig) : null
 }
 
+const commissionEditValue = (dec: number | null): string =>
+  dec === null ? '' : (dec * 100).toString()
+
 const membershipTooltip = (inSet: boolean, cause: string | null): string =>
   cause ??
   (inSet
@@ -754,7 +757,7 @@ export const ValidatorDetail = ({
 
   const [editBid, setEditBid] = useState(validator.revShare.bidPmpe.toString())
   const [editInflation, setEditInflation] = useState(
-    (validator.inflationCommissionDec * 100).toString(),
+    commissionEditValue(validator.inflationCommissionDec),
   )
   const [editMev, setEditMev] = useState(
     validator.mevCommissionDec !== null

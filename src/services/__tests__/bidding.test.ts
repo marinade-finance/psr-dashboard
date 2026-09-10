@@ -160,6 +160,11 @@ describe('computeBidding — formatted commission fields', () => {
     expect(b.inflPct).toBe('8%')
   })
 
+  it('inflPct is "-" when inflationCommissionDec is null', () => {
+    const b = computeBidding(makeValidator({ inflationCommissionDec: null }))
+    expect(b.inflPct).toBe('-')
+  })
+
   it('mevPct is "-" when mevCommissionDec is null', () => {
     const b = computeBidding(makeValidator({ mevCommissionDec: null }))
     expect(b.mevPct).toBe('-')
