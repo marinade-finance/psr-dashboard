@@ -1,12 +1,11 @@
-import { pct } from 'src/format'
 import { pmpeToSol } from 'src/services/constants'
 import {
   formattedBlockRewardsCommission,
+  formattedInflationCommission,
   formattedMevCommission,
   overridesCpmpeMessage,
   selectBid,
   selectBlockRewardsCommissionPmpe,
-  selectCommission,
   selectCommissionPmpe,
   selectEffectiveBid,
   selectEffectiveCost,
@@ -62,7 +61,7 @@ export function computeBidding(v: AugmentedAuctionValidator): Bidding {
     cost,
     activatingCost,
     total: cost + activatingCost,
-    inflPct: pct(selectCommission(v), 0),
+    inflPct: formattedInflationCommission(v),
     mevPct: formattedMevCommission(v),
     blkPct: formattedBlockRewardsCommission(v),
     inflPmpe: selectCommissionPmpe(v),
