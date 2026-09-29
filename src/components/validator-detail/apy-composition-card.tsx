@@ -4,7 +4,11 @@ import { cn } from 'src/class_utils'
 import { CalcCard } from 'src/components/breakdowns/card'
 import { pct } from 'src/format'
 import { blockRewardsSharedFrac } from 'src/services/calculations'
-import { formattedInflationCommission, selectInSet } from 'src/services/sam'
+import {
+  formattedInflationCommission,
+  formattedMevCommission,
+  selectInSet,
+} from 'src/services/sam'
 
 import type { AuctionValidator } from '@marinade.finance/ds-sam-sdk'
 import type { ApyBreakdownValue } from 'src/services/tip-engine'
@@ -57,9 +61,6 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
   isSimulated,
   onGoToBidding,
 }) => {
-  // Simulation can null the MEV commission. Default to 0 so the rendered
-  // percentage stays "0%" instead of "NaN%".
-  const mevComm = validator.mevCommissionDec ?? 0
   // Block rewards are framed by the share GIVEN to stakers (1 − commission),
   // not the commission kept — matches GUIDE.md and how the SDK credits
   // blockPmpe (zero when commission is null or ≥ 100%, so "shared" reads 0%
@@ -85,7 +86,7 @@ export const ApyCompositionCard: React.FC<ApyCompositionCardProps> = ({
       apy: apyBreakdown.mev,
       pmpe: r.mevPmpe,
       swatch: 'bg-chart-2',
-      context: `${pct(mevComm, 0)} commission`,
+      context: `${formattedMevCommission(validator)} commission`,
     },
     {
       label: 'Block rewards',
