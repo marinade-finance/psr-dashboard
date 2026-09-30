@@ -344,7 +344,8 @@ penalties` when total is zero, or the destructive total cost),
   inflation / MEV / block rewards / stake bid. Bar widths use raw
   PMPE proportions (so they sum to total); the displayed % is each
   component's compounded APY. Per-row context line: inflation and MEV
-  show `N% commission` (the share the validator keeps); block rewards
+  show `N% commission` (the share the validator keeps, or `- commission`
+  when the rate is unknown); block rewards
   show `N% shared` — the fraction GIVEN to stakers (`1 − commission`,
   and `0%` when the commission is null or ≥ 100%, matching the SDK's
   zeroed `blockPmpe`). Threshold marker line + label at the
