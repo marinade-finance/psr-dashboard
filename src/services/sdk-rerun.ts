@@ -3,47 +3,17 @@ import {
   AuctionConstraints,
   Debug,
   LogVerbosity,
-} from '@marinade.finance/ds-sam-sdk'
+  buildAuctionConstraintsConfig,
+} from '@marinade.finance/ds-sam-sdk/dist/src/engine.js'
 import { calcValidatorRevShare } from '@marinade.finance/ds-sam-calc'
 
 import type {
-  AuctionConstraintsConfig,
   AuctionData,
   AuctionResult,
   AuctionValidator,
   DsSamConfig,
 } from '@marinade.finance/ds-sam-sdk'
 import type { AppOverrides } from 'src/services/simulation'
-
-function buildConstraintsConfig(
-  config: DsSamConfig,
-  data: AuctionData,
-): AuctionConstraintsConfig {
-  const { networkTotalSol, marinadeSamTvlSol } = data.stakeAmounts
-  return {
-    totalCountryStakeCapSol:
-      networkTotalSol * config.maxNetworkStakeConcentrationPerCountryDec,
-    totalAsoStakeCapSol:
-      networkTotalSol * config.maxNetworkStakeConcentrationPerAsoDec,
-    marinadeCountryStakeCapSol:
-      marinadeSamTvlSol * config.maxMarinadeStakeConcentrationPerCountryDec,
-    marinadeAsoStakeCapSol:
-      marinadeSamTvlSol * config.maxMarinadeStakeConcentrationPerAsoDec,
-    marinadeValidatorStakeCapSol:
-      marinadeSamTvlSol * config.maxMarinadeTvlSharePerValidatorDec,
-    minBondBalanceSol: config.minBondBalanceSol,
-    minMaxStakeWanted: config.minMaxStakeWanted ?? Infinity,
-    minBondEpochs: config.minBondEpochs,
-    idealBondEpochs: config.idealBondEpochs,
-    unprotectedValidatorStakeCapSol:
-      marinadeSamTvlSol * config.maxUnprotectedStakePerValidatorDec,
-    minUnprotectedStakeToDelegateSol: config.minUnprotectedStakeToDelegateSol,
-    unprotectedFoundationStakeDec: config.unprotectedFoundationStakeDec,
-    unprotectedDelegatedStakeDec: config.unprotectedDelegatedStakeDec,
-    bondObligationSafetyMult: config.bondObligationSafetyMult,
-    bondSamHealthMult: config.bondSamHealthMult,
-  }
-}
 
 export function runSdkRerun(
   baseAuctionData: AuctionData,
@@ -127,7 +97,10 @@ export function runSdkRerun(
     validators,
   }
 
-  const constraintsConfig = buildConstraintsConfig(config, clonedAuctionData)
+  const constraintsConfig = buildAuctionConstraintsConfig(
+    config,
+    clonedAuctionData,
+  )
   const constraints = new AuctionConstraints(constraintsConfig, debug)
   const auction = new Auction(clonedAuctionData, constraints, config, debug)
   // baseAuctionData is post-evaluation (loadSam already drained
