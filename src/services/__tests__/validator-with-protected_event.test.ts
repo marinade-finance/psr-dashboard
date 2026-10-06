@@ -66,7 +66,16 @@ function makeScoring(epoch: number): ScoringValidator {
   return {
     epoch,
     voteAccount: VOTE,
-    revShare: { bidTooLowPenaltyPmpe: 1, blacklistPenaltyPmpe: 0 },
+    marinadeSamTargetSol: 0,
+    maxStakeWanted: null,
+    revShare: {
+      bidTooLowPenaltyPmpe: 1,
+      blacklistPenaltyPmpe: 0,
+      inflationPmpe: 0,
+      mevPmpe: 0,
+      totalPmpe: 0,
+      auctionEffectiveBidPmpe: 0,
+    },
     values: { bondRiskFeeSol: 0 },
   }
 }
@@ -75,15 +84,13 @@ vi.mock('../protected-events', async importOriginal => ({
   ...(await importOriginal<typeof ProtectedEventsModule>()),
   fetchProtectedEvents: vi.fn(),
 }))
-vi.mock('../protected-events-estimator', () => ({
-  calculateProtectedEventEstimates: vi.fn(),
-}))
+vi.mock('../psr-estimates', () => ({ loadPsrEstimates: vi.fn() }))
 vi.mock('../scoring', () => ({ fetchScoring: vi.fn() }))
 vi.mock('../validators', () => ({ fetchValidatorsWithEpochs: vi.fn() }))
 vi.mock('../sam', () => ({ loadSam: vi.fn() }))
 
 import { fetchProtectedEvents } from '../protected-events'
-import { calculateProtectedEventEstimates } from '../protected-events-estimator'
+import { loadPsrEstimates } from '../psr-estimates'
 import { fetchScoring } from '../scoring'
 
 // The real client resolves each queryKey to a different payload; ensureQueryData
@@ -106,7 +113,7 @@ describe('fetchProtectedEventsWithValidators settled-epoch guard', () => {
     vi.mocked(fetchProtectedEvents).mockResolvedValue({
       protected_events: [makeEvent(1007)],
     })
-    vi.mocked(calculateProtectedEventEstimates).mockResolvedValue([
+    vi.mocked(loadPsrEstimates).mockResolvedValue([
       makeEvent(1007),
       makeEvent(1008),
       makeEvent(1009),
@@ -147,7 +154,7 @@ describe('fetchProtectedEventsWithValidators settled-epoch guard', () => {
     vi.mocked(fetchProtectedEvents).mockResolvedValue({
       protected_events: [makeEvent(1007)],
     })
-    vi.mocked(calculateProtectedEventEstimates).mockResolvedValue([])
+    vi.mocked(loadPsrEstimates).mockResolvedValue([])
     vi.mocked(fetchScoring).mockResolvedValue([
       makeScoring(1007),
       makeScoring(1008),
@@ -189,7 +196,7 @@ describe('fetchProtectedEventsWithValidators penalty edges', () => {
       },
     } as unknown as AuctionResult
     vi.mocked(fetchProtectedEvents).mockResolvedValue({ protected_events: [] })
-    vi.mocked(calculateProtectedEventEstimates).mockResolvedValue([])
+    vi.mocked(loadPsrEstimates).mockResolvedValue([])
     vi.mocked(fetchScoring).mockResolvedValue([makeScoring(1009)])
 
     const result = await fetchProtectedEventsWithValidators(
@@ -208,7 +215,7 @@ describe('fetchProtectedEventsWithValidators penalty edges', () => {
       auctionData: { validators: [] },
     } as unknown as AuctionResult
     vi.mocked(fetchProtectedEvents).mockResolvedValue({ protected_events: [] })
-    vi.mocked(calculateProtectedEventEstimates).mockResolvedValue([])
+    vi.mocked(loadPsrEstimates).mockResolvedValue([])
     vi.mocked(fetchScoring).mockResolvedValue([
       { ...makeScoring(1008), values: { bondRiskFeeSol: 0.25 } },
     ])
@@ -240,7 +247,7 @@ describe('fetchProtectedEventsWithValidators penalty edges', () => {
       },
     } as unknown as AuctionResult
     vi.mocked(fetchProtectedEvents).mockResolvedValue({ protected_events: [] })
-    vi.mocked(calculateProtectedEventEstimates).mockResolvedValue([])
+    vi.mocked(loadPsrEstimates).mockResolvedValue([])
     vi.mocked(fetchScoring).mockResolvedValue([makeScoring(1009)])
 
     const result = await fetchProtectedEventsWithValidators(

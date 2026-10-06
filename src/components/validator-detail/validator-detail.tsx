@@ -50,7 +50,7 @@ import {
   selectCurrentEpochEstimates,
   selectLatestProcessedEpoch,
 } from 'src/services/protected-events'
-import { calculateProtectedEventEstimates } from 'src/services/protected-events-estimator'
+import { loadPsrEstimates } from 'src/services/psr-estimates'
 import {
   selectExpectedStakeChange,
   selectInSet,
@@ -704,10 +704,9 @@ export const ValidatorDetail = ({
   )
   const paymentMetrics = useMemo(() => computeBidding(validator), [validator])
   const queryClient = useQueryClient()
-  // Estimates for the live epoch only. The estimator emits one row per epoch
-  // over a trailing 3-epoch window, and every row here is folded into a "Total
-  // payment" for *this* epoch — so past epochs must be dropped, including ones
-  // the bonds API has already settled and charged for (GEN-8534).
+  // Estimates for the live epoch only. Every row here is folded into a "Total
+  // payment" for *this* epoch, so an estimate for an epoch the bonds API has
+  // already settled and charged for must be dropped (GEN-8534).
   // Flagged, not a silent `= []`: the bonds API answers 500 until its BigQuery cache loads, and
   // an empty estimate list understates the epoch total instead of saying it is incomplete.
   const {
@@ -717,7 +716,7 @@ export const ValidatorDetail = ({
   } = useQuery({
     queryKey: ['psr-estimates-all'],
     queryFn: async ({ signal }) => {
-      const [{ validators }, { protected_events: settledEvents }] =
+      const [{ validators }, { protected_events: settledEvents }, estimates] =
         await Promise.all([
           queryClient.ensureQueryData({
             queryKey: ['validators-with-epochs', 3],
@@ -725,11 +724,8 @@ export const ValidatorDetail = ({
               fetchValidatorsWithEpochs(3, ctx.signal),
           }),
           fetchProtectedEvents(signal),
+          loadPsrEstimates(queryClient, signal),
         ])
-      const estimates = await calculateProtectedEventEstimates(
-        validators,
-        signal,
-      )
       return selectCurrentEpochEstimates(
         estimates,
         selectNetworkEpoch(validators),

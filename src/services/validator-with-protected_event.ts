@@ -2,7 +2,7 @@ import { buildProtectedEventRows } from '@marinade.finance/ds-sam-estimator'
 
 import { LAST_DRYRUN_EPOCH } from './constants'
 import { fetchProtectedEvents } from './protected-events'
-import { calculateProtectedEventEstimates } from './protected-events-estimator'
+import { loadPsrEstimates } from './psr-estimates'
 import { loadSam } from './sam'
 import { fetchScoring } from './scoring'
 import { fetchValidatorsWithEpochs } from './validators'
@@ -25,6 +25,7 @@ export const fetchProtectedEventsWithValidators = async (
     { protected_events: protectedEvents },
     scoring,
     { auctionResult },
+    estimates,
   ] = await Promise.all([
     // Canonical cache key shared with the validator-detail Payments tab, so the
     // 3-epoch validator payload (multi-MB) is fetched at most once.
@@ -35,9 +36,8 @@ export const fetchProtectedEventsWithValidators = async (
     fetchProtectedEvents(signal),
     fetchScoring(signal),
     qc.ensureQueryData({ queryKey: ['sam'], queryFn: () => loadSam() }),
+    loadPsrEstimates(qc, signal),
   ])
-
-  const estimates = await calculateProtectedEventEstimates(validators, signal)
 
   return buildProtectedEventRows({
     validators,
