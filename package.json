@@ -51,8 +51,9 @@
     "vitest": "5.0.0"
   },
   "dependencies": {
-    "@marinade.finance/ds-sam-calc": "0.4.0",
-    "@marinade.finance/ds-sam-sdk": "0.4.0",
+    "@marinade.finance/ds-sam-calc": "0.6.0",
+    "@marinade.finance/ds-sam-estimator": "0.6.0",
+    "@marinade.finance/ds-sam-sdk": "0.6.0",
     "@marinade.finance/ts-common": "^5.1.2",
     "@zodios/core": "10.9.6",
     "zod": "^3",
@@ -83,7 +84,10 @@
   "pnpm": {
     "overrides": {
       "diff": ">=8.0.3",
-      "esbuild@<0.28.1": "^0.28.1"
+      "esbuild@<0.28.1": "^0.28.1",
+      "@marinade.finance/ds-sam-calc": "link:../ds-sam/packages/ds-sam-calc",
+      "@marinade.finance/ds-sam-sdk": "link:../ds-sam/packages/ds-sam-sdk",
+      "@marinade.finance/ds-sam-estimator": "link:../ds-sam/packages/ds-sam-estimator"
     }
   },
   "packageManager": "pnpm@9.12.0+sha512.4abf725084d7bcbafbd728bfc7bee61f2f791f977fd87542b3579dcb23504d170d46337945e4c66485cd12d588a0c0e570ed9c477e7ccdd8507cf05f3f92eaca"

@@ -59,6 +59,13 @@ export default defineConfig({
   resolve: {
     alias: { src: path.resolve(__dirname, 'src') },
   },
+  optimizeDeps: {
+    include: [
+      '@marinade.finance/ds-sam-calc',
+      '@marinade.finance/ds-sam-sdk',
+      '@marinade.finance/ds-sam-estimator',
+    ],
+  },
   build: { outDir: 'build' },
   appType: 'mpa',
   test: {
