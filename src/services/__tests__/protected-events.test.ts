@@ -160,6 +160,35 @@ describe('selectProtectedStakeReason low-credits label', () => {
   })
 })
 
+describe('selectProtectedStakeReason CommissionSamIncrease label', () => {
+  it('renders a null MEV commission as "-"', () => {
+    const event = {
+      ...makeLowCreditsEvent(1007),
+      reason: {
+        ProtectedEvent: {
+          CommissionSamIncrease: {
+            vote_account: 'vote1',
+            expected_inflation_commission: 0.05,
+            actual_inflation_commission: 0.1,
+            past_inflation_commission: 0.05,
+            expected_mev_commission: null,
+            actual_mev_commission: 0.05,
+            past_mev_commission: null,
+            before_sam_commission_increase_pmpe: 0,
+            expected_epr: 1,
+            actual_epr: 0.96,
+            epr_loss_bps: 361,
+            stake: 1000,
+          },
+        },
+      },
+    } as unknown as ProtectedEvent
+    expect(selectProtectedStakeReason(event)).toBe(
+      'Inflation Commission 5.00% -> 10.00%; MEV Commission - -> 5.00%',
+    )
+  })
+})
+
 // The bonds API unions both settlement tables, so the response carries institutional payouts and
 // direct-staking PSR alongside SAM. Unfiltered they inflate this dashboard's per-validator totals.
 describe('selectSamBiddingSettlements', () => {
