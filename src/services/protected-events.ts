@@ -1,3 +1,4 @@
+import { isProtectedEvent } from '@marinade.finance/ds-sam-estimator'
 import { z } from 'zod'
 
 import { pct } from 'src/format'
@@ -5,97 +6,24 @@ import { schemas } from 'src/schemas/generated/bonds'
 import { VALIDATOR_BONDS_API_URL } from 'src/services/apiUrls'
 import { fetchJson } from 'src/services/fetch-utils'
 
-type SettlementFunder = 'ValidatorBond' | 'Marinade'
+import type { ProtectedEvent } from '@marinade.finance/ds-sam-estimator'
 
-export type SettlementMeta = {
-  funder: SettlementFunder
-}
-
-type ProtectedEventCommissionSamIncreaseReason = {
-  vote_account: string
-  actual_inflation_commission: number
-  expected_inflation_commission: number
-  actual_mev_commission: number
-  expected_mev_commission: number
-  expected_epr: number
-  actual_epr: number
-  epr_loss_bps: number
-  stake: number
-}
-type ProtectedEventCommissionIncrease = {
-  vote_account: string
-  previous_commission: number
-  current_commission: number
-  expected_epr: number
-  actual_epr: number
-  epr_loss_bps: number
-  stake: number
-}
-type ProtectedEventLowCredits = {
-  vote_account: string
-  expected_credits: number
-  actual_credits: number
-  commission: number
-  expected_epr: number
-  actual_epr: number
-  epr_loss_bps: number
-  stake: number
-}
-
-type CommissionIncreaseReason = {
-  CommissionIncrease: ProtectedEventCommissionIncrease
-}
-type LowCreditsReason = { LowCredits: ProtectedEventLowCredits }
-type DowntimeRevenueImpactReason = {
-  DowntimeRevenueImpact: ProtectedEventLowCredits
-}
-type CommissionSamIncreaseReason = {
-  CommissionSamIncrease: ProtectedEventCommissionSamIncreaseReason
-}
-export type ProtectedEventReason =
-  | CommissionIncreaseReason
-  | LowCreditsReason
-  | DowntimeRevenueImpactReason
-  | CommissionSamIncreaseReason
-
-const isCommissionIncreaseReason = (
-  e: ProtectedEventReason,
-): e is CommissionIncreaseReason => 'CommissionIncrease' in e
-const isLowCreditsReason = (e: ProtectedEventReason): e is LowCreditsReason =>
-  'LowCredits' in e
-const isDowntimeRevenueImpactReason = (
-  e: ProtectedEventReason,
-): e is DowntimeRevenueImpactReason => 'DowntimeRevenueImpact' in e
-const isCommissionSamIncreaseReason = (
-  e: ProtectedEventReason,
-): e is CommissionSamIncreaseReason => 'CommissionSamIncrease' in e
-
-type ProtectedEventSettlement = {
-  ProtectedEvent: ProtectedEventReason
-}
-
-// The non-ProtectedEvent reasons come from the generated schema, so a regen adds new ones (most
-// recently InstitutionalPayout) without a hand edit here.
-export type SettlementReason =
-  | ProtectedEventSettlement
-  | Exclude<z.infer<typeof schemas.SettlementReason>, object>
-
-export const isProtectedEvent = (
-  e: SettlementReason,
-): e is ProtectedEventSettlement =>
-  typeof e === 'object' && 'ProtectedEvent' in e
-
-// Which bond paid, and the off-chain product attribution — typed from the generated schema. Both
-// optional because locally built estimates are not settlements and never carry them.
-export type ProtectedEvent = {
-  epoch: number
-  amount: number
-  vote_account: string
-  meta: SettlementMeta
-  reason: SettlementReason
-  bond_type?: z.infer<typeof schemas.ProtectedEventRecord>['bond_type']
-  product?: z.infer<typeof schemas.ProtectedEventRecord>['product']
-}
+export {
+  isProtectedEvent,
+  selectCurrentEpochEstimates,
+  selectLatestProcessedEpoch,
+  selectUnsettledEstimates,
+  type ProtectedEvent,
+  type ProtectedEventCommissionIncrease,
+  type ProtectedEventCommissionSamIncrease,
+  type ProtectedEventDowntimeRevenueImpact,
+  type ProtectedEventLowCredits,
+  type ProtectedEventReason,
+  type ProtectedEventSettlement,
+  type SettlementFunder,
+  type SettlementMeta,
+  type SettlementReason,
+} from '@marinade.finance/ds-sam-estimator'
 
 type ProtectedEventsResponse = {
   protected_events: ProtectedEvent[]
@@ -108,21 +36,23 @@ type ProtectedEventsResponse = {
 const lowCreditsLabel = (actualCredits: number, expectedCredits: number) =>
   `Vote credits ${pct(expectedCredits > 0 ? actualCredits / expectedCredits : 0)} of network mean`
 
+const optionalPct = (dec: number | null) => (dec == null ? '-' : pct(dec))
+
 export const selectProtectedStakeReason = (protectedEvent: ProtectedEvent) => {
   if (isProtectedEvent(protectedEvent.reason)) {
     const reason = protectedEvent.reason.ProtectedEvent
-    if (isCommissionIncreaseReason(reason)) {
+    if ('CommissionIncrease' in reason) {
       return `Commission ${reason.CommissionIncrease.previous_commission}% -> ${reason.CommissionIncrease.current_commission}%`
     }
-    if (isCommissionSamIncreaseReason(reason)) {
-      return `Inflation Commission ${pct(reason.CommissionSamIncrease.expected_inflation_commission)} -> ${pct(reason.CommissionSamIncrease.actual_inflation_commission)}; MEV Commission ${pct(reason.CommissionSamIncrease.expected_mev_commission)} -> ${pct(reason.CommissionSamIncrease.actual_mev_commission)}`
+    if ('CommissionSamIncrease' in reason) {
+      return `Inflation Commission ${pct(reason.CommissionSamIncrease.expected_inflation_commission)} -> ${pct(reason.CommissionSamIncrease.actual_inflation_commission)}; MEV Commission ${optionalPct(reason.CommissionSamIncrease.expected_mev_commission)} -> ${optionalPct(reason.CommissionSamIncrease.actual_mev_commission)}`
     }
-    if (isLowCreditsReason(reason)) {
+    if ('LowCredits' in reason) {
       const { actual_credits: actual, expected_credits: expected } =
         reason.LowCredits
       return lowCreditsLabel(actual, expected)
     }
-    if (isDowntimeRevenueImpactReason(reason)) {
+    if ('DowntimeRevenueImpact' in reason) {
       const { actual_credits: actual, expected_credits: expected } =
         reason.DowntimeRevenueImpact
       return lowCreditsLabel(actual, expected)
@@ -154,38 +84,6 @@ export const selectProtectedStakeReason = (protectedEvent: ProtectedEvent) => {
 // `amount` is stored in lamports; expose to callers in SOL.
 export const selectAmount = (protectedEvent: ProtectedEvent) =>
   protectedEvent.amount / 1e9
-
-// Newest epoch the bonds API has finalized settlements for. Anything at or
-// below it is a paid fact, so an estimate for the same epoch would bill the
-// operator a second time.
-export const selectLatestProcessedEpoch = (
-  protectedEvents: ProtectedEvent[],
-): number => protectedEvents.reduce((max, e) => Math.max(e.epoch, max), 0)
-
-// Drop estimates the API has already settled. Shared by the Events page and the
-// validator-detail Payments tab so both surfaces suppress the same rows.
-export const selectUnsettledEstimates = (
-  estimates: ProtectedEvent[],
-  latestProcessedEpoch: number,
-): ProtectedEvent[] => estimates.filter(e => e.epoch > latestProcessedEpoch)
-
-// Estimates that belong on the Payments tab. That tab totals a single epoch
-// ("you will pay X this epoch"), but the estimator walks a trailing 3-epoch
-// window (validators?epochs=3), so without this an old bad epoch keeps getting
-// re-billed on the current epoch's total for three epochs running. Keep only
-// the live epoch, and only while it is still unsettled.
-// A null networkEpoch means we cannot tell which epoch is live — show nothing
-// rather than risk re-billing a settled one.
-export const selectCurrentEpochEstimates = (
-  estimates: ProtectedEvent[],
-  networkEpoch: number | null,
-  latestProcessedEpoch: number,
-): ProtectedEvent[] =>
-  networkEpoch === null
-    ? []
-    : selectUnsettledEstimates(estimates, latestProcessedEpoch).filter(
-        e => e.epoch === networkEpoch,
-      )
 
 // This dashboard is the SAM view, but /v1 returns every settlement of both bond configs, so
 // institutional payouts and direct-staking PSR would otherwise land in per-validator totals.
