@@ -63,6 +63,7 @@ export default defineConfig({
     include: [
       '@marinade.finance/ds-sam-calc',
       '@marinade.finance/ds-sam-sdk',
+      '@marinade.finance/ds-sam-sdk/dist/src/engine.js',
       '@marinade.finance/ds-sam-estimator',
     ],
   },
