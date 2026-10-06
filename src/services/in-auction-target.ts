@@ -1,6 +1,7 @@
 // Table A — "Get into the auction". Closed-form bid needed to clear the
 // current winning total. Shifts the clearing price when applied, so treat
 // as a lower bound — verify with Simulate.
+import { isCapBinding } from '@marinade.finance/ds-sam-calc'
 import { selectNonBidPmpe } from 'src/services/sam'
 
 import type { BondCoverage } from 'src/services/bond-coverage'
@@ -32,6 +33,7 @@ export const computeInAuctionTarget = (
   const currentTotalPmpe = v.revShare.totalPmpe
   const pmpeGap = Math.max(0, winningTotalPmpe - currentTotalPmpe)
   const targetBidPmpe = currentBidPmpe + pmpeGap
+  const capConstrained = isCapBinding(v)
   return {
     winningTotalPmpe,
     currentTotalPmpe,
@@ -41,16 +43,12 @@ export const computeInAuctionTarget = (
     bidIncrease: pmpeGap,
     bondFloorToBack: coverage.stakeKeepFloor,
     bondTopUp: coverage.topUpToKeepStake,
-    capConstrained:
-      v.lastCapConstraint != null &&
-      v.lastCapConstraint.totalLeftToCapSol === 0,
-    capConstraintName:
-      v.lastCapConstraint?.totalLeftToCapSol === 0
-        ? (v.lastCapConstraint.constraintName ?? null)
-        : null,
-    capConstraintType:
-      v.lastCapConstraint?.totalLeftToCapSol === 0
-        ? (v.lastCapConstraint.constraintType ?? null)
-        : null,
+    capConstrained,
+    capConstraintName: capConstrained
+      ? (v.lastCapConstraint?.constraintName ?? null)
+      : null,
+    capConstraintType: capConstrained
+      ? (v.lastCapConstraint?.constraintType ?? null)
+      : null,
   }
 }
