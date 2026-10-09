@@ -29,12 +29,9 @@ type ProtectedEventsResponse = {
   protected_events: ProtectedEvent[]
 }
 
-// `expected_credits` is the stake-weighted mean vote credits of every validator
-// in that epoch (see calcTargetCreditsByEpoch), so actual/expected is a
-// vote-credits-vs-network-mean ratio — NOT uptime. A validator that voted every
-// slot but landed below the network mean is not "99% up". Name the metric.
+// Tower expects the network mean, Alpenglow the validator's stake and leader-slot share: not uptime
 const lowCreditsLabel = (actualCredits: number, expectedCredits: number) =>
-  `Vote credits ${pct(expectedCredits > 0 ? actualCredits / expectedCredits : 0)} of network mean`
+  `Vote credits ${pct(expectedCredits > 0 ? actualCredits / expectedCredits : 0)} of expected`
 
 const optionalPct = (dec: number | null) => (dec == null ? '-' : pct(dec))
 

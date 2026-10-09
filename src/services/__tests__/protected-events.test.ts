@@ -132,7 +132,7 @@ describe('selectCurrentEpochEstimates', () => {
 describe('selectProtectedStakeReason low-credits label', () => {
   it('names the metric and the baseline instead of calling it uptime', () => {
     const label = selectProtectedStakeReason(makeLowCreditsEvent(1007))
-    expect(label).toBe('Vote credits 96.39% of network mean')
+    expect(label).toBe('Vote credits 96.39% of expected')
     expect(label).not.toContain('Uptime')
   })
 
@@ -155,7 +155,7 @@ describe('selectProtectedStakeReason low-credits label', () => {
       },
     } as unknown as ProtectedEvent
     expect(selectProtectedStakeReason(event)).toBe(
-      'Vote credits 96.39% of network mean',
+      'Vote credits 96.39% of expected',
     )
   })
 })
