@@ -6,6 +6,7 @@ import { fetchJson } from 'src/services/fetch-utils'
 export type ValidatorEpoch = {
   credits?: number | null
   vote_reward_lamports?: number | null
+  leader_slots: number
   marinade_stake: string
   marinade_native_stake: string
   activated_stake: string

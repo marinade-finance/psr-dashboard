@@ -20,6 +20,7 @@ type Spec = {
   vote: string
   credits: number | null
   voteReward?: number
+  leaderSlots?: number
   commissionAdvertised?: number | null
   won: boolean
   inflationCommissionDec: number
@@ -37,6 +38,7 @@ const validator = (s: Spec): Validator => ({
       epoch: EPOCH,
       credits: s.credits,
       vote_reward_lamports: s.voteReward ?? null,
+      leader_slots: s.leaderSlots ?? 0,
       commission_advertised:
         s.commissionAdvertised === undefined ? 5 : s.commissionAdvertised,
       activated_stake: STAKE,
@@ -245,10 +247,11 @@ describe('loadPsrEstimates', () => {
       won: true,
       inflationCommissionDec: 0,
     }
+    // an equal vote reward keeps the loser clear of an Alpenglow downtime estimate
     const loser: Spec = {
       vote: 'loser',
       credits: null,
-      voteReward: 1_000,
+      voteReward: 10_000,
       won: false,
       inflationCommissionDec: 0.5,
     }
@@ -262,6 +265,47 @@ describe('loadPsrEstimates', () => {
 
     expect(events.map(e => [e.vote_account, e.amount])).toEqual([
       ['loser', 500_000_000],
+    ])
+  })
+
+  it('charges an Alpenglow DowntimeRevenueImpact from vote rewards and leader slots', async () => {
+    // validator-bonds alpenglow_collection: w = s/S + L/N expects 1000, 800 and 600 of 2400
+    const specs: Spec[] = [
+      { vote: 'a', voteReward: 1000, leaderSlots: 3 },
+      { vote: 'b', voteReward: 1000, leaderSlots: 2 },
+      { vote: 'c', voteReward: 400, leaderSlots: 1 },
+    ].map(s => ({
+      ...s,
+      credits: null,
+      won: true,
+      inflationCommissionDec: 0.5,
+    }))
+    vi.mocked(fetchScoring).mockResolvedValue(
+      specs.map(s => scoreRow(s, EPOCH)),
+    )
+
+    const events = await loadPsrEstimates(makeQc(specs))
+
+    // a third of the 0.5/1000 expected EPR lost on 1000 SOL
+    expect(events).toEqual([
+      {
+        epoch: EPOCH,
+        amount: 166_666_666,
+        vote_account: 'c',
+        meta: { funder: 'ValidatorBond' },
+        reason: {
+          ProtectedEvent: {
+            DowntimeRevenueImpact: expect.objectContaining({
+              vote_account: 'c',
+              actual_credits: 400,
+              expected_credits: 600,
+              expected_epr: 0.0005,
+              epr_loss_bps: 3333,
+              stake: 1e12,
+            }) as unknown,
+          },
+        },
+      },
     ])
   })
 

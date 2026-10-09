@@ -47,6 +47,7 @@ export const loadPsrEstimates = async (
         stat.vote_reward_lamports == null
           ? null
           : BigInt(stat.vote_reward_lamports),
+      leader_slots: BigInt(stat.leader_slots),
     })
     marinadeStakeLamports.set(
       validator.vote_account,
