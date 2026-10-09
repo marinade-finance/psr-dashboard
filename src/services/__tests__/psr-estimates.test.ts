@@ -18,7 +18,8 @@ const STAKE = '1000000000000'
 
 type Spec = {
   vote: string
-  credits: number
+  credits: number | null
+  voteReward?: number
   commissionAdvertised?: number | null
   won: boolean
   inflationCommissionDec: number
@@ -35,6 +36,7 @@ const validator = (s: Spec): Validator => ({
     {
       epoch: EPOCH,
       credits: s.credits,
+      vote_reward_lamports: s.voteReward ?? null,
       commission_advertised:
         s.commissionAdvertised === undefined ? 5 : s.commissionAdvertised,
       activated_stake: STAKE,
@@ -233,6 +235,34 @@ describe('loadPsrEstimates', () => {
     expect(reason.ProtectedEvent.DowntimeRevenueImpact.expected_credits).toBe(
       8333,
     )
+  })
+
+  it('keeps the commission estimate in an Alpenglow epoch, where credits are null', async () => {
+    const winner: Spec = {
+      vote: 'winner',
+      credits: null,
+      voteReward: 10_000,
+      won: true,
+      inflationCommissionDec: 0,
+    }
+    const loser: Spec = {
+      vote: 'loser',
+      credits: null,
+      voteReward: 1_000,
+      won: false,
+      inflationCommissionDec: 0.5,
+    }
+    vi.mocked(fetchScoring).mockResolvedValue([
+      scoreRow(winner, EPOCH),
+      scoreRow(loser, EPOCH),
+      scoreRow(loser, EPOCH - 1, 0),
+    ])
+
+    const events = await loadPsrEstimates(makeQc([winner, loser]))
+
+    expect(events.map(e => [e.vote_account, e.amount])).toEqual([
+      ['loser', 500_000_000],
+    ])
   })
 
   it('estimates nothing when no validator has epoch stats', async () => {
