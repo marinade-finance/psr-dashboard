@@ -4,11 +4,12 @@ import { VALIDATORS_API_URL } from 'src/services/apiUrls'
 import { fetchJson } from 'src/services/fetch-utils'
 
 export type ValidatorEpoch = {
-  credits: number
+  credits?: number | null
+  vote_reward_lamports?: number | null
   marinade_stake: string
   marinade_native_stake: string
   activated_stake: string
-  commission_advertised: number
+  commission_advertised: number | null
   epoch: number
   epoch_start_at: string | null
   epoch_end_at: string | null

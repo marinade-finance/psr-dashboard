@@ -137,6 +137,23 @@ describe('computeInAuctionTarget — cap constraints', () => {
     expect(t.capConstraintType).toBeNull()
   })
 
+  it('cap with marinadeLeftToCapSol=0 but network headroom → capConstrained=true, names populated', () => {
+    const v = makeValidator({
+      lastCapConstraint: {
+        constraintType: 'COUNTRY',
+        constraintName: 'Germany',
+        totalStakeSol: 500_000,
+        totalLeftToCapSol: 50_000,
+        marinadeLeftToCapSol: 0,
+        validators: [],
+      },
+    })
+    const t = computeInAuctionTarget(v, 15, makeCoverage())
+    expect(t.capConstrained).toBe(true)
+    expect(t.capConstraintName).toBe('Germany')
+    expect(t.capConstraintType).toBe('COUNTRY')
+  })
+
   it('VALIDATOR cap type (vote account) → type surfaced as-is', () => {
     const v = makeValidator({
       lastCapConstraint: {
