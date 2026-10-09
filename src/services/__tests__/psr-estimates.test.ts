@@ -21,6 +21,7 @@ type Spec = {
   credits: number | null
   voteReward?: number
   leaderSlots?: number
+  epochStake?: number
   commissionAdvertised?: number | null
   won: boolean
   inflationCommissionDec: number
@@ -39,6 +40,7 @@ const validator = (s: Spec): Validator => ({
       credits: s.credits,
       vote_reward_lamports: s.voteReward ?? null,
       leader_slots: s.leaderSlots ?? 0,
+      epoch_stake: s.epochStake ?? null,
       commission_advertised:
         s.commissionAdvertised === undefined ? 5 : s.commissionAdvertised,
       activated_stake: STAKE,
@@ -270,10 +272,12 @@ describe('loadPsrEstimates', () => {
 
   it('charges an Alpenglow DowntimeRevenueImpact from vote rewards and leader slots', async () => {
     // validator-bonds alpenglow_collection: w = s/S + L/N expects 1000, 800 and 600 of 2400
+    // d holds stake but is outside the reward committee, so it is neither charged nor weighed
     const specs: Spec[] = [
-      { vote: 'a', voteReward: 1000, leaderSlots: 3 },
-      { vote: 'b', voteReward: 1000, leaderSlots: 2 },
-      { vote: 'c', voteReward: 400, leaderSlots: 1 },
+      { vote: 'a', voteReward: 1000, leaderSlots: 3, epochStake: 1e12 },
+      { vote: 'b', voteReward: 1000, leaderSlots: 2, epochStake: 1e12 },
+      { vote: 'c', voteReward: 400, leaderSlots: 1, epochStake: 1e12 },
+      { vote: 'd', voteReward: 0, leaderSlots: 0 },
     ].map(s => ({
       ...s,
       credits: null,

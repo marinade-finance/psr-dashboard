@@ -7,6 +7,7 @@ export type ValidatorEpoch = {
   credits?: number | null
   vote_reward_lamports?: number | null
   leader_slots: number
+  epoch_stake?: number | null
   marinade_stake: string
   marinade_native_stake: string
   activated_stake: string
