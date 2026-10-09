@@ -42,7 +42,11 @@ export const loadPsrEstimates = async (
       // 100 keeps the stake in the network credits mean; the estimator never charges it
       commission: stat.commission_advertised ?? 100,
       stake: BigInt(stat.activated_stake),
-      credits: BigInt(stat.credits),
+      credits: stat.credits == null ? null : BigInt(stat.credits),
+      vote_reward_lamports:
+        stat.vote_reward_lamports == null
+          ? null
+          : BigInt(stat.vote_reward_lamports),
     })
     marinadeStakeLamports.set(
       validator.vote_account,
