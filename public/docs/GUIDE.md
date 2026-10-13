@@ -151,7 +151,8 @@ PMPE measures revenue per 1000 SOL per epoch. The unit the auction speaks in.
   a fixed amount the validator pays out of their bond for every 1000 SOL of stake
   they receive, every epoch. (Also identified as `cpmpe` in the protocol.)
 - **0.1 PMPE = 0.1 SOL earned per 1000 SOL per epoch.**
-- **APY conversion**: `APY = (1 + PMPE/1000)^182.6 − 1` (≈182.6 epochs per year).
+- **APY conversion**: `APY = (1 + PMPE/1000)^epochsPerYear − 1`, where
+  `epochsPerYear` is the auction's `slotParams.slotsPerYear` / 432,000.
 
 A validator's **max APY** in the table is the sum of all PMPE streams converted
 to APY, with the static Cost PMPE bid mixed in.
@@ -930,7 +931,8 @@ alone does not clear the simulation.
 - Bond data (bid/Cost PMPE and bond balance) is reloaded periodically by
   Marinade — typically once per hour. Other validator and auction data
   follow their own refresh cadences (see the table at the top).
-- Solana epochs are roughly 2 days (~182.6 epochs per year).
+- A Solana epoch is 432,000 slots. Its length follows the protocol slot
+  time, so the number of epochs per year is not fixed.
 - The page auto-refreshes its main data once an hour. Manual reload
   forces an immediate refetch.
 - All auction math runs client-side via the SDK. Numbers should match Marinade's
