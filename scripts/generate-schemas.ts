@@ -28,7 +28,7 @@ for (const [name, url] of Object.entries(SPECS)) {
   dedupeOperationIds(doc)
 
   await Bun.write(`${SPEC_DIR}/${name}.json`, JSON.stringify(doc))
-  await $`npx openapi-zod-client ${SPEC_DIR}/${name}.json -o ${OUT_DIR}/${name}.ts`
+  await $`npx openapi-zod-client ${SPEC_DIR}/${name}.json -o ${OUT_DIR}/${name}.ts --export-types`
 
   // strip the no-baseUrl `export const api = new Zodios(endpoints)` the tool emits
   const src = await Bun.file(`${OUT_DIR}/${name}.ts`).text()
