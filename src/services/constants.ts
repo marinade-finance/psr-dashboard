@@ -29,4 +29,10 @@ export const PSR_SETTLEMENT_CONFIGS: readonly SettlementConfig[] = [
     base_markup_bps: 0,
     penalty_markup_bps: 0,
   },
+  {
+    type: 'VatUnadmittedSettlement',
+    meta: { funder: 'ValidatorBond' },
+    min_settlement_lamports: 100_000_000,
+    covered_range_bps: [0, 10_000],
+  },
 ]

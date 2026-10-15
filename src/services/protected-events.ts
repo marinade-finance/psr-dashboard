@@ -20,6 +20,7 @@ export {
   type ProtectedEventLowCredits,
   type ProtectedEventReason,
   type ProtectedEventSettlement,
+  type ProtectedEventVatUnadmitted,
   type SettlementFunder,
   type SettlementMeta,
   type SettlementReason,
@@ -53,6 +54,9 @@ export const selectProtectedStakeReason = (protectedEvent: ProtectedEvent) => {
       const { actual_credits: actual, expected_credits: expected } =
         reason.DowntimeRevenueImpact
       return lowCreditsLabel(actual, expected)
+    }
+    if ('VatUnadmitted' in reason) {
+      return 'Inflation rewards not admitted'
     }
   }
   // After isProtectedEvent narrows the object case out, reason is the

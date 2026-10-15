@@ -302,6 +302,28 @@ describe('fetchProtectedEvents schema leniency', () => {
     expect(selectProtectedStakeReason(events[0])).toBe('Unsupported')
   })
 
+  it('parses and labels a settled VatUnadmitted event', async () => {
+    respondWith(
+      samRow({
+        ProtectedEvent: {
+          VatUnadmitted: {
+            vote_account: 'vote1',
+            actual_credits: 1000,
+            expected_epr: 0.095,
+            actual_epr: 0,
+            epr_loss_bps: 10_000,
+            stake: 1000,
+          },
+        },
+      }),
+    )
+    const { protected_events: events } = await fetchProtectedEvents()
+    expect(events).toHaveLength(1)
+    expect(selectProtectedStakeReason(events[0])).toBe(
+      'Inflation rewards not admitted',
+    )
+  })
+
   it('accepts a ProtectedEvent variant newer than this client', async () => {
     respondWith(
       samRow({ ProtectedEvent: { StakeRuleViolation: { stake: 1 } } }),
