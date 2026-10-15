@@ -39,8 +39,10 @@ export const loadPsrEstimates = async (
     if (!stat) continue
     validatorMetas.push({
       vote_account: validator.vote_account,
-      // 100 keeps the stake in the network credits mean; the estimator never charges it
+      // 100 keeps the stake in the credits mean; uncharged unless the applied bps say otherwise
       commission: stat.commission_advertised ?? 100,
+      inflation_rewards_commission_bps:
+        stat.inflation_rewards_commission_bps ?? null,
       stake: BigInt(stat.activated_stake),
       credits: stat.credits == null ? null : BigInt(stat.credits),
       vote_reward_lamports:

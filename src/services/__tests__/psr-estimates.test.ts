@@ -23,6 +23,7 @@ type Spec = {
   leaderSlots?: number
   epochStake?: number
   commissionAdvertised?: number | null
+  appliedBps?: number
   won: boolean
   inflationCommissionDec: number
 }
@@ -40,9 +41,10 @@ const validator = (s: Spec): Validator => ({
       credits: s.credits,
       vote_reward_lamports: s.voteReward ?? null,
       leader_slots: s.leaderSlots ?? 0,
-      epoch_stake: s.epochStake ?? null,
+      epoch_stake: s.epochStake == null ? null : String(s.epochStake),
       commission_advertised:
         s.commissionAdvertised === undefined ? 5 : s.commissionAdvertised,
+      inflation_rewards_commission_bps: s.appliedBps ?? null,
       activated_stake: STAKE,
       marinade_stake: STAKE,
       marinade_native_stake: '0',
@@ -239,6 +241,27 @@ describe('loadPsrEstimates', () => {
     expect(reason.ProtectedEvent.DowntimeRevenueImpact.expected_credits).toBe(
       8333,
     )
+  })
+
+  it('gates the downtime charge on the applied inflation commission, not the advertised one', async () => {
+    const specs: Spec[] = [
+      { vote: 'up', credits: 15_000 },
+      { vote: 'full', credits: 5_000, appliedBps: 10_000 },
+      {
+        vote: 'applied',
+        credits: 5_000,
+        commissionAdvertised: null,
+        appliedBps: 500,
+      },
+    ].map(s => ({ ...s, won: true, inflationCommissionDec: 0.5 }))
+    vi.mocked(fetchScoring).mockResolvedValue(
+      specs.map(s => scoreRow(s, EPOCH)),
+    )
+
+    const events = await loadPsrEstimates(makeQc(specs))
+
+    // 'full' advertises 5% but keeps all inflation rewards; 'applied' advertises nothing
+    expect(events.map(e => e.vote_account)).toEqual(['applied'])
   })
 
   it('keeps the commission estimate in an Alpenglow epoch, where credits are null', async () => {
