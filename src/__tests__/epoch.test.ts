@@ -22,6 +22,7 @@ const stat = (
   over: Partial<ValidatorEpoch> & { epoch: number },
 ): ValidatorEpoch => ({
   credits: 0,
+  leader_slots: 0,
   marinade_stake: '0',
   marinade_native_stake: '0',
   activated_stake: '0',

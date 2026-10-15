@@ -2,9 +2,9 @@ import { z } from 'zod'
 import { SCORING_API_URL } from './apiUrls'
 import { fetchJson } from './fetch-utils'
 
-export type ScoringValidator = {
-  epoch: number
-  voteAccount: string
+import type { SamScoreRow } from '@marinade.finance/ds-sam-estimator'
+
+export type ScoringValidator = SamScoreRow & {
   revShare: {
     bidTooLowPenaltyPmpe: number
     blacklistPenaltyPmpe: number
@@ -18,13 +18,38 @@ const ScoringValidatorSchema = z
   .object({
     epoch: z.number(),
     voteAccount: z.string(),
+    marinadeSamTargetSol: z.number(),
+    maxStakeWanted: z.number().nullable(),
     revShare: z
       .object({
         bidTooLowPenaltyPmpe: z.number(),
         blacklistPenaltyPmpe: z.number(),
+        inflationPmpe: z.number(),
+        mevPmpe: z.number(),
+        totalPmpe: z.number(),
+        auctionEffectiveBidPmpe: z.number(),
       })
       .passthrough(),
-    values: z.object({ bondRiskFeeSol: z.number() }).passthrough(),
+    values: z
+      .object({
+        bondRiskFeeSol: z.number(),
+        commissions: z
+          .object({
+            inflationCommissionDec: z.number().nullable(),
+            mevCommissionDec: z.number(),
+            inflationCommissionOnchainDec: z.number().nullable(),
+            inflationCommissionInBondDec: z.number().nullable(),
+            mevCommissionOnchainDec: z.number().nullable(),
+            mevCommissionInBondDec: z.number().nullable(),
+          })
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    metadata: z
+      .object({ scoringId: z.string().optional() })
+      .passthrough()
+      .optional(),
   })
   .passthrough()
 const ScoringResponseSchema = z.array(ScoringValidatorSchema)

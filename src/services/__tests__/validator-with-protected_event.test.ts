@@ -66,7 +66,16 @@ function makeScoring(epoch: number): ScoringValidator {
   return {
     epoch,
     voteAccount: VOTE,
-    revShare: { bidTooLowPenaltyPmpe: 1, blacklistPenaltyPmpe: 0 },
+    marinadeSamTargetSol: 0,
+    maxStakeWanted: null,
+    revShare: {
+      bidTooLowPenaltyPmpe: 1,
+      blacklistPenaltyPmpe: 0,
+      inflationPmpe: 0,
+      mevPmpe: 0,
+      totalPmpe: 0,
+      auctionEffectiveBidPmpe: 0,
+    },
     values: { bondRiskFeeSol: 0 },
   }
 }
@@ -75,15 +84,13 @@ vi.mock('../protected-events', async importOriginal => ({
   ...(await importOriginal<typeof ProtectedEventsModule>()),
   fetchProtectedEvents: vi.fn(),
 }))
-vi.mock('../protected-events-estimator', () => ({
-  calculateProtectedEventEstimates: vi.fn(),
-}))
+vi.mock('../psr-estimates', () => ({ loadPsrEstimates: vi.fn() }))
 vi.mock('../scoring', () => ({ fetchScoring: vi.fn() }))
 vi.mock('../validators', () => ({ fetchValidatorsWithEpochs: vi.fn() }))
 vi.mock('../sam', () => ({ loadSam: vi.fn() }))
 
 import { fetchProtectedEvents } from '../protected-events'
-import { calculateProtectedEventEstimates } from '../protected-events-estimator'
+import { loadPsrEstimates } from '../psr-estimates'
 import { fetchScoring } from '../scoring'
 
 // The real client resolves each queryKey to a different payload; ensureQueryData
@@ -106,7 +113,7 @@ describe('fetchProtectedEventsWithValidators settled-epoch guard', () => {
     vi.mocked(fetchProtectedEvents).mockResolvedValue({
       protected_events: [makeEvent(1007)],
     })
-    vi.mocked(calculateProtectedEventEstimates).mockResolvedValue([
+    vi.mocked(loadPsrEstimates).mockResolvedValue([
       makeEvent(1007),
       makeEvent(1008),
       makeEvent(1009),
@@ -147,7 +154,7 @@ describe('fetchProtectedEventsWithValidators settled-epoch guard', () => {
     vi.mocked(fetchProtectedEvents).mockResolvedValue({
       protected_events: [makeEvent(1007)],
     })
-    vi.mocked(calculateProtectedEventEstimates).mockResolvedValue([])
+    vi.mocked(loadPsrEstimates).mockResolvedValue([])
     vi.mocked(fetchScoring).mockResolvedValue([
       makeScoring(1007),
       makeScoring(1008),
@@ -169,5 +176,87 @@ describe('fetchProtectedEventsWithValidators settled-epoch guard', () => {
     const live = penalties.find(r => r.protectedEvent.epoch === 1009)
     // 1000 SOL of Marinade stake × 2 PMPE / 1000 = 2 SOL, in lamports.
     expect(live?.protectedEvent.amount).toBe(2_000_000_000)
+  })
+})
+
+describe('fetchProtectedEventsWithValidators penalty edges', () => {
+  const OTHER = 'vote2'
+
+  it('emits no NaN penalty for an auction validator missing from the validators list', async () => {
+    // same-named case in ds-sam estimator test/protected-event-rows.test.ts
+    const auctionResult = {
+      auctionData: {
+        validators: [
+          {
+            voteAccount: OTHER,
+            revShare: { bidTooLowPenaltyPmpe: 2, blacklistPenaltyPmpe: 0 },
+            values: { bondRiskFeeSol: 0.5 },
+          },
+        ],
+      },
+    } as unknown as AuctionResult
+    vi.mocked(fetchProtectedEvents).mockResolvedValue({ protected_events: [] })
+    vi.mocked(loadPsrEstimates).mockResolvedValue([])
+    vi.mocked(fetchScoring).mockResolvedValue([makeScoring(1009)])
+
+    const result = await fetchProtectedEventsWithValidators(
+      makeQc([makeValidator([1009])], auctionResult),
+    )
+
+    const other = result.filter(r => r.protectedEvent.vote_account === OTHER)
+    expect(other.map(r => r.protectedEvent.reason)).toEqual(['BondRiskFee'])
+    expect(other[0].protectedEvent.amount).toBe(500_000_000)
+    expect(other[0].validator).toBeNull()
+  })
+
+  it('keeps the scoring BondRiskFee for a validator with no stats for that epoch', async () => {
+    // same-named case in ds-sam estimator test/protected-event-rows.test.ts
+    const auctionResult = {
+      auctionData: { validators: [] },
+    } as unknown as AuctionResult
+    vi.mocked(fetchProtectedEvents).mockResolvedValue({ protected_events: [] })
+    vi.mocked(loadPsrEstimates).mockResolvedValue([])
+    vi.mocked(fetchScoring).mockResolvedValue([
+      { ...makeScoring(1008), values: { bondRiskFeeSol: 0.25 } },
+    ])
+
+    const result = await fetchProtectedEventsWithValidators(
+      makeQc([makeValidator([1009])], auctionResult),
+    )
+
+    expect(
+      result.map(r => [r.protectedEvent.epoch, r.protectedEvent.reason]),
+    ).toEqual([[1008, 'BondRiskFee']])
+    expect(result[0].protectedEvent.amount).toBe(250_000_000)
+  })
+
+  it('rounds a non-integer bid-too-low penalty to an integer lamport amount', async () => {
+    // same-named case in ds-sam estimator test/protected-event-rows.test.ts
+    const auctionResult = {
+      auctionData: {
+        validators: [
+          {
+            voteAccount: VOTE,
+            revShare: {
+              bidTooLowPenaltyPmpe: 1.2345678901234,
+              blacklistPenaltyPmpe: 0,
+            },
+            values: { bondRiskFeeSol: 0 },
+          },
+        ],
+      },
+    } as unknown as AuctionResult
+    vi.mocked(fetchProtectedEvents).mockResolvedValue({ protected_events: [] })
+    vi.mocked(loadPsrEstimates).mockResolvedValue([])
+    vi.mocked(fetchScoring).mockResolvedValue([makeScoring(1009)])
+
+    const result = await fetchProtectedEventsWithValidators(
+      makeQc([makeValidator([1009])], auctionResult),
+    )
+
+    const live = result.filter(
+      r => r.protectedEvent.reason === 'BidTooLowPenalty',
+    )
+    expect(live.map(r => r.protectedEvent.amount)).toEqual([1_234_567_890])
   })
 })

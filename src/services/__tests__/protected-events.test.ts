@@ -132,7 +132,7 @@ describe('selectCurrentEpochEstimates', () => {
 describe('selectProtectedStakeReason low-credits label', () => {
   it('names the metric and the baseline instead of calling it uptime', () => {
     const label = selectProtectedStakeReason(makeLowCreditsEvent(1007))
-    expect(label).toBe('Vote credits 96.39% of network mean')
+    expect(label).toBe('Vote credits 96.39% of expected')
     expect(label).not.toContain('Uptime')
   })
 
@@ -155,7 +155,36 @@ describe('selectProtectedStakeReason low-credits label', () => {
       },
     } as unknown as ProtectedEvent
     expect(selectProtectedStakeReason(event)).toBe(
-      'Vote credits 96.39% of network mean',
+      'Vote credits 96.39% of expected',
+    )
+  })
+})
+
+describe('selectProtectedStakeReason CommissionSamIncrease label', () => {
+  it('renders a null MEV commission as "-"', () => {
+    const event = {
+      ...makeLowCreditsEvent(1007),
+      reason: {
+        ProtectedEvent: {
+          CommissionSamIncrease: {
+            vote_account: 'vote1',
+            expected_inflation_commission: 0.05,
+            actual_inflation_commission: 0.1,
+            past_inflation_commission: 0.05,
+            expected_mev_commission: null,
+            actual_mev_commission: 0.05,
+            past_mev_commission: null,
+            before_sam_commission_increase_pmpe: 0,
+            expected_epr: 1,
+            actual_epr: 0.96,
+            epr_loss_bps: 361,
+            stake: 1000,
+          },
+        },
+      },
+    } as unknown as ProtectedEvent
+    expect(selectProtectedStakeReason(event)).toBe(
+      'Inflation Commission 5.00% -> 10.00%; MEV Commission - -> 5.00%',
     )
   })
 })
@@ -271,6 +300,28 @@ describe('fetchProtectedEvents schema leniency', () => {
     const { protected_events: events } = await fetchProtectedEvents()
     expect(events).toHaveLength(1)
     expect(selectProtectedStakeReason(events[0])).toBe('Unsupported')
+  })
+
+  it('parses and labels a settled VatUnadmitted event', async () => {
+    respondWith(
+      samRow({
+        ProtectedEvent: {
+          VatUnadmitted: {
+            vote_account: 'vote1',
+            actual_credits: 1000,
+            expected_epr: 0.095,
+            actual_epr: 0,
+            epr_loss_bps: 10_000,
+            stake: 1000,
+          },
+        },
+      }),
+    )
+    const { protected_events: events } = await fetchProtectedEvents()
+    expect(events).toHaveLength(1)
+    expect(selectProtectedStakeReason(events[0])).toBe(
+      'Inflation rewards not admitted',
+    )
   })
 
   it('accepts a ProtectedEvent variant newer than this client', async () => {
