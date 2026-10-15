@@ -1715,10 +1715,10 @@ export const TEST_AUCTION_RESULT: AuctionResult = {
 // it too. Half an epoch at the 400ms slot time the fixture's slotParams assume.
 export const TEST_EPOCH_INFO: {
   info: EpochInfo
-  slotDurationSeconds: number
+  slotDurationMs: number
 } = {
   info: { epoch: EPOCH, slotIndex: 216_000, slotsInEpoch: 432_000 },
-  slotDurationSeconds: 0.4,
+  slotDurationMs: 400,
 }
 
 // Thin config — only fields the UI reads directly

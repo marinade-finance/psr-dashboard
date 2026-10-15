@@ -75,19 +75,18 @@ export type PerformanceSample = {
   samplePeriodSecs: number
 }
 
-// Five ~60s windows: long enough to ride out a single slow window, short
-// enough to track a real change in the slot rate within one refetch.
-const PERF_SAMPLE_COUNT = 5
+// ~1h of ~60s windows, the window the Marinade SDK and native-staking bot measure over.
+const PERF_SAMPLE_COUNT = 60
 
 // A partially stalled cluster still reports well-formed windows, just with a
 // handful of slots in them, and every window stalls together so pooling does
 // not rescue it. Outside this band the samples describe a stall, not a rate.
-const MIN_SLOT_DURATION_S = 0.05
-const MAX_SLOT_DURATION_S = 2
+const MIN_SLOT_DURATION_MS = 50
+const MAX_SLOT_DURATION_MS = 2000
 
 // Pool slots over pooled seconds — a slot-weighted mean. Averaging the
 // per-sample ratios instead would let a short window skew the result.
-export const slotDurationFromSamples = (
+export const slotDurationMsFromSamples = (
   samples: PerformanceSample[],
 ): number | null => {
   let slots = 0
@@ -105,18 +104,18 @@ export const slotDurationFromSamples = (
     seconds += sample.samplePeriodSecs
   }
   if (slots === 0) return null
-  const slotDuration = seconds / slots
-  return slotDuration >= MIN_SLOT_DURATION_S &&
-    slotDuration <= MAX_SLOT_DURATION_S
-    ? slotDuration
+  const slotDurationMs = (seconds * 1000) / slots
+  return slotDurationMs >= MIN_SLOT_DURATION_MS &&
+    slotDurationMs <= MAX_SLOT_DURATION_MS
+    ? slotDurationMs
     : null
 }
 
-// Measured wall-clock seconds per slot. SIMD-0525 steps the protocol slot time
+// Measured wall-clock milliseconds per slot. SIMD-0525 steps the protocol slot time
 // 400ms → 200ms and congestion moves the achieved rate further still, so the
 // countdown has to read the cluster's live throughput — any nominal constant is
 // wrong, and wrong in whichever direction the network happens to be running.
-export async function fetchSlotDurationSeconds(
+export async function fetchSlotDurationMs(
   signal?: AbortSignal,
 ): Promise<number | null> {
   const samples = await rpcResult<PerformanceSample[]>(
@@ -124,7 +123,7 @@ export async function fetchSlotDurationSeconds(
     [PERF_SAMPLE_COUNT],
     signal,
   )
-  return Array.isArray(samples) ? slotDurationFromSamples(samples) : null
+  return Array.isArray(samples) ? slotDurationMsFromSamples(samples) : null
 }
 
 // Slot-based progress from getEpochInfo — exact, no timestamp arithmetic.
@@ -133,16 +132,16 @@ export async function fetchSlotDurationSeconds(
 // dropped.
 export const epochInfoProgress = (
   info: EpochInfo,
-  slotDurationSeconds: number | null,
+  slotDurationMs: number | null,
 ): EpochProgress => ({
   epoch: info.epoch,
   percent: Math.min(100, (info.slotIndex / info.slotsInEpoch) * 100),
   hoursRemaining:
-    slotDurationSeconds === null
+    slotDurationMs === null
       ? null
       : Math.max(
           0,
-          ((info.slotsInEpoch - info.slotIndex) * slotDurationSeconds) / 3600,
+          ((info.slotsInEpoch - info.slotIndex) * slotDurationMs) / 3_600_000,
         ),
 })
 
