@@ -70,6 +70,20 @@ const ProtectedEvent = z.union([
     .passthrough(),
   z
     .object({
+      VatUnadmitted: z
+        .object({
+          actual_credits: z.number().int().gte(0),
+          actual_epr: z.number(),
+          epr_loss_bps: z.number().int().gte(0),
+          expected_epr: z.number(),
+          stake: z.number().int().gte(0),
+          vote_account: Pubkey,
+        })
+        .passthrough(),
+    })
+    .passthrough(),
+  z
+    .object({
       CommissionIncrease: z
         .object({
           actual_epr: z.number(),
@@ -303,7 +317,7 @@ const endpoints = makeApi([
     errors: [
       {
         status: 400,
-        description: `&#x60;from_epoch&#x60; is not a non-negative integer.`,
+        description: `&#x60;from_epoch&#x60; is not a non-negative integer, or is past the largest storable epoch.`,
         schema: z.void(),
       },
       {

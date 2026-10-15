@@ -5,6 +5,8 @@ import { schemas } from 'src/schemas/generated/validators'
 const epochStats = (credits: number | null) => ({
   activated_stake: '1000',
   blocks_produced: 0,
+  client_label: 'Agave + Jito',
+  client_name: 'Jito Labs',
   credits,
   epoch: 1100,
   foundation_stake: '0',

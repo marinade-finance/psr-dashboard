@@ -66,7 +66,7 @@ type PerformanceRecord = {
   blocks_produced: number
   credits?: (number | null) | undefined
   leader_slots: number
-  skip_rate?: (number | null) | undefined
+  skip_rate: number
 }
 type SettlementRecord = {
   amount: string
@@ -230,6 +230,23 @@ type ResponseEvents = {
 }
 type ResponseGlobalUnstakeHints = {
   unstake_hints: Array<GlobalUnstakeHintRecord>
+}
+type ResponseGroupHistory = {
+  current_epoch?: (number | null) | undefined
+  epochs: Array<GroupHistoryEpoch>
+  name: string
+  net_apy_updated_at?: (string | null) | undefined
+}
+type GroupHistoryEpoch = {
+  epoch: number
+  epoch_end_at?: (string | null) | undefined
+  epoch_start_at?: (string | null) | undefined
+  expected_take_rate?: (number | null) | undefined
+  net_apy?: (number | null) | undefined
+  stake_share: number
+  take_rate?: (number | null) | undefined
+  total_stake: string
+  validator_count: number
 }
 type ResponseJito = {
   validators: Array<JitoRecord>
@@ -515,6 +532,7 @@ type ValidatorEpochStats = {
   downtime?: (number | null) | undefined
   epoch: number
   epoch_end_at?: (string | null) | undefined
+  epoch_stake?: (string | null) | undefined
   epoch_start_at?: (string | null) | undefined
   feature_set?: (number | null) | undefined
   foundation_stake: string
@@ -540,7 +558,7 @@ type ValidatorEpochStats = {
   score?: (number | null) | undefined
   self_stake: string
   shred_version?: (number | null) | undefined
-  skip_rate?: (number | null) | undefined
+  skip_rate: number
   stake_to_become_superminority: string
   superminority: boolean
   uptime?: (number | null) | undefined
@@ -736,6 +754,27 @@ const ResponseClients: z.ZodType<ResponseClients> = z
     net_apy_updated_at: z.union([z.string(), z.null()]).optional(),
     total_activated_stake: z.string(),
     total_count: z.number().int().gte(0),
+  })
+  .passthrough()
+const GroupHistoryEpoch: z.ZodType<GroupHistoryEpoch> = z
+  .object({
+    epoch: z.number().int().gte(0),
+    epoch_end_at: z.union([z.string(), z.null()]).optional(),
+    epoch_start_at: z.union([z.string(), z.null()]).optional(),
+    expected_take_rate: z.union([z.number(), z.null()]).optional(),
+    net_apy: z.union([z.number(), z.null()]).optional(),
+    stake_share: z.number(),
+    take_rate: z.union([z.number(), z.null()]).optional(),
+    total_stake: z.string(),
+    validator_count: z.number().int().gte(0),
+  })
+  .passthrough()
+const ResponseGroupHistory: z.ZodType<ResponseGroupHistory> = z
+  .object({
+    current_epoch: z.union([z.number(), z.null()]).optional(),
+    epochs: z.array(GroupHistoryEpoch),
+    name: z.string(),
+    net_apy_updated_at: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const BlockProductionStats: z.ZodType<BlockProductionStats> = z
@@ -973,6 +1012,7 @@ const ValidatorEpochStats: z.ZodType<ValidatorEpochStats> = z
     downtime: z.union([z.number(), z.null()]).optional(),
     epoch: z.number().int().gte(0),
     epoch_end_at: z.union([z.string(), z.null()]).optional(),
+    epoch_stake: z.union([z.string(), z.null()]).optional(),
     epoch_start_at: z.union([z.string(), z.null()]).optional(),
     feature_set: z.union([z.number(), z.null()]).optional(),
     foundation_stake: z.string(),
@@ -1008,7 +1048,7 @@ const ValidatorEpochStats: z.ZodType<ValidatorEpochStats> = z
     score: z.union([z.number(), z.null()]).optional(),
     self_stake: z.string(),
     shred_version: z.union([z.number(), z.null()]).optional(),
-    skip_rate: z.union([z.number(), z.null()]).optional(),
+    skip_rate: z.number(),
     stake_to_become_superminority: z.string(),
     superminority: z.boolean(),
     uptime: z.union([z.number(), z.null()]).optional(),
@@ -1230,7 +1270,7 @@ const PerformanceRecord: z.ZodType<PerformanceRecord> = z
     blocks_produced: z.number().int().gte(0),
     credits: z.union([z.number(), z.null()]).optional(),
     leader_slots: z.number().int().gte(0),
-    skip_rate: z.union([z.number(), z.null()]).optional(),
+    skip_rate: z.number(),
   })
   .passthrough()
 const SettlementRecord: z.ZodType<SettlementRecord> = z
@@ -1308,6 +1348,8 @@ export const schemas = {
   ValidatorClientGroupRecord,
   ValidatorGroupNode,
   ResponseClients,
+  GroupHistoryEpoch,
+  ResponseGroupHistory,
   BlockProductionStats,
   ClientDiversityStats,
   ClientLineageStats,
@@ -1485,6 +1527,43 @@ const endpoints = makeApi([
   },
   {
     method: 'get',
+    path: '/clients/history',
+    alias: 'Get client history',
+    description: `Per-epoch stake, stake share, net APY and take rate of one &#x60;/clients&#x60; group (&#x60;level&#x3D;lineage&#x60; or &#x60;label&#x60;), newest epoch first.`,
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'key',
+        type: 'Query',
+        schema: z.string(),
+      },
+      {
+        name: 'level',
+        type: 'Query',
+        schema: z.enum(['lineage', 'label']).optional(),
+      },
+      {
+        name: 'epochs',
+        type: 'Query',
+        schema: z.number().int().gte(0).optional(),
+      },
+    ],
+    response: ResponseGroupHistory,
+    errors: [
+      {
+        status: 400,
+        description: `epochs is 0 or above 90, or level is not lineage or label`,
+        schema: z.void(),
+      },
+      {
+        status: 404,
+        description: `No client group with that key at that level`,
+        schema: z.void(),
+      },
+    ],
+  },
+  {
+    method: 'get',
     path: '/cluster-stats',
     alias: 'Show cluster stats',
     requestFormat: 'json',
@@ -1592,6 +1671,43 @@ const endpoints = makeApi([
       },
     ],
     response: ResponseProviders,
+  },
+  {
+    method: 'get',
+    path: '/providers/history',
+    alias: 'Get provider history',
+    description: `Per-epoch stake, stake share, net APY and take rate of one &#x60;/providers&#x60; group, newest epoch first.`,
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'key',
+        type: 'Query',
+        schema: z.string().optional(),
+      },
+      {
+        name: 'asn',
+        type: 'Query',
+        schema: z.number().int().optional(),
+      },
+      {
+        name: 'epochs',
+        type: 'Query',
+        schema: z.number().int().gte(0).optional(),
+      },
+    ],
+    response: ResponseGroupHistory,
+    errors: [
+      {
+        status: 400,
+        description: `epochs is 0 or above 90, or not exactly one of key / asn`,
+        schema: z.void(),
+      },
+      {
+        status: 404,
+        description: `No provider with that key or ASN`,
+        schema: z.void(),
+      },
+    ],
   },
   {
     method: 'get',
