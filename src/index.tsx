@@ -146,7 +146,7 @@ const router = createBrowserRouter([
 ])
 
 // Defaults tuned for a long-dwell dashboard whose underlying data updates
-// per Solana epoch (~48h). Stock v5 defaults (`staleTime: 0`,
+// per Solana epoch. Stock v5 defaults (`staleTime: 0`,
 // `refetchOnWindowFocus: true`, `retry: 3`) would refetch the heavy
 // `loadSam` path on every tab focus and amplify transient failures into
 // minutes of retry storms.

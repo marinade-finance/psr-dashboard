@@ -344,8 +344,7 @@ export const ProtectedEventsTable: React.FC<Props> = ({ data, level }) => {
               },
               {
                 header: 'Epoch',
-                headerHelp:
-                  'Which Solana epoch this happened in — each epoch is about two days long.',
+                headerHelp: 'Which Solana epoch this happened in.',
                 headerGuideTo: `${docsPath(level)}#psr`,
                 render: ({ protectedEvent }) => <>{protectedEvent.epoch}</>,
                 compare: (a, b) =>

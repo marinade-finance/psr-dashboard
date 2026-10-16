@@ -11,7 +11,7 @@ import {
   fetchAuctionEpoch,
   fetchEpochInfo,
   fetchEpochMeterData,
-  fetchSlotDurationSeconds,
+  fetchSlotDurationMs,
   type EpochMeterModel,
   type EpochProgress,
   type TimelineStage,
@@ -47,11 +47,11 @@ export const EpochMeter: React.FC = () => {
   const { data: epochData } = useQuery({
     queryKey: ['epoch-info'],
     queryFn: async ({ signal }) => {
-      const [info, slotDurationSeconds] = await Promise.all([
+      const [info, slotDurationMs] = await Promise.all([
         fetchEpochInfo(signal),
-        fetchSlotDurationSeconds(signal),
+        fetchSlotDurationMs(signal),
       ])
-      return { info, slotDurationSeconds }
+      return { info, slotDurationMs }
     },
     staleTime: 10 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000,
@@ -68,7 +68,7 @@ export const EpochMeter: React.FC = () => {
   const paymentSettled = meter?.paymentSettled ?? null
   const auctionSettled = meter?.auctionSettled ?? null
   const progress = epochData?.info
-    ? epochInfoProgress(epochData.info, epochData.slotDurationSeconds)
+    ? epochInfoProgress(epochData.info, epochData.slotDurationMs)
     : null
 
   const model = epochMeterModel({
