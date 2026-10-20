@@ -34,10 +34,11 @@ start:dev`), build output to `build/` (`pnpm build`), preview on 8080
 - **Data**: `@tanstack/react-query` 5.100 (object-form API everywhere).
 - **Markdown**: `react-markdown` 10 + `remark-gfm` + `remark-breaks` +
   `rehype-raw` (for the docs page).
-- **Auction algorithm**: `@marinade.finance/ds-sam-sdk` 0.4.0
+- **Auction algorithm**: `@marinade.finance/ds-sam-sdk` 0.6.1
   (`DsSamSDK`, `loadSamConfig`, `runFinalOnly`) plus
-  `@marinade.finance/ds-sam-calc` 0.4.0 (shared pure calc / selectors /
-  tip engine, re-exported through `src/services/*`). Both packages ship
+  `@marinade.finance/ds-sam-calc` 0.6.1 (shared pure calc / selectors /
+  tip engine, re-exported through `src/services/*`) and
+  `@marinade.finance/ds-sam-estimator` 0.6.1. All three packages ship
   from the same `ds-sam` repo and must be bumped together. 0.3.0 reshapes
   `ConcentrationContext`: the flat `pctOfTotal` / `capPct` pair became two
   `ConcentrationDimension`s, `network` (group stake over `networkTotalSol`)

@@ -13,14 +13,14 @@ importers:
   .:
     dependencies:
       '@marinade.finance/ds-sam-calc':
-        specifier: 0.6.0
-        version: 0.6.0
+        specifier: 0.6.1
+        version: 0.6.1
       '@marinade.finance/ds-sam-estimator':
-        specifier: 0.6.0
-        version: 0.6.0
+        specifier: 0.6.1
+        version: 0.6.1
       '@marinade.finance/ds-sam-sdk':
-        specifier: 0.6.0
-        version: 0.6.0
+        specifier: 0.6.1
+        version: 0.6.1
       '@marinade.finance/ts-common':
         specifier: ^5.1.2
         version: 5.4.0
@@ -594,14 +594,14 @@ packages:
   '@liuli-util/fs-extra@0.1.0':
     resolution: {integrity: sha512-eaAyDyMGT23QuRGbITVY3SOJff3G9ekAAyGqB9joAnTBmqvFN+9a1FazOdO70G6IUqgpKV451eBHYSRcOJ/FNQ==}
 
-  '@marinade.finance/ds-sam-calc@0.6.0':
-    resolution: {integrity: sha512-X1Ue6+d831v/hBouxPlc9TIzjKqunMzkRzSAsUUve4HJrGIIxiatGGqc7wNZ3a3KmPpUUQBfSZkV1iCNeVb6gw==}
+  '@marinade.finance/ds-sam-calc@0.6.1':
+    resolution: {integrity: sha512-GCcJ1dtEaQfvhc15g2UqOjgz1Fi9kc/myh+ZZpzIB87DX+zgELxhVq1e72Vbkn87bMXZ4aRQPVjkkgxV22WDZA==}
 
-  '@marinade.finance/ds-sam-estimator@0.6.0':
-    resolution: {integrity: sha512-rGTQewtIYQ1tWrkSy25vWFO5TcuI28x8bSr0vchUYWJtOwYTbX6pKp3UdScLbNW1hPfL8FiBStiD4nuSLr33Pw==}
+  '@marinade.finance/ds-sam-estimator@0.6.1':
+    resolution: {integrity: sha512-ii0T51ornaqiJlZmdFupLDCIiM7pGYT0qVLaqtnBXHTJliCHgQOyjumCPQymuDujfw9ELbPdr4PYnYf1KHEeJg==}
 
-  '@marinade.finance/ds-sam-sdk@0.6.0':
-    resolution: {integrity: sha512-MDYRJvwHjetWAQLbIO96UK2hIPdgp3u27U3x9Tft6TEbhcywHkxN0C6mdgKka3tj4zpMV083ZjaUyaPr69F1+A==}
+  '@marinade.finance/ds-sam-sdk@0.6.1':
+    resolution: {integrity: sha512-brIe92KR9gEy2kGE5bwWjBYbk1QMPk128vUSF4HqyinwwO+9vjLZdRlvvRiYdGljfCzMmV86TODYE8wGmoO4IQ==}
 
   '@marinade.finance/eslint-config@1.3.5':
     resolution: {integrity: sha512-yKLW2vI9QmQ6uWO3SQSbOYDmtSpYPU34zuomKGCfoLF7/bN+c6GinyzUumIPoUshqztRkqjOpFels4F4E6puEg==}
@@ -5050,20 +5050,20 @@ snapshots:
       '@types/fs-extra': 9.0.13
       fs-extra: 10.1.0
 
-  '@marinade.finance/ds-sam-calc@0.6.0':
+  '@marinade.finance/ds-sam-calc@0.6.1':
     dependencies:
       '@marinade.finance/ts-common': 5.11.1
       decimal.js: 10.6.0
 
-  '@marinade.finance/ds-sam-estimator@0.6.0':
+  '@marinade.finance/ds-sam-estimator@0.6.1':
     dependencies:
-      '@marinade.finance/ds-sam-calc': 0.6.0
+      '@marinade.finance/ds-sam-calc': 0.6.1
       '@marinade.finance/ts-common': 5.11.1
       decimal.js: 10.6.0
 
-  '@marinade.finance/ds-sam-sdk@0.6.0':
+  '@marinade.finance/ds-sam-sdk@0.6.1':
     dependencies:
-      '@marinade.finance/ds-sam-calc': 0.6.0
+      '@marinade.finance/ds-sam-calc': 0.6.1
       '@marinade.finance/ts-common': 5.11.1
       axios: 1.20.0
       decimal.js: 10.6.0
