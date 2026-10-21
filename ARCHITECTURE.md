@@ -39,8 +39,10 @@ start:dev`), build output to `build/` (`pnpm build`), preview on 8080
   `@marinade.finance/ds-sam-calc` 0.6.2 (shared pure calc / selectors /
   tip engine, re-exported through `src/services/*`) and
   `@marinade.finance/ds-sam-estimator` 0.6.1. All three packages ship
-  from the same `ds-sam` repo and must be bumped together. 0.3.0 reshapes
-  `ConcentrationContext`: the flat `pctOfTotal` / `capPct` pair became two
+  from the same `ds-sam` repo. Bump each one to its newest release. A
+  `ds-sam` release can skip a package: 0.6.2 has no estimator, so the
+  estimator stays at 0.6.1 and pulls its own `ds-sam-calc` 0.6.1.
+  0.3.0 reshapes `ConcentrationContext`: the flat `pctOfTotal` / `capPct` pair became two
   `ConcentrationDimension`s, `network` (group stake over `networkTotalSol`)
   and `marinade` (group SAM target over `marinadeSamTvlSol`), plus a
   `binding` discriminator naming whichever ledger has the least headroom.
