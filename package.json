@@ -51,9 +51,9 @@
     "vitest": "5.0.0"
   },
   "dependencies": {
-    "@marinade.finance/ds-sam-calc": "0.6.2",
-    "@marinade.finance/ds-sam-estimator": "0.6.1",
-    "@marinade.finance/ds-sam-sdk": "0.6.2",
+    "@marinade.finance/ds-sam-calc": "0.6.3",
+    "@marinade.finance/ds-sam-estimator": "0.6.3",
+    "@marinade.finance/ds-sam-sdk": "0.6.3",
     "@marinade.finance/ts-common": "^5.1.2",
     "@zodios/core": "10.9.6",
     "zod": "^3",
