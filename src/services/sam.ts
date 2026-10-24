@@ -4,14 +4,15 @@ import {
   loadSamConfig,
   LogVerbosity,
 } from '@marinade.finance/ds-sam-sdk'
-import {
-  epochDurationSecondsFromSlotsPerYear,
-  pmpeToApy,
-  pmpeToSol,
-} from '@marinade.finance/ts-common'
+import { pmpeToApy, pmpeToSol } from '@marinade.finance/ts-common'
 
 import { pct } from 'src/format'
 
+import {
+  fetchEpochMeasurement,
+  resolveEpochDuration,
+  type EpochMeasurement,
+} from './epoch-duration'
 import { fetchValidatorsWithEpochs } from './validators'
 
 import type {
@@ -50,14 +51,14 @@ type SamResult = {
   dsSamConfig: DsSamConfig
 }
 
-// The auction's own slot-time regime is the only basis consistent with its
-// numbers: the SDK normalises the inflation window to this same nominal, so
-// annualizing against a measured multi-epoch average would count the SIMD-0525
-// slot-time step twice. Decimal in, plain number out — the UI does float math.
-export const selectEpochDurationSeconds = (auctionData: AuctionData): number =>
-  epochDurationSecondsFromSlotsPerYear(
-    auctionData.slotParams.slotsPerYear,
-  ).toNumber()
+// The real epoch duration every APY is annualised on (see epoch-duration.ts).
+// Without a measurement it is the 220 ms-per-200 ms-slot estimate, never the
+// nominal, which overstates APY by about 60 bps.
+export const selectEpochDurationSeconds = (
+  auctionData: AuctionData,
+  measurement: EpochMeasurement | null = null,
+): number =>
+  resolveEpochDuration(auctionData.slotParams.slotsPerYear, measurement).seconds
 
 // Fetches the live auction. Simulation with overrides goes through
 // runSdkRerun (single source of truth); loadSam does not accept overrides.
@@ -71,11 +72,17 @@ export const loadSam = async (): Promise<SamResult> => {
     logVerbosity: LogVerbosity.ERROR,
   })
 
-  const auctionResult = await dsSam.runFinalOnly()
+  const [auctionResult, measurement] = await Promise.all([
+    dsSam.runFinalOnly(),
+    fetchEpochMeasurement(),
+  ])
 
   return {
     auctionResult,
-    epochDurationSeconds: selectEpochDurationSeconds(auctionResult.auctionData),
+    epochDurationSeconds: selectEpochDurationSeconds(
+      auctionResult.auctionData,
+      measurement,
+    ),
     dsSamConfig: dsSam.config,
   }
 }

@@ -379,22 +379,31 @@ function makeApyValidator(
   } as unknown as AuctionValidator
 }
 
-// The scaling constant behind every APY the dashboard renders — pin it against
-// the 48h nominal the expected values elsewhere in this suite are written for.
+// The scaling constant behind every APY the dashboard renders. With no
+// measurement it is the estimate: 220 ms per 200 ms nominal slot.
 describe('selectEpochDurationSeconds', () => {
   const auctionData = (slotsPerYear: number) =>
     ({ slotParams: { slotsPerYear } }) as unknown as AuctionData
 
-  it('baseline slots-per-year → the 48h nominal epoch', () => {
-    expect(
-      selectEpochDurationSeconds(auctionData(BASELINE_SLOTS_PER_YEAR)),
-    ).toBeCloseTo(172_800, 6)
-  })
-
-  it('halved slot time → halved epoch duration', () => {
+  it('no measurement → nominal epoch stretched by 10%', () => {
     expect(
       selectEpochDurationSeconds(auctionData(2 * BASELINE_SLOTS_PER_YEAR)),
-    ).toBeCloseTo(86_400, 6)
+    ).toBeCloseTo(86_400 * 1.1, 6)
+  })
+
+  it('a clean measurement → the measured duration', () => {
+    const nominal = 2 * BASELINE_SLOTS_PER_YEAR
+    expect(
+      selectEpochDurationSeconds(auctionData(nominal), {
+        measuredHours: 26.16,
+        slotsPerYearByEpoch: [
+          [1055, nominal],
+          [1056, nominal],
+          [1057, nominal],
+          [1058, nominal],
+        ],
+      }),
+    ).toBeCloseTo(26.16 * 3600, 6)
   })
 })
 

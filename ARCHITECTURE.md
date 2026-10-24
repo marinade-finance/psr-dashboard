@@ -187,13 +187,22 @@ AggregatedValidator[]`, `stakeAmounts`, `rewards`, `slotParams`,
 `blacklist`; after `transformValidators()` validators gain eligibility
 fields (`samEligible`, `samBlocked`).
 
-`slotParams.slotsPerYear` is agave's nominal for the slot-time regime the
-inputs were normalised to. The SDK normalises its inflation window to that
-same nominal, so the dashboard annualises against
-`epochDurationSecondsFromSlotsPerYear(slotsPerYear)` — never a measured
-multi-epoch average, which would count the SIMD-0525 slot-time step twice.
-This value is threaded as `epochDurationSeconds` from `SamPage` into
-`SamTable` and `ValidatorDetail`.
+Every APY is annualised on the **real** epoch duration, not the nominal slot
+time (`src/services/epoch-duration.ts`). PMPE is per epoch: the SDK
+normalises its inflation window to the nominal `slotParams.slotsPerYear`,
+which is how the chain pays inflation, and MEV and block rewards accrue per
+block. Only the number of epochs in a year depends on the wall clock, and
+real slots run slower than the nominal (about 218 ms against 200 ms since
+epoch 1053), so the nominal overstated every APY by about 57 bps at epoch
+1058 (6.67% against 6.10% Winning APY). `loadSam()` fetches, alongside the
+auction, `api2.marinade.finance/metrics_json`
+(`last_3_epochs_avg_duration_hs`) and `validators-api /rewards?epochs=4`
+(`slots_per_year` history). The measurement is used only when all three
+averaged epochs ran on the current nominal: right after a SIMD-0525 step the
+window still holds slower epochs and would understate APY. Otherwise, or when
+either fetch fails, the duration is estimated at 220 ms per 200 ms nominal
+slot. The result is threaded as `epochDurationSeconds` from `SamPage` into
+`SamTable` and `ValidatorDetail`; simulations reuse the live value.
 
 `src/services/sam.ts:loadSam()` runs the live auction (no overrides).
 Simulation reruns go through `src/services/sdk-rerun.ts` — the single
