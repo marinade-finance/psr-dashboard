@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { schemas } from 'src/schemas/generated/validators'
 
-const epochStats = (credits: number | null) => ({
+const epochStats = (credits: number | null, skipRate: number | null = 0) => ({
   activated_stake: '1000',
   blocks_produced: 0,
   client_label: 'Agave + Jito',
@@ -15,7 +15,7 @@ const epochStats = (credits: number | null) => ({
   marinade_native_stake: '0',
   marinade_stake: '0',
   self_stake: '0',
-  skip_rate: 0,
+  skip_rate: skipRate,
   stake_to_become_superminority: '0',
   superminority: false,
   vote_reward_lamports: 5000,
@@ -28,6 +28,12 @@ describe('ValidatorEpochStats schema', () => {
     ).toBe(true)
     expect(
       schemas.ValidatorEpochStats.safeParse(epochStats(432_000)).success,
+    ).toBe(true)
+  })
+
+  it('accepts null skip_rate, as the validators API sends for zero leader slots', () => {
+    expect(
+      schemas.ValidatorEpochStats.safeParse(epochStats(432_000, null)).success,
     ).toBe(true)
   })
 })

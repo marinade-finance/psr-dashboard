@@ -66,7 +66,7 @@ type PerformanceRecord = {
   blocks_produced: number
   credits?: (number | null) | undefined
   leader_slots: number
-  skip_rate: number
+  skip_rate?: (number | null) | undefined
 }
 type SettlementRecord = {
   amount: string
@@ -410,6 +410,7 @@ type ResponseValidators = {
   total_count: number
   validators: Array<ValidatorRecord>
   validators_aggregated: Array<ValidatorsAggregated>
+  vat_minimum_balances: {}
 }
 type ValidatorRecord = {
   activated_stake: string
@@ -494,9 +495,11 @@ type ValidatorRecord = {
   start_epoch: number
   superminority: boolean
   unique_delegators?: (number | null) | undefined
+  vat_eligible?: (boolean | null) | undefined
   verified?: boolean | undefined
   version?: (string | null) | undefined
   vote_account: string
+  vote_account_lamports?: (string | null) | undefined
   vote_reward_lamports?: (number | null) | undefined
   warnings: Array<ValidatorWarning>
 }
@@ -558,12 +561,14 @@ type ValidatorEpochStats = {
   score?: (number | null) | undefined
   self_stake: string
   shred_version?: (number | null) | undefined
-  skip_rate: number
+  skip_rate?: (number | null) | undefined
   stake_to_become_superminority: string
   superminority: boolean
   uptime?: (number | null) | undefined
   uptime_pct?: (number | null) | undefined
+  vat_eligible?: (boolean | null) | undefined
   version?: (string | null) | undefined
+  vote_account_lamports?: (string | null) | undefined
   vote_reward_lamports?: (number | null) | undefined
 }
 type RugInfo = {
@@ -1048,12 +1053,14 @@ const ValidatorEpochStats: z.ZodType<ValidatorEpochStats> = z
     score: z.union([z.number(), z.null()]).optional(),
     self_stake: z.string(),
     shred_version: z.union([z.number(), z.null()]).optional(),
-    skip_rate: z.number(),
+    skip_rate: z.union([z.number(), z.null()]).optional(),
     stake_to_become_superminority: z.string(),
     superminority: z.boolean(),
     uptime: z.union([z.number(), z.null()]).optional(),
     uptime_pct: z.union([z.number(), z.null()]).optional(),
+    vat_eligible: z.union([z.boolean(), z.null()]).optional(),
     version: z.union([z.string(), z.null()]).optional(),
+    vote_account_lamports: z.union([z.string(), z.null()]).optional(),
     vote_reward_lamports: z.union([z.number(), z.null()]).optional(),
   })
   .passthrough()
@@ -1169,9 +1176,11 @@ const ValidatorRecord: z.ZodType<ValidatorRecord> = z
     start_epoch: z.number().int().gte(0),
     superminority: z.boolean(),
     unique_delegators: z.union([z.number(), z.null()]).optional(),
+    vat_eligible: z.union([z.boolean(), z.null()]).optional(),
     verified: z.boolean().optional(),
     version: z.union([z.string(), z.null()]).optional(),
     vote_account: z.string(),
+    vote_account_lamports: z.union([z.string(), z.null()]).optional(),
     vote_reward_lamports: z.union([z.number(), z.null()]).optional(),
     warnings: z.array(ValidatorWarning),
   })
@@ -1194,6 +1203,7 @@ const ResponseValidators: z.ZodType<ResponseValidators> = z
     total_count: z.number().int().gte(0),
     validators: z.array(ValidatorRecord),
     validators_aggregated: z.array(ValidatorsAggregated),
+    vat_minimum_balances: z.record(z.string()),
   })
   .passthrough()
 const ValidatorBlockRewardsRecord: z.ZodType<ValidatorBlockRewardsRecord> = z
@@ -1270,7 +1280,7 @@ const PerformanceRecord: z.ZodType<PerformanceRecord> = z
     blocks_produced: z.number().int().gte(0),
     credits: z.union([z.number(), z.null()]).optional(),
     leader_slots: z.number().int().gte(0),
-    skip_rate: z.number(),
+    skip_rate: z.union([z.number(), z.null()]).optional(),
   })
   .passthrough()
 const SettlementRecord: z.ZodType<SettlementRecord> = z
