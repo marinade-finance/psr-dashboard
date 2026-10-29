@@ -1749,6 +1749,7 @@ export const TEST_DS_SAM_CONFIG: DsSamConfig = {
   // readable "Top up bond to 5 SOL to win stake." All baseline fixture
   // bonds are ≥ 6 SOL, so their health/coverage is unaffected.
   minBondBalanceSol: 5,
+  noBondBalanceSol: 1.00228288,
   minBondEpochs: 1,
   // Bond runway gauge scaleMax = 4 × idealBondEpochs = 52ep, so a healthy
   // 40-60ep runway fills realistically instead of saturating at the old

@@ -20,6 +20,7 @@ const CONFIG: DsSamConfig = {
   idealBondEpochs: 10,
   bondRiskFeeMult: 1,
   minBondBalanceSol: 1,
+  noBondBalanceSol: 0,
 } as unknown as DsSamConfig
 
 function makeValidator(
