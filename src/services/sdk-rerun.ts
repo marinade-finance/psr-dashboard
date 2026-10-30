@@ -85,6 +85,8 @@ export function runSdkRerun(
       bondBalanceSol,
       claimableBondBalanceSol,
       revShare,
+      // The overrides can move the SDK's gate; null hands the cause back to the tip engine.
+      samIneligibilityGate: null,
     }
   })
 

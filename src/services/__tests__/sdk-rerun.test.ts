@@ -54,4 +54,27 @@ describe('runSdkRerun', () => {
       )
     })
   })
+
+  it('clears the SDK gate only on rows the overrides touch', () => {
+    const input = evaluateWithSdk()
+    const clientVote = 'FiXtUREvoCLIENThi4444444444444444444444444dd'
+    const blacklistedVote = 'FiXtUREvoBLACKLISTEDhi33333333333333333333cc'
+    const overrides = {
+      source: {
+        inflationCommissionsDec: new Map(),
+        mevCommissionsDec: new Map(),
+        blockRewardsCommissionsDec: new Map(),
+        cpmpesDec: new Map([[clientVote, 5]]),
+      },
+      bondBalanceSol: new Map(),
+    }
+
+    const rerun = runSdkRerun(input.auctionData, TEST_DS_SAM_CONFIG, overrides)
+    const gateOf = (vote: string) =>
+      rerun.auctionData.validators.find(v => v.voteAccount === vote)
+        ?.samIneligibilityGate
+
+    expect(gateOf(clientVote)).toBeNull()
+    expect(gateOf(blacklistedVote)).toBe('blacklist')
+  })
 })

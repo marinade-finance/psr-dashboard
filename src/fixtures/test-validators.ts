@@ -197,6 +197,8 @@ function makeBase(
     foundationStakeSol: 0,
     selfStakeSol: 50_000,
     epochStats: [],
+    // With samEligible false, a null gate falls back to the engine's old inference.
+    samIneligibilityGate: null,
     auctions: makeAuctions(
       opts.bidCpmpe != null ? opts.bidCpmpe : 2.5,
       WINNING_PMPE,
@@ -1296,6 +1298,7 @@ const o02: AuctionValidator = {
   }),
   ...O_COMMON,
   samEligible: false,
+  samIneligibilityGate: 'noBond',
   samBlocked: false,
   lastCapConstraint: null,
   values: outOfSetValues(70_000, null),
@@ -1312,6 +1315,7 @@ const o03: AuctionValidator = {
   }),
   ...O_COMMON,
   samEligible: false,
+  samIneligibilityGate: 'blacklist',
   samBlocked: false,
   lastCapConstraint: null,
   values: outOfSetValues(60_000, 100),
@@ -1328,13 +1332,14 @@ const o13: AuctionValidator = {
   }),
   ...O_COMMON,
   samEligible: false,
+  samIneligibilityGate: 'blacklist',
   samBlocked: false,
   lastCapConstraint: null,
   values: outOfSetValues(5_000, 100),
 }
 
-// o04. samEligible=false, bond present, not blacklisted → CRITICAL
-//   "Not eligible — check client version and vote credits."
+// o04. samEligible=false, refused by the client-version gate → WARNING
+//   "Upgrade to a supported validator client."
 const o04: AuctionValidator = {
   ...outOfSetBase('FiXtUREvoCLIENThi4444444444444444444444444dd', {
     marinadeActivatedStakeSol: 55_000,
@@ -1343,6 +1348,7 @@ const o04: AuctionValidator = {
   }),
   ...O_COMMON,
   samEligible: false,
+  samIneligibilityGate: 'clientVersion',
   samBlocked: false,
   lastCapConstraint: null,
   values: outOfSetValues(55_000, 100),
@@ -1446,6 +1452,7 @@ const o09: AuctionValidator = {
   }),
   ...O_COMMON,
   samEligible: false,
+  samIneligibilityGate: 'noBond',
   samBlocked: false,
   lastCapConstraint: null,
   values: outOfSetValues(0, null),

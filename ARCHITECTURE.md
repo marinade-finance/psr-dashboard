@@ -185,7 +185,10 @@ last-price auction — every winner pays the clearing price (effective
 bid). Key types: `AggregatedData` carries `validators:
 AggregatedValidator[]`, `stakeAmounts`, `rewards`, `slotParams`,
 `blacklist`; after `transformValidators()` validators gain eligibility
-fields (`samEligible`, `samBlocked`).
+fields (`samEligible`, `samIneligibilityGate`, `samBlocked`).
+`samIneligibilityGate` names the gate that refused the validator, so tips
+name the real cause. `runSdkRerun` resets it to `null` on overridden rows,
+which hands the cause back to the tip engine's inference.
 
 `slotParams.slotsPerYear` is agave's nominal for the slot-time regime the
 inputs were normalised to. The SDK normalises its inflation window to that
