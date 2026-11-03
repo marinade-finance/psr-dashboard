@@ -54,4 +54,29 @@ describe('runSdkRerun', () => {
       )
     })
   })
+
+  it('clears only the gates an override can move', () => {
+    const input = evaluateWithSdk()
+    const clientVote = 'FiXtUREvoCLIENThi4444444444444444444444444dd'
+    const noBondVote = 'FiXtUREvoNOBONDhi2222222222222222222222222bb'
+    const blacklistedVote = 'FiXtUREvoBLACKLISTEDhi33333333333333333333cc'
+    const overrides = {
+      source: {
+        inflationCommissionsDec: new Map(),
+        mevCommissionsDec: new Map(),
+        blockRewardsCommissionsDec: new Map(),
+        cpmpesDec: new Map([[clientVote, 5]]),
+      },
+      bondBalanceSol: new Map([[noBondVote, 1000]]),
+    }
+
+    const rerun = runSdkRerun(input.auctionData, TEST_DS_SAM_CONFIG, overrides)
+    const gateOf = (vote: string) =>
+      rerun.auctionData.validators.find(v => v.voteAccount === vote)
+        ?.samIneligibilityGate
+
+    expect(gateOf(clientVote)).toBe('clientVersion')
+    expect(gateOf(noBondVote)).toBeNull()
+    expect(gateOf(blacklistedVote)).toBe('blacklist')
+  })
 })

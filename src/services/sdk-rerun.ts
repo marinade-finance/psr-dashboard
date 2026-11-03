@@ -85,6 +85,12 @@ export function runSdkRerun(
       bondBalanceSol,
       claimableBondBalanceSol,
       revShare,
+      // Only bond and revShare gates can move; null hands those back to the tip engine.
+      samIneligibilityGate:
+        v.samIneligibilityGate === 'noBond' ||
+        v.samIneligibilityGate === 'revShareBelowFloor'
+          ? null
+          : v.samIneligibilityGate,
     }
   })
 
