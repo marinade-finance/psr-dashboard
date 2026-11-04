@@ -58,7 +58,7 @@ export const selectEpochDurationSeconds = (
   auctionData: AuctionData,
   measurement: EpochMeasurement | null = null,
 ): number =>
-  resolveEpochDuration(auctionData.slotParams.slotsPerYear, measurement).seconds
+  resolveEpochDuration(auctionData.slotParams.slotsPerYear, measurement)
 
 // Fetches the live auction. Simulation with overrides goes through
 // runSdkRerun (single source of truth); loadSam does not accept overrides.

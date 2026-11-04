@@ -197,10 +197,13 @@ auction, `api2.marinade.finance/metrics_json`
 (`last_3_epochs_avg_duration_hs`) and `validators-api /rewards?epochs=4`
 (`slots_per_year` history). The measurement is used only when all three
 averaged epochs ran on the current nominal: right after a SIMD-0525 step the
-window still holds slower epochs and would understate APY. Otherwise, or when
-either fetch fails, the duration is estimated at 220 ms per 200 ms nominal
-slot. The result is threaded as `epochDurationSeconds` from `SamPage` into
-`SamTable` and `ValidatorDetail`; simulations reuse the live value.
+window still holds slower epochs and would understate APY. The API recomputes
+the average once per epoch and publishes no window epoch, so one extra epoch
+of slack covers a stale value at the start of an epoch. Otherwise, or when
+either fetch fails or times out (5 s), the duration is estimated at 220 ms per
+200 ms nominal slot. The result is threaded as `epochDurationSeconds` from
+`SamPage` into `SamTable` and `ValidatorDetail`; simulations reuse the live
+value.
 
 `src/services/sam.ts:loadSam()` runs the live auction (no overrides).
 Simulation reruns go through `src/services/sdk-rerun.ts` — the single

@@ -13,10 +13,17 @@ import { MARINADE_API_URL, VALIDATORS_API_URL } from './apiUrls'
 // The measured figure is the Marinade API's average over the last three
 // completed epochs. Right after a SIMD-0525 slot-time step that window still
 // holds epochs from the slower regime and would understate APY, so it is used
-// only when all three epochs ran on today's nominal. Otherwise, or when the
-// API is down, the duration is estimated at 220 ms per 200 ms nominal slot.
+// only when all three epochs ran on today's nominal. The API recomputes the
+// average once per epoch and publishes no window epoch next to it, so at the
+// start of an epoch it may still be the previous epoch's window: one extra
+// epoch of slack covers that. Otherwise, or when the API is down or slow, the
+// duration is estimated at 220 ms per 200 ms nominal slot.
 
 const MEASURED_WINDOW_EPOCHS = 3
+// Epochs the regime must have run for before the window counts as clean: the
+// window itself plus one epoch for a not-yet-recomputed average.
+const CLEAN_REGIME_EPOCHS = MEASURED_WINDOW_EPOCHS + 1
+const FETCH_TIMEOUT_MS = 5000
 // Real slot time over nominal when no clean measurement exists.
 export const ESTIMATED_SLOT_STRETCH = 1.1
 // Slots cannot run faster than the nominal; a 50% stall is an outage.
@@ -30,15 +37,9 @@ export type EpochMeasurement = {
   slotsPerYearByEpoch: readonly SlotsPerYearRecord[]
 }
 
-export type EpochDuration = {
-  seconds: number
-  source: 'measured' | 'estimated'
-  nominalSeconds: number
-}
-
 // First epoch of the current slot-time regime: where the trailing run of the
-// latest slots_per_year value starts. A gap ends the run, so a regime is never
-// assumed older than the history shows.
+// latest slots_per_year value starts. A gap or a repeated epoch ends the run,
+// so a regime is never assumed older than the history shows.
 export const regimeStartEpoch = (
   slotsPerYearByEpoch: readonly SlotsPerYearRecord[],
 ): number | null => {
@@ -47,24 +48,24 @@ export const regimeStartEpoch = (
   if (!latest) return null
   const [latestEpoch, current] = latest
   let start = latestEpoch
-  for (const [epoch, slotsPerYear] of sorted.slice(1)) {
-    if (slotsPerYear !== current || epoch !== start - 1) break
+  for (let i = 1; i < sorted.length; i++) {
+    const [epoch, slotsPerYear] = sorted[i]
+    const repeated = sorted[i + 1]?.[0] === epoch
+    if (slotsPerYear !== current || epoch !== start - 1 || repeated) break
     start = epoch
   }
   return start
 }
 
+// Epoch duration in seconds: the measurement when it is clean and plausible,
+// the estimate otherwise.
 export const resolveEpochDuration = (
   slotsPerYear: number,
   measurement: EpochMeasurement | null,
-): EpochDuration => {
+): number => {
   const nominalSeconds =
     epochDurationSecondsFromSlotsPerYear(slotsPerYear).toNumber()
-  const estimated: EpochDuration = {
-    seconds: nominalSeconds * ESTIMATED_SLOT_STRETCH,
-    source: 'estimated',
-    nominalSeconds,
-  }
+  const estimated = nominalSeconds * ESTIMATED_SLOT_STRETCH
   const measuredHours = measurement?.measuredHours
   if (measuredHours == null || !Number.isFinite(measuredHours)) return estimated
 
@@ -82,17 +83,21 @@ export const resolveEpochDuration = (
   )
   const start = regimeStartEpoch(history)
   if (!latest || start == null || latest[1] !== slotsPerYear) return estimated
-  if (start > latest[0] - MEASURED_WINDOW_EPOCHS) return estimated
+  if (start > latest[0] - CLEAN_REGIME_EPOCHS) return estimated
 
-  return { seconds: measuredSeconds, source: 'measured', nominalSeconds }
+  return measuredSeconds
 }
 
+// A hanging request would hold the shared auction query pending, so without a
+// caller's signal the fetch times out and falls back to the estimate.
 const fetchJson = async (
   url: string,
   signal?: AbortSignal,
 ): Promise<unknown> => {
   try {
-    const res = await fetch(url, { signal })
+    const res = await fetch(url, {
+      signal: signal ?? AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    })
     return res.ok ? ((await res.json()) as unknown) : null
   } catch {
     return null

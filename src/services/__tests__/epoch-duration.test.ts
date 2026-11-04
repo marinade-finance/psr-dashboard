@@ -10,6 +10,7 @@ import {
 const NOMINAL_200MS = 157_784_629.968 // epoch 1053 onwards
 const NOMINAL_250MS = 126_227_703.974 // epochs 1037-1052
 const NOMINAL_EPOCH_SECONDS = 86_400 // 432,000 slots at 200 ms
+const ESTIMATED_EPOCH_SECONDS = NOMINAL_EPOCH_SECONDS * ESTIMATED_SLOT_STRETCH
 
 const history = (
   from: number,
@@ -37,6 +38,15 @@ describe('regimeStartEpoch', () => {
     ).toBe(1056)
   })
 
+  it('ends the run before a repeated epoch, in any order', () => {
+    const records: SlotsPerYearRecord[] = [
+      ...history(1053, 1056, NOMINAL_200MS),
+      [1053, NOMINAL_250MS],
+    ]
+    expect(regimeStartEpoch(records)).toBe(1054)
+    expect(regimeStartEpoch([...records].reverse())).toBe(1054)
+  })
+
   it('is null for an empty history', () => {
     expect(regimeStartEpoch([])).toBeNull()
   })
@@ -49,47 +59,58 @@ describe('resolveEpochDuration', () => {
   ]
 
   it('uses the measured average when all three epochs ran on the current nominal', () => {
-    const duration = resolveEpochDuration(NOMINAL_200MS, {
-      measuredHours: 26.16,
-      slotsPerYearByEpoch: settled,
-    })
-    expect(duration.source).toBe('measured')
-    expect(duration.seconds).toBeCloseTo(26.16 * 3600, 6)
-    expect(duration.nominalSeconds).toBeCloseTo(NOMINAL_EPOCH_SECONDS, 3)
+    expect(
+      resolveEpochDuration(NOMINAL_200MS, {
+        measuredHours: 26.16,
+        slotsPerYearByEpoch: settled,
+      }),
+    ).toBeCloseTo(26.16 * 3600, 6)
   })
 
   it('estimates while the window still holds epochs from the previous regime', () => {
     // Current epoch 1055: the window is 1052-1054, and 1052 ran on 250 ms slots.
-    const duration = resolveEpochDuration(NOMINAL_200MS, {
-      measuredHours: 28.2,
-      slotsPerYearByEpoch: [
-        ...history(1050, 1052, NOMINAL_250MS),
-        ...history(1053, 1055, NOMINAL_200MS),
-      ],
-    })
-    expect(duration.source).toBe('estimated')
-    expect(duration.seconds).toBeCloseTo(
-      NOMINAL_EPOCH_SECONDS * ESTIMATED_SLOT_STRETCH,
-      3,
-    )
+    expect(
+      resolveEpochDuration(NOMINAL_200MS, {
+        measuredHours: 28.2,
+        slotsPerYearByEpoch: [
+          ...history(1050, 1052, NOMINAL_250MS),
+          ...history(1053, 1055, NOMINAL_200MS),
+        ],
+      }),
+    ).toBeCloseTo(ESTIMATED_EPOCH_SECONDS, 3)
   })
 
-  it('accepts the measurement once the window is clean (current epoch 1056)', () => {
+  it('estimates one more epoch, while the average may predate a clean window', () => {
+    // Current epoch 1056: the window 1053-1055 is clean, but the published
+    // average may still be the one computed in 1055 over 1052-1054.
+    expect(
+      resolveEpochDuration(NOMINAL_200MS, {
+        measuredHours: 28.2,
+        slotsPerYearByEpoch: [
+          ...history(1052, 1052, NOMINAL_250MS),
+          ...history(1053, 1056, NOMINAL_200MS),
+        ],
+      }),
+    ).toBeCloseTo(ESTIMATED_EPOCH_SECONDS, 3)
+  })
+
+  it('accepts the measurement once the window is clean (current epoch 1057)', () => {
     expect(
       resolveEpochDuration(NOMINAL_200MS, {
         measuredHours: 26.2,
         slotsPerYearByEpoch: [
           ...history(1052, 1052, NOMINAL_250MS),
-          ...history(1053, 1056, NOMINAL_200MS),
+          ...history(1053, 1057, NOMINAL_200MS),
         ],
-      }).source,
-    ).toBe('measured')
+      }),
+    ).toBeCloseTo(26.2 * 3600, 6)
   })
 
   it('estimates 220 ms per 200 ms slot without a measurement', () => {
-    const duration = resolveEpochDuration(NOMINAL_200MS, null)
-    expect(duration.source).toBe('estimated')
-    expect(duration.seconds / 432_000).toBeCloseTo(0.22, 6)
+    expect(resolveEpochDuration(NOMINAL_200MS, null) / 432_000).toBeCloseTo(
+      0.22,
+      6,
+    )
   })
 
   it('estimates when the history is missing or out of step with the auction', () => {
@@ -97,14 +118,14 @@ describe('resolveEpochDuration', () => {
       resolveEpochDuration(NOMINAL_200MS, {
         measuredHours: 26.16,
         slotsPerYearByEpoch: [],
-      }).source,
-    ).toBe('estimated')
+      }),
+    ).toBeCloseTo(ESTIMATED_EPOCH_SECONDS, 3)
     expect(
       resolveEpochDuration(NOMINAL_200MS, {
         measuredHours: 26.16,
         slotsPerYearByEpoch: history(1050, 1058, NOMINAL_250MS),
-      }).source,
-    ).toBe('estimated')
+      }),
+    ).toBeCloseTo(ESTIMATED_EPOCH_SECONDS, 3)
   })
 
   it('rejects a measurement that cannot be an epoch duration', () => {
@@ -113,7 +134,7 @@ describe('resolveEpochDuration', () => {
         resolveEpochDuration(NOMINAL_200MS, {
           measuredHours,
           slotsPerYearByEpoch: settled,
-        }).source,
-      ).toBe('estimated')
+        }),
+      ).toBeCloseTo(ESTIMATED_EPOCH_SECONDS, 3)
   })
 })

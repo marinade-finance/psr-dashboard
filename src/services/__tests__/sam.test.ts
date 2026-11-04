@@ -397,6 +397,7 @@ describe('selectEpochDurationSeconds', () => {
       selectEpochDurationSeconds(auctionData(nominal), {
         measuredHours: 26.16,
         slotsPerYearByEpoch: [
+          [1054, nominal],
           [1055, nominal],
           [1056, nominal],
           [1057, nominal],
