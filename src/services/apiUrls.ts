@@ -15,3 +15,6 @@ export const NOTIFICATIONS_API_URL =
 
 export const RPC_URL =
   import.meta.env.VITE_RPC_URL ?? 'https://rpc.marinade.finance'
+
+export const MARINADE_API_URL =
+  import.meta.env.VITE_MARINADE_API_URL ?? 'https://api2.marinade.finance'
