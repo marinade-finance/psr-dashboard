@@ -54,7 +54,7 @@ start:dev`), build output to `build/` (`pnpm build`), preview on 8080
   with `.toNumber()` at the UI boundary.
 - **Analytics**: `react-gtm-module` initialised in `src/index.tsx`.
 - **Testing**: Vitest 4 (unit, `*.test.{ts,tsx}` under `src/`);
-  Playwright 1.60 (e2e, `tests/`).
+  Playwright 1.61 (e2e, `tests/`).
 
 ---
 
