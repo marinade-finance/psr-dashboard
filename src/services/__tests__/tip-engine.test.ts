@@ -901,6 +901,22 @@ describe('outOfSetGate — badge caption source', () => {
     )
   })
 
+  it('VAT gate → label names the rejection reason', () => {
+    const validator = makeValidator({
+      auctionStake: { marinadeSamTargetSol: 0 },
+      samEligible: false,
+      samIneligibilityGate: 'vatIneligible',
+      vatEligible: false,
+      vatRejectionReason: 'no_bls_key',
+      values: { expectedStakeChangeSol: -10_000 },
+    })
+    const gate = outOfSetGate(validator, GATE_CONFIG)
+    expect(gate).toEqual({ kind: 'vatIneligible', reason: 'no_bls_key' })
+    expect(gate && outOfSetGateLabel(gate, GATE_CONFIG)).toBe(
+      'No BLS key on the vote account',
+    )
+  })
+
   it('a recorded country cap wins over a bond inside the hysteresis band', () => {
     // clipBondStakeCap only zeroes the cap below 0.8 × the minimum, so a 4.5
     // SOL bond still carries stake and must not be blamed for someone else's
