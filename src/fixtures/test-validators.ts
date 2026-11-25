@@ -1772,7 +1772,7 @@ export const TEST_DS_SAM_CONFIG: DsSamConfig = {
   minExpectedEffBidPmpe: 0,
   expectedFeePmpe: 0,
   minEligibleFeePmpe: null,
-  minimalCommission: null,
+  minimalCommission: -5.0,
   bondObligationSafetyMult: 1.0,
   bidTooLowPenaltyPermittedDeviationPmpe: 0.0001,
   debugVoteAccounts: [],
